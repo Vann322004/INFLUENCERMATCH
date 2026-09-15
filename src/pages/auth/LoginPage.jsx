@@ -4,9 +4,7 @@ import {
   MailOutlined,
   LockOutlined,
   ArrowRightOutlined,
-  GoogleOutlined,
-  FacebookFilled,
-  AppleFilled
+  GoogleOutlined
 } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { LABELS } from '../../constants/labels';
@@ -100,32 +98,14 @@ export default function LoginPage() {
       </Divider>
 
       {/* Social Logins */}
-      <Row gutter={12}>
-        <Col span={8}>
+      <Row>
+        <Col span={24}>
           <Button
             block
             onClick={() => handleSocialLogin('Google')}
             icon={<GoogleOutlined style={{ color: '#4285F4' }} />}
           >
             Google
-          </Button>
-        </Col>
-        <Col span={8}>
-          <Button
-            block
-            onClick={() => handleSocialLogin('Facebook')}
-            icon={<FacebookFilled style={{ color: '#1877F2' }} />}
-          >
-            Facebook
-          </Button>
-        </Col>
-        <Col span={8}>
-          <Button
-            block
-            onClick={() => handleSocialLogin('Apple')}
-            icon={<AppleFilled style={{ color: '#000000' }} />}
-          >
-            Apple
           </Button>
         </Col>
       </Row>
