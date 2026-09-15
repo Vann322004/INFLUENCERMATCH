@@ -1,0 +1,57 @@
+export const LABELS = {
+  BRAND: {
+    NAME: 'INFLUENCERMATCH',
+    TAGLINE: 'CONNECT • COLLABORATE • GROW',
+  },
+  HERO: {
+    TITLE_PREFIX: 'Tìm đúng ',
+    TITLE_HIGHLIGHT: 'Influencer',
+    TITLE_SUFFIX: ' cho mọi chiến dịch',
+    SUBTITLE: 'INFLUENCERMATCH giúp thương hiệu kết nối với những nhà sáng tạo nội dung phù hợp nhất, nhanh chóng, hiệu quả và dễ dàng.',
+  },
+  FEATURES: [
+    {
+      id: 'target',
+      title: 'Đúng đối tượng',
+      description: 'Kết nối với content creator phù hợp với thương hiệu của bạn.',
+    },
+    {
+      id: 'time',
+      title: 'Tiết kiệm thời gian',
+      description: 'Tìm kiếm, lọc và quản lý chiến dịch dễ dàng hơn bao giờ hết.',
+    },
+    {
+      id: 'roi',
+      title: 'Tăng hiệu quả',
+      description: 'Tối ưu ngân sách, đo lường rõ ràng, hiệu suất vượt trội.',
+    },
+  ],
+  AUTH: {
+    LOGIN_TITLE: 'Đăng nhập',
+    LOGIN_SUBTITLE: 'Chào mừng trở lại! Vui lòng đăng nhập để tiếp tục.',
+    REGISTER_TITLE: 'Đăng ký tài khoản',
+    REGISTER_SUBTITLE: 'Bắt đầu hành trình kết nối Influencer ngay hôm nay.',
+    FORGOT_TITLE: 'Quên mật khẩu',
+    FORGOT_SUBTITLE: 'Nhập email để nhận liên kết khôi phục mật khẩu.',
+    RESET_TITLE: 'Đặt lại mật khẩu',
+    RESET_SUBTITLE: 'Nhập mật khẩu mới cho tài khoản của bạn.',
+    EMAIL_OR_PHONE_PLACEHOLDER: 'Email hoặc số điện thoại',
+    PASSWORD_PLACEHOLDER: 'Mật khẩu',
+    FULL_NAME_PLACEHOLDER: 'Họ và tên',
+    REMEMBER_ME: 'Ghi nhớ đăng nhập',
+    FORGOT_PASSWORD_LINK: 'Quên mật khẩu?',
+    SUBMIT_LOGIN: 'Đăng nhập',
+    SUBMIT_REGISTER: 'Đăng ký ngay',
+    SUBMIT_FORGOT: 'Gửi yêu cầu khôi phục',
+    OR_CONTINUE_WITH: 'Hoặc đăng nhập với',
+    NO_ACCOUNT_PROMPT: 'Chưa có tài khoản?',
+    REGISTER_NOW_LINK: 'Đăng ký ngay',
+    HAS_ACCOUNT_PROMPT: 'Đã có tài khoản?',
+    LOGIN_NOW_LINK: 'Đăng nhập',
+  },
+  SLOGAN: {
+    LINE1: 'Kết nối chuẩn xác',
+    LINE2: 'Tác động đột phá',
+    FORMULA: 'Your Brand + Perfect Influencer = Success',
+  },
+};
