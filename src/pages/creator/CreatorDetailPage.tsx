@@ -41,6 +41,7 @@ import {
   DownOutlined,
   PhoneOutlined,
   SendOutlined,
+  ArrowRightOutlined,
 } from '@ant-design/icons';
 import './CreatorDetailPage.css';
 
@@ -219,6 +220,10 @@ export default function CreatorDetailPage() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [shortlistModalOpen, setShortlistModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [contactTab, setContactTab] = useState<'public' | 'direct'>('public');
+  const [messageTemplate, setMessageTemplate] = useState(
+    `Xin chào Linh,\nMình là đại diện từ InfluencerMatch. Bọn mình rất ấn tượng với nội dung và phong cách của bạn. Hiện tại, chúng mình đang tìm kiếm KOL phù hợp cho chiến dịch về [tên chiến dịch]. Bạn có thể cho mình biết bạn có quan tâm và sẵn sàng hợp tác không ạ? 😊`
+  );
   const [selectedReel, setSelectedReel] = useState<(typeof CREATOR_DATA.recentReels)[0] | null>(null);
   const [sampleSizeFilter, setSampleSizeFilter] = useState('126.5k người theo dõi');
 
@@ -855,68 +860,234 @@ export default function CreatorDetailPage() {
         </Form>
       </Modal>
 
-      {/* Modal: Quick Contact */}
+      {/* Modal: Liên hệ Creator (Được thiết kế lại chuẩn 1:1 theo giao diện screenshot) */}
       <Modal
-        title="Liên hệ trực tiếp với Creator"
         open={contactModalOpen}
         onCancel={() => setContactModalOpen(false)}
         footer={null}
-        width={450}
+        width={560}
+        centered
+        className="contact-creator-modal"
+        closeIcon={<span style={{ fontSize: 16, color: '#94A3B8' }}>✕</span>}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
-          <div
-            style={{
-              padding: 14,
-              border: '1px solid #E2E8F0',
-              borderRadius: 12,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <MailOutlined style={{ fontSize: 18, color: '#2563EB' }} />
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A' }}>Email Quản Lý / Booking</div>
-                <div style={{ fontSize: 12, color: '#64748B' }}>contact.linhnguyen@influencermatch.vn</div>
-              </div>
+        <div className="contact-modal-container">
+          {/* Header */}
+          <div className="contact-modal-header">
+            <div className="contact-modal-header-icon">
+              <SendOutlined />
             </div>
-            <Button
-              size="small"
-              onClick={() => {
-                navigator.clipboard?.writeText('contact.linhnguyen@influencermatch.vn');
-                message.success('Đã sao chép email!');
-              }}
-            >
-              Sao chép
-            </Button>
+            <div className="contact-modal-header-info">
+              <h3 className="contact-modal-title">Liên hệ Creator</h3>
+              <span className="contact-modal-subtitle">
+                Chọn phương thức liên hệ phù hợp để bắt đầu hợp tác.
+              </span>
+            </div>
           </div>
 
-          <div
-            style={{
-              padding: 14,
-              border: '1px solid #E2E8F0',
-              borderRadius: 12,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <PhoneOutlined style={{ fontSize: 18, color: '#10B981' }} />
+          {/* Creator Pill Card */}
+          <div className="contact-creator-banner">
+            <div className="contact-creator-info-left">
+              <div className="contact-avatar-box">
+                LN
+                <div className="contact-avatar-verified-dot">
+                  <CheckOutlined style={{ fontSize: 7, strokeWidth: 3 }} />
+                </div>
+              </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A' }}>Hotline / Zalo Booking</div>
-                <div style={{ fontSize: 12, color: '#64748B' }}>+84 908 123 456 (Ms. Hằng - Manager)</div>
+                <div className="contact-creator-name-row">
+                  <span className="contact-creator-display-name">Linh Nguyễn</span>
+                  <CheckCircleFilled style={{ color: '#2563EB', fontSize: 13 }} />
+                </div>
+                <div className="contact-creator-meta-line">
+                  <span>@linhnguyen.beauty</span>
+                  <span>•</span>
+                  <span className="contact-channel-pill-tag">Instagram</span>
+                </div>
               </div>
             </div>
+
+            <div
+              className="contact-view-all-link"
+              onClick={() => message.info('Đang mở thông tin đầy đủ về creator...')}
+            >
+              <span>Xem tất cả</span>
+              <ArrowRightOutlined style={{ fontSize: 11 }} />
+            </div>
+          </div>
+
+          {/* Tabs Bar */}
+          <div className="contact-tabs-pill-bar">
+            <div
+              className={`contact-tab-pill-item ${contactTab === 'public' ? 'active' : ''}`}
+              onClick={() => setContactTab('public')}
+            >
+              <span>🔗</span>
+              <span>Liên hệ công khai</span>
+            </div>
+            <div
+              className={`contact-tab-pill-item ${contactTab === 'direct' ? 'active' : ''}`}
+              onClick={() => setContactTab('direct')}
+            >
+              <span>💬</span>
+              <span>Gửi tin nhắn trực tiếp</span>
+              <span className="contact-fast-badge">Nhanh chóng</span>
+            </div>
+          </div>
+
+          {/* Tab 1: Kênh liên hệ công khai */}
+          {contactTab === 'public' ? (
+            <div className="contact-channels-section">
+              <div className="contact-section-label">KÊNH LIÊN HỆ CÔNG KHAI</div>
+
+              <div className="contact-channels-list">
+                {/* Email */}
+                <div className="contact-channel-row-card">
+                  <div className="contact-channel-row-left">
+                    <div className="channel-icon-avatar channel-icon-email">
+                      <MailOutlined />
+                    </div>
+                    <div className="contact-channel-name-val">
+                      <span className="contact-channel-title">Email</span>
+                      <span className="contact-channel-handle">linhnguyen@sample.vn</span>
+                    </div>
+                  </div>
+                  <div className="contact-channel-row-right">
+                    <span className="channel-verified-pill">
+                      <CheckOutlined style={{ fontSize: 10 }} />
+                      Đã xác minh
+                    </span>
+                    <Button
+                      className="btn-channel-copy"
+                      icon={<CopyOutlined style={{ fontSize: 11 }} />}
+                      onClick={() => {
+                        navigator.clipboard?.writeText('linhnguyen@sample.vn');
+                        message.success('Đã sao chép Email: linhnguyen@sample.vn!');
+                      }}
+                    >
+                      Sao chép
+                    </Button>
+                  </div>
+                </div>
+
+                {/* TikTok */}
+                <div className="contact-channel-row-card">
+                  <div className="contact-channel-row-left">
+                    <div className="channel-icon-avatar channel-icon-tiktok">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.68 6.34 6.34 0 0 0 9.35 22a6.33 6.33 0 0 0 6.33-6.32V8.92a8.31 8.31 0 0 0 4.91 1.6V7.07a4.8 4.8 0 0 1-1-.38z" />
+                      </svg>
+                    </div>
+                    <div className="contact-channel-name-val">
+                      <span className="contact-channel-title">Tiktok</span>
+                      <span className="contact-channel-handle">@linhnguyen.beauty</span>
+                    </div>
+                  </div>
+                  <div className="contact-channel-row-right">
+                    <span className="channel-verified-pill">
+                      <CheckOutlined style={{ fontSize: 10 }} />
+                      Đã xác minh
+                    </span>
+                    <Button
+                      className="btn-channel-copy"
+                      icon={<CopyOutlined style={{ fontSize: 11 }} />}
+                      onClick={() => {
+                        navigator.clipboard?.writeText('@linhnguyen.beauty');
+                        message.success('Đã sao chép TikTok: @linhnguyen.beauty!');
+                      }}
+                    >
+                      Sao chép
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Instagram */}
+                <div className="contact-channel-row-card">
+                  <div className="contact-channel-row-left">
+                    <div className="channel-icon-avatar channel-icon-instagram">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                      </svg>
+                    </div>
+                    <div className="contact-channel-name-val">
+                      <span className="contact-channel-title">Instagram</span>
+                      <span className="contact-channel-handle">@linhnguyen.beauty</span>
+                    </div>
+                  </div>
+                  <div className="contact-channel-row-right">
+                    <span className="channel-verified-pill">
+                      <CheckOutlined style={{ fontSize: 10 }} />
+                      Đã xác minh
+                    </span>
+                    <Button
+                      className="btn-channel-copy"
+                      icon={<CopyOutlined style={{ fontSize: 11 }} />}
+                      onClick={() => {
+                        navigator.clipboard?.writeText('@linhnguyen.beauty');
+                        message.success('Đã sao chép Instagram: @linhnguyen.beauty!');
+                      }}
+                    >
+                      Sao chép
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Tab 2: Gửi tin nhắn trực tiếp */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '4px 0' }}>
+              <div style={{ fontSize: 12, color: '#64748B' }}>
+                Hệ thống sẽ chuyển tin nhắn trực tiếp tới kênh chat bảo mật của Creator:
+              </div>
+              <Input placeholder="Tiêu đề lời mời hợp tác..." style={{ borderRadius: 8 }} />
+            </div>
+          )}
+
+          {/* Gợi ý mẫu tin nhắn */}
+          <div className="contact-template-box">
+            <div className="contact-template-top">
+              <span className="contact-template-title-label">
+                <span>✦</span>
+                <span>GỢI Ý MẪU TIN NHẮN</span>
+              </span>
+              <span
+                className="contact-template-customize-link"
+                onClick={() => message.info('Bạn có thể tùy ý sửa nội dung trực tiếp trong ô văn bản')}
+              >
+                Tùy chỉnh
+              </span>
+            </div>
+
+            <div className="contact-template-input-wrap">
+              <textarea
+                className="contact-template-textarea"
+                rows={4}
+                value={messageTemplate}
+                onChange={(e) => setMessageTemplate(e.target.value)}
+              />
+              <div className="contact-template-counter">
+                {messageTemplate.length}/500
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="contact-modal-footer-row">
+            <div className="contact-tip-text-wrap">
+              <span className="contact-tip-icon">💡</span>
+              <span>
+                Mẹo nhỏ: Cá nhân hóa tin nhắn sẽ giúp tăng tỷ lệ phản hồi lên đến <strong>3x!</strong>
+              </span>
+            </div>
+
             <Button
-              size="small"
+              className="btn-contact-send-primary"
+              icon={<SendOutlined />}
               onClick={() => {
-                navigator.clipboard?.writeText('+84908123456');
-                message.success('Đã sao chép số điện thoại!');
+                message.success('Đã gửi tin nhắn trực tiếp tới Linh Nguyễn thành công!');
+                setContactModalOpen(false);
               }}
             >
-              Sao chép
+              Gửi tin nhắn
             </Button>
           </div>
         </div>
