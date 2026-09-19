@@ -29,13 +29,19 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
   const location = useLocation();
 
   // Determine active key from current path
-  const activeKey = location.pathname.includes('campaign') ? 'campaigns' : 'dashboard';
+  const activeKey = location.pathname.includes('creator')
+    ? 'creators'
+    : location.pathname.includes('campaign')
+    ? 'campaigns'
+    : 'dashboard';
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     if (key === 'dashboard') {
       navigate('/dashboard');
     } else if (key === 'campaigns') {
       navigate('/campaigns');
+    } else if (key === 'creators') {
+      navigate('/creators');
     }
   };
 

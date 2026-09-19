@@ -12,6 +12,7 @@ import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import AuthLayout from './components/layout/AuthLayout';
 import CreateCampaignPage from './pages/campaign/CreateCampaignPage';
+import CreatorDiscoveryPage from './pages/creator/CreatorDiscoveryPage';
 import './styles/custom.css';
 
 const { Content } = Layout;
@@ -30,7 +31,7 @@ function MainLayout({ children }: { children: React.ReactNode }) {
         <Content
           style={{
             background: '#F5F6FA',
-            padding: '24px 28px 40px 28px',
+            padding: '20px 28px 20px 28px',
             overflowY: 'auto',
             boxSizing: 'border-box',
           }}
@@ -115,6 +116,32 @@ export default function App() {
             element={
               <MainLayout>
                 <CreateCampaignPage />
+              </MainLayout>
+            }
+          />
+
+          {/* Discover Creators Route */}
+          <Route
+            path="/creators"
+            element={
+              <MainLayout>
+                <CreatorDiscoveryPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/creators/discover"
+            element={
+              <MainLayout>
+                <CreatorDiscoveryPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/creators-match"
+            element={
+              <MainLayout>
+                <CreatorDiscoveryPage />
               </MainLayout>
             }
           />
