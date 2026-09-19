@@ -13,6 +13,8 @@ import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import AuthLayout from './components/layout/AuthLayout';
 import CreateCampaignPage from './pages/campaign/CreateCampaignPage';
 import CreatorDiscoveryPage from './pages/creator/CreatorDiscoveryPage';
+import CreatorDetailPage from './pages/creator/CreatorDetailPage';
+import CreatorShortlistPage from './pages/creator/CreatorShortlistPage';
 import './styles/custom.css';
 
 const { Content } = Layout;
@@ -142,6 +144,58 @@ export default function App() {
             element={
               <MainLayout>
                 <CreatorDiscoveryPage />
+              </MainLayout>
+            }
+          />
+
+          {/* Creator Detail Routes */}
+          <Route
+            path="/creators/:id"
+            element={
+              <MainLayout>
+                <CreatorDetailPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/creators/detail"
+            element={
+              <MainLayout>
+                <CreatorDetailPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/creator-detail"
+            element={
+              <MainLayout>
+                <CreatorDetailPage />
+              </MainLayout>
+            }
+          />
+
+          {/* Shortlists & Comparison Routes */}
+          <Route
+            path="/shortlists"
+            element={
+              <MainLayout>
+                <CreatorShortlistPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/creators/shortlist"
+            element={
+              <MainLayout>
+                <CreatorShortlistPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/shortlist"
+            element={
+              <MainLayout>
+                <CreatorShortlistPage />
               </MainLayout>
             }
           />

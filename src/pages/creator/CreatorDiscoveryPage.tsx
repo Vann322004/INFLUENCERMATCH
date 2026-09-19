@@ -768,8 +768,7 @@ export default function CreatorDiscoveryPage() {
   };
 
   const handleOpenCreator = (creator: Creator) => {
-    setSelectedCreator(creator);
-    setDrawerVisible(true);
+    navigate(`/creators/${creator.id}`);
   };
 
   return (

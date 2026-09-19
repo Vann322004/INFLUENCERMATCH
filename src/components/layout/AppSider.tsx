@@ -29,7 +29,9 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
   const location = useLocation();
 
   // Determine active key from current path
-  const activeKey = location.pathname.includes('creator')
+  const activeKey = location.pathname.includes('shortlist')
+    ? 'shortlists'
+    : location.pathname.includes('creator')
     ? 'creators'
     : location.pathname.includes('campaign')
     ? 'campaigns'
@@ -42,6 +44,8 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       navigate('/campaigns');
     } else if (key === 'creators') {
       navigate('/creators');
+    } else if (key === 'shortlists') {
+      navigate('/shortlists');
     }
   };
 
