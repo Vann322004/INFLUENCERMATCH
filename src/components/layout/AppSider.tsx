@@ -8,6 +8,7 @@ import {
   CompassOutlined,
   UnorderedListOutlined,
   TeamOutlined,
+  ApartmentOutlined,
   BarChartOutlined,
   MessageOutlined,
   SettingOutlined,
@@ -29,7 +30,9 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
   const location = useLocation();
 
   // Determine active key from current path
-  const activeKey = location.pathname.includes('shortlist')
+  const activeKey = location.pathname.includes('campaign-management') || location.pathname.includes('pipeline') || location.pathname.includes('relationship')
+    ? 'campaign-management'
+    : location.pathname.includes('shortlist')
     ? 'shortlists'
     : location.pathname.includes('creator')
     ? 'creators'
@@ -46,6 +49,8 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       navigate('/creators');
     } else if (key === 'shortlists') {
       navigate('/shortlists');
+    } else if (key === 'campaign-management') {
+      navigate('/campaign-management');
     }
   };
 
@@ -71,9 +76,9 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       label: 'Danh sách chọn',
     },
     {
-      key: 'relationships',
-      icon: <TeamOutlined />,
-      label: 'Mối quan hệ',
+      key: 'campaign-management',
+      icon: <ApartmentOutlined />,
+      label: 'Quản lý chiến dịch',
     },
     {
       key: 'reports',

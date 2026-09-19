@@ -15,6 +15,7 @@ import CreateCampaignPage from './pages/campaign/CreateCampaignPage';
 import CreatorDiscoveryPage from './pages/creator/CreatorDiscoveryPage';
 import CreatorDetailPage from './pages/creator/CreatorDetailPage';
 import CreatorShortlistPage from './pages/creator/CreatorShortlistPage';
+import CampaignManagementPage from './pages/campaign/CampaignManagementPage';
 import './styles/custom.css';
 
 const { Content } = Layout;
@@ -196,6 +197,40 @@ export default function App() {
             element={
               <MainLayout>
                 <CreatorShortlistPage />
+              </MainLayout>
+            }
+          />
+
+          {/* Campaign Management / Pipeline Routes */}
+          <Route
+            path="/campaign-management"
+            element={
+              <MainLayout>
+                <CampaignManagementPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/pipeline"
+            element={
+              <MainLayout>
+                <CampaignManagementPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/campaigns/management"
+            element={
+              <MainLayout>
+                <CampaignManagementPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/relationships"
+            element={
+              <MainLayout>
+                <CampaignManagementPage />
               </MainLayout>
             }
           />
