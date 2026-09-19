@@ -1,15 +1,17 @@
 import React from 'react';
 import { Breadcrumb, Typography, Button, Row, Col, Space } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import StatCard from '../components/dashboard/StatCard';
-import PerformanceChart from '../components/dashboard/PerformanceChart';
-import FeaturedCampaign from '../components/dashboard/FeaturedCampaign';
-import CampaignTable from '../components/dashboard/CampaignTable';
-import { STAT_CARDS_DATA } from '../data/mockData';
+import { useNavigate } from 'react-router-dom';
+import StatCard from '../../components/dashboard/StatCard';
+import PerformanceChart from '../../components/dashboard/PerformanceChart';
+import FeaturedCampaign from '../../components/dashboard/FeaturedCampaign';
+import CampaignTable from '../../components/dashboard/CampaignTable';
+import { STAT_CARDS_DATA } from '../../data/mockData';
 
 const { Title, Paragraph, Text } = Typography;
 
 export default function CampaignPage() {
+  const navigate = useNavigate();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* 1. Page Header Section */}
@@ -89,6 +91,7 @@ export default function CampaignPage() {
             type="primary"
             icon={<PlusOutlined />}
             size="large"
+            onClick={() => navigate('/campaigns/create')}
             style={{
               background: '#5B5BF0',
               fontWeight: 700,

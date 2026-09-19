@@ -27,11 +27,13 @@ import {
   ArrowRightOutlined,
   PlusOutlined
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 
 const { Title, Text } = Typography;
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const [campaignTab, setCampaignTab] = useState('Tất cả');
   const [chartPeriod, setChartPeriod] = useState('30 ngày');
 
@@ -404,12 +406,14 @@ export default function DashboardPage() {
                 </p>
                 <Button
                   shape="round"
+                  onClick={() => navigate('/campaigns/create')}
                   style={{
                     background: '#FFFFFF',
                     color: '#1E1B4B',
                     fontWeight: 700,
                     fontSize: 12,
                     border: 'none',
+                    cursor: 'pointer',
                   }}
                   icon={<ArrowRightOutlined style={{ fontSize: 11 }} />}
                 >

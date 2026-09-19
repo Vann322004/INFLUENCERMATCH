@@ -5,12 +5,13 @@ import { themeConfig } from './theme/themeConfig';
 import AppSider from './components/layout/AppSider';
 import AppHeader from './components/layout/AppHeader';
 import DashboardPage from './pages/dashboard/DashboardPage';
-import CampaignPage from './pages/CampaignPage';
+import CampaignPage from './pages/campaign/CampaignPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import AuthLayout from './components/layout/AuthLayout';
+import CreateCampaignPage from './pages/campaign/CreateCampaignPage';
 import './styles/custom.css';
 
 const { Content } = Layout;
@@ -96,6 +97,24 @@ export default function App() {
             element={
               <MainLayout>
                 <CampaignPage />
+              </MainLayout>
+            }
+          />
+
+          {/* Create Campaign Route */}
+          <Route
+            path="/campaigns/create"
+            element={
+              <MainLayout>
+                <CreateCampaignPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/create-campaign"
+            element={
+              <MainLayout>
+                <CreateCampaignPage />
               </MainLayout>
             }
           />
