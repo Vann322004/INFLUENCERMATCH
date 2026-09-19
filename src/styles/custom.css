@@ -1,0 +1,161 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #F5F6FA !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+/* ==========================================================================
+   Sidebar: Light Linear Gradient Tone (Nền Linear Sáng Trước Đó)
+   ========================================================================== */
+.app-sider {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAF5FF 40%, #EEF2FF 75%, #E0E7FF 100%) !important;
+  border-right: 1px solid #E2E8F0 !important;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  box-shadow: 2px 0 16px rgba(99, 102, 241, 0.05);
+}
+
+.app-sider .ant-layout-sider-children {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  padding: 16px 12px 14px 12px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+/* Sidebar Menu Items */
+.sidebar-menu .ant-menu-item {
+  color: #475569 !important;
+  border-radius: 10px !important;
+  margin: 3px 0 !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.sidebar-menu .ant-menu-item:hover {
+  color: #7C3AED !important;
+  background: rgba(139, 92, 246, 0.08) !important;
+  transform: translateX(2px);
+}
+
+.sidebar-menu .ant-menu-item-selected {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
+}
+
+.sidebar-menu .ant-menu-item-selected .ant-menu-item-icon {
+  color: #FFFFFF !important;
+}
+
+/* Sidebar Promo Banner (Light Card) */
+.sidebar-promo-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, #F5F3FF 60%, #EEF2FF 100%);
+  border: 1px solid #DDD6FE;
+  border-radius: 14px;
+  padding: 12px 10px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.08);
+}
+
+.sidebar-promo-avatar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: 2px solid #8B5CF6;
+}
+
+/* Sidebar Bottom User (Pinned at bottom) */
+.sidebar-user-card {
+  border-top: 1px solid #E2E8F0;
+  padding-top: 10px;
+  margin-top: auto;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.sidebar-user-card:hover {
+  background: rgba(139, 92, 246, 0.08);
+}
+
+/* Header */
+.app-header {
+  background: #FFFFFF !important;
+  height: 64px !important;
+  line-height: normal !important;
+  padding: 0 28px !important;
+  border-bottom: 1px solid #EEF0F6;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+/* Handwritten Note */
+.handwritten-note {
+  font-family: 'Caveat', cursive;
+  font-size: 20px;
+  font-weight: 700;
+  color: #6C5CE7;
+  line-height: 1.15;
+  transform: rotate(-3deg);
+  display: inline-block;
+  text-align: right;
+  max-width: 200px;
+}
+
+/* Sparkline SVG inside stat card */
+.sparkline-svg {
+  width: 90px;
+  height: 38px;
+  overflow: visible;
+}
+
+/* Custom Table Polish */
+.campaign-table .ant-table-thead > tr > th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  color: #64748B;
+  background: #FAFAFD;
+  border-bottom: 1px solid #EEF0F6;
+}
+
+.campaign-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #F1F5F9;
+  padding: 14px 16px !important;
+}
+
+.campaign-table .ant-table-tbody > tr:hover > td {
+  background: #F8FAFC !important;
+}
+
+/* Custom Underline Tab Bar */
+.custom-campaign-tabs .ant-tabs-nav {
+  margin-bottom: 0 !important;
+}
+
+.custom-campaign-tabs .ant-tabs-tab {
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 10px 14px !important;
+}
+
+.custom-campaign-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #5B5BF0 !important;
+  font-weight: 700;
+}
