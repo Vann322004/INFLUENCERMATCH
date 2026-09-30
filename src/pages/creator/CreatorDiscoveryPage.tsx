@@ -16,15 +16,18 @@ import {
   Tooltip,
   Drawer,
   message,
+  Radio,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
   SearchOutlined,
   ThunderboltOutlined,
+  ThunderboltFilled,
   StarFilled,
   AppstoreOutlined,
   UnorderedListOutlined,
   ReloadOutlined,
+  SyncOutlined,
   CheckOutlined,
   MoreOutlined,
   EyeOutlined,
@@ -42,6 +45,9 @@ import {
   SaveOutlined,
   MessageOutlined,
 } from '@ant-design/icons';
+import AiBriefAssistant from '../../components/ai/AiBriefAssistant';
+import type { StructuredBrief } from '../../components/ai/AiBriefAssistant';
+import ExternalDiscovery from '../../components/discovery/ExternalDiscovery';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -488,6 +494,54 @@ export default function CreatorDiscoveryPage() {
   const [creators, setCreators] = useState<Creator[]>(INITIAL_CREATORS);
   const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [discoveryMode, setDiscoveryMode] = useState<'database' | 'external'>('database');
+  const [isRefreshingCreator, setIsRefreshingCreator] = useState(false);
+
+  // Apply AI Structured Brief to filters
+  const handleApplyBrief = (brief: StructuredBrief) => {
+    setSelectedCategory(brief.category);
+    if (brief.location !== 'all') {
+      setSelectedLocation(brief.location);
+    }
+    setEngagementTier(brief.engagement);
+    if (brief.price !== 'all') {
+      setPriceTier(brief.price);
+    }
+    setCurrentPage(1);
+  };
+
+  // Request Refresh Creator stats
+  const handleRequestRefresh = () => {
+    if (!selectedCreator) return;
+    setIsRefreshingCreator(true);
+    message.loading({
+      content: `Đang cào dữ liệu mới nhất từ mạng xã hội cho @${selectedCreator.username}...`,
+      key: 'refresh_creator',
+    });
+
+    setTimeout(() => {
+      setIsRefreshingCreator(false);
+      const isM = selectedCreator.followers.includes('M');
+      const currentNum = parseFloat(selectedCreator.followers);
+      const updatedFollowers = isM ? `${(currentNum + 0.05).toFixed(2)}M` : `${Math.round(currentNum + 15)}K`;
+      const currentEng = parseFloat(selectedCreator.engagementRate);
+      const updatedEng = `${(currentEng + 0.3).toFixed(1)}%`;
+
+      const updatedCreator: Creator = {
+        ...selectedCreator,
+        followers: updatedFollowers,
+        engagementRate: updatedEng,
+      };
+
+      setSelectedCreator(updatedCreator);
+      setCreators((prev) => prev.map((c) => (c.id === updatedCreator.id ? updatedCreator : c)));
+      message.success({
+        content: `Đã làm mới dữ liệu mới nhất của ${selectedCreator.name}! (Tiêu hao 1 lượt Refresh Quota)`,
+        key: 'refresh_creator',
+        duration: 3,
+      });
+    }, 1200);
+  };
 
   // Provinces API State
   const [provinceOptions, setProvinceOptions] = useState<{ value: string; label: string }[]>([
@@ -830,23 +884,24 @@ export default function CreatorDiscoveryPage() {
           </Text>
         </div>
 
-        {/* Top Right Action Buttons */}
-        <Space size={12}>
-          <Button
-            icon={<SaveOutlined />}
-            onClick={() => message.success('Đã lưu cấu hình tìm kiếm!')}
-            style={{
-              fontWeight: 600,
-              fontSize: 13,
-              borderRadius: 10,
-              height: 40,
-              padding: '0 16px',
-              borderColor: '#E2E8F0',
-              color: '#334155',
-            }}
+        {/* Top Right: Discovery Mode Switcher & Actions */}
+        <Space size={10} wrap>
+          <Radio.Group
+            value={discoveryMode}
+            onChange={(e) => setDiscoveryMode(e.target.value)}
+            buttonStyle="solid"
+            size="middle"
           >
-            Lưu tìm kiếm
-          </Button>
+            <Radio.Button value="database">
+              <span>Khám phá hệ thống</span>
+            </Radio.Button>
+            <Radio.Button value="external">
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <GlobalOutlined /> Quét kênh ngoài 🌐
+              </span>
+            </Radio.Button>
+          </Radio.Group>
+
           <Button
             type="primary"
             icon={<ThunderboltOutlined />}
@@ -856,8 +911,8 @@ export default function CreatorDiscoveryPage() {
               fontWeight: 700,
               fontSize: 13,
               borderRadius: 10,
-              height: 40,
-              padding: '0 20px',
+              height: 38,
+              padding: '0 16px',
               boxShadow: '0 4px 14px rgba(124, 58, 237, 0.35)',
               border: 'none',
             }}
@@ -867,7 +922,15 @@ export default function CreatorDiscoveryPage() {
         </Space>
       </div>
 
-      {/* 2. Metrics Summary Overview Row (4 KPI Cards) */}
+      {/* RENDER EXTERNAL DISCOVERY MODE */}
+      {discoveryMode === 'external' ? (
+        <ExternalDiscovery />
+      ) : (
+        <>
+          {/* AI Brief Assistant Box */}
+          <AiBriefAssistant onApplyBrief={handleApplyBrief} onReset={handleResetFilters} />
+
+          {/* 2. Metrics Summary Overview Row (4 KPI Cards) */}
       <Row gutter={[14, 14]}>
         <Col xs={12} sm={6}>
           <Card
@@ -1416,7 +1479,13 @@ export default function CreatorDiscoveryPage() {
                   <div>
                     {/* Top Row: Avatar, Name & Match Badge */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <div
+                        style={{ display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer' }}
+                        onClick={() => {
+                          setSelectedCreator(creator);
+                          setDrawerVisible(true);
+                        }}
+                      >
                         <Avatar
                           src={creator.avatar}
                           size={48}
@@ -1459,8 +1528,24 @@ export default function CreatorDiscoveryPage() {
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        ★ {isHighMatch ? 'Khớp cao' : 'Khớp trung bình'}
+                        ★ {creator.matchRate}% {isHighMatch ? 'Khớp cao' : 'Khớp vừa'}
                       </div>
+                    </div>
+
+                    {/* AI Explanation Snippet */}
+                    <div
+                      style={{
+                        background: '#FAF5FF',
+                        border: '1px solid #E9D5FF',
+                        borderRadius: 8,
+                        padding: '6px 10px',
+                        fontSize: 11,
+                        color: '#6B21A8',
+                        marginBottom: 10,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      ✦ <strong>AI Match:</strong> Khán giả 82% Nữ (18-24 tuổi), tương tác {creator.engagementRate} vượt trội so với trung bình ngành.
                     </div>
 
                     {/* Categories Tags */}
@@ -1544,6 +1629,23 @@ export default function CreatorDiscoveryPage() {
                   {/* Bottom Buttons */}
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <Button
+                      onClick={() => {
+                        setSelectedCreator(creator);
+                        setDrawerVisible(true);
+                      }}
+                      style={{
+                        borderRadius: 8,
+                        height: 36,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: '#4F46E5',
+                        borderColor: '#C7D2FE',
+                      }}
+                    >
+                      Xem nhanh
+                    </Button>
+
+                    <Button
                       type="primary"
                       onClick={() => handleOpenCreator(creator)}
                       style={{
@@ -1555,7 +1657,7 @@ export default function CreatorDiscoveryPage() {
                         height: 36,
                       }}
                     >
-                      Xem hồ sơ →
+                      Chi tiết →
                     </Button>
 
                     <Button
@@ -1571,7 +1673,7 @@ export default function CreatorDiscoveryPage() {
                         background: creator.saved ? '#FFF1F2' : '#FFFFFF',
                       }}
                     >
-                      {creator.saved ? 'Đã lưu' : 'Lưu danh sách'}
+                      {creator.saved ? 'Đã lưu' : 'Lưu'}
                     </Button>
 
                     <Dropdown
@@ -1742,21 +1844,42 @@ export default function CreatorDiscoveryPage() {
           />
         </div>
       </div>
+    </>
+  )}
 
       {/* 6. Creator Profile Quick Preview Drawer */}
       <Drawer
         title={
           selectedCreator ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Avatar src={selectedCreator.avatar} size={36} />
-              <div>
-                <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A' }}>
-                  {selectedCreator.name}
-                </div>
-                <div style={{ fontSize: 11.5, color: '#94A3B8' }}>
-                  @{selectedCreator.username}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingRight: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Avatar src={selectedCreator.avatar} size={38} />
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A' }}>
+                    {selectedCreator.name}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: '#94A3B8' }}>
+                    @{selectedCreator.username}
+                  </div>
                 </div>
               </div>
+
+              <Button
+                size="small"
+                icon={<SyncOutlined spin={isRefreshingCreator} />}
+                loading={isRefreshingCreator}
+                onClick={handleRequestRefresh}
+                style={{
+                  borderRadius: 8,
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  borderColor: '#818CF8',
+                  color: '#4F46E5',
+                  background: '#EEF2FF',
+                }}
+              >
+                Làm mới số liệu
+              </Button>
             </div>
           ) : (
             'Chi tiết Creator'
