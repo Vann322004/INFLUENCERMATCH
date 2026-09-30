@@ -16,6 +16,8 @@ import {
   LogoutOutlined,
   UserOutlined,
   CrownOutlined,
+  FileDoneOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
 import SidebarPromo from '../dashboard/SidebarPromo';
 import { CURRENT_USER } from '../../data/mockData';
@@ -35,6 +37,12 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
     ? 'subscription'
     : location.pathname.includes('crm') || location.pathname.includes('outreach') || location.pathname.includes('relationship')
     ? 'crm'
+    : location.pathname.includes('collaboration') || location.pathname.includes('collab') || location.pathname.includes('operations')
+    ? 'collaboration'
+    : location.pathname.includes('performance') || location.pathname.includes('reports') || location.pathname.includes('analytics')
+    ? 'reports'
+    : location.pathname.includes('campaign-history') || location.pathname.includes('/history')
+    ? 'history'
     : location.pathname.includes('campaign-management') || location.pathname.includes('pipeline')
     ? 'campaign-management'
     : location.pathname.includes('shortlist')
@@ -56,6 +64,12 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       navigate('/shortlists');
     } else if (key === 'crm') {
       navigate('/crm');
+    } else if (key === 'collaboration') {
+      navigate('/collaboration');
+    } else if (key === 'reports') {
+      navigate('/performance');
+    } else if (key === 'history') {
+      navigate('/campaign-history');
     } else if (key === 'campaign-management') {
       navigate('/campaign-management');
     } else if (key === 'subscription') {
@@ -90,6 +104,11 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       label: 'Tiếp cận & CRM',
     },
     {
+      key: 'collaboration',
+      icon: <FileDoneOutlined />,
+      label: 'Vận hành & Hợp tác',
+    },
+    {
       key: 'campaign-management',
       icon: <ApartmentOutlined />,
       label: 'Quản lý chiến dịch',
@@ -97,7 +116,12 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
     {
       key: 'reports',
       icon: <BarChartOutlined />,
-      label: 'Báo cáo',
+      label: 'Hiệu suất & ROI',
+    },
+    {
+      key: 'history',
+      icon: <ClockCircleOutlined />,
+      label: 'Lịch sử Chiến dịch',
     },
     {
       key: 'messages',

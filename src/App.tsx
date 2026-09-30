@@ -21,6 +21,9 @@ import CampaignDetailPage from './pages/campaign/CampaignDetailPage';
 import SubscriptionPage from './pages/subscription/SubscriptionPage';
 import BrandProfilePage from './pages/brand/BrandProfilePage';
 import OutreachCrmPage from './pages/crm/OutreachCrmPage';
+import CollaborationPage from './pages/collaboration/CollaborationPage';
+import PerformancePage from './pages/performance/PerformancePage';
+import CampaignHistoryPage from './pages/history/CampaignHistoryPage';
 import './styles/custom.css';
 
 const { Content } = Layout;
@@ -283,12 +286,82 @@ export default function App() {
             }
           />
 
+          {/* Collaboration & Operations Routes */}
+          <Route
+            path="/collaboration"
+            element={
+              <MainLayout>
+                <CollaborationPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/collab"
+            element={
+              <MainLayout>
+                <CollaborationPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/operations"
+            element={
+              <MainLayout>
+                <CollaborationPage />
+              </MainLayout>
+            }
+          />
+
           {/* Campaign Pipeline Detail — Kanban view for a specific campaign */}
           <Route
             path="/campaign-management/:id"
             element={
               <MainLayout>
                 <CampaignManagementPage />
+              </MainLayout>
+            }
+          />
+
+          {/* Performance & Analytics Routes */}
+          <Route
+            path="/performance"
+            element={
+              <MainLayout>
+                <PerformancePage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <MainLayout>
+                <PerformancePage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <MainLayout>
+                <PerformancePage />
+              </MainLayout>
+            }
+          />
+
+          {/* Campaign History Routes */}
+          <Route
+            path="/campaign-history"
+            element={
+              <MainLayout>
+                <CampaignHistoryPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/history"
+            element={
+              <MainLayout>
+                <CampaignHistoryPage />
               </MainLayout>
             }
           />
