@@ -209,3 +209,217 @@ export const CAMPAIGNS_DATA: Campaign[] = [
     date: '15 thg 1, 2025',
   },
 ];
+
+// ==================== SUBSCRIPTION & BILLING DATA ====================
+
+export interface PlanFeature {
+  text: string;
+  included: boolean;
+  highlight?: boolean;
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  badge?: string;
+  subtitle: string;
+  priceMonthly: number;
+  priceYearly: number;
+  popular?: boolean;
+  isCurrent?: boolean;
+  features: PlanFeature[];
+}
+
+export interface QuotaMetric {
+  id: string;
+  title: string;
+  used: number;
+  total: number;
+  unit: string;
+  description: string;
+  color: string;
+  bgLight: string;
+}
+
+export interface PaymentInvoice {
+  id: string;
+  code: string;
+  date: string;
+  planName: string;
+  billingPeriod: string;
+  amount: number;
+  currency: string;
+  method: string;
+  status: 'success' | 'pending' | 'failed';
+  statusText: string;
+  invoiceUrl?: string;
+}
+
+export const CURRENT_SUBSCRIPTION_INFO = {
+  currentPlanId: 'plan-pro',
+  currentPlanName: 'Professional',
+  billingCycle: 'monthly',
+  renewalDate: '18 thg 10, 2026',
+  daysRemaining: 18,
+  autoRenew: true,
+  cardLast4: '4289',
+  cardBrand: 'Visa',
+};
+
+export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
+  {
+    id: 'plan-starter',
+    name: 'Starter',
+    subtitle: 'Lựa chọn hoàn hảo cho thương hiệu mới bắt đầu khám phá Creator',
+    priceMonthly: 1490000,
+    priceYearly: 14300000, // Tiết kiệm 20%
+    isCurrent: false,
+    popular: false,
+    features: [
+      { text: 'Tối đa 3 chiến dịch hoạt động cùng lúc', included: true },
+      { text: 'Khám phá 50 Creator / tháng', included: true },
+      { text: 'Làm mới số liệu (Refresh) 15 Creator / tháng', included: true },
+      { text: 'Bộ lọc cơ bản theo ngành hàng & nền tảng', included: true },
+      { text: 'So sánh tối đa 3 Creator cùng lúc', included: true },
+      { text: 'AI Brief Assistant phân tích tự động', included: false },
+      { text: 'Khám phá kênh ngoài (External Discovery)', included: false },
+      { text: 'Xuất báo cáo PDF & hỗ trợ ưu tiên', included: false },
+    ],
+  },
+  {
+    id: 'plan-pro',
+    name: 'Professional',
+    badge: 'Khuyên Dùng • Phổ Biến Nhất',
+    subtitle: 'Dành cho nhãn hàng đang mở rộng quy mô chiến dịch Influencer đa kênh',
+    priceMonthly: 3890000,
+    priceYearly: 37340000, // Tiết kiệm 20%
+    isCurrent: true,
+    popular: true,
+    features: [
+      { text: 'Tối đa 15 chiến dịch hoạt động cùng lúc', included: true },
+      { text: 'Khám phá 300 Creator / tháng', included: true },
+      { text: 'Làm mới số liệu (Refresh) 50 Creator / tháng', included: true },
+      { text: 'AI Brief Assistant (Phân tích ngôn ngữ tự nhiên)', included: true, highlight: true },
+      { text: 'Gợi ý AI Match Score & Explanation chi tiết', included: true, highlight: true },
+      { text: 'Khám phá kênh ngoài (External Discovery)', included: true },
+      { text: 'So sánh 5 Creator cùng lúc & Bảng Shortlist chuyên sâu', included: true },
+      { text: 'Quy trình duyệt bài (Deliverable Review) & Đo lường KPI', included: true },
+      { text: 'Hỗ trợ khách hàng ưu tiên 24/7', included: true },
+    ],
+  },
+  {
+    id: 'plan-enterprise',
+    name: 'Enterprise',
+    badge: 'Tập Đoàn & Agency',
+    subtitle: 'Giải pháp toàn diện không giới hạn cho các tập đoàn & agency lớn',
+    priceMonthly: 8990000,
+    priceYearly: 86300000, // Tiết kiệm 20%
+    isCurrent: false,
+    popular: false,
+    features: [
+      { text: 'Không giới hạn số lượng chiến dịch cùng lúc', included: true },
+      { text: 'Không giới hạn lượt khám phá & tìm kiếm Creator', included: true },
+      { text: 'Làm mới số liệu không giới hạn', included: true },
+      { text: 'AI Custom Tuning theo dữ liệu lịch sử thương hiệu', included: true, highlight: true },
+      { text: 'Phân quyền đa thành viên (Multi-seat Workspace)', included: true },
+      { text: 'Tích hợp API & Webhook tùy biến', included: true },
+      { text: 'Báo cáo ROI/ROAS độc quyền theo yêu cầu', included: true },
+      { text: 'Chuyên viên tư vấn tài khoản chuyên trách (Account Manager)', included: true },
+    ],
+  },
+];
+
+export const QUOTA_METRICS_DATA: QuotaMetric[] = [
+  {
+    id: 'q-campaigns',
+    title: 'Chiến dịch đang hoạt động',
+    used: 8,
+    total: 15,
+    unit: 'chiến dịch',
+    description: 'Bao gồm chiến dịch đang chạy và bản nháp đang hoàn thiện',
+    color: '#6366F1',
+    bgLight: '#EEF2FF',
+  },
+  {
+    id: 'q-discovery',
+    title: 'Lượt khám phá AI Discovery',
+    used: 182,
+    total: 300,
+    unit: 'lượt',
+    description: 'Số lượt tìm kiếm thông minh và phân tích hồ sơ Creator trong tháng',
+    color: '#0EA5E9',
+    bgLight: '#E0F2FE',
+  },
+  {
+    id: 'q-refresh',
+    title: 'Làm mới hồ sơ (Request Refresh)',
+    used: 34,
+    total: 50,
+    unit: 'lượt',
+    description: 'Cập nhật chỉ số tương tác và follower mới nhất từ mạng xã hội',
+    color: '#10B981',
+    bgLight: '#ECFDF5',
+  },
+  {
+    id: 'q-outreach',
+    title: 'Creator tiếp cận qua CRM',
+    used: 65,
+    total: 100,
+    unit: 'creator',
+    description: 'Số lượng Creator được gửi lời mời hoặc quản lý trong quy trình tuyển chọn',
+    color: '#F59E0B',
+    bgLight: '#FEF3C7',
+  },
+];
+
+export const PAYMENT_INVOICES_DATA: PaymentInvoice[] = [
+  {
+    id: 'inv-001',
+    code: 'INV-2026-0918',
+    date: '18/09/2026',
+    planName: 'Gói Professional (1 Tháng)',
+    billingPeriod: '18/09/2026 – 18/10/2026',
+    amount: 3890000,
+    currency: 'VND',
+    method: 'Visa •••• 4289',
+    status: 'success',
+    statusText: 'Đã thanh toán',
+  },
+  {
+    id: 'inv-002',
+    code: 'INV-2026-0818',
+    date: '18/08/2026',
+    planName: 'Gói Professional (1 Tháng)',
+    billingPeriod: '18/08/2026 – 18/09/2026',
+    amount: 3890000,
+    currency: 'VND',
+    method: 'Visa •••• 4289',
+    status: 'success',
+    statusText: 'Đã thanh toán',
+  },
+  {
+    id: 'inv-003',
+    code: 'INV-2026-0718',
+    date: '18/07/2026',
+    planName: 'Gói Starter (Nâng cấp Pro)',
+    billingPeriod: '18/07/2026 – 18/08/2026',
+    amount: 2400000,
+    currency: 'VND',
+    method: 'Chuyển khoản VNPAY-QR',
+    status: 'success',
+    statusText: 'Đã thanh toán',
+  },
+  {
+    id: 'inv-004',
+    code: 'INV-2026-0618',
+    date: '18/06/2026',
+    planName: 'Gói Starter (1 Tháng)',
+    billingPeriod: '18/06/2026 – 18/07/2026',
+    amount: 1490000,
+    currency: 'VND',
+    method: 'Ví điện tử MoMo',
+    status: 'success',
+    statusText: 'Đã thanh toán',
+  },
+];
+

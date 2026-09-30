@@ -15,6 +15,7 @@ import {
   RightOutlined,
   LogoutOutlined,
   UserOutlined,
+  CrownOutlined,
 } from '@ant-design/icons';
 import SidebarPromo from '../dashboard/SidebarPromo';
 import { CURRENT_USER } from '../../data/mockData';
@@ -30,7 +31,9 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
   const location = useLocation();
 
   // Determine active key from current path
-  const activeKey = location.pathname.includes('campaign-management') || location.pathname.includes('pipeline') || location.pathname.includes('relationship')
+  const activeKey = location.pathname.includes('subscription') || location.pathname.includes('billing') || location.pathname.includes('plans')
+    ? 'subscription'
+    : location.pathname.includes('campaign-management') || location.pathname.includes('pipeline') || location.pathname.includes('relationship')
     ? 'campaign-management'
     : location.pathname.includes('shortlist')
     ? 'shortlists'
@@ -51,6 +54,8 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       navigate('/shortlists');
     } else if (key === 'campaign-management') {
       navigate('/campaign-management');
+    } else if (key === 'subscription') {
+      navigate('/subscription');
     }
   };
 
@@ -109,9 +114,16 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       label: 'Hồ sơ cá nhân',
     },
     {
+      key: 'subscription',
+      icon: <CrownOutlined />,
+      label: 'Gói cước & Hạn mức',
+      onClick: () => navigate('/subscription'),
+    },
+    {
       key: 'settings',
       icon: <SettingOutlined />,
       label: 'Cài đặt tài khoản',
+      onClick: () => navigate('/subscription'),
     },
     {
       type: 'divider',

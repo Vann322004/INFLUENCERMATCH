@@ -17,6 +17,7 @@ import CreatorDetailPage from './pages/creator/CreatorDetailPage';
 import CreatorShortlistPage from './pages/creator/CreatorShortlistPage';
 import CampaignManagementPage from './pages/campaign/CampaignManagementPage';
 import CampaignListPage from './pages/campaign/CampaignListPage';
+import SubscriptionPage from './pages/subscription/SubscriptionPage';
 import './styles/custom.css';
 
 const { Content } = Layout;
@@ -242,6 +243,32 @@ export default function App() {
             element={
               <MainLayout>
                 <CampaignManagementPage />
+              </MainLayout>
+            }
+          />
+
+          {/* Subscription & Billing Routes */}
+          <Route
+            path="/subscription"
+            element={
+              <MainLayout>
+                <SubscriptionPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/billing"
+            element={
+              <MainLayout>
+                <SubscriptionPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/plans"
+            element={
+              <MainLayout>
+                <SubscriptionPage />
               </MainLayout>
             }
           />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Layout, Input, Button, Badge, Avatar, Dropdown, Space, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import {
   SearchOutlined,
   BellOutlined,
@@ -8,13 +9,22 @@ import {
   DownOutlined,
   UserOutlined,
   LogoutOutlined,
+  CrownOutlined,
 } from '@ant-design/icons';
 import { CURRENT_USER } from '../../data/mockData';
 
 const { Header } = Layout;
 
 export default function AppHeader() {
+  const navigate = useNavigate();
+
   const userMenuItems: MenuProps['items'] = [
+    {
+      key: 'subscription',
+      icon: <CrownOutlined style={{ color: '#F59E0B' }} />,
+      label: 'Gói cước & Hạn mức',
+      onClick: () => navigate('/subscription'),
+    },
     {
       key: 'profile',
       icon: <UserOutlined />,

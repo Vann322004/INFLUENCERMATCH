@@ -55,22 +55,15 @@ body {
   color: #FFFFFF !important;
 }
 
-/* Sidebar Promo Banner (Light Card) */
-.sidebar-promo-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, #F5F3FF 60%, #EEF2FF 100%);
-  border: 1px solid #DDD6FE;
-  border-radius: 14px;
-  padding: 12px 10px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.08);
+/* Sidebar Promo & Subscription Banner */
+.sidebar-subscription-card {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.sidebar-promo-avatar {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  border: 2px solid #8B5CF6;
+.sidebar-subscription-card:hover {
+  transform: translateY(-2px);
+  border-color: #8B5CF6 !important;
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.16) !important;
 }
 
 /* Sidebar Bottom User (Pinned at bottom) */
