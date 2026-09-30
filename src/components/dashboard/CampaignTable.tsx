@@ -69,8 +69,10 @@ export default function CampaignTable() {
   ];
 
   const handleActionMenu = (key: string, record?: Campaign) => {
-    if (key === 'view') {
-      navigate('/campaign-management');
+    if (key === 'view' && record) {
+      navigate(`/campaigns/${record.id}`);
+    } else if (key === 'edit') {
+      navigate('/campaigns/create');
     }
   };
 
@@ -80,7 +82,12 @@ export default function CampaignTable() {
       dataIndex: 'title',
       key: 'title',
       render: (_, record) => (
-        <Space size={12} align="center">
+        <Space
+          size={12}
+          align="center"
+          style={{ cursor: 'pointer' }}
+          onClick={() => navigate(`/campaigns/${record.id}`)}
+        >
           <Avatar
             shape="square"
             size={42}
@@ -95,7 +102,10 @@ export default function CampaignTable() {
                 color: '#0F172A',
                 lineHeight: 1.3,
                 marginBottom: 3,
+                transition: 'color 0.2s',
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#5B5BF0')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#0F172A')}
             >
               {record.title}
             </span>

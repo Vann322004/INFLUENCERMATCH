@@ -1,0 +1,62 @@
+/* Campaign Detail Page Styles */
+.cdetail-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.cdetail-header-card {
+  background: #FFFFFF;
+  border: 1px solid #EEF0F6;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.cdetail-stat-card {
+  background: #FFFFFF;
+  border: 1px solid #EEF0F6;
+  border-radius: 14px;
+  padding: 18px 20px;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
+.cdetail-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: #CBD5E1;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+}
+
+.cdetail-content-card {
+  background: #FFFFFF;
+  border: 1px solid #EEF0F6;
+  border-radius: 16px;
+}
+
+.brief-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.brief-item-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.timeline-dot-done {
+  color: #10B981;
+}
+
+.timeline-dot-active {
+  color: #5B5BF0;
+}

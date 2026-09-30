@@ -228,10 +228,18 @@ export default function CampaignListPage() {
                   src={campaign.thumbnail}
                   alt={campaign.title}
                   className="clist-card-thumb"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => navigate(`/campaigns/${campaign.id}`)}
                 />
                 <div className="clist-card-meta">
                   <div className="clist-card-title-row">
-                    <h3 className="clist-card-name">{campaign.title}</h3>
+                    <h3
+                      className="clist-card-name"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                    >
+                      {campaign.title}
+                    </h3>
                     <span
                       className="clist-status-badge"
                       style={{ color: cfg.color, background: cfg.bg }}
@@ -299,13 +307,22 @@ export default function CampaignListPage() {
                   <CalendarOutlined style={{ marginRight: 4 }} />
                   {campaign.date}
                 </span>
-                <Button
-                  className="clist-btn-pipeline"
-                  icon={<ArrowRightOutlined />}
-                  onClick={() => navigate(`/campaign-management/${campaign.id}`)}
-                >
-                  Xem Pipeline
-                </Button>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <Button
+                    size="small"
+                    onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                    style={{ borderRadius: 6, fontSize: 12, fontWeight: 600 }}
+                  >
+                    Chi tiết
+                  </Button>
+                  <Button
+                    className="clist-btn-pipeline"
+                    icon={<ArrowRightOutlined />}
+                    onClick={() => navigate(`/campaign-management/${campaign.id}`)}
+                  >
+                    Pipeline
+                  </Button>
+                </div>
               </div>
             </div>
           );

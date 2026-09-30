@@ -17,6 +17,7 @@ import CreatorDetailPage from './pages/creator/CreatorDetailPage';
 import CreatorShortlistPage from './pages/creator/CreatorShortlistPage';
 import CampaignManagementPage from './pages/campaign/CampaignManagementPage';
 import CampaignListPage from './pages/campaign/CampaignListPage';
+import CampaignDetailPage from './pages/campaign/CampaignDetailPage';
 import SubscriptionPage from './pages/subscription/SubscriptionPage';
 import BrandProfilePage from './pages/brand/BrandProfilePage';
 import './styles/custom.css';
@@ -104,6 +105,24 @@ export default function App() {
             element={
               <MainLayout>
                 <CampaignPage />
+              </MainLayout>
+            }
+          />
+
+          {/* Campaign Detail Route */}
+          <Route
+            path="/campaigns/:id"
+            element={
+              <MainLayout>
+                <CampaignDetailPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/campaign-detail/:id"
+            element={
+              <MainLayout>
+                <CampaignDetailPage />
               </MainLayout>
             }
           />
