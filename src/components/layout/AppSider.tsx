@@ -111,7 +111,8 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: 'Hồ sơ cá nhân',
+      label: 'Hồ sơ thương hiệu',
+      onClick: () => navigate('/brand-profile'),
     },
     {
       key: 'subscription',

@@ -52,9 +52,9 @@ Tài liệu này đối soát toàn bộ sơ đồ kiến trúc quy trình ngư�
 | STT | Phân hệ (Module) | Yêu cầu theo sơ đồ | Hiện trạng trong Code | Mức độ hoàn thiện | Đánh giá |
 |:---|:---|:---|:---|:---:|:---|
 | **1** | **Brand Login & Auth** | Đăng ký, Đăng nhập, Quên MK, **Xác minh Email / OTP** | Đã có `LoginPage`, `RegisterPage`, `ForgotPasswordPage`, `ResetPasswordPage`. | 80% | 🟡 Thiếu màn hình **Verify Email / OTP** |
-| **2** | **Brand Layout & Topbar** | Header + Sidebar + Bell + Brand Dropdown | Đã có Layout chung. Bell và Dropdown chưa trỏ vào các trang chức năng. | 70% | 🟡 Thiếu Drawer Thông báo & Cài đặt Alert |
-| **3** | **Brand Profile** | Business, Industry, Target market, Guidelines | Chưa có trang quản lý hồ sơ thương hiệu. | 0% | 🔴 **Thiếu hoàn toàn** |
-| **4** | **Subscription** | • Plans / Upgrade<br>• Quota còn lại<br>• Payment History | Chưa có trang thanh toán và quản lý hạn mức. | 0% | 🔴 **Thiếu hoàn toàn** |
+| **2** | **Brand Layout & Topbar** | Header + Sidebar + Bell + Brand Dropdown | Đã có Layout + `NotificationDrawer` (In-app alerts & Email settings) + Menu điều hướng đầy đủ. | 100% | 🟢 **Hoàn thành** |
+| **3** | **Brand Profile** | Business, Industry, Target market, Guidelines | Đã có `BrandProfilePage` (4 tabs: Doanh nghiệp, Ngành hàng, Target Persona, Brand Guidelines). | 100% | 🟢 **Hoàn thành** |
+| **4** | **Subscription** | • Plans / Upgrade<br>• Quota còn lại<br>• Payment History | Đã có `SubscriptionPage` (3 tabs: Plans/Upgrade, Quota còn lại, Payment History + Modal hóa đơn VAT + Widget Sidebar). | 100% | 🟢 **Hoàn thành** |
 | **5** | **Campaigns** | • List + Status<br>• Create / Edit Campaign<br>• **Campaign Detail** (Activate / Cancel / Complete) | Đã có `CampaignListPage`, `CreateCampaignPage`. Chưa có trang chi tiết quản lý trạng thái chiến dịch. | 65% | 🟡 Thiếu **Campaign Detail Page** & luồng Edit Draft |
 | **6** | **AI Creator Discovery** | • AI Brief Assistant (NL → Brief)<br>• Search + Filters<br>• Score + AI Explanation<br>• Creator Profile (Drawer + Request Refresh)<br>• Discover More (External Discovery) | Đã có `CreatorDiscoveryPage` (Lọc theo tiêu chí & danh sách thẻ). Chưa có AI Brief, AI Explanation, Quick Drawer kèm nút Request Refresh, và tab quét bên ngoài. | 40% | 🟡 Thiếu 3/5 thành phần cốt lõi |
 | **7** | **Shortlist** | • Shortlist Board (Per Campaign, Note, Fav, Priority)<br>• Creator Comparison (3-5 creators) | Đã có bảng so sánh `CreatorShortlistPage`. Chưa có Shortlist Board lọc theo từng campaign. | 50% | 🟡 Cần tách/bổ sung Shortlist Board |

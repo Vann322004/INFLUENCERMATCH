@@ -423,3 +423,161 @@ export const PAYMENT_INVOICES_DATA: PaymentInvoice[] = [
   },
 ];
 
+// ==================== BRAND PROFILE & NOTIFICATIONS DATA ====================
+
+export interface BrandProfileData {
+  brandName: string;
+  tagline: string;
+  logo: string;
+  coverImage: string;
+  legalName: string;
+  taxCode: string;
+  website: string;
+  contactEmail: string;
+  phone: string;
+  headquarters: string;
+  companySize: string;
+  industry: string;
+  subCategories: string[];
+  priceSegment: string;
+  targetGender: { female: number; male: number };
+  targetAgeRange: string[];
+  targetLocations: string[];
+  customerInterests: string[];
+  toneOfVoice: string[];
+  usps: string[];
+  guidelinesSummary: string;
+  socialLinks: {
+    facebook?: string;
+    instagram?: string;
+    tiktok?: string;
+    shopee?: string;
+  };
+}
+
+export const INITIAL_BRAND_PROFILE: BrandProfileData = {
+  brandName: 'GlowBeauty Vietnam',
+  tagline: 'Mỹ phẩm thuần chay lành tính cho làn da châu Á',
+  logo: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=150&auto=format&fit=crop&q=80',
+  coverImage: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop&q=80',
+  legalName: 'Công ty Cổ phần Thương mại GlowBeauty Việt Nam',
+  taxCode: '0317899881',
+  website: 'https://glowbeauty.vn',
+  contactEmail: 'contact@glowbeauty.vn',
+  phone: '(+84) 28 3910 8899',
+  headquarters: 'Tòa nhà TechHub, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+  companySize: '50 - 200 nhân viên',
+  industry: 'Mỹ phẩm & Chăm sóc cá nhân',
+  subCategories: ['Chăm sóc da (Skincare)', 'Thuần chay (Vegan)', 'Dược mỹ phẩm', 'Chống lão hóa'],
+  priceSegment: 'Tầm trung - Cận cao cấp (300.000 ₫ - 800.000 ₫)',
+  targetGender: { female: 75, male: 25 },
+  targetAgeRange: ['18 - 24 tuổi', '25 - 34 tuổi'],
+  targetLocations: ['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ'],
+  customerInterests: [
+    'Chăm sóc da khoa học',
+    'Thành phần thiên nhiên',
+    'Trang điểm tự nhiên',
+    'Phong cách sống lành mạnh',
+  ],
+  toneOfVoice: ['Thân thiện & Tận tâm', 'Khoa học & Đáng tin cậy', 'Trẻ trung, Hiện đại'],
+  usps: [
+    '100% Thuần chay được chứng nhận ECOCERT',
+    'Chiết xuất rau má lên men độc quyền',
+    'Không cồn, không hương liệu nhân tạo',
+  ],
+  guidelinesSummary:
+    'Video review tự nhiên, nhấn mạnh cảm nhận chân thật sau 7 ngày sử dụng. Tránh nói quá công dụng tức thì. Bắt buộc có hashtag #GlowBeautyVN #GlowYourSkin.',
+  socialLinks: {
+    facebook: 'https://facebook.com/glowbeauty.vn',
+    instagram: 'https://instagram.com/glowbeauty.official',
+    tiktok: 'https://tiktok.com/@glowbeauty_vietnam',
+    shopee: 'https://shopee.vn/glowbeauty_official',
+  },
+};
+
+export interface InAppNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'deliverable' | 'invitation' | 'quota' | 'payment' | 'system';
+  timeAgo: string;
+  read: boolean;
+  avatar?: string;
+  linkText?: string;
+  linkUrl?: string;
+}
+
+export const INITIAL_NOTIFICATIONS: InAppNotification[] = [
+  {
+    id: 'notif-1',
+    title: 'Bản video demo mới cần duyệt',
+    message: 'Linh Nguyễn đã nộp bản nháp video TikTok cho chiến dịch "Ra mắt Skincare Summer Glow".',
+    type: 'deliverable',
+    timeAgo: '10 phút trước',
+    read: false,
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    linkText: 'Duyệt bài ngay',
+    linkUrl: '/campaigns',
+  },
+  {
+    id: 'notif-2',
+    title: 'Lời mời hợp tác được chấp thuận',
+    message: 'Creator Thu Trang đã đồng ý tham gia chiến dịch với mức thù lao thỏa thuận 8.4M.',
+    type: 'invitation',
+    timeAgo: '2 giờ trước',
+    read: false,
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80',
+    linkText: 'Xem tiến độ',
+    linkUrl: '/campaign-management',
+  },
+  {
+    id: 'notif-3',
+    title: 'Cảnh báo hạn mức tìm kiếm',
+    message: 'Bạn đã sử dụng 182 / 300 lượt AI Discovery trong chu kỳ này (đạt 60% hạn mức).',
+    type: 'quota',
+    timeAgo: '1 ngày trước',
+    read: false,
+    linkText: 'Xem Quota',
+    linkUrl: '/subscription',
+  },
+  {
+    id: 'notif-4',
+    title: 'Thanh toán thành công',
+    message: 'Hóa đơn INV-2026-0918 gói Professional (3.890.000 ₫) đã được thanh toán thành công.',
+    type: 'payment',
+    timeAgo: '2 ngày trước',
+    read: true,
+    linkText: 'Xem hóa đơn',
+    linkUrl: '/subscription',
+  },
+  {
+    id: 'notif-5',
+    title: 'Hệ thống AI Discovery nâng cấp',
+    message: 'Mô hình AI Match Score v2.4 đã sẵn sàng với độ chuẩn xác phân tích tương tác tăng 25%.',
+    type: 'system',
+    timeAgo: '4 ngày trước',
+    read: true,
+    linkText: 'Khám phá ngay',
+    linkUrl: '/creators',
+  },
+];
+
+export interface EmailAlertSettings {
+  deliverableReview: boolean;
+  creatorAccepted: boolean;
+  quotaWarning: boolean;
+  weeklyPerformanceReport: boolean;
+  invoiceBilling: boolean;
+  marketingUpdates: boolean;
+}
+
+export const INITIAL_EMAIL_ALERTS: EmailAlertSettings = {
+  deliverableReview: true,
+  creatorAccepted: true,
+  quotaWarning: true,
+  weeklyPerformanceReport: true,
+  invoiceBilling: true,
+  marketingUpdates: false,
+};
+
+

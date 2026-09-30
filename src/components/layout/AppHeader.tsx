@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Layout, Input, Button, Badge, Avatar, Dropdown, Space, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
 import { useNavigate } from 'react-router-dom';
@@ -12,11 +12,13 @@ import {
   CrownOutlined,
 } from '@ant-design/icons';
 import { CURRENT_USER } from '../../data/mockData';
+import NotificationDrawer from './NotificationDrawer';
 
 const { Header } = Layout;
 
 export default function AppHeader() {
   const navigate = useNavigate();
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const userMenuItems: MenuProps['items'] = [
     {
@@ -28,12 +30,14 @@ export default function AppHeader() {
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: 'Thông tin tài khoản',
+      label: 'Hồ sơ thương hiệu',
+      onClick: () => navigate('/brand-profile'),
     },
     {
       key: 'settings',
       icon: <SettingOutlined />,
       label: 'Cài đặt hệ thống',
+      onClick: () => navigate('/subscription'),
     },
     {
       type: 'divider',
@@ -82,6 +86,7 @@ export default function AppHeader() {
             <Button
               shape="circle"
               icon={<BellOutlined />}
+              onClick={() => setNotifOpen(true)}
               style={{
                 border: '1px solid #EEF0F6',
                 color: '#64748B',
@@ -96,6 +101,7 @@ export default function AppHeader() {
           <Button
             shape="circle"
             icon={<SettingOutlined />}
+            onClick={() => navigate('/subscription')}
             style={{
               border: '1px solid #EEF0F6',
               color: '#64748B',
@@ -131,6 +137,9 @@ export default function AppHeader() {
           </div>
         </Dropdown>
       </Space>
+
+      {/* Notification Drawer Component */}
+      <NotificationDrawer open={notifOpen} onClose={() => setNotifOpen(false)} />
     </Header>
   );
 }

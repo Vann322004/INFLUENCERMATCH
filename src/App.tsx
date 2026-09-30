@@ -18,6 +18,7 @@ import CreatorShortlistPage from './pages/creator/CreatorShortlistPage';
 import CampaignManagementPage from './pages/campaign/CampaignManagementPage';
 import CampaignListPage from './pages/campaign/CampaignListPage';
 import SubscriptionPage from './pages/subscription/SubscriptionPage';
+import BrandProfilePage from './pages/brand/BrandProfilePage';
 import './styles/custom.css';
 
 const { Content } = Layout;
@@ -269,6 +270,24 @@ export default function App() {
             element={
               <MainLayout>
                 <SubscriptionPage />
+              </MainLayout>
+            }
+          />
+
+          {/* Brand Profile Routes */}
+          <Route
+            path="/brand-profile"
+            element={
+              <MainLayout>
+                <BrandProfilePage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <MainLayout>
+                <BrandProfilePage />
               </MainLayout>
             }
           />
