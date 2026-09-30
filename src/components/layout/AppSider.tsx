@@ -33,7 +33,9 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
   // Determine active key from current path
   const activeKey = location.pathname.includes('subscription') || location.pathname.includes('billing') || location.pathname.includes('plans')
     ? 'subscription'
-    : location.pathname.includes('campaign-management') || location.pathname.includes('pipeline') || location.pathname.includes('relationship')
+    : location.pathname.includes('crm') || location.pathname.includes('outreach') || location.pathname.includes('relationship')
+    ? 'crm'
+    : location.pathname.includes('campaign-management') || location.pathname.includes('pipeline')
     ? 'campaign-management'
     : location.pathname.includes('shortlist')
     ? 'shortlists'
@@ -52,6 +54,8 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       navigate('/creators');
     } else if (key === 'shortlists') {
       navigate('/shortlists');
+    } else if (key === 'crm') {
+      navigate('/crm');
     } else if (key === 'campaign-management') {
       navigate('/campaign-management');
     } else if (key === 'subscription') {
@@ -79,6 +83,11 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       key: 'shortlists',
       icon: <UnorderedListOutlined />,
       label: 'Danh sách chọn',
+    },
+    {
+      key: 'crm',
+      icon: <TeamOutlined />,
+      label: 'Tiếp cận & CRM',
     },
     {
       key: 'campaign-management',

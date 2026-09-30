@@ -20,6 +20,7 @@ import CampaignListPage from './pages/campaign/CampaignListPage';
 import CampaignDetailPage from './pages/campaign/CampaignDetailPage';
 import SubscriptionPage from './pages/subscription/SubscriptionPage';
 import BrandProfilePage from './pages/brand/BrandProfilePage';
+import OutreachCrmPage from './pages/crm/OutreachCrmPage';
 import './styles/custom.css';
 
 const { Content } = Layout;
@@ -248,11 +249,36 @@ export default function App() {
               </MainLayout>
             }
           />
+          {/* Outreach & Relationship CRM Routes */}
+          <Route
+            path="/crm"
+            element={
+              <MainLayout>
+                <OutreachCrmPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/outreach"
+            element={
+              <MainLayout>
+                <OutreachCrmPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/outreach-crm"
+            element={
+              <MainLayout>
+                <OutreachCrmPage />
+              </MainLayout>
+            }
+          />
           <Route
             path="/relationships"
             element={
               <MainLayout>
-                <CampaignListPage />
+                <OutreachCrmPage />
               </MainLayout>
             }
           />

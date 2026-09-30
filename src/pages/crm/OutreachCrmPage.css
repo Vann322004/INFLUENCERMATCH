@@ -1,0 +1,786 @@
+/* ==========================================================================
+   Outreach & Relationship CRM Page Styling
+   ========================================================================== */
+
+.outreach-crm-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-bottom: 50px;
+}
+
+/* 1. Breadcrumb */
+.crm-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748B;
+  margin-bottom: 2px;
+}
+
+.crm-breadcrumb .breadcrumb-link {
+  color: #64748B;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.crm-breadcrumb .breadcrumb-link:hover {
+  color: #2563EB;
+}
+
+.crm-breadcrumb .breadcrumb-current {
+  color: #0F172A;
+  font-weight: 600;
+}
+
+/* 2. Top Header */
+.crm-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.crm-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.crm-main-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.4px;
+}
+
+.crm-tagline {
+  font-family: 'Caveat', 'Segoe Script', cursive, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #4F46E5;
+}
+
+.crm-description {
+  font-size: 13px;
+  color: #64748B;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.crm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.crm-campaign-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 9px;
+  padding: 2px 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.selector-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #64748B;
+  white-space: nowrap;
+}
+
+.crm-campaign-selector .ant-select-selector {
+  border: none !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+  padding: 0 !important;
+}
+
+/* 3. Funnel Summary Stats Banner */
+.crm-stats-banner {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 992px) {
+  .crm-stats-banner {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .crm-stats-banner {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stat-card {
+  background: #FFFFFF;
+  border: 1px solid #F1F5F9;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+  transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.stat-icon-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.2;
+}
+
+.stat-text {
+  font-size: 11.5px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+/* 4. Sub-tabs Bar */
+.crm-subtabs-bar {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 6px 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.subtabs-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.subtabs-list::-webkit-scrollbar {
+  display: none;
+}
+
+.subtab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #64748B;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.subtab-btn:hover {
+  background: #F8FAFC;
+  color: #0F172A;
+}
+
+.subtab-btn.active {
+  background: #EEF2FF;
+  color: #4F46E5;
+  font-weight: 700;
+}
+
+.subtab-count-pill {
+  background: #F1F5F9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.subtab-count-pill.highlight {
+  background: #E0E7FF;
+  color: #4338CA;
+}
+
+/* ==========================================================================
+   SUB-TAB 1: OUTREACH EMAIL STYLING
+   ========================================================================== */
+.outreach-email-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 18px;
+}
+
+@media (max-width: 1024px) {
+  .outreach-email-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.email-composer-card,
+.email-tracker-card {
+  background: #FFFFFF;
+  border: 1px solid #F1F5F9;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.composer-header,
+.tracker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #F1F5F9;
+  padding-bottom: 14px;
+}
+
+.composer-title,
+.tracker-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tracker-subtitle {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.composer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-item-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-item-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #334155;
+}
+
+/* AI Draft Trigger Box */
+.ai-draft-trigger-box {
+  background: linear-gradient(135deg, #FAF5FF 0%, #F5F3FF 100%);
+  border: 1.5px solid #DDD6FE;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-trigger-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ai-trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-tone-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-ai-generate-email {
+  background: linear-gradient(135deg, #7C3AED 0%, #6366F1 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  height: 36px !important;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3) !important;
+}
+
+.btn-ai-generate-email:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.composer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* Tracker Email List */
+.tracker-email-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.tracker-email-item {
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #FFFFFF;
+}
+
+.tracker-email-item:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.email-item-avatar-wrap {
+  flex-shrink: 0;
+}
+
+.email-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #E2E8F0;
+}
+
+.email-item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.email-item-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.email-creator-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.email-creator-channel {
+  font-size: 11px;
+  color: #64748B;
+  background: #F1F5F9;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.email-time-tag {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-left: auto;
+}
+
+.email-item-subject {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.email-item-preview-text {
+  font-size: 11.5px;
+  color: #64748B;
+  line-height: 1.3;
+}
+
+.email-item-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.last-opened-info {
+  font-size: 11px;
+  color: #64748B;
+  display: inline-flex;
+  align-items: center;
+}
+
+.email-item-arrow {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* ==========================================================================
+   SUB-TAB 2: RELATIONSHIP CRM KANBAN STYLING
+   ========================================================================= */
+.relationship-crm-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.crm-controls-bar {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.controls-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.platform-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crm-kanban-board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  overflow-x: auto;
+  min-height: 540px;
+  padding-bottom: 10px;
+}
+
+@media (max-width: 1280px) {
+  .crm-kanban-board {
+    grid-template-columns: repeat(5, 260px);
+  }
+}
+
+.kanban-column {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  height: 100%;
+}
+
+.kanban-column-header {
+  padding-bottom: 6px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.kanban-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kanban-stage-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0F172A;
+  padding-left: 6px;
+}
+
+.kanban-count-badge {
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
+.kanban-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.kanban-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.kanban-card:hover {
+  border-color: #C7D2FE;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+}
+
+.kanban-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kanban-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #CBD5E1;
+  flex-shrink: 0;
+}
+
+.kanban-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.kanban-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kanban-user {
+  font-size: 11px;
+  color: #64748B;
+}
+
+.kanban-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: #F8FAFC;
+  border: 1px solid #F1F5F9;
+  border-radius: 8px;
+  padding: 6px;
+  text-align: center;
+}
+
+.k-val {
+  font-size: 11.5px;
+  font-weight: 800;
+  display: block;
+}
+
+.k-lbl {
+  font-size: 9px;
+  color: #94A3B8;
+  display: block;
+}
+
+.kanban-note-box {
+  background: #FFFBEB;
+  border: 1px solid #FEF3C7;
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.k-activity-time {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #B45309;
+}
+
+.k-note-text {
+  font-size: 11px;
+  color: #78350F;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.kanban-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.btn-kanban-log-note {
+  background: transparent;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #475569;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.btn-kanban-log-note:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+.btn-kanban-next-stage {
+  background: #EEF2FF;
+  border: 1px solid #C7D2FE;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #4F46E5;
+  padding: 3px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-kanban-next-stage:hover {
+  background: #4F46E5;
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   SUB-TAB 3: OFFICIAL INVITATION MANAGER STYLING
+   ========================================================================== */
+.invitations-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.invitations-filter-bar {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.filter-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.invitations-table-wrap {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  overflow-x: auto;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+}
+
+.invitations-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 950px;
+}
+
+.invitations-table th {
+  background: #F8FAFC;
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748B;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.invitations-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #F1F5F9;
+  font-size: 12.5px;
+  color: #0F172A;
+  vertical-align: middle;
+}
+
+.invitations-table tr:hover {
+  background: #FAF5FF;
+}
+
+.invite-code-pill {
+  background: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  font-family: monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+.invite-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #E2E8F0;
+}
