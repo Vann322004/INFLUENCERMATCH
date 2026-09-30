@@ -16,6 +16,7 @@ import CreatorDiscoveryPage from './pages/creator/CreatorDiscoveryPage';
 import CreatorDetailPage from './pages/creator/CreatorDetailPage';
 import CreatorShortlistPage from './pages/creator/CreatorShortlistPage';
 import CampaignManagementPage from './pages/campaign/CampaignManagementPage';
+import CampaignListPage from './pages/campaign/CampaignListPage';
 import './styles/custom.css';
 
 const { Content } = Layout;
@@ -201,12 +202,12 @@ export default function App() {
             }
           />
 
-          {/* Campaign Management / Pipeline Routes */}
+          {/* Campaign Management — List of campaigns */}
           <Route
             path="/campaign-management"
             element={
               <MainLayout>
-                <CampaignManagementPage />
+                <CampaignListPage />
               </MainLayout>
             }
           />
@@ -214,7 +215,7 @@ export default function App() {
             path="/pipeline"
             element={
               <MainLayout>
-                <CampaignManagementPage />
+                <CampaignListPage />
               </MainLayout>
             }
           />
@@ -222,12 +223,22 @@ export default function App() {
             path="/campaigns/management"
             element={
               <MainLayout>
-                <CampaignManagementPage />
+                <CampaignListPage />
               </MainLayout>
             }
           />
           <Route
             path="/relationships"
+            element={
+              <MainLayout>
+                <CampaignListPage />
+              </MainLayout>
+            }
+          />
+
+          {/* Campaign Pipeline Detail — Kanban view for a specific campaign */}
+          <Route
+            path="/campaign-management/:id"
             element={
               <MainLayout>
                 <CampaignManagementPage />

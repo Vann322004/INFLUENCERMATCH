@@ -391,8 +391,8 @@ export default function CampaignManagementPage() {
     <div className="pipeline-page-container">
       {/* 1. Breadcrumb */}
       <div className="pipeline-breadcrumb">
-        <span className="breadcrumb-link" onClick={() => navigate('/campaigns')}>
-          Chiến dịch
+        <span className="breadcrumb-link" onClick={() => navigate('/campaign-management')}>
+          Quản lý chiến dịch
         </span>
         <span>›</span>
         <span className="breadcrumb-current">Chiến dịch Summer Glow 2025</span>

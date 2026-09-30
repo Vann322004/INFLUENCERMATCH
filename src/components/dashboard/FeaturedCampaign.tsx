@@ -5,11 +5,13 @@ import {
   RightOutlined,
   ArrowRightOutlined,
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { FEATURED_CAMPAIGN } from '../../data/mockData';
 
 const { Title, Text } = Typography;
 
 export default function FeaturedCampaign() {
+  const navigate = useNavigate();
   const item = FEATURED_CAMPAIGN;
 
   return (
@@ -147,6 +149,7 @@ export default function FeaturedCampaign() {
       <Button
         type="primary"
         block
+        onClick={() => navigate('/campaign-management')}
         style={{
           background: '#5B5BF0',
           fontWeight: 700,

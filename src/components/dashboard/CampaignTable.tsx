@@ -21,10 +21,12 @@ import {
   EditOutlined,
   DeleteOutlined,
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { CAMPAIGNS_DATA } from '../../data/mockData';
 import type { Campaign } from '../../data/mockData';
 
 export default function CampaignTable() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>('all');
   const [searchText, setSearchText] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('latest');
@@ -65,6 +67,12 @@ export default function CampaignTable() {
     { type: 'divider' },
     { key: 'delete', icon: <DeleteOutlined />, danger: true, label: 'Xóa chiến dịch' },
   ];
+
+  const handleActionMenu = (key: string, record?: Campaign) => {
+    if (key === 'view') {
+      navigate('/campaign-management');
+    }
+  };
 
   const columns: ColumnsType<Campaign> = [
     {
@@ -225,7 +233,11 @@ export default function CampaignTable() {
       key: 'action',
       width: 44,
       render: () => (
-        <Dropdown menu={{ items: actionItems }} trigger={['click']} placement="bottomRight">
+        <Dropdown
+          menu={{ items: actionItems, onClick: ({ key }) => handleActionMenu(key) }}
+          trigger={['click']}
+          placement="bottomRight"
+        >
           <Button
             type="text"
             size="small"
