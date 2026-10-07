@@ -1,0 +1,71 @@
+/* Minimal CSS: Only for custom animations, hover transitions, and decorative banner graphics */
+
+/* Waving Hand Animation */
+.im-hand-wave {
+  display: inline-block;
+  animation: waveHand 2.2s infinite;
+  transform-origin: 70% 70%;
+}
+
+@keyframes waveHand {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(14deg); }
+  20% { transform: rotate(-8deg); }
+  30% { transform: rotate(14deg); }
+  40% { transform: rotate(-4deg); }
+  50% { transform: rotate(10deg); }
+  60% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Ant Design Hover States */
+.antd-list-item-hover:hover {
+  background: #F8FAFC;
+  border-color: #E2E8F0 !important;
+  transform: translateX(2px);
+}
+
+.antd-task-hover:hover {
+  background: #F8FAFC;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+  border-radius: 8px;
+}
+
+.antd-creator-row-hover:hover {
+  background: #F8FAFC;
+  border-radius: 8px;
+}
+
+/* Decorative Radar Circles for Ant Design Create Campaign Banner */
+.im-create-graphic {
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 140px;
+  height: 140px;
+  pointer-events: none;
+}
+
+.im-radar-circle {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.im-radar-circle.c1 { width: 45px; height: 45px; }
+.im-radar-circle.c2 { width: 90px; height: 90px; }
+.im-radar-circle.c3 { width: 135px; height: 135px; }
+
+.im-radar-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #FDE047;
+  font-size: 14px;
+}

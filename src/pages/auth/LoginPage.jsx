@@ -1,24 +1,62 @@
-import React from 'react';
-import { Form, Input, Button, Checkbox, Divider, Row, Col, Typography, message } from 'antd';
+import React, { useState } from 'react';
+import { Form, Input, Button, Checkbox, Divider, Row, Col, Typography, message, Alert } from 'antd';
 import {
   MailOutlined,
   LockOutlined,
   ArrowRightOutlined,
-  GoogleOutlined
+  GoogleOutlined,
+  ThunderboltOutlined,
+  CheckCircleOutlined
 } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { LABELS } from '../../constants/labels';
 import { ROUTES } from '../../constants/routes';
+import { authService, MOCK_USER } from '../../mock/authData';
 
 const { Title, Text } = Typography;
 
 export default function LoginPage() {
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  const ADMIN_ROLES = ['admin', 'super_admin'];
+
+  const redirectByRole = (user) => {
+    if (user && ADMIN_ROLES.includes(user.role)) {
+      navigate('/admin/dashboard');
+    } else {
+      navigate(ROUTES.DASHBOARD || '/dashboard');
+    }
+  };
 
   const onFinish = (values) => {
-    message.success(`Đăng nhập thành công! Chào mừng ${values.username}`);
-    // Navigate to dashboard if needed
+    setLoading(true);
+    setTimeout(() => {
+      const result = authService.login(values.username, values.password);
+      setLoading(false);
+
+      if (result.success) {
+        message.success(`Đăng nhập thành công! Xin chào ${result.user.name}`);
+        redirectByRole(result.user);
+      } else {
+        message.error(result.message || 'Đăng nhập thất bại!');
+      }
+    }, 400);
+  };
+
+  const handleQuickLogin = () => {
+    form.setFieldsValue({
+      username: MOCK_USER.email,
+      password: MOCK_USER.password,
+    });
+    setLoading(true);
+    setTimeout(() => {
+      const result = authService.login(MOCK_USER.email, MOCK_USER.password);
+      setLoading(false);
+      message.success(`Đăng nhập thành công! Chào mừng ${MOCK_USER.name}`);
+      redirectByRole(result.user);
+    }, 300);
   };
 
   const handleSocialLogin = (provider) => {
@@ -37,13 +75,54 @@ export default function LoginPage() {
         </Text>
       </div>
 
+      {/* Demo Account Box */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #F5F3FF 0%, #EFF6FF 100%)',
+          border: '1px solid #DDD6FE',
+          borderRadius: 12,
+          padding: '10px 14px',
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#6D28D9', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+          <ThunderboltOutlined /> Tài khoản Demo:
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#64748B', marginBottom: 2 }}>🏢 BRAND</div>
+            <div style={{ fontSize: 11, color: '#4B5563' }}>
+              <code>thevan@influencermatch.com</code> / <code>123456</code>
+            </div>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#64748B', marginBottom: 2 }}>🔐 ADMIN</div>
+            <div style={{ fontSize: 11, color: '#4B5563' }}>
+              <code>admin@influencermatch.vn</code> / <code>admin123</code>
+            </div>
+          </div>
+        </div>
+        <Button
+          size="small"
+          type="primary"
+          onClick={handleQuickLogin}
+          style={{ fontSize: 11, height: 26, padding: '0 10px', background: '#7C3AED', borderRadius: 8, marginTop: 8 }}
+        >
+          Điền nhanh (Brand)
+        </Button>
+      </div>
+
       {/* Ant Design Form */}
       <Form
         form={form}
         name="login_form"
         layout="vertical"
         onFinish={onFinish}
-        initialValues={{ remember: true }}
+        initialValues={{
+          remember: true,
+          username: MOCK_USER.email,
+          password: MOCK_USER.password,
+        }}
         requiredMark={false}
         size="large"
       >
@@ -79,12 +158,13 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <Form.Item style={{ marginTop: 20, marginBottom: 0 }}>
+        <Form.Item style={{ marginTop: 16, marginBottom: 0 }}>
           <Button
             type="primary"
             htmlType="submit"
             block
             size="large"
+            loading={loading}
             icon={<ArrowRightOutlined />}
           >
             {LABELS.AUTH.SUBMIT_LOGIN}
@@ -93,7 +173,7 @@ export default function LoginPage() {
       </Form>
 
       {/* Divider */}
-      <Divider style={{ color: '#94A3B8', fontSize: 12, margin: '22px 0' }}>
+      <Divider style={{ color: '#94A3B8', fontSize: 12, margin: '18px 0' }}>
         {LABELS.AUTH.OR_CONTINUE_WITH}
       </Divider>
 

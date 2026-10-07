@@ -1,0 +1,65 @@
+/* DashboardLayout CSS & Ant Design Fixes */
+
+/* Fix Sider Flex Container so user card stays at bottom */
+.antd-custom-sider {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+.antd-custom-sider .ant-layout-sider-children {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  box-sizing: border-box !important;
+  padding: 16px 12px !important;
+  overflow: hidden !important;
+}
+
+.antd-sider-menu-wrapper {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Ant Design Menu item styles */
+.antd-sider-menu .ant-menu-item {
+  border-radius: 12px !important;
+  margin: 3px 0 !important;
+  font-size: 13.5px !important;
+  color: #475569 !important;
+  transition: all 0.2s ease !important;
+}
+
+.antd-sider-menu .ant-menu-item:hover {
+  background: rgba(139, 92, 246, 0.08) !important;
+  color: #7C3AED !important;
+  transform: translateX(2px);
+}
+
+.antd-sider-menu .ant-menu-item-selected {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
+}
+
+.antd-sider-menu .ant-menu-item-selected .ant-menu-item-icon {
+  color: #FFFFFF !important;
+}
+
+/* User Card pinned at bottom of sidebar */
+.antd-sidebar-user-bottom {
+  margin-top: auto !important;
+  padding-top: 8px !important;
+  border-top: 1px solid #E2E8F0 !important;
+  flex-shrink: 0 !important;
+  width: 100% !important;
+}
+
+.antd-user-card-hover:hover {
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.antd-header-profile-hover:hover {
+  background: #F8FAFC;
+}

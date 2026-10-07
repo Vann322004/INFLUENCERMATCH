@@ -1,0 +1,150 @@
+/* Subscription Page Styling */
+.subscription-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Header Banner */
+.sub-current-card {
+  background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
+  border-radius: 16px;
+  padding: 24px 28px;
+  color: #FFFFFF;
+  box-shadow: 0 10px 25px -5px rgba(67, 56, 202, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.sub-current-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.25) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+}
+
+/* Plans Switcher */
+.billing-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 10px 0 26px 0;
+}
+
+/* Plan Card */
+.pricing-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pricing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px -8px rgba(91, 91, 240, 0.15);
+  border-color: #C7D2FE;
+}
+
+.pricing-card.popular {
+  border: 2px solid #6366F1;
+  background: linear-gradient(180deg, #FAF5FF 0%, #FFFFFF 25%);
+  box-shadow: 0 12px 28px -6px rgba(99, 102, 241, 0.22);
+}
+
+.popular-badge {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
+  white-space: nowrap;
+}
+
+/* Price Display */
+.price-tag {
+  font-size: 32px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.1;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 16px 0 6px 0;
+}
+
+.price-cycle {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748B;
+}
+
+/* Feature Item */
+.feature-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+/* Quota Progress Cards */
+.quota-card {
+  background: #FFFFFF;
+  border: 1px solid #EEF0F6;
+  border-radius: 14px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.quota-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+
+/* Add-on Pack Card */
+.addon-card {
+  background: #F8FAFC;
+  border: 1px dashed #CBD5E1;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.addon-card:hover {
+  background: #EEF2FF;
+  border-color: #818CF8;
+}
+
+/* Invoice Modal */
+.invoice-paper {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}

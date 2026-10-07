@@ -1,0 +1,54 @@
+/* Brand Profile Styling */
+.brand-profile-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.brand-cover-wrapper {
+  position: relative;
+  height: 180px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #312E81 0%, #4F46E5 50%, #7C3AED 100%);
+}
+
+.brand-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
+}
+
+.brand-header-card {
+  margin-top: -60px;
+  position: relative;
+  z-index: 2;
+  background: #FFFFFF;
+  border: 1px solid #EEF0F6;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.brand-logo-avatar {
+  border: 4px solid #FFFFFF;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+}
+
+.brand-form-card {
+  background: #FFFFFF;
+  border: 1px solid #EEF0F6;
+  border-radius: 16px;
+}
+
+.persona-metric-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 16px;
+}
