@@ -30,6 +30,8 @@ import './styles/custom.css';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
 import AdminDashboardPage from './pages/admin/dashboard/AdminDashboardPage';
+import AccountManagementPage from './pages/admin/accounts/AccountManagementPage';
+import AccountDetailPage from './pages/admin/accounts/AccountDetailPage';
 
 const { Content } = Layout;
 
@@ -433,7 +435,10 @@ export default function App() {
           >
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboardPage />} />
-            {/* Phase 3-8 pages will be added here as they are built */}
+            {/* Phase 3 — Account Management */}
+            <Route path="accounts" element={<AccountManagementPage />} />
+            <Route path="accounts/:id" element={<AccountDetailPage />} />
+            {/* Phase 4-8 pages will be added here as they are built */}
           </Route>
 
           {/* Admin root redirect */}

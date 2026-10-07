@@ -108,25 +108,25 @@ Tài liệu này đối soát toàn bộ sơ đồ màn hình Admin (Admin Scree
 ### 🟠 PHASE 3 — Account Management
 > **Mục tiêu**: Quản lý toàn bộ tài khoản (admin / brand / creator)
 
-- [ ] **3.1** Tạo `src/pages/admin/accounts/AccountManagementPage.tsx`
+- [x] **3.1** Tạo `src/pages/admin/accounts/AccountManagementPage.tsx`
   - Table: Avatar | Tên | Email | Role | Trạng thái | Lần đăng nhập cuối | Actions
   - Filter: Role (Admin/Brand/Creator), Status (Active/Locked/Inactive), Search
   - Bulk action: Lock/Unlock nhiều tài khoản, Export CSV
-- [ ] **3.2** Tạo `src/pages/admin/accounts/AccountDetailPage.tsx`
+- [x] **3.2** Tạo `src/pages/admin/accounts/AccountDetailPage.tsx`
   - Thông tin đầy đủ tài khoản
   - Lịch sử hoạt động bảo mật
   - Panel đổi trạng thái
-- [ ] **3.3** Tạo `src/pages/admin/accounts/components/CreateAdminModal.tsx`
+- [x] **3.3** Tạo `src/pages/admin/accounts/components/CreateAdminModal.tsx`
   - Form: Họ tên, Email, Password, Role, Ghi chú
   - Validation + Submit
-- [ ] **3.4** Tạo `src/pages/admin/accounts/components/LockUnlockModal.tsx`
+- [x] **3.4** Tạo `src/pages/admin/accounts/components/LockUnlockModal.tsx`
   - Confirm modal với lý do (Reason input)
   - 3 action: Lock / Unlock / Restore
-- [ ] **3.5** Tạo `src/pages/admin/accounts/components/SecurityActivityPanel.tsx`
+- [x] **3.5** Tạo `src/pages/admin/accounts/components/SecurityActivityPanel.tsx`
   - Lần đăng nhập cuối: Thời gian + IP + Thiết bị
   - Lịch sử 10 sự kiện bảo mật gần nhất
 
-**Tiến độ Phase 3**: `0 / 5` tasks ⬜⬜⬜⬜⬜
+**Tiến độ Phase 3**: `5 / 5` tasks ✅✅✅✅✅
 
 ---
 
@@ -381,13 +381,13 @@ src/
 |:------|:----|:--------:|:-------:|:----------:|
 | 1 | Foundation (Layout + Routing) | 7 | 7 | ✅ Hoàn thành |
 | 2 | Admin Login + Dashboard | 2 | 2 | ✅ Hoàn thành |
-| 3 | Account Management | 5 | 0 | 🔴 Chưa bắt đầu |
+| 3 | Account Management | 5 | 5 | ✅ Hoàn thành |
 | 4 | Creator Catalog (6 tabs) | 7 | 0 | 🔴 Chưa bắt đầu |
 | 5 | Data Sources | 4 | 0 | 🔴 Chưa bắt đầu |
 | 6 | Collection Jobs + Scoring Config | 8 | 0 | 🔴 Chưa bắt đầu |
 | 7 | Subscription Plans + Payments | 6 | 0 | 🔴 Chưa bắt đầu |
 | 8 | Audit Log + Notifications | 3 | 0 | 🔴 Chưa bắt đầu |
-| **TOTAL** | | **42** | **9** | **21%** |
+| **TOTAL** | | **42** | **14** | **33%** |
 
 ---
 
