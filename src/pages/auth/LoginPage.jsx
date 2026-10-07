@@ -20,6 +20,16 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
+  const ADMIN_ROLES = ['admin', 'super_admin'];
+
+  const redirectByRole = (user) => {
+    if (user && ADMIN_ROLES.includes(user.role)) {
+      navigate('/admin/dashboard');
+    } else {
+      navigate(ROUTES.DASHBOARD || '/dashboard');
+    }
+  };
+
   const onFinish = (values) => {
     setLoading(true);
     setTimeout(() => {
@@ -28,7 +38,7 @@ export default function LoginPage() {
 
       if (result.success) {
         message.success(`Đăng nhập thành công! Xin chào ${result.user.name}`);
-        navigate(ROUTES.DASHBOARD || '/dashboard');
+        redirectByRole(result.user);
       } else {
         message.error(result.message || 'Đăng nhập thất bại!');
       }
@@ -42,10 +52,10 @@ export default function LoginPage() {
     });
     setLoading(true);
     setTimeout(() => {
-      authService.login(MOCK_USER.email, MOCK_USER.password);
+      const result = authService.login(MOCK_USER.email, MOCK_USER.password);
       setLoading(false);
       message.success(`Đăng nhập thành công! Chào mừng ${MOCK_USER.name}`);
-      navigate(ROUTES.DASHBOARD || '/dashboard');
+      redirectByRole(result.user);
     }, 300);
   };
 
@@ -73,33 +83,32 @@ export default function LoginPage() {
           borderRadius: 12,
           padding: '10px 14px',
           marginBottom: 16,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 8,
         }}
       >
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#6D28D9', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <ThunderboltOutlined /> Tài khoản Mock Demo:
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#6D28D9', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+          <ThunderboltOutlined /> Tài khoản Demo:
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#64748B', marginBottom: 2 }}>🏢 BRAND</div>
+            <div style={{ fontSize: 11, color: '#4B5563' }}>
+              <code>thevan@influencermatch.com</code> / <code>123456</code>
+            </div>
           </div>
-          <div style={{ fontSize: 11.5, color: '#4B5563', marginTop: 2 }}>
-            <code>thevan@influencermatch.com</code> / <code>123456</code>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#64748B', marginBottom: 2 }}>🔐 ADMIN</div>
+            <div style={{ fontSize: 11, color: '#4B5563' }}>
+              <code>admin@influencermatch.vn</code> / <code>admin123</code>
+            </div>
           </div>
         </div>
         <Button
           size="small"
           type="primary"
           onClick={handleQuickLogin}
-          style={{
-            fontSize: 11,
-            height: 28,
-            padding: '0 10px',
-            background: '#7C3AED',
-            borderRadius: 8,
-          }}
+          style={{ fontSize: 11, height: 26, padding: '0 10px', background: '#7C3AED', borderRadius: 8, marginTop: 8 }}
         >
-          Điền nhanh
+          Điền nhanh (Brand)
         </Button>
       </div>
 

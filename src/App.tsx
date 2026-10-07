@@ -26,6 +26,11 @@ import PerformancePage from './pages/performance/PerformancePage';
 import CampaignHistoryPage from './pages/history/CampaignHistoryPage';
 import './styles/custom.css';
 
+// ── Admin Imports ────────────────────────────────────
+import AdminLayout from './components/admin/AdminLayout';
+import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
+import AdminDashboardPage from './pages/admin/dashboard/AdminDashboardPage';
+
 const { Content } = Layout;
 
 // Main App Layout Wrapper with Light Linear Sidebar & Top Header
@@ -412,6 +417,27 @@ export default function App() {
 
           {/* Root Redirects to Dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+          {/* ── Admin Routes (/admin/*) ─────────────────────── */}
+          {/* Admin login dùng chung trang /login của Brand */}
+          <Route path="/admin/login" element={<Navigate to="/login" replace />} />
+
+          {/* Admin Protected Pages — wrapped in AdminLayout */}
+          <Route
+            path="/admin"
+            element={
+              <AdminProtectedRoute>
+                <AdminLayout />
+              </AdminProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboardPage />} />
+            {/* Phase 3-8 pages will be added here as they are built */}
+          </Route>
+
+          {/* Admin root redirect */}
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
