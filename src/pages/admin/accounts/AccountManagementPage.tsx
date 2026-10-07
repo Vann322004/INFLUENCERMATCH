@@ -198,7 +198,7 @@ export default function AccountManagementPage() {
       {/* Page Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <div style={{ color: '#F1F5F9', fontWeight: 800, fontSize: 20 }}>Quản lý Tài khoản</div>
+          <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>Quản lý Tài khoản</div>
           <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>Quản lý toàn bộ tài khoản Admin, Brand và Creator</div>
         </div>
         <Space>
@@ -223,30 +223,26 @@ export default function AccountManagementPage() {
       <Row gutter={[12, 12]} style={{ marginBottom: 20 }}>
         {statCards.map(card => (
           <Col xs={12} sm={6} key={card.label}>
-            <Card
-              bordered={false}
-              bodyStyle={{ padding: '14px 18px' }}
-              style={{
-                background: 'rgba(30,41,59,0.6)',
-                border: '1px solid rgba(99,102,241,0.1)',
-                borderRadius: 12,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  background: card.color + '18',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: card.color, fontSize: 16,
-                }}>
-                  {card.icon}
-                </div>
-                <div>
-                  <div style={{ color: '#94A3B8', fontSize: 11, fontWeight: 600 }}>{card.label}</div>
-                  <div style={{ color: '#F1F5F9', fontWeight: 800, fontSize: 20, lineHeight: 1.1 }}>{card.value}</div>
-                </div>
-              </div>
-            </Card>
+        <Card
+          bordered={false}
+          bodyStyle={{ padding: '14px 18px' }}
+          style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', height: '100%' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: card.color + '15',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: card.color, fontSize: 16,
+            }}>
+              {card.icon}
+            </div>
+            <div>
+              <div style={{ color: '#64748B', fontSize: 11, fontWeight: 600 }}>{card.label}</div>
+              <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20, lineHeight: 1.1 }}>{card.value}</div>
+            </div>
+          </div>
+        </Card>
           </Col>
         ))}
       </Row>
@@ -255,7 +251,7 @@ export default function AccountManagementPage() {
       <Card
         bordered={false}
         bodyStyle={{ padding: '14px 18px' }}
-        style={{ background: 'rgba(30,41,59,0.6)', border: '1px solid rgba(99,102,241,0.1)', borderRadius: 12, marginBottom: 16 }}
+        style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', marginBottom: 16 }}
       >
         <Row gutter={[12, 12]} align="middle">
           <Col xs={24} sm={10} md={8}>
@@ -264,7 +260,7 @@ export default function AccountManagementPage() {
               placeholder="Tìm theo tên, email..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(255,255,255,0.08)', color: '#F1F5F9', borderRadius: 8 }}
+              style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#334155', borderRadius: 8 }}
               allowClear
             />
           </Col>
@@ -301,7 +297,7 @@ export default function AccountManagementPage() {
       <Card
         bordered={false}
         bodyStyle={{ padding: 0 }}
-        style={{ background: 'rgba(30,41,59,0.6)', border: '1px solid rgba(99,102,241,0.1)', borderRadius: 12, overflow: 'hidden' }}
+        style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', overflow: 'hidden' }}
       >
         <Table
           columns={columns}

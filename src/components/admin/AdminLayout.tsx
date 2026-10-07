@@ -12,17 +12,16 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ pageTitle }: AdminLayoutProps) {
   return (
-    <Layout style={{ minHeight: '100vh', background: '#0F172A' }}>
+    <Layout style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden' }}>
       <AdminSidebar />
-      <Layout style={{ background: '#0F172A', height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <Layout style={{ background: '#F5F6FA', height: '100vh', overflow: 'hidden' }}>
         <AdminHeader title={pageTitle} />
         <Content
           style={{
-            background: '#0B1120',
+            background: '#F5F6FA',
+            padding: '20px 28px 20px 28px',
             overflowY: 'auto',
-            padding: '24px 28px 40px',
             boxSizing: 'border-box',
-            flex: 1,
           }}
         >
           <Outlet />

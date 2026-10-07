@@ -74,13 +74,12 @@ export default function AccountDetailPage() {
       <Row gutter={[20, 20]}>
         {/* Left — Profile Card */}
         <Col xs={24} lg={8}>
-          <Card
+        <Card
             bordered={false}
             bodyStyle={{ padding: '28px 24px' }}
             style={{
-              background: 'rgba(30,41,59,0.7)',
-              border: '1px solid rgba(99,102,241,0.15)',
               borderRadius: 16,
+              boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
               textAlign: 'center',
             }}
           >
@@ -89,7 +88,7 @@ export default function AccountDetailPage() {
               size={80}
               style={{ border: '3px solid rgba(99,102,241,0.4)', marginBottom: 14 }}
             />
-            <Title level={4} style={{ color: '#F1F5F9', margin: '0 0 4px', fontWeight: 800 }}>
+            <Title level={4} style={{ color: '#0F172A', margin: '0 0 4px', fontWeight: 800 }}>
               {account.name}
             </Title>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
@@ -122,7 +121,7 @@ export default function AccountDetailPage() {
                   <span style={{ color: '#6366F1', fontSize: 14, width: 18 }}>{item.icon}</span>
                   <div>
                     <div style={{ color: '#64748B', fontSize: 10, fontWeight: 600, lineHeight: 1 }}>{item.label}</div>
-                    <div style={{ color: '#E2E8F0', fontSize: 12.5, fontWeight: 600 }}>{item.value}</div>
+                    <div style={{ color: '#334155', fontSize: 12.5, fontWeight: 600 }}>{item.value}</div>
                   </div>
                 </div>
               ))}
@@ -180,19 +179,18 @@ export default function AccountDetailPage() {
                 bordered={false}
                 bodyStyle={{ padding: '20px 22px' }}
                 style={{
-                  background: 'rgba(30,41,59,0.7)',
-                  border: '1px solid rgba(99,102,241,0.15)',
                   borderRadius: 16,
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
                 }}
               >
-                <Title level={5} style={{ color: '#F1F5F9', fontWeight: 700, margin: '0 0 16px' }}>
+                <Title level={5} style={{ color: '#0F172A', fontWeight: 700, margin: '0 0 16px' }}>
                   Thông tin tài khoản
                 </Title>
                 <Descriptions
                   column={2}
                   size="small"
                   labelStyle={{ color: '#64748B', fontWeight: 600, fontSize: 12 }}
-                  contentStyle={{ color: '#E2E8F0', fontWeight: 600, fontSize: 13 }}
+                  contentStyle={{ color: '#334155', fontWeight: 600, fontSize: 13 }}
                   colon={false}
                 >
                   <Descriptions.Item label="ID">{account.id}</Descriptions.Item>
@@ -215,9 +213,8 @@ export default function AccountDetailPage() {
                 bordered={false}
                 bodyStyle={{ padding: '20px 22px' }}
                 style={{
-                  background: 'rgba(30,41,59,0.7)',
-                  border: '1px solid rgba(99,102,241,0.15)',
                   borderRadius: 16,
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
                 }}
               >
                 <SecurityActivityPanel userId={account.id} />
