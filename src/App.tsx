@@ -32,6 +32,13 @@ import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
 import AdminDashboardPage from './pages/admin/dashboard/AdminDashboardPage';
 import AccountManagementPage from './pages/admin/accounts/AccountManagementPage';
 import AccountDetailPage from './pages/admin/accounts/AccountDetailPage';
+import CreatorCatalogPage from './pages/admin/creators/CreatorCatalogPage';
+import DataSourcesPage from './pages/admin/datasources/DataSourcesPage';
+import CollectionJobsPage from './pages/admin/jobs/CollectionJobsPage';
+import ScoringConfigPage from './pages/admin/scoring/ScoringConfigPage';
+import SubscriptionPlansPage from './pages/admin/subscriptions/SubscriptionPlansPage';
+import PaymentsPage from './pages/admin/payments/PaymentsPage';
+import AuditLogPage from './pages/admin/audit/AuditLogPage';
 
 const { Content } = Layout;
 
@@ -438,7 +445,18 @@ export default function App() {
             {/* Phase 3 — Account Management */}
             <Route path="accounts" element={<AccountManagementPage />} />
             <Route path="accounts/:id" element={<AccountDetailPage />} />
-            {/* Phase 4-8 pages will be added here as they are built */}
+            {/* Phase 4 — Creator Catalog */}
+            <Route path="creators" element={<CreatorCatalogPage />} />
+            {/* Phase 5 — Data Sources */}
+            <Route path="data-sources" element={<DataSourcesPage />} />
+            {/* Phase 6 — Collection Jobs & Scoring Config */}
+            <Route path="jobs" element={<CollectionJobsPage />} />
+            <Route path="scoring" element={<ScoringConfigPage />} />
+            {/* Phase 7 — Subscriptions & Payments */}
+            <Route path="subscriptions" element={<SubscriptionPlansPage />} />
+            <Route path="payments" element={<PaymentsPage />} />
+            {/* Phase 8 — Audit Log */}
+            <Route path="audit" element={<AuditLogPage />} />
           </Route>
 
           {/* Admin root redirect */}

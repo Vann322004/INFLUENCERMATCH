@@ -116,7 +116,6 @@ export default function LockUnlockModal({ open, account, action, onClose, onDone
               rules={[{ required: true, message: 'Vui lòng nhập lý do' }]}
             >
               <Input.TextArea
-                prefix={<LockOutlined />}
                 placeholder="Nhập lý do khóa tài khoản (bắt buộc)..."
                 rows={3}
                 style={{ resize: 'none' }}

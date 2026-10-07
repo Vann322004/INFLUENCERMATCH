@@ -274,7 +274,7 @@ export default function SubscriptionPage() {
             </div>
           </Col>
 
-          <Col xs={24} md={9} style={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+          <Col xs={24} md={9} style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <div
               style={{
                 background: 'rgba(255, 255, 255, 0.12)',

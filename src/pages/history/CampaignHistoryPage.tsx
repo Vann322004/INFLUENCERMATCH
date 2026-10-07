@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Input, Select, Button, Tag, Modal, Avatar, Rate, Progress,
   Tooltip, Statistic, Tabs, Row, Col, Card, Badge, Divider,
@@ -418,7 +418,7 @@ const CampaignHistoryPage: React.FC = () => {
                       </div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', align: 'center', gap: 4 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Progress type="circle" percent={c.overallScore} width={36} strokeColor={c.overallScore >= 90 ? '#10b981' : c.overallScore >= 75 ? '#6366f1' : '#ef4444'} format={() => <span style={{ fontSize: 10, fontWeight: 800 }}>{c.overallScore}</span>} />
                       </div>
                     </td>

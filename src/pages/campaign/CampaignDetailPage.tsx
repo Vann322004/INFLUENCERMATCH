@@ -352,7 +352,7 @@ export default function CampaignDetailPage() {
           </Col>
 
           {/* Action Toolbar */}
-          <Col xs={24} md={10} style={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, gap: 8, flexWrap: 'wrap' }}>
+          <Col xs={24} md={10} style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
             {currentStatus === 'draft' && (
               <Button
                 type="primary"

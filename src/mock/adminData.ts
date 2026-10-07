@@ -138,15 +138,19 @@ export interface AdminCreator {
   status: CreatorStatus;
   avatar: string;
   lastVerified: string;
+  avgViews?: number;
+  score?: number;
+  country?: string;
+  profileUrl?: string;
 }
 
 export const MOCK_CREATORS: AdminCreator[] = [
-  { id: 'cr_001', handle: '@linh.beauty', name: 'Nguyễn Thị Linh', platform: 'tiktok', followers: 2_400_000, er: 8.4, category: 'Làm đẹp', status: 'active', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop', lastVerified: '2026-10-06' },
-  { id: 'cr_002', handle: '@hungfood', name: 'Phạm Quốc Hùng', platform: 'instagram', followers: 890_000, er: 5.2, category: 'Ẩm thực', status: 'active', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop', lastVerified: '2026-10-05' },
-  { id: 'cr_003', handle: '@tuantech', name: 'Võ Minh Tuấn', platform: 'youtube', followers: 1_200_000, er: 4.8, category: 'Công nghệ', status: 'hidden', avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=80&auto=format&fit=crop', lastVerified: '2026-09-20' },
-  { id: 'cr_004', handle: '@anhthu.fashion', name: 'Lê Anh Thư', platform: 'instagram', followers: 650_000, er: 6.1, category: 'Thời trang', status: 'active', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop', lastVerified: '2026-10-07' },
-  { id: 'cr_005', handle: '@minhhuy.travel', name: 'Nguyễn Minh Huy', platform: 'tiktok', followers: 3_100_000, er: 9.2, category: 'Du lịch', status: 'active', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&auto=format&fit=crop', lastVerified: '2026-10-07' },
-  { id: 'cr_006', handle: '@hoaphuong', name: 'Trần Hoa Phương', platform: 'youtube', followers: 420_000, er: 3.9, category: 'Giáo dục', status: 'inactive', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&auto=format&fit=crop', lastVerified: '2026-08-15' },
+  { id: 'cr_001', handle: '@linh.beauty', name: 'Nguyễn Thị Linh', platform: 'tiktok', followers: 2_400_000, er: 8.4, category: 'Làm đẹp', status: 'active', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop', lastVerified: '2026-10-06', avgViews: 650000, score: 92, country: 'Việt Nam', profileUrl: 'https://tiktok.com/@linh.beauty' },
+  { id: 'cr_002', handle: '@hungfood', name: 'Phạm Quốc Hùng', platform: 'instagram', followers: 890_000, er: 5.2, category: 'Ẩm thực', status: 'active', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop', lastVerified: '2026-10-05', avgViews: 210000, score: 85, country: 'Việt Nam', profileUrl: 'https://instagram.com/hungfood' },
+  { id: 'cr_003', handle: '@tuantech', name: 'Võ Minh Tuấn', platform: 'youtube', followers: 1_200_000, er: 4.8, category: 'Công nghệ', status: 'hidden', avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=80&auto=format&fit=crop', lastVerified: '2026-09-20', avgViews: 450000, score: 78, country: 'Việt Nam', profileUrl: 'https://youtube.com/@tuantech' },
+  { id: 'cr_004', handle: '@anhthu.fashion', name: 'Lê Anh Thư', platform: 'instagram', followers: 650_000, er: 6.1, category: 'Thời trang', status: 'active', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop', lastVerified: '2026-10-07', avgViews: 180000, score: 88, country: 'Việt Nam', profileUrl: 'https://instagram.com/anhthu.fashion' },
+  { id: 'cr_005', handle: '@minhhuy.travel', name: 'Nguyễn Minh Huy', platform: 'tiktok', followers: 3_100_000, er: 9.2, category: 'Du lịch', status: 'active', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&auto=format&fit=crop', lastVerified: '2026-10-07', avgViews: 820000, score: 95, country: 'Việt Nam', profileUrl: 'https://tiktok.com/@minhhuy.travel' },
+  { id: 'cr_006', handle: '@hoaphuong', name: 'Trần Hoa Phương', platform: 'youtube', followers: 420_000, er: 3.9, category: 'Giáo dục', status: 'inactive', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&auto=format&fit=crop', lastVerified: '2026-08-15', avgViews: 95000, score: 68, country: 'Việt Nam', profileUrl: 'https://youtube.com/@hoaphuong' },
 ];
 
 export const MOCK_DUPLICATES = [
