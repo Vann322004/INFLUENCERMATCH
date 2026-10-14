@@ -223,6 +223,7 @@
 .im-banner-name {
   background: linear-gradient(90deg, #F9A8D4 0%, #FDE047 50%, #A7F3D0 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 900;
 }
