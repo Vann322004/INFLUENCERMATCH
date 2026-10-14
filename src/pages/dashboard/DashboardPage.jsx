@@ -25,15 +25,43 @@ import {
   LineChartOutlined,
   CommentOutlined,
   ArrowRightOutlined,
-  PlusOutlined
+  PlusOutlined,
+  ThunderboltOutlined,
+  CalendarOutlined,
+  SearchOutlined,
+  FireOutlined,
+  RiseOutlined,
+  CheckCircleFilled
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { authService, MOCK_USER } from '../../mock/authData';
 import './Dashboard.css';
 
 const { Title, Text } = Typography;
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const currentUser = authService.getCurrentUser() || MOCK_USER;
+  const userName = currentUser?.name ? currentUser.name.split(' ').pop() : 'Văn';
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return { text: 'Chào buổi sáng', emoji: '☀️' };
+    if (hour < 18) return { text: 'Chào buổi chiều', emoji: '🌤️' };
+    return { text: 'Chào buổi tối', emoji: '✨' };
+  };
+
+  const getFormattedDate = () => {
+    const now = new Date();
+    const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+    const dayName = days[now.getDay()];
+    const d = String(now.getDate()).padStart(2, '0');
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const y = now.getFullYear();
+    return `${dayName}, ${d}/${m}/${y}`;
+  };
+
+  const greeting = getGreeting();
   const [campaignTab, setCampaignTab] = useState('Tất cả');
   const [chartPeriod, setChartPeriod] = useState('30 ngày');
 
@@ -198,24 +226,159 @@ export default function DashboardPage() {
 
   return (
     <div style={{ maxWidth: 1400, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* 1. WELCOME GREETING BANNER */}
-      <Card
-        bordered={false}
-        style={{
-          background: 'linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 45%, #FCE7F3 100%)',
-          borderRadius: 20,
-          border: '1px solid rgba(226, 232, 240, 0.8)',
-          boxShadow: '0 4px 20px -2px rgba(99, 102, 241, 0.08)',
-        }}
-        bodyStyle={{ padding: '24px 32px' }}
-      >
-        <Title level={3} style={{ margin: '0 0 6px 0', fontWeight: 800, color: '#0F172A' }}>
-          Chào buổi sáng, Văn! <span className="im-hand-wave">👋</span>
-        </Title>
-        <Text type="secondary" style={{ fontSize: 13.5, color: '#64748B' }}>
-          Hành trình kết nối thương hiệu của bạn với những influencer phù hợp bắt đầu từ đây. Cùng tạo nên những chiến dịch bùng nổ!
-        </Text>
-      </Card>
+      {/* 1. HERO WELCOME BANNER (ULTRA MODERN & DYNAMIC) */}
+      <div className="im-welcome-banner">
+        {/* Ambient atmospheric glows */}
+        <div className="im-banner-glow-1" />
+        <div className="im-banner-glow-2" />
+        <div className="im-banner-glow-3" />
+        <div className="im-banner-grid-overlay" />
+
+        <div className="im-banner-content">
+          {/* Left Column: Greeting, AI badge, description & action buttons */}
+          <div className="im-banner-left">
+            <div className="im-banner-tags">
+              <span className="im-ai-badge">
+                <span className="im-ai-pulse" />
+                <ThunderboltOutlined style={{ color: '#FDE047', fontSize: 13 }} />
+                <span>AI Matching Engine 3.0</span>
+              </span>
+              <span className="im-date-badge">
+                <CalendarOutlined style={{ fontSize: 12, marginRight: 6, opacity: 0.85 }} />
+                {getFormattedDate()}
+              </span>
+            </div>
+
+            <div className="im-banner-title">
+              {greeting.text},{' '}
+              <span className="im-banner-name">{userName}!</span>{' '}
+              <span className="im-hand-wave">👋</span>
+            </div>
+
+            <p className="im-banner-desc">
+              Hôm nay hệ thống AI đã phân tích và đề xuất{' '}
+              <strong>18 Creator tiềm năng</strong> đạt độ tương thích trên{' '}
+              <strong>92%</strong> cho thương hiệu của bạn. Hãy tạo chiến dịch mới hoặc khám phá ngay!
+            </p>
+
+            {/* Quick Action Buttons */}
+            <div className="im-banner-actions">
+              <Button
+                type="primary"
+                size="large"
+                className="im-btn-create-campaign"
+                icon={<RocketOutlined style={{ fontSize: 16 }} />}
+                onClick={() => navigate('/campaigns/create')}
+              >
+                Tạo chiến dịch mới
+              </Button>
+
+              <Button
+                size="large"
+                className="im-btn-discover-creator"
+                icon={<SearchOutlined style={{ fontSize: 15 }} />}
+                onClick={() => navigate('/creators')}
+              >
+                Khám phá Creator AI
+              </Button>
+            </div>
+
+            {/* Live micro-status pills */}
+            <div className="im-banner-quick-stats">
+              <div className="im-quick-stat-item">
+                <CheckCircleFilled style={{ color: '#34D399', fontSize: 13 }} />
+                <span><strong>8</strong> chiến dịch đang chạy</span>
+              </div>
+              <div className="im-quick-stat-divider">•</div>
+              <div className="im-quick-stat-item">
+                <FireOutlined style={{ color: '#FB7185', fontSize: 13 }} />
+                <span><strong>4</strong> yêu cầu báo giá mới</span>
+              </div>
+              <div className="im-quick-stat-divider">•</div>
+              <div className="im-quick-stat-item">
+                <RiseOutlined style={{ color: '#60A5FA', fontSize: 13 }} />
+                <span><strong>+33%</strong> lượt tiếp cận tuần này</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Glassmorphism Spotlight Card */}
+          <div className="im-banner-right">
+            <div className="im-glass-card">
+              <div className="im-glass-header">
+                <div className="im-glass-title-wrap">
+                  <span className="im-glass-icon">✨</span>
+                  <div>
+                    <div className="im-glass-title">Gợi ý AI Nổi Bật</div>
+                    <div className="im-glass-subtitle">Tương thích cao nhất hôm nay</div>
+                  </div>
+                </div>
+                <span className="im-match-score-badge">98.4% Match</span>
+              </div>
+
+              {/* Top Creator recommendations */}
+              <div className="im-spotlight-creators">
+                <div className="im-spotlight-creator-row">
+                  <div className="im-creator-info">
+                    <Avatar
+                      size={36}
+                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+                      style={{ border: '2px solid #C084FC', flexShrink: 0 }}
+                    />
+                    <div style={{ marginLeft: 10 }}>
+                      <div className="im-creator-name">
+                        Lan Ngọc Official{' '}
+                        <CheckCircleFilled style={{ color: '#38BDF8', fontSize: 11 }} />
+                      </div>
+                      <div className="im-creator-category">Beauty & Lifestyle • 2.4M FL</div>
+                    </div>
+                  </div>
+                  <span className="im-creator-match-tag">99%</span>
+                </div>
+
+                <div className="im-spotlight-creator-row">
+                  <div className="im-creator-info">
+                    <Avatar
+                      size={36}
+                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
+                      style={{ border: '2px solid #818CF8', flexShrink: 0 }}
+                    />
+                    <div style={{ marginLeft: 10 }}>
+                      <div className="im-creator-name">
+                        Duy Khang Review{' '}
+                        <CheckCircleFilled style={{ color: '#38BDF8', fontSize: 11 }} />
+                      </div>
+                      <div className="im-creator-category">Tech & Media • 1.1M FL</div>
+                    </div>
+                  </div>
+                  <span className="im-creator-match-tag">96%</span>
+                </div>
+              </div>
+
+              {/* Glass Card Footer */}
+              <div className="im-glass-footer">
+                <div className="im-footer-metric">
+                  <span className="im-metric-label">Reach ước tính</span>
+                  <span className="im-metric-val">~3.5M+</span>
+                </div>
+                <div className="im-footer-sep" />
+                <div className="im-footer-metric">
+                  <span className="im-metric-label">Chi phí tối ưu</span>
+                  <span className="im-metric-val">Tiết kiệm 25%</span>
+                </div>
+                <Button
+                  type="link"
+                  size="small"
+                  className="im-glass-link"
+                  onClick={() => navigate('/creators')}
+                >
+                  Xem tất cả <RightOutlined style={{ fontSize: 10 }} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* 2. 4 METRIC STAT CARDS (Ant Design Row/Col + Card) */}
       <Row gutter={[16, 16]}>

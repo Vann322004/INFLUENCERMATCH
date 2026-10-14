@@ -511,20 +511,7 @@ export default function CollaborationPage() {
 
   return (
     <div className="collaboration-page-container">
-      {/* 1. Breadcrumb */}
-      <div className="collab-breadcrumb">
-        <span className="breadcrumb-link" onClick={() => navigate('/campaigns')}>
-          Chiến dịch
-        </span>
-        <span>›</span>
-        <span className="breadcrumb-link" onClick={() => navigate('/campaign-management')}>
-          Quản lý chiến dịch
-        </span>
-        <span>›</span>
-        <span className="breadcrumb-current">Hợp tác & Vận hành (Collaboration Ops)</span>
-      </div>
-
-      {/* 2. Header Row */}
+      {/* 1. Header Row */}
       <div className="collab-header-row">
         <div>
           <div className="collab-title-wrap">

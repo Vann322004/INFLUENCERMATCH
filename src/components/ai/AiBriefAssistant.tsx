@@ -180,11 +180,8 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
             <ThunderboltFilled style={{ fontSize: 14 }} />
           </div>
           <span style={{ fontWeight: 800, fontSize: 15, color: '#1E1B4B' }}>
-            AI Brief Assistant (Khám phá Creator bằng ngôn ngữ tự nhiên)
+            AI Brief Assistant
           </span>
-          <Tag color="purple" style={{ borderRadius: 999, fontWeight: 700, fontSize: 10.5 }}>
-            NL → STRUCTURED BRIEF
-          </Tag>
         </div>
 
         {parsedResult && (
@@ -199,10 +196,6 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
           </Button>
         )}
       </div>
-
-      <Text type="secondary" style={{ fontSize: 12.5, display: 'block', marginBottom: 12 }}>
-        Mô tả yêu cầu bằng tiếng Việt tự nhiên (ngành hàng, tệp người xem, ngân sách, khu vực...). AI sẽ tự động phân tích và khớp các Creator có chỉ số tốt nhất.
-      </Text>
 
       {/* Input box */}
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>

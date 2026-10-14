@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Breadcrumb,
   Typography,
   Card,
   Row,
@@ -286,35 +285,8 @@ export default function CreateCampaignPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 80 }}>
-      {/* 1. Header & Breadcrumb */}
+      {/* 1. Header Section */}
       <div>
-        <Breadcrumb
-          separator=">"
-          items={[
-            {
-              title: (
-                <span
-                  style={{ color: '#5B5BF0', cursor: 'pointer', fontWeight: 600 }}
-                  onClick={() => navigate('/campaigns')}
-                >
-                  Chiến dịch
-                </span>
-              ),
-            },
-            {
-              title: (
-                <span style={{ color: '#94A3B8' }}>
-                  {currentStep === 1
-                    ? 'Bước 1: Thông tin chiến dịch'
-                    : currentStep === 2
-                    ? 'Bước 2: Yêu cầu creator'
-                    : 'Bước 3: Chỉ số & ngân sách'}
-                </span>
-              ),
-            },
-          ]}
-          style={{ marginBottom: 6, fontSize: 12.5 }}
-        />
         <Title
           level={2}
           style={{

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Breadcrumb,
   Typography,
   Card,
   Row,
@@ -306,16 +305,8 @@ export default function CampaignDetailPage() {
 
   return (
     <div className="cdetail-container">
-      {/* 1. Breadcrumb & Back button */}
+      {/* 1. Back button */}
       <div>
-        <Breadcrumb
-          separator="/"
-          items={[
-            { title: <span style={{ color: '#94A3B8', cursor: 'pointer' }} onClick={() => navigate('/campaigns')}>Chiến dịch</span> },
-            { title: <span style={{ color: '#5B5BF0', fontWeight: 600 }}>{campaignData.title}</span> },
-          ]}
-          style={{ marginBottom: 8, fontSize: 12.5 }}
-        />
         <Button
           type="text"
           icon={<ArrowLeftOutlined />}

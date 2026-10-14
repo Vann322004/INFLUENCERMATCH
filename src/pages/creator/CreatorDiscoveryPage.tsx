@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Breadcrumb,
   Typography,
   Card,
   Row,
@@ -18,11 +17,13 @@ import {
   message,
   Radio,
 } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   SearchOutlined,
   ThunderboltOutlined,
   ThunderboltFilled,
+  RocketOutlined,
+  AimOutlined,
   StarFilled,
   AppstoreOutlined,
   UnorderedListOutlined,
@@ -473,8 +474,95 @@ const ALL_CATEGORIES = [
   'Mẹ & Bé',
 ];
 
+// Brand Campaigns List for Project-Based Matching
+export interface BrandCampaignItem {
+  id: string;
+  name: string;
+  tag: string;
+  target: string;
+  suggestedCategory?: string;
+}
+
+export const BRAND_CAMPAIGNS: BrandCampaignItem[] = [
+  {
+    id: 'camp-1',
+    name: 'Ra mắt Skincare Summer Glow 2025',
+    tag: 'Làm đẹp & Chăm sóc da',
+    target: 'Nữ 18-24, TikTok & Instagram, Tương tác > 6%',
+    suggestedCategory: 'Làm đẹp & Chăm sóc da',
+  },
+  {
+    id: 'camp-2',
+    name: 'Đẩy mạnh Viral Serum Cấp Ẩm',
+    tag: 'Chăm sóc da & Làm đẹp',
+    target: 'Nữ 20-32, Ngân sách $800 - $2,500',
+    suggestedCategory: 'Làm đẹp & Chăm sóc da',
+  },
+  {
+    id: 'camp-3',
+    name: 'BST Giày Sneaker Thu Đông',
+    tag: 'Thời trang & Thể thao',
+    target: 'Nam & Nữ 18-28, Streetwear & Sneakerheads',
+    suggestedCategory: 'Thời trang',
+  },
+  {
+    id: 'camp-4',
+    name: 'Laptop & Phụ kiện cho Gen Z',
+    tag: 'Công nghệ & Media',
+    target: 'Sinh viên & Giới trẻ, Review chi tiết YouTube/TikTok',
+    suggestedCategory: 'Công nghệ & Game',
+  },
+];
+
 export default function CreatorDiscoveryPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialCampId = searchParams.get('campaignId') || null;
+
+  // Campaign Matching States: Khoan đề xuất khớp cao/thấp cho đến khi Brand chọn dự án và bấm tìm
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(initialCampId);
+  const [matchedCampaign, setMatchedCampaign] = useState<BrandCampaignItem | null>(() => {
+    if (initialCampId) {
+      return BRAND_CAMPAIGNS.find((c) => c.id === initialCampId) || null;
+    }
+    return null;
+  });
+  const [isMatching, setIsMatching] = useState(false);
+
+  const handleTriggerMatch = () => {
+    if (!selectedCampaignId) {
+      message.warning('Vui lòng chọn một Dự án / Chiến dịch trước khi tìm kiếm Creator!');
+      return;
+    }
+
+    const camp = BRAND_CAMPAIGNS.find((c) => c.id === selectedCampaignId);
+    if (!camp) return;
+
+    setIsMatching(true);
+    message.loading({
+      content: `AI đang phân tích và đối soát độ tương thích cho dự án "${camp.name}"...`,
+      key: 'campaign_match',
+      duration: 1,
+    });
+
+    setTimeout(() => {
+      setIsMatching(false);
+      setMatchedCampaign(camp);
+      setSortBy('match');
+      setCurrentPage(1);
+      message.success({
+        content: `Đã tính toán độ tương thích cho dự án "${camp.name}"! Sắp xếp theo thứ tự khớp cao nhất.`,
+        key: 'campaign_match',
+        duration: 3,
+      });
+    }, 600);
+  };
+
+  const handleClearMatch = () => {
+    setSelectedCampaignId(null);
+    setMatchedCampaign(null);
+    message.info('Đã thoát chế độ so khớp dự án. Đang hiển thị danh sách khám phá chung.');
+  };
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -484,7 +572,6 @@ export default function CreatorDiscoveryPage() {
   const [engagementTier, setEngagementTier] = useState<string>('all');
   const [priceTier, setPriceTier] = useState<string>('all');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('match');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
@@ -611,7 +698,6 @@ export default function CreatorDiscoveryPage() {
     setEngagementTier('all');
     setPriceTier('all');
     setSelectedLocation('all');
-    setSelectedLanguage('all');
     setSortBy('match');
     setCurrentPage(1);
     message.info('Đã đặt lại tất cả bộ lọc');
@@ -661,15 +747,13 @@ export default function CreatorDiscoveryPage() {
           if (c.location !== selectedLocation) return false;
         }
 
-        // Language
-        if (selectedLanguage !== 'all') {
-          if (c.language !== selectedLanguage) return false;
-        }
-
         return true;
       })
       .sort((a, b) => {
-        if (sortBy === 'match') return b.matchRate - a.matchRate;
+        if (sortBy === 'match') {
+          if (matchedCampaign) return b.matchRate - a.matchRate;
+          return b.followersCount - a.followersCount;
+        }
         if (sortBy === 'followers') return b.followersCount - a.followersCount;
         if (sortBy === 'engagement') return b.engagementValue - a.engagementValue;
         if (sortBy === 'priceAsc') return a.avgPriceValue - b.avgPriceValue;
@@ -685,8 +769,8 @@ export default function CreatorDiscoveryPage() {
     engagementTier,
     priceTier,
     selectedLocation,
-    selectedLanguage,
     sortBy,
+    matchedCampaign,
   ]);
 
   // Ensure currentPage is valid when filters change
@@ -708,9 +792,8 @@ export default function CreatorDiscoveryPage() {
     if (engagementTier !== 'all') count++;
     if (priceTier !== 'all') count++;
     if (selectedLocation !== 'all') count++;
-    if (selectedLanguage !== 'all') count++;
     return count;
-  }, [selectedPlatform, selectedCategory, followerTier, engagementTier, priceTier, selectedLocation, selectedLanguage]);
+  }, [selectedPlatform, selectedCategory, followerTier, engagementTier, priceTier, selectedLocation]);
 
   // Render Platform Icon
   const renderPlatformIcon = (platform: string) => {
@@ -845,25 +928,6 @@ export default function CreatorDiscoveryPage() {
         }}
       >
         <div>
-          <Breadcrumb
-            separator=">"
-            items={[
-              {
-                title: (
-                  <span
-                    style={{ color: '#5B5BF0', cursor: 'pointer', fontWeight: 600 }}
-                    onClick={() => navigate('/campaigns')}
-                  >
-                    Chiến dịch
-                  </span>
-                ),
-              },
-              {
-                title: <span style={{ color: '#94A3B8' }}>Khám phá Creator</span>,
-              },
-            ]}
-            style={{ marginBottom: 6, fontSize: 12.5 }}
-          />
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Title
               level={2}
@@ -930,6 +994,139 @@ export default function CreatorDiscoveryPage() {
           {/* AI Brief Assistant Box */}
           <AiBriefAssistant onApplyBrief={handleApplyBrief} onReset={handleResetFilters} />
 
+          {/* 1.5. CAMPAIGN MATCHING HUB (BỘ CHỌN DỰ ÁN ĐỐI SOÁT AI MATCHING) */}
+          <Card
+            bordered
+            style={{
+              borderRadius: 16,
+              background: matchedCampaign
+                ? 'linear-gradient(135deg, #FAF5FF 0%, #EEF2FF 100%)'
+                : '#FFFFFF',
+              borderColor: matchedCampaign ? '#C4B5FD' : '#E2E8F0',
+              boxShadow: matchedCampaign
+                ? '0 6px 20px -4px rgba(124, 58, 237, 0.15)'
+                : '0 2px 10px rgba(0, 0, 0, 0.02)',
+              transition: 'all 0.3s ease',
+            }}
+            bodyStyle={{ padding: '16px 20px' }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 14,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div
+                  style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: 12,
+                    background: matchedCampaign
+                      ? 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)'
+                      : '#F1F5F9',
+                    color: matchedCampaign ? '#FFFFFF' : '#64748B',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 20,
+                    boxShadow: matchedCampaign ? '0 4px 12px rgba(124, 58, 237, 0.3)' : 'none',
+                    flexShrink: 0,
+                  }}
+                >
+                  <AimOutlined />
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 800, fontSize: 15, color: '#0F172A' }}>
+                      {matchedCampaign ? 'Dự án đang đối soát AI:' : 'Chọn Dự án / Chiến dịch để tính điểm khớp:'}
+                    </span>
+                    {matchedCampaign ? (
+                      <Tag color="purple" style={{ fontWeight: 800, borderRadius: 999, fontSize: 11 }}>
+                        🎯 ĐÃ KÍCH HOẠT ĐỘ KHỚP
+                      </Tag>
+                    ) : (
+                      <Tag color="default" style={{ borderRadius: 999, fontSize: 11, color: '#64748B' }}>
+                        Khoan đề xuất • Chờ chọn dự án
+                      </Tag>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 12.5, color: '#64748B', marginTop: 2 }}>
+                    {matchedCampaign
+                      ? `Đang hiển thị tỷ lệ khớp cao/thấp theo tiêu chí: "${matchedCampaign.name}" (${matchedCampaign.tag})`
+                      : 'Vui lòng chọn chiến dịch cần triển khai và bấm "Tìm Creator phù hợp" (hoặc nhấn phím Enter) để AI kích hoạt tính toán.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Selector & Actions */}
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleTriggerMatch();
+                  }
+                }}
+              >
+                <Select
+                  size="large"
+                  placeholder="-- Chọn một chiến dịch của thương hiệu --"
+                  value={selectedCampaignId}
+                  onChange={(val) => setSelectedCampaignId(val)}
+                  style={{ minWidth: 290, height: 42 }}
+                  options={BRAND_CAMPAIGNS.map((camp) => ({
+                    value: camp.id,
+                    label: (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontWeight: 600 }}>{camp.name}</span>
+                        <span style={{ fontSize: 11, color: '#94A3B8' }}>({camp.tag})</span>
+                      </div>
+                    ),
+                  }))}
+                />
+
+                <Button
+                  type="primary"
+                  size="large"
+                  loading={isMatching}
+                  icon={<RocketOutlined />}
+                  onClick={handleTriggerMatch}
+                  style={{
+                    background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+                    border: 'none',
+                    fontWeight: 700,
+                    borderRadius: 10,
+                    height: 42,
+                    padding: '0 20px',
+                    boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
+                  }}
+                >
+                  Tìm Creator phù hợp ↵
+                </Button>
+
+                {matchedCampaign && (
+                  <Button
+                    size="large"
+                    type="default"
+                    onClick={handleClearMatch}
+                    style={{
+                      borderRadius: 10,
+                      height: 42,
+                      color: '#64748B',
+                      borderColor: '#CBD5E1',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Bỏ lọc dự án ✕
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
+
           {/* 2. Metrics Summary Overview Row (4 KPI Cards) */}
       <Row gutter={[14, 14]}>
         <Col xs={12} sm={6}>
@@ -977,8 +1174,8 @@ export default function CreatorDiscoveryPage() {
                   width: 38,
                   height: 38,
                   borderRadius: 10,
-                  background: '#ECFDF5',
-                  color: '#10B981',
+                  background: matchedCampaign ? '#ECFDF5' : '#F1F5F9',
+                  color: matchedCampaign ? '#10B981' : '#94A3B8',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -989,10 +1186,12 @@ export default function CreatorDiscoveryPage() {
                 <StarFilled />
               </div>
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', lineHeight: 1.2 }}>
-                  892
+                <div style={{ fontSize: 18, fontWeight: 800, color: matchedCampaign ? '#0F172A' : '#94A3B8', lineHeight: 1.2 }}>
+                  {matchedCampaign ? '892' : '--'}
                 </div>
-                <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>Creator phù hợp</div>
+                <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>
+                  {matchedCampaign ? 'Creator phù hợp' : 'Độ khớp (Chờ dự án)'}
+                </div>
               </div>
             </div>
           </Card>
@@ -1287,23 +1486,6 @@ export default function CreatorDiscoveryPage() {
               />
             </div>
 
-            {/* Filter: Ngôn ngữ */}
-            <div style={{ minWidth: 140 }}>
-              <Select
-                value={selectedLanguage}
-                onChange={(val) => {
-                  setSelectedLanguage(val);
-                  setCurrentPage(1);
-                }}
-                style={{ width: '100%', height: 38 }}
-                options={[
-                  { value: 'all', label: '🗣️ Ngôn ngữ: Tất cả' },
-                  { value: 'vi', label: '🇻🇳 Tiếng Việt' },
-                  { value: 'en', label: '🇬🇧 Tiếng Anh' },
-                ]}
-              />
-            </div>
-
             {/* Reset Button */}
             {activeFiltersCount > 0 && (
               <Button
@@ -1513,40 +1695,62 @@ export default function CreatorDiscoveryPage() {
                         </div>
                       </div>
 
-                      {/* Match Rate Badge */}
-                      <div
-                        style={{
-                          background: isHighMatch ? '#DCFCE7' : '#FEF3C7',
-                          color: isHighMatch ? '#16A34A' : '#D97706',
-                          fontWeight: 700,
-                          fontSize: 10.5,
-                          padding: '3px 8px',
-                          borderRadius: 6,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 3,
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        ★ {creator.matchRate}% {isHighMatch ? 'Khớp cao' : 'Khớp vừa'}
-                      </div>
+                      {/* Match Rate Badge: Chỉ hiển thị khi đã chọn dự án và bấm tìm */}
+                      {matchedCampaign ? (
+                        <div
+                          style={{
+                            background: isHighMatch ? '#DCFCE7' : '#FEF3C7',
+                            color: isHighMatch ? '#16A34A' : '#D97706',
+                            fontWeight: 700,
+                            fontSize: 10.5,
+                            padding: '3px 8px',
+                            borderRadius: 6,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 3,
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          ★ {creator.matchRate}% {isHighMatch ? 'Khớp cao' : 'Khớp vừa'}
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            background: '#F1F5F9',
+                            color: '#94A3B8',
+                            fontWeight: 600,
+                            fontSize: 10,
+                            padding: '3px 8px',
+                            borderRadius: 6,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 3,
+                            whiteSpace: 'nowrap',
+                          }}
+                          title="Chọn dự án phía trên và bấm Tìm Creator phù hợp để tính độ khớp"
+                        >
+                          Chờ chọn dự án
+                        </div>
+                      )}
                     </div>
 
-                    {/* AI Explanation Snippet */}
-                    <div
-                      style={{
-                        background: '#FAF5FF',
-                        border: '1px solid #E9D5FF',
-                        borderRadius: 8,
-                        padding: '6px 10px',
-                        fontSize: 11,
-                        color: '#6B21A8',
-                        marginBottom: 10,
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      ✦ <strong>AI Match:</strong> Khán giả 82% Nữ (18-24 tuổi), tương tác {creator.engagementRate} vượt trội so với trung bình ngành.
-                    </div>
+                    {/* AI Explanation Snippet: Chỉ hiển thị khi đã có dự án đối soát */}
+                    {matchedCampaign && (
+                      <div
+                        style={{
+                          background: '#FAF5FF',
+                          border: '1px solid #E9D5FF',
+                          borderRadius: 8,
+                          padding: '6px 10px',
+                          fontSize: 11,
+                          color: '#6B21A8',
+                          marginBottom: 10,
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        ✦ <strong>AI Match ({matchedCampaign.name}):</strong> Khán giả 82% Nữ (18-24 tuổi), tương tác {creator.engagementRate} rất phù hợp với dự án.
+                      </div>
+                    )}
 
                     {/* Categories Tags */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
@@ -1734,18 +1938,34 @@ export default function CreatorDiscoveryPage() {
                             {creator.isVerified && (
                               <CheckCircleFilled style={{ color: '#2563EB', fontSize: 13 }} />
                             )}
-                            <span
-                              style={{
-                                background: isHighMatch ? '#DCFCE7' : '#FEF3C7',
-                                color: isHighMatch ? '#16A34A' : '#D97706',
-                                fontWeight: 700,
-                                fontSize: 10,
-                                padding: '1px 6px',
-                                borderRadius: 4,
-                              }}
-                            >
-                              ★ {creator.matchRate}%
-                            </span>
+                            {matchedCampaign ? (
+                              <span
+                                style={{
+                                  background: isHighMatch ? '#DCFCE7' : '#FEF3C7',
+                                  color: isHighMatch ? '#16A34A' : '#D97706',
+                                  fontWeight: 700,
+                                  fontSize: 10,
+                                  padding: '1px 6px',
+                                  borderRadius: 4,
+                                }}
+                              >
+                                ★ {creator.matchRate}% {isHighMatch ? 'Khớp cao' : 'Khớp vừa'}
+                              </span>
+                            ) : (
+                              <span
+                                style={{
+                                  background: '#F1F5F9',
+                                  color: '#94A3B8',
+                                  fontWeight: 500,
+                                  fontSize: 10,
+                                  padding: '1px 6px',
+                                  borderRadius: 4,
+                                }}
+                                title="Chọn dự án phía trên để tính điểm khớp"
+                              >
+                                Chờ chọn dự án
+                              </span>
+                            )}
                           </div>
                           <div style={{ fontSize: 11.5, color: '#94A3B8' }}>
                             @{creator.username} • 📍 {creator.location}
@@ -1905,12 +2125,20 @@ export default function CreatorDiscoveryPage() {
                 <span style={{ fontWeight: 700, fontSize: 13, color: '#1E40AF' }}>
                   ✦ AI Match Score
                 </span>
-                <Tag color="green" style={{ fontWeight: 800, borderRadius: 6 }}>
-                  {selectedCreator.matchRate}% Độ phù hợp
-                </Tag>
+                {matchedCampaign ? (
+                  <Tag color="green" style={{ fontWeight: 800, borderRadius: 6 }}>
+                    {selectedCreator.matchRate}% Độ phù hợp ({matchedCampaign.name})
+                  </Tag>
+                ) : (
+                  <Tag color="default" style={{ borderRadius: 6, color: '#64748B' }}>
+                    Chưa chọn dự án đối soát
+                  </Tag>
+                )}
               </div>
               <p style={{ fontSize: 12, color: '#475569', margin: 0 }}>
-                Creator này có tệp khán giả trùng khớp 88% với khách hàng mục tiêu của bạn trong lĩnh vực chăm sóc da và làm đẹp.
+                {matchedCampaign
+                  ? `Creator này có tệp khán giả trùng khớp ${selectedCreator.matchRate}% với tiêu chí của chiến dịch "${matchedCampaign.name}".`
+                  : 'Vui lòng chọn một Dự án / Chiến dịch ở đầu trang và bấm "Tìm Creator phù hợp" để AI tính toán tỷ lệ tương thích chi tiết.'}
               </p>
             </div>
 

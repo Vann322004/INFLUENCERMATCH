@@ -663,20 +663,7 @@ export default function CreatorShortlistPage() {
 
   return (
     <div className="shortlist-page-container">
-      {/* 1. Breadcrumb */}
-      <div className="shortlist-breadcrumb">
-        <span className="breadcrumb-link" onClick={() => navigate('/campaigns')}>
-          Chiến dịch
-        </span>
-        <span>›</span>
-        <span className="breadcrumb-link" onClick={() => navigate('/creators')}>
-          Khám phá Creator
-        </span>
-        <span>›</span>
-        <span className="breadcrumb-current">Danh sách chọn (Shortlist)</span>
-      </div>
-
-      {/* 2. Header & Title Bar with Campaign Selector */}
+      {/* 1. Header & Title Bar with Campaign Selector */}
       <div className="shortlist-header-row">
         <div>
           <div className="shortlist-title-wrap">

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Breadcrumb,
   Typography,
   Card,
   Row,
@@ -217,17 +216,8 @@ export default function SubscriptionPage() {
 
   return (
     <div className="subscription-container">
-      {/* 1. Breadcrumbs & Header */}
+      {/* 1. Header Section */}
       <div>
-        <Breadcrumb
-          separator="/"
-          items={[
-            { title: <span style={{ color: '#94A3B8' }}>Không gian làm việc</span> },
-            { title: <span style={{ color: '#94A3B8' }}>Cài đặt tài khoản</span> },
-            { title: <span style={{ color: '#5B5BF0', fontWeight: 600 }}>Gói cước & Hạn mức</span> },
-          ]}
-          style={{ marginBottom: 6, fontSize: 12.5 }}
-        />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <Title level={2} style={{ margin: 0, fontWeight: 800, color: '#0F172A', letterSpacing: -0.5 }}>

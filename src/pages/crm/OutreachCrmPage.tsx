@@ -524,15 +524,15 @@ export default function OutreachCrmPage() {
   const renderEmailStatusTag = (status: OutreachEmail['status'], openedCount: number) => {
     switch (status) {
       case 'replied':
-        return <Tag color="success">💬 Đã trả lời</Tag>;
+        return <Tag color="success">Đã trả lời</Tag>;
       case 'opened':
-        return <Tag color="processing">👁️ Đã mở ({openedCount} lần)</Tag>;
+        return <Tag color="processing">Đã mở ({openedCount} lần)</Tag>;
       case 'delivered':
-        return <Tag color="default">📬 Đã nhận thư</Tag>;
+        return <Tag color="default">Đã nhận thư</Tag>;
       case 'sent':
-        return <Tag color="blue">✈️ Đã gửi</Tag>;
+        return <Tag color="blue">Đã gửi</Tag>;
       case 'bounced':
-        return <Tag color="error">❌ Bị trả về</Tag>;
+        return <Tag color="error">Bị trả về</Tag>;
       default:
         return null;
     }
@@ -542,13 +542,13 @@ export default function OutreachCrmPage() {
   const renderInvitationStatusTag = (status: CollaborationInvitation['status']) => {
     switch (status) {
       case 'accepted':
-        return <Tag color="success" style={{ fontWeight: 700 }}>✅ Đã chấp thuận</Tag>;
+        return <Tag color="success" style={{ fontWeight: 600 }}>Đã chấp thuận</Tag>;
       case 'pending':
-        return <Tag color="warning" style={{ fontWeight: 700 }}>⏳ Chờ phản hồi</Tag>;
+        return <Tag color="warning" style={{ fontWeight: 600 }}>Chờ phản hồi</Tag>;
       case 'counter_offer':
-        return <Tag color="purple" style={{ fontWeight: 700 }}>⚠️ Đề xuất lại giá</Tag>;
+        return <Tag color="purple" style={{ fontWeight: 600 }}>Đề xuất lại giá</Tag>;
       case 'declined':
-        return <Tag color="error" style={{ fontWeight: 700 }}>❌ Từ chối</Tag>;
+        return <Tag color="default" style={{ fontWeight: 600 }}>Từ chối</Tag>;
       default:
         return null;
     }
@@ -556,28 +556,17 @@ export default function OutreachCrmPage() {
 
   return (
     <div className="outreach-crm-container">
-      {/* 1. Breadcrumb */}
-      <div className="crm-breadcrumb">
-        <span className="breadcrumb-link" onClick={() => navigate('/campaigns')}>
-          Chiến dịch
-        </span>
-        <span>›</span>
-        <span className="breadcrumb-link" onClick={() => navigate('/campaign-management')}>
-          Quản lý chiến dịch
-        </span>
-        <span>›</span>
-        <span className="breadcrumb-current">Tiếp cận & CRM (Outreach & Relationship)</span>
-      </div>
-
-      {/* 2. Top Header Row */}
+      {/* 1. Top Header Row */}
       <div className="crm-header-row">
         <div>
           <div className="crm-title-wrap">
-            <h1 className="crm-main-title">Tiếp cận & Quản lý mối quan hệ (Outreach CRM)</h1>
-            <span className="crm-tagline">Kết nối chuyên nghiệp • Cá nhân hóa bằng AI ✨</span>
+            <h1 className="crm-main-title">Tiếp cận & Quan hệ Creator</h1>
+            <Tag color="purple" style={{ borderRadius: 999, fontWeight: 700, fontSize: 11, border: 'none' }}>
+              Outreach CRM
+            </Tag>
           </div>
           <div className="crm-description">
-            Soạn email tiếp cận cá nhân hóa với AI, quản lý phễu đàm phán quan hệ Creator và phát hành thư mời hợp tác chính thức.
+            Soạn thảo email tiếp cận cá nhân hóa với AI, quản lý phễu đàm phán quan hệ và phát hành thư mời hợp tác.
           </div>
         </div>
 
@@ -588,7 +577,7 @@ export default function OutreachCrmPage() {
             <Select
               value={selectedCampaign}
               onChange={setSelectedCampaign}
-              style={{ width: 260 }}
+              style={{ width: 240 }}
               options={CAMPAIGN_OPTIONS}
             />
           </div>
@@ -596,7 +585,14 @@ export default function OutreachCrmPage() {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)', borderRadius: 8, height: 38 }}
+            style={{
+              background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+              borderRadius: 8,
+              height: 38,
+              fontWeight: 600,
+              border: 'none',
+              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.25)',
+            }}
             onClick={() => setCreateInviteModalOpen(true)}
           >
             Tạo thư mời hợp tác
@@ -604,50 +600,52 @@ export default function OutreachCrmPage() {
         </div>
       </div>
 
-      {/* 3. Funnel Summary Stats Banner */}
+      {/* 2. Funnel Summary Stats Banner */}
       <div className="crm-stats-banner">
         <div className="stat-card">
-          <div className="stat-icon-wrap" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
+          <div className="stat-icon-wrap" style={{ background: '#F5F3FF', color: '#7C3AED' }}>
             <UserOutlined />
           </div>
           <div className="stat-info">
-            <span className="stat-number">42 Creator</span>
-            <span className="stat-text">Trong phễu chiến dịch</span>
+            <div className="stat-number">42</div>
+            <div className="stat-text">Creator trong phễu</div>
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon-wrap" style={{ background: '#F0FDF4', color: '#16A34A' }}>
+          <div className="stat-icon-wrap" style={{ background: '#EFF6FF', color: '#2563EB' }}>
             <MailOutlined />
           </div>
           <div className="stat-info">
-            <span className="stat-number">18 Đã gửi Email</span>
-            <span className="stat-text">Tỷ lệ mở thư đạt 78%</span>
+            <div className="stat-number">
+              18 <span style={{ fontSize: 12, fontWeight: 600, color: '#16A34A', marginLeft: 4 }}>78% mở</span>
+            </div>
+            <div className="stat-text">Email đã gửi</div>
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon-wrap" style={{ background: '#FEF3C7', color: '#D97706' }}>
+          <div className="stat-icon-wrap" style={{ background: '#FFFBEB', color: '#D97706' }}>
             <MessageOutlined />
           </div>
           <div className="stat-info">
-            <span className="stat-number">12 Đang đàm phán</span>
-            <span className="stat-text">Phản hồi tích cực</span>
+            <div className="stat-number">12</div>
+            <div className="stat-text">Đang đàm phán</div>
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon-wrap" style={{ background: '#FAF5FF', color: '#9333EA' }}>
+          <div className="stat-icon-wrap" style={{ background: '#ECFDF5', color: '#059669' }}>
             <CheckCircleFilled />
           </div>
           <div className="stat-info">
-            <span className="stat-number">6 Đã chốt (Confirmed)</span>
-            <span className="stat-text">Sẵn sàng ký hợp đồng</span>
+            <div className="stat-number">6</div>
+            <div className="stat-text">Đã chốt hợp tác</div>
           </div>
         </div>
       </div>
 
-      {/* 4. Sub-tabs Navigation */}
+      {/* 3. Sub-tabs Navigation */}
       <div className="crm-subtabs-bar">
         <div className="subtabs-list">
           <button
@@ -655,7 +653,7 @@ export default function OutreachCrmPage() {
             onClick={() => setActiveSubTab('email')}
           >
             <MailOutlined />
-            <span>✉️ Outreach Email (AI Draft & Tracker)</span>
+            <span>Email tiếp cận</span>
             <span className="subtab-count-pill">{emails.length}</span>
           </button>
 
@@ -664,7 +662,7 @@ export default function OutreachCrmPage() {
             onClick={() => setActiveSubTab('crm')}
           >
             <ApartmentOutlined />
-            <span>🤝 Relationship CRM (Phễu 5 bước)</span>
+            <span>Phễu quan hệ (Pipeline)</span>
             <span className="subtab-count-pill highlight">{pipelineCreators.length}</span>
           </button>
 
@@ -673,7 +671,7 @@ export default function OutreachCrmPage() {
             onClick={() => setActiveSubTab('invitation')}
           >
             <FileTextOutlined />
-            <span>📜 Lời mời hợp tác chính thức (Invitation)</span>
+            <span>Thư mời hợp tác</span>
             <span className="subtab-count-pill">{invitations.length}</span>
           </button>
         </div>
@@ -688,10 +686,9 @@ export default function OutreachCrmPage() {
           <div className="email-composer-card">
             <div className="composer-header">
               <div className="composer-title">
-                <RobotOutlined style={{ color: '#4F46E5', fontSize: 18 }} />
+                <MailOutlined style={{ color: '#4F46E5', fontSize: 16 }} />
                 <span>Soạn Email Tiếp Cận Creator</span>
               </div>
-              <Tag color="purple">Tích hợp AI Copywriting</Tag>
             </div>
 
             <div className="composer-form">
@@ -703,46 +700,53 @@ export default function OutreachCrmPage() {
                   onChange={setSelectedRecipientId}
                   style={{ width: '100%' }}
                   options={[
-                    { value: 'c1', label: '🌟 Linh Nguyễn (TikTok & IG - 1.2M) - linhnguyen.booking@gmail.com' },
-                    { value: 'c2', label: '🌟 Minh Hoàng (TikTok - 856K) - minhhoang.work@gmail.com' },
-                    { value: 'c5', label: '🌟 Bác sĩ Ngọc (Da liễu - 920K) - drngoc.official@clinic.vn' },
-                    { value: 'c3', label: '🌟 Thảo Vy (Instagram - 542K) - thaovy.collab@gmail.com' },
+                    { value: 'c1', label: 'Linh Nguyễn (TikTok & IG - 1.2M) • linhnguyen.booking@gmail.com' },
+                    { value: 'c2', label: 'Minh Hoàng (TikTok - 856K) • minhhoang.work@gmail.com' },
+                    { value: 'c5', label: 'Bác sĩ Ngọc (Da liễu - 920K) • drngoc.official@clinic.vn' },
+                    { value: 'c3', label: 'Thảo Vy (Instagram - 542K) • thaovy.collab@gmail.com' },
                   ]}
                 />
               </div>
 
-              {/* AI Generator Control Box */}
-              <div className="ai-draft-trigger-box">
-                <div className="ai-trigger-top">
-                  <div className="ai-trigger-left">
-                    <ThunderboltOutlined style={{ color: '#F59E0B' }} />
-                    <span style={{ fontWeight: 700, fontSize: 13, color: '#1E293B' }}>
-                      Tạo bản thảo cá nhân hóa bằng AI:
-                    </span>
-                  </div>
+              {/* Compact AI Generator Bar */}
+              <div className="composer-ai-bar">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ThunderboltOutlined style={{ color: '#7C3AED', fontSize: 13 }} />
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: '#334155' }}>Trợ lý AI:</span>
+                </div>
 
-                  <div className="ai-tone-selector">
-                    <span style={{ fontSize: 12, color: '#64748B' }}>Tone giọng:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 12, color: '#64748B' }}>Giọng điệu:</span>
                     <Radio.Group
                       size="small"
                       value={aiTone}
                       onChange={(e) => setAiTone(e.target.value)}
                     >
-                      <Radio.Button value="friendly">Thân thiện 💖</Radio.Button>
-                      <Radio.Button value="formal">Trang trọng 💼</Radio.Button>
-                      <Radio.Button value="concise">Ngắn gọn ⚡</Radio.Button>
+                      <Radio.Button value="friendly">Thân thiện</Radio.Button>
+                      <Radio.Button value="formal">Trang trọng</Radio.Button>
+                      <Radio.Button value="concise">Ngắn gọn</Radio.Button>
                     </Radio.Group>
                   </div>
-                </div>
 
-                <Button
-                  className="btn-ai-generate-email"
-                  icon={<RobotOutlined />}
-                  loading={aiGenerating}
-                  onClick={handleGenerateAiEmail}
-                >
-                  {aiGenerating ? 'AI đang soạn thảo...' : '🤖 Bấm để AI tự động viết thư mời'}
-                </Button>
+                  <Button
+                    type="primary"
+                    size="small"
+                    loading={aiGenerating}
+                    onClick={handleGenerateAiEmail}
+                    icon={<RobotOutlined />}
+                    style={{
+                      background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      border: 'none',
+                      height: 28,
+                    }}
+                  >
+                    {aiGenerating ? 'Đang viết...' : 'Tạo thư mẫu'}
+                  </Button>
+                </div>
               </div>
 
               {/* Email Subject */}
@@ -764,7 +768,7 @@ export default function OutreachCrmPage() {
                   value={emailBody}
                   onChange={(e) => setEmailBody(e.target.value)}
                   placeholder="Nội dung thư tiếp cận, giới thiệu thương hiệu, sản phẩm và đề xuất thù lao..."
-                  style={{ borderRadius: 8 }}
+                  style={{ borderRadius: 8, fontSize: 13 }}
                 />
               </div>
 
@@ -774,6 +778,7 @@ export default function OutreachCrmPage() {
                   onClick={() => {
                     message.info('Đã lưu thư nháp vào hàng đợi gửi!');
                   }}
+                  style={{ borderRadius: 8 }}
                 >
                   Lưu bản nháp
                 </Button>
@@ -781,7 +786,14 @@ export default function OutreachCrmPage() {
                 <Button
                   type="primary"
                   icon={<SendOutlined />}
-                  style={{ background: '#4F46E5', borderRadius: 8, height: 38 }}
+                  style={{
+                    background: '#4F46E5',
+                    borderRadius: 8,
+                    height: 38,
+                    fontWeight: 600,
+                    border: 'none',
+                    boxShadow: '0 2px 8px rgba(79, 70, 229, 0.3)',
+                  }}
                   onClick={handleSendEmail}
                 >
                   Gửi Email ngay →

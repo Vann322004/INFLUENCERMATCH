@@ -287,20 +287,8 @@ export default function CreatorDetailPage() {
 
   return (
     <div className="creator-detail-container">
-      {/* 1. Breadcrumb & Back Button */}
-      <div className="creator-detail-breadcrumb">
-        <div className="breadcrumb-path">
-          <span className="breadcrumb-link" onClick={() => navigate('/campaigns')}>
-            Chiến dịch
-          </span>
-          <span>›</span>
-          <span className="breadcrumb-link" onClick={() => navigate('/creators')}>
-            Khám phá Creator
-          </span>
-          <span>›</span>
-          <span className="breadcrumb-current">Hồ sơ Creator</span>
-        </div>
-
+      {/* 1. Back Button */}
+      <div className="creator-detail-breadcrumb" style={{ justifyContent: 'flex-start' }}>
         <button
           className="breadcrumb-back-btn"
           onClick={() => navigate('/creators')}
