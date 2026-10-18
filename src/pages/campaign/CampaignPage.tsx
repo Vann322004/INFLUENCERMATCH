@@ -1,5 +1,5 @@
 import React from 'react';
-import { Breadcrumb, Typography, Button, Row, Col, Space } from 'antd';
+import { Typography, Button, Row, Col, Space } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import StatCard from '../../components/dashboard/StatCard';
@@ -25,14 +25,6 @@ export default function CampaignPage() {
         }}
       >
         <div style={{ maxWidth: 640 }}>
-          <Breadcrumb
-            separator="/"
-            items={[
-              { title: <span style={{ color: '#94A3B8' }}>Không gian làm việc</span> },
-              { title: <span style={{ color: '#5B5BF0', fontWeight: 600 }}>Chiến dịch</span> },
-            ]}
-            style={{ marginBottom: 6, fontSize: 12.5 }}
-          />
           <Title
             level={2}
             style={{

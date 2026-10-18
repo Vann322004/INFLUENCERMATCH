@@ -22,19 +22,83 @@ import {
   DeleteOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { CAMPAIGNS_DATA } from '../../data/mockData';
+import { campaignService } from '../../services/api/campaignService';
+import type { CampaignResponse } from '../../types/api/campaign.types';
 import type { Campaign } from '../../data/mockData';
+
+export const mapApiCampaignToUi = (c: CampaignResponse): Campaign => {
+  const statusMap: Record<string, 'running' | 'draft' | 'completed'> = {
+    ACTIVE: 'running',
+    READY_FOR_DISCOVERY: 'running',
+    DRAFT: 'draft',
+    COMPLETED: 'completed',
+    ARCHIVED: 'completed',
+  };
+  const statusTextMap: Record<string, string> = {
+    ACTIVE: 'Đang chạy',
+    READY_FOR_DISCOVERY: 'Sẵn sàng AI',
+    DRAFT: 'Bản nháp',
+    COMPLETED: 'Đã hoàn thành',
+    ARCHIVED: 'Đã lưu trữ',
+  };
+
+  const budgetNum = c.budgetMax || c.budgetMin || 0;
+  const budgetText = budgetNum > 0 ? `${(budgetNum / 1_000_000).toFixed(0)}M ₫` : 'Chưa định mức';
+
+  return {
+    id: c.id,
+    title: c.name,
+    tags: [
+      c.objective || 'Mục tiêu chung',
+      ...(c.platforms || []).map((p) => p.toLowerCase()),
+    ],
+    thumbnail: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=100&auto=format&fit=crop&q=80',
+    status: statusMap[c.status] || 'draft',
+    statusText: statusTextMap[c.status] || c.status,
+    creatorsCount: 0,
+    reach: '0',
+    reachNumber: 0,
+    engagement: '0%',
+    engagementNumber: 0,
+    spent: budgetText,
+    spentNumber: budgetNum,
+    date: c.startDate ? new Date(c.startDate).toLocaleDateString('vi-VN') : 'Mới tạo',
+  };
+};
 
 export default function CampaignTable() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [searchText, setSearchText] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('latest');
   const [currentPage, setCurrentPage] = useState<number>(1);
 
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchCampaigns = async () => {
+      try {
+        setLoading(true);
+        const data = await campaignService.getCampaigns(0, 50);
+        if (isMounted && Array.isArray(data)) {
+          setCampaigns(data.map(mapApiCampaignToUi));
+        }
+      } catch (err) {
+        console.error('Lỗi khi tải chiến dịch:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchCampaigns();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Filter & Sort
   const filteredData = useMemo(() => {
-    let list = [...CAMPAIGNS_DATA];
+    let list = [...campaigns];
 
     // Status filter
     if (activeTab === 'running') {
@@ -59,7 +123,7 @@ export default function CampaignTable() {
     }
 
     return list;
-  }, [activeTab, searchText, sortBy]);
+  }, [campaigns, activeTab, searchText, sortBy]);
 
   const actionItems: MenuProps['items'] = [
     { key: 'view', icon: <EyeOutlined />, label: 'Xem chi tiết' },
@@ -320,6 +384,7 @@ export default function CampaignTable() {
       {/* Table */}
       <Table
         rowKey="id"
+        loading={loading}
         columns={columns}
         dataSource={filteredData}
         pagination={false}

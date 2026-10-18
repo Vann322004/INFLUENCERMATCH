@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button,
   Input,
@@ -9,6 +9,7 @@ import {
   Modal,
   Tag,
   Tooltip,
+  Spin,
 } from 'antd';
 import type { MenuProps } from 'antd';
 import { useNavigate } from 'react-router-dom';
@@ -96,264 +97,82 @@ export const CAMPAIGN_OPTIONS = [
   { value: 'camp-3', label: '👟 BST Giày Sneaker Thu Đông' },
 ];
 
-export const INITIAL_COMPARE_CREATORS: CreatorCompareItem[] = [
-  {
-    id: 'c1',
-    campaignId: 'camp-1',
-    campaignName: 'Ra mắt Skincare Summer Glow',
-    name: 'Linh Nguyễn',
-    username: 'linhnguyen.official',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    isVerified: true,
+import { creatorService } from '../../services/api/creatorService';
+import type { CreatorItem } from '../../types/api/creator.types';
+
+export const mapCreatorToShortlistItem = (c: CreatorItem, campaignName = 'Tất cả chiến dịch'): CreatorCompareItem => {
+  const followersNum = c.followers || 0;
+  const followersText = followersNum >= 1_000_000
+    ? `${(followersNum / 1_000_000).toFixed(1)}M`
+    : followersNum >= 1_000
+    ? `${Math.round(followersNum / 1_000)}K`
+    : `${followersNum}`;
+  const eng = c.engagementRate || 3.5;
+
+  return {
+    id: c.creatorId || c.id,
+    campaignId: 'all',
+    campaignName,
+    name: c.displayName || c.userName,
+    username: c.userName,
+    avatar: c.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    isVerified: !!c.verifiedByInfluencerMatch,
     matchLevel: 'high',
-    matchText: 'Khớp cao (96%)',
-    platforms: ['tiktok', 'instagram'],
-    categories: ['Làm đẹp & Chăm sóc da', 'Phong cách sống'],
-    followers: '1.2M',
-    followersPercent: 100,
-    views: '32.4K',
-    viewsPercent: 100,
-    engagement: '8.7%',
-    engagementPercent: 100,
-    likes: '4.1K',
-    likesPercent: 100,
-    comments: '340',
-    commentsPercent: 100,
-    shares: '120',
-    sharesPercent: 100,
-    price: '15.000.000 ₫',
-    location: 'Việt Nam (78%)',
-    gender: { female: 78, male: 22 },
-    interests: ['Chăm sóc da', 'Làm đẹp', 'Đời sống'],
-    note: 'Phù hợp hoàn hảo với mục tiêu ra mắt kem chống nắng, tệp nữ 18-28 tuổi rất đông.',
+    matchText: 'Khớp cao (92%)',
+    platforms: [c.platform?.toLowerCase() || 'tiktok'],
+    categories: c.niche ? [c.niche] : ['Làm đẹp & Chăm sóc da'],
+    followers: followersText,
+    followersPercent: Math.min(100, Math.round((followersNum / 1000000) * 100)) || 80,
+    views: '25.0K',
+    viewsPercent: 80,
+    engagement: `${eng}%`,
+    engagementPercent: Math.min(100, Math.round(eng * 10)),
+    likes: '3.0K',
+    likesPercent: 75,
+    comments: '250',
+    commentsPercent: 70,
+    shares: '90',
+    sharesPercent: 70,
+    price: '10.000.000 ₫',
+    location: c.location || 'Việt Nam',
+    gender: { female: 75, male: 25 },
+    interests: [c.niche || 'Làm đẹp', 'Đời sống'],
+    note: c.contentSummary || 'Creator tiềm năng trong danh sách chọn.',
     noteType: 'high',
-    favorite: true,
-    priority: 'high',
-    selected: true,
-    addedDate: '28/09/2026',
-    status: 'shortlisted',
-  },
-  {
-    id: 'c2',
-    campaignId: 'camp-1',
-    campaignName: 'Ra mắt Skincare Summer Glow',
-    name: 'Minh Hoàng',
-    username: 'minhhoang.92',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    isVerified: true,
-    matchLevel: 'high',
-    matchText: 'Khớp cao (91%)',
-    platforms: ['tiktok', 'youtube'],
-    categories: ['Thời trang', 'Phong cách sống'],
-    followers: '856K',
-    followersPercent: 71,
-    views: '28.7K',
-    viewsPercent: 88,
-    engagement: '6.2%',
-    engagementPercent: 71,
-    likes: '3.2K',
-    likesPercent: 78,
-    comments: '210',
-    commentsPercent: 62,
-    shares: '87',
-    sharesPercent: 72,
-    price: '12.500.000 ₫',
-    location: 'Việt Nam (72%)',
-    gender: { female: 72, male: 28 },
-    interests: ['Thời trang', 'Đời sống', 'Du lịch'],
-    note: 'Tệp khán giả tương tác rất tốt, phong cách video chất lượng 4K.',
-    noteType: 'high',
-    favorite: true,
-    priority: 'high',
-    selected: true,
-    addedDate: '29/09/2026',
-    status: 'contacted',
-  },
-  {
-    id: 'c3',
-    campaignId: 'camp-2',
-    campaignName: 'Son Lì TikTok Blitz',
-    name: 'Thảo Vy',
-    username: 'thaovy.official',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-    isVerified: true,
-    matchLevel: 'med',
-    matchText: 'Khớp TB (84%)',
-    platforms: ['instagram', 'tiktok'],
-    categories: ['Ẩm thực & Đồ uống', 'Phong cách sống'],
-    followers: '542K',
-    followersPercent: 45,
-    views: '19.6K',
-    viewsPercent: 60,
-    engagement: '5.1%',
-    engagementPercent: 58,
-    likes: '2.1K',
-    likesPercent: 51,
-    comments: '150',
-    commentsPercent: 44,
-    shares: '62',
-    sharesPercent: 51,
-    price: '8.000.000 ₫',
-    location: 'Việt Nam (68%)',
-    gender: { female: 68, male: 32 },
-    interests: ['Ẩm thực', 'Đời sống', 'Nấu ăn'],
-    note: 'Nội dung swatch son tự nhiên, review chân thật, giá hợp lý trong ngân sách.',
-    noteType: 'med',
     favorite: false,
-    priority: 'med',
-    selected: true,
-    addedDate: '26/09/2026',
-    status: 'shortlisted',
-  },
-  {
-    id: 'c4',
-    campaignId: 'camp-3',
-    campaignName: 'BST Giày Sneaker Thu Đông',
-    name: 'Đức Anh',
-    username: 'ducanh.travel',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    isVerified: false,
-    matchLevel: 'med',
-    matchText: 'Khớp TB (79%)',
-    platforms: ['tiktok', 'facebook'],
-    categories: ['Du lịch', 'Phong cách sống'],
-    followers: '421K',
-    followersPercent: 35,
-    views: '15.2K',
-    viewsPercent: 47,
-    engagement: '4.8%',
-    engagementPercent: 55,
-    likes: '1.8K',
-    likesPercent: 44,
-    comments: '120',
-    commentsPercent: 35,
-    shares: '45',
-    sharesPercent: 37,
-    price: '7.000.000 ₫',
-    location: 'Việt Nam (61%)',
-    gender: { female: 61, male: 39 },
-    interests: ['Du lịch', 'Trải nghiệm', 'Đời sống'],
-    note: 'Phong cách năng động đường phố, thường xuyên phối outfit với giày thể thao.',
-    noteType: 'neutral',
-    favorite: false,
-    priority: 'med',
-    selected: false,
-    addedDate: '25/09/2026',
-    status: 'shortlisted',
-  },
-  {
-    id: 'c5',
-    campaignId: 'camp-1',
-    campaignName: 'Ra mắt Skincare Summer Glow',
-    name: 'Bác sĩ Ngọc',
-    username: 'drngoc.dermatology',
-    avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80',
-    isVerified: true,
-    matchLevel: 'high',
-    matchText: 'Khớp cao (94%)',
-    platforms: ['tiktok', 'youtube'],
-    categories: ['Làm đẹp & Chăm sóc da', 'Sức khỏe'],
-    followers: '920K',
-    followersPercent: 77,
-    views: '41.0K',
-    viewsPercent: 95,
-    engagement: '7.8%',
-    engagementPercent: 90,
-    likes: '3.8K',
-    likesPercent: 92,
-    comments: '410',
-    commentsPercent: 96,
-    shares: '180',
-    sharesPercent: 95,
-    price: '18.000.000 ₫',
-    location: 'Việt Nam (85%)',
-    gender: { female: 81, male: 19 },
-    interests: ['Da liễu', 'Dược mỹ phẩm', 'Chăm sóc sức khỏe'],
-    note: 'Có chuyên môn cao, tăng uy tín cho thương hiệu khi phân tích thành phần sản phẩm.',
-    noteType: 'high',
-    favorite: true,
     priority: 'high',
     selected: false,
-    addedDate: '27/09/2026',
-    status: 'negotiating',
-  },
-  {
-    id: 'c6',
-    campaignId: 'camp-2',
-    campaignName: 'Son Lì TikTok Blitz',
-    name: 'Mai Lan',
-    username: 'mailan.foodie',
-    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80',
-    isVerified: false,
-    matchLevel: 'high',
-    matchText: 'Khớp cao (89%)',
-    platforms: ['tiktok', 'instagram'],
-    categories: ['Làm đẹp & Chăm sóc da', 'Thời trang'],
-    followers: '680K',
-    followersPercent: 57,
-    views: '24.5K',
-    viewsPercent: 76,
-    engagement: '6.9%',
-    engagementPercent: 79,
-    likes: '2.9K',
-    likesPercent: 71,
-    comments: '280',
-    commentsPercent: 82,
-    shares: '95',
-    sharesPercent: 79,
-    price: '9.500.000 ₫',
-    location: 'Việt Nam (75%)',
-    gender: { female: 86, male: 14 },
-    interests: ['Makeup', 'Thời trang', 'GenZ Lifestyle'],
-    note: 'Fanbase nữ 18-24 chiếm 86%, chuyên các video thử son lên màu chuẩn.',
-    noteType: 'high',
-    favorite: true,
-    priority: 'med',
-    selected: false,
-    addedDate: '28/09/2026',
+    addedDate: new Date().toLocaleDateString('vi-VN'),
     status: 'shortlisted',
-  },
-  {
-    id: 'c7',
-    campaignId: 'camp-3',
-    campaignName: 'BST Giày Sneaker Thu Đông',
-    name: 'Tuấn Khang',
-    username: 'tuankhang.tech',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
-    isVerified: false,
-    matchLevel: 'med',
-    matchText: 'Khớp TB (76%)',
-    platforms: ['youtube', 'tiktok'],
-    categories: ['Công nghệ', 'Phong cách sống'],
-    followers: '510K',
-    followersPercent: 43,
-    views: '18.0K',
-    viewsPercent: 56,
-    engagement: '4.2%',
-    engagementPercent: 48,
-    likes: '1.6K',
-    likesPercent: 39,
-    comments: '98',
-    commentsPercent: 29,
-    shares: '34',
-    sharesPercent: 28,
-    price: '6.500.000 ₫',
-    location: 'Việt Nam (65%)',
-    gender: { female: 42, male: 58 },
-    interests: ['Công nghệ', 'Sneakers', 'Gym'],
-    note: 'Dự phòng cho Đức Anh nếu cần thêm góc nhìn unbox & review độ êm khi di chuyển.',
-    noteType: 'neutral',
-    favorite: false,
-    priority: 'low',
-    selected: false,
-    addedDate: '29/09/2026',
-    status: 'shortlisted',
-  },
-];
+  };
+};
 
 export default function CreatorShortlistPage() {
   const navigate = useNavigate();
-  const [creators, setCreators] = useState<CreatorCompareItem[]>(INITIAL_COMPARE_CREATORS);
+  const [loading, setLoading] = useState(true);
+  const [creators, setCreators] = useState<CreatorCompareItem[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchShortlistOrCreators = async () => {
+      try {
+        setLoading(true);
+        // Load creators from API to populate shortlist
+        const apiCreators = await creatorService.getCreators();
+        if (isMounted && Array.isArray(apiCreators)) {
+          setCreators(apiCreators.map((c) => mapCreatorToShortlistItem(c)));
+        }
+      } catch (err) {
+        console.error('Lỗi khi tải danh sách shortlist:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchShortlistOrCreators();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   const [selectedCampaign, setSelectedCampaign] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'board' | 'compare'>('board');
   const [boardLayout, setBoardLayout] = useState<'grid' | 'table'>('grid');
@@ -663,20 +482,7 @@ export default function CreatorShortlistPage() {
 
   return (
     <div className="shortlist-page-container">
-      {/* 1. Breadcrumb */}
-      <div className="shortlist-breadcrumb">
-        <span className="breadcrumb-link" onClick={() => navigate('/campaigns')}>
-          Chiến dịch
-        </span>
-        <span>›</span>
-        <span className="breadcrumb-link" onClick={() => navigate('/creators')}>
-          Khám phá Creator
-        </span>
-        <span>›</span>
-        <span className="breadcrumb-current">Danh sách chọn (Shortlist)</span>
-      </div>
-
-      {/* 2. Header & Title Bar with Campaign Selector */}
+      {/* 1. Header & Title Bar with Campaign Selector */}
       <div className="shortlist-header-row">
         <div>
           <div className="shortlist-title-wrap">
@@ -840,7 +646,14 @@ export default function CreatorShortlistPage() {
           {/* Grid Layout Cards */}
           {boardLayout === 'grid' && (
             <div className="shortlist-board-grid">
-              {filteredCreators.length === 0 ? (
+              {loading ? (
+                <div className="shortlist-empty-box" style={{ padding: '60px 20px', gridColumn: '1 / -1' }}>
+                  <Spin size="large" />
+                  <div style={{ color: '#64748B', fontWeight: 600, marginTop: 16 }}>
+                    Đang tải danh sách Creator từ máy chủ...
+                  </div>
+                </div>
+              ) : filteredCreators.length === 0 ? (
                 <div className="shortlist-empty-box">
                   <div style={{ fontSize: 36 }}>🔍</div>
                   <div style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>
@@ -1210,62 +1023,6 @@ export default function CreatorShortlistPage() {
           ========================================================================= */}
       {viewMode === 'compare' && (
         <div className="shortlist-compare-section">
-          {/* Top Banner Navigation */}
-          <div className="compare-mode-header-card">
-            <div className="compare-header-left">
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={() => setViewMode('board')}
-                style={{ borderRadius: 8 }}
-              >
-                ← Quay lại Bảng Shortlist
-              </Button>
-              <div>
-                <h2 className="compare-main-title">
-                  Bảng đối chiếu chuyên sâu ({selectedCreators.length} Creator)
-                </h2>
-                <div className="compare-main-subtitle">
-                  Chiến dịch:{' '}
-                  <strong>
-                    {selectedCampaign === 'all'
-                      ? 'Tất cả chiến dịch'
-                      : CAMPAIGN_OPTIONS.find((o) => o.value === selectedCampaign)?.label}
-                  </strong>
-                </div>
-              </div>
-            </div>
-
-            <div className="compare-header-right">
-              <div className="matrix-metric-select-wrap">
-                <span>Chỉ số tập trung:</span>
-                <Select
-                  value={metricFilter}
-                  onChange={setMetricFilter}
-                  size="small"
-                  style={{ width: 140 }}
-                  options={[
-                    { value: 'engagement', label: 'Tỷ lệ tương tác' },
-                    { value: 'views', label: 'Lượt xem TB' },
-                    { value: 'followers', label: 'Người theo dõi' },
-                    { value: 'price', label: 'Giá dự kiến' },
-                  ]}
-                />
-              </div>
-
-              <Button
-                className="btn-download-report"
-                icon={<DownloadOutlined />}
-                onClick={() => {
-                  message.loading('Đang xuất file báo cáo so sánh...');
-                  setTimeout(() => {
-                    message.success('Đã tải xuống file so sánh Creator (PDF/Excel)!');
-                  }, 1000);
-                }}
-              >
-                Tải báo cáo
-              </Button>
-            </div>
-          </div>
 
           {selectedCreators.length < 2 ? (
             <div className="shortlist-empty-box" style={{ background: '#FFFFFF', padding: 40, borderRadius: 16 }}>

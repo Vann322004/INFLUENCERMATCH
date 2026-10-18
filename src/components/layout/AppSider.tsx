@@ -20,7 +20,7 @@ import {
   ClockCircleOutlined,
 } from '@ant-design/icons';
 import SidebarPromo from '../dashboard/SidebarPromo';
-import { CURRENT_USER } from '../../data/mockData';
+import { authService } from '../../services/api/authService';
 
 const { Sider } = Layout;
 
@@ -31,6 +31,7 @@ interface AppSiderProps {
 export default function AppSider({ collapsed = false }: AppSiderProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const currentUser = authService.getCurrentUser();
 
   // Determine active key from current path
   const activeKey = location.pathname.includes('subscription') || location.pathname.includes('billing') || location.pathname.includes('plans')
@@ -167,7 +168,10 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       icon: <LogoutOutlined />,
       danger: true,
       label: 'Đăng xuất',
-      onClick: () => navigate('/login'),
+      onClick: async () => {
+        await authService.logout();
+        navigate('/login');
+      },
     },
   ];
 
@@ -267,7 +271,9 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
               padding: '6px 4px',
             }}
           >
-            <Avatar src={CURRENT_USER.avatar} size={36} style={{ flexShrink: 0, border: '1.5px solid #CBD5E1' }} />
+            <Avatar size={36} style={{ flexShrink: 0, backgroundColor: '#8B5CF6', border: '1.5px solid #CBD5E1' }}>
+              {(currentUser?.fullName || currentUser?.email || 'U').charAt(0).toUpperCase()}
+            </Avatar>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
                 style={{
@@ -280,7 +286,7 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
                   lineHeight: 1.2,
                 }}
               >
-                {CURRENT_USER.name}
+                {currentUser?.fullName || currentUser?.email || 'Người dùng'}
               </div>
               <div
                 style={{
@@ -292,7 +298,7 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
                   lineHeight: 1.2,
                 }}
               >
-                {CURRENT_USER.role}
+                {currentUser?.role || 'BRAND'}
               </div>
             </div>
             <RightOutlined style={{ color: '#94A3B8', fontSize: 11, flexShrink: 0 }} />

@@ -7,6 +7,7 @@ export const ADMIN_ROUTES = {
     DETAIL: '/admin/accounts/:id',
   },
   CREATORS: '/admin/creators',
+  CREATOR_CLAIMS: '/admin/creator-claims',
   DATA_SOURCES: '/admin/data-sources',
   JOBS: '/admin/jobs',
   SCORING: '/admin/scoring',

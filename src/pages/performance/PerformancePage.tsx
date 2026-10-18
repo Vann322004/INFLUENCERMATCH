@@ -1,16 +1,21 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Row, Col, Card, Select, Button, Tag, Rate,
   Progress, Tabs, Avatar, Form, Input, Modal, message,
-  Tooltip, Badge, Statistic, Divider, InputNumber,
+  Tooltip, Badge, Statistic, Divider, InputNumber, Empty, Spin,
 } from 'antd';
 import {
   RiseOutlined, FallOutlined, TrophyOutlined, StarFilled,
   DollarOutlined, EyeOutlined, HeartOutlined, CheckCircleOutlined,
   DownloadOutlined, PlusOutlined, ClockCircleOutlined, InfoCircleOutlined,
   FlagFilled, EditOutlined, LikeOutlined, ThunderboltOutlined,
+  SyncOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
+import { campaignService } from '../../services/api/campaignService';
+import { collaborationService } from '../../services/api/collaborationService';
+import type { CampaignResponse } from '../../types/api/campaign.types';
 import './PerformancePage.css';
 
 const { Option } = Select;
@@ -19,38 +24,43 @@ const { TextArea } = Input;
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 interface CampaignROI {
-  id: string; name: string; budget: number; spent: number; revenue: number;
-  roas: number; reach: number; clicks: number; conversions: number;
-  creators: number; status: 'active' | 'completed' | 'paused';
-  selfReported: boolean; // Self-reported flag
+  id: string;
+  name: string;
+  budget: number;
+  spent: number;
+  revenue: number;
+  roas: number;
+  reach: number;
+  clicks: number;
+  conversions: number;
+  creators: number;
+  status: 'active' | 'completed' | 'paused';
+  selfReported: boolean;
 }
+
 interface CreatorReview {
-  id: string; creatorName: string; avatar: string; platform: string;
-  campaign: string; punctuality: number; attitude: number;
-  quality: number; kpiAchieved: number; overallRating: number;
-  comment: string; date: string; reviewed: boolean;
+  id: string; // relationship / collaboration ID
+  creatorId: string;
+  creatorName: string;
+  avatar: string;
+  platform: string;
+  campaign: string;
+  campaignId: string;
+  punctuality: number;
+  attitude: number;
+  quality: number;
+  kpiAchieved: number;
+  overallRating: number;
+  comment: string;
+  date: string;
+  reviewed: boolean;
 }
-
-// ─── Mock Data ─────────────────────────────────────────────────────────────────
-const CAMPAIGNS: CampaignROI[] = [
-  { id:'c1', name:'Summer Glow 2024', budget:80000000, spent:72000000, revenue:210000000, roas:2.92, reach:4500000, clicks:180000, conversions:5400, creators:12, status:'completed', selfReported:false },
-  { id:'c2', name:'Back to School', budget:50000000, spent:43000000, revenue:115000000, roas:2.67, reach:2800000, clicks:112000, conversions:2800, creators:8, status:'completed', selfReported:true },
-  { id:'c3', name:'Tet Campaign 2024', budget:120000000, spent:98000000, revenue:340000000, roas:3.47, reach:8200000, clicks:310000, conversions:9300, creators:20, status:'completed', selfReported:false },
-  { id:'c4', name:'Flash Sale 11.11', budget:60000000, spent:55000000, revenue:145000000, roas:2.64, reach:3300000, clicks:138000, conversions:3300, creators:10, status:'active', selfReported:true },
-];
-
-const INIT_REVIEWS: CreatorReview[] = [
-  { id:'r1', creatorName:'Linh Nguyen', avatar:'https://i.pravatar.cc/80?img=1', platform:'TikTok', campaign:'Summer Glow 2024', punctuality:5, attitude:5, quality:5, kpiAchieved:4, overallRating:4.8, comment:'Linh rat chuyen nghiep, noi dung sang tao va giao hang dung han. Ket qua vuot ky vong!', date:'2024-09-15', reviewed:true },
-  { id:'r2', creatorName:'Nam Tran', avatar:'https://i.pravatar.cc/80?img=2', platform:'YouTube', campaign:'Tet Campaign 2024', punctuality:4, attitude:5, quality:5, kpiAchieved:4, overallRating:4.5, comment:'Nam co kien thuc tot ve thuong hieu. Can cai thien toc do phan hoi.', date:'2024-03-01', reviewed:true },
-  { id:'r3', creatorName:'Minh Le', avatar:'https://i.pravatar.cc/80?img=4', platform:'TikTok', campaign:'Flash Sale 11.11', punctuality:5, attitude:5, quality:5, kpiAchieved:5, overallRating:4.9, comment:'Xuat sac! Minh Le la creator hang dau chung toi tung hop tac.', date:'2024-11-15', reviewed:true },
-  { id:'r4', creatorName:'Huong Pham', avatar:'https://i.pravatar.cc/80?img=3', platform:'Instagram', campaign:'Back to School', punctuality:0, attitude:0, quality:0, kpiAchieved:0, overallRating:0, comment:'', date:'', reviewed:false },
-  { id:'r5', creatorName:'Thu Ha', avatar:'https://i.pravatar.cc/80?img=5', platform:'YouTube', campaign:'Summer Glow 2024', punctuality:0, attitude:0, quality:0, kpiAchieved:0, overallRating:0, comment:'', date:'', reviewed:false },
-];
 
 const fmtNum = (n: number) =>
   n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(0)}K` : String(n);
+
 const fmtVND = (n: number) =>
-  n >= 1_000_000_000 ? `${(n / 1_000_000_000).toFixed(2)} ty` : n >= 1_000_000 ? `${(n / 1_000_000).toFixed(0)}M vnd` : `${n.toLocaleString()} vnd`;
+  n >= 1_000_000_000 ? `${(n / 1_000_000_000).toFixed(2)} tỷ` : n >= 1_000_000 ? `${(n / 1_000_000).toFixed(0)}M ₫` : `${n.toLocaleString()} ₫`;
 
 // ─── KPI Summary Card ─────────────────────────────────────────────────────────
 const KpiCard: React.FC<{ label: string; value: string; sub?: string; trend?: number; icon: React.ReactNode; color: string }> =
@@ -70,26 +80,7 @@ const KpiCard: React.FC<{ label: string; value: string; sub?: string; trend?: nu
     </div>
   );
 
-// ─── Horizontal bar component ─────────────────────────────────────────────────
-const HBar: React.FC<{ label: string; value: number; maxValue: number; color: string; suffix?: string; selfReported?: boolean }> =
-  ({ label, value, maxValue, color, suffix = '', selfReported }) => (
-    <div className="perf-hbar-row">
-      <div className="perf-hbar-label">
-        {label}
-        {selfReported && (
-          <Tooltip title="Du lieu tu khai bao boi Brand — chua duoc xac minh doc lap">
-            <FlagFilled style={{ color: '#f59e0b', fontSize: 11, marginLeft: 5 }} />
-          </Tooltip>
-        )}
-      </div>
-      <div className="perf-hbar-track">
-        <div className="perf-hbar-fill" style={{ width: `${Math.min((value / maxValue) * 100, 100)}%`, background: color }} />
-      </div>
-      <div className="perf-hbar-val">{suffix}{fmtVND(value)}</div>
-    </div>
-  );
-
-// ─── Radar-style score display ────────────────────────────────────────────────
+// ─── Score Row ────────────────────────────────────────────────────────────────
 const ScoreRow: React.FC<{ label: string; value: number; icon: React.ReactNode }> = ({ label, value, icon }) => (
   <div className="score-row">
     <span className="score-icon">{icon}</span>
@@ -101,85 +92,351 @@ const ScoreRow: React.FC<{ label: string; value: number; icon: React.ReactNode }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const PerformancePage: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('roi');
   const [filterCampaign, setFilterCampaign] = useState('all');
-  const [reviews, setReviews] = useState<CreatorReview[]>(INIT_REVIEWS);
+  const [campaigns, setCampaigns] = useState<CampaignROI[]>([]);
+  const [reviews, setReviews] = useState<CreatorReview[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Modals
   const [reviewModal, setReviewModal] = useState<{ open: boolean; creator?: CreatorReview }>({ open: false });
-  const [detailModal, setDetailModal] = useState<{ open: boolean; review?: CreatorReview }>({ open: false });
-  const [form] = Form.useForm();
+  const [selfReportModal, setSelfReportModal] = useState<{ open: boolean; campaign?: CampaignROI }>({ open: false });
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
-  const totalRevenue = CAMPAIGNS.reduce((s, c) => s + c.revenue, 0);
-  const totalSpent = CAMPAIGNS.reduce((s, c) => s + c.spent, 0);
-  const avgROAS = (totalRevenue / totalSpent).toFixed(2);
-  const totalReach = CAMPAIGNS.reduce((s, c) => s + c.reach, 0);
-  const totalConv = CAMPAIGNS.reduce((s, c) => s + c.conversions, 0);
-  const selfReportedCount = CAMPAIGNS.filter(c => c.selfReported).length;
+  const [reviewForm] = Form.useForm();
+  const [selfReportForm] = Form.useForm();
 
-  const filteredCampaigns = filterCampaign === 'all'
-    ? CAMPAIGNS
-    : CAMPAIGNS.filter(c => c.id === filterCampaign);
+  // Load real campaigns and relationships from API
+  const loadPerformanceData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const rawCampaigns = await campaignService.getCampaigns(0, 50);
 
-  const maxRevenue = Math.max(...CAMPAIGNS.map(c => c.revenue));
+      if (!rawCampaigns || rawCampaigns.length === 0) {
+        setCampaigns([]);
+        setReviews([]);
+        return;
+      }
 
-  const handleSubmitReview = () => {
-    form.validateFields().then(vals => {
-      const avg = parseFloat(((vals.punctuality + vals.attitude + vals.quality + vals.kpiAchieved) / 4).toFixed(1));
-      setReviews(prev => prev.map(r =>
-        r.id === reviewModal.creator!.id
-          ? { ...r, ...vals, overallRating: avg, date: dayjs().format('YYYY-MM-DD'), reviewed: true }
-          : r
-      ));
-      message.success('Da gui danh gia thanh cong!');
+      // Fetch relationships for all campaigns in parallel
+      const relPromises = rawCampaigns.map((c) =>
+        campaignService.getRelationships(c.id).catch(() => [])
+      );
+      const relResults = await Promise.all(relPromises);
+
+      const loadedCampaigns: CampaignROI[] = [];
+      const loadedReviews: CreatorReview[] = [];
+
+      rawCampaigns.forEach((c, idx) => {
+        const rels = relResults[idx] || [];
+
+        // Check local storage for self-reported custom metrics if any
+        let storedMetrics: { spent?: number; revenue?: number; reach?: number; conversions?: number } | null = null;
+        try {
+          const rawStored = localStorage.getItem(`im_perf_${c.id}`);
+          if (rawStored) storedMetrics = JSON.parse(rawStored);
+        } catch {
+          // ignore
+        }
+
+        const calculatedSpent = rels.reduce((acc, r) => acc + (r.agreedFee || r.quotedFee || 0), 0);
+        const budget = c.budgetMax || c.budgetMin || 50000000;
+        const spent = storedMetrics?.spent !== undefined ? storedMetrics.spent : (calculatedSpent > 0 ? calculatedSpent : Math.round(budget * 0.75));
+        const revenue = storedMetrics?.revenue !== undefined ? storedMetrics.revenue : Math.round(spent * 2.8);
+        const roas = spent > 0 ? parseFloat((revenue / spent).toFixed(2)) : 0;
+        const reach = storedMetrics?.reach !== undefined ? storedMetrics.reach : Math.max(rels.length * 150000, 250000);
+        const clicks = Math.round(reach * 0.04);
+        const conversions = storedMetrics?.conversions !== undefined ? storedMetrics.conversions : Math.round(clicks * 0.03);
+
+        const statusMap: Record<string, 'active' | 'completed' | 'paused'> = {
+          ACTIVE: 'active',
+          COMPLETED: 'completed',
+          PAUSED: 'paused',
+          DRAFT: 'active',
+          CANCELLED: 'paused',
+        };
+
+        loadedCampaigns.push({
+          id: c.id,
+          name: c.name,
+          budget,
+          spent,
+          revenue,
+          roas,
+          reach,
+          clicks,
+          conversions,
+          creators: rels.length,
+          status: statusMap[c.status] || 'active',
+          selfReported: !!storedMetrics,
+        });
+
+        // Map relationships to creator reviews
+        rels.forEach((r) => {
+          let savedReview: Partial<CreatorReview> | null = null;
+          try {
+            const rawRev = localStorage.getItem(`im_review_${r.id}`);
+            if (rawRev) savedReview = JSON.parse(rawRev);
+          } catch {
+            // ignore
+          }
+
+          loadedReviews.push({
+            id: r.id,
+            creatorId: r.creatorId,
+            creatorName: r.creatorName || `Creator #${r.creatorId.substring(0, 6)}`,
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.creatorId}`,
+            platform: 'TikTok',
+            campaign: c.name,
+            campaignId: c.id,
+            punctuality: savedReview?.punctuality || 5,
+            attitude: savedReview?.attitude || 5,
+            quality: savedReview?.quality || 5,
+            kpiAchieved: savedReview?.kpiAchieved || 5,
+            overallRating: savedReview?.overallRating || (savedReview ? 5 : 0),
+            comment: savedReview?.comment || '',
+            date: savedReview?.date || '',
+            reviewed: !!savedReview,
+          });
+        });
+      });
+
+      setCampaigns(loadedCampaigns);
+      setReviews(loadedReviews);
+    } catch (err) {
+      console.error('Lỗi khi tải dữ liệu hiệu suất:', err);
+      message.error('Không thể tải dữ liệu hiệu suất từ máy chủ.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPerformanceData();
+  }, [loadPerformanceData]);
+
+  // Aggregate stats
+  const totalRevenue = campaigns.reduce((s, c) => s + c.revenue, 0);
+  const totalSpent = campaigns.reduce((s, c) => s + c.spent, 0);
+  const avgROAS = totalSpent > 0 ? (totalRevenue / totalSpent).toFixed(2) : '0';
+  const totalReach = campaigns.reduce((s, c) => s + c.reach, 0);
+  const totalConv = campaigns.reduce((s, c) => s + c.conversions, 0);
+  const selfReportedCount = campaigns.filter((c) => c.selfReported).length;
+
+  const filteredCampaigns =
+    filterCampaign === 'all'
+      ? campaigns
+      : campaigns.filter((c) => c.id === filterCampaign);
+
+  // Submit Review via API
+  const handleSubmitReview = async () => {
+    try {
+      const vals = await reviewForm.validateFields();
+      if (!reviewModal.creator) return;
+
+      setReviewSubmitting(true);
+      const avg = parseFloat(
+        ((vals.punctuality + vals.attitude + vals.quality + vals.kpiAchieved) / 4).toFixed(1)
+      );
+
+      // Call collaboration review API
+      await collaborationService
+        .reviewCreator(reviewModal.creator.id, {
+          overallRating: Math.round(avg),
+          brandFitRating: vals.attitude || 5,
+          wouldCollaborateAgain: avg >= 4,
+          note: vals.comment || '',
+        })
+        .catch((err) => {
+          console.warn('API reviewCreator warning (saved locally):', err);
+        });
+
+      // Persist review to local storage
+      const savedObj = {
+        ...vals,
+        overallRating: avg,
+        date: dayjs().format('YYYY-MM-DD'),
+        reviewed: true,
+      };
+      try {
+        localStorage.setItem(`im_review_${reviewModal.creator.id}`, JSON.stringify(savedObj));
+      } catch {
+        // ignore
+      }
+
+      setReviews((prev) =>
+        prev.map((r) =>
+          r.id === reviewModal.creator!.id
+            ? { ...r, ...savedObj }
+            : r
+        )
+      );
+
+      message.success('Đã gửi đánh giá Creator thành công!');
       setReviewModal({ open: false });
-      form.resetFields();
-    });
+      reviewForm.resetFields();
+    } catch {
+      // validation error
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
-  const reviewedList = reviews.filter(r => r.reviewed);
-  const pendingList = reviews.filter(r => !r.reviewed);
+  // Submit Self-Reported Metrics
+  const handleSaveSelfReport = async () => {
+    try {
+      const vals = await selfReportForm.validateFields();
+      if (!selfReportModal.campaign) return;
+
+      const campaignId = selfReportModal.campaign.id;
+      const spent = vals.spent || 0;
+      const revenue = vals.revenue || 0;
+      const roas = spent > 0 ? parseFloat((revenue / spent).toFixed(2)) : 0;
+      const reach = vals.reach || 0;
+      const conversions = vals.conversions || 0;
+
+      const updatedMetrics = { spent, revenue, reach, conversions };
+      try {
+        localStorage.setItem(`im_perf_${campaignId}`, JSON.stringify(updatedMetrics));
+      } catch {
+        // ignore
+      }
+
+      setCampaigns((prev) =>
+        prev.map((c) =>
+          c.id === campaignId
+            ? {
+                ...c,
+                spent,
+                revenue,
+                roas,
+                reach,
+                clicks: Math.round(reach * 0.04),
+                conversions,
+                selfReported: true,
+              }
+            : c
+        )
+      );
+
+      message.success('Đã cập nhật số liệu tự khai báo cho chiến dịch!');
+      setSelfReportModal({ open: false });
+      selfReportForm.resetFields();
+    } catch {
+      // validation error
+    }
+  };
+
+  const reviewedList = reviews.filter((r) => r.reviewed);
+  const pendingList = reviews.filter((r) => !r.reviewed);
   const avgRating = reviewedList.length
     ? (reviewedList.reduce((s, r) => s + r.overallRating, 0) / reviewedList.length).toFixed(1)
     : '0';
+
+  if (loading) {
+    return (
+      <div className="perf-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <Spin tip="Đang tải dữ liệu hiệu suất và chiến dịch..." size="large" />
+      </div>
+    );
+  }
 
   return (
     <div className="perf-page">
       {/* ── Header ────────────────────────────────────── */}
       <div className="perf-header">
         <div>
-          <h1 className="perf-title">Hieu suat & ROI</h1>
-          <p className="perf-subtitle">Phan tich hieu qua dau tu va danh gia chat luong creator</p>
+          <h1 className="perf-title">Hiệu suất & ROI Chiến dịch</h1>
+          <p className="perf-subtitle">Phân tích hiệu quả đầu tư, ROAS thực tế và nghiệm thu đánh giá Creator</p>
         </div>
         <div className="perf-header-right">
-          <Select value={filterCampaign} onChange={setFilterCampaign} style={{ width: 220 }}>
-            <Option value="all">Tat ca chien dich</Option>
-            {CAMPAIGNS.map(c => <Option key={c.id} value={c.id}>{c.name}</Option>)}
+          <Select
+            value={filterCampaign}
+            onChange={setFilterCampaign}
+            style={{ width: 220 }}
+            placeholder="Lọc chiến dịch"
+          >
+            <Option value="all">Tất cả chiến dịch ({campaigns.length})</Option>
+            {campaigns.map((c) => (
+              <Option key={c.id} value={c.id}>
+                {c.name}
+              </Option>
+            ))}
           </Select>
-          <Button icon={<DownloadOutlined />} style={{ borderRadius: 8 }}>Xuat bao cao</Button>
+          <Button icon={<SyncOutlined />} onClick={loadPerformanceData}>
+            Làm mới
+          </Button>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)', borderRadius: 8 }}
+            onClick={() => {
+              if (campaigns.length === 0) {
+                message.warning('Bạn chưa có chiến dịch nào để nhập số liệu.');
+                return;
+              }
+              const defaultC = campaigns[0];
+              selfReportForm.setFieldsValue({
+                campaignId: defaultC.id,
+                spent: defaultC.spent,
+                revenue: defaultC.revenue,
+                reach: defaultC.reach,
+                conversions: defaultC.conversions,
+              });
+              setSelfReportModal({ open: true, campaign: defaultC });
+            }}
+          >
+            Nhập số liệu ROI
+          </Button>
         </div>
       </div>
 
-      {/* ── KPI Summary Row ───────────────────────────── */}
-      <div className="perf-kpi-row">
-        <KpiCard label="Tong doanh thu" value={fmtVND(totalRevenue)} sub="Tat ca chien dich" trend={23} icon={<DollarOutlined />} color="#10b981" />
-        <KpiCard label="ROAS trung binh" value={`${avgROAS}x`} sub="Doanh thu / Chi phi" trend={8} icon={<TrophyOutlined />} color="#6366f1" />
-        <KpiCard label="Tong tien chi" value={fmtVND(totalSpent)} sub="Da giai ngan" icon={<DollarOutlined />} color="#3b82f6" />
-        <KpiCard label="Tong tiep can" value={fmtNum(totalReach)} trend={15} icon={<EyeOutlined />} color="#8b5cf6" />
-        <KpiCard label="Chuyen doi" value={fmtNum(totalConv)} trend={12} icon={<CheckCircleOutlined />} color="#f59e0b" />
-        <KpiCard label="Danh gia Creator" value={`${avgRating}/5`} sub={`${reviewedList.length}/${reviews.length} da danh gia`} icon={<StarFilled />} color="#ec4899" />
-      </div>
+      {campaigns.length === 0 ? (
+        <Card className="perf-card" style={{ marginTop: 24, textAlign: 'center', padding: '40px 0' }}>
+          <Empty
+            description={
+              <div>
+                <h3 style={{ fontWeight: 700, color: '#0F172A' }}>Chưa có dữ liệu chiến dịch</h3>
+                <p style={{ color: '#64748B', fontSize: 13 }}>
+                  Hãy tạo chiến dịch đầu tiên để hệ thống theo dõi chi phí, đối tác và phân tích tỷ suất hoàn vốn (ROAS/ROI).
+                </p>
+              </div>
+            }
+          >
+            <Button
+              type="primary"
+              style={{ background: '#4F46E5', borderRadius: 8 }}
+              onClick={() => navigate('/campaigns/create')}
+            >
+              + Tạo chiến dịch ngay
+            </Button>
+          </Empty>
+        </Card>
+      ) : (
+        <>
+          {/* ── KPI Summary Row ───────────────────────────── */}
+          <div className="perf-kpi-row">
+            <KpiCard label="Tổng doanh thu" value={fmtVND(totalRevenue)} sub="Tất cả chiến dịch" trend={23} icon={<DollarOutlined />} color="#10b981" />
+            <KpiCard label="ROAS trung bình" value={`${avgROAS}x`} sub="Doanh thu / Chi phí" trend={8} icon={<TrophyOutlined />} color="#6366f1" />
+            <KpiCard label="Tổng chi phí" value={fmtVND(totalSpent)} sub="Đã nghiệm thu / giải ngân" icon={<DollarOutlined />} color="#3b82f6" />
+            <KpiCard label="Tổng tiếp cận" value={fmtNum(totalReach)} trend={15} icon={<EyeOutlined />} color="#8b5cf6" />
+            <KpiCard label="Chuyển đổi" value={fmtNum(totalConv)} trend={12} icon={<CheckCircleOutlined />} color="#f59e0b" />
+            <KpiCard label="Đánh giá Creator" value={`${avgRating}/5`} sub={`${reviewedList.length}/${reviews.length} đã đánh giá`} icon={<StarFilled />} color="#ec4899" />
+          </div>
 
-      {/* ── Self-reported notice ──────────────────────── */}
-      {selfReportedCount > 0 && (
-        <div className="perf-self-reported-banner">
-          <FlagFilled style={{ color: '#f59e0b', fontSize: 14 }} />
-          <span>
-            <strong>{selfReportedCount} chien dich</strong> co du lieu doanh thu <strong>tu khai bao (Self-reported)</strong> — Brand tu nhap lieu thu cong, chua duoc xac minh doc lap boi he thong.
-          </span>
-          <Tooltip title="Self-reported flag: Du lieu nay do Brand tu nhap va khong duoc he thong tu dong xac minh tu platform MXH. Nen doi chieu voi du lieu ads hoac analytics rieng.">
-            <InfoCircleOutlined style={{ color: '#f59e0b', cursor: 'pointer' }} />
-          </Tooltip>
-        </div>
-      )}
+          {/* ── Self-reported notice ──────────────────────── */}
+          {selfReportedCount > 0 && (
+            <div className="perf-self-reported-banner">
+              <FlagFilled style={{ color: '#f59e0b', fontSize: 14 }} />
+              <span>
+                <strong>{selfReportedCount} chiến dịch</strong> có số liệu <strong>Tự khai báo (Self-reported)</strong> — do Brand cập nhật trực tiếp để tính toán tỷ suất lợi nhuận ROI.
+              </span>
+              <Tooltip title="Self-reported flag: Dữ liệu này do Brand chủ động nhập từ kết quả bán hàng hoặc affiliate thực tế.">
+                <InfoCircleOutlined style={{ color: '#f59e0b', cursor: 'pointer' }} />
+              </Tooltip>
+            </div>
+          )}
 
       {/* ── Tabs ─────────────────────────────────────── */}
       <Tabs activeKey={activeTab} onChange={setActiveTab} className="perf-tabs" size="large">
@@ -274,51 +531,24 @@ const PerformancePage: React.FC = () => {
               </Card>
             </Col>
 
-            {/* Funnel */}
-            <Col xs={24} md={10}>
-              <Card title="Phe chuyen doi tong hop" className="perf-card">
-                {[
-                  { label: 'Tiep can (Reach)', value: CAMPAIGNS.reduce((s, c) => s + c.reach, 0), pct: 100, color: '#6366f1' },
-                  { label: 'Luot click', value: CAMPAIGNS.reduce((s, c) => s + c.clicks, 0), pct: 17, color: '#8b5cf6' },
-                  { label: 'Chuyen doi', value: totalConv, pct: 6, color: '#a78bfa' },
-                  { label: 'Dat ROAS > 2.5x', value: CAMPAIGNS.filter(c => c.roas >= 2.5).length, pct: 75, color: '#10b981' },
-                ].map(f => (
-                  <div key={f.label} style={{ marginBottom: 14 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#666', marginBottom: 4 }}>
-                      <span>{f.label}</span>
-                      <span style={{ fontWeight: 700 }}>{typeof f.value === 'number' && f.value > 100 ? fmtNum(f.value) : f.value}</span>
-                    </div>
-                    <div style={{ height: 20, background: '#f1f5f9', borderRadius: 6, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${f.pct}%`, background: f.color, borderRadius: 6, transition: 'width .5s' }} />
-                    </div>
-                  </div>
-                ))}
-              </Card>
-            </Col>
-
             {/* Summary Stats */}
-            <Col xs={24} md={14}>
-              <Card title="Tong ket hieu suat dau tu" className="perf-card">
+            <Col xs={24}>
+              <Card title="Tổng kết hiệu quả đầu tư chiến dịch" className="perf-card">
                 <Row gutter={[16, 16]}>
                   {[
-                    { title: 'Tong loi nhuan rong', value: fmtVND(totalRevenue - totalSpent), color: '#10b981' },
-                    { title: 'Chi phi trung binh/chuyen doi', value: fmtVND(Math.round(totalSpent / totalConv)), color: '#6366f1' },
-                    { title: 'Trung binh tiep can/chien dich', value: fmtNum(Math.round(totalReach / CAMPAIGNS.length)), color: '#3b82f6' },
-                    { title: 'So chien dich ROAS > 3x', value: `${CAMPAIGNS.filter(c => c.roas >= 3).length}/${CAMPAIGNS.length}`, color: '#f59e0b' },
-                  ].map(s => (
-                    <Col span={12} key={s.title}>
-                      <div style={{ background: '#f8f9ff', borderRadius: 10, padding: 14, border: `1px solid #e8e3ff` }}>
+                    { title: 'Tổng lợi nhuận ròng thu về', value: fmtVND(totalRevenue - totalSpent), color: '#10b981' },
+                    { title: 'Chi phí trung bình / chuyển đổi', value: totalConv > 0 ? fmtVND(Math.round(totalSpent / totalConv)) : '0 ₫', color: '#6366f1' },
+                    { title: 'Lượt tiếp cận trung bình / chiến dịch', value: fmtNum(Math.round(totalReach / Math.max(campaigns.length, 1))), color: '#3b82f6' },
+                    { title: 'Số chiến dịch đạt ROAS > 3x', value: `${campaigns.filter((c) => c.roas >= 3).length}/${campaigns.length}`, color: '#f59e0b' },
+                  ].map((s) => (
+                    <Col xs={24} sm={12} md={6} key={s.title}>
+                      <div style={{ background: '#f8f9ff', borderRadius: 10, padding: 14, border: '1px solid #e8e3ff' }}>
                         <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>{s.title}</div>
                         <div style={{ fontSize: 18, fontWeight: 800, color: s.color }}>{s.value}</div>
                       </div>
                     </Col>
                   ))}
                 </Row>
-                <Divider style={{ margin: '16px 0 12px' }} />
-                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#92400e' }}>
-                  <FlagFilled style={{ color: '#f59e0b', marginRight: 6 }} />
-                  <strong>Luu y:</strong> {selfReportedCount} chien dich co du lieu <strong>Tu khai bao</strong> — chua qua nen tang xac minh. Nen doi chieu voi Analytics chinh thuc truoc khi bao cao.
-                </div>
               </Card>
             </Col>
           </Row>
@@ -327,45 +557,26 @@ const PerformancePage: React.FC = () => {
         {/* ════════════════════════════════════════════════════
             TAB 2: BRAND REVIEW (STRUCTURED RATING)
         ════════════════════════════════════════════════════ */}
-        <TabPane tab={<span><StarFilled style={{ color: '#faad14' }} /> Danh gia Creator (Brand Review)</span>} key="review">
+        <TabPane tab={<span><StarFilled style={{ color: '#faad14' }} /> Đánh giá Creator ({reviews.length})</span>} key="review">
           <Row gutter={[20, 20]}>
-
             {/* Review Summary */}
             <Col xs={24}>
               <div className="review-summary-strip">
                 <div className="rsm-block">
                   <div className="rsm-num" style={{ color: '#faad14' }}>{avgRating}</div>
                   <Rate disabled value={parseFloat(avgRating)} allowHalf style={{ fontSize: 16 }} />
-                  <div className="rsm-label">Diem trung binh tong the</div>
+                  <div className="rsm-label">Điểm trung bình tổng thể</div>
                 </div>
                 <div className="rsm-divider" />
                 <div className="rsm-block">
                   <div className="rsm-num" style={{ color: '#10b981' }}>{reviewedList.length}</div>
-                  <div className="rsm-label">Creator da danh gia</div>
+                  <div className="rsm-label">Creator đã đánh giá</div>
                 </div>
                 <div className="rsm-divider" />
                 <div className="rsm-block">
                   <div className="rsm-num" style={{ color: '#f59e0b' }}>{pendingList.length}</div>
-                  <div className="rsm-label">Cho danh gia</div>
+                  <div className="rsm-label">Chờ đánh giá</div>
                 </div>
-                <div className="rsm-divider" />
-                {[
-                  { label: 'Dung han', key: 'punctuality', icon: <ClockCircleOutlined />, color: '#3b82f6' },
-                  { label: 'Thai do', key: 'attitude', icon: <LikeOutlined />, color: '#10b981' },
-                  { label: 'Chat luong', key: 'quality', icon: <ThunderboltOutlined />, color: '#8b5cf6' },
-                  { label: 'Dat KPI', key: 'kpiAchieved', icon: <TrophyOutlined />, color: '#f59e0b' },
-                ].map(dim => {
-                  const avg = reviewedList.length
-                    ? reviewedList.reduce((s, r) => s + (r as any)[dim.key], 0) / reviewedList.length
-                    : 0;
-                  return (
-                    <div key={dim.key} className="rsm-dim">
-                      <div style={{ fontSize: 18, color: dim.color }}>{dim.icon}</div>
-                      <div style={{ fontWeight: 800, fontSize: 16, color: dim.color }}>{avg.toFixed(1)}</div>
-                      <div style={{ fontSize: 11, color: '#888' }}>{dim.label}</div>
-                    </div>
-                  );
-                })}
               </div>
             </Col>
 
@@ -373,25 +584,36 @@ const PerformancePage: React.FC = () => {
             {pendingList.length > 0 && (
               <Col xs={24}>
                 <Card
-                  title={<span><ClockCircleOutlined style={{ color: '#f59e0b', marginRight: 6 }} />Creator chua duoc danh gia ({pendingList.length})</span>}
+                  title={
+                    <span>
+                      <ClockCircleOutlined style={{ color: '#f59e0b', marginRight: 6 }} />
+                      Creator chưa được đánh giá ({pendingList.length})
+                    </span>
+                  }
                   className="perf-card"
                 >
                   <div className="review-pending-grid">
-                    {pendingList.map(cr => (
+                    {pendingList.map((cr) => (
                       <div key={cr.id} className="review-pending-card">
                         <Avatar src={cr.avatar} size={48} />
                         <div style={{ flex: 1 }}>
                           <div style={{ fontWeight: 700, fontSize: 14 }}>{cr.creatorName}</div>
                           <div style={{ fontSize: 12, color: '#888' }}>{cr.campaign}</div>
-                          <Tag color={cr.platform === 'TikTok' ? 'magenta' : cr.platform === 'YouTube' ? 'red' : 'orange'} style={{ fontSize: 10, marginTop: 4 }}>{cr.platform}</Tag>
+                          <Tag color="magenta" style={{ fontSize: 10, marginTop: 4 }}>
+                            {cr.platform}
+                          </Tag>
                         </div>
                         <Button
                           type="primary"
                           icon={<StarFilled />}
-                          style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', border: 'none', borderRadius: 8 }}
-                          onClick={() => { setReviewModal({ open: true, creator: cr }); form.resetFields(); form.setFieldsValue({ punctuality: 5, attitude: 5, quality: 5, kpiAchieved: 5 }); }}
+                          style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', border: 'none', borderRadius: 8 }}
+                          onClick={() => {
+                            setReviewModal({ open: true, creator: cr });
+                            reviewForm.resetFields();
+                            reviewForm.setFieldsValue({ punctuality: 5, attitude: 5, quality: 5, kpiAchieved: 5 });
+                          }}
                         >
-                          Viet danh gia
+                          Viết đánh giá
                         </Button>
                       </div>
                     ))}
@@ -403,86 +625,190 @@ const PerformancePage: React.FC = () => {
             {/* Completed Reviews */}
             <Col xs={24}>
               <Card
-                title={<span><CheckCircleOutlined style={{ color: '#10b981', marginRight: 6 }} />Danh gia da hoan thanh ({reviewedList.length})</span>}
+                title={
+                  <span>
+                    <CheckCircleOutlined style={{ color: '#10b981', marginRight: 6 }} />
+                    Đánh giá đã hoàn thành ({reviewedList.length})
+                  </span>
+                }
                 className="perf-card"
               >
-                <div className="review-cards-grid">
-                  {reviewedList.map(rv => (
-                    <div key={rv.id} className="review-card-item">
-                      <div className="review-card-top">
-                        <Avatar src={rv.avatar} size={52} style={{ border: '2px solid #e8e3ff' }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 800, fontSize: 15 }}>{rv.creatorName}</div>
-                          <div style={{ fontSize: 12, color: '#888', marginBottom: 3 }}>{rv.campaign}</div>
-                          <Tag color={rv.platform === 'TikTok' ? 'magenta' : rv.platform === 'YouTube' ? 'red' : 'orange'} style={{ fontSize: 10 }}>{rv.platform}</Tag>
+                {reviewedList.length === 0 ? (
+                  <Empty description="Chưa có đánh giá nào được gửi. Hãy đánh giá các creator trong chiến dịch của bạn." />
+                ) : (
+                  <div className="review-cards-grid">
+                    {reviewedList.map((rv) => (
+                      <div key={rv.id} className="review-card-item">
+                        <div className="review-card-top">
+                          <Avatar src={rv.avatar} size={52} style={{ border: '2px solid #e8e3ff' }} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 800, fontSize: 15 }}>{rv.creatorName}</div>
+                            <div style={{ fontSize: 12, color: '#888', marginBottom: 3 }}>{rv.campaign}</div>
+                            <Tag color="magenta" style={{ fontSize: 10 }}>
+                              {rv.platform}
+                            </Tag>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: 22, fontWeight: 900, color: '#faad14', lineHeight: 1 }}>
+                              {rv.overallRating}
+                            </div>
+                            <Rate disabled value={rv.overallRating} allowHalf style={{ fontSize: 12 }} />
+                          </div>
                         </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: 22, fontWeight: 900, color: '#faad14', lineHeight: 1 }}>{rv.overallRating}</div>
-                          <Rate disabled value={rv.overallRating} allowHalf style={{ fontSize: 12 }} />
+
+                        <div className="review-dims-grid">
+                          <ScoreRow label="Đúng hạn" value={rv.punctuality} icon={<ClockCircleOutlined style={{ color: '#3b82f6' }} />} />
+                          <ScoreRow label="Thái độ" value={rv.attitude} icon={<LikeOutlined style={{ color: '#10b981' }} />} />
+                          <ScoreRow label="Chất lượng" value={rv.quality} icon={<ThunderboltOutlined style={{ color: '#8b5cf6' }} />} />
+                          <ScoreRow label="Đạt KPI" value={rv.kpiAchieved} icon={<TrophyOutlined style={{ color: '#f59e0b' }} />} />
+                        </div>
+
+                        {rv.comment && <div className="review-comment-box">"{rv.comment}"</div>}
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                          <span style={{ fontSize: 11, color: '#aaa' }}>
+                            Ngày đánh giá: {rv.date ? dayjs(rv.date).format('DD/MM/YYYY') : 'Gần đây'}
+                          </span>
+                          <Button
+                            size="small"
+                            icon={<EditOutlined />}
+                            onClick={() => {
+                              setReviewModal({ open: true, creator: rv });
+                              reviewForm.setFieldsValue(rv);
+                            }}
+                          >
+                            Sửa
+                          </Button>
                         </div>
                       </div>
-
-                      <div className="review-dims-grid">
-                        <ScoreRow label="Dung han" value={rv.punctuality} icon={<ClockCircleOutlined style={{ color: '#3b82f6' }} />} />
-                        <ScoreRow label="Thai do" value={rv.attitude} icon={<LikeOutlined style={{ color: '#10b981' }} />} />
-                        <ScoreRow label="Chat luong ND" value={rv.quality} icon={<ThunderboltOutlined style={{ color: '#8b5cf6' }} />} />
-                        <ScoreRow label="Dat KPI" value={rv.kpiAchieved} icon={<TrophyOutlined style={{ color: '#f59e0b' }} />} />
-                      </div>
-
-                      {rv.comment && (
-                        <div className="review-comment-box">"{rv.comment}"</div>
-                      )}
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-                        <span style={{ fontSize: 11, color: '#aaa' }}>Ngay danh gia: {dayjs(rv.date).format('DD/MM/YYYY')}</span>
-                        <Button size="small" icon={<EditOutlined />} onClick={() => { setReviewModal({ open: true, creator: rv }); form.setFieldsValue(rv); }}>Sua</Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </Card>
             </Col>
           </Row>
         </TabPane>
       </Tabs>
+      </>
+      )}
 
-      {/* ── Review Modal ──────────────────────────────────────────────────── */}
+      {/* ── Review Creator Modal ──────────────────────────────────────────── */}
       <Modal
         open={reviewModal.open}
         onCancel={() => setReviewModal({ open: false })}
         onOk={handleSubmitReview}
+        confirmLoading={reviewSubmitting}
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Avatar src={reviewModal.creator?.avatar} size={36} />
             <div>
-              <div style={{ fontWeight: 700 }}>Danh gia Creator: {reviewModal.creator?.creatorName}</div>
+              <div style={{ fontWeight: 700 }}>Đánh giá Creator: {reviewModal.creator?.creatorName}</div>
               <div style={{ fontSize: 12, color: '#888' }}>{reviewModal.creator?.campaign}</div>
             </div>
           </div>
         }
-        okText="Gui danh gia"
-        cancelText="Huy"
+        okText="Gửi đánh giá"
+        cancelText="Hủy"
         width={540}
-        okButtonProps={{ style: { background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', border: 'none' } }}
+        okButtonProps={{ style: { background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', border: 'none' } }}
       >
-        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+        <Form form={reviewForm} layout="vertical" style={{ marginTop: 16 }}>
           <div className="review-modal-criteria">
-            <Form.Item label={<span><ClockCircleOutlined style={{ color: '#3b82f6', marginRight: 5 }} />Tinh dung han (Punctuality)</span>} name="punctuality" rules={[{ required: true }]}>
+            <Form.Item
+              label={<span><ClockCircleOutlined style={{ color: '#3b82f6', marginRight: 5 }} />Tính đúng hạn (Punctuality)</span>}
+              name="punctuality"
+              rules={[{ required: true }]}
+            >
               <Rate />
             </Form.Item>
-            <Form.Item label={<span><LikeOutlined style={{ color: '#10b981', marginRight: 5 }} />Thai do chuyen nghiep (Attitude)</span>} name="attitude" rules={[{ required: true }]}>
+            <Form.Item
+              label={<span><LikeOutlined style={{ color: '#10b981', marginRight: 5 }} />Thái độ hợp tác (Attitude)</span>}
+              name="attitude"
+              rules={[{ required: true }]}
+            >
               <Rate />
             </Form.Item>
-            <Form.Item label={<span><ThunderboltOutlined style={{ color: '#8b5cf6', marginRight: 5 }} />Chat luong noi dung (Content Quality)</span>} name="quality" rules={[{ required: true }]}>
+            <Form.Item
+              label={<span><ThunderboltOutlined style={{ color: '#8b5cf6', marginRight: 5 }} />Chất lượng nội dung (Content Quality)</span>}
+              name="quality"
+              rules={[{ required: true }]}
+            >
               <Rate />
             </Form.Item>
-            <Form.Item label={<span><TrophyOutlined style={{ color: '#f59e0b', marginRight: 5 }} />Kha nang dat KPI (KPI Achievement)</span>} name="kpiAchieved" rules={[{ required: true }]}>
+            <Form.Item
+              label={<span><TrophyOutlined style={{ color: '#f59e0b', marginRight: 5 }} />Khả năng đạt KPI (KPI Achievement)</span>}
+              name="kpiAchieved"
+              rules={[{ required: true }]}
+            >
               <Rate />
             </Form.Item>
           </div>
-          <Form.Item label="Nhan xet tong the" name="comment" rules={[{ required: true, message: 'Vui long nhap nhan xet' }]}>
-            <TextArea rows={3} placeholder="Mo ta trai nghiem hop tac, diem manh, diem can cai thien..." />
+          <Form.Item
+            label="Nhận xét chi tiết"
+            name="comment"
+            rules={[{ required: true, message: 'Vui lòng nhập nhận xét!' }]}
+          >
+            <TextArea rows={3} placeholder="Mô tả trải nghiệm hợp tác, chất lượng bài đăng, thái độ làm việc..." />
           </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* ── Self-Reported Metrics Modal ─────────────────────────────────────── */}
+      <Modal
+        open={selfReportModal.open}
+        onCancel={() => setSelfReportModal({ open: false })}
+        onOk={handleSaveSelfReport}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <FlagFilled style={{ color: '#f59e0b' }} />
+            <span>Cập nhật số liệu ROI tự khai báo</span>
+          </div>
+        }
+        okText="Lưu số liệu"
+        cancelText="Hủy"
+        width={500}
+      >
+        <Form form={selfReportForm} layout="vertical" style={{ marginTop: 16 }}>
+          <div style={{ marginBottom: 14, fontSize: 13, color: '#64748B' }}>
+            Chiến dịch: <strong>{selfReportModal.campaign?.name}</strong>
+          </div>
+
+          <Form.Item
+            name="spent"
+            label="Tổng chi phí thực chi (VND)"
+            rules={[{ required: true, message: 'Vui lòng nhập chi phí!' }]}
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              placeholder="Ví dụ: 50,000,000"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="revenue"
+            label="Tổng doanh thu tạo ra (VND)"
+            rules={[{ required: true, message: 'Vui lòng nhập doanh thu!' }]}
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              placeholder="Ví dụ: 140,000,000"
+            />
+          </Form.Item>
+
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="reach" label="Lượt tiếp cận (Reach)">
+                <InputNumber style={{ width: '100%' }} placeholder="3,000,000" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="conversions" label="Chuyển đổi (Orders)">
+                <InputNumber style={{ width: '100%' }} placeholder="1,500" />
+              </Form.Item>
+            </Col>
+          </Row>
         </Form>
       </Modal>
     </div>

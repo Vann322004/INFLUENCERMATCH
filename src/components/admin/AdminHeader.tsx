@@ -7,7 +7,7 @@ import {
   CheckOutlined, CloseCircleOutlined, WarningOutlined,
   InfoCircleOutlined, CheckCircleOutlined,
 } from '@ant-design/icons';
-import { adminAuthService, ADMIN_NOTIFICATIONS } from '../../mock/adminData';
+import { adminAuthService, ADMIN_NOTIFICATIONS, ADMIN_USER } from '../../mock/adminData';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 
 const { Header } = Layout;
@@ -28,7 +28,7 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
   const navigate   = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState(ADMIN_NOTIFICATIONS);
-  const currentUser  = adminAuthService.getCurrentUser();
+  const currentUser: any = adminAuthService.getCurrentUser() || ADMIN_USER;
   const unreadCount  = notifications.filter(n => !n.read).length;
 
   const handleLogout = () => {

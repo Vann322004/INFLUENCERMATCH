@@ -53,17 +53,15 @@ Tài liệu này đối soát toàn bộ sơ đồ màn hình Admin (Admin Scree
 
 | STT | Phân hệ (Module) | Yêu cầu theo sơ đồ | Hiện trạng | Mức độ | Đánh giá |
 |:---|:---|:---|:---|:---:|:---|
-| **0** | **Admin Layout** | Sidebar + Header + Dropdown + Rail | Chưa có layout riêng cho admin | 0% | 🔴 **Chưa làm** |
-| **1** | **Admin Login** | JWT + Role check `admin` | Chỉ có login chung, chưa check role | 10% | 🔴 **Chưa làm** |
-| **2** | **Admin Dashboard** | KPI Cards + Charts (Users, Revenue, Creators, Jobs) | Chưa có | 0% | 🔴 **Chưa làm** |
-| **3** | **Account Management** | List + Detail + Create Modal + Lock/Unlock + Security Activity | Chưa có | 0% | 🔴 **Chưa làm** |
-| **4** | **Creator Catalog** | 6 sub-tabs: List, Add/Import, Detail, Duplicates, External, Refresh | Chưa có (chỉ có Discovery phía Brand) | 0% | 🔴 **Chưa làm** |
-| **5** | **Data Sources** | Connector Status + Sync & Rate-limit + Source Priority | Chưa có | 0% | 🔴 **Chưa làm** |
-| **6** | **Collection Jobs** | List + Filter + Job Detail + Retry/Cancel | Chưa có | 0% | 🔴 **Chưa làm** |
-| **7** | **Scoring Config** | 4 tabs: Weights, Preview, Version History, Rollback | Chưa có | 0% | 🔴 **Chưa làm** |
-| **8** | **Subscription Plans** | Create/Edit Plan + Activate/Stop | Chưa có (chỉ có phía Brand xem plans) | 0% | 🔴 **Chưa làm** |
-| **9** | **Payments** | Transaction List + Detail + Refund Modal | Chưa có | 0% | 🔴 **Chưa làm** |
-| **10** | **Audit Log** | List + Filter + Audit Detail (Old/New value diff) | Chưa có | 0% | 🔴 **Chưa làm** |
+| **0** | **Admin Layout** | Sidebar + Header + Dropdown + Rail | Đã tích hợp hoàn thiện layout admin | 100% | 🟢 **Hoàn thành** |
+| **1** | **Admin Login** | JWT + Role check `admin` | Đã dùng chung login Brand + check role admin | 100% | 🟢 **Hoàn thành** |
+| **2** | **Admin Dashboard** | KPI Cards + Charts (Users, Revenue, Creators, Jobs) | Đã hoàn thiện đầy đủ KPIs & biểu đồ | 100% | 🟢 **Hoàn thành** |
+| **3** | **Account Management** | List + Detail + Create Modal + Lock/Unlock + Security Activity | Đã hoàn thiện 5/5 components | 100% | 🟢 **Hoàn thành** |
+| **4** | **Creator Catalog** | 6 sub-tabs: List, Add/Import, Detail, Duplicates, External, Refresh | Đã hoàn thiện container + 6 sub-tabs | 100% | 🟢 **Hoàn thành** |
+| **5** | **Data Sources** | Connector Status + Sync & Rate-limit + Source Priority | Đã hoàn thiện 4/4 components | 100% | 🟢 **Hoàn thành** |
+| **6** | **Collection Jobs & Scoring** | Jobs (Detail + Retry/Cancel) + Scoring (Weights + Preview + Rollback) | Đã hoàn thiện 8/8 components | 100% | 🟢 **Hoàn thành** |
+| **7** | **Subscriptions & Payments** | Plans (Create/Edit + Active/Stop) + Payments (Detail + Refund) | Đã hoàn thiện 6/6 components | 100% | 🟢 **Hoàn thành** |
+| **8** | **Audit Log & Notifications** | Audit Log + Diff Drawer + Notification Alerts Drawer | Đã hoàn thiện 3/3 components | 100% | 🟢 **Hoàn thành** |
 
 ---
 
@@ -111,75 +109,56 @@ Tài liệu này đối soát toàn bộ sơ đồ màn hình Admin (Admin Scree
 - [x] **3.1** Tạo `src/pages/admin/accounts/AccountManagementPage.tsx`
   - Table: Avatar | Tên | Email | Role | Trạng thái | Lần đăng nhập cuối | Actions
   - Filter: Role (Admin/Brand/Creator), Status (Active/Locked/Inactive), Search
-  - Bulk action: Lock/Unlock nhiều tài khoản, Export CSV
-- [x] **3.2** Tạo `src/pages/admin/accounts/AccountDetailPage.tsx`
-  - Thông tin đầy đủ tài khoản
-  - Lịch sử hoạt động bảo mật
-  - Panel đổi trạng thái
-- [x] **3.3** Tạo `src/pages/admin/accounts/components/CreateAdminModal.tsx`
-  - Form: Họ tên, Email, Password, Role, Ghi chú
-  - Validation + Submit
-- [x] **3.4** Tạo `src/pages/admin/accounts/components/LockUnlockModal.tsx`
-  - Confirm modal với lý do (Reason input)
-  - 3 action: Lock / Unlock / Restore
-- [x] **3.5** Tạo `src/pages/admin/accounts/components/SecurityActivityPanel.tsx`
-  - Lần đăng nhập cuối: Thời gian + IP + Thiết bị
-  - Lịch sử 10 sự kiện bảo mật gần nhất
-
-**Tiến độ Phase 3**: `5 / 5` tasks ✅✅✅✅✅
-
----
-
-### 🟠 PHASE 4 — Creator Catalog (6 Sub-tabs)
+  - Bulk action: Lock/Unlock nhiều tài khoản, Export CSV### 🟠 PHASE 4 — Creator Catalog (6 Sub-tabs)
 > **Mục tiêu**: Quản lý toàn bộ creator trong hệ thống từ góc độ admin
 
-- [ ] **4.1** Tạo `src/pages/admin/creators/CreatorCatalogPage.tsx` — container với 6 tabs
-- [ ] **4.2** Tạo `src/pages/admin/creators/components/CreatorListTab.tsx`
+- [x] **4.1** Tạo `src/pages/admin/creators/CreatorCatalogPage.tsx` — container với 6 tabs
+- [x] **4.2** Tạo `src/pages/admin/creators/components/CreatorListTab.tsx`
   - Table: Avatar | Handle | Platform | Followers | ER% | Status | Actions
   - Search, Filter (platform, category, follower range, status)
   - Toggle Hide / Inactive per creator
-- [ ] **4.3** Tạo `src/pages/admin/creators/components/AddImportTab.tsx`
+- [x] **4.3** Tạo `src/pages/admin/creators/components/AddImportTab.tsx`
   - Form thêm manual: handle, platform, bio, categories
   - Upload CSV (với template download)
   - Dataset picker từ external sources
-- [ ] **4.4** Tạo `src/pages/admin/creators/components/CreatorDetailTab.tsx`
+- [x] **4.4** Tạo `src/pages/admin/creators/components/CreatorDetailTab.tsx`
   - Profile: avatar, tên, bio, categories, location, joined date
   - Social accounts: platform + handle + followers + ER + last verified
   - Nút Edit Metadata
-- [ ] **4.5** Tạo `src/pages/admin/creators/components/DuplicatesMergeTab.tsx`
+- [x] **4.5** Tạo `src/pages/admin/creators/components/DuplicatesMergeTab.tsx`
   - Danh sách cặp duplicate phát hiện được
   - So sánh side-by-side 2 profile
   - Chọn master record → Merge → Confirm
-- [ ] **4.6** Tạo `src/pages/admin/creators/components/ExternalDiscoveredTab.tsx`
+- [x] **4.6** Tạo `src/pages/admin/creators/components/ExternalDiscoveredTab.tsx`
   - Table: Handle | Source | Ngày phát hiện | Status (Pending/Approved/Rejected)
   - Action: Approve (thêm vào catalog) / Reject / Review
-- [ ] **4.7** Tạo `src/pages/admin/creators/components/RefreshRequestTab.tsx`
+- [x] **4.7** Tạo `src/pages/admin/creators/components/RefreshRequestTab.tsx`
   - Queue các yêu cầu làm mới dữ liệu public
   - Status: Pending / Processing / Done / Failed
   - Action: Retry / Cancel request
 
-**Tiến độ Phase 4**: `0 / 7` tasks ⬜⬜⬜⬜⬜⬜⬜
+**Tiến độ Phase 4**: `7 / 7` tasks ✅✅✅✅✅✅✅
 
 ---
 
 ### 🟡 PHASE 5 — Data Sources
 > **Mục tiêu**: Quản lý connector đến các nền tảng mạng xã hội
 
-- [ ] **5.1** Tạo `src/pages/admin/datasources/DataSourcesPage.tsx`
+- [x] **5.1** Tạo `src/pages/admin/datasources/DataSourcesPage.tsx`
   - Grid connector cards: Instagram, TikTok, YouTube, Twitter/X, Facebook...
   - Mỗi card: Logo | Status badge | Last sync | Success/Fail stats
-- [ ] **5.2** Tạo `src/pages/admin/datasources/components/ConnectorStatusCard.tsx`
+- [x] **5.2** Tạo `src/pages/admin/datasources/components/ConnectorStatusCard.tsx`
   - Toggle ON / OFF / PAUSE per connector
   - Status indicator: 🟢 Active | 🔴 Error | 🟡 Paused
-- [ ] **5.3** Tạo `src/pages/admin/datasources/components/SyncRateLimitPanel.tsx`
+- [x] **5.3** Tạo `src/pages/admin/datasources/components/SyncRateLimitPanel.tsx`
   - Success count / Fail count / Total requests hôm nay
   - Rate limit config: requests/minute
   - Biểu đồ mini: sync success rate 7 ngày qua
-- [ ] **5.4** Tạo `src/pages/admin/datasources/components/SourcePriorityPanel.tsx`
+- [x] **5.4** Tạo `src/pages/admin/datasources/components/SourcePriorityPanel.tsx`
   - Drag & drop list để đặt thứ tự ưu tiên nguồn dữ liệu
   - Save ordering button
 
-**Tiến độ Phase 5**: `0 / 4` tasks ⬜⬜⬜⬜
+**Tiến độ Phase 5**: `4 / 4` tasks ✅✅✅✅
 
 ---
 
@@ -187,37 +166,37 @@ Tài liệu này đối soát toàn bộ sơ đồ màn hình Admin (Admin Scree
 > **Mục tiêu**: Monitor background jobs + Cấu hình thuật toán chấm điểm creator
 
 #### 6A — Collection Jobs
-- [ ] **6.1** Tạo `src/pages/admin/jobs/CollectionJobsPage.tsx`
+- [x] **6.1** Tạo `src/pages/admin/jobs/CollectionJobsPage.tsx`
   - Table: Job ID | Type | Status | Started | Duration | Source | Actions
   - Filter: Status (Running/Done/Failed/Cancelled), Type, Date range
   - Status badges: 🟢 Done | 🔵 Running | 🔴 Failed | ⚫ Cancelled
-- [ ] **6.2** Tạo `src/pages/admin/jobs/components/JobDetailModal.tsx`
+- [x] **6.2** Tạo `src/pages/admin/jobs/components/JobDetailModal.tsx`
   - Chi tiết job: Creator target, Duration, Log messages, Error message (nếu có)
   - Timestamp từng bước thực thi
-- [ ] **6.3** Tạo `src/pages/admin/jobs/components/RetryCancelActions.tsx`
+- [x] **6.3** Tạo `src/pages/admin/jobs/components/RetryCancelActions.tsx`
   - Button Retry (chỉ khi status Failed/Cancelled)
   - Button Cancel (chỉ khi status Running/Pending)
   - Confirm popover trước khi thực hiện
 
 #### 6B — Scoring Config
-- [ ] **6.4** Tạo `src/pages/admin/scoring/ScoringConfigPage.tsx` — container với 4 tabs
-- [ ] **6.5** Tạo `src/pages/admin/scoring/components/WeightsEditorTab.tsx`
+- [x] **6.4** Tạo `src/pages/admin/scoring/ScoringConfigPage.tsx` — container với 4 tabs
+- [x] **6.5** Tạo `src/pages/admin/scoring/components/WeightsEditorTab.tsx`
   - Sliders: Engagement Rate, Follower Count, Growth Rate, Content Quality, Consistency...
   - Live sum counter: **phải = 100%** mới cho phép Save
   - Màu đỏ nếu sum ≠ 100%, màu xanh nếu hợp lệ
-- [ ] **6.6** Tạo `src/pages/admin/scoring/components/PreviewTab.tsx`
+- [x] **6.6** Tạo `src/pages/admin/scoring/components/PreviewTab.tsx`
   - Chọn sample creators (3-5 người)
   - Hiển thị điểm tính toán theo weights hiện tại
   - So sánh với điểm trong database
-- [ ] **6.7** Tạo `src/pages/admin/scoring/components/VersionHistoryTab.tsx`
+- [x] **6.7** Tạo `src/pages/admin/scoring/components/VersionHistoryTab.tsx`
   - Timeline các version đã lưu: Version number | Date | Saved by | Notes
   - Badge: "Current" cho version đang dùng
-- [ ] **6.8** Tạo `src/pages/admin/scoring/components/RollbackModal.tsx`
+- [x] **6.8** Tạo `src/pages/admin/scoring/components/RollbackModal.tsx`
   - Confirm rollback về version X
   - Hiển thị diff weights cũ vs mới
   - Nhập lý do rollback
 
-**Tiến độ Phase 6**: `0 / 8` tasks ⬜⬜⬜⬜⬜⬜⬜⬜
+**Tiến độ Phase 6**: `8 / 8` tasks ✅✅✅✅✅✅✅✅
 
 ---
 
@@ -225,53 +204,52 @@ Tài liệu này đối soát toàn bộ sơ đồ màn hình Admin (Admin Scree
 > **Mục tiêu**: Quản lý gói dịch vụ và toàn bộ giao dịch thanh toán
 
 #### 7A — Subscription Plans
-- [ ] **7.1** Tạo `src/pages/admin/subscriptions/SubscriptionPlansPage.tsx`
+- [x] **7.1** Tạo `src/pages/admin/subscriptions/SubscriptionPlansPage.tsx`
   - Plan cards: Free | Starter | Pro | Enterprise
   - Mỗi card: Tên, Giá/tháng, Giá/năm, Quota (searches, creators, campaigns), Status
   - Nút "+ Tạo Plan mới"
-- [ ] **7.2** Tạo `src/pages/admin/subscriptions/components/CreateEditPlanForm.tsx`
+- [x] **7.2** Tạo `src/pages/admin/subscriptions/components/CreateEditPlanForm.tsx`
   - Form trong Drawer: Tên plan, Giá tháng, Giá năm, Mô tả, Quota config, Features list
   - Mode Create / Edit
-- [ ] **7.3** Tạo `src/pages/admin/subscriptions/components/ActivateStopToggle.tsx`
+- [x] **7.3** Tạo `src/pages/admin/subscriptions/components/ActivateStopToggle.tsx`
   - Toggle Active/Inactive per plan
   - Confirm trước khi Stop (nếu có users đang dùng)
   - Hiển thị số users đang dùng plan này
 
 #### 7B — Payments
-- [ ] **7.4** Tạo `src/pages/admin/payments/PaymentsPage.tsx`
+- [x] **7.4** Tạo `src/pages/admin/payments/PaymentsPage.tsx`
   - Table: Mã ref | Người dùng | Plan | Số tiền | Trạng thái | Ngày | Actions
   - Filter: Status (Paid/Pending/Refunded/Failed), Date range, Plan type
   - Summary stats: Total revenue, Refunded amount, Pending amount
-- [ ] **7.5** Tạo `src/pages/admin/payments/components/TransactionDetailModal.tsx`
+- [x] **7.5** Tạo `src/pages/admin/payments/components/TransactionDetailModal.tsx`
   - Mã ref, Gateway (VNPAY/MoMo/Bank), Ngày tạo, Ngày thanh toán
   - User info, Plan purchased, Amount, Status
   - Timeline trạng thái giao dịch
-- [ ] **7.6** Tạo `src/pages/admin/payments/components/RefundModal.tsx`
+- [x] **7.6** Tạo `src/pages/admin/payments/components/RefundModal.tsx`
   - Confirm hoàn tiền với lý do bắt buộc (Reason)
   - Hiển thị số tiền sẽ hoàn
   - Warning nếu đã quá 30 ngày
 
-**Tiến độ Phase 7**: `0 / 6` tasks ⬜⬜⬜⬜⬜⬜
+**Tiến độ Phase 7**: `6 / 6` tasks ✅✅✅✅✅✅
 
 ---
 
 ### 🟢 PHASE 8 — Audit Log + Notifications
 > **Mục tiêu**: Theo dõi mọi thay đổi trong hệ thống + cảnh báo hệ thống
 
-- [ ] **8.1** Tạo `src/pages/admin/audit/AuditLogPage.tsx`
+- [x] **8.1** Tạo `src/pages/admin/audit/AuditLogPage.tsx`
   - Table: Timestamp | Actor (admin) | Action | Resource type | Resource ID | IP Address
   - Filter: Action type, Date range, Actor, Resource type
   - Màu action: 🔵 CREATE | 🟡 UPDATE | 🔴 DELETE | 🟢 LOGIN
-- [ ] **8.2** Tạo `src/pages/admin/audit/components/AuditDetailDrawer.tsx`
+- [x] **8.2** Tạo `src/pages/admin/audit/components/AuditDetailDrawer.tsx`
   - Side-by-side diff: **Old Value** (JSON) vs **New Value** (JSON)
   - Highlight các field thay đổi
   - Actor info: tên, email, IP, user agent
-- [ ] **8.3** Cập nhật `src/components/admin/AdminHeader.tsx`
+- [x] **8.3** Cập nhật `src/components/admin/AdminHeader.tsx`
   - Notification bell: hiển thị system alerts
   - Phân loại: 🔴 Error | 🟡 Warning | 🔵 Info
   - Click vào → Drawer danh sách alerts với timestamp
-
-**Tiến độ Phase 8**: `0 / 3` tasks ⬜⬜⬜
+**Tiến độ Phase 8**: `3 / 3` tasks ✅✅✅
 
 ---
 
@@ -382,12 +360,12 @@ src/
 | 1 | Foundation (Layout + Routing) | 7 | 7 | ✅ Hoàn thành |
 | 2 | Admin Login + Dashboard | 2 | 2 | ✅ Hoàn thành |
 | 3 | Account Management | 5 | 5 | ✅ Hoàn thành |
-| 4 | Creator Catalog (6 tabs) | 7 | 0 | 🔴 Chưa bắt đầu |
-| 5 | Data Sources | 4 | 0 | 🔴 Chưa bắt đầu |
-| 6 | Collection Jobs + Scoring Config | 8 | 0 | 🔴 Chưa bắt đầu |
-| 7 | Subscription Plans + Payments | 6 | 0 | 🔴 Chưa bắt đầu |
-| 8 | Audit Log + Notifications | 3 | 0 | 🔴 Chưa bắt đầu |
-| **TOTAL** | | **42** | **14** | **33%** |
+| 4 | Creator Catalog (6 tabs) | 7 | 7 | ✅ Hoàn thành |
+| 5 | Data Sources | 4 | 4 | ✅ Hoàn thành |
+| 6 | Collection Jobs + Scoring Config | 8 | 8 | ✅ Hoàn thành |
+| 7 | Subscription Plans + Payments | 6 | 6 | ✅ Hoàn thành |
+| 8 | Audit Log + Notifications | 3 | 3 | ✅ Hoàn thành |
+| **TOTAL** | | **42** | **42** | **100%** |
 
 ---
 

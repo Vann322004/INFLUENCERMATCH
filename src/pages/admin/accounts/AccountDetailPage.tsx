@@ -1,27 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Button, Avatar, Tag, Descriptions, Card, Row, Col,
-  Typography, Space, Badge, Divider,
+  Typography, Space, Badge, Divider, Spin,
 } from 'antd';
 import {
   ArrowLeftOutlined, LockOutlined, UnlockOutlined,
   EditOutlined, MailOutlined, CalendarOutlined, GlobalOutlined,
 } from '@ant-design/icons';
-import { MOCK_ACCOUNTS, type AccountStatus, type AccountRole } from '../../../mock/adminData';
+import { adminService } from '../../../services/api/adminService';
+import type { AdminUser, AdminUserStatus, AdminUserRole } from '../../../types/api/admin.types';
 import SecurityActivityPanel from './components/SecurityActivityPanel';
 import LockUnlockModal from './components/LockUnlockModal';
 
 const { Title, Text } = Typography;
 
-const STATUS_CONFIG: Record<AccountStatus, { label: string; color: string }> = {
+const STATUS_CONFIG: Record<AdminUserStatus, { label: string; color: string }> = {
   active:   { label: 'Hoạt động', color: 'success' },
   locked:   { label: 'Đã khóa',   color: 'error' },
   inactive: { label: 'Không HĐ',  color: 'default' },
   pending:  { label: 'Chờ duyệt', color: 'warning' },
 };
 
-const ROLE_COLOR: Record<AccountRole, string> = {
+const ROLE_COLOR: Record<AdminUserRole, string> = {
   super_admin: '#8B5CF6',
   admin:       '#6366F1',
   brand:       '#0EA5E9',
@@ -31,11 +32,27 @@ const ROLE_COLOR: Record<AccountRole, string> = {
 export default function AccountDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [accounts, setAccounts] = useState(MOCK_ACCOUNTS);
+  const [account, setAccount] = useState<AdminUser | null>(null);
+  const [loading, setLoading] = useState(true);
   const [lockOpen, setLockOpen] = useState(false);
   const [lockAction, setLockAction] = useState<'lock' | 'unlock' | 'restore'>('lock');
 
-  const account = accounts.find(a => a.id === id);
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    adminService.getUserById(id)
+      .then(setAccount)
+      .catch(() => setAccount(null))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', paddingTop: 80 }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   if (!account) {
     return (
@@ -48,10 +65,10 @@ export default function AccountDetailPage() {
   }
 
   const statusCfg = STATUS_CONFIG[account.status];
-  const roleColor = ROLE_COLOR[account.role];
+  const roleColor = account.role ? ROLE_COLOR[account.role] : '#6366F1';
 
-  const handleLockDone = (accId: string, newStatus: AccountStatus) => {
-    setAccounts(prev => prev.map(a => a.id === accId ? { ...a, status: newStatus } : a));
+  const handleLockDone = (accId: string, newStatus: AdminUserStatus) => {
+    setAccount(prev => prev ? { ...prev, status: newStatus } : prev);
     setLockOpen(false);
   };
 

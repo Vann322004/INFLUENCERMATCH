@@ -1,23 +1,24 @@
 import React, { useState } from 'react';
 import { Modal, Form, Input, Button, Alert, message, Avatar, Typography } from 'antd';
 import { LockOutlined, UnlockOutlined, WarningOutlined } from '@ant-design/icons';
-import type { AdminAccount, AccountStatus } from '../../../../mock/adminData';
+import { adminService } from '../../../../services/api/adminService';
+import type { AdminUser, AdminUserStatus } from '../../../../types/api/admin.types';
 
 const { Text } = Typography;
 
 interface LockUnlockModalProps {
   open: boolean;
-  account: AdminAccount;
+  account: AdminUser;
   action: 'lock' | 'unlock' | 'restore';
   onClose: () => void;
-  onDone: (id: string, newStatus: AccountStatus) => void;
+  onDone: (id: string, newStatus: AdminUserStatus) => void;
 }
 
 const ACTION_CONFIG = {
   lock: {
     title: 'Khóa tài khoản',
     desc: 'Tài khoản sẽ không thể đăng nhập vào hệ thống.',
-    newStatus: 'locked' as AccountStatus,
+    newStatus: 'locked' as AdminUserStatus,
     buttonLabel: 'Xác nhận khóa',
     buttonColor: '#EF4444',
     icon: <LockOutlined />,
@@ -27,7 +28,7 @@ const ACTION_CONFIG = {
   unlock: {
     title: 'Mở khóa tài khoản',
     desc: 'Tài khoản sẽ được khôi phục quyền đăng nhập bình thường.',
-    newStatus: 'active' as AccountStatus,
+    newStatus: 'active' as AdminUserStatus,
     buttonLabel: 'Xác nhận mở khóa',
     buttonColor: '#10B981',
     icon: <UnlockOutlined />,
@@ -37,7 +38,7 @@ const ACTION_CONFIG = {
   restore: {
     title: 'Khôi phục tài khoản',
     desc: 'Kích hoạt lại tài khoản đang ở trạng thái không hoạt động.',
-    newStatus: 'active' as AccountStatus,
+    newStatus: 'active' as AdminUserStatus,
     buttonLabel: 'Xác nhận khôi phục',
     buttonColor: '#F59E0B',
     icon: <UnlockOutlined />,
@@ -57,12 +58,15 @@ export default function LockUnlockModal({ open, account, action, onClose, onDone
         await form.validateFields();
       }
       setLoading(true);
-      await new Promise(r => setTimeout(r, 600));
+      await adminService.updateUserStatus(account.id, {
+        status: cfg.newStatus,
+        reason: action === 'lock' ? form.getFieldValue('reason') : undefined,
+      });
       onDone(account.id, cfg.newStatus);
       message.success(`${cfg.title} thành công cho ${account.name}!`);
       form.resetFields();
     } catch {
-      // validation failed
+      // validation failed or API error handled by interceptor
     } finally {
       setLoading(false);
     }
@@ -116,7 +120,6 @@ export default function LockUnlockModal({ open, account, action, onClose, onDone
               rules={[{ required: true, message: 'Vui lòng nhập lý do' }]}
             >
               <Input.TextArea
-                prefix={<LockOutlined />}
                 placeholder="Nhập lý do khóa tài khoản (bắt buộc)..."
                 rows={3}
                 style={{ resize: 'none' }}

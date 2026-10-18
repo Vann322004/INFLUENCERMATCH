@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Table, Tag, Avatar, Button, Input, Select, Space,
-  Tooltip, Dropdown, Typography, Row, Col, Card, Statistic, Badge,
+  Tooltip, Dropdown, Typography, Row, Col, Card, Spin, Badge,
 } from 'antd';
 import type { MenuProps, TableColumnsType } from 'antd';
 import {
@@ -12,7 +12,8 @@ import {
   ExportOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_ACCOUNTS, type AdminAccount, type AccountRole, type AccountStatus } from '../../../mock/adminData';
+import { adminService } from '../../../services/api/adminService';
+import type { AdminUser, AdminUserRole, AdminUserStatus } from '../../../types/api/admin.types';
 import CreateAdminModal from './components/CreateAdminModal';
 import LockUnlockModal from './components/LockUnlockModal';
 
@@ -20,14 +21,14 @@ const { Text } = Typography;
 const { Option } = Select;
 
 // ── Status config ─────────────────────────────────────
-const STATUS_CONFIG: Record<AccountStatus, { label: string; color: string; bg: string }> = {
+const STATUS_CONFIG: Record<AdminUserStatus, { label: string; color: string; bg: string }> = {
   active:   { label: 'Hoạt động', color: '#10B981', bg: 'rgba(16,185,129,0.12)' },
   locked:   { label: 'Đã khóa',   color: '#EF4444', bg: 'rgba(239,68,68,0.12)' },
   inactive: { label: 'Không HĐ',  color: '#94A3B8', bg: 'rgba(148,163,184,0.12)' },
   pending:  { label: 'Chờ duyệt', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
 };
 
-const ROLE_CONFIG: Record<AccountRole, { label: string; color: string; icon: React.ReactNode }> = {
+const ROLE_CONFIG: Record<AdminUserRole, { label: string; color: string; icon: React.ReactNode }> = {
   super_admin: { label: 'Super Admin', color: '#8B5CF6', icon: <SafetyCertificateOutlined /> },
   admin:       { label: 'Admin',       color: '#6366F1', icon: <CrownOutlined /> },
   brand:       { label: 'Brand',       color: '#0EA5E9', icon: <TeamOutlined /> },
@@ -36,14 +37,29 @@ const ROLE_CONFIG: Record<AccountRole, { label: string; color: string; icon: Rea
 
 export default function AccountManagementPage() {
   const navigate = useNavigate();
-  const [data, setData] = useState<AdminAccount[]>(MOCK_ACCOUNTS);
+  const [data, setData] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createOpen, setCreateOpen] = useState(false);
-  const [lockTarget, setLockTarget] = useState<AdminAccount | null>(null);
+  const [lockTarget, setLockTarget] = useState<AdminUser | null>(null);
   const [lockAction, setLockAction] = useState<'lock' | 'unlock' | 'restore'>('lock');
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await adminService.getUsers({ size: 100 });
+      setData(res.content ?? []);
+    } catch {
+      // apiClient interceptor already shows error toast
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchUsers(); }, []);
 
   // Filtered data
   const filtered = data.filter(acc => {
@@ -62,22 +78,23 @@ export default function AccountManagementPage() {
     pending: data.filter(a => a.status === 'pending').length,
   };
 
-  const openLock = (record: AdminAccount, action: 'lock' | 'unlock' | 'restore') => {
+  const openLock = (record: AdminUser, action: 'lock' | 'unlock' | 'restore') => {
     setLockTarget(record);
     setLockAction(action);
   };
 
-  const handleLockDone = (id: string, newStatus: AccountStatus) => {
+  const handleLockDone = (id: string, newStatus: AdminUserStatus) => {
     setData(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
     setLockTarget(null);
   };
 
-  const handleCreate = (newAdmin: AdminAccount) => {
-    setData(prev => [newAdmin, ...prev]);
+  const handleCreate = () => {
+    // Refetch the full list after creating a new admin
     setCreateOpen(false);
+    fetchUsers();
   };
 
-  const rowActions = (record: AdminAccount): MenuProps['items'] => [
+  const rowActions = (record: AdminUser): MenuProps['items'] => [
     {
       key: 'view',
       icon: <EyeOutlined />,
@@ -92,7 +109,7 @@ export default function AccountManagementPage() {
       : { key: 'restore', icon: <UnlockOutlined style={{ color: '#F59E0B' }} />, label: <span style={{ color: '#F59E0B' }}>Khôi phục</span>, onClick: () => openLock(record, 'restore') },
   ];
 
-  const columns: TableColumnsType<AdminAccount> = [
+  const columns: TableColumnsType<AdminUser> = [
     {
       title: 'Tài khoản',
       key: 'account',
@@ -111,7 +128,7 @@ export default function AccountManagementPage() {
       dataIndex: 'role',
       key: 'role',
       width: 140,
-      render: (role: AccountRole) => {
+      render: (role: AdminUserRole) => {
         const cfg = ROLE_CONFIG[role];
         return (
           <Tag
@@ -136,7 +153,7 @@ export default function AccountManagementPage() {
       dataIndex: 'status',
       key: 'status',
       width: 120,
-      render: (status: AccountStatus) => {
+      render: (status: AdminUserStatus) => {
         const cfg = STATUS_CONFIG[status];
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -299,25 +316,27 @@ export default function AccountManagementPage() {
         bodyStyle={{ padding: 0 }}
         style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', overflow: 'hidden' }}
       >
-        <Table
-          columns={columns}
-          dataSource={filtered}
-          rowKey="id"
-          size="middle"
-          rowSelection={{
-            selectedRowKeys: selectedKeys,
-            onChange: setSelectedKeys,
-          }}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: false,
-            showTotal: (total) => <span style={{ color: '#64748B', fontSize: 12 }}>{total} tài khoản</span>,
-          }}
-          onRow={record => ({
-            onClick: () => navigate(`/admin/accounts/${record.id}`),
-            style: { cursor: 'pointer' },
-          })}
-        />
+        <Spin spinning={loading}>
+          <Table
+            columns={columns}
+            dataSource={filtered}
+            rowKey="id"
+            size="middle"
+            rowSelection={{
+              selectedRowKeys: selectedKeys,
+              onChange: setSelectedKeys,
+            }}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: false,
+              showTotal: (total) => <span style={{ color: '#64748B', fontSize: 12 }}>{total} tài khoản</span>,
+            }}
+            onRow={record => ({
+              onClick: () => navigate(`/admin/accounts/${record.id}`),
+              style: { cursor: 'pointer' },
+            })}
+          />
+        </Spin>
       </Card>
 
       {/* Modals */}

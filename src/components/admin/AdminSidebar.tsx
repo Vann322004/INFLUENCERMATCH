@@ -29,6 +29,7 @@ const MENU_ITEMS: MenuProps['items'] = [
   { type: 'divider' },
   { key: 'accounts',      icon: <TeamOutlined />,          label: 'Tài khoản' },
   { key: 'creators',      icon: <UserOutlined />,          label: 'Creator Catalog' },
+  { key: 'creator-claims', icon: <SafetyCertificateOutlined />, label: 'Duyệt Claims' },
   { type: 'divider' },
   { key: 'data-sources',  icon: <ApiOutlined />,           label: 'Data Sources' },
   { key: 'jobs',          icon: <ThunderboltOutlined />,   label: 'Collection Jobs' },
@@ -41,27 +42,29 @@ const MENU_ITEMS: MenuProps['items'] = [
 ];
 
 const ROUTE_KEY_MAP: Record<string, string> = {
-  '/admin/dashboard':    'dashboard',
-  '/admin/accounts':     'accounts',
-  '/admin/creators':     'creators',
-  '/admin/data-sources': 'data-sources',
-  '/admin/jobs':         'jobs',
-  '/admin/scoring':      'scoring',
-  '/admin/subscriptions':'subscriptions',
-  '/admin/payments':     'payments',
-  '/admin/audit':        'audit',
+  '/admin/dashboard':      'dashboard',
+  '/admin/accounts':       'accounts',
+  '/admin/creators':       'creators',
+  '/admin/creator-claims': 'creator-claims',
+  '/admin/data-sources':   'data-sources',
+  '/admin/jobs':           'jobs',
+  '/admin/scoring':        'scoring',
+  '/admin/subscriptions':  'subscriptions',
+  '/admin/payments':       'payments',
+  '/admin/audit':          'audit',
 };
 
 const KEY_ROUTE_MAP: Record<string, string> = {
-  dashboard:     ADMIN_ROUTES.DASHBOARD,
-  accounts:      ADMIN_ROUTES.ACCOUNTS.LIST,
-  creators:      ADMIN_ROUTES.CREATORS,
-  'data-sources':ADMIN_ROUTES.DATA_SOURCES,
-  jobs:          ADMIN_ROUTES.JOBS,
-  scoring:       ADMIN_ROUTES.SCORING,
-  subscriptions: ADMIN_ROUTES.SUBSCRIPTIONS,
-  payments:      ADMIN_ROUTES.PAYMENTS,
-  audit:         ADMIN_ROUTES.AUDIT,
+  dashboard:       ADMIN_ROUTES.DASHBOARD,
+  accounts:        ADMIN_ROUTES.ACCOUNTS.LIST,
+  creators:        ADMIN_ROUTES.CREATORS,
+  'creator-claims': ADMIN_ROUTES.CREATOR_CLAIMS,
+  'data-sources':  ADMIN_ROUTES.DATA_SOURCES,
+  jobs:            ADMIN_ROUTES.JOBS,
+  scoring:         ADMIN_ROUTES.SCORING,
+  subscriptions:   ADMIN_ROUTES.SUBSCRIPTIONS,
+  payments:        ADMIN_ROUTES.PAYMENTS,
+  audit:           ADMIN_ROUTES.AUDIT,
 };
 
 export default function AdminSidebar() {
@@ -69,7 +72,7 @@ export default function AdminSidebar() {
   const location  = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
-  const currentUser = adminAuthService.getCurrentUser() || ADMIN_USER;
+  const currentUser: any = adminAuthService.getCurrentUser() || ADMIN_USER;
 
   const activeKey = Object.entries(ROUTE_KEY_MAP).find(([path]) =>
     location.pathname.startsWith(path)

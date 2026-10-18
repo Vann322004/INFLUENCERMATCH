@@ -19,15 +19,17 @@ export default function AdminLoginPage() {
 
   const handleLogin = async (values: { email: string; password: string }) => {
     setLoading(true);
-    await new Promise(r => setTimeout(r, 900));
-    const result = adminAuthService.login(values.email, values.password);
-    if (result.success) {
-      message.success('Đăng nhập thành công!');
-      navigate(ADMIN_ROUTES.DASHBOARD);
-    } else {
-      message.error(result.message);
+    try {
+      const result = await adminAuthService.login(values.email, values.password);
+      if (result.success) {
+        message.success('Đăng nhập thành công!');
+        navigate(ADMIN_ROUTES.DASHBOARD);
+      } else {
+        message.error(result.message);
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

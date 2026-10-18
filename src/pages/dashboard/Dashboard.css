@@ -69,3 +69,417 @@
   color: #FDE047;
   font-size: 14px;
 }
+
+/* ============================================================
+   PREMIUM MODERN HERO WELCOME BANNER
+   ============================================================ */
+.im-welcome-banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #1E1B4B 0%, #2E1065 38%, #4338CA 72%, #6366F1 100%);
+  padding: 32px 36px;
+  box-shadow: 0 16px 40px -8px rgba(67, 56, 202, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  color: #FFFFFF;
+  margin-bottom: 2px;
+}
+
+/* Ambient Ambient Glows */
+.im-banner-glow-1 {
+  position: absolute;
+  top: -80px;
+  right: -40px;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.38) 0%, rgba(168, 85, 247, 0.18) 45%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(40px);
+  animation: bannerPulse 8s ease-in-out infinite alternate;
+}
+
+.im-banner-glow-2 {
+  position: absolute;
+  bottom: -100px;
+  left: 10%;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.32) 0%, rgba(99, 102, 241, 0.12) 50%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(45px);
+}
+
+.im-banner-glow-3 {
+  position: absolute;
+  top: 40%;
+  left: 45%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(244, 63, 94, 0.18) 0%, transparent 65%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(35px);
+}
+
+@keyframes bannerPulse {
+  0% { transform: scale(0.95) translate(0, 0); opacity: 0.8; }
+  100% { transform: scale(1.1) translate(-15px, 15px); opacity: 1; }
+}
+
+/* Subtle modern mesh grid pattern */
+.im-banner-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.28;
+  pointer-events: none;
+}
+
+/* Layout container */
+.im-banner-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+@media (max-width: 991px) {
+  .im-banner-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+  }
+}
+
+/* Left side content */
+.im-banner-left {
+  flex: 1;
+  max-width: 720px;
+}
+
+.im-banner-tags {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.im-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 0.2px;
+}
+
+.im-ai-pulse {
+  width: 7px;
+  height: 7px;
+  background: #34D399;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #34D399;
+  animation: pulseDot 1.8s infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.im-date-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.im-banner-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  line-height: 1.25;
+  margin: 0 0 10px 0;
+  color: #FFFFFF;
+}
+
+.im-banner-name {
+  background: linear-gradient(90deg, #F9A8D4 0%, #FDE047 50%, #A7F3D0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
+}
+
+.im-banner-desc {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: rgba(241, 245, 249, 0.88);
+  margin: 0 0 22px 0;
+  max-width: 620px;
+}
+
+.im-banner-desc strong {
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+/* Action buttons */
+.im-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.im-btn-create-campaign {
+  background: #FFFFFF !important;
+  color: #1E1B4B !important;
+  border: none !important;
+  font-weight: 700 !important;
+  border-radius: 12px !important;
+  height: 44px !important;
+  padding: 0 24px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.im-btn-create-campaign:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.3) !important;
+  background: #F8FAFC !important;
+}
+
+.im-btn-discover-creator {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  font-weight: 600 !important;
+  border-radius: 12px !important;
+  height: 44px !important;
+  padding: 0 22px !important;
+  backdrop-filter: blur(10px) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.im-btn-discover-creator:hover {
+  background: rgba(255, 255, 255, 0.24) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  color: #FFFFFF !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Quick live status indicators */
+.im-banner-quick-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.85);
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.im-quick-stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.im-quick-stat-divider {
+  opacity: 0.4;
+  font-size: 10px;
+}
+
+/* Right side: Glass Spotlight Card */
+.im-banner-right {
+  flex-shrink: 0;
+  width: 360px;
+}
+
+@media (max-width: 991px) {
+  .im-banner-right {
+    width: 100%;
+  }
+}
+
+.im-glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 20px;
+  padding: 18px 20px;
+  box-shadow: 0 16px 36px 0 rgba(0, 0, 0, 0.28);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.im-glass-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.36);
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.im-glass-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.im-glass-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.im-glass-icon {
+  font-size: 18px;
+}
+
+.im-glass-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.2;
+}
+
+.im-glass-subtitle {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.im-match-score-badge {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
+/* Spotlight creators list */
+.im-spotlight-creators {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.im-spotlight-creator-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.2s ease;
+}
+
+.im-spotlight-creator-row:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.im-creator-info {
+  display: flex;
+  align-items: center;
+}
+
+.im-creator-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.im-creator-category {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.im-creator-match-tag {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #FDE047;
+  background: rgba(253, 224, 71, 0.15);
+  border: 1px solid rgba(253, 224, 71, 0.3);
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+/* Glass card footer */
+.im-glass-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.im-footer-metric {
+  display: flex;
+  flex-direction: column;
+}
+
+.im-metric-label {
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.im-metric-val {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.im-footer-sep {
+  width: 1px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.im-glass-link {
+  color: #A7F3D0 !important;
+  font-weight: 700 !important;
+  font-size: 11.5px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.im-glass-link:hover {
+  color: #34D399 !important;
+}
+

@@ -1,16 +1,19 @@
-import React from 'react';
-import { Timeline, Tag, Typography } from 'antd';
+﻿import React, { useEffect, useState } from 'react';
+import { Timeline, Tag, Typography, Spin } from 'antd';
 import {
   LoginOutlined, WarningOutlined, KeyOutlined, MobileOutlined,
 } from '@ant-design/icons';
-import { SECURITY_ACTIVITY } from '../../../../mock/adminData';
+import { adminService } from '../../../../services/api/adminService';
+import type { AuditLogItem } from '../../../../types/api/admin.types';
 
 const { Text } = Typography;
 
-const EVENT_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = {
-  'Đăng nhập thành công':              { icon: <LoginOutlined />, color: '#10B981' },
-  'Đăng nhập thất bại (sai mật khẩu)': { icon: <WarningOutlined />, color: '#EF4444' },
-  'Đổi mật khẩu':                      { icon: <KeyOutlined />, color: '#F59E0B' },
+const ACTION_ICON: Record<string, { icon: React.ReactNode; color: string }> = {
+  LOGIN:  { icon: <LoginOutlined />, color: '#10B981' },
+  LOGOUT: { icon: <LoginOutlined />, color: '#64748B' },
+  UPDATE: { icon: <KeyOutlined />,   color: '#F59E0B' },
+  CREATE: { icon: <KeyOutlined />,   color: '#6366F1' },
+  DELETE: { icon: <WarningOutlined />, color: '#EF4444' },
 };
 
 interface SecurityActivityPanelProps {
@@ -18,35 +21,47 @@ interface SecurityActivityPanelProps {
 }
 
 export default function SecurityActivityPanel({ userId }: SecurityActivityPanelProps) {
-  // In a real app, filter by userId. Here we use all mock data.
-  const activities = SECURITY_ACTIVITY;
+  const [activities, setActivities] = useState<AuditLogItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    adminService.getAuditLogs({ actorId: userId, size: 10 })
+      .then(res => setActivities(res.content ?? []))
+      .catch(() => setActivities([]))
+      .finally(() => setLoading(false));
+  }, [userId]);
 
   return (
     <div>
       <div style={{ fontWeight: 700, fontSize: 14, color: '#0F172A', marginBottom: 14 }}>
-        🔐 Lịch sử hoạt động bảo mật
+        Lich su hoat dong bao mat
       </div>
-      {activities.length === 0 ? (
-        <Text type="secondary" style={{ fontSize: 13 }}>Không có dữ liệu.</Text>
+      {loading ? (
+        <Spin size="small" />
+      ) : activities.length === 0 ? (
+        <Text type="secondary" style={{ fontSize: 13 }}>Khong co du lieu.</Text>
       ) : (
         <Timeline
           items={activities.map(act => {
-            const cfg = EVENT_CONFIG[act.event] ?? { icon: <LoginOutlined />, color: '#94A3B8' };
+            const cfg = ACTION_ICON[act.action] ?? { icon: <LoginOutlined />, color: '#94A3B8' };
             return {
               color: cfg.color,
               dot: <span style={{ color: cfg.color, fontSize: 14 }}>{cfg.icon}</span>,
               children: (
                 <div style={{ paddingBottom: 8 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, color: '#0F172A' }}>{act.event}</div>
+                  <div style={{ fontWeight: 600, fontSize: 13, color: '#0F172A' }}>
+                    {act.action} - {act.resource}
+                  </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
-                    <Tag style={{ fontSize: 11, borderRadius: 6 }}>
-                      <MobileOutlined style={{ marginRight: 4 }} />{act.device}
-                    </Tag>
                     <Tag color="default" style={{ fontSize: 11, borderRadius: 6 }}>
                       IP: {act.ip}
                     </Tag>
+                    <Tag style={{ fontSize: 11, borderRadius: 6 }}>
+                      ID: {act.resourceId}
+                    </Tag>
                   </div>
-                  <div style={{ color: '#94A3B8', fontSize: 11, marginTop: 4 }}>{act.time}</div>
+                  <div style={{ color: '#94A3B8', fontSize: 11, marginTop: 4 }}>{act.timestamp}</div>
                 </div>
               ),
             };
