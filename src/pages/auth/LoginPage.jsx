@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Checkbox, Divider, Row, Col, Typography, message } from 'antd';
+import { Form, Input, Button, Checkbox, Divider, Typography, message } from 'antd';
 import {
   MailOutlined,
   LockOutlined,
   ArrowRightOutlined,
-  GoogleOutlined,
-  ThunderboltOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
 } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { LABELS } from '../../constants/labels';
@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const redirectByRole = (user) => {
     if (user && (user.role === 'ADMIN' || user.role === 'DATA_MANAGER')) {
@@ -28,7 +29,17 @@ export default function LoginPage() {
     }
   };
 
+  const handleNavigateRegister = (e) => {
+    e.preventDefault();
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      navigate(ROUTES.AUTH.REGISTER || '/register');
+    }, 240);
+  };
+
   const onFinish = async (values) => {
+    if (loading) return; // Prevent double-submit
     setLoading(true);
     try {
       const loginData = await authService.login({
@@ -45,14 +56,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickLogin = (email, password) => {
-    form.setFieldsValue({
-      email,
-      password,
-    });
-    form.submit();
-  };
-
   const handleSocialLogin = (provider) => {
     if (provider === 'Google') {
       window.location.href = `${import.meta.env.VITE_API_BASE_URL || 'http://221.121.3.226:8080/api/v1'}/auth/google`;
@@ -62,46 +65,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div>
+    <div className={`login-form-container ${isTransitioning ? 'al-form-slide-exit-to-left' : 'al-form-slide-enter'}`}>
       {/* Title & Subtitle */}
       <div className="card-title-group">
-        <Title level={3} style={{ margin: 0, fontWeight: 800 }}>
+        <Title level={2} className="al-card-title">
           {LABELS.AUTH.LOGIN_TITLE}
         </Title>
-        <Text type="secondary" style={{ fontSize: 13.5 }}>
+        <Text className="al-card-subtitle">
           {LABELS.AUTH.LOGIN_SUBTITLE}
         </Text>
-      </div>
-
-      {/* Demo Account Box */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #F5F3FF 0%, #EFF6FF 100%)',
-          border: '1px solid #DDD6FE',
-          borderRadius: 12,
-          padding: '10px 14px',
-          marginBottom: 16,
-        }}
-      >
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#6D28D9', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
-          <ThunderboltOutlined /> Tài khoản đã kiểm thử trên Server:
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#64748B', marginBottom: 2 }}>🏢 BRAND TEST</div>
-            <div style={{ fontSize: 11, color: '#4B5563' }}>
-              <code>brand_test_01@influencermatch.vn</code> / <code>Password123!</code>
-            </div>
-          </div>
-        </div>
-        <Button
-          size="small"
-          type="primary"
-          onClick={() => handleQuickLogin('brand_test_01@influencermatch.vn', 'Password123!')}
-          style={{ fontSize: 11, height: 26, padding: '0 10px', background: '#7C3AED', borderRadius: 8, marginTop: 8 }}
-        >
-          Điền nhanh & Đăng nhập
-        </Button>
       </div>
 
       {/* Ant Design Form */}
@@ -112,86 +84,138 @@ export default function LoginPage() {
         onFinish={onFinish}
         initialValues={{
           remember: true,
-          email: 'brand_test_01@influencermatch.vn',
-          password: 'Password123!',
         }}
         requiredMark={false}
         size="large"
+        aria-live="polite"
       >
         <Form.Item
           name="email"
+          htmlFor="login-email"
+          label={<span className="al-input-label">Email tài khoản</span>}
           rules={[
             { required: true, message: 'Vui lòng nhập email!' },
-            { type: 'email', message: 'Email không hợp lệ!' },
+            { type: 'email', message: 'Địa chỉ email không hợp lệ!' },
           ]}
+          style={{ marginBottom: 12 }}
         >
           <Input
-            prefix={<MailOutlined style={{ color: '#94A3B8' }} />}
-            placeholder="Email tài khoản"
+            id="login-email"
+            prefix={<MailOutlined className="al-field-icon" aria-hidden="true" />}
+            placeholder="name@company.com"
+            autoComplete="email"
+            disabled={loading}
           />
         </Form.Item>
 
         <Form.Item
           name="password"
+          htmlFor="login-password"
+          label={<span className="al-input-label">Mật khẩu</span>}
           rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
+          style={{ marginBottom: 12 }}
         >
           <Input.Password
-            prefix={<LockOutlined style={{ color: '#94A3B8' }} />}
-            placeholder={LABELS.AUTH.PASSWORD_PLACEHOLDER}
+            id="login-password"
+            prefix={<LockOutlined className="al-field-icon" aria-hidden="true" />}
+            placeholder="Nhập mật khẩu của bạn"
+            autoComplete="current-password"
+            disabled={loading}
+            iconRender={(visible) => (
+              <span
+                role="button"
+                className="al-pwd-toggle-btn"
+                aria-label={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.currentTarget.click();
+                  }
+                }}
+              >
+                {visible ? <EyeOutlined aria-hidden="true" /> : <EyeInvisibleOutlined aria-hidden="true" />}
+              </span>
+            )}
           />
         </Form.Item>
 
-        <div className="form-options">
+        {/* Remember me & Forgot password */}
+        <div className="al-form-options">
           <Form.Item name="remember" valuePropName="checked" noStyle>
-            <Checkbox style={{ color: '#475569', fontWeight: 600 }}>
+            <Checkbox className="al-remember-checkbox">
               {LABELS.AUTH.REMEMBER_ME}
             </Checkbox>
           </Form.Item>
 
-          <Link to={ROUTES.AUTH.FORGOT_PASSWORD} className="forgot-link">
+          <Link
+            to={ROUTES.AUTH.FORGOT_PASSWORD || '/forgot-password'}
+            className="al-forgot-link"
+          >
             {LABELS.AUTH.FORGOT_PASSWORD_LINK}
           </Link>
         </div>
 
-        <Form.Item style={{ marginTop: 16, marginBottom: 0 }}>
+        {/* Submit Button */}
+        <Form.Item style={{ marginBottom: 0 }}>
           <Button
             type="primary"
             htmlType="submit"
             block
             size="large"
             loading={loading}
-            icon={<ArrowRightOutlined />}
+            disabled={loading}
+            icon={!loading && <ArrowRightOutlined aria-hidden="true" />}
+            className="primary-login-btn"
           >
-            {LABELS.AUTH.SUBMIT_LOGIN}
+            {loading ? 'Đang xác thực...' : LABELS.AUTH.SUBMIT_LOGIN}
           </Button>
         </Form.Item>
       </Form>
 
       {/* Divider */}
-      <Divider style={{ color: '#94A3B8', fontSize: 12, margin: '18px 0' }}>
+      <Divider className="al-divider">
         {LABELS.AUTH.OR_CONTINUE_WITH}
       </Divider>
 
-      {/* Social Logins */}
-      <Row>
-        <Col span={24}>
-          <Button
-            block
-            onClick={() => handleSocialLogin('Google')}
-            icon={<GoogleOutlined style={{ color: '#4285F4' }} />}
-          >
-            Google
-          </Button>
-        </Col>
-      </Row>
+      {/* Google Sign-in */}
+      <Button
+        block
+        size="large"
+        onClick={() => handleSocialLogin('Google')}
+        className="al-google-btn"
+        disabled={loading}
+        aria-label="Đăng nhập với Google"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+        </svg>
+        <span>Đăng nhập với Google</span>
+      </Button>
 
-      {/* Footer link */}
-      <div className="card-footer-text">
-        <Text type="secondary">{LABELS.AUTH.NO_ACCOUNT_PROMPT}</Text>
-        <Link to={ROUTES.AUTH.REGISTER} style={{ fontWeight: 700, marginLeft: 6, color: '#8B5CF6' }}>
+      {/* Footer Registration Link */}
+      <div className="al-footer-register">
+        <span className="al-footer-prompt">{LABELS.AUTH.NO_ACCOUNT_PROMPT}</span>
+        <a
+          href={ROUTES.AUTH.REGISTER || '/register'}
+          onClick={handleNavigateRegister}
+          className="al-register-link"
+          role="button"
+          tabIndex={0}
+        >
           {LABELS.AUTH.REGISTER_NOW_LINK}
-        </Link>
+        </a>
       </div>
+
+      {/* Legal disclaimer */}
+      <p className="al-legal-disclaimer">
+        Bằng việc đăng nhập, bạn đồng ý với{' '}
+        <a href="#terms" className="al-legal-link">Điều khoản</a> và{' '}
+        <a href="#privacy" className="al-legal-link">Chính sách bảo mật</a>
+      </p>
     </div>
   );
 }

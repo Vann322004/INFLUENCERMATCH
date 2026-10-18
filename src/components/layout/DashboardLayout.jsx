@@ -109,11 +109,6 @@ export default function DashboardLayout({ children }) {
         </div>
       ),
     },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: 'Cài đặt',
-    },
   ];
 
   return (
@@ -232,37 +227,6 @@ export default function DashboardLayout({ children }) {
             </Button>
           </Card>
         </div>
-
-        {/* Bottom User Card with Dropdown (PINNED AT VERY BOTTOM) */}
-        <div className="antd-sidebar-user-bottom">
-          <Dropdown menu={{ items: userMenuItems }} placement="topRight" trigger={['click']}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '8px 10px',
-                borderRadius: 10,
-                cursor: 'pointer',
-                transition: 'background 0.2s',
-              }}
-              className="antd-user-card-hover"
-            >
-              <Avatar size={36} style={{ border: '1.5px solid #CBD5E1', flexShrink: 0, backgroundColor: '#8B5CF6' }}>
-                {(currentUser?.fullName || currentUser?.email || 'U').charAt(0).toUpperCase()}
-              </Avatar>
-              <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                <div style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.2 }}>
-                  {currentUser?.fullName || currentUser?.email || 'Người dùng'}
-                </div>
-                <div style={{ fontSize: 10.5, color: '#64748B', lineHeight: 1.2 }}>
-                  {currentUser?.role || 'User'}
-                </div>
-              </div>
-              <RightOutlined style={{ fontSize: 11, color: '#94A3B8', flexShrink: 0 }} />
-            </div>
-          </Dropdown>
-        </div>
       </Sider>
 
       {/* MAIN LAYOUT */}
@@ -270,44 +234,20 @@ export default function DashboardLayout({ children }) {
         {/* HEADER */}
         <Header
           style={{
-            background: '#FFFFFF',
-            borderBottom: '1px solid #E2E8F0',
+            background: 'transparent',
+            borderBottom: 'none',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 28px',
-            height: 64,
+            justifyContent: 'flex-end',
+            padding: '12px 28px 4px 28px',
+            height: 'auto',
+            minHeight: 52,
             lineHeight: 'normal',
             zIndex: 10,
             flexShrink: 0,
             boxSizing: 'border-box',
           }}
         >
-          {/* Ant Design Search Input */}
-          <Input
-            placeholder="Tìm kiếm creator, chiến dịch, từ khóa..."
-            prefix={<SearchOutlined style={{ color: '#94A3B8', marginRight: 6 }} />}
-            suffix={
-              <span
-                style={{
-                  background: '#EDF2F7',
-                  padding: '2px 6px',
-                  borderRadius: 6,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: '#94A3B8',
-                }}
-              >
-                Ctrl + K
-              </span>
-            }
-            style={{
-              width: 360,
-              borderRadius: 12,
-              background: '#F8FAFC',
-              borderColor: '#E2E8F0',
-            }}
-          />
 
           {/* Right Header Actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

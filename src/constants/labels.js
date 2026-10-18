@@ -7,7 +7,7 @@ export const LABELS = {
     TITLE_PREFIX: 'Tìm đúng ',
     TITLE_HIGHLIGHT: 'Influencer',
     TITLE_SUFFIX: ' cho mọi chiến dịch',
-    SUBTITLE: 'INFLUENCERMATCH giúp thương hiệu kết nối với những nhà sáng tạo nội dung phù hợp nhất, nhanh chóng, hiệu quả và dễ dàng.',
+    SUBTITLE: 'InfluencerMatch giúp thương hiệu kết nối với những nhà sáng tạo nội dung phù hợp nhất, nhanh chóng, hiệu quả và dễ dàng.',
   },
   FEATURES: [
     {

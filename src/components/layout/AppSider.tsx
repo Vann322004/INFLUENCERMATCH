@@ -134,45 +134,6 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
         </div>
       ),
     },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: 'Cài đặt',
-    },
-  ];
-
-  const userDropdownItems: MenuProps['items'] = [
-    {
-      key: 'profile',
-      icon: <UserOutlined />,
-      label: 'Hồ sơ thương hiệu',
-      onClick: () => navigate('/brand-profile'),
-    },
-    {
-      key: 'subscription',
-      icon: <CrownOutlined />,
-      label: 'Gói cước & Hạn mức',
-      onClick: () => navigate('/subscription'),
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: 'Cài đặt tài khoản',
-      onClick: () => navigate('/subscription'),
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      danger: true,
-      label: 'Đăng xuất',
-      onClick: async () => {
-        await authService.logout();
-        navigate('/login');
-      },
-    },
   ];
 
   return (
@@ -194,26 +155,17 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
           flexShrink: 0,
         }}
       >
-        <div
+        <img
+          src="/logo.png"
+          alt="InfluencerMatch"
           style={{
-            width: 36,
-            height: 36,
-            background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%)',
-            borderRadius: 10,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#FFFFFF',
-            fontWeight: 800,
-            fontSize: 16,
-            boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
+            width: 38,
+            height: 38,
+            objectFit: 'contain',
             flexShrink: 0,
-            position: 'relative',
+            filter: 'drop-shadow(0 3px 8px rgba(124, 58, 237, 0.25))',
           }}
-        >
-          iM
-          <span style={{ position: 'absolute', top: -4, right: -4, fontSize: 10, color: '#FDE047' }}>✦</span>
-        </div>
+        />
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span
             style={{
@@ -256,54 +208,8 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       </div>
 
       {/* AI Promo Card */}
-      <div style={{ margin: '12px 0', flexShrink: 0 }}>
+      <div style={{ marginTop: 'auto', paddingTop: 12, flexShrink: 0 }}>
         <SidebarPromo />
-      </div>
-
-      {/* Bottom User Profile (Pinned at bottom) */}
-      <div className="sidebar-user-card">
-        <Dropdown menu={{ items: userDropdownItems }} placement="topRight" trigger={['click']}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '6px 4px',
-            }}
-          >
-            <Avatar size={36} style={{ flexShrink: 0, backgroundColor: '#8B5CF6', border: '1.5px solid #CBD5E1' }}>
-              {(currentUser?.fullName || currentUser?.email || 'U').charAt(0).toUpperCase()}
-            </Avatar>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  color: '#0F172A',
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  lineHeight: 1.2,
-                }}
-              >
-                {currentUser?.fullName || currentUser?.email || 'Người dùng'}
-              </div>
-              <div
-                style={{
-                  color: '#64748B',
-                  fontSize: 10.5,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  lineHeight: 1.2,
-                }}
-              >
-                {currentUser?.role || 'BRAND'}
-              </div>
-            </div>
-            <RightOutlined style={{ color: '#94A3B8', fontSize: 11, flexShrink: 0 }} />
-          </div>
-        </Dropdown>
       </div>
     </Sider>
   );

@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Layout, Input, Button, Badge, Avatar, Dropdown, Space, Tooltip } from 'antd';
+import { Layout, Badge, Avatar, Dropdown, Space, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
-  SearchOutlined,
   BellOutlined,
   SettingOutlined,
   DownOutlined,
@@ -59,90 +58,49 @@ export default function AppHeader() {
 
   return (
     <Header className="app-header">
-      {/* Search Input */}
-      <Input
-        placeholder="Tìm kiếm chiến dịch, creator hoặc từ khóa..."
-        prefix={<SearchOutlined style={{ color: '#94A3B8', marginRight: 8 }} />}
-        suffix={
-          <span
-            style={{
-              background: '#F1F5F9',
-              padding: '2px 6px',
-              borderRadius: 6,
-              fontSize: 11,
-              fontWeight: 600,
-              color: '#94A3B8',
-            }}
-          >
-            ⌘ K
-          </span>
-        }
-        style={{
-          width: 380,
-          borderRadius: 10,
-          background: '#F8FAFC',
-          borderColor: '#EEF0F6',
-          height: 38,
-        }}
-      />
-
-      {/* Right Actions */}
-      <Space size={14} align="center">
+      {/* Standalone Action Buttons (no bar, clean floating buttons) */}
+      <Space size={12} align="center">
+        {/* Notification standalone button */}
         <Tooltip title="Thông báo">
-          <Badge dot color="#EF4444" offset={[-2, 2]}>
-            <Button
-              shape="circle"
-              icon={<BellOutlined />}
+          <Badge dot color="#EF4444" offset={[-3, 3]}>
+            <button
+              type="button"
+              className="standalone-action-btn"
               onClick={() => setNotifOpen(true)}
-              style={{
-                border: '1px solid #EEF0F6',
-                color: '#64748B',
-                width: 36,
-                height: 36,
-              }}
-            />
+              aria-label="Thông báo"
+            >
+              <BellOutlined style={{ fontSize: 16 }} />
+            </button>
           </Badge>
         </Tooltip>
 
-        <Tooltip title="Cài đặt giao diện">
-          <Button
-            shape="circle"
-            icon={<SettingOutlined />}
+        {/* Settings standalone button */}
+        <Tooltip title="Cài đặt">
+          <button
+            type="button"
+            className="standalone-action-btn"
             onClick={() => navigate('/subscription')}
-            style={{
-              border: '1px solid #EEF0F6',
-              color: '#64748B',
-              width: 36,
-              height: 36,
-            }}
-          />
+            aria-label="Cài đặt"
+          >
+            <SettingOutlined style={{ fontSize: 16 }} />
+          </button>
         </Tooltip>
 
-        {/* User Profile */}
+        {/* User Profile standalone pill button */}
         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 10,
-              cursor: 'pointer',
-              padding: '4px 8px',
-              borderRadius: 8,
-              transition: 'background 0.2s',
-            }}
-          >
-            <Avatar size={36} style={{ flexShrink: 0, backgroundColor: '#8B5CF6' }}>
+          <div className="standalone-user-btn">
+            <Avatar size={34} style={{ flexShrink: 0, backgroundColor: '#8B5CF6', fontWeight: 700 }}>
               {(currentUser?.fullName || currentUser?.email || 'U').charAt(0).toUpperCase()}
             </Avatar>
             <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.2 }}>
               <span style={{ fontWeight: 700, fontSize: 13, color: '#0F172A', whiteSpace: 'nowrap' }}>
                 {currentUser?.fullName || currentUser?.email || 'Người dùng'}
               </span>
-              <span style={{ fontSize: 11, color: '#64748B', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 10.5, color: '#64748B', whiteSpace: 'nowrap' }}>
                 {currentUser?.role || 'BRAND'}
               </span>
             </div>
-            <DownOutlined style={{ fontSize: 10, color: '#94A3B8', marginLeft: 2 }} />
+            <DownOutlined style={{ fontSize: 10, color: '#94A3B8', marginLeft: 2, marginRight: 2 }} />
           </div>
         </Dropdown>
       </Space>
