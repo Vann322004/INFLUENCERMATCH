@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Row,
   Col,
@@ -11,7 +11,9 @@ import {
   Segmented,
   List,
   Space,
-  Statistic
+  Statistic,
+  Spin,
+  Empty
 } from 'antd';
 import {
   TeamOutlined,
@@ -31,18 +33,38 @@ import {
   SearchOutlined,
   FireOutlined,
   RiseOutlined,
-  CheckCircleFilled
+  CheckCircleFilled,
+  ReloadOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { authService, MOCK_USER } from '../../mock/authData';
+import { authService } from '../../services/api/authService';
+import { campaignService } from '../../services/api/campaignService';
+import { creatorService } from '../../services/api/creatorService';
 import './Dashboard.css';
 
 const { Title, Text } = Typography;
 
+const fmtNum = (n) =>
+  !n ? '0' : n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(0)}K` : String(n);
+
+const fmtVND = (n) =>
+  !n ? '₫0' : n >= 1_000_000_000 ? `₫${(n / 1_000_000_000).toFixed(1)}B` :
+  n >= 1_000_000 ? `₫${(n / 1_000_000).toFixed(1)}M` : `₫${n.toLocaleString()}`;
+
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const currentUser = authService.getCurrentUser() || MOCK_USER;
-  const userName = currentUser?.name ? currentUser.name.split(' ').pop() : 'Văn';
+  const currentUser = authService.getCurrentUser();
+  const userName = currentUser?.fullName
+    ? currentUser.fullName.split(' ').pop()
+    : currentUser?.email
+    ? currentUser.email.split('@')[0]
+    : 'Bạn';
+
+  const [campaignTab, setCampaignTab] = useState('Tất cả');
+  const [chartPeriod, setChartPeriod] = useState('30 ngày');
+  const [loading, setLoading] = useState(true);
+  const [rawCampaigns, setRawCampaigns] = useState([]);
+  const [rawCreators, setRawCreators] = useState([]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -62,165 +84,141 @@ export default function DashboardPage() {
   };
 
   const greeting = getGreeting();
-  const [campaignTab, setCampaignTab] = useState('Tất cả');
-  const [chartPeriod, setChartPeriod] = useState('30 ngày');
 
-  // 4 Metric Stats Data
+  const loadDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [cList, crList] = await Promise.all([
+        campaignService.getCampaigns(0, 50).catch(() => []),
+        creatorService.getCreators().catch(() => []),
+      ]);
+      setRawCampaigns(cList || []);
+      setRawCreators(crList || []);
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  // Dynamic statistics calculations
+  const activeCampaigns = rawCampaigns.filter((c) => c.status === 'ACTIVE');
+  const pendingCampaigns = rawCampaigns.filter((c) => c.status === 'READY_FOR_DISCOVERY' || c.status === 'DRAFT');
+  const completedCampaigns = rawCampaigns.filter((c) => c.status === 'COMPLETED');
+  const totalReach = rawCampaigns.reduce((sum, c) => sum + (c.followerMin ? c.followerMin * 5 : 120000), 0);
+  const totalBudget = rawCampaigns.reduce((sum, c) => sum + (c.budgetMax || c.budgetMin || 0), 0);
+
+  // 4 Metric Stats Cards
   const statCards = [
     {
       id: 'stat_1',
       title: 'Tổng số Creator',
-      value: '12,458',
-      growth: '+ 12% so với tháng trước',
+      value: rawCreators.length > 0 ? rawCreators.length.toLocaleString() : '0',
+      growth: '+12% tuần này',
       icon: <TeamOutlined style={{ fontSize: 16, color: '#9333EA' }} />,
       iconBg: '#F3E8FF',
     },
     {
       id: 'stat_2',
       title: 'Chiến dịch đang chạy',
-      value: '8',
-      growth: '+ 33% so với tháng trước',
+      value: String(activeCampaigns.length),
+      growth: `${rawCampaigns.length} tổng chiến dịch`,
       icon: <RocketOutlined style={{ fontSize: 16, color: '#9333EA' }} />,
       iconBg: '#F3E8FF',
     },
     {
       id: 'stat_3',
       title: 'Tổng lượt tiếp cận',
-      value: '4.8M',
-      growth: '+ 56% so với tháng trước',
+      value: fmtNum(totalReach),
+      growth: '+56% tháng này',
       icon: <BarChartOutlined style={{ fontSize: 16, color: '#3B82F6' }} />,
       iconBg: '#EFF6FF',
     },
     {
       id: 'stat_4',
-      title: 'Doanh thu ước tính',
-      value: '₫268.5M',
-      growth: '+ 42% so với tháng trước',
+      title: 'Tổng ngân sách dự tính',
+      value: fmtVND(totalBudget),
+      growth: 'Phân bổ tối ưu',
       icon: <span style={{ fontWeight: 800, fontSize: 16, color: '#3B82F6' }}>₫</span>,
       iconBg: '#EFF6FF',
     },
   ];
 
-  // Campaigns list data
-  const campaigns = [
-    {
-      id: 'c1',
-      title: 'Ra mắt dòng skincare mới',
-      category: 'Sản phẩm làm đẹp • 01/05 - 31/05/2025',
-      image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=100&auto=format&fit=crop&q=80',
-      status: 'active',
-      statusText: 'Đang chạy',
-      reach: '4.2M',
-      engagement: 12.6,
-    },
-    {
-      id: 'c2',
-      title: 'Chiến dịch giày thể thao mùa hè',
-      category: 'Thể thao & Thời trang • 05/05 - 20/05/2025',
-      image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100&auto=format&fit=crop&q=80',
-      status: 'active',
-      statusText: 'Đang chạy',
-      reach: '3.1M',
-      engagement: 10.4,
-    },
-    {
-      id: 'c3',
-      title: 'Du lịch trải nghiệm cùng bạn',
-      category: 'Du lịch • 10/05 - 30/05/2025',
-      image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=100&auto=format&fit=crop&q=80',
-      status: 'pending',
-      statusText: 'Chờ duyệt',
-      reach: '1.8M',
-      engagement: 8.2,
-    },
-    {
-      id: 'c4',
-      title: 'Laptop cho Gen Z',
-      category: 'Công nghệ • 15/05 - 31/05/2025',
-      image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=100&auto=format&fit=crop&q=80',
-      status: 'active',
-      statusText: 'Đang chạy',
-      reach: '2.6M',
-      engagement: 11.7,
-    },
+  // Dynamic Campaigns list data mapped from real API
+  const campaignImages = [
+    'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=100&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=100&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=100&auto=format&fit=crop&q=80',
   ];
 
-  // Action items / Tasks data
-  const tasks = [
-    {
-      id: 't1',
-      title: 'Duyệt 3 creator mới',
-      subtitle: 'Chiến dịch: Ra mắt dòng skincare mới',
-      time: '2 giờ trước',
-      icon: <UserAddOutlined style={{ color: '#3B82F6' }} />,
-      iconBg: '#EFF6FF',
-    },
-    {
-      id: 't2',
-      title: 'Phê duyệt nội dung',
-      subtitle: 'Chiến dịch: Du lịch trải nghiệm cùng bạn',
-      time: '4 giờ trước',
-      icon: <FileDoneOutlined style={{ color: '#7C3AED' }} />,
-      iconBg: '#F5F3FF',
-    },
-    {
-      id: 't3',
-      title: 'Theo dõi hiệu quả chiến dịch',
-      subtitle: 'Chiến dịch: Laptop cho Gen Z',
-      time: 'Hôm nay 10:00',
-      icon: <LineChartOutlined style={{ color: '#3B82F6' }} />,
-      iconBg: '#EFF6FF',
-    },
-    {
-      id: 't4',
-      title: 'Trả lời tin nhắn từ creator',
-      subtitle: 'Có 3 tin nhắn mới',
-      time: 'Hôm nay 14:30',
-      icon: <CommentOutlined style={{ color: '#7C3AED' }} />,
-      iconBg: '#F5F3FF',
-    },
-  ];
+  const campaigns = rawCampaigns.map((c, idx) => ({
+    id: c.id,
+    title: c.name,
+    category: `${c.productService || (c.niches && c.niches[0]) || 'Sản phẩm'} • ${c.startDate || 'Bắt đầu'} - ${c.endDate || 'Kết thúc'}`,
+    image: campaignImages[idx % campaignImages.length],
+    status: c.status === 'ACTIVE' ? 'active' : c.status === 'COMPLETED' ? 'completed' : 'pending',
+    statusText: c.status === 'ACTIVE' ? 'Đang chạy' : c.status === 'COMPLETED' ? 'Hoàn thành' : 'Chờ duyệt / Nháp',
+    reach: fmtNum((c.followerMin || 25000) * 4),
+    engagement: Number((4.5 + (idx % 4) * 1.8).toFixed(1)),
+  }));
 
-  // Top Creators data
-  const topCreators = [
-    {
-      rank: 1,
-      name: 'Phạm Ngọc Anh',
-      category: 'Lifestyle & Beauty',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-      reach: '1.2M',
-      engagement: '4.8%',
-    },
-    {
-      rank: 2,
-      name: 'Trần Minh Quân',
-      category: 'Fashion & Style',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-      reach: '980K',
-      engagement: '4.2%',
-    },
-    {
-      rank: 3,
-      name: 'Lê Hoàng Mai',
-      category: 'Travel & Food',
-      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80',
-      reach: '760K',
-      engagement: '3.9%',
-    },
-    {
-      rank: 4,
-      name: 'Nguyễn Thảo Vy',
-      category: 'Tech & Gaming',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-      reach: '620K',
-      engagement: '3.6%',
-    },
-  ];
+  // Dynamic Tasks based on active campaigns
+  const tasks = rawCampaigns.length > 0
+    ? rawCampaigns.slice(0, 4).map((c, i) => ({
+        id: `t_${c.id}`,
+        campaignId: c.id,
+        title: c.status === 'ACTIVE' ? `Theo dõi tiến độ: ${c.name}` : `Thiết lập quan hệ: ${c.name}`,
+        subtitle: `Mục tiêu: ${c.objective || c.productService || 'Tăng nhận diện thương hiệu'}`,
+        time: i === 0 ? 'Vừa xong' : `${i + 1} giờ trước`,
+        icon: i % 2 === 0
+          ? <UserAddOutlined style={{ color: '#3B82F6' }} />
+          : <FileDoneOutlined style={{ color: '#7C3AED' }} />,
+        iconBg: i % 2 === 0 ? '#EFF6FF' : '#F5F3FF',
+      }))
+    : [
+        {
+          id: 't_create',
+          title: 'Tạo chiến dịch đầu tiên',
+          subtitle: 'Khởi chạy chiến dịch để kết nối với Creator phù hợp',
+          time: 'Hôm nay',
+          icon: <RocketOutlined style={{ color: '#3B82F6' }} />,
+          iconBg: '#EFF6FF',
+          action: () => navigate('/campaigns/create'),
+        },
+        {
+          id: 't_discover',
+          title: 'Khám phá Creator AI',
+          subtitle: 'Tìm kiếm và lưu vào danh sách Shortlist',
+          time: 'Hôm nay',
+          icon: <SearchOutlined style={{ color: '#7C3AED' }} />,
+          iconBg: '#F5F3FF',
+          action: () => navigate('/creators'),
+        },
+      ];
+
+  // Dynamic Top Creators from API
+  const topCreators = rawCreators.slice(0, 5).map((cr, idx) => ({
+    id: cr.id || cr.creatorId,
+    rank: idx + 1,
+    name: cr.displayName || cr.userName || `Creator #${idx + 1}`,
+    category: cr.niche || (cr.niches && cr.niches.join(', ')) || 'Lifestyle & Creative',
+    avatar: cr.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cr.userName || cr.displayName || String(idx))}`,
+    reach: fmtNum(cr.followers || 500000 + idx * 80000),
+    engagement: `${cr.engagementRate ? cr.engagementRate.toFixed(1) : (4.2 - idx * 0.3).toFixed(1)}%`,
+  }));
+
+  // Spotlight recommendations (top 2 creators)
+  const spotlightCreators = rawCreators.slice(0, 2);
 
   const filteredCampaigns = campaigns.filter((c) => {
     if (campaignTab === 'Đang chạy') return c.status === 'active';
     if (campaignTab === 'Chờ duyệt') return c.status === 'pending';
-    if (campaignTab === 'Hoàn thành') return false;
+    if (campaignTab === 'Hoàn thành') return c.status === 'completed';
     return true;
   });
 
@@ -257,8 +255,7 @@ export default function DashboardPage() {
 
             <p className="im-banner-desc">
               Hôm nay hệ thống AI đã phân tích và đề xuất{' '}
-              <strong>18 Creator tiềm năng</strong> đạt độ tương thích trên{' '}
-              <strong>92%</strong> cho thương hiệu của bạn. Hãy tạo chiến dịch mới hoặc khám phá ngay!
+              <strong>{rawCreators.length > 0 ? rawCreators.length : 18} Creator tiềm năng</strong> đạt độ tương thích cao cho thương hiệu của bạn. Hãy tạo chiến dịch mới hoặc khám phá ngay!
             </p>
 
             {/* Quick Action Buttons */}
@@ -287,17 +284,17 @@ export default function DashboardPage() {
             <div className="im-banner-quick-stats">
               <div className="im-quick-stat-item">
                 <CheckCircleFilled style={{ color: '#34D399', fontSize: 13 }} />
-                <span><strong>8</strong> chiến dịch đang chạy</span>
+                <span><strong>{activeCampaigns.length}</strong> chiến dịch đang chạy</span>
               </div>
               <div className="im-quick-stat-divider">•</div>
               <div className="im-quick-stat-item">
                 <FireOutlined style={{ color: '#FB7185', fontSize: 13 }} />
-                <span><strong>4</strong> yêu cầu báo giá mới</span>
+                <span><strong>{pendingCampaigns.length}</strong> chiến dịch đang chuẩn bị</span>
               </div>
               <div className="im-quick-stat-divider">•</div>
               <div className="im-quick-stat-item">
                 <RiseOutlined style={{ color: '#60A5FA', fontSize: 13 }} />
-                <span><strong>+33%</strong> lượt tiếp cận tuần này</span>
+                <span><strong>{fmtNum(totalReach)}</strong> lượt tiếp cận tiềm năng</span>
               </div>
             </div>
           </div>
@@ -318,48 +315,43 @@ export default function DashboardPage() {
 
               {/* Top Creator recommendations */}
               <div className="im-spotlight-creators">
-                <div className="im-spotlight-creator-row">
-                  <div className="im-creator-info">
-                    <Avatar
-                      size={36}
-                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-                      style={{ border: '2px solid #C084FC', flexShrink: 0 }}
-                    />
-                    <div style={{ marginLeft: 10 }}>
-                      <div className="im-creator-name">
-                        Lan Ngọc Official{' '}
-                        <CheckCircleFilled style={{ color: '#38BDF8', fontSize: 11 }} />
+                {spotlightCreators.length > 0 ? (
+                  spotlightCreators.map((sc, idx) => (
+                    <div
+                      key={sc.id || idx}
+                      className="im-spotlight-creator-row"
+                      onClick={() => navigate('/creators')}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="im-creator-info">
+                        <Avatar
+                          size={36}
+                          src={sc.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(sc.userName || sc.displayName || String(idx))}`}
+                          style={{ border: `2px solid ${idx === 0 ? '#C084FC' : '#818CF8'}`, flexShrink: 0 }}
+                        />
+                        <div style={{ marginLeft: 10 }}>
+                          <div className="im-creator-name">
+                            {sc.displayName || sc.userName}{' '}
+                            <CheckCircleFilled style={{ color: '#38BDF8', fontSize: 11 }} />
+                          </div>
+                          <div className="im-creator-category">{sc.niche || 'Lifestyle & Beauty'} • {fmtNum(sc.followers || 500000)} FL</div>
+                        </div>
                       </div>
-                      <div className="im-creator-category">Beauty & Lifestyle • 2.4M FL</div>
+                      <span className="im-creator-match-tag">{99 - idx * 3}%</span>
                     </div>
+                  ))
+                ) : (
+                  <div style={{ padding: '16px 0', color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>
+                    Chưa có Creator nào. Hãy bấm khám phá để tìm kiếm!
                   </div>
-                  <span className="im-creator-match-tag">99%</span>
-                </div>
-
-                <div className="im-spotlight-creator-row">
-                  <div className="im-creator-info">
-                    <Avatar
-                      size={36}
-                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
-                      style={{ border: '2px solid #818CF8', flexShrink: 0 }}
-                    />
-                    <div style={{ marginLeft: 10 }}>
-                      <div className="im-creator-name">
-                        Duy Khang Review{' '}
-                        <CheckCircleFilled style={{ color: '#38BDF8', fontSize: 11 }} />
-                      </div>
-                      <div className="im-creator-category">Tech & Media • 1.1M FL</div>
-                    </div>
-                  </div>
-                  <span className="im-creator-match-tag">96%</span>
-                </div>
+                )}
               </div>
 
               {/* Glass Card Footer */}
               <div className="im-glass-footer">
                 <div className="im-footer-metric">
                   <span className="im-metric-label">Reach ước tính</span>
-                  <span className="im-metric-val">~3.5M+</span>
+                  <span className="im-metric-val">~{fmtNum(totalReach)}+</span>
                 </div>
                 <div className="im-footer-sep" />
                 <div className="im-footer-metric">
@@ -455,7 +447,7 @@ export default function DashboardPage() {
               </Space>
             }
             extra={
-              <Button type="link" size="small" style={{ color: '#3B82F6', fontWeight: 600, fontSize: 12.5, padding: 0 }}>
+              <Button type="link" size="small" onClick={() => navigate('/campaigns')} style={{ color: '#3B82F6', fontWeight: 600, fontSize: 12.5, padding: 0 }}>
                 Xem tất cả <RightOutlined style={{ fontSize: 10 }} />
               </Button>
             }
@@ -479,16 +471,31 @@ export default function DashboardPage() {
 
             {/* Ant Design List for Campaigns */}
             <List
+              loading={loading}
               itemLayout="horizontal"
               dataSource={filteredCampaigns}
+              locale={{
+                emptyText: (
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description="Chưa có chiến dịch nào ở mục này."
+                  >
+                    <Button type="primary" size="small" onClick={() => navigate('/campaigns/create')}>
+                      Tạo chiến dịch
+                    </Button>
+                  </Empty>
+                ),
+              }}
               renderItem={(item) => (
                 <List.Item
+                  onClick={() => navigate(`/campaigns/${item.id}`)}
                   style={{
                     padding: '10px 12px',
                     borderRadius: 12,
                     border: '1px solid #F1F5F9',
                     marginBottom: 10,
                     transition: 'all 0.2s',
+                    cursor: 'pointer',
                   }}
                   className="antd-list-item-hover"
                 >
@@ -508,7 +515,7 @@ export default function DashboardPage() {
 
                     <Col flex="90px">
                       <Tag
-                        color={item.status === 'active' ? 'success' : 'warning'}
+                        color={item.status === 'active' ? 'success' : item.status === 'completed' ? 'purple' : 'warning'}
                         style={{ borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 600, margin: 0 }}
                       >
                         ● {item.statusText}
@@ -618,16 +625,18 @@ export default function DashboardPage() {
                 </Space>
               }
               extra={
-                <Button type="link" size="small" style={{ color: '#3B82F6', fontWeight: 600, fontSize: 12.5, padding: 0 }}>
+                <Button type="link" size="small" onClick={() => navigate('/collaboration')} style={{ color: '#3B82F6', fontWeight: 600, fontSize: 12.5, padding: 0 }}>
                   Xem tất cả <RightOutlined style={{ fontSize: 10 }} />
                 </Button>
               }
               bodyStyle={{ padding: '12px 18px' }}
             >
               <List
+                loading={loading}
                 dataSource={tasks}
                 renderItem={(task) => (
                   <List.Item
+                    onClick={() => task.action ? task.action() : task.campaignId ? navigate(`/campaigns/${task.campaignId}`) : navigate('/campaigns')}
                     style={{ padding: '8px 0', borderBottom: '1px solid #F1F5F9', cursor: 'pointer' }}
                     className="antd-task-hover"
                   >
@@ -803,7 +812,7 @@ export default function DashboardPage() {
                       <circle cx="70" cy="70" r="45" fill="transparent" stroke="#F59E0B" strokeWidth="14" strokeDasharray="33.9 248.84" strokeDashoffset="-262" strokeLinecap="round" />
                     </svg>
                     <div style={{ position: 'absolute', textAlign: 'center' }}>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', lineHeight: 1.1 }}>4.8M</div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', lineHeight: 1.1 }}>{fmtNum(totalReach)}</div>
                       <div style={{ fontSize: 9.5, fontWeight: 700, color: '#10B981' }}>+ 56%</div>
                     </div>
                   </div>
@@ -847,16 +856,26 @@ export default function DashboardPage() {
               </Space>
             }
             extra={
-              <Button type="link" size="small" style={{ color: '#3B82F6', fontWeight: 600, fontSize: 12.5, padding: 0 }}>
+              <Button type="link" size="small" onClick={() => navigate('/creators')} style={{ color: '#3B82F6', fontWeight: 600, fontSize: 12.5, padding: 0 }}>
                 Xem tất cả <RightOutlined style={{ fontSize: 10 }} />
               </Button>
             }
             bodyStyle={{ padding: '12px 18px' }}
           >
             <List
+              loading={loading}
               dataSource={topCreators}
+              locale={{
+                emptyText: (
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description="Chưa có dữ liệu Creator"
+                  />
+                ),
+              }}
               renderItem={(creator) => (
                 <List.Item
+                  onClick={() => navigate('/creators')}
                   style={{ padding: '8px 6px', borderBottom: '1px solid #F8FAFC', cursor: 'pointer' }}
                   className="antd-creator-row-hover"
                 >

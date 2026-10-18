@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Typography,
   Card,
@@ -17,6 +17,7 @@ import {
   Space,
   Tooltip,
   Badge,
+  Spin,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -38,7 +39,6 @@ import {
   CalendarOutlined,
 } from '@ant-design/icons';
 import {
-  SUBSCRIPTION_PLANS,
   QUOTA_METRICS_DATA,
   PAYMENT_INVOICES_DATA,
   CURRENT_SUBSCRIPTION_INFO,
@@ -48,18 +48,24 @@ import type {
   QuotaMetric,
   PaymentInvoice,
 } from '../../data/mockData';
+import { subscriptionService } from '../../services/api/subscriptionService';
+import type { PlanResponse } from '../../types/api/subscription.types';
+import { getErrorMessage } from '../../services/apiClient';
 import './SubscriptionPage.css';
 
 const { Title, Text, Paragraph } = Typography;
 
 export default function SubscriptionPage() {
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>('plans');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState<SubscriptionPlan | null>(null);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'visa' | 'vnpay' | 'momo'>('visa');
+  const [paymentMethod, setPaymentMethod] = useState<'visa' | 'vnpay' | 'momo'>('vnpay');
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherApplied, setVoucherApplied] = useState(false);
+  const [paying, setPaying] = useState<boolean>(false);
 
   // Dynamic Quota State to allow interactive add-on quota buying
   const [quotas, setQuotas] = useState<QuotaMetric[]>(QUOTA_METRICS_DATA);
@@ -69,6 +75,45 @@ export default function SubscriptionPage() {
   const [selectedInvoice, setSelectedInvoice] = useState<PaymentInvoice | null>(null);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
+  useEffect(() => {
+    let isMounted = true;
+    const loadPlans = async () => {
+      setLoadingPlans(true);
+      try {
+        const remotePlans: PlanResponse[] = await subscriptionService.getPlans();
+        if (isMounted) {
+          const mapped: SubscriptionPlan[] = remotePlans.map((p, idx) => ({
+            id: p.id,
+            name: p.planName.replace(/-[0-9]+$/, ''),
+            subtitle: p.description || 'Gói dịch vụ chuyên nghiệp dành cho doanh nghiệp',
+            priceMonthly: p.price,
+            priceYearly: p.price * 10,
+            isCurrent: idx === 0,
+            popular: idx === 1,
+            badge: idx === 1 ? 'Khuyên Dùng • Phổ Biến' : undefined,
+            features: [
+              { text: `Tối đa ${p.campaignQuota} chiến dịch hoạt động`, included: true },
+              { text: `Khám phá ${p.recommendationQuota} Creator / tháng`, included: true },
+              { text: `Làm mới số liệu (Refresh) ${p.refreshQuota} Creator / tháng`, included: true },
+              { text: 'Bộ lọc cơ bản theo ngành hàng & nền tảng', included: true },
+              { text: 'Thanh toán trực tuyến bảo mật qua VNPAY', included: true, highlight: true },
+            ],
+          }));
+          setPlans(mapped);
+        }
+      } catch (err) {
+        console.error('Failed to load plans:', err);
+      } finally {
+        if (isMounted) setLoadingPlans(false);
+      }
+    };
+
+    loadPlans();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Handle plan upgrade click
   const handleOpenUpgrade = (plan: SubscriptionPlan) => {
     setSelectedPlanForUpgrade(plan);
@@ -77,16 +122,23 @@ export default function SubscriptionPage() {
     setIsUpgradeModalOpen(true);
   };
 
-  const handleConfirmPayment = () => {
-    message.loading({ content: 'Đang xử lý giao dịch an toàn...', key: 'upgrade_msg' });
-    setTimeout(() => {
-      message.success({
-        content: `Chúc mừng! Bạn đã kích hoạt thành công gói ${selectedPlanForUpgrade?.name}!`,
-        key: 'upgrade_msg',
-        duration: 4,
-      });
-      setIsUpgradeModalOpen(false);
-    }, 1200);
+  const handleConfirmPayment = async () => {
+    if (!selectedPlanForUpgrade) return;
+    setPaying(true);
+    message.loading({ content: 'Đang kết nối cổng thanh toán VNPay...', key: 'upgrade_msg' });
+    try {
+      const res = await subscriptionService.subscribeVNPay(selectedPlanForUpgrade.id);
+      if (res?.paymentUrl) {
+        message.success({ content: 'Đang chuyển hướng tới cổng thanh toán VNPay...', key: 'upgrade_msg' });
+        window.location.href = res.paymentUrl;
+      } else {
+        message.error({ content: 'Không tìm thấy liên kết thanh toán.', key: 'upgrade_msg' });
+      }
+    } catch (err) {
+      message.error({ content: getErrorMessage(err, 'Khởi tạo thanh toán VNPay thất bại.'), key: 'upgrade_msg' });
+    } finally {
+      setPaying(false);
+    }
   };
 
   // Handle buy addon quota
@@ -391,7 +443,7 @@ export default function SubscriptionPage() {
 
                   {/* 3 Plans Grid */}
                   <Row gutter={[20, 20]} align="stretch">
-                    {SUBSCRIPTION_PLANS.map((plan) => {
+                    {plans.map((plan) => {
                       const price = billingCycle === 'monthly' ? plan.priceMonthly : Math.round(plan.priceYearly / 12);
                       const isCurrent = plan.isCurrent;
 

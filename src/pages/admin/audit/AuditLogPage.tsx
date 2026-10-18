@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Card, Table, Tag, Input, Select, Button, Space, Typography, Tooltip, message } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Table, Tag, Input, Select, Button, Space, Typography, Tooltip, message, Spin } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   SearchOutlined,
@@ -8,7 +8,8 @@ import {
   EyeOutlined,
   DownloadOutlined,
 } from '@ant-design/icons';
-import { MOCK_AUDIT_LOGS, type AuditLog, type AuditAction } from '../../../mock/adminData';
+import { adminService } from '../../../services/api/adminService';
+import type { AuditLogItem, AuditAction } from '../../../types/api/admin.types';
 import AuditDetailDrawer from './components/AuditDetailDrawer';
 
 const { Text } = Typography;
@@ -22,33 +23,44 @@ const ACTION_COLORS: Record<AuditAction, string> = {
 };
 
 export default function AuditLogPage() {
-  const [logs, setLogs] = useState<AuditLog[]>(MOCK_AUDIT_LOGS);
+  const [logs, setLogs] = useState<AuditLogItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('all');
   const [resourceFilter, setResourceFilter] = useState('all');
-  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const handleOpenDetail = (log: AuditLog) => {
+  const fetchLogs = async (p = page) => {
+    try {
+      setLoading(true);
+      const res = await adminService.getAuditLogs({
+        page: p - 1,
+        size: 10,
+        search: search || undefined,
+        action: actionFilter !== 'all' ? (actionFilter as AuditAction) : undefined,
+        resource: resourceFilter !== 'all' ? resourceFilter : undefined,
+      });
+      setLogs(res.content ?? []);
+      setTotal(res.totalElements ?? 0);
+    } catch {
+      // handled by apiClient interceptor
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchLogs(1); setPage(1); }, [search, actionFilter, resourceFilter]);
+  useEffect(() => { fetchLogs(page); }, [page]);
+
+  const handleOpenDetail = (log: AuditLogItem) => {
     setSelectedLog(log);
     setDrawerOpen(true);
   };
 
-  const filteredLogs = logs.filter(l => {
-    const q = search.toLowerCase();
-    const matchQ =
-      !q ||
-      l.actor.toLowerCase().includes(q) ||
-      l.actorEmail.toLowerCase().includes(q) ||
-      l.resource.toLowerCase().includes(q) ||
-      l.resourceId.toLowerCase().includes(q) ||
-      l.ip.includes(q);
-    const matchA = actionFilter === 'all' || l.action === actionFilter;
-    const matchR = resourceFilter === 'all' || l.resource === resourceFilter;
-    return matchQ && matchA && matchR;
-  });
-
-  const columns: TableColumnsType<AuditLog> = [
+  const columns: TableColumnsType<AuditLogItem> = [
     {
       title: 'Thời gian',
       dataIndex: 'timestamp',
@@ -174,13 +186,21 @@ export default function AuditLogPage() {
         </div>
 
         {/* Table */}
-        <Table
-          columns={columns}
-          dataSource={filteredLogs}
-          rowKey="id"
-          pagination={{ pageSize: 10, showTotal: (t) => `Tổng số ${t} bản ghi audit` }}
-          size="middle"
-        />
+        <Spin spinning={loading}>
+          <Table
+            columns={columns}
+            dataSource={logs}
+            rowKey="id"
+            pagination={{
+              current: page,
+              pageSize: 10,
+              total,
+              onChange: setPage,
+              showTotal: (t) => `Tổng số ${t} bản ghi audit`,
+            }}
+            size="middle"
+          />
+        </Spin>
       </Card>
 
       {/* Detail Diff Drawer */}

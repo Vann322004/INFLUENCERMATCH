@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Checkbox, Divider, Row, Col, Typography, message, Alert } from 'antd';
+import { Form, Input, Button, Checkbox, Divider, Row, Col, Typography, message } from 'antd';
 import {
   MailOutlined,
   LockOutlined,
   ArrowRightOutlined,
   GoogleOutlined,
   ThunderboltOutlined,
-  CheckCircleOutlined
 } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { LABELS } from '../../constants/labels';
 import { ROUTES } from '../../constants/routes';
-import { authService, MOCK_USER } from '../../mock/authData';
+import { authService } from '../../services/api/authService';
+import { getErrorMessage } from '../../services/apiClient';
 
 const { Title, Text } = Typography;
 
@@ -20,47 +20,45 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const ADMIN_ROLES = ['admin', 'super_admin'];
-
   const redirectByRole = (user) => {
-    if (user && ADMIN_ROLES.includes(user.role)) {
+    if (user && (user.role === 'ADMIN' || user.role === 'DATA_MANAGER')) {
       navigate('/admin/dashboard');
     } else {
       navigate(ROUTES.DASHBOARD || '/dashboard');
     }
   };
 
-  const onFinish = (values) => {
+  const onFinish = async (values) => {
     setLoading(true);
-    setTimeout(() => {
-      const result = authService.login(values.username, values.password);
-      setLoading(false);
+    try {
+      const loginData = await authService.login({
+        email: values.email?.trim(),
+        password: values.password,
+      });
 
-      if (result.success) {
-        message.success(`Đăng nhập thành công! Xin chào ${result.user.name}`);
-        redirectByRole(result.user);
-      } else {
-        message.error(result.message || 'Đăng nhập thất bại!');
-      }
-    }, 400);
+      message.success(`Đăng nhập thành công! Xin chào ${loginData.user?.fullName || loginData.user?.email}`);
+      redirectByRole(loginData.user);
+    } catch (error) {
+      message.error(getErrorMessage(error, 'Đăng nhập thất bại! Vui lòng kiểm tra lại email và mật khẩu.'));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleQuickLogin = () => {
+  const handleQuickLogin = (email, password) => {
     form.setFieldsValue({
-      username: MOCK_USER.email,
-      password: MOCK_USER.password,
+      email,
+      password,
     });
-    setLoading(true);
-    setTimeout(() => {
-      const result = authService.login(MOCK_USER.email, MOCK_USER.password);
-      setLoading(false);
-      message.success(`Đăng nhập thành công! Chào mừng ${MOCK_USER.name}`);
-      redirectByRole(result.user);
-    }, 300);
+    form.submit();
   };
 
   const handleSocialLogin = (provider) => {
-    message.info(`Đang kết nối với ${provider}...`);
+    if (provider === 'Google') {
+      window.location.href = `${import.meta.env.VITE_API_BASE_URL || 'http://221.121.3.226:8080/api/v1'}/auth/google`;
+    } else {
+      message.info(`Đang kết nối với ${provider}...`);
+    }
   };
 
   return (
@@ -86,29 +84,23 @@ export default function LoginPage() {
         }}
       >
         <div style={{ fontSize: 12, fontWeight: 700, color: '#6D28D9', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
-          <ThunderboltOutlined /> Tài khoản Demo:
+          <ThunderboltOutlined /> Tài khoản đã kiểm thử trên Server:
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#64748B', marginBottom: 2 }}>🏢 BRAND</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#64748B', marginBottom: 2 }}>🏢 BRAND TEST</div>
             <div style={{ fontSize: 11, color: '#4B5563' }}>
-              <code>thevan@influencermatch.com</code> / <code>123456</code>
-            </div>
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#64748B', marginBottom: 2 }}>🔐 ADMIN</div>
-            <div style={{ fontSize: 11, color: '#4B5563' }}>
-              <code>admin@influencermatch.vn</code> / <code>admin123</code>
+              <code>brand_test_01@influencermatch.vn</code> / <code>Password123!</code>
             </div>
           </div>
         </div>
         <Button
           size="small"
           type="primary"
-          onClick={handleQuickLogin}
+          onClick={() => handleQuickLogin('brand_test_01@influencermatch.vn', 'Password123!')}
           style={{ fontSize: 11, height: 26, padding: '0 10px', background: '#7C3AED', borderRadius: 8, marginTop: 8 }}
         >
-          Điền nhanh (Brand)
+          Điền nhanh & Đăng nhập
         </Button>
       </div>
 
@@ -120,19 +112,22 @@ export default function LoginPage() {
         onFinish={onFinish}
         initialValues={{
           remember: true,
-          username: MOCK_USER.email,
-          password: MOCK_USER.password,
+          email: 'brand_test_01@influencermatch.vn',
+          password: 'Password123!',
         }}
         requiredMark={false}
         size="large"
       >
         <Form.Item
-          name="username"
-          rules={[{ required: true, message: 'Vui lòng nhập email hoặc số điện thoại!' }]}
+          name="email"
+          rules={[
+            { required: true, message: 'Vui lòng nhập email!' },
+            { type: 'email', message: 'Email không hợp lệ!' },
+          ]}
         >
           <Input
             prefix={<MailOutlined style={{ color: '#94A3B8' }} />}
-            placeholder={LABELS.AUTH.EMAIL_OR_PHONE_PLACEHOLDER}
+            placeholder="Email tài khoản"
           />
         </Form.Item>
 

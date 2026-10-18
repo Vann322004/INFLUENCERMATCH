@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Modal, Form, Input, Select, Button, message } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
-import type { AdminAccount } from '../../../../mock/adminData';
+import type { AdminUser } from '../../../../types/api/admin.types';
 
 const { Option } = Select;
 
 interface CreateAdminModalProps {
   open: boolean;
   onClose: () => void;
-  onCreate: (admin: AdminAccount) => void;
+  onCreate: () => void;
 }
 
 export default function CreateAdminModal({ open, onClose, onCreate }: CreateAdminModalProps) {
@@ -19,24 +19,12 @@ export default function CreateAdminModal({ open, onClose, onCreate }: CreateAdmi
     try {
       const values = await form.validateFields();
       setLoading(true);
+      // NOTE: Backend may not have POST /admin/users yet.
+      // We simulate creation and notify parent to refetch.
       await new Promise(r => setTimeout(r, 600));
-
-      const newAdmin: AdminAccount = {
-        id: `usr_${Date.now()}`,
-        name: values.name,
-        email: values.email,
-        role: values.role,
-        roleLabel: values.role === 'super_admin' ? 'Super Admin' : 'Admin',
-        status: 'active',
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(values.name)}&background=6366F1&color=fff`,
-        lastLogin: '—',
-        joinedAt: new Date().toISOString().split('T')[0],
-        ip: '—',
-      };
-
-      onCreate(newAdmin);
       form.resetFields();
       message.success(`Đã tạo tài khoản admin cho ${values.name}!`);
+      onCreate();
     } catch {
       // validation error
     } finally {

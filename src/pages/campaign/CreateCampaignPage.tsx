@@ -18,6 +18,9 @@ import {
   message,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { campaignService } from '../../services/api/campaignService';
+import { getErrorMessage } from '../../services/apiClient';
+import type { CampaignObjective, CampaignPlatform } from '../../types/api/campaign.types';
 import {
   RightOutlined,
   LeftOutlined,
@@ -249,7 +252,7 @@ export default function CreateCampaignPage() {
   };
 
   // Next step handler with validation
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (currentStep === 1) {
       if (!campaignName.trim()) {
         message.warning('Vui lòng nhập tên chiến dịch!');
@@ -267,8 +270,50 @@ export default function CreateCampaignPage() {
       scrollToTop();
       message.success('Đã chuyển sang Bước 3: Chỉ số & ngân sách!');
     } else if (currentStep === 3) {
-      message.success('🎉 Chiến dịch đã được khởi tạo thành công!');
-      navigate('/campaigns');
+      try {
+        message.loading({ content: 'Đang khởi tạo chiến dịch trên hệ thống...', key: 'create_camp' });
+        const objectiveMap: Record<string, CampaignObjective> = {
+          sales: 'CONVERSION',
+          awareness: 'AWARENESS',
+          engagement: 'ENGAGEMENT',
+          traffic: 'TRAFFIC',
+        };
+        const platformMap: Record<string, CampaignPlatform> = {
+          tiktok: 'TIKTOK',
+          instagram: 'INSTAGRAM',
+          youtube: 'YOUTUBE',
+        };
+        const mappedPlatforms = selectedPlatforms
+          .map((p) => platformMap[p.toLowerCase()])
+          .filter(Boolean) as CampaignPlatform[];
+
+        const primaryObj = selectedObjectives[0] || 'awareness';
+        const niches = interests
+          ? interests.split(',').map((s) => s.trim()).filter(Boolean)
+          : ['Làm đẹp', 'Phong cách sống'];
+        const locations = location && location !== 'nationwide' ? [location] : ['Toàn quốc'];
+        const targetAudiences = selectedAges.length > 0 ? selectedAges : ['18-24', '25-34'];
+        const contentType = selectedFormats.length > 0 ? selectedFormats.join(', ') : 'Short video';
+
+        await campaignService.createCampaign({
+          name: campaignName.trim(),
+          productService: product.trim(),
+          objective: objectiveMap[primaryObj] || 'AWARENESS',
+          platforms: mappedPlatforms.length > 0 ? mappedPlatforms : ['TIKTOK'],
+          budgetMin: budgetTotal ? budgetTotal * 0.8 : 10000000,
+          budgetMax: budgetTotal || 25000000,
+          followerMin: 10000,
+          followerMax: 500000,
+          niches,
+          locations,
+          targetAudiences,
+          contentType,
+        });
+        message.success({ content: '🎉 Chiến dịch đã được khởi tạo thành công!', key: 'create_camp' });
+        navigate('/campaigns');
+      } catch (err) {
+        message.error({ content: getErrorMessage(err, 'Không thể tạo chiến dịch.'), key: 'create_camp' });
+      }
     }
   };
 

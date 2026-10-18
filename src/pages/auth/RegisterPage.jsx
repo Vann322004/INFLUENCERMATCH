@@ -1,17 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Form, Input, Button, Typography, message } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined, ArrowRightOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { LABELS } from '../../constants/labels';
 import { ROUTES } from '../../constants/routes';
+import { authService } from '../../services/api/authService';
+import { getErrorMessage } from '../../services/apiClient';
 
 const { Title, Text } = Typography;
 
 export default function RegisterPage() {
   const [form] = Form.useForm();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  const onFinish = (values) => {
-    message.success('Đăng ký tài khoản thành công! Vui lòng đăng nhập.');
+  const onFinish = async (values) => {
+    setLoading(true);
+    try {
+      await authService.register({
+        fullName: values.fullName?.trim(),
+        email: values.email?.trim(),
+        password: values.password,
+      });
+
+      message.success('Đăng ký tài khoản thành công! Vui lòng đăng nhập.');
+      navigate(ROUTES.AUTH.LOGIN || '/login');
+    } catch (error) {
+      message.error(getErrorMessage(error, 'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,11 +76,14 @@ export default function RegisterPage() {
 
         <Form.Item
           name="password"
-          rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
+          rules={[
+            { required: true, message: 'Vui lòng nhập mật khẩu!' },
+            { min: 8, message: 'Mật khẩu phải có tối thiểu 8 ký tự!' },
+          ]}
         >
           <Input.Password
             prefix={<LockOutlined style={{ color: '#94A3B8' }} />}
-            placeholder={LABELS.AUTH.PASSWORD_PLACEHOLDER}
+            placeholder="Mật khẩu (tối thiểu 8 ký tự)"
           />
         </Form.Item>
 
@@ -72,6 +93,7 @@ export default function RegisterPage() {
             htmlType="submit"
             block
             size="large"
+            loading={loading}
             icon={<ArrowRightOutlined />}
           >
             {LABELS.AUTH.SUBMIT_REGISTER}

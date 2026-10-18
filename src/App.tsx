@@ -39,6 +39,7 @@ import ScoringConfigPage from './pages/admin/scoring/ScoringConfigPage';
 import SubscriptionPlansPage from './pages/admin/subscriptions/SubscriptionPlansPage';
 import PaymentsPage from './pages/admin/payments/PaymentsPage';
 import AuditLogPage from './pages/admin/audit/AuditLogPage';
+import CreatorClaimReviewPage from './pages/admin/claims/CreatorClaimReviewPage';
 
 const { Content } = Layout;
 
@@ -457,6 +458,8 @@ export default function App() {
             <Route path="payments" element={<PaymentsPage />} />
             {/* Phase 8 — Audit Log */}
             <Route path="audit" element={<AuditLogPage />} />
+            {/* Phase 9 — Creator Claim Review */}
+            <Route path="creator-claims" element={<CreatorClaimReviewPage />} />
           </Route>
 
           {/* Admin root redirect */}

@@ -11,7 +11,7 @@ import {
   LogoutOutlined,
   CrownOutlined,
 } from '@ant-design/icons';
-import { CURRENT_USER } from '../../data/mockData';
+import { authService } from '../../services/api/authService';
 import NotificationDrawer from './NotificationDrawer';
 
 const { Header } = Layout;
@@ -19,6 +19,12 @@ const { Header } = Layout;
 export default function AppHeader() {
   const navigate = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
+  const currentUser = authService.getCurrentUser();
+
+  const handleLogout = async () => {
+    await authService.logout();
+    navigate('/login');
+  };
 
   const userMenuItems: MenuProps['items'] = [
     {
@@ -47,6 +53,7 @@ export default function AppHeader() {
       icon: <LogoutOutlined />,
       danger: true,
       label: 'Đăng xuất',
+      onClick: handleLogout,
     },
   ];
 
@@ -124,13 +131,15 @@ export default function AppHeader() {
               transition: 'background 0.2s',
             }}
           >
-            <Avatar src={CURRENT_USER.avatar} size={36} style={{ flexShrink: 0 }} />
+            <Avatar size={36} style={{ flexShrink: 0, backgroundColor: '#8B5CF6' }}>
+              {(currentUser?.fullName || currentUser?.email || 'U').charAt(0).toUpperCase()}
+            </Avatar>
             <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.2 }}>
               <span style={{ fontWeight: 700, fontSize: 13, color: '#0F172A', whiteSpace: 'nowrap' }}>
-                {CURRENT_USER.name}
+                {currentUser?.fullName || currentUser?.email || 'Người dùng'}
               </span>
               <span style={{ fontSize: 11, color: '#64748B', whiteSpace: 'nowrap' }}>
-                {CURRENT_USER.role}
+                {currentUser?.role || 'BRAND'}
               </span>
             </div>
             <DownOutlined style={{ fontSize: 10, color: '#94A3B8', marginLeft: 2 }} />

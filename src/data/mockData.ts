@@ -266,68 +266,7 @@ export const CURRENT_SUBSCRIPTION_INFO = {
   cardBrand: 'Visa',
 };
 
-export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
-  {
-    id: 'plan-starter',
-    name: 'Starter',
-    subtitle: 'Lựa chọn hoàn hảo cho thương hiệu mới bắt đầu khám phá Creator',
-    priceMonthly: 1490000,
-    priceYearly: 14300000, // Tiết kiệm 20%
-    isCurrent: false,
-    popular: false,
-    features: [
-      { text: 'Tối đa 3 chiến dịch hoạt động cùng lúc', included: true },
-      { text: 'Khám phá 50 Creator / tháng', included: true },
-      { text: 'Làm mới số liệu (Refresh) 15 Creator / tháng', included: true },
-      { text: 'Bộ lọc cơ bản theo ngành hàng & nền tảng', included: true },
-      { text: 'So sánh tối đa 3 Creator cùng lúc', included: true },
-      { text: 'AI Brief Assistant phân tích tự động', included: false },
-      { text: 'Khám phá kênh ngoài (External Discovery)', included: false },
-      { text: 'Xuất báo cáo PDF & hỗ trợ ưu tiên', included: false },
-    ],
-  },
-  {
-    id: 'plan-pro',
-    name: 'Professional',
-    badge: 'Khuyên Dùng • Phổ Biến Nhất',
-    subtitle: 'Dành cho nhãn hàng đang mở rộng quy mô chiến dịch Influencer đa kênh',
-    priceMonthly: 3890000,
-    priceYearly: 37340000, // Tiết kiệm 20%
-    isCurrent: true,
-    popular: true,
-    features: [
-      { text: 'Tối đa 15 chiến dịch hoạt động cùng lúc', included: true },
-      { text: 'Khám phá 300 Creator / tháng', included: true },
-      { text: 'Làm mới số liệu (Refresh) 50 Creator / tháng', included: true },
-      { text: 'AI Brief Assistant (Phân tích ngôn ngữ tự nhiên)', included: true, highlight: true },
-      { text: 'Gợi ý AI Match Score & Explanation chi tiết', included: true, highlight: true },
-      { text: 'Khám phá kênh ngoài (External Discovery)', included: true },
-      { text: 'So sánh 5 Creator cùng lúc & Bảng Shortlist chuyên sâu', included: true },
-      { text: 'Quy trình duyệt bài (Deliverable Review) & Đo lường KPI', included: true },
-      { text: 'Hỗ trợ khách hàng ưu tiên 24/7', included: true },
-    ],
-  },
-  {
-    id: 'plan-enterprise',
-    name: 'Enterprise',
-    badge: 'Tập Đoàn & Agency',
-    subtitle: 'Giải pháp toàn diện không giới hạn cho các tập đoàn & agency lớn',
-    priceMonthly: 8990000,
-    priceYearly: 86300000, // Tiết kiệm 20%
-    isCurrent: false,
-    popular: false,
-    features: [
-      { text: 'Không giới hạn số lượng chiến dịch cùng lúc', included: true },
-      { text: 'Không giới hạn lượt khám phá & tìm kiếm Creator', included: true },
-      { text: 'Làm mới số liệu không giới hạn', included: true },
-      { text: 'AI Custom Tuning theo dữ liệu lịch sử thương hiệu', included: true, highlight: true },
-      { text: 'Phân quyền đa thành viên (Multi-seat Workspace)', included: true },
-      { text: 'Tích hợp API & Webhook tùy biến', included: true },
-      { text: 'Báo cáo ROI/ROAS độc quyền theo yêu cầu', included: true },
-      { text: 'Chuyên viên tư vấn tài khoản chuyên trách (Account Manager)', included: true },
-    ],
-  },
-];
+// (SUBSCRIPTION_PLANS removed - replaced by real API: subscriptionService.getPlans())
 
 export const QUOTA_METRICS_DATA: QuotaMetric[] = [
   {
@@ -455,45 +394,8 @@ export interface BrandProfileData {
   };
 }
 
-export const INITIAL_BRAND_PROFILE: BrandProfileData = {
-  brandName: 'GlowBeauty Vietnam',
-  tagline: 'Mỹ phẩm thuần chay lành tính cho làn da châu Á',
-  logo: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=150&auto=format&fit=crop&q=80',
-  coverImage: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop&q=80',
-  legalName: 'Công ty Cổ phần Thương mại GlowBeauty Việt Nam',
-  taxCode: '0317899881',
-  website: 'https://glowbeauty.vn',
-  contactEmail: 'contact@glowbeauty.vn',
-  phone: '(+84) 28 3910 8899',
-  headquarters: 'Tòa nhà TechHub, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
-  companySize: '50 - 200 nhân viên',
-  industry: 'Mỹ phẩm & Chăm sóc cá nhân',
-  subCategories: ['Chăm sóc da (Skincare)', 'Thuần chay (Vegan)', 'Dược mỹ phẩm', 'Chống lão hóa'],
-  priceSegment: 'Tầm trung - Cận cao cấp (300.000 ₫ - 800.000 ₫)',
-  targetGender: { female: 75, male: 25 },
-  targetAgeRange: ['18 - 24 tuổi', '25 - 34 tuổi'],
-  targetLocations: ['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ'],
-  customerInterests: [
-    'Chăm sóc da khoa học',
-    'Thành phần thiên nhiên',
-    'Trang điểm tự nhiên',
-    'Phong cách sống lành mạnh',
-  ],
-  toneOfVoice: ['Thân thiện & Tận tâm', 'Khoa học & Đáng tin cậy', 'Trẻ trung, Hiện đại'],
-  usps: [
-    '100% Thuần chay được chứng nhận ECOCERT',
-    'Chiết xuất rau má lên men độc quyền',
-    'Không cồn, không hương liệu nhân tạo',
-  ],
-  guidelinesSummary:
-    'Video review tự nhiên, nhấn mạnh cảm nhận chân thật sau 7 ngày sử dụng. Tránh nói quá công dụng tức thì. Bắt buộc có hashtag #GlowBeautyVN #GlowYourSkin.',
-  socialLinks: {
-    facebook: 'https://facebook.com/glowbeauty.vn',
-    instagram: 'https://instagram.com/glowbeauty.official',
-    tiktok: 'https://tiktok.com/@glowbeauty_vietnam',
-    shopee: 'https://shopee.vn/glowbeauty_official',
-  },
-};
+// (INITIAL_BRAND_PROFILE removed - replaced by real Brand API: brandService.getMyBrand())
+
 
 export interface InAppNotification {
   id: string;

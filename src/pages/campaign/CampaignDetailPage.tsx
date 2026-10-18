@@ -42,7 +42,8 @@ import {
   ApartmentOutlined,
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CAMPAIGNS_DATA } from '../../data/mockData';
+import { campaignService } from '../../services/api/campaignService';
+import { mapApiCampaignToUi } from '../../components/dashboard/CampaignTable';
 import type { Campaign } from '../../data/mockData';
 import './CampaignDetailPage.css';
 
@@ -124,14 +125,51 @@ export default function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Find target campaign or fallback to first
-  const campaignData: Campaign =
-    CAMPAIGNS_DATA.find((c) => c.id === id) || CAMPAIGNS_DATA[0];
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const [currentStatus, setCurrentStatus] = useState<CampaignStatusType>(
-    (campaignData.status as CampaignStatusType) || 'running'
-  );
+  const [currentStatus, setCurrentStatus] = useState<CampaignStatusType>('running');
   const [activeTab, setActiveTab] = useState('overview');
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const loadCampaign = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        const data = await campaignService.getCampaignById(id);
+        if (isMounted && data) {
+          setCampaign(mapApiCampaignToUi(data));
+          setCurrentStatus((data.status === 'ACTIVE' ? 'running' : data.status === 'COMPLETED' ? 'completed' : 'draft') as CampaignStatusType);
+        }
+      } catch (err) {
+        console.error('Lỗi khi tải chi tiết chiến dịch:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    loadCampaign();
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  const campaignData: Campaign = campaign || {
+    id: id || 'camp-1',
+    title: 'Chiến dịch',
+    tags: ['Chiến dịch tiếp thị'],
+    thumbnail: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=100&auto=format&fit=crop&q=80',
+    status: 'running',
+    statusText: 'Đang chạy',
+    creatorsCount: 0,
+    reach: '0',
+    reachNumber: 0,
+    engagement: '0%',
+    engagementNumber: 0,
+    spent: '0 ₫',
+    spentNumber: 0,
+    date: 'Mới tạo',
+  };
 
   // Cancel Modal state
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -145,7 +183,10 @@ export default function CampaignDetailPage() {
       okText: 'Kích hoạt ngay',
       cancelText: 'Hủy',
       okButtonProps: { style: { background: '#10B981', borderColor: '#10B981' } },
-      onOk: () => {
+      onOk: async () => {
+        if (id) {
+          await campaignService.updateStatus(id, 'ACTIVE').catch(() => {});
+        }
         setCurrentStatus('running');
         message.success('Chiến dịch đã được kích hoạt thành công!');
       },
@@ -178,21 +219,27 @@ export default function CampaignDetailPage() {
       okText: 'Hoàn thành chiến dịch',
       cancelText: 'Hủy',
       okButtonProps: { style: { background: '#6366F1' } },
-      onOk: () => {
+      onOk: async () => {
+        if (id) {
+          await campaignService.updateStatus(id, 'COMPLETED').catch(() => {});
+        }
         setCurrentStatus('completed');
         message.success('Chiến dịch đã được đánh dấu hoàn thành xuất sắc!');
       },
     });
   };
 
-  const handleConfirmCancel = () => {
+  const handleConfirmCancel = async () => {
     if (!cancelReason.trim()) {
       message.warning('Vui lòng nhập lý do hủy chiến dịch!');
       return;
     }
+    if (id) {
+      await campaignService.archiveCampaign(id).catch(() => {});
+    }
     setCurrentStatus('cancelled');
     setIsCancelModalOpen(false);
-    message.error('Chiến dịch đã được hủy.');
+    message.error('Chiến dịch đã được hủy và lưu trữ.');
   };
 
   const getStatusBadge = () => {

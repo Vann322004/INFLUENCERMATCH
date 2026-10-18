@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button,
   Tag,
@@ -11,9 +11,12 @@ import {
   Select,
   InputNumber,
   DatePicker,
+  Spin,
 } from 'antd';
 import type { MenuProps } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
+import { creatorService } from '../../services/api/creatorService';
+import { claimService } from '../../services/api/claimService';
 import {
   ArrowLeftOutlined,
   CheckCircleFilled,
@@ -215,6 +218,38 @@ const CREATOR_DATA = {
 export default function CreatorDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [creator, setCreator] = useState(CREATOR_DATA);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!id || id === 'c1') return;
+    let isMounted = true;
+    const fetchDetail = async () => {
+      try {
+        setLoading(true);
+        const detail = await creatorService.getCreatorById(id).catch(() => null);
+        if (isMounted && detail) {
+          setCreator((prev) => ({
+            ...prev,
+            id: detail.id,
+            name: detail.displayName || detail.userName,
+            username: detail.userName,
+            avatar: detail.avatarUrl || prev.avatar,
+            isVerified: !!detail.verifiedByInfluencerMatch,
+            location: detail.location || prev.location,
+          }));
+        }
+      } catch (err) {
+        console.error('Lỗi khi tải chi tiết Creator:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchDetail();
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
   const [activeTab, setActiveTab] = useState('performance');
   const [isSaved, setIsSaved] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -226,6 +261,9 @@ export default function CreatorDetailPage() {
   );
   const [selectedReel, setSelectedReel] = useState<(typeof CREATOR_DATA.recentReels)[0] | null>(null);
   const [sampleSizeFilter, setSampleSizeFilter] = useState('126.5k người theo dõi');
+  const [claimModalOpen, setClaimModalOpen] = useState(false);
+  const [claimSubmitting, setClaimSubmitting] = useState(false);
+  const [claimForm] = Form.useForm();
 
   // Sample size dropdown items
   const sampleItems: MenuProps['items'] = [
@@ -248,6 +286,13 @@ export default function CreatorDetailPage() {
 
   // More options dropdown
   const moreMenuItems: MenuProps['items'] = [
+    {
+      key: 'claim',
+      icon: <SafetyCertificateOutlined style={{ color: '#4F46E5' }} />,
+      label: 'Xác minh sở hữu kênh (Claim)',
+      onClick: () => setClaimModalOpen(true),
+    },
+    { type: 'divider' },
     {
       key: 'share',
       icon: <ShareAltOutlined />,
@@ -274,15 +319,35 @@ export default function CreatorDetailPage() {
   const handleAddToShortlist = () => {
     setIsSaved(!isSaved);
     if (!isSaved) {
-      message.success(`Đã thêm ${CREATOR_DATA.name} vào danh sách chiến dịch!`);
+      message.success(`Đã thêm ${creator.name} vào danh sách chiến dịch!`);
     } else {
-      message.info(`Đã xóa ${CREATOR_DATA.name} khỏi danh sách.`);
+      message.info(`Đã xóa ${creator.name} khỏi danh sách.`);
     }
   };
 
   const handleSendInvite = (values: any) => {
-    message.success(`Đã gửi lời mời hợp tác tới ${CREATOR_DATA.name}!`);
+    message.success(`Đã gửi lời mời hợp tác tới ${creator.name}!`);
     setInviteModalOpen(false);
+  };
+
+  const handleClaimSubmit = async (values: { evidenceUrls?: string; note?: string }) => {
+    try {
+      setClaimSubmitting(true);
+      const urls = values.evidenceUrls
+        ? values.evidenceUrls.split('\n').map((u) => u.trim()).filter(Boolean)
+        : [];
+      await claimService.submitClaim(creator.id, {
+        evidenceUrls: urls,
+        note: values.note,
+      });
+      message.success('Đã gửi yêu cầu xác minh sở hữu kênh thành công! Admin sẽ xét duyệt trong 24h.');
+      setClaimModalOpen(false);
+      claimForm.resetFields();
+    } catch (err: any) {
+      message.error(err?.response?.data?.message || 'Không thể gửi yêu cầu xác minh. Vui lòng thử lại sau.');
+    } finally {
+      setClaimSubmitting(false);
+    }
   };
 
   return (
@@ -313,8 +378,8 @@ export default function CreatorDetailPage() {
             {/* Avatar Box with badge */}
             <div className="creator-avatar-box">
               <img
-                src={CREATOR_DATA.avatar}
-                alt={CREATOR_DATA.name}
+                src={creator.avatar}
+                alt={creator.name}
                 className="creator-avatar-img"
               />
               <span className="creator-avatar-caption">LINH NGUYEN</span>
@@ -327,9 +392,9 @@ export default function CreatorDetailPage() {
             <div className="creator-info-content">
               {/* Name & Handle */}
               <div className="creator-name-row">
-                <h1 className="creator-display-name">{CREATOR_DATA.name}</h1>
+                <h1 className="creator-display-name">{creator.name}</h1>
                 <CheckCircleFilled style={{ color: '#2563EB', fontSize: 17 }} />
-                <span className="creator-handle-badge">@{CREATOR_DATA.username}</span>
+                <span className="creator-handle-badge">@{creator.username}</span>
               </div>
 
               {/* Social Platforms & Tags */}
@@ -359,28 +424,28 @@ export default function CreatorDetailPage() {
                 </span>
 
                 {/* Category tags */}
-                <span className="tag-category-active">{CREATOR_DATA.categories[0]}</span>
-                <span className="tag-category-normal">{CREATOR_DATA.categories[1]}</span>
+                <span className="tag-category-active">{creator.categories[0]}</span>
+                <span className="tag-category-normal">{creator.categories[1]}</span>
               </div>
 
               {/* Location & Status Meta */}
               <div className="creator-meta-row">
                 <span className="creator-meta-item">
                   <EnvironmentOutlined style={{ color: '#64748B' }} />
-                  {CREATOR_DATA.location}
+                  {creator.location}
                 </span>
                 <span className="creator-meta-item">
                   <WomanOutlined style={{ color: '#64748B' }} />
-                  {CREATOR_DATA.gender}
+                  {creator.gender}
                 </span>
                 <span className="creator-meta-item" style={{ color: '#10B981', fontWeight: 600 }}>
                   <span className="status-active-dot" />
-                  {CREATOR_DATA.lastActive}
+                  {creator.lastActive}
                 </span>
               </div>
 
               {/* Bio description */}
-              <p className="creator-bio-text">{CREATOR_DATA.bio}</p>
+              <p className="creator-bio-text">{creator.bio}</p>
             </div>
           </div>
 
@@ -443,7 +508,7 @@ export default function CreatorDetailPage() {
                 </defs>
               </svg>
               <div className="match-score-text">
-                <span className="match-score-number">{CREATOR_DATA.matchScore}</span>
+                <span className="match-score-number">{creator.matchScore}</span>
                 <span className="match-score-denominator">/100</span>
               </div>
             </div>
@@ -454,7 +519,7 @@ export default function CreatorDetailPage() {
                 <span className="match-title">Độ khớp AI</span>
                 <span className="match-trust-tag">Độ tin cậy cao</span>
               </div>
-              <div className="match-rank-text">{CREATOR_DATA.matchRank}</div>
+              <div className="match-rank-text">{creator.matchRank}</div>
             </div>
           </div>
 
@@ -471,13 +536,13 @@ export default function CreatorDetailPage() {
 
             <div>
               <span className="pricing-amount-main">
-                {CREATOR_DATA.priceMin} – {CREATOR_DATA.priceMax}
+                {creator.priceMin} – {creator.priceMax}
               </span>
               <span className="pricing-currency-unit">VND</span>
             </div>
 
             <div className="pricing-usd-equivalent">
-              ~ {CREATOR_DATA.priceUSD} • 1 dedicated video / reel
+              ~ {creator.priceUSD} • 1 dedicated video / reel
             </div>
           </div>
 
@@ -485,7 +550,7 @@ export default function CreatorDetailPage() {
           <div className="match-badges-row">
             <span className="badge-verified-campaigns">
               <CheckCircleFilled style={{ color: '#2563EB' }} />
-              Xác thực qua {CREATOR_DATA.verifiedCampaignsCount} chiến dịch
+              Xác thực qua {creator.verifiedCampaignsCount} chiến dịch
             </span>
 
             <span className="badge-trend-above-avg">
@@ -536,7 +601,7 @@ export default function CreatorDetailPage() {
 
       {/* 4. 5 Metrics Cards Grid */}
       <div className="metrics-5-grid">
-        {CREATOR_DATA.metrics.map((item) => (
+        {creator.metrics.map((item) => (
           <div key={item.key} className="metric-stat-card">
             <div className="metric-stat-header">
               <span className="metric-stat-label">{item.label}</span>
@@ -581,7 +646,7 @@ export default function CreatorDetailPage() {
                 <WomanOutlined style={{ color: '#4F46E5' }} />
                 PHÂN BỐ GIỚI TÍNH
               </div>
-              {CREATOR_DATA.demographics.gender.map((g) => (
+              {creator.demographics.gender.map((g) => (
                 <div key={g.label} className="demo-bar-item">
                   <div className="demo-bar-labels">
                     <span>{g.label}</span>
@@ -603,7 +668,7 @@ export default function CreatorDetailPage() {
                 <ClockCircleOutlined style={{ color: '#6366F1' }} />
                 NHÓM TUỔI
               </div>
-              {CREATOR_DATA.demographics.age.map((a) => (
+              {creator.demographics.age.map((a) => (
                 <div key={a.label} className="demo-bar-item">
                   <div className="demo-bar-labels">
                     <span>{a.label}</span>
@@ -625,7 +690,7 @@ export default function CreatorDetailPage() {
                 <EnvironmentOutlined style={{ color: '#0EA5E9' }} />
                 ĐỊA ĐIỂM HÀNG ĐẦU (VN)
               </div>
-              {CREATOR_DATA.demographics.locations.map((loc) => (
+              {creator.demographics.locations.map((loc) => (
                 <div key={loc.name} className="demo-bar-item">
                   <div className="demo-bar-labels">
                     <span>{loc.name}</span>
@@ -646,7 +711,7 @@ export default function CreatorDetailPage() {
           <div className="interests-section">
             <div className="interests-label">SỞ THÍCH & CHỦ ĐỀ NỔI BẬT</div>
             <div className="interests-tags-wrap">
-              {CREATOR_DATA.demographics.interests.map((interest) => (
+              {creator.demographics.interests.map((interest) => (
                 <span
                   key={interest.name}
                   className={`interest-tag-item ${interest.highlight ? 'highlight' : ''}`}
@@ -674,7 +739,7 @@ export default function CreatorDetailPage() {
             </div>
 
             <div className="ai-score-list">
-              {CREATOR_DATA.aiScores.map((item) => (
+              {creator.aiScores.map((item) => (
                 <div key={item.name} className="ai-score-row">
                   <div className="ai-score-item-icon" style={{ background: item.iconBg }}>
                     {item.icon}
@@ -729,7 +794,7 @@ export default function CreatorDetailPage() {
 
         {/* 5 Reels Video Cards */}
         <div className="recent-reels-grid">
-          {CREATOR_DATA.recentReels.map((reel) => (
+          {creator.recentReels.map((reel) => (
             <div
               key={reel.id}
               className="reel-card"
@@ -759,7 +824,7 @@ export default function CreatorDetailPage() {
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <SendOutlined style={{ color: '#4F46E5' }} />
-            <span>Gửi lời mời hợp tác trực tiếp tới {CREATOR_DATA.name}</span>
+            <span>Gửi lời mời hợp tác trực tiếp tới {creator.name}</span>
           </div>
         }
         open={inviteModalOpen}
@@ -825,7 +890,7 @@ export default function CreatorDetailPage() {
           <Form.Item
             label="Tin nhắn / Yêu cầu gửi tới Creator"
             name="message"
-            initialValue={`Chào ${CREATOR_DATA.name}, chúng tôi rất ấn tượng với phong cách và tương tác tự nhiên của bạn trong ngành làm đẹp...`}
+            initialValue={`Chào ${creator.name}, chúng tôi rất ấn tượng với phong cách và tương tác tự nhiên của bạn trong ngành làm đẹp...`}
           >
             <Input.TextArea rows={4} />
           </Form.Item>
@@ -1150,6 +1215,69 @@ export default function CreatorDetailPage() {
             </Button>
           </div>
         )}
+      </Modal>
+
+      {/* Claim Profile Verification Modal */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <SafetyCertificateOutlined style={{ color: '#4F46E5', fontSize: 20 }} />
+            <span style={{ fontWeight: 700, fontSize: 16 }}>Xác minh quyền sở hữu kênh Creator</span>
+          </div>
+        }
+        open={claimModalOpen}
+        onCancel={() => {
+          setClaimModalOpen(false);
+          claimForm.resetFields();
+        }}
+        footer={null}
+        width={560}
+        destroyOnClose
+      >
+        <div style={{ marginTop: 8 }}>
+          <p style={{ color: '#64748B', fontSize: 13, lineHeight: 1.5 }}>
+            Bạn là chủ sở hữu hợp pháp của profile <strong>{creator.name}</strong> (@{creator.username})?
+            Vui lòng cung cấp link hình ảnh/tài liệu chứng minh (ảnh chụp màn hình Dashboard phân tích, trang quản lý kênh, hợp đồng,...) để ban quản trị đối soát và kích hoạt huy hiệu chính thức.
+          </p>
+
+          <Form form={claimForm} layout="vertical" onFinish={handleClaimSubmit} style={{ marginTop: 16 }}>
+            <Form.Item
+              name="evidenceUrls"
+              label="Link bằng chứng xác minh (mỗi link 1 dòng, tối đa 5 link)"
+              rules={[{ required: true, message: 'Vui lòng cung cấp ít nhất 1 đường link bằng chứng' }]}
+            >
+              <Input.TextArea
+                rows={4}
+                placeholder="https://drive.google.com/...\nhttps://imgur.com/..."
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="note"
+              label="Ghi chú thêm cho ban quản trị (tùy chọn)"
+            >
+              <Input.TextArea
+                rows={3}
+                placeholder="Ví dụ: Kênh TikTok của tôi có ID là ..., tôi đăng ký bằng email liên kết này."
+              />
+            </Form.Item>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+              <Button onClick={() => setClaimModalOpen(false)}>Hủy bỏ</Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={claimSubmitting}
+                style={{
+                  background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+                  fontWeight: 600,
+                }}
+              >
+                Gửi yêu cầu xác minh
+              </Button>
+            </div>
+          </Form>
+        </div>
       </Modal>
     </div>
   );

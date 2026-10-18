@@ -2,128 +2,39 @@
 // ADMIN MOCK DATA - InfluencerMatch Admin Panel
 // =============================================
 
+import { authService } from '../services/api/authService';
+
 // ── Auth ──────────────────────────────────────
 export const ADMIN_USER = {
   id: 'admin_001',
   name: 'Trần Minh Khoa',
   email: 'admin@influencermatch.vn',
   password: 'admin123',
-  role: 'super_admin' as const,
+  role: 'ADMIN' as const,
   roleLabel: 'Super Admin',
   avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
 };
 
-// Dùng chung storage key với authData.js — login qua LoginPage của Brand
-const SHARED_STORAGE_KEY = 'influencermatch_user';
-const ADMIN_ROLES = ['admin', 'super_admin'];
-
 export const adminAuthService = {
-  login: (email: string, password: string) => {
-    // Admin login đi qua LoginPage của Brand nên hàm này chỉ dùng cho internal check
-    const emailLower = (email || '').trim().toLowerCase();
-    const isMatch =
-      emailLower === ADMIN_USER.email.toLowerCase() ||
-      emailLower === 'admin' ||
-      emailLower === 'admin@influencermatch.vn';
-    if (isMatch && (password === ADMIN_USER.password || password === 'admin123' || password === '123456')) {
-      localStorage.setItem(SHARED_STORAGE_KEY, JSON.stringify(ADMIN_USER));
-      return { success: true, user: ADMIN_USER };
-    }
-    return { success: false, message: 'Sai thông tin đăng nhập. Dùng: admin@influencermatch.vn / admin123' };
-  },
-  logout: () => localStorage.removeItem(SHARED_STORAGE_KEY),
-  isAuthenticated: () => {
+  login: async (email: string, password: string) => {
     try {
-      const stored = localStorage.getItem(SHARED_STORAGE_KEY);
-      if (!stored) return false;
-      const user = JSON.parse(stored);
-      return ADMIN_ROLES.includes(user?.role);
-    } catch { return false; }
+      const loginData = await authService.login({ email, password });
+      return { success: true, user: loginData.user };
+    } catch {
+      return { success: false, message: 'Sai thông tin đăng nhập hoặc không có quyền truy cập.' };
+    }
+  },
+  logout: () => authService.logout(),
+  isAuthenticated: () => {
+    return authService.isAdmin();
   },
   getCurrentUser: () => {
-    try {
-      const stored = localStorage.getItem(SHARED_STORAGE_KEY);
-      if (!stored) return null;
-      const user = JSON.parse(stored);
-      return ADMIN_ROLES.includes(user?.role) ? user : null;
-    } catch { return null; }
+    return authService.getCurrentUser();
   },
 };
 
-// ── Dashboard KPIs ────────────────────────────
-export const ADMIN_KPI = {
-  totalUsers: 4_287,
-  totalUsersTrend: +18.4,
-  activeCreators: 1_963,
-  activeCreatorsTrend: +12.1,
-  revenueMonth: 284_500_000,
-  revenueMonthTrend: +23.7,
-  jobsRunning: 14,
-  jobsRunningTrend: -3,
-};
-
-export const MONTHLY_USER_GROWTH = [
-  { month: 'T1', users: 2100, brands: 480, creators: 1620 },
-  { month: 'T2', users: 2340, brands: 530, creators: 1810 },
-  { month: 'T3', users: 2780, brands: 610, creators: 2170 },
-  { month: 'T4', users: 3050, brands: 680, creators: 2370 },
-  { month: 'T5', users: 3420, brands: 760, creators: 2660 },
-  { month: 'T6', users: 3710, brands: 820, creators: 2890 },
-  { month: 'T7', users: 3890, brands: 870, creators: 3020 },
-  { month: 'T8', users: 4050, brands: 910, creators: 3140 },
-  { month: 'T9', users: 4180, brands: 940, creators: 3240 },
-  { month: 'T10', users: 4287, brands: 968, creators: 3319 },
-];
-
-export const REVENUE_BY_PLAN = [
-  { plan: 'Starter', revenue: 42000000, users: 310 },
-  { plan: 'Pro', revenue: 148000000, users: 187 },
-  { plan: 'Enterprise', revenue: 94500000, users: 42 },
-];
-
-export const RECENT_ACTIVITY = [
-  { id: 'act_1', type: 'user_register', actor: 'Lê Thị Hoa', action: 'Đăng ký tài khoản Brand mới', time: '2 phút trước', color: '#10B981' },
-  { id: 'act_2', type: 'job_failed', actor: 'System', action: 'Job thu thập TikTok #J-4821 thất bại', time: '15 phút trước', color: '#EF4444' },
-  { id: 'act_3', type: 'plan_upgrade', actor: 'Nguyễn Văn An', action: 'Nâng cấp lên gói Pro', time: '1 giờ trước', color: '#6366F1' },
-  { id: 'act_4', type: 'creator_added', actor: 'admin@influencermatch.vn', action: 'Thêm 120 creator từ CSV import', time: '2 giờ trước', color: '#0EA5E9' },
-  { id: 'act_5', type: 'refund', actor: 'Trần Quốc Bảo', action: 'Yêu cầu hoàn tiền giao dịch #TXN-0091', time: '3 giờ trước', color: '#F59E0B' },
-  { id: 'act_6', type: 'scoring_update', actor: 'Trần Minh Khoa', action: 'Cập nhật bộ trọng số Scoring v2.4', time: '5 giờ trước', color: '#8B5CF6' },
-];
-
-// ── Accounts ──────────────────────────────────
-export type AccountRole = 'super_admin' | 'admin' | 'brand' | 'creator';
-export type AccountStatus = 'active' | 'locked' | 'inactive' | 'pending';
-
-export interface AdminAccount {
-  id: string;
-  name: string;
-  email: string;
-  role: AccountRole;
-  roleLabel: string;
-  status: AccountStatus;
-  avatar: string;
-  lastLogin: string;
-  joinedAt: string;
-  ip: string;
-}
-
-export const MOCK_ACCOUNTS: AdminAccount[] = [
-  { id: 'usr_001', name: 'Trần Minh Khoa', email: 'admin@influencermatch.vn', role: 'super_admin', roleLabel: 'Super Admin', status: 'active', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop', lastLogin: '2026-10-07 07:20', joinedAt: '2024-01-01', ip: '113.161.77.10' },
-  { id: 'usr_002', name: 'Nguyễn Thị Mai', email: 'mai.nguyen@brand.vn', role: 'brand', roleLabel: 'Brand', status: 'active', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop', lastLogin: '2026-10-07 06:45', joinedAt: '2024-03-15', ip: '118.70.12.34' },
-  { id: 'usr_003', name: 'Phạm Quốc Hùng', email: 'hungpq@gmail.com', role: 'creator', roleLabel: 'Creator', status: 'active', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop', lastLogin: '2026-10-06 20:10', joinedAt: '2024-04-22', ip: '222.252.89.12' },
-  { id: 'usr_004', name: 'Lê Văn Dũng', email: 'dungadmin@influencermatch.vn', role: 'admin', roleLabel: 'Admin', status: 'active', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&auto=format&fit=crop', lastLogin: '2026-10-07 05:00', joinedAt: '2024-02-10', ip: '14.161.22.8' },
-  { id: 'usr_005', name: 'Trần Thị Hoa', email: 'hoatran@beauty.com', role: 'brand', roleLabel: 'Brand', status: 'locked', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&auto=format&fit=crop', lastLogin: '2026-09-20 11:30', joinedAt: '2024-05-01', ip: '210.245.34.55' },
-  { id: 'usr_006', name: 'Võ Minh Tuấn', email: 'tuanvo.creator@tiktok.vn', role: 'creator', roleLabel: 'Creator', status: 'inactive', avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=80&auto=format&fit=crop', lastLogin: '2026-08-01 08:00', joinedAt: '2024-06-12', ip: '103.48.194.22' },
-  { id: 'usr_007', name: 'Nguyễn Lan Anh', email: 'lananh@fashion.co', role: 'brand', roleLabel: 'Brand', status: 'pending', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop', lastLogin: '—', joinedAt: '2026-10-07', ip: '—' },
-];
-
-export const SECURITY_ACTIVITY = [
-  { id: 'sa_1', event: 'Đăng nhập thành công', ip: '113.161.77.10', device: 'Chrome 125 / macOS', time: '2026-10-07 07:20' },
-  { id: 'sa_2', event: 'Đăng nhập thất bại (sai mật khẩu)', ip: '113.161.77.10', device: 'Chrome 125 / macOS', time: '2026-10-07 07:18' },
-  { id: 'sa_3', event: 'Đổi mật khẩu', ip: '113.161.77.10', device: 'Chrome 125 / macOS', time: '2026-10-06 14:00' },
-  { id: 'sa_4', event: 'Đăng nhập thành công', ip: '210.245.88.12', device: 'Safari / iPhone 15', time: '2026-10-05 09:30' },
-];
-
+// NOTE: Dashboard KPIs, Growth chart, Revenue and Audit logs are fetched dynamically from real APIs in AdminDashboardPage.tsx
+// NOTE: Account types and data moved to src/types/api/admin.types.ts
 // ── Creators ──────────────────────────────────
 export type CreatorStatus = 'active' | 'hidden' | 'inactive' | 'pending';
 
@@ -137,30 +48,13 @@ export interface AdminCreator {
   category: string;
   status: CreatorStatus;
   avatar: string;
-  lastVerified: string;
+  lastVerified?: string;
   avgViews?: number;
   score?: number;
   country?: string;
   profileUrl?: string;
 }
 
-export const MOCK_CREATORS: AdminCreator[] = [
-  { id: 'cr_001', handle: '@linh.beauty', name: 'Nguyễn Thị Linh', platform: 'tiktok', followers: 2_400_000, er: 8.4, category: 'Làm đẹp', status: 'active', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop', lastVerified: '2026-10-06', avgViews: 650000, score: 92, country: 'Việt Nam', profileUrl: 'https://tiktok.com/@linh.beauty' },
-  { id: 'cr_002', handle: '@hungfood', name: 'Phạm Quốc Hùng', platform: 'instagram', followers: 890_000, er: 5.2, category: 'Ẩm thực', status: 'active', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop', lastVerified: '2026-10-05', avgViews: 210000, score: 85, country: 'Việt Nam', profileUrl: 'https://instagram.com/hungfood' },
-  { id: 'cr_003', handle: '@tuantech', name: 'Võ Minh Tuấn', platform: 'youtube', followers: 1_200_000, er: 4.8, category: 'Công nghệ', status: 'hidden', avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=80&auto=format&fit=crop', lastVerified: '2026-09-20', avgViews: 450000, score: 78, country: 'Việt Nam', profileUrl: 'https://youtube.com/@tuantech' },
-  { id: 'cr_004', handle: '@anhthu.fashion', name: 'Lê Anh Thư', platform: 'instagram', followers: 650_000, er: 6.1, category: 'Thời trang', status: 'active', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop', lastVerified: '2026-10-07', avgViews: 180000, score: 88, country: 'Việt Nam', profileUrl: 'https://instagram.com/anhthu.fashion' },
-  { id: 'cr_005', handle: '@minhhuy.travel', name: 'Nguyễn Minh Huy', platform: 'tiktok', followers: 3_100_000, er: 9.2, category: 'Du lịch', status: 'active', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&auto=format&fit=crop', lastVerified: '2026-10-07', avgViews: 820000, score: 95, country: 'Việt Nam', profileUrl: 'https://tiktok.com/@minhhuy.travel' },
-  { id: 'cr_006', handle: '@hoaphuong', name: 'Trần Hoa Phương', platform: 'youtube', followers: 420_000, er: 3.9, category: 'Giáo dục', status: 'inactive', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&auto=format&fit=crop', lastVerified: '2026-08-15', avgViews: 95000, score: 68, country: 'Việt Nam', profileUrl: 'https://youtube.com/@hoaphuong' },
-];
-
-export const MOCK_DUPLICATES = [
-  {
-    id: 'dup_001',
-    creator1: MOCK_CREATORS[0],
-    creator2: { ...MOCK_CREATORS[0], id: 'cr_099', handle: '@linhnguyen.beauty', name: 'Nguyễn Linh', followers: 2_380_000 },
-    similarity: 94,
-  },
-];
 
 export const MOCK_EXTERNAL_DISCOVERED = [
   { id: 'ext_001', handle: '@banh.mi.review', source: 'TikTok Crawl', platform: 'tiktok', followers: 780_000, discoveredAt: '2026-10-06', status: 'pending' as const },
@@ -302,31 +196,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
   { id: 'txn_5', ref: 'TXN-2609080', userId: 'usr_004', userName: 'Lê Văn Dũng', userEmail: 'dungadmin@influencermatch.vn', plan: 'Enterprise', amount: 9990000, gateway: 'Bank Transfer', status: 'paid', createdAt: '2026-09-08 14:00', paidAt: '2026-09-08 15:30' },
 ];
 
-// ── Audit Log ─────────────────────────────────
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT';
-
-export interface AuditLog {
-  id: string;
-  timestamp: string;
-  actor: string;
-  actorEmail: string;
-  action: AuditAction;
-  resource: string;
-  resourceId: string;
-  ip: string;
-  oldValue?: Record<string, unknown>;
-  newValue?: Record<string, unknown>;
-}
-
-export const MOCK_AUDIT_LOGS: AuditLog[] = [
-  { id: 'al_1', timestamp: '2026-10-07 07:20:14', actor: 'Trần Minh Khoa', actorEmail: 'admin@influencermatch.vn', action: 'LOGIN', resource: 'Auth', resourceId: 'admin_001', ip: '113.161.77.10' },
-  { id: 'al_2', timestamp: '2026-10-06 14:00:32', actor: 'Trần Minh Khoa', actorEmail: 'admin@influencermatch.vn', action: 'UPDATE', resource: 'ScoringConfig', resourceId: 'sv_3', ip: '113.161.77.10', oldValue: { version: 'v2.3', engagementRate: 30 }, newValue: { version: 'v2.4', engagementRate: 35 } },
-  { id: 'al_3', timestamp: '2026-10-06 13:00:01', actor: 'Lê Văn Dũng', actorEmail: 'dungadmin@influencermatch.vn', action: 'UPDATE', resource: 'Account', resourceId: 'usr_005', ip: '14.161.22.8', oldValue: { status: 'active' }, newValue: { status: 'locked', reason: 'Spam activity detected' } },
-  { id: 'al_4', timestamp: '2026-10-06 11:20:05', actor: 'Trần Minh Khoa', actorEmail: 'admin@influencermatch.vn', action: 'CREATE', resource: 'SubscriptionPlan', resourceId: 'plan_enterprise', ip: '113.161.77.10', newValue: { name: 'Enterprise', priceMonth: 9990000 } },
-  { id: 'al_5', timestamp: '2026-10-05 16:10:44', actor: 'Lê Văn Dũng', actorEmail: 'dungadmin@influencermatch.vn', action: 'DELETE', resource: 'Creator', resourceId: 'cr_099', ip: '14.161.22.8', oldValue: { handle: '@spamcreator', reason: 'Fake account' } },
-  { id: 'al_6', timestamp: '2026-10-05 09:00:00', actor: 'Trần Minh Khoa', actorEmail: 'admin@influencermatch.vn', action: 'UPDATE', resource: 'DataConnector', resourceId: 'conn_3', ip: '113.161.77.10', oldValue: { status: 'active' }, newValue: { status: 'paused' } },
-];
-
+// NOTE: AuditLog types and MOCK_AUDIT_LOGS removed - real data from GET /admin/audit-logs
 // ── Notifications ─────────────────────────────
 export const ADMIN_NOTIFICATIONS = [
   { id: 'notif_1', type: 'error', title: 'Job thu thập thất bại', body: 'J-4822: YouTube quota exceeded', time: '4 giờ trước', read: false },

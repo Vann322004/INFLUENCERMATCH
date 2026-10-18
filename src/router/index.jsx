@@ -8,7 +8,7 @@ import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 import DashboardPage from '../pages/dashboard/DashboardPage';
 import { ROUTES } from '../constants/routes';
-import { authService } from '../mock/authData';
+import { authService } from '../services/api/authService';
 
 // Protected Route wrapper component
 function ProtectedRoute({ children }) {

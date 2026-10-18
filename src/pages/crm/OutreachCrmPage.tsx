@@ -157,133 +157,46 @@ const INITIAL_EMAILS: OutreachEmail[] = [
   },
 ];
 
-const INITIAL_KANBAN_CREATORS: KanbanCreator[] = [
-  // 1. Mới tìm thấy
-  {
-    id: 'k1',
-    name: 'Phương Mai',
-    username: 'phuongmai.vlog',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-    platform: 'tiktok',
-    followers: '450K',
-    engagement: '5.2%',
-    fee: '6.000.000 ₫',
-    matchScore: 88,
-    stage: 'found',
-    lastActivity: 'Đã lưu từ AI Discovery',
-    note: 'Video phong cách sáng tạo, năng lượng Gen-Z.',
-    tags: ['Skincare', 'Daily Vlog'],
-  },
-  {
-    id: 'k2',
-    name: 'Quang Đăng',
-    username: 'dang.review',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-    platform: 'youtube',
-    followers: '310K',
-    engagement: '4.1%',
-    fee: '5.500.000 ₫',
-    matchScore: 82,
-    stage: 'found',
-    lastActivity: 'Mới tìm thấy hôm qua',
-    note: 'Chuyên so sánh chi tiết các thành phần hóa học.',
-    tags: ['Review', 'Mỹ phẩm'],
-  },
-  // 2. Đang xem xét
-  {
-    id: 'k3',
-    name: 'Khánh Linh',
-    username: 'linhkhanh.official',
-    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&auto=format&fit=crop&q=80',
-    platform: 'instagram',
-    followers: '580K',
-    engagement: '6.4%',
-    fee: '8.500.000 ₫',
-    matchScore: 91,
-    stage: 'review',
-    lastActivity: 'Team Brand đã duyệt hồ sơ',
-    note: 'Hình ảnh sang trọng, tệp người theo dõi thu nhập khá.',
-    tags: ['Thời trang', 'Làm đẹp'],
-  },
-  // 3. Đã liên hệ
-  {
-    id: 'k4',
-    name: 'Bác sĩ Ngọc',
-    username: 'drngoc.dermatology',
-    avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&auto=format&fit=crop&q=80',
-    platform: 'tiktok',
-    followers: '920K',
-    engagement: '7.8%',
-    fee: '18.000.000 ₫',
-    matchScore: 94,
-    stage: 'contacted',
-    lastActivity: 'Đã gửi email ngày 29/09',
-    note: 'Chờ phản hồi kiểm tra lịch quay tại phòng khám.',
-    tags: ['Bác sĩ', 'Da liễu'],
-  },
-  {
-    id: 'k5',
-    name: 'Đức Anh',
-    username: 'ducanh.travel',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80',
-    platform: 'tiktok',
-    followers: '421K',
-    engagement: '4.8%',
-    fee: '7.000.000 ₫',
-    matchScore: 79,
-    stage: 'contacted',
-    lastActivity: 'Đã gửi email mở thư hôm qua',
-    note: 'Đang đợi xác nhận chi phí 1 video 60s.',
-    tags: ['Du lịch', 'Outdoor'],
-  },
-  // 4. Đang thương lượng
-  {
-    id: 'k6',
-    name: 'Minh Hoàng',
-    username: 'minhhoang.92',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-    platform: 'youtube',
-    followers: '856K',
-    engagement: '6.2%',
-    fee: '12.500.000 ₫',
-    matchScore: 91,
-    stage: 'negotiating',
-    lastActivity: 'Creator đề xuất tặng kèm 1 Story IG',
-    note: 'Thống nhất mức giá 12.5M, đang chốt quyền sử dụng hình ảnh 6 tháng.',
-    tags: ['Thời trang', 'Vlog'],
-  },
-  // 5. Đã xác nhận
-  {
-    id: 'k7',
-    name: 'Linh Nguyễn',
-    username: 'linhnguyen.official',
+import { campaignService } from '../../services/api/campaignService';
+import type { RelationshipDto, RelationshipStage } from '../../types/api/campaign.types';
+
+const stageMapToKanban: Record<RelationshipStage, KanbanCreator['stage']> = {
+  SHORTLISTED: 'found',
+  INTERESTED: 'review',
+  CONTACTED: 'contacted',
+  COLLABORATING: 'negotiating',
+  COMPLETED: 'confirmed',
+  NOT_INTERESTED: 'review',
+};
+
+export const stageMapFromKanban: Record<KanbanCreator['stage'], RelationshipStage> = {
+  found: 'SHORTLISTED',
+  review: 'INTERESTED',
+  contacted: 'CONTACTED',
+  negotiating: 'COLLABORATING',
+  confirmed: 'COMPLETED',
+};
+
+export const mapRelationshipToKanban = (r: RelationshipDto): KanbanCreator => {
+  const feeNum = r.agreedFee || r.quotedFee || 0;
+  const feeText = feeNum > 0 ? `${(feeNum / 1_000_000).toFixed(1)}M ₫` : 'Thỏa thuận';
+
+  return {
+    id: r.id,
+    name: r.creatorName || 'Creator',
+    username: r.creatorName ? r.creatorName.toLowerCase().replace(/\s+/g, '_') : 'creator',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
     platform: 'tiktok',
-    followers: '1.2M',
-    engagement: '8.7%',
-    fee: '15.000.000 ₫',
-    matchScore: 96,
-    stage: 'confirmed',
-    lastActivity: 'Đã chấp nhận thư mời chính thức ✓',
-    note: 'Đã chốt hợp đồng. Đang gửi hộp quà sản phẩm thử nghiệm.',
-    tags: ['Skincare', 'Top Match'],
-  },
-  {
-    id: 'k8',
-    name: 'Thảo Vy',
-    username: 'thaovy.official',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80',
-    platform: 'instagram',
-    followers: '542K',
-    engagement: '5.1%',
-    fee: '8.000.000 ₫',
-    matchScore: 84,
-    stage: 'confirmed',
-    lastActivity: 'Đã nhận quà & ký thỏa thuận',
-    note: 'Kịch bản nộp ngày 05/10, đăng bài ngày 10/10.',
-    tags: ['Food', 'Beauty'],
-  },
-];
+    followers: '500K',
+    engagement: '5.2%',
+    fee: feeText,
+    matchScore: 90,
+    stage: stageMapToKanban[r.stage] || 'found',
+    lastActivity: r.lastContactAt ? new Date(r.lastContactAt).toLocaleDateString('vi-VN') : 'Mới cập nhật',
+    note: r.notes || '',
+    tags: ['KOL', 'Hợp tác'],
+  };
+};
 
 const INITIAL_INVITATIONS: CollaborationInvitation[] = [
   {
@@ -380,12 +293,34 @@ export default function OutreachCrmPage() {
   const [previewEmail, setPreviewEmail] = useState<OutreachEmail | null>(null);
 
   // Tab 2: Relationship CRM State
-  const [pipelineCreators, setPipelineCreators] = useState<KanbanCreator[]>(INITIAL_KANBAN_CREATORS);
+  const [pipelineCreators, setPipelineCreators] = useState<KanbanCreator[]>([]);
+  const [crmLoading, setCrmLoading] = useState(false);
   const [crmSearch, setCrmSearch] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [activeCreatorForNote, setActiveCreatorForNote] = useState<KanbanCreator | null>(null);
   const [newLogNote, setNewLogNote] = useState('');
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchRelationships = async () => {
+      try {
+        setCrmLoading(true);
+        const data = await campaignService.getRelationships(selectedCampaign);
+        if (isMounted && Array.isArray(data)) {
+          setPipelineCreators(data.map(mapRelationshipToKanban));
+        }
+      } catch (err) {
+        console.error('Lỗi khi tải relationships:', err);
+      } finally {
+        if (isMounted) setCrmLoading(false);
+      }
+    };
+    fetchRelationships();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedCampaign]);
 
   // Tab 3: Official Invitation State
   const [invitations, setInvitations] = useState<CollaborationInvitation[]>(INITIAL_INVITATIONS);
@@ -457,11 +392,17 @@ export default function OutreachCrmPage() {
     { key: 'confirmed', title: '5. Đã xác nhận', color: '#10B981', count: pipelineCreators.filter((c) => c.stage === 'confirmed').length },
   ];
 
-  const handleMoveStage = (creatorId: string, currentStage: KanbanCreator['stage']) => {
+  const handleMoveStage = async (creatorId: string, currentStage: KanbanCreator['stage']) => {
     const stageOrder: KanbanCreator['stage'][] = ['found', 'review', 'contacted', 'negotiating', 'confirmed'];
     const currentIndex = stageOrder.indexOf(currentStage);
     if (currentIndex < stageOrder.length - 1) {
       const nextStage = stageOrder[currentIndex + 1];
+      const apiStage = stageMapFromKanban[nextStage];
+      try {
+        await campaignService.updateRelationshipStage(selectedCampaign, creatorId, apiStage).catch(() => {});
+      } catch (err) {
+        console.error(err);
+      }
       setPipelineCreators((prev) =>
         prev.map((c) => (c.id === creatorId ? { ...c, stage: nextStage, lastActivity: `Vừa chuyển sang ${stages.find((s) => s.key === nextStage)?.title}` } : c))
       );
@@ -470,8 +411,13 @@ export default function OutreachCrmPage() {
   };
 
   // Save interaction note
-  const handleSaveLogNote = () => {
+  const handleSaveLogNote = async () => {
     if (!newLogNote.trim() || !activeCreatorForNote) return;
+    try {
+      await campaignService.updateRelationshipDetails(selectedCampaign, activeCreatorForNote.id, { notes: newLogNote }).catch(() => {});
+    } catch (err) {
+      console.error(err);
+    }
     setPipelineCreators((prev) =>
       prev.map((c) =>
         c.id === activeCreatorForNote.id

@@ -30,7 +30,7 @@ import {
   RightOutlined,
   ArrowRightOutlined
 } from '@ant-design/icons';
-import { authService, MOCK_USER } from '../../mock/authData';
+import { authService } from '../../services/api/authService';
 import { ROUTES } from '../../constants/routes';
 import './DashboardLayout.css';
 
@@ -38,7 +38,7 @@ const { Header, Sider, Content } = Layout;
 
 export default function DashboardLayout({ children }) {
   const navigate = useNavigate();
-  const currentUser = authService.getCurrentUser() || MOCK_USER;
+  const currentUser = authService.getCurrentUser();
   const [activeMenu, setActiveMenu] = useState('dashboard');
 
   const handleLogout = () => {
@@ -248,13 +248,15 @@ export default function DashboardLayout({ children }) {
               }}
               className="antd-user-card-hover"
             >
-              <Avatar src={currentUser.avatar} size={36} style={{ border: '1.5px solid #CBD5E1', flexShrink: 0 }} />
+              <Avatar size={36} style={{ border: '1.5px solid #CBD5E1', flexShrink: 0, backgroundColor: '#8B5CF6' }}>
+                {(currentUser?.fullName || currentUser?.email || 'U').charAt(0).toUpperCase()}
+              </Avatar>
               <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                 <div style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.2 }}>
-                  {currentUser.name}
+                  {currentUser?.fullName || currentUser?.email || 'Người dùng'}
                 </div>
                 <div style={{ fontSize: 10.5, color: '#64748B', lineHeight: 1.2 }}>
-                  {currentUser.role}
+                  {currentUser?.role || 'User'}
                 </div>
               </div>
               <RightOutlined style={{ fontSize: 11, color: '#94A3B8', flexShrink: 0 }} />
@@ -341,13 +343,15 @@ export default function DashboardLayout({ children }) {
                 }}
                 className="antd-header-profile-hover"
               >
-                <Avatar src={currentUser.avatar} size={36} style={{ border: '1.5px solid #E2E8F0', flexShrink: 0 }} />
+                <Avatar size={36} style={{ border: '1.5px solid #E2E8F0', flexShrink: 0, backgroundColor: '#8B5CF6' }}>
+                  {(currentUser?.fullName || currentUser?.email || 'U').charAt(0).toUpperCase()}
+                </Avatar>
                 <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
                   <span style={{ fontWeight: 700, fontSize: 13, color: '#0F172A', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
-                    {currentUser.name}
+                    {currentUser?.fullName || currentUser?.email || 'Người dùng'}
                   </span>
                   <span style={{ fontSize: 11, color: '#64748B', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
-                    {currentUser.role}
+                    {currentUser?.role || 'User'}
                   </span>
                 </div>
                 <DownOutlined style={{ fontSize: 10, color: '#94A3B8', marginLeft: 2 }} />

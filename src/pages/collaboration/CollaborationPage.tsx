@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button,
   Input,
@@ -12,8 +12,13 @@ import {
   Form,
   InputNumber,
   Upload,
+  Empty,
+  Spin,
+  Rate,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { campaignService } from '../../services/api/campaignService';
+import { collaborationService } from '../../services/api/collaborationService';
 import {
   FileTextOutlined,
   VideoCameraOutlined,
@@ -23,6 +28,7 @@ import {
   ClockCircleOutlined,
   EyeOutlined,
   MessageOutlined,
+  StarFilled,
   PlusOutlined,
   SearchOutlined,
   UploadOutlined,
@@ -40,12 +46,7 @@ import {
 } from '@ant-design/icons';
 import './CollaborationPage.css';
 
-// Campaign selector options
-const CAMPAIGN_OPTIONS = [
-  { value: 'camp-1', label: '🌟 Ra mắt Skincare Summer Glow' },
-  { value: 'camp-2', label: '💄 Son Lì TikTok Blitz' },
-  { value: 'camp-3', label: '👟 BST Giày Sneaker Thu Đông' },
-];
+// Campaign selector options - loaded dynamically from campaignService
 
 // Interface for Collaboration Partner
 interface CollabPartner {
@@ -367,20 +368,29 @@ const INITIAL_KPIS: KpiEntryItem[] = [
 
 export default function CollaborationPage() {
   const navigate = useNavigate();
-  const [selectedCampaign, setSelectedCampaign] = useState('camp-1');
+  const [campaignOptions, setCampaignOptions] = useState<{ value: string; label: string }[]>([]);
+  const [selectedCampaign, setSelectedCampaign] = useState<string>('');
+  const [loadingCampaigns, setLoadingCampaigns] = useState<boolean>(true);
+  const [loadingPartners, setLoadingPartners] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'list' | 'review' | 'fees' | 'kpi'>('list');
 
   // Partners state
-  const [partners, setPartners] = useState<CollabPartner[]>(INITIAL_PARTNERS);
+  const [partners, setPartners] = useState<CollabPartner[]>([]);
   const [partnerFilter, setPartnerFilter] = useState('all');
 
-  // Review state
+  // Review state (Deliverables)
   const [deliverables, setDeliverables] = useState<DeliverableReviewItem[]>(INITIAL_DELIVERABLES);
   const [selectedDeliverableId, setSelectedDeliverableId] = useState<string>('deliv-1');
   const [timestampInput, setTimestampInput] = useState('00:24');
   const [newCommentText, setNewCommentText] = useState('');
   const [revisionModalOpen, setRevisionModalOpen] = useState(false);
   const [revisionFeedback, setRevisionFeedback] = useState('');
+
+  // Creator Review Modal State
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [selectedPartnerForReview, setSelectedPartnerForReview] = useState<CollabPartner | null>(null);
+  const [creatorReviewForm] = Form.useForm();
 
   // Fee state
   const [feeItems, setFeeItems] = useState<FeeTrackingItem[]>(INITIAL_FEES);
@@ -390,7 +400,101 @@ export default function CollaborationPage() {
   // KPI state
   const [kpiItems, setKpiItems] = useState<KpiEntryItem[]>(INITIAL_KPIS);
   const [kpiModalOpen, setKpiModalOpen] = useState(false);
+  const [kpiSubmitting, setKpiSubmitting] = useState(false);
   const [kpiForm] = Form.useForm();
+
+  // Load Campaigns on mount
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCampaigns = async () => {
+      try {
+        setLoadingCampaigns(true);
+        const list = await campaignService.getCampaigns(0, 50);
+        if (isMounted) {
+          if (list && list.length > 0) {
+            const opts = list.map((c) => ({
+              value: c.id,
+              label: `🌟 ${c.name}`,
+            }));
+            setCampaignOptions(opts);
+            setSelectedCampaign(opts[0].value);
+          } else {
+            setCampaignOptions([]);
+            setSelectedCampaign('');
+          }
+        }
+      } catch (err) {
+        console.error('Lỗi tải danh sách chiến dịch:', err);
+      } finally {
+        if (isMounted) setLoadingCampaigns(false);
+      }
+    };
+    fetchCampaigns();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Load Relationships when selectedCampaign changes
+  useEffect(() => {
+    if (!selectedCampaign) {
+      setPartners([]);
+      return;
+    }
+    let isMounted = true;
+    const fetchRelationships = async () => {
+      try {
+        setLoadingPartners(true);
+        const rels = await campaignService.getRelationships(selectedCampaign);
+        if (isMounted) {
+          if (rels && rels.length > 0) {
+            const stageMap: Record<string, CollabPartner['stage']> = {
+              SHORTLISTED: 'contract_signed',
+              CONTACTED: 'waiting_script',
+              INTERESTED: 'waiting_video',
+              COLLABORATING: 'review_pending',
+              COMPLETED: 'published',
+              NOT_INTERESTED: 'contract_signed',
+            };
+            const progressMap: Record<string, number> = {
+              SHORTLISTED: 15,
+              CONTACTED: 35,
+              INTERESTED: 55,
+              COLLABORATING: 75,
+              COMPLETED: 100,
+              NOT_INTERESTED: 0,
+            };
+            const mapped: CollabPartner[] = rels.map((r) => ({
+              id: r.id,
+              creatorName: r.creatorName || `Creator #${r.creatorId.substring(0, 6)}`,
+              creatorAvatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.creatorId}`,
+              platform: 'tiktok',
+              handle: `@${(r.creatorName || 'creator').toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+              deliverableSummary: r.notes || '1 Video Reels/TikTok + 1 Story nghiệm thu',
+              stage: stageMap[r.stage] || 'contract_signed',
+              progressPercent: progressMap[r.stage] || 30,
+              postDeadline: r.nextAction || 'Theo kế hoạch',
+              picBrand: 'Trang Nguyễn (Brand Lead)',
+              fee: r.agreedFee ? `${r.agreedFee.toLocaleString()} ₫` : (r.quotedFee ? `${r.quotedFee.toLocaleString()} ₫` : 'Thương lượng'),
+              depositStatus: 'paid',
+              finalStatus: r.stage === 'COMPLETED' ? 'paid' : 'pending',
+            }));
+            setPartners(mapped);
+          } else {
+            setPartners([]);
+          }
+        }
+      } catch (err) {
+        console.error('Lỗi tải danh sách đối tác:', err);
+      } finally {
+        if (isMounted) setLoadingPartners(false);
+      }
+    };
+    fetchRelationships();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedCampaign]);
 
   // Current deliverable
   const activeDeliverable = deliverables.find((d) => d.id === selectedDeliverableId) || deliverables[0];
@@ -465,30 +569,74 @@ export default function CollaborationPage() {
     setRevisionFeedback('');
   };
 
-  // Save new KPI submission
-  const handleSaveKpiSubmit = (values: any) => {
-    const totalCost = values.totalCost || 10000000;
-    const revenue = values.revenue || 0;
-    const newKpi: KpiEntryItem = {
-      id: `kpi-${Date.now()}`,
-      creatorName: values.creatorName,
-      creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-      platform: values.platform,
-      postLink: values.postLink,
-      postDate: 'Hôm nay',
-      views: values.views || 0,
-      likes: values.likes || 0,
-      comments: values.comments || 0,
-      clicks: values.clicks || 0,
-      orders: values.orders || 0,
-      revenue: revenue,
-      totalCost: totalCost,
-    };
+  // Save new KPI submission with API call
+  const handleSaveKpiSubmit = async (values: any) => {
+    try {
+      setKpiSubmitting(true);
+      const targetPartner = partners.find((p) => p.id === values.partnerId);
+      const totalCost = values.totalCost || 10000000;
+      const revenue = values.revenue || 0;
 
-    setKpiItems([newKpi, ...kpiItems]);
-    message.success('Đã lưu dữ liệu KPI nghiệm thu bài đăng thành công!');
-    setKpiModalOpen(false);
-    kpiForm.resetFields();
+      // Call API outcome recording
+      if (values.partnerId) {
+        await collaborationService.recordOutcome(values.partnerId, {
+          views: Number(values.views) || 0,
+          clicks: Number(values.clicks) || 0,
+          publishedContentUrl: values.postLink || '',
+          resultNote: `Doanh thu: ${revenue.toLocaleString()}đ, Đơn hàng: ${values.orders || 0}`,
+        }).catch((err) => {
+          console.warn('API recordOutcome error (using fallback local entry):', err);
+        });
+      }
+
+      const newKpi: KpiEntryItem = {
+        id: `kpi-${Date.now()}`,
+        creatorName: targetPartner?.creatorName || values.creatorName || 'Đối tác Creator',
+        creatorAvatar: targetPartner?.creatorAvatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=partner',
+        platform: values.platform || 'tiktok',
+        postLink: values.postLink || 'https://tiktok.com/@post',
+        postDate: 'Hôm nay',
+        views: Number(values.views) || 0,
+        likes: Number(values.likes) || 0,
+        comments: Number(values.comments) || 0,
+        clicks: Number(values.clicks) || 0,
+        orders: Number(values.orders) || 0,
+        revenue: revenue,
+        totalCost: totalCost,
+      };
+
+      setKpiItems([newKpi, ...kpiItems]);
+      message.success('Đã lưu dữ liệu KPI nghiệm thu bài đăng thành công!');
+      setKpiModalOpen(false);
+      kpiForm.resetFields();
+    } catch {
+      message.error('Có lỗi xảy ra khi lưu KPI.');
+    } finally {
+      setKpiSubmitting(false);
+    }
+  };
+
+  // Submit Creator Review after collaboration
+  const handleReviewSubmit = async (values: any) => {
+    if (!selectedPartnerForReview) return;
+    try {
+      setReviewSubmitting(true);
+      await collaborationService.reviewCreator(selectedPartnerForReview.id, {
+        overallRating: values.overallRating || 5,
+        brandFitRating: values.brandFitRating || 5,
+        wouldCollaborateAgain: values.wouldCollaborateAgain ?? true,
+        note: values.note || '',
+      });
+      message.success(`Đã gửi đánh giá Creator ${selectedPartnerForReview.creatorName} thành công!`);
+      setReviewModalOpen(false);
+      creatorReviewForm.resetFields();
+      setSelectedPartnerForReview(null);
+    } catch (err: any) {
+      console.error('Lỗi khi gửi đánh giá:', err);
+      message.error(err?.response?.data?.message || 'Không thể gửi đánh giá lúc này.');
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   // Helpers for Stage tags
@@ -527,10 +675,13 @@ export default function CollaborationPage() {
           <div className="collab-campaign-selector">
             <span className="selector-label">Chiến dịch:</span>
             <Select
-              value={selectedCampaign}
+              value={selectedCampaign || undefined}
               onChange={setSelectedCampaign}
-              style={{ width: 260 }}
-              options={CAMPAIGN_OPTIONS}
+              loading={loadingCampaigns}
+              placeholder="Chọn chiến dịch..."
+              style={{ width: 280 }}
+              options={campaignOptions}
+              notFoundContent="Chưa có chiến dịch nào"
             />
           </div>
 
@@ -552,7 +703,7 @@ export default function CollaborationPage() {
             <FileDoneOutlined />
           </div>
           <div>
-            <div className="c-stat-val">5 Đối tác</div>
+            <div className="c-stat-val">{partners.length} Đối tác</div>
             <div className="c-stat-lbl">Đang tiến hành hợp tác</div>
           </div>
         </div>
@@ -562,7 +713,9 @@ export default function CollaborationPage() {
             <VideoCameraOutlined />
           </div>
           <div>
-            <div className="c-stat-val">2 Ấn phẩm</div>
+            <div className="c-stat-val">
+              {partners.filter((p) => p.stage === 'review_pending').length} Ấn phẩm
+            </div>
             <div className="c-stat-lbl">Đang chờ Brand duyệt</div>
           </div>
         </div>
@@ -663,72 +816,108 @@ export default function CollaborationPage() {
                 </tr>
               </thead>
               <tbody>
-                {partners
-                  .filter((p) => (partnerFilter === 'all' ? true : p.stage === partnerFilter))
-                  .map((p) => (
-                    <tr key={p.id}>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <img src={p.creatorAvatar} alt={p.creatorName} className="collab-avatar" />
-                          <div>
-                            <div style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A' }}>{p.creatorName}</div>
-                            <div style={{ fontSize: 11, color: '#64748B' }}>{p.handle}</div>
+                {loadingPartners ? (
+                  <tr>
+                    <td colSpan={8} style={{ textAlign: 'center', padding: '48px 0' }}>
+                      <Spin tip="Đang tải dữ liệu đối tác hợp tác..." />
+                    </td>
+                  </tr>
+                ) : partners.filter((p) => (partnerFilter === 'all' ? true : p.stage === partnerFilter)).length === 0 ? (
+                  <tr>
+                    <td colSpan={8} style={{ textAlign: 'center', padding: '48px 0' }}>
+                      <Empty
+                        description={
+                          <span>
+                            Chưa có đối tác nào trong chiến dịch này.{' '}
+                            <Button type="link" onClick={() => navigate('/creators')}>
+                              Khám phá Creator ngay
+                            </Button>
+                          </span>
+                        }
+                      />
+                    </td>
+                  </tr>
+                ) : (
+                  partners
+                    .filter((p) => (partnerFilter === 'all' ? true : p.stage === partnerFilter))
+                    .map((p) => (
+                      <tr key={p.id}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <img src={p.creatorAvatar} alt={p.creatorName} className="collab-avatar" />
+                            <div>
+                              <div style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A' }}>{p.creatorName}</div>
+                              <div style={{ fontSize: 11, color: '#64748B' }}>{p.handle}</div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span style={{ fontSize: 12.5, color: '#334155' }}>{p.deliverableSummary}</span>
-                      </td>
-                      <td>{renderStageTag(p.stage)}</td>
-                      <td style={{ width: 140 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <Progress
-                            percent={p.progressPercent}
-                            size="small"
-                            strokeColor={p.progressPercent === 100 ? '#10B981' : '#4F46E5'}
-                          />
-                        </div>
-                      </td>
-                      <td>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: '#0F172A' }}>📅 {p.postDeadline}</span>
-                      </td>
-                      <td>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#4F46E5' }}>{p.fee}</span>
-                      </td>
-                      <td>
-                        <span style={{ fontSize: 11.5, color: '#64748B' }}>{p.picBrand}</span>
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', gap: 6 }}>
-                          {p.stage === 'review_pending' && (
-                            <Button
+                        </td>
+                        <td>
+                          <span style={{ fontSize: 12.5, color: '#334155' }}>{p.deliverableSummary}</span>
+                        </td>
+                        <td>{renderStageTag(p.stage)}</td>
+                        <td style={{ width: 140 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Progress
+                              percent={p.progressPercent}
                               size="small"
-                              type="primary"
-                              style={{ background: '#7C3AED' }}
-                              onClick={() => {
-                                setSelectedDeliverableId('deliv-1');
-                                setActiveTab('review');
-                              }}
-                            >
-                              Duyệt bài ngay
+                              strokeColor={p.progressPercent === 100 ? '#10B981' : '#4F46E5'}
+                            />
+                          </div>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: '#0F172A' }}>📅 {p.postDeadline}</span>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#4F46E5' }}>{p.fee}</span>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: 11.5, color: '#64748B' }}>{p.picBrand}</span>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', gap: 6 }}>
+                            {p.stage === 'review_pending' && (
+                              <Button
+                                size="small"
+                                type="primary"
+                                style={{ background: '#7C3AED' }}
+                                onClick={() => {
+                                  setSelectedDeliverableId('deliv-1');
+                                  setActiveTab('review');
+                                }}
+                              >
+                                Duyệt bài ngay
+                              </Button>
+                            )}
+                            {p.stage === 'published' && (
+                              <>
+                                <Button
+                                  size="small"
+                                  style={{ color: '#10B981', borderColor: '#A7F3D0' }}
+                                  onClick={() => setActiveTab('kpi')}
+                                >
+                                  Xem KPI
+                                </Button>
+                                <Button
+                                  size="small"
+                                  icon={<StarFilled style={{ color: '#F59E0B' }} />}
+                                  style={{ color: '#D97706', borderColor: '#FDE68A', background: '#FFFBEB' }}
+                                  onClick={() => {
+                                    setSelectedPartnerForReview(p);
+                                    setReviewModalOpen(true);
+                                  }}
+                                >
+                                  Đánh giá
+                                </Button>
+                              </>
+                            )}
+                            <Button size="small" onClick={() => setActiveTab('fees')}>
+                              Đối soát
                             </Button>
-                          )}
-                          {p.stage === 'published' && (
-                            <Button
-                              size="small"
-                              style={{ color: '#10B981', borderColor: '#A7F3D0' }}
-                              onClick={() => setActiveTab('kpi')}
-                            >
-                              Xem KPI
-                            </Button>
-                          )}
-                          <Button size="small" onClick={() => setActiveTab('fees')}>
-                            Đối soát
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                )}
               </tbody>
             </table>
           </div>
@@ -1209,32 +1398,43 @@ export default function CollaborationPage() {
         width={580}
       >
         <Form form={kpiForm} layout="vertical" onFinish={handleSaveKpiSubmit} style={{ marginTop: 14 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <Form.Item
-              name="creatorName"
-              label="Tên Creator"
-              rules={[{ required: true, message: 'Nhập tên creator!' }]}
-              initialValue="Linh Nguyễn"
-            >
-              <Input placeholder="Tên creator..." />
-            </Form.Item>
-
-            <Form.Item name="platform" label="Nền tảng đăng bài" initialValue="tiktok">
+          {partners.length > 0 ? (
+            <Form.Item name="partnerId" label="Chọn Creator đối tác trong chiến dịch" initialValue={partners[0]?.id}>
               <Select
-                options={[
-                  { value: 'tiktok', label: 'TikTok' },
-                  { value: 'instagram', label: 'Instagram' },
-                  { value: 'youtube', label: 'YouTube' },
-                ]}
+                options={partners.map((p) => ({
+                  value: p.id,
+                  label: `${p.creatorName} (${p.handle}) - ${p.fee}`,
+                }))}
               />
             </Form.Item>
-          </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <Form.Item
+                name="creatorName"
+                label="Tên Creator"
+                rules={[{ required: true, message: 'Nhập tên creator!' }]}
+                initialValue="Linh Nguyễn"
+              >
+                <Input placeholder="Tên creator..." />
+              </Form.Item>
+
+              <Form.Item name="platform" label="Nền tảng đăng bài" initialValue="tiktok">
+                <Select
+                  options={[
+                    { value: 'tiktok', label: 'TikTok' },
+                    { value: 'instagram', label: 'Instagram' },
+                    { value: 'youtube', label: 'YouTube' },
+                  ]}
+                />
+              </Form.Item>
+            </div>
+          )}
 
           <Form.Item
             name="postLink"
             label="Đường link bài đăng thực tế (URL)"
             rules={[{ required: true, message: 'Nhập đường link bài đăng!' }]}
-            initialValue="https://tiktok.com/@linhnguyen/video/789123891"
+            initialValue="https://tiktok.com/@creator/video/1"
           >
             <Input prefix={<LinkOutlined />} placeholder="https://tiktok.com/@..." />
           </Form.Item>
@@ -1275,8 +1475,98 @@ export default function CollaborationPage() {
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
             <Button onClick={() => setKpiModalOpen(false)}>Hủy</Button>
-            <Button type="primary" htmlType="submit" style={{ background: '#4F46E5', borderRadius: 8 }}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={kpiSubmitting}
+              style={{ background: '#4F46E5', borderRadius: 8 }}
+            >
               Lưu số liệu nghiệm thu
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+
+      {/* =========================================================================
+          MODAL: ĐÁNH GIÁ CREATOR SAU CHIẾN DỊCH
+          ========================================================================= */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <StarFilled style={{ color: '#F59E0B', fontSize: 18 }} />
+            <span>Đánh giá kết quả hợp tác với Creator</span>
+          </div>
+        }
+        open={reviewModalOpen}
+        onCancel={() => {
+          setReviewModalOpen(false);
+          creatorReviewForm.resetFields();
+          setSelectedPartnerForReview(null);
+        }}
+        footer={null}
+        width={520}
+        destroyOnClose
+      >
+        <Form
+          form={creatorReviewForm}
+          layout="vertical"
+          onFinish={handleReviewSubmit}
+          initialValues={{ overallRating: 5, brandFitRating: 5, wouldCollaborateAgain: true }}
+          style={{ marginTop: 14 }}
+        >
+          {selectedPartnerForReview && (
+            <div style={{ padding: '10px 14px', background: '#F8FAFC', borderRadius: 8, marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, color: '#0F172A' }}>{selectedPartnerForReview.creatorName}</div>
+              <div style={{ fontSize: 12, color: '#64748B' }}>{selectedPartnerForReview.deliverableSummary}</div>
+            </div>
+          )}
+
+          <Form.Item
+            name="overallRating"
+            label="Đánh giá tổng thể (Overall Rating)"
+            rules={[{ required: true, message: 'Vui lòng chọn số sao đánh giá!' }]}
+          >
+            <Rate />
+          </Form.Item>
+
+          <Form.Item
+            name="brandFitRating"
+            label="Độ phù hợp thương hiệu & sản phẩm (Brand Fit)"
+            rules={[{ required: true, message: 'Vui lòng đánh giá độ phù hợp!' }]}
+          >
+            <Rate />
+          </Form.Item>
+
+          <Form.Item
+            name="wouldCollaborateAgain"
+            label="Sẵn sàng tái hợp tác trong các chiến dịch tiếp theo?"
+            rules={[{ required: true }]}
+          >
+            <Radio.Group>
+              <Radio value={true}>Có, rất sẵn sàng</Radio>
+              <Radio value={false}>Cần cân nhắc thêm</Radio>
+            </Radio.Group>
+          </Form.Item>
+
+          <Form.Item
+            name="note"
+            label="Nhận xét chi tiết về tác phong, đúng hạn và chất lượng nội dung"
+          >
+            <Input.TextArea
+              rows={3}
+              placeholder="Ví dụ: Creator giao bài đúng deadline, tương tác bình luận nhiệt tình, hình ảnh sắc nét..."
+            />
+          </Form.Item>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <Button onClick={() => setReviewModalOpen(false)}>Hủy</Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={reviewSubmitting}
+              style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', borderRadius: 8 }}
+            >
+              Gửi đánh giá
             </Button>
           </div>
         </Form>

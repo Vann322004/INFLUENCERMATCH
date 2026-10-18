@@ -6,12 +6,12 @@ import {
   ClockCircleOutlined,
   AppstoreOutlined,
 } from '@ant-design/icons';
-import type { AuditLog, AuditAction } from '../../../../mock/adminData';
+import type { AuditLogItem, AuditAction } from '../../../../types/api/admin.types';
 
 const { Text } = Typography;
 
 interface Props {
-  log: AuditLog | null;
+  log: AuditLogItem | null;
   open: boolean;
   onClose: () => void;
 }
