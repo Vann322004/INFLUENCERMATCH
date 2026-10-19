@@ -42,9 +42,9 @@ import './OutreachCrmPage.css';
 
 // Campaign selector options
 const CAMPAIGN_OPTIONS = [
-  { value: 'camp-1', label: '🌟 Ra mắt Skincare Summer Glow' },
-  { value: 'camp-2', label: '💄 Son Lì TikTok Blitz' },
-  { value: 'camp-3', label: '👟 BST Giày Sneaker Thu Đông' },
+  { value: 'camp-1', label: 'Ra mắt Skincare Summer Glow' },
+  { value: 'camp-2', label: 'Son Lì TikTok Blitz' },
+  { value: 'camp-3', label: 'BST Giày Sneaker Thu Đông' },
 ];
 
 // Interface for Outreach Email Log
@@ -953,27 +953,19 @@ export default function OutreachCrmPage() {
           <div className="invitations-filter-bar">
             <div className="filter-left">
               <span style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Trạng thái phản hồi:</span>
-              <Radio.Group
+              <Select
                 value={invitationFilter}
-                onChange={(e) => setInvitationFilter(e.target.value)}
-                size="small"
-              >
-                <Radio.Button value="all">Tất cả ({invitations.length})</Radio.Button>
-                <Radio.Button value="pending">Chờ phản hồi</Radio.Button>
-                <Radio.Button value="accepted">Đã chấp thuận</Radio.Button>
-                <Radio.Button value="counter_offer">Đề xuất lại giá</Radio.Button>
-                <Radio.Button value="declined">Từ chối</Radio.Button>
-              </Radio.Group>
+                onChange={(val) => setInvitationFilter(val)}
+                style={{ minWidth: 190, height: 36 }}
+                options={[
+                  { value: 'all', label: `Tất cả (${invitations.length})` },
+                  { value: 'pending', label: 'Chờ phản hồi' },
+                  { value: 'accepted', label: 'Đã chấp thuận' },
+                  { value: 'counter_offer', label: 'Đề xuất lại giá' },
+                  { value: 'declined', label: 'Từ chối' },
+                ]}
+              />
             </div>
-
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              style={{ background: '#4F46E5', borderRadius: 8 }}
-              onClick={() => setCreateInviteModalOpen(true)}
-            >
-              + Tạo thư mời mới
-            </Button>
           </div>
 
           {/* Invitations Table */}

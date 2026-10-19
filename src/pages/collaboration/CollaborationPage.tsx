@@ -1235,7 +1235,7 @@ export default function CollaborationPage() {
               style={{ background: '#4F46E5', borderRadius: 8 }}
               onClick={() => setKpiModalOpen(true)}
             >
-              + Nhập số liệu bài đăng mới
+              Nhập số liệu bài đăng mới
             </Button>
           </div>
 

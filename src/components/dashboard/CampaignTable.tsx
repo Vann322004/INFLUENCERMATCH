@@ -322,12 +322,24 @@ export default function CampaignTable() {
     },
   ];
 
+  const allCount = campaigns.length;
+  const runningCount = campaigns.filter((c) => c.status === 'running').length;
+  const draftCount = campaigns.filter((c) => c.status === 'draft').length;
+  const completedCount = campaigns.filter((c) => c.status === 'completed').length;
+
   const tabItems = [
-    { key: 'all', label: 'Tất cả (8)' },
-    { key: 'running', label: 'Đang chạy (5)' },
-    { key: 'draft', label: 'Bản nháp (2)' },
-    { key: 'completed', label: 'Hoàn thành (1)' },
+    { key: 'all', label: `Tất cả (${allCount})` },
+    { key: 'running', label: `Đang chạy (${runningCount})` },
+    { key: 'draft', label: `Bản nháp (${draftCount})` },
+    { key: 'completed', label: `Hoàn thành (${completedCount})` },
   ];
+
+  const pageSize = 6;
+  const startIndex = filteredData.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, filteredData.length);
+  const paginatedData = useMemo(() => {
+    return filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  }, [filteredData, currentPage]);
 
   return (
     <Card
@@ -352,7 +364,10 @@ export default function CampaignTable() {
       >
         <Tabs
           activeKey={activeTab}
-          onChange={setActiveTab}
+          onChange={(key) => {
+            setActiveTab(key);
+            setCurrentPage(1);
+          }}
           items={tabItems}
           className="custom-campaign-tabs"
         />
@@ -363,7 +378,10 @@ export default function CampaignTable() {
             placeholder="Tìm kiếm chiến dịch..."
             prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
             value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+              setCurrentPage(1);
+            }}
             style={{ width: 190, borderRadius: 8, height: 32, fontSize: 12.5 }}
           />
 
@@ -386,7 +404,7 @@ export default function CampaignTable() {
         rowKey="id"
         loading={loading}
         columns={columns}
-        dataSource={filteredData}
+        dataSource={paginatedData}
         pagination={false}
         className="campaign-table"
         scroll={{ x: 800 }}
@@ -406,17 +424,21 @@ export default function CampaignTable() {
         }}
       >
         <span style={{ fontSize: 12.5, color: '#64748B' }}>
-          Hiển thị 1 đến 6 trên 12 chiến dịch
+          {filteredData.length > 0
+            ? `Hiển thị ${startIndex} đến ${endIndex} trên ${filteredData.length} chiến dịch`
+            : 'Chưa có chiến dịch nào'}
         </span>
 
-        <Pagination
-          current={currentPage}
-          onChange={setCurrentPage}
-          total={12}
-          pageSize={6}
-          size="small"
-          showSizeChanger={false}
-        />
+        {filteredData.length > pageSize && (
+          <Pagination
+            current={currentPage}
+            onChange={setCurrentPage}
+            total={filteredData.length}
+            pageSize={pageSize}
+            size="small"
+            showSizeChanger={false}
+          />
+        )}
       </div>
     </Card>
   );

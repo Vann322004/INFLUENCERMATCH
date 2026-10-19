@@ -131,7 +131,7 @@ export default function AdminDashboardPage() {
     try {
       const results = await Promise.allSettled([
         adminService.getUsers({ size: 100 }),
-        creatorService.getCreators({ page: 0, size: 100 }),
+        creatorService.getCreators(),
         campaignService.getCampaigns(0, 100),
         adminService.getAdminSubscriptions(),
         subscriptionService.getPlans(0, 20),
@@ -147,7 +147,7 @@ export default function AdminDashboardPage() {
       // 2. Creators
       if (results[1].status === 'fulfilled') {
         const cRes = results[1].value;
-        setCreators(cRes?.items || []);
+        setCreators(Array.isArray(cRes) ? cRes : []);
       }
 
       // 3. Campaigns
@@ -192,7 +192,7 @@ export default function AdminDashboardPage() {
   const creatorUsers = users.filter(u => u.role?.toLowerCase() === 'creator').length;
 
   const totalCreators = creators.length;
-  const activeCreators = creators.filter(c => (c.status || '').toLowerCase() !== 'inactive').length;
+  const activeCreators = creators.filter(c => ((c as any).status || '').toLowerCase() !== 'inactive').length;
 
   const activeCampaigns = campaigns.filter(c => c.status === 'ACTIVE').length;
   const totalCampaigns = campaigns.length;
@@ -226,12 +226,12 @@ export default function AdminDashboardPage() {
     if (plans.length > 0) {
       return plans.map(p => {
         const planSubs = subscriptions.filter(s => 
-          s.planId === p.id || s.planName?.toLowerCase().includes(p.name.toLowerCase())
+          s.planId === p.id || s.planName?.toLowerCase().includes((p.planName || '').toLowerCase())
         );
         const count = planSubs.length || Math.max(1, Math.round(totalUsers * 0.2));
         const rev = planSubs.reduce((sum, s) => sum + (s.amount || 0), 0) || (count * (p.price || 990_000));
         return {
-          plan: p.name,
+          plan: p.planName,
           revenue: rev,
           users: count,
         };

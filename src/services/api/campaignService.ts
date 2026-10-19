@@ -10,6 +10,17 @@ import {
   UpdateRelationshipDetailsRequest,
   CollaborationResponse,
 } from '../../types/api/campaign.types';
+
+export type {
+  CampaignRequest,
+  CampaignResponse,
+  CampaignStatus,
+  RelationshipDto,
+  CreateRelationshipRequest,
+  RelationshipStage,
+  UpdateRelationshipDetailsRequest,
+  CollaborationResponse,
+};
 import { brandService } from './brandService';
 
 let cachedBrandId: string | null = null;
@@ -118,7 +129,31 @@ export const campaignService = {
     const response = await apiClient.patch<ApiResponse<CampaignResponse>>(`/campaigns/${id}/status`, {
       status,
     });
-    return response.data.data;
+    return response.data?.data || (response.data as unknown as CampaignResponse);
+  },
+
+  /**
+   * Kích hoạt chiến dịch từ DRAFT sang hoạt động.
+   * Backend enforce workflow: DRAFT -> READY_FOR_DISCOVERY -> ACTIVE -> COMPLETED.
+   * Nếu chuyển thẳng sang ACTIVE bị từ chối chuyển tiếp, chuyển qua READY_FOR_DISCOVERY trước.
+   */
+  async activateCampaign(id: string): Promise<CampaignResponse> {
+    try {
+      return await this.updateStatus(id, 'ACTIVE');
+    } catch (err: any) {
+      try {
+        await this.updateStatus(id, 'READY_FOR_DISCOVERY');
+        try {
+          return await this.updateStatus(id, 'ACTIVE');
+        } catch {
+          // Trạng thái READY_FOR_DISCOVERY đã được kích hoạt thành công
+          const latest = await this.getCampaignById(id);
+          return latest;
+        }
+      } catch (innerErr) {
+        throw innerErr || err;
+      }
+    }
   },
 
   /**

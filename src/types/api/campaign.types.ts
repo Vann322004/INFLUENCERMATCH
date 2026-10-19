@@ -7,6 +7,7 @@ export type CampaignPlatform = 'TIKTOK' | 'INSTAGRAM' | 'YOUTUBE';
 export interface CampaignRequest {
   name: string;
   productService: string;
+  description?: string;
   objective: CampaignObjective;
   platforms: CampaignPlatform[];
   targetAudiences?: string[];
@@ -26,6 +27,7 @@ export interface CampaignResponse {
   brandId: string;
   name: string;
   productService: string;
+  description?: string;
   objective: CampaignObjective;
   status: CampaignStatus;
   platforms?: CampaignPlatform[];
