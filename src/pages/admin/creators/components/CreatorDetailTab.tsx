@@ -110,7 +110,7 @@ export default function CreatorDetailTab() {
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: '30px 0' }}>
-            <Spin tip="Đang tải danh sách..." />
+            <Spin description="Đang tải danh sách..." />
           </div>
         ) : displayList.length === 0 ? (
           <Empty description="Không tìm thấy creator nào" />

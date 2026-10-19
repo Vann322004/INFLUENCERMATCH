@@ -1,6 +1,6 @@
 import React from 'react';
 import { Form, Input, Button, Typography, message } from 'antd';
-import { LockOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { LockOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { LABELS } from '../../constants/labels';
 import { ROUTES } from '../../constants/routes';
@@ -72,7 +72,6 @@ export default function ResetPasswordPage() {
             htmlType="submit"
             block
             size="large"
-            icon={<ArrowRightOutlined />}
           >
             Lưu mật khẩu mới
           </Button>

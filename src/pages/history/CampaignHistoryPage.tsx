@@ -460,7 +460,7 @@ const CampaignHistoryPage: React.FC = () => {
       {/* ── Loading Spinner ─────────────────────────────────────── */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <Spin size="large" tip="Đang tải dữ liệu chiến dịch từ API..." />
+          <Spin size="large" description="Đang tải dữ liệu chiến dịch từ API..." />
         </div>
       ) : filtered.length === 0 ? (
         <Empty

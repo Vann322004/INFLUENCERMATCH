@@ -272,7 +272,7 @@ export default function CampaignListPage() {
       {/* ── Loading Spinner ── */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <Spin size="large" tip="Đang tải danh sách chiến dịch từ máy chủ..." />
+          <Spin size="large" description="Đang tải danh sách chiến dịch từ máy chủ..." />
         </div>
       ) : (
         <>
@@ -357,7 +357,7 @@ export default function CampaignListPage() {
                           ? '#F59E0B'
                           : '#6366F1'
                       }
-                      trailColor="#F1F5F9"
+                      railColor="#F1F5F9"
                       size="small"
                       style={{ margin: 0 }}
                     />

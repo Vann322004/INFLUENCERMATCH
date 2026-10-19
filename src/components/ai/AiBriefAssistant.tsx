@@ -131,7 +131,7 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
       setIsAnalyzing(false);
       onApplyBrief(targetBrief);
       message.success({
-        content: '✦ AI đã trích xuất Structured Brief và lọc Creator phù hợp!',
+        content: 'AI đã trích xuất Structured Brief và lọc Creator phù hợp!',
         key: 'ai_brief',
         duration: 3,
       });

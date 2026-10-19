@@ -192,7 +192,7 @@ export default function SubscriptionPlansPage() {
       {/* Plan Cards Grid */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <Spin size="large" tip="Đang nạp danh sách gói dịch vụ từ máy chủ..." />
+          <Spin size="large" description="Đang nạp danh sách gói dịch vụ từ máy chủ..." />
         </div>
       ) : (
         <Row gutter={[16, 16]}>

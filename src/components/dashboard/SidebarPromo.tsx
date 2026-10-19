@@ -127,7 +127,7 @@ export default function SidebarPromo() {
             '0%': '#6366F1',
             '100%': '#8B5CF6',
           }}
-          trailColor="#E2E8F0"
+          railColor="#E2E8F0"
           style={{ margin: 0, height: 6 }}
         />
 

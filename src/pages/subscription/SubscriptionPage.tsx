@@ -337,7 +337,7 @@ export default function SubscriptionPage() {
               <Progress
                 percent={Math.round(((30 - CURRENT_SUBSCRIPTION_INFO.daysRemaining) / 30) * 100)}
                 strokeColor="#FDE047"
-                trailColor="rgba(255, 255, 255, 0.25)"
+                railColor="rgba(255, 255, 255, 0.25)"
                 showInfo={false}
                 size="small"
               />
@@ -614,7 +614,7 @@ export default function SubscriptionPage() {
                             <Progress
                               percent={percent}
                               strokeColor={quota.color}
-                              trailColor="#F1F5F9"
+                              railColor="#F1F5F9"
                               showInfo={false}
                               style={{ marginBottom: 10 }}
                             />

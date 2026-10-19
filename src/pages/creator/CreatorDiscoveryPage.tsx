@@ -50,6 +50,8 @@ import {
 import AiBriefAssistant from '../../components/ai/AiBriefAssistant';
 import type { StructuredBrief } from '../../components/ai/AiBriefAssistant';
 import ExternalDiscovery from '../../components/discovery/ExternalDiscovery';
+import { campaignService } from '../../services/api/campaignService';
+import type { CampaignResponse } from '../../types/api/campaign.types';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -166,20 +168,86 @@ export const BRAND_CAMPAIGNS: BrandCampaignItem[] = [
   },
 ];
 
+const mapApiCampaignToItem = (c: CampaignResponse): BrandCampaignItem => {
+  const tag = (c.niches && c.niches.length > 0)
+    ? c.niches.join(', ')
+    : (c.productService || 'Chiến dịch');
+  const target = (c.targetAudiences && c.targetAudiences.length > 0)
+    ? c.targetAudiences.join(', ')
+    : `Mục tiêu: ${c.objective || 'Tiếp cận'}`;
+  const suggestedCategory = (c.niches && c.niches.length > 0)
+    ? c.niches[0]
+    : c.productService;
+
+  return {
+    id: c.id,
+    name: c.name,
+    tag,
+    target,
+    suggestedCategory,
+  };
+};
+
 export default function CreatorDiscoveryPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialCampId = searchParams.get('campaignId') || null;
 
+  // Real Brand Campaigns loaded from API
+  const [campaignsList, setCampaignsList] = useState<BrandCampaignItem[]>([]);
+  const [loadingCampaigns, setLoadingCampaigns] = useState<boolean>(true);
+
   // Campaign Matching States: Khoan đề xuất khớp cao/thấp cho đến khi Brand chọn dự án và bấm tìm
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(initialCampId);
-  const [matchedCampaign, setMatchedCampaign] = useState<BrandCampaignItem | null>(() => {
-    if (initialCampId) {
-      return BRAND_CAMPAIGNS.find((c) => c.id === initialCampId) || null;
-    }
-    return null;
-  });
+  const [matchedCampaign, setMatchedCampaign] = useState<BrandCampaignItem | null>(null);
   const [isMatching, setIsMatching] = useState(false);
+
+  // Fetch real campaigns from backend API
+  useEffect(() => {
+    let isMounted = true;
+    const fetchBrandCampaigns = async () => {
+      setLoadingCampaigns(true);
+      try {
+        const apiCampaigns = await campaignService.getCampaigns(0, 50);
+        if (isMounted) {
+          if (Array.isArray(apiCampaigns) && apiCampaigns.length > 0) {
+            const mapped = apiCampaigns.map(mapApiCampaignToItem);
+            setCampaignsList(mapped);
+            if (initialCampId) {
+              const matched = mapped.find((c) => c.id === initialCampId);
+              if (matched) {
+                setMatchedCampaign(matched);
+                setSelectedCampaignId(initialCampId);
+              }
+            }
+          } else {
+            // Không có campaign từ API, fallback sang mock mẫu để Brand tham khảo
+            setCampaignsList(BRAND_CAMPAIGNS);
+            if (initialCampId) {
+              const matched = BRAND_CAMPAIGNS.find((c) => c.id === initialCampId);
+              if (matched) setMatchedCampaign(matched);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Lỗi khi tải chiến dịch thực tế từ API, dùng danh sách mẫu:', err);
+        if (isMounted) {
+          setCampaignsList(BRAND_CAMPAIGNS);
+          if (initialCampId) {
+            const matched = BRAND_CAMPAIGNS.find((c) => c.id === initialCampId);
+            if (matched) setMatchedCampaign(matched);
+          }
+        }
+      } finally {
+        if (isMounted) setLoadingCampaigns(false);
+      }
+    };
+
+    fetchBrandCampaigns();
+    return () => {
+      isMounted = false;
+    };
+  }, [initialCampId]);
 
   const handleTriggerMatch = () => {
     if (!selectedCampaignId) {
@@ -187,7 +255,7 @@ export default function CreatorDiscoveryPage() {
       return;
     }
 
-    const camp = BRAND_CAMPAIGNS.find((c) => c.id === selectedCampaignId);
+    const camp = campaignsList.find((c) => c.id === selectedCampaignId) || BRAND_CAMPAIGNS.find((c) => c.id === selectedCampaignId);
     if (!camp) return;
 
     setIsMatching(true);
@@ -624,7 +692,6 @@ export default function CreatorDiscoveryPage() {
             >
               Khám phá Creator & Match
             </Title>
-            <span style={{ color: '#7C3AED', fontSize: 18, fontWeight: 800 }}>✦</span>
           </div>
           <Text style={{ color: '#64748B', fontSize: 13 }}>
             Tìm kiếm creator lý tưởng cho thương hiệu với thuật toán ghép nối AI, bộ lọc chuyên sâu và thông tin chi tiết thời gian thực.
@@ -644,7 +711,7 @@ export default function CreatorDiscoveryPage() {
             </Radio.Button>
             <Radio.Button value="external">
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <GlobalOutlined /> Quét kênh ngoài 🌐
+                <GlobalOutlined /> Quét kênh ngoài
               </span>
             </Radio.Button>
           </Radio.Group>
@@ -726,7 +793,7 @@ export default function CreatorDiscoveryPage() {
                     </span>
                     {matchedCampaign ? (
                       <Tag color="purple" style={{ fontWeight: 800, borderRadius: 999, fontSize: 11 }}>
-                        🎯 ĐÃ KÍCH HOẠT ĐỘ KHỚP
+                        ĐÃ KÍCH HOẠT ĐỘ KHỚP
                       </Tag>
                     ) : (
                       <Tag color="default" style={{ borderRadius: 999, fontSize: 11, color: '#64748B' }}>
@@ -753,14 +820,30 @@ export default function CreatorDiscoveryPage() {
               >
                 <Select
                   size="large"
-                  placeholder="-- Chọn một chiến dịch của thương hiệu --"
+                  placeholder={loadingCampaigns ? 'Đang tải danh sách dự án...' : '-- Chọn một chiến dịch của thương hiệu --'}
                   value={selectedCampaignId}
+                  loading={loadingCampaigns}
                   onChange={(val) => setSelectedCampaignId(val)}
-                  style={{ minWidth: 290, height: 42 }}
-                  options={BRAND_CAMPAIGNS.map((camp) => ({
+                  style={{ minWidth: 320, height: 42 }}
+                  notFoundContent={
+                    <div style={{ padding: '8px 12px', textAlign: 'center' }}>
+                      <div style={{ color: '#64748B', fontSize: 13, marginBottom: 6 }}>
+                        Chưa có chiến dịch nào được tạo
+                      </div>
+                      <Button
+                        type="link"
+                        size="small"
+                        onClick={() => navigate('/campaigns/create')}
+                        style={{ padding: 0, fontWeight: 700 }}
+                      >
+                        + Tạo chiến dịch mới ngay
+                      </Button>
+                    </div>
+                  }
+                  options={campaignsList.map((camp) => ({
                     value: camp.id,
                     label: (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                         <span style={{ fontWeight: 600 }}>{camp.name}</span>
                         <span style={{ fontSize: 11, color: '#94A3B8' }}>({camp.tag})</span>
                       </div>
@@ -784,7 +867,7 @@ export default function CreatorDiscoveryPage() {
                     boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
                   }}
                 >
-                  Tìm Creator phù hợp ↵
+                  Tìm Creator phù hợp
                 </Button>
 
                 {matchedCampaign && (
@@ -988,11 +1071,11 @@ export default function CreatorDiscoveryPage() {
                 onChange={setSortBy}
                 style={{ width: 175, height: 40 }}
                 options={[
-                  { value: 'match', label: '✦ Độ phù hợp (AI)' },
-                  { value: 'followers', label: '👥 Lượt theo dõi cao' },
-                  { value: 'engagement', label: '📈 Tương tác cao' },
-                  { value: 'priceAsc', label: '💰 Giá: Thấp đến cao' },
-                  { value: 'priceDesc', label: '💰 Giá: Cao đến thấp' },
+                  { value: 'match', label: 'Độ phù hợp (AI)' },
+                  { value: 'followers', label: 'Lượt theo dõi cao' },
+                  { value: 'engagement', label: 'Tương tác cao' },
+                  { value: 'priceAsc', label: 'Giá: Thấp đến cao' },
+                  { value: 'priceDesc', label: 'Giá: Cao đến thấp' },
                 ]}
               />
             </div>
@@ -1071,12 +1154,12 @@ export default function CreatorDiscoveryPage() {
                 }}
                 style={{ width: '100%', height: 38 }}
                 options={[
-                  { value: 'all', label: '🌐 Tất cả nền tảng' },
-                  { value: 'tiktok', label: '🎵 TikTok' },
-                  { value: 'instagram', label: '📷 Instagram' },
-                  { value: 'youtube', label: '▶️ YouTube' },
-                  { value: 'facebook', label: '👤 Facebook' },
-                  { value: 'x', label: '𝕏 X (Twitter)' },
+                  { value: 'all', label: 'Tất cả nền tảng' },
+                  { value: 'tiktok', label: 'TikTok' },
+                  { value: 'instagram', label: 'Instagram' },
+                  { value: 'youtube', label: 'YouTube' },
+                  { value: 'facebook', label: 'Facebook' },
+                  { value: 'x', label: 'X (Twitter)' },
                 ]}
               />
             </div>
@@ -1091,7 +1174,7 @@ export default function CreatorDiscoveryPage() {
                 }}
                 style={{ width: '100%', height: 38 }}
                 options={[
-                  { value: 'all', label: '🏷️ Tất cả lĩnh vực' },
+                  { value: 'all', label: 'Tất cả lĩnh vực' },
                   ...categoriesList.map((c) => ({ value: c, label: c })),
                 ]}
               />
@@ -1125,7 +1208,7 @@ export default function CreatorDiscoveryPage() {
                 }}
                 style={{ width: '100%', height: 38 }}
                 options={[
-                  { value: 'all', label: '👥 Quy mô: Tất cả' },
+                  { value: 'all', label: 'Quy mô: Tất cả' },
                   { value: 'nano', label: 'Nano (< 50K)' },
                   { value: 'micro', label: 'Micro (50K – 200K)' },
                   { value: 'macro', label: 'Macro (200K – 1M)' },
@@ -1144,7 +1227,7 @@ export default function CreatorDiscoveryPage() {
                 }}
                 style={{ width: '100%', height: 38 }}
                 options={[
-                  { value: 'all', label: '📊 Tương tác: Tất cả' },
+                  { value: 'all', label: 'Tương tác: Tất cả' },
                   { value: 'high', label: 'Cao (> 5%)' },
                   { value: 'vhigh', label: 'Rất cao (> 8%)' },
                 ]}
@@ -1161,7 +1244,7 @@ export default function CreatorDiscoveryPage() {
                 }}
                 style={{ width: '100%', height: 38 }}
                 options={[
-                  { value: 'all', label: '💰 Mức giá: Tất cả' },
+                  { value: 'all', label: 'Mức giá: Tất cả' },
                   { value: 'low', label: '< $500' },
                   { value: 'mid', label: '$500 – $1,000' },
                   { value: 'high', label: '> $1,000' },
@@ -1441,7 +1524,7 @@ export default function CreatorDiscoveryPage() {
                           lineHeight: 1.4,
                         }}
                       >
-                        ✦ <strong>AI Match ({matchedCampaign.name}):</strong> Khán giả 82% Nữ (18-24 tuổi), tương tác {creator.engagementRate} rất phù hợp với dự án.
+                        <strong>AI Match ({matchedCampaign.name}):</strong> Khán giả 82% Nữ (18-24 tuổi), tương tác {creator.engagementRate} rất phù hợp với dự án.
                       </div>
                     )}
 
@@ -1554,7 +1637,7 @@ export default function CreatorDiscoveryPage() {
                         height: 36,
                       }}
                     >
-                      Chi tiết →
+                      Chi tiết
                     </Button>
 
                     <Button
@@ -1712,7 +1795,7 @@ export default function CreatorDiscoveryPage() {
                           onClick={() => handleOpenCreator(creator)}
                           style={{ background: '#2563EB', borderRadius: 8, fontWeight: 700 }}
                         >
-                          Xem hồ sơ →
+                          Xem hồ sơ
                         </Button>
                       </Space>
                     </Col>
@@ -1816,7 +1899,7 @@ export default function CreatorDiscoveryPage() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <span style={{ fontWeight: 700, fontSize: 13, color: '#1E40AF' }}>
-                  ✦ AI Match Score
+                  AI Match Score
                 </span>
                 {matchedCampaign ? (
                   <Tag color="green" style={{ fontWeight: 800, borderRadius: 6 }}>

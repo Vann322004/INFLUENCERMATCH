@@ -742,7 +742,7 @@ export default function OutreachCrmPage() {
                   }}
                   onClick={handleSendEmail}
                 >
-                  Gửi Email ngay →
+                  Gửi Email ngay
                 </Button>
               </div>
             </div>
@@ -885,7 +885,7 @@ export default function OutreachCrmPage() {
                             <span className="kanban-name">{creator.name}</span>
                             <span className="kanban-user">@{creator.username}</span>
                             <Tag color="cyan" style={{ fontSize: 10, padding: '0 4px', margin: '2px 0 0' }}>
-                              ✦ Khớp {creator.matchScore}%
+                              Khớp {creator.matchScore}%
                             </Tag>
                           </div>
                         </div>
@@ -1017,13 +1017,13 @@ export default function OutreachCrmPage() {
                     </td>
                     <td style={{ maxWidth: 220 }}>
                       <div style={{ fontSize: 12, color: '#334155', lineHeight: 1.3 }}>{inv.deliverables}</div>
-                      <div style={{ fontSize: 10.5, color: '#94A3B8', marginTop: 2 }}>🎁 {inv.freeProducts}</div>
+                      <div style={{ fontSize: 10.5, color: '#94A3B8', marginTop: 2 }}>{inv.freeProducts}</div>
                     </td>
                     <td>
-                      <span style={{ fontSize: 12, color: '#475569' }}>📅 {inv.scriptDeadline}</span>
+                      <span style={{ fontSize: 12, color: '#475569' }}>{inv.scriptDeadline}</span>
                     </td>
                     <td>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A' }}>🚀 {inv.postDeadline}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A' }}>{inv.postDeadline}</span>
                     </td>
                     <td>{renderInvitationStatusTag(inv.status)}</td>
                     <td style={{ textAlign: 'right' }}>

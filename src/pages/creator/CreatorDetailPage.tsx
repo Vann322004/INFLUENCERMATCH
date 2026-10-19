@@ -45,6 +45,10 @@ import {
   PhoneOutlined,
   SendOutlined,
   ArrowRightOutlined,
+  BarChartOutlined,
+  PlaySquareOutlined,
+  HistoryOutlined,
+  BulbOutlined,
 } from '@ant-design/icons';
 import './CreatorDetailPage.css';
 
@@ -573,28 +577,28 @@ export default function CreatorDetailPage() {
           className={`creator-tab-item ${activeTab === 'ai_score' ? 'active' : ''}`}
           onClick={() => setActiveTab('ai_score')}
         >
-          <span>📊</span>
+          <BarChartOutlined />
           Phân tích điểm số AI
         </div>
         <div
           className={`creator-tab-item ${activeTab === 'recent_content' ? 'active' : ''}`}
           onClick={() => setActiveTab('recent_content')}
         >
-          <span>🎬</span>
+          <PlaySquareOutlined />
           Nội dung gần đây
         </div>
         <div
           className={`creator-tab-item ${activeTab === 'campaign_history' ? 'active' : ''}`}
           onClick={() => setActiveTab('campaign_history')}
         >
-          <span>📋</span>
+          <HistoryOutlined />
           Lịch sử chiến dịch thực tế
         </div>
         <div
           className={`creator-tab-item ${activeTab === 'algorithm' ? 'active' : ''}`}
           onClick={() => setActiveTab('algorithm')}
         >
-          <span>✨</span>
+          <BulbOutlined />
           Giải thích thuật toán ghép nối
         </div>
       </div>
@@ -1099,7 +1103,6 @@ export default function CreatorDetailPage() {
           <div className="contact-template-box">
             <div className="contact-template-top">
               <span className="contact-template-title-label">
-                <span>✦</span>
                 <span>GỢI Ý MẪU TIN NHẮN</span>
               </span>
               <span

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Form, Input, Button, Typography, message } from 'antd';
-import { MailOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { MailOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { LABELS } from '../../constants/labels';
 import { ROUTES } from '../../constants/routes';
@@ -52,7 +52,6 @@ export default function ForgotPasswordPage() {
             htmlType="submit"
             block
             size="large"
-            icon={<ArrowRightOutlined />}
           >
             {LABELS.AUTH.SUBMIT_FORGOT}
           </Button>

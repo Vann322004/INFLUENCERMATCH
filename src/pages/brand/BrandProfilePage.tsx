@@ -246,7 +246,7 @@ export default function BrandProfilePage() {
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <Spin size="large" tip="Đang tải dữ liệu hồ sơ thương hiệu từ máy chủ..." />
+          <Spin size="large" description="Đang tải dữ liệu hồ sơ thương hiệu từ máy chủ..." />
         </div>
       ) : (
         <>

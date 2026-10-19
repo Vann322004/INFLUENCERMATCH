@@ -114,7 +114,7 @@ export default function NotificationDrawer({ open, onClose }: NotificationDrawer
       width={440}
       onClose={onClose}
       open={open}
-      bodyStyle={{ padding: '0 20px 20px 20px' }}
+      styles={{ body: { padding: '0 20px 20px 20px' } }}
     >
       <Tabs
         defaultActiveKey="inapp"

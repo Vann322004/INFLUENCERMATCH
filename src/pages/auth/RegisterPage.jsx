@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Typography, message } from 'antd';
-import { UserOutlined, MailOutlined, LockOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { LABELS } from '../../constants/labels';
 import { ROUTES } from '../../constants/routes';
@@ -118,7 +118,6 @@ export default function RegisterPage() {
             size="large"
             loading={loading}
             disabled={loading}
-            icon={!loading && <ArrowRightOutlined aria-hidden="true" />}
             className="primary-login-btn"
           >
             {loading ? 'Đang tạo tài khoản...' : LABELS.AUTH.SUBMIT_REGISTER}

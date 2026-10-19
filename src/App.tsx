@@ -1,5 +1,4 @@
-import React from 'react';
-import { ConfigProvider, Layout } from 'antd';
+import { ConfigProvider, Layout, App as AntdApp } from 'antd';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { themeConfig } from './theme/themeConfig';
 import AppSider from './components/layout/AppSider';
@@ -72,7 +71,8 @@ function MainLayout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <ConfigProvider theme={themeConfig}>
-      <BrowserRouter>
+      <AntdApp>
+        <BrowserRouter>
         <Routes>
           {/* Auth Routes */}
           <Route
@@ -469,6 +469,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
+      </AntdApp>
     </ConfigProvider>
   );
 }

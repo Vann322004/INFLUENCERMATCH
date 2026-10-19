@@ -255,7 +255,7 @@ export default function ExternalDiscovery() {
               }}
             >
               <div style={{ fontSize: 11, fontWeight: 700, color: '#047857', textTransform: 'uppercase' }}>
-                ✦ AI Match Score
+                AI Match Score
               </div>
               <div style={{ fontSize: 26, fontWeight: 800, color: '#059669' }}>
                 {scannedResult.matchScore}%

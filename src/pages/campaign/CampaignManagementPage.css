@@ -308,36 +308,28 @@
   gap: 6px !important;
 }
 
-/* 5. Main Content: Kanban Columns + Right Sidebar */
+/* 5. Main Content: Full-width Pipeline Kanban Columns */
 .pipeline-layout-grid {
-  display: grid;
-  grid-template-columns: 1fr 310px;
-  gap: 16px;
-  align-items: start;
+  width: 100%;
 }
 
-@media (max-width: 1400px) {
-  .pipeline-layout-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Kanban Board: 5 Columns */
+/* Kanban Board: 5 Columns full width */
 .kanban-board-container {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(5, minmax(210px, 1fr));
+  gap: 14px;
+  width: 100%;
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding-bottom: 12px;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 992px) {
   .kanban-board-container {
-    grid-template-columns: repeat(3, minmax(260px, 1fr));
+    grid-template-columns: repeat(5, minmax(220px, 1fr));
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .kanban-board-container {
     grid-template-columns: repeat(1, 1fr);
   }
@@ -787,7 +779,7 @@
 }
 
 .widget-create-campaign-banner::after {
-  content: '🚀';
+  display: none !important;
   position: absolute;
   bottom: 8px;
   right: 12px;
@@ -821,3 +813,198 @@
   background: #F8FAFC !important;
   color: #1D4ED8 !important;
 }
+
+/* ── 7. Floating AI Assistant Round Avatar & Panel ── */
+.floating-ai-assistant-wrapper {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* Floating Avatar Button */
+.floating-ai-trigger-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #EC4899 100%);
+  border: 2.5px solid #FFFFFF;
+  box-shadow: 0 10px 25px -4px rgba(99, 102, 241, 0.5), 0 4px 12px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  padding: 0;
+  outline: none;
+}
+
+.floating-ai-trigger-btn:hover {
+  transform: translateY(-3px) scale(1.06);
+  box-shadow: 0 14px 30px -4px rgba(139, 92, 246, 0.65), 0 6px 16px rgba(0, 0, 0, 0.16);
+}
+
+.floating-ai-trigger-btn:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.floating-ai-trigger-btn.active {
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.3), 0 12px 28px -4px rgba(99, 102, 241, 0.6);
+}
+
+/* Pulsing ambient ring */
+.floating-ai-pulse-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(139, 92, 246, 0.45);
+  animation: ai-pulse 2.4s infinite cubic-bezier(0.4, 0, 0.6, 1);
+  pointer-events: none;
+}
+
+@keyframes ai-pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(1.25);
+    opacity: 0;
+  }
+}
+
+.floating-ai-avatar-core {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.floating-ai-icon {
+  color: #FFFFFF !important;
+  font-size: 24px !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.floating-ai-badge {
+  position: absolute;
+  top: -14px;
+  right: -16px;
+  background: #10B981;
+  color: #FFFFFF;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 10px;
+  border: 1.5px solid #FFFFFF;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+/* Floating AI Popup Card */
+.floating-ai-panel {
+  position: absolute;
+  bottom: 70px;
+  right: 0;
+  width: 350px;
+  max-width: calc(100vw - 40px);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.22), 0 4px 16px rgba(0, 0, 0, 0.06);
+  padding: 18px;
+  animation: ai-panel-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+@keyframes ai-panel-pop {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.floating-ai-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.floating-ai-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.floating-ai-avatar-mini {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+}
+
+.floating-ai-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.2;
+}
+
+.floating-ai-subtitle {
+  font-size: 11px;
+  color: #64748B;
+}
+
+.floating-ai-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.floating-ai-close-btn {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.floating-ai-close-btn:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+.floating-ai-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+

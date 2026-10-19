@@ -155,7 +155,6 @@ export default function DashboardLayout({ children }) {
             }}
           >
             iM
-            <span style={{ position: 'absolute', top: -4, right: -4, fontSize: 10, color: '#FDE047' }}>✦</span>
           </div>
           <div>
             <div style={{ fontWeight: 800, fontSize: 14.5, color: '#0F172A', letterSpacing: 0.5, lineHeight: 1.2 }}>

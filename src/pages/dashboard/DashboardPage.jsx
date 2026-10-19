@@ -68,9 +68,9 @@ export default function DashboardPage() {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return { text: 'Chào buổi sáng', emoji: '☀️' };
-    if (hour < 18) return { text: 'Chào buổi chiều', emoji: '🌤️' };
-    return { text: 'Chào buổi tối', emoji: '✨' };
+    if (hour < 12) return { text: 'Chào buổi sáng', emoji: '' };
+    if (hour < 18) return { text: 'Chào buổi chiều', emoji: '' };
+    return { text: 'Chào buổi tối', emoji: '' };
   };
 
   const getFormattedDate = () => {
@@ -304,7 +304,7 @@ export default function DashboardPage() {
             <div className="im-glass-card">
               <div className="im-glass-header">
                 <div className="im-glass-title-wrap">
-                  <span className="im-glass-icon">✨</span>
+                  <ThunderboltOutlined className="im-glass-icon" style={{ color: '#F59E0B' }} />
                   <div>
                     <div className="im-glass-title">Gợi ý AI Nổi Bật</div>
                     <div className="im-glass-subtitle">Tương thích cao nhất hôm nay</div>
@@ -596,7 +596,7 @@ export default function DashboardPage() {
                 <div className="im-radar-circle c1"></div>
                 <div className="im-radar-circle c2"></div>
                 <div className="im-radar-circle c3"></div>
-                <div className="im-radar-center">✦</div>
+                <div className="im-radar-center"></div>
               </div>
             </Card>
 

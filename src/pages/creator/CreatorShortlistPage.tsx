@@ -406,7 +406,7 @@ export default function CreatorShortlistPage() {
       },
       {
         key: 'low',
-        label: '🟢 Ưu tiên Thấp',
+        label: 'Ưu tiên Thấp',
         onClick: () => handleChangePriority(creator.id, 'low'),
       },
     ];
@@ -415,13 +415,13 @@ export default function CreatorShortlistPage() {
     let text = 'Ưu tiên Thấp';
     if (creator.priority === 'high') {
       color = 'error';
-      text = '🔴 Ưu tiên Cao';
+      text = 'Ưu tiên Cao';
     } else if (creator.priority === 'med') {
       color = 'warning';
-      text = '🟡 Ưu tiên TB';
+      text = 'Ưu tiên TB';
     } else {
       color = 'success';
-      text = '🟢 Ưu tiên Thấp';
+      text = 'Ưu tiên Thấp';
     }
 
     return (
@@ -488,7 +488,7 @@ export default function CreatorShortlistPage() {
           <div className="shortlist-title-wrap">
             <h1 className="shortlist-main-title">Danh sách chọn & So sánh Creator</h1>
             <span className="shortlist-tagline-cursive">
-              Phù hợp hơn • Quản lý tập trung • So sánh trực quan ✨
+              Phù hợp hơn • Quản lý tập trung • So sánh trực quan
             </span>
           </div>
           <div className="shortlist-description">
@@ -610,9 +610,9 @@ export default function CreatorShortlistPage() {
                     style={{ width: 140 }}
                     options={[
                       { value: 'all', label: 'Tất cả mức độ' },
-                      { value: 'high', label: '🔴 Ưu tiên Cao' },
-                      { value: 'med', label: '🟡 Ưu tiên TB' },
-                      { value: 'low', label: '🟢 Ưu tiên Thấp' },
+                      { value: 'high', label: 'Ưu tiên Cao' },
+                      { value: 'med', label: 'Ưu tiên TB' },
+                      { value: 'low', label: 'Ưu tiên Thấp' },
                     ]}
                   />
                 </div>
@@ -625,7 +625,7 @@ export default function CreatorShortlistPage() {
                   onClick={() => setOnlyFavorite(!onlyFavorite)}
                   style={{ borderRadius: 8, height: 32 }}
                 >
-                  {onlyFavorite ? 'Đang lọc Yêu thích ⭐' : 'Chỉ xem Yêu thích'}
+                  {onlyFavorite ? 'Đang lọc Yêu thích' : 'Chỉ xem Yêu thích'}
                 </Button>
 
                 <span
@@ -727,13 +727,13 @@ export default function CreatorShortlistPage() {
 
                       {/* Campaign Tag */}
                       <div className="card-campaign-badge">
-                        <span className="campaign-chip">📌 {c.campaignName}</span>
+                        <span className="campaign-chip">{c.campaignName}</span>
                         <span
                           className={`match-badge-pill ${
                             isHigh ? 'match-badge-high' : 'match-badge-med'
                           }`}
                         >
-                          ✦ {c.matchText}
+                          {c.matchText}
                         </span>
                       </div>
 
@@ -1010,7 +1010,7 @@ export default function CreatorShortlistPage() {
                   icon={<BarChartOutlined />}
                   onClick={() => setViewMode('compare')}
                 >
-                  Bắt đầu so sánh chi tiết ({selectedCreators.length}) →
+                  Bắt đầu so sánh chi tiết ({selectedCreators.length})
                 </Button>
               </div>
             </div>
@@ -1425,7 +1425,7 @@ export default function CreatorShortlistPage() {
                 {/* Bottom Callout */}
                 <div className="matrix-bottom-banner">
                   <div className="banner-left-group">
-                    <div className="banner-sparkle-icon">✦</div>
+                    <div className="banner-sparkle-icon"><ThunderboltOutlined /></div>
                     <div>
                       <div className="banner-title">Khuyến nghị phân bổ ngân sách AI</div>
                       <div className="banner-subtitle">
@@ -1443,7 +1443,7 @@ export default function CreatorShortlistPage() {
                       navigate('/campaigns/management');
                     }}
                   >
-                    Tiến hành liên hệ nhóm này →
+                    Tiến hành liên hệ nhóm này
                   </Button>
                 </div>
               </div>

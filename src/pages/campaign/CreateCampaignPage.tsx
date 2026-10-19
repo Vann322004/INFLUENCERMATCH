@@ -534,7 +534,7 @@ export default function CreateCampaignPage() {
                       fontWeight: 800,
                     }}
                   >
-                    ✦
+                    <RobotOutlined style={{ fontSize: 14 }} />
                   </div>
                   <span style={{ fontWeight: 800, fontSize: 14.5, color: '#0F172A' }}>
                     Trợ lý AI Chiến dịch
@@ -552,14 +552,8 @@ export default function CreateCampaignPage() {
                       margin: 0,
                     }}
                   >
-                    ✨ Trợ lý AI
+                    Trợ lý AI
                   </Tag>
-                </div>
-
-                <div style={{ display: 'flex', gap: 6, opacity: 0.6, fontSize: 15 }}>
-                  <span>💬</span>
-                  <span>🎵</span>
-                  <span>🤖</span>
                 </div>
               </div>
 
@@ -595,7 +589,7 @@ export default function CreateCampaignPage() {
                     flexShrink: 0,
                   }}
                 >
-                  Gợi ý ngay →
+                  Gợi ý ngay
                 </Button>
               </div>
             </Card>
@@ -1285,7 +1279,7 @@ export default function CreateCampaignPage() {
                   <Row gutter={[16, 16]}>
                     <Col xs={24} sm={8}>
                       <div style={{ background: '#F8FAFC', padding: '14px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-                        <div style={{ fontSize: 11.5, color: '#64748B', marginBottom: 4 }}>🎯 Lượt tiếp cận mục tiêu</div>
+                        <div style={{ fontSize: 11.5, color: '#64748B', marginBottom: 4 }}>Lượt tiếp cận mục tiêu</div>
                         <Input
                           value={targetReach}
                           onChange={(e) => setTargetReach(e.target.value)}
@@ -1439,13 +1433,12 @@ export default function CreateCampaignPage() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <Space size={6}>
-                  <span style={{ color: '#7C3AED', fontWeight: 800 }}>✦</span>
                   <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
                     Gợi ý từ AI
                   </span>
                 </Space>
                 <Button type="link" size="small" style={{ color: '#2563EB', fontSize: 11.5, padding: 0, fontWeight: 600 }}>
-                  Xem tất cả →
+                  Xem tất cả
                 </Button>
               </div>
 
@@ -1550,7 +1543,6 @@ export default function CreateCampaignPage() {
               bodyStyle={{ padding: '18px 20px' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <span style={{ color: '#7C3AED', fontWeight: 800 }}>✦</span>
                 <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
                   Tăng hiệu quả chiến dịch cùng AI
                 </span>
@@ -1603,7 +1595,7 @@ export default function CreateCampaignPage() {
                       fontSize: 13,
                     }}
                   >
-                    🎯
+                    <AimOutlined />
                   </div>
                   <div>
                     <div style={{ fontSize: 10.5, color: '#94A3B8' }}>Ước tính lượt tiếp cận</div>
@@ -1723,10 +1715,10 @@ export default function CreateCampaignPage() {
             }}
           >
             {currentStep === 1
-              ? 'Tiếp theo (Bước 2) →'
+              ? 'Tiếp theo (Bước 2)'
               : currentStep === 2
-              ? 'Tiếp theo (Bước 3) →'
-              : '🚀 Hoàn tất & Khởi tạo chiến dịch'}
+              ? 'Tiếp theo (Bước 3)'
+              : 'Hoàn tất & Khởi tạo chiến dịch'}
           </Button>
         </Space>
       </div>

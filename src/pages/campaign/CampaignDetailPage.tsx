@@ -606,7 +606,7 @@ export default function CampaignDetailPage() {
                     <Col xs={24} lg={10}>
                       <div className="brief-box">
                         <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A', marginBottom: 16 }}>
-                          🎯 Thông tin vận hành chiến dịch
+                          Thông tin vận hành chiến dịch
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13 }}>

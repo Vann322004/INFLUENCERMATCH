@@ -389,7 +389,7 @@ export default function AdminDashboardPage() {
 
             {loading ? (
               <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                <Spin tip="Đang tải sự kiện hệ thống..." />
+                <Spin description="Đang tải sự kiện hệ thống..." />
               </div>
             ) : auditLogs.length === 0 ? (
               <Empty

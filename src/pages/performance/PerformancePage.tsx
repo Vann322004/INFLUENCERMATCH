@@ -337,7 +337,7 @@ const PerformancePage: React.FC = () => {
   if (loading) {
     return (
       <div className="perf-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <Spin tip="Đang tải dữ liệu hiệu suất và chiến dịch..." size="large" />
+        <Spin description="Đang tải dữ liệu hiệu suất và chiến dịch..." size="large" />
       </div>
     );
   }
@@ -518,7 +518,7 @@ const PerformancePage: React.FC = () => {
                         percent={(c.roas / 5) * 100}
                         showInfo={false}
                         strokeColor={c.roas >= 3 ? '#10b981' : c.roas >= 2 ? '#f59e0b' : '#ef4444'}
-                        trailColor="#f1f5f9"
+                        railColor="#f1f5f9"
                         strokeWidth={10}
                         style={{ borderRadius: 8 }}
                       />

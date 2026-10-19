@@ -128,7 +128,6 @@ export default function AdminSidebar() {
           }}
         >
           <SafetyCertificateOutlined style={{ fontSize: 18 }} />
-          <span style={{ position: 'absolute', top: -4, right: -4, fontSize: 10, color: '#FDE047' }}>✦</span>
         </div>
         {!collapsed && (
           <div>

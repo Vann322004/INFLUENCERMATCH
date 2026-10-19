@@ -10,13 +10,14 @@ import {
 } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  PlusOutlined,
   SearchOutlined,
   FilterOutlined,
   CalendarOutlined,
   ExportOutlined,
   RightOutlined,
   ThunderboltOutlined,
+  ThunderboltFilled,
+  CloseOutlined,
   DownOutlined,
 } from '@ant-design/icons';
 import { campaignService } from '../../services/api/campaignService';
@@ -60,20 +61,26 @@ export default function CampaignManagementPage() {
   const { id } = useParams<{ id: string }>();
 
   const [campaign, setCampaign] = useState<CampaignResponse | null>(null);
+  const [availableCampaigns, setAvailableCampaigns] = useState<CampaignResponse[]>([]);
   const [pipelineCreators, setPipelineCreators] = useState<PipelineCreator[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedChannel, setSelectedChannel] = useState<'all' | 'instagram' | 'youtube' | 'tiktok'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     const loadData = async () => {
       setLoading(true);
       try {
+        const allCamps = await campaignService.getCampaigns(0, 50).catch(() => []);
+        if (isMounted) {
+          setAvailableCampaigns(allCamps);
+        }
+
         let currentCampId = id;
-        if (!currentCampId) {
-          const allCamps = await campaignService.getCampaigns();
+        if (!currentCampId || !allCamps.some((c) => c.id === currentCampId)) {
           if (allCamps.length > 0) {
             currentCampId = allCamps[0].id;
           }
@@ -141,56 +148,56 @@ export default function CampaignManagementPage() {
     {
       key: 'found',
       title: 'Mới tìm thấy',
-      icon: '✦',
+      icon: '',
       headerClass: 'stage-found',
       count: pipelineCreators.filter((c) => c.stage === 'found').length,
       budget: '$18.2M',
       nextStage: 'review',
-      actionText: '+ Đang xem xét',
+      actionText: 'Đang xem xét',
       actionClass: 'btn-action-add',
     },
     {
       key: 'review',
       title: 'Đang xem xét',
-      icon: '👁',
+      icon: '',
       headerClass: 'stage-review',
       count: pipelineCreators.filter((c) => c.stage === 'review').length,
       budget: '$16.7M',
       nextStage: 'contacted',
-      actionText: '✉ Đã liên hệ',
+      actionText: 'Đã liên hệ',
       actionClass: 'btn-action-add',
     },
     {
       key: 'contacted',
       title: 'Đã liên hệ',
-      icon: '✉',
+      icon: '',
       headerClass: 'stage-contacted',
       count: pipelineCreators.filter((c) => c.stage === 'contacted').length,
       budget: '$9.4M',
       nextStage: 'negotiating',
-      actionText: '🤝 Đang đàm phán',
+      actionText: 'Đang đàm phán',
       actionClass: 'btn-action-contacted',
     },
     {
       key: 'negotiating',
       title: 'Đang đàm phán',
-      icon: '🤝',
+      icon: '',
       headerClass: 'stage-negotiating',
       count: pipelineCreators.filter((c) => c.stage === 'negotiating').length,
       budget: '$7.8M',
       nextStage: 'confirmed',
-      actionText: '✓ Đã xác nhận',
+      actionText: 'Đã xác nhận',
       actionClass: 'btn-action-negotiating',
     },
     {
       key: 'confirmed',
       title: 'Đã xác nhận',
-      icon: '✓',
+      icon: '',
       headerClass: 'stage-confirmed',
       count: pipelineCreators.filter((c) => c.stage === 'confirmed').length,
       budget: '$4.6M',
       nextStage: null,
-      actionText: '✓ Hoàn thành',
+      actionText: 'Hoàn thành',
       actionClass: 'btn-action-confirmed',
     },
   ];
@@ -279,14 +286,6 @@ export default function CampaignManagementPage() {
             Quản lý và theo dõi toàn bộ quá trình làm việc với các influencer cho chiến dịch của bạn.
           </div>
         </div>
-
-        <Button
-          className="btn-add-creator-gradient"
-          icon={<PlusOutlined />}
-          onClick={() => setAddModalOpen(true)}
-        >
-          Thêm Creator
-        </Button>
       </div>
 
       {/* 3. Campaign Summary Card */}
@@ -301,7 +300,7 @@ export default function CampaignManagementPage() {
           <div className="campaign-meta-content">
             <div className="campaign-title-row">
               <span className="campaign-name-title">{campaign?.name || 'Chiến dịch Influencer'}</span>
-              <span className="campaign-status-tag">🟢 {campaign?.status || 'Đang diễn ra'}</span>
+              <span className="campaign-status-tag">{campaign?.status || 'Đang diễn ra'}</span>
             </div>
 
             <div className="campaign-subtitle-text">
@@ -358,11 +357,23 @@ export default function CampaignManagementPage() {
       {/* 4. Filter & Channel Tabs Bar */}
       <div className="pipeline-filters-bar">
         <div className="pipeline-channels-group">
-          {/* Campaign dropdown */}
-          <div className="campaign-select-pill">
-            <span>👜 {campaign?.name || 'Chiến dịch hiện tại'}</span>
-            <DownOutlined style={{ fontSize: 10 }} />
-          </div>
+          {/* Campaign dropdown switcher */}
+          {availableCampaigns.length > 0 ? (
+            <Select
+              className="campaign-select-pill-select"
+              value={campaign?.id || (availableCampaigns[0] && availableCampaigns[0].id)}
+              onChange={(newCampId) => navigate(`/campaign-management/${newCampId}`)}
+              style={{ minWidth: 240, height: 32 }}
+              options={availableCampaigns.map((c) => ({
+                value: c.id,
+                label: c.name,
+              }))}
+            />
+          ) : (
+            <div className="campaign-select-pill">
+              <span>{campaign?.name || 'Chiến dịch hiện tại'}</span>
+            </div>
+          )}
 
           {/* Channels Pills */}
           <div
@@ -416,7 +427,7 @@ export default function CampaignManagementPage() {
       {/* 5. Main Layout: 5 Kanban Columns + Right Sidebar Panel */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <Spin size="large" tip="Đang tải dữ liệu Pipeline từ máy chủ..." />
+          <Spin size="large" description="Đang tải dữ liệu Pipeline từ máy chủ..." />
         </div>
       ) : (
         <div className="pipeline-layout-grid">
@@ -429,7 +440,6 @@ export default function CampaignManagementPage() {
                   {/* Column Header */}
                   <div className={`kanban-col-header ${stg.headerClass}`}>
                     <div className="col-header-title">
-                      <span>{stg.icon}</span>
                       <span>{stg.title}</span>
                       <span className="col-header-count">{colItems.length}</span>
                     </div>
@@ -509,20 +519,40 @@ export default function CampaignManagementPage() {
             })}
           </div>
 
-          {/* Right Sidebar Widgets */}
-          <div className="pipeline-right-sidebar">
-            {/* Widget 1: Trợ lý AI (Beta) */}
-            <div className="widget-ai-assistant">
-              <div className="widget-ai-header">
-                <div className="widget-ai-title-row">
-                  <ThunderboltOutlined style={{ color: '#4F46E5' }} />
-                  <span>Trợ lý AI</span>
-                </div>
-                <span className="widget-beta-tag">Beta</span>
-              </div>
+          {/* Pipeline Kanban Board takes full space */}
+        </div>
+      )}
 
+      {/* Floating AI Assistant Round Avatar & Panel */}
+      <div className="floating-ai-assistant-wrapper">
+        {aiAssistantOpen && (
+          <div className="floating-ai-panel">
+            <div className="floating-ai-panel-header">
+              <div className="floating-ai-header-left">
+                <div className="floating-ai-avatar-mini">
+                  <ThunderboltFilled style={{ color: '#FFFFFF', fontSize: 14 }} />
+                </div>
+                <div>
+                  <div className="floating-ai-title">Trợ lý AI</div>
+                  <div className="floating-ai-subtitle">Tối ưu chiến dịch thông minh</div>
+                </div>
+              </div>
+              <div className="floating-ai-header-right">
+                <span className="widget-beta-tag">Beta</span>
+                <button
+                  type="button"
+                  className="floating-ai-close-btn"
+                  onClick={() => setAiAssistantOpen(false)}
+                  aria-label="Đóng trợ lý AI"
+                >
+                  <CloseOutlined />
+                </button>
+              </div>
+            </div>
+
+            <div className="floating-ai-panel-body">
               <p className="widget-ai-description">
-                Gợi ý creator phù hợp và hỗ trợ bạn tối ưu chiến dịch hiệu quả hơn.
+                Gợi ý creator phù hợp và hỗ trợ bạn tối ưu tiến độ chiến dịch hiệu quả hơn.
               </p>
 
               <div className="widget-ai-recommendations-list">
@@ -557,55 +587,66 @@ export default function CampaignManagementPage() {
                 className="btn-view-ai-proposals"
                 onClick={() => message.success('Đang phân tích toàn diện chiến dịch qua AI...')}
               >
-                ✦ Xem đề xuất AI →
+                Xem đề xuất AI
               </Button>
-            </div>
 
-            {/* Widget 2: Thông tin nhanh */}
-            <div className="widget-quick-info">
-              <div className="widget-quick-info-title">✦ Thông tin nhanh</div>
-
-              <div className="widget-quick-info-grid">
-                <div className="quick-info-stat-box">
-                  <span className="quick-info-label">Tổng creator</span>
-                  <span className="quick-info-number">{pipelineCreators.length}</span>
-                  <span className="quick-info-trend">Live</span>
-                </div>
-
-                <div className="quick-info-stat-box">
-                  <span className="quick-info-label">Đã liên hệ</span>
-                  <span className="quick-info-number">
-                    {pipelineCreators.filter((c) => c.stage === 'contacted').length}
-                  </span>
-                  <span className="quick-info-trend">CRM</span>
-                </div>
-
-                <div className="quick-info-stat-box">
-                  <span className="quick-info-label">Đã xác nhận</span>
-                  <span className="quick-info-number">
-                    {pipelineCreators.filter((c) => c.stage === 'confirmed').length}
-                  </span>
-                  <span className="quick-info-trend">Hợp đồng</span>
+              {/* Thông tin nhanh Widget */}
+              <div className="widget-quick-info">
+                <div className="widget-quick-info-title">Thông tin nhanh</div>
+                <div className="widget-quick-info-grid">
+                  <div className="quick-info-stat-box">
+                    <span className="quick-info-label">Tổng creator</span>
+                    <span className="quick-info-number">{pipelineCreators.length}</span>
+                    <span className="quick-info-trend">Live</span>
+                  </div>
+                  <div className="quick-info-stat-box">
+                    <span className="quick-info-label">Đã liên hệ</span>
+                    <span className="quick-info-number">
+                      {pipelineCreators.filter((c) => c.stage === 'contacted').length}
+                    </span>
+                    <span className="quick-info-trend">CRM</span>
+                  </div>
+                  <div className="quick-info-stat-box">
+                    <span className="quick-info-label">Đã xác nhận</span>
+                    <span className="quick-info-number">
+                      {pipelineCreators.filter((c) => c.stage === 'confirmed').length}
+                    </span>
+                    <span className="quick-info-trend">Hợp đồng</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Widget 3: Banner Tạo chiến dịch mới với AI */}
-            <div className="widget-create-campaign-banner">
-              <h4 className="banner-create-title">
-                Tạo chiến dịch mới với AI chỉ trong 1 phút
-              </h4>
-
-              <Button
-                className="btn-banner-create-action"
-                onClick={() => navigate('/campaigns/create')}
-              >
-                Tạo chiến dịch ngay →
-              </Button>
+              {/* Banner Tạo chiến dịch mới với AI */}
+              <div className="widget-create-campaign-banner" style={{ marginTop: 4 }}>
+                <h4 className="banner-create-title">
+                  Tạo chiến dịch mới với AI chỉ trong 1 phút
+                </h4>
+                <Button
+                  className="btn-banner-create-action"
+                  onClick={() => navigate('/campaigns/create')}
+                >
+                  Tạo chiến dịch ngay
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Circular Avatar Trigger Button */}
+        <button
+          type="button"
+          className={`floating-ai-trigger-btn ${aiAssistantOpen ? 'active' : ''}`}
+          onClick={() => setAiAssistantOpen((prev) => !prev)}
+          title="Mở Trợ lý AI"
+          aria-label="Mở Trợ lý AI"
+        >
+          <div className="floating-ai-pulse-ring" />
+          <div className="floating-ai-avatar-core">
+            <ThunderboltFilled className="floating-ai-icon" />
+            <span className="floating-ai-badge">AI</span>
+          </div>
+        </button>
+      </div>
 
       {/* Modal Thêm Creator vào Pipeline */}
       <Modal

@@ -649,9 +649,9 @@ export default function CollaborationPage() {
       case 'waiting_video':
         return <Tag color="warning">3. Đợi video demo</Tag>;
       case 'review_pending':
-        return <Tag color="purple" style={{ fontWeight: 700 }}>4. Cần duyệt bài 🎬</Tag>;
+        return <Tag color="purple" style={{ fontWeight: 700 }}>4. Cần duyệt bài</Tag>;
       case 'published':
-        return <Tag color="success" style={{ fontWeight: 700 }}>5. Đã đăng bài 🚀</Tag>;
+        return <Tag color="success" style={{ fontWeight: 700 }}>5. Đã đăng bài</Tag>;
       default:
         return null;
     }
@@ -664,7 +664,7 @@ export default function CollaborationPage() {
         <div>
           <div className="collab-title-wrap">
             <h1 className="collab-main-title">Quản lý Vận hành & Hợp tác Creator</h1>
-            <span className="collab-tagline">Tiến độ chuẩn • Duyệt bài nhanh • Minh bạch thù lao ✨</span>
+            <span className="collab-tagline">Tiến độ chuẩn • Duyệt bài nhanh • Minh bạch thù lao</span>
           </div>
           <div className="collab-description">
             Trung tâm điều phối toàn bộ các hợp đồng hợp tác: kiểm duyệt ấn phẩm theo mốc thời gian, đối soát thanh toán và nghiệm thu số liệu KPI thực tế.
@@ -819,7 +819,7 @@ export default function CollaborationPage() {
                 {loadingPartners ? (
                   <tr>
                     <td colSpan={8} style={{ textAlign: 'center', padding: '48px 0' }}>
-                      <Spin tip="Đang tải dữ liệu đối tác hợp tác..." />
+                      <Spin description="Đang tải dữ liệu đối tác hợp tác..." />
                     </td>
                   </tr>
                 ) : partners.filter((p) => (partnerFilter === 'all' ? true : p.stage === partnerFilter)).length === 0 ? (

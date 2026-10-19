@@ -84,7 +84,7 @@ body {
 }
 
 .logo-icon::after {
-  content: '✨';
+  display: none !important;
   position: absolute;
   top: -5px;
   right: -5px;

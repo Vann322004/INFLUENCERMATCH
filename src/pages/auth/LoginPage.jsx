@@ -3,7 +3,6 @@ import { Form, Input, Button, Checkbox, Divider, Typography, message } from 'ant
 import {
   MailOutlined,
   LockOutlined,
-  ArrowRightOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
 } from '@ant-design/icons';
@@ -165,7 +164,6 @@ export default function LoginPage() {
             size="large"
             loading={loading}
             disabled={loading}
-            icon={!loading && <ArrowRightOutlined aria-hidden="true" />}
             className="primary-login-btn"
           >
             {loading ? 'Đang xác thực...' : LABELS.AUTH.SUBMIT_LOGIN}

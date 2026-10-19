@@ -37,7 +37,7 @@ export const getStoredUser = () => {
   }
 };
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://221.121.3.226:8080/api/v1';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
