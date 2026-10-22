@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Button,
   Input,
@@ -10,6 +10,7 @@ import {
   Tag,
   Tooltip,
   Spin,
+  Alert,
 } from 'antd';
 import type { MenuProps } from 'antd';
 import { useNavigate } from 'react-router-dom';
@@ -52,6 +53,7 @@ import './CreatorShortlistPage.css';
 
 export interface CreatorCompareItem {
   id: string;
+  shortlistItemId?: string;
   campaignId: string;
   campaignName: string;
   name: string;
@@ -90,37 +92,54 @@ export interface CreatorCompareItem {
   status: 'shortlisted' | 'contacted' | 'negotiating';
 }
 
-export const CAMPAIGN_OPTIONS = [
-  { value: 'all', label: '📁 Tất cả chiến dịch' },
-  { value: 'camp-1', label: '🌟 Ra mắt Skincare Summer Glow' },
-  { value: 'camp-2', label: '💄 Son Lì TikTok Blitz' },
-  { value: 'camp-3', label: '👟 BST Giày Sneaker Thu Đông' },
-];
-
 import { creatorService } from '../../services/api/creatorService';
-import type { CreatorItem } from '../../types/api/creator.types';
+import { campaignService } from '../../services/api/campaignService';
+import type { CreatorItem, ShortlistItem } from '../../types/api/creator.types';
+import type { CampaignResponse } from '../../types/api/campaign.types';
 
-export const mapCreatorToShortlistItem = (c: CreatorItem, campaignName = 'Tất cả chiến dịch'): CreatorCompareItem => {
+export const normalizeNiche = (niche?: string): string => {
+  if (!niche || niche.toUpperCase() === 'UNKNOWN' || niche.trim() === '') {
+    return 'Lối sống & Sáng tạo';
+  }
+  return niche;
+};
+
+export const mapCreatorToShortlistItem = (
+  c: CreatorItem,
+  campaignName = 'Tất cả chiến dịch',
+  shortlistItemId?: string,
+  priority: 'high' | 'med' | 'low' = 'high',
+  note?: string,
+  addedDate?: string
+): CreatorCompareItem => {
   const followersNum = c.followers || 0;
   const followersText = followersNum >= 1_000_000
     ? `${(followersNum / 1_000_000).toFixed(1)}M`
     : followersNum >= 1_000
     ? `${Math.round(followersNum / 1_000)}K`
-    : `${followersNum}`;
-  const eng = c.engagementRate || 3.5;
+    : followersNum > 0
+    ? `${followersNum}`
+    : '—';
+  const rawEng = c.engagementRate;
+  let eng = 3.5;
+  if (typeof rawEng === 'number' && !isNaN(rawEng)) {
+    eng = (rawEng > 0 && rawEng <= 1) ? Number((rawEng * 100).toFixed(2)) : Number(rawEng.toFixed(2));
+  }
+  const safeNiche = normalizeNiche(c.niche);
 
   return {
     id: c.creatorId || c.id,
+    shortlistItemId,
     campaignId: 'all',
     campaignName,
     name: c.displayName || c.userName,
-    username: c.userName,
-    avatar: c.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    username: (c.userName || '').replace(/^@+/, ''),
+    avatar: c.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.displayName || c.userName || 'C')}&background=4F46E5&color=fff&size=150&bold=true`,
     isVerified: !!c.verifiedByInfluencerMatch,
     matchLevel: 'high',
     matchText: 'Khớp cao (92%)',
     platforms: [c.platform?.toLowerCase() || 'tiktok'],
-    categories: c.niche ? [c.niche] : ['Làm đẹp & Chăm sóc da'],
+    categories: [safeNiche],
     followers: followersText,
     followersPercent: Math.min(100, Math.round((followersNum / 1000000) * 100)) || 80,
     views: '25.0K',
@@ -136,13 +155,13 @@ export const mapCreatorToShortlistItem = (c: CreatorItem, campaignName = 'Tất 
     price: '10.000.000 ₫',
     location: c.location || 'Việt Nam',
     gender: { female: 75, male: 25 },
-    interests: [c.niche || 'Làm đẹp', 'Đời sống'],
-    note: c.contentSummary || 'Creator tiềm năng trong danh sách chọn.',
-    noteType: 'high',
+    interests: [safeNiche, 'Đời sống'],
+    note: note || c.contentSummary || 'Creator tiềm năng trong danh sách chọn.',
+    noteType: priority === 'high' ? 'high' : priority === 'low' ? 'neutral' : 'med',
     favorite: false,
-    priority: 'high',
+    priority,
     selected: false,
-    addedDate: new Date().toLocaleDateString('vi-VN'),
+    addedDate: addedDate || new Date().toLocaleDateString('vi-VN'),
     status: 'shortlisted',
   };
 };
@@ -151,29 +170,175 @@ export default function CreatorShortlistPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [creators, setCreators] = useState<CreatorCompareItem[]>([]);
+  const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
+  const [creatorsMap, setCreatorsMap] = useState<Map<string, CreatorItem>>(new Map());
+  const [selectedCampaign, setSelectedCampaign] = useState<string>('all');
+
+  // Candidate Search & Adding state in Add Modal
+  const [candidateSearch, setCandidateSearch] = useState('');
+  const [addingCandidateId, setAddingCandidateId] = useState<string | null>(null);
+
+  // Dynamic Campaign Options for Select
+  const campaignOptions = useMemo(() => {
+    const list = [{ value: 'all', label: '📁 Tất cả chiến dịch' }];
+    campaigns.forEach((camp) => {
+      list.push({
+        value: camp.id,
+        label: `🎯 ${camp.name}`,
+      });
+    });
+    return list;
+  }, [campaigns]);
+
+  // Load Shortlist for specific campaign or all campaigns
+  const loadShortlist = async (
+    campId: string,
+    currentCampaigns: CampaignResponse[],
+    cMap: Map<string, CreatorItem>
+  ) => {
+    setLoading(true);
+    try {
+      let rawShortlistItems: { item: ShortlistItem; campaignName: string }[] = [];
+
+      if (campId === 'all') {
+        if (currentCampaigns.length > 0) {
+          const results = await Promise.all(
+            currentCampaigns.map(async (camp) => {
+              try {
+                const list = await creatorService.getShortlist(camp.id);
+                return (list || []).map((it) => ({ item: it, campaignName: camp.name }));
+              } catch {
+                return [];
+              }
+            })
+          );
+          rawShortlistItems = results.flat();
+        }
+      } else {
+        const targetCamp = currentCampaigns.find((c) => c.id === campId);
+        const list = await creatorService.getShortlist(campId);
+        rawShortlistItems = (list || []).map((it) => ({
+          item: it,
+          campaignName: targetCamp?.name || 'Chiến dịch',
+        }));
+      }
+
+      const mapped: CreatorCompareItem[] = rawShortlistItems.map(({ item, campaignName }) => {
+        const profile = cMap.get(item.creatorId);
+        const followersNum = profile?.followers || 0;
+        const followersText = followersNum >= 1_000_000
+          ? `${(followersNum / 1_000_000).toFixed(1)}M`
+          : followersNum >= 1_000
+          ? `${Math.round(followersNum / 1_000)}K`
+          : followersNum > 0
+          ? `${followersNum}`
+          : '—';
+        const rawEng = profile?.engagementRate;
+        let eng = 3.5;
+        if (typeof rawEng === 'number' && !isNaN(rawEng)) {
+          eng = rawEng > 0 && rawEng <= 1 ? Number((rawEng * 100).toFixed(2)) : Number(rawEng.toFixed(2));
+        }
+        const safeNiche = normalizeNiche(profile?.niche);
+        const uiPriority = item.priority === 'HIGH' ? 'high' : item.priority === 'LOW' ? 'low' : 'med';
+
+        return {
+          id: item.creatorId,
+          shortlistItemId: item.id,
+          campaignId: item.campaignId,
+          campaignName,
+          name: item.creatorName || profile?.displayName || profile?.userName || 'Creator',
+          username: (profile?.userName || '').replace(/^@+/, ''),
+          avatar:
+            profile?.avatarUrl ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(item.creatorName || 'C')}&background=4F46E5&color=fff&size=150&bold=true`,
+          isVerified: !!profile?.verifiedByInfluencerMatch,
+          matchLevel: 'high',
+          matchText: 'Khớp cao (92%)',
+          platforms: [profile?.platform?.toLowerCase() || 'tiktok'],
+          categories: [safeNiche],
+          followers: followersText,
+          followersPercent: Math.min(100, Math.round((followersNum / 1000000) * 100)) || 80,
+          views: '25.0K',
+          viewsPercent: 80,
+          engagement: `${eng}%`,
+          engagementPercent: Math.min(100, Math.round(eng * 10)),
+          likes: '3.0K',
+          likesPercent: 75,
+          comments: '250',
+          commentsPercent: 70,
+          shares: '90',
+          sharesPercent: 70,
+          price: '10.000.000 ₫',
+          location: profile?.location || 'Việt Nam',
+          gender: { female: 75, male: 25 },
+          interests: [safeNiche, 'Đời sống'],
+          note: item.note || `Đã thêm vào shortlist lúc ${new Date(item.addedAt || Date.now()).toLocaleDateString('vi-VN')}`,
+          noteType: uiPriority === 'high' ? 'high' : uiPriority === 'low' ? 'neutral' : 'med',
+          favorite: false,
+          priority: uiPriority,
+          selected: false,
+          addedDate: item.addedAt ? new Date(item.addedAt).toLocaleDateString('vi-VN') : 'Mới thêm',
+          status: 'shortlisted',
+        };
+      });
+
+      setCreators(mapped);
+    } catch (err) {
+      console.error('Lỗi khi tải shortlist:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
-    const fetchShortlistOrCreators = async () => {
+    const initData = async () => {
       try {
         setLoading(true);
-        // Load creators from API to populate shortlist
-        const apiCreators = await creatorService.getCreators();
-        if (isMounted && Array.isArray(apiCreators)) {
-          setCreators(apiCreators.map((c) => mapCreatorToShortlistItem(c)));
+        const [campsRes, apiCreators] = await Promise.all([
+          campaignService.getCampaigns(0, 50).catch(() => []),
+          creatorService.getCreators().catch(() => []),
+        ]);
+
+        if (!isMounted) return;
+
+        const camps = Array.isArray(campsRes) ? campsRes : [];
+        setCampaigns(camps);
+
+        const cMap = new Map<string, CreatorItem>();
+        if (Array.isArray(apiCreators)) {
+          apiCreators.forEach((c) => {
+            const key = c.creatorId || c.id;
+            if (key) cMap.set(key, c);
+          });
         }
+        setCreatorsMap(cMap);
+
+        if (camps.length > 0) {
+          setAddCampaignId(camps[0].id);
+        }
+
+        // Tải toàn bộ shortlist
+        await loadShortlist('all', camps, cMap);
       } catch (err) {
-        console.error('Lỗi khi tải danh sách shortlist:', err);
+        console.error('Lỗi khi khởi tạo dữ liệu shortlist:', err);
       } finally {
         if (isMounted) setLoading(false);
       }
     };
-    fetchShortlistOrCreators();
+
+    initData();
     return () => {
       isMounted = false;
     };
   }, []);
-  const [selectedCampaign, setSelectedCampaign] = useState<string>('all');
+
+  const handleSelectCampaign = async (val: string) => {
+    setSelectedCampaign(val);
+    const targetLabel = campaignOptions.find((o) => o.value === val)?.label || val;
+    message.info(`Đang xem danh sách: ${targetLabel}`);
+    await loadShortlist(val, campaigns, creatorsMap);
+  };
   const [viewMode, setViewMode] = useState<'board' | 'compare'>('board');
   const [boardLayout, setBoardLayout] = useState<'grid' | 'table'>('grid');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -252,31 +417,48 @@ export default function CreatorShortlistPage() {
 
   // Remove from shortlist
   const handleRemoveFromShortlist = (id: string, name: string) => {
+    const target = creators.find((c) => c.id === id);
     Modal.confirm({
       title: 'Xóa Creator khỏi Shortlist?',
-      content: `Bạn có chắc muốn xóa ${name} khỏi danh sách chọn này?`,
+      content: `Bạn có chắc muốn xóa ${name} khỏi danh sách chọn của chiến dịch "${target?.campaignName || ''}"?`,
       okText: 'Xóa',
       okType: 'danger',
       cancelText: 'Hủy',
-      onOk: () => {
-        setCreators((prev) => prev.filter((c) => c.id !== id));
-        message.info(`Đã xóa ${name} khỏi shortlist`);
+      onOk: async () => {
+        try {
+          if (target?.campaignId && target.shortlistItemId) {
+            await creatorService.removeFromShortlist(target.campaignId, target.shortlistItemId);
+          }
+          setCreators((prev) => prev.filter((c) => c.id !== id));
+          message.success(`Đã xóa ${name} khỏi danh sách chọn`);
+        } catch (err: any) {
+          console.error(err);
+          message.error(err?.response?.data?.message || 'Không thể xóa creator khỏi shortlist');
+        }
       },
     });
   };
 
   // Move creator to another campaign
-  const handleMoveCampaign = (creatorId: string, newCampaignId: string) => {
-    const targetCamp = CAMPAIGN_OPTIONS.find((opt) => opt.value === newCampaignId);
+  const handleMoveCampaign = async (creatorId: string, newCampaignId: string) => {
+    const targetCamp = campaignOptions.find((opt) => opt.value === newCampaignId);
     if (!targetCamp || newCampaignId === 'all') return;
-    setCreators((prev) =>
-      prev.map((c) =>
-        c.id === creatorId
-          ? { ...c, campaignId: newCampaignId, campaignName: targetCamp.label.replace(/^[^\w\s]*\s*/, '') }
-          : c
-      )
-    );
-    message.success(`Đã chuyển sang chiến dịch: ${targetCamp.label}`);
+    const target = creators.find((c) => c.id === creatorId);
+    try {
+      if (target?.campaignId && target.shortlistItemId) {
+        await creatorService.removeFromShortlist(target.campaignId, target.shortlistItemId);
+      }
+      await creatorService.addToShortlist(newCampaignId, {
+        creatorId,
+        priority: (target?.priority?.toUpperCase() as any) || 'HIGH',
+        note: target?.note,
+      });
+      message.success(`Đã chuyển sang chiến dịch: ${targetCamp.label}`);
+      await loadShortlist(selectedCampaign, campaigns, creatorsMap);
+    } catch (err: any) {
+      console.error(err);
+      message.error('Không thể chuyển chiến dịch. Vui lòng thử lại!');
+    }
   };
 
   // Filtered creators for Board view
@@ -452,7 +634,7 @@ export default function CreatorShortlistPage() {
       key: 'move',
       label: 'Chuyển chiến dịch',
       icon: <SwapOutlined />,
-      children: CAMPAIGN_OPTIONS.filter((opt) => opt.value !== 'all').map((opt) => ({
+      children: campaignOptions.filter((opt) => opt.value !== 'all').map((opt) => ({
         key: `move-${opt.value}`,
         label: opt.label,
         disabled: opt.value === creator.campaignId,
@@ -502,12 +684,9 @@ export default function CreatorShortlistPage() {
             <span className="campaign-selector-label">Chiến dịch:</span>
             <Select
               value={selectedCampaign}
-              onChange={(val) => {
-                setSelectedCampaign(val);
-                message.info(`Đang xem danh sách: ${CAMPAIGN_OPTIONS.find((o) => o.value === val)?.label}`);
-              }}
+              onChange={handleSelectCampaign}
               style={{ width: 250 }}
-              options={CAMPAIGN_OPTIONS}
+              options={campaignOptions}
             />
           </div>
 
@@ -537,7 +716,7 @@ export default function CreatorShortlistPage() {
             onClick={() => setViewMode('board')}
           >
             <UnorderedListOutlined />
-            <span>📋 Bảng Shortlist Board</span>
+            <span>Bảng Shortlist</span>
             <span className="mode-count-badge">{filteredCreators.length}</span>
           </button>
 
@@ -551,7 +730,7 @@ export default function CreatorShortlistPage() {
             }}
           >
             <BarChartOutlined />
-            <span>⚖️ So sánh chi tiết</span>
+            <span>So sánh chi tiết</span>
             <span className="mode-count-badge highlight">
               {selectedCreators.length}/5 đã chọn
             </span>
@@ -654,26 +833,51 @@ export default function CreatorShortlistPage() {
                   </div>
                 </div>
               ) : filteredCreators.length === 0 ? (
-                <div className="shortlist-empty-box">
-                  <div style={{ fontSize: 36 }}>🔍</div>
-                  <div style={{ fontWeight: 700, fontSize: 16, marginTop: 8 }}>
-                    Không tìm thấy Creator nào trong danh sách
+                <div className="shortlist-empty-box" style={{ gridColumn: '1 / -1', padding: '48px 24px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 44, marginBottom: 12 }}>🎯</div>
+                  <div style={{ fontWeight: 800, fontSize: 18, color: '#0F172A', marginBottom: 6 }}>
+                    {creators.length === 0
+                      ? 'Chưa có Creator nào trong Shortlist'
+                      : 'Không tìm thấy Creator nào phù hợp bộ lọc'}
                   </div>
-                  <div style={{ color: '#64748B', fontSize: 13, marginTop: 4 }}>
-                    Thử đổi bộ lọc hoặc bấm "Thêm Creator" để bổ sung ứng viên mới vào chiến dịch này.
+                  <div style={{ color: '#64748B', fontSize: 14, maxWidth: 520, margin: '0 auto 20px', lineHeight: 1.6 }}>
+                    {creators.length === 0
+                      ? `Chiến dịch "${campaignOptions.find((o) => o.value === selectedCampaign)?.label || 'được chọn'}" hiện chưa có Creator nào trong danh sách. Hãy duyệt qua kho Creator tại trang Khám phá và bấm "+ Shortlist" để đưa họ vào đây so sánh.`
+                      : 'Thử tìm kiếm với từ khóa khác hoặc bấm đặt lại bộ lọc để xem toàn bộ danh sách.'}
                   </div>
-                  <Button
-                    type="primary"
-                    style={{ marginTop: 14, borderRadius: 8 }}
-                    onClick={() => {
-                      setSearchTerm('');
-                      setPriorityFilter('all');
-                      setOnlyFavorite(false);
-                      setSelectedCampaign('all');
-                    }}
-                  >
-                    Xem tất cả Creator
-                  </Button>
+                  <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                    {creators.length === 0 ? (
+                      <>
+                        <Button
+                          type="primary"
+                          icon={<SearchOutlined />}
+                          style={{ borderRadius: 8, height: 40, fontWeight: 700, background: '#4F46E5' }}
+                          onClick={() => navigate('/creators')}
+                        >
+                          Khám phá Creator trên sàn
+                        </Button>
+                        <Button
+                          icon={<PlusOutlined />}
+                          style={{ borderRadius: 8, height: 40, fontWeight: 600 }}
+                          onClick={() => setAddModalOpen(true)}
+                        >
+                          Thêm nhanh Creator
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        type="primary"
+                        style={{ borderRadius: 8, height: 38 }}
+                        onClick={() => {
+                          setSearchTerm('');
+                          setPriorityFilter('all');
+                          setOnlyFavorite(false);
+                        }}
+                      >
+                        Đặt lại bộ lọc
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 filteredCreators.map((c) => {
@@ -878,7 +1082,27 @@ export default function CreatorShortlistPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCreators.map((c) => (
+                  {filteredCreators.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748B' }}>
+                        <div style={{ fontSize: 32, marginBottom: 8 }}>🎯</div>
+                        <div style={{ fontWeight: 700, fontSize: 15, color: '#0F172A', marginBottom: 4 }}>
+                          Chưa có Creator nào trong danh sách
+                        </div>
+                        <div style={{ fontSize: 13, marginBottom: 16 }}>
+                          Hãy khám phá và thêm Creator vào shortlist của chiến dịch.
+                        </div>
+                        <Button
+                          type="primary"
+                          style={{ background: '#4F46E5', borderRadius: 8 }}
+                          onClick={() => navigate('/creators')}
+                        >
+                          Khám phá Creator ngay
+                        </Button>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredCreators.map((c) => (
                     <tr key={c.id} className={c.selected ? 'row-selected' : ''}>
                       <td>
                         <Checkbox
@@ -961,7 +1185,8 @@ export default function CreatorShortlistPage() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                )}
                 </tbody>
               </table>
             </div>
@@ -1472,127 +1697,146 @@ export default function CreatorShortlistPage() {
               value={addCampaignId}
               onChange={setAddCampaignId}
               style={{ width: '100%' }}
-              options={CAMPAIGN_OPTIONS.filter((o) => o.value !== 'all')}
+              options={campaignOptions.filter((o) => o.value !== 'all')}
+              placeholder="Chọn chiến dịch đích"
             />
           </div>
 
-          <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
-            Chọn Creator từ kho ứng viên:
-          </label>
-          <Input
-            prefix={<SearchOutlined />}
-            placeholder="Tìm theo tên hoặc username..."
-            style={{ marginBottom: 14, borderRadius: 8 }}
-          />
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 280, overflowY: 'auto' }}>
-            {[
-              {
-                id: 'cand-1',
-                name: 'Hải Đăng',
-                user: 'haidang.vlog',
-                followers: '740K',
-                cat: 'Đời sống & Vlog',
-                price: '11.000.000 ₫',
-                avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80',
-              },
-              {
-                id: 'cand-2',
-                name: 'Quỳnh Nga',
-                user: 'quynhnga.skin',
-                followers: '590K',
-                cat: 'Làm đẹp & Mỹ phẩm',
-                price: '9.000.000 ₫',
-                avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-              },
-              {
-                id: 'cand-3',
-                name: 'Bảo Long',
-                user: 'baolong.fitness',
-                followers: '460K',
-                cat: 'Thể thao & Gym',
-                price: '7.500.000 ₫',
-                avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-              },
-            ].map((cand) => (
-              <div
-                key={cand.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 14px',
-                  border: '1px solid #E2E8F0',
-                  borderRadius: 10,
-                  background: '#F8FAFC',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <img
-                    src={cand.avatar}
-                    alt={cand.name}
-                    style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
-                  />
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A' }}>{cand.name}</div>
-                    <div style={{ fontSize: 11.5, color: '#64748B' }}>
-                      @{cand.user} • {cand.followers} • {cand.price}
-                    </div>
-                  </div>
-                </div>
-
+          {campaignOptions.filter((o) => o.value !== 'all').length === 0 ? (
+            <Alert
+              type="warning"
+              showIcon
+              message="Chưa có chiến dịch nào"
+              description="Bạn cần tạo chiến dịch trước khi có thể lưu trữ Creator vào danh sách chọn."
+              action={
                 <Button
                   size="small"
                   type="primary"
-                  style={{ background: '#4F46E5', borderRadius: 6 }}
                   onClick={() => {
-                    const campObj = CAMPAIGN_OPTIONS.find((o) => o.value === addCampaignId);
-                    const newCreator: CreatorCompareItem = {
-                      id: `c-added-${Date.now()}`,
-                      campaignId: addCampaignId,
-                      campaignName: campObj ? campObj.label.replace(/^[^\w\s]*\s*/, '') : 'Chiến dịch',
-                      name: cand.name,
-                      username: cand.user,
-                      avatar: cand.avatar,
-                      isVerified: true,
-                      matchLevel: 'high',
-                      matchText: 'Khớp cao (88%)',
-                      platforms: ['tiktok', 'instagram'],
-                      categories: [cand.cat],
-                      followers: cand.followers,
-                      followersPercent: 65,
-                      views: '22.0K',
-                      viewsPercent: 70,
-                      engagement: '6.4%',
-                      engagementPercent: 72,
-                      likes: '2.5K',
-                      likesPercent: 68,
-                      comments: '190',
-                      commentsPercent: 60,
-                      shares: '75',
-                      sharesPercent: 65,
-                      price: cand.price,
-                      location: 'Việt Nam (80%)',
-                      gender: { female: 70, male: 30 },
-                      interests: ['Làm đẹp', 'Đời sống'],
-                      note: 'Mới thêm vào shortlist từ kho ứng viên.',
-                      noteType: 'neutral',
-                      favorite: false,
-                      priority: 'med',
-                      selected: false,
-                      addedDate: 'Hôm nay',
-                      status: 'shortlisted',
-                    };
-                    setCreators((prev) => [newCreator, ...prev]);
-                    message.success(`Đã thêm ${cand.name} vào Shortlist chiến dịch!`);
                     setAddModalOpen(false);
+                    navigate('/campaigns/create');
                   }}
                 >
-                  + Thêm vào
+                  Tạo ngay
+                </Button>
+              }
+              style={{ borderRadius: 8, marginBottom: 14 }}
+            />
+          ) : (
+            <>
+              <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
+                Chọn Creator từ kho ứng viên:
+              </label>
+              <Input
+                prefix={<SearchOutlined />}
+                placeholder="Tìm theo tên hoặc username..."
+                value={candidateSearch}
+                onChange={(e) => setCandidateSearch(e.target.value)}
+                style={{ marginBottom: 14, borderRadius: 8 }}
+                allowClear
+              />
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 280, overflowY: 'auto' }}>
+                {Array.from(creatorsMap.values())
+                  .filter((c) => {
+                    if (!candidateSearch.trim()) return true;
+                    const q = candidateSearch.toLowerCase();
+                    return (
+                      c.displayName?.toLowerCase().includes(q) ||
+                      c.userName?.toLowerCase().includes(q) ||
+                      c.niche?.toLowerCase().includes(q)
+                    );
+                  })
+                  .slice(0, 15)
+                  .map((cand) => {
+                    const candId = cand.creatorId || cand.id;
+                    const isAlreadyIn = creators.some(
+                      (item) => item.id === candId && (addCampaignId === 'all' || item.campaignId === addCampaignId)
+                    );
+                    const isSubmitting = addingCandidateId === candId;
+
+                    return (
+                      <div
+                        key={candId}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '10px 14px',
+                          border: '1px solid #E2E8F0',
+                          borderRadius: 10,
+                          background: '#F8FAFC',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <img
+                            src={cand.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(cand.displayName || cand.userName)}`}
+                            alt={cand.displayName}
+                            style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+                          />
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A' }}>
+                              {cand.displayName || cand.userName}
+                            </div>
+                            <div style={{ fontSize: 11.5, color: '#64748B' }}>
+                              @{cand.userName?.replace(/^@+/, '')} • {cand.followers ? `${Math.round(cand.followers / 1000)}K` : '—'} • {normalizeNiche(cand.niche)}
+                            </div>
+                          </div>
+                        </div>
+
+                        <Button
+                          size="small"
+                          type={isAlreadyIn ? 'default' : 'primary'}
+                          disabled={isAlreadyIn}
+                          loading={isSubmitting}
+                          style={{
+                            borderRadius: 6,
+                            background: isAlreadyIn ? '#F1F5F9' : '#4F46E5',
+                            borderColor: isAlreadyIn ? '#CBD5E1' : '#4F46E5',
+                          }}
+                          onClick={async () => {
+                            if (!addCampaignId || addCampaignId === 'all') {
+                              message.warning('Vui lòng chọn chiến dịch cần thêm!');
+                              return;
+                            }
+                            setAddingCandidateId(candId);
+                            try {
+                              await creatorService.addToShortlist(addCampaignId, {
+                                creatorId: candId,
+                                priority: 'HIGH',
+                                note: 'Đã thêm từ kho ứng viên',
+                              });
+                              message.success(`Đã thêm ${cand.displayName || cand.userName} vào Shortlist!`);
+                              await loadShortlist(selectedCampaign, campaigns, creatorsMap);
+                            } catch (err: any) {
+                              message.error(err?.response?.data?.message || 'Không thể thêm vào shortlist');
+                            } finally {
+                              setAddingCandidateId(null);
+                            }
+                          }}
+                        >
+                          {isAlreadyIn ? 'Đã trong list' : '+ Thêm vào'}
+                        </Button>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              <div style={{ marginTop: 14, textAlign: 'center', paddingTop: 10, borderTop: '1px dashed #E2E8F0' }}>
+                <span style={{ fontSize: 12.5, color: '#64748B' }}>Tìm thêm gương mặt mới? </span>
+                <Button
+                  type="link"
+                  style={{ padding: 0, fontWeight: 600, fontSize: 13, color: '#4F46E5' }}
+                  onClick={() => {
+                    setAddModalOpen(false);
+                    navigate('/creators');
+                  }}
+                >
+                  Khám phá thêm trên Sàn Creator →
                 </Button>
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
       </Modal>
 

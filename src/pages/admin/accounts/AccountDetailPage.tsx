@@ -64,8 +64,8 @@ export default function AccountDetailPage() {
     );
   }
 
-  const statusCfg = STATUS_CONFIG[account.status];
-  const roleColor = account.role ? ROLE_COLOR[account.role] : '#6366F1';
+  const statusCfg = (account.status && STATUS_CONFIG[account.status]) || STATUS_CONFIG['active'];
+  const roleColor = (account.role && ROLE_COLOR[account.role]) || '#6366F1';
 
   const handleLockDone = (accId: string, newStatus: AdminUserStatus) => {
     setAccount(prev => prev ? { ...prev, status: newStatus } : prev);

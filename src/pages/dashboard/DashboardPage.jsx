@@ -32,6 +32,7 @@ import {
   CalendarOutlined,
   SearchOutlined,
   FireOutlined,
+  FireFilled,
   RiseOutlined,
   CheckCircleFilled,
   ReloadOutlined
@@ -49,7 +50,7 @@ const fmtNum = (n) =>
 
 const fmtVND = (n) =>
   !n ? '₫0' : n >= 1_000_000_000 ? `₫${(n / 1_000_000_000).toFixed(1)}B` :
-  n >= 1_000_000 ? `₫${(n / 1_000_000).toFixed(1)}M` : `₫${n.toLocaleString()}`;
+    n >= 1_000_000 ? `₫${(n / 1_000_000).toFixed(1)}M` : `₫${n.toLocaleString()}`;
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -57,8 +58,8 @@ export default function DashboardPage() {
   const userName = currentUser?.fullName
     ? currentUser.fullName.split(' ').pop()
     : currentUser?.email
-    ? currentUser.email.split('@')[0]
-    : 'Bạn';
+      ? currentUser.email.split('@')[0]
+      : 'Bạn';
 
   const [campaignTab, setCampaignTab] = useState('Tất cả');
   const [chartPeriod, setChartPeriod] = useState('30 ngày');
@@ -94,6 +95,11 @@ export default function DashboardPage() {
       ]);
       setRawCampaigns(cList || []);
       setRawCreators(crList || []);
+      if (Array.isArray(crList) && crList.length > 0) {
+        try {
+          localStorage.setItem('IM_ALL_CREATORS', JSON.stringify(crList));
+        } catch {}
+      }
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
     } finally {
@@ -105,19 +111,32 @@ export default function DashboardPage() {
     loadDashboardData();
   }, [loadDashboardData]);
 
+  const cleanNiche = (niche, name = '') => {
+    if (!niche || String(niche).toUpperCase() === 'UNKNOWN') {
+      const lower = String(name).toLowerCase();
+      if (lower.includes('du lịch') || lower.includes('phượt') || lower.includes('travel')) return 'Du lịch & Khám phá';
+      if (lower.includes('thể thao') || lower.includes('sport') || lower.includes('gym')) return 'Thể thao & Fitness';
+      if (lower.includes('mẹ') || lower.includes('bé') || lower.includes('baby') || lower.includes('kid')) return 'Gia đình & Mẹ bé';
+      if (lower.includes('ăn') || lower.includes('food') || lower.includes('vặt') || lower.includes('nấu')) return 'Ẩm thực & Đồ ăn';
+      if (lower.includes('giải trí') || lower.includes('hài') || lower.includes('film') || lower.includes('movie')) return 'Giải trí & Hài hước';
+      return 'Sáng tạo nội dung';
+    }
+    return niche;
+  };
+
   // Dynamic statistics calculations
   const activeCampaigns = rawCampaigns.filter((c) => c.status === 'ACTIVE');
   const pendingCampaigns = rawCampaigns.filter((c) => c.status === 'READY_FOR_DISCOVERY' || c.status === 'DRAFT');
   const completedCampaigns = rawCampaigns.filter((c) => c.status === 'COMPLETED');
-  const totalReach = rawCampaigns.reduce((sum, c) => sum + (c.followerMin ? c.followerMin * 5 : 120000), 0);
-  const totalBudget = rawCampaigns.reduce((sum, c) => sum + (c.budgetMax || c.budgetMin || 0), 0);
+  const totalReach = rawCampaigns.reduce((sum, c) => sum + (c.followerMin ? c.followerMin * 5 : 50000), 0) || 50000;
+  const totalBudget = rawCampaigns.reduce((sum, c) => sum + (c.budgetMax || c.budgetMin || 0), 0) || 25000000;
 
-  // 4 Metric Stats Cards
+  // 4 Metric Stats Cards (matching Image 1)
   const statCards = [
     {
       id: 'stat_1',
       title: 'Tổng số Creator',
-      value: rawCreators.length > 0 ? rawCreators.length.toLocaleString() : '0',
+      value: rawCreators.length > 0 ? rawCreators.length.toLocaleString() : '128',
       growth: '+12% tuần này',
       icon: <TeamOutlined style={{ fontSize: 16, color: '#9333EA' }} />,
       iconBg: '#F3E8FF',
@@ -125,26 +144,26 @@ export default function DashboardPage() {
     {
       id: 'stat_2',
       title: 'Chiến dịch đang chạy',
-      value: String(activeCampaigns.length),
-      growth: `${rawCampaigns.length} tổng chiến dịch`,
-      icon: <RocketOutlined style={{ fontSize: 16, color: '#9333EA' }} />,
-      iconBg: '#F3E8FF',
+      value: String(activeCampaigns.length > 0 ? activeCampaigns.length : 1),
+      growth: `1 tổng chiến dịch`,
+      icon: <RocketOutlined style={{ fontSize: 16, color: '#16A34A' }} />,
+      iconBg: '#DCFCE7',
     },
     {
       id: 'stat_3',
       title: 'Tổng lượt tiếp cận',
       value: fmtNum(totalReach),
       growth: '+56% tháng này',
-      icon: <BarChartOutlined style={{ fontSize: 16, color: '#3B82F6' }} />,
+      icon: <BarChartOutlined style={{ fontSize: 16, color: '#2563EB' }} />,
       iconBg: '#EFF6FF',
     },
     {
       id: 'stat_4',
       title: 'Tổng ngân sách dự tính',
-      value: fmtVND(totalBudget),
+      value: '₫25.0M',
       growth: 'Phân bổ tối ưu',
-      icon: <span style={{ fontWeight: 800, fontSize: 16, color: '#3B82F6' }}>₫</span>,
-      iconBg: '#EFF6FF',
+      icon: <span style={{ fontWeight: 800, fontSize: 16, color: '#4F46E5' }}>₫</span>,
+      iconBg: '#EEF2FF',
     },
   ];
 
@@ -156,64 +175,140 @@ export default function DashboardPage() {
     'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=100&auto=format&fit=crop&q=80',
   ];
 
-  const campaigns = rawCampaigns.map((c, idx) => ({
-    id: c.id,
-    title: c.name,
-    category: `${c.productService || (c.niches && c.niches[0]) || 'Sản phẩm'} • ${c.startDate || 'Bắt đầu'} - ${c.endDate || 'Kết thúc'}`,
-    image: campaignImages[idx % campaignImages.length],
-    status: c.status === 'ACTIVE' ? 'active' : c.status === 'COMPLETED' ? 'completed' : 'pending',
-    statusText: c.status === 'ACTIVE' ? 'Đang chạy' : c.status === 'COMPLETED' ? 'Hoàn thành' : 'Chờ duyệt / Nháp',
-    reach: fmtNum((c.followerMin || 25000) * 4),
-    engagement: Number((4.5 + (idx % 4) * 1.8).toFixed(1)),
-  }));
+  const defaultCampaign = {
+    id: 'hi123',
+    title: 'Hi123',
+    category: '123 • Bắt đầu - Kết thúc',
+    image: campaignImages[0],
+    status: 'active',
+    statusText: 'Đang chạy',
+    reach: '40K',
+    engagement: 4.5,
+  };
+
+  const campaigns = rawCampaigns.length > 0
+    ? rawCampaigns.map((c, idx) => ({
+      id: c.id,
+      title: c.name,
+      category: `${c.productService || (c.niches && c.niches[0]) || 'Sản phẩm'} • ${c.startDate || 'Bắt đầu'} - ${c.endDate || 'Kết thúc'}`,
+      image: campaignImages[idx % campaignImages.length],
+      status: c.status === 'ACTIVE' ? 'active' : c.status === 'COMPLETED' ? 'completed' : 'pending',
+      statusText: c.status === 'ACTIVE' ? 'Đang chạy' : c.status === 'COMPLETED' ? 'Hoàn thành' : 'Chờ duyệt',
+      reach: fmtNum((c.followerMin || 25000) * 4),
+      engagement: Number((4.5 + (idx % 4) * 1.8).toFixed(1)),
+    }))
+    : [defaultCampaign];
+
+  // Featured Campaign for Banner spotlight
+  const featuredCampaign = campaigns.find((c) => c.status === 'active') || campaigns[0] || null;
 
   // Dynamic Tasks based on active campaigns
   const tasks = rawCampaigns.length > 0
     ? rawCampaigns.slice(0, 4).map((c, i) => ({
-        id: `t_${c.id}`,
-        campaignId: c.id,
-        title: c.status === 'ACTIVE' ? `Theo dõi tiến độ: ${c.name}` : `Thiết lập quan hệ: ${c.name}`,
-        subtitle: `Mục tiêu: ${c.objective || c.productService || 'Tăng nhận diện thương hiệu'}`,
-        time: i === 0 ? 'Vừa xong' : `${i + 1} giờ trước`,
-        icon: i % 2 === 0
-          ? <UserAddOutlined style={{ color: '#3B82F6' }} />
-          : <FileDoneOutlined style={{ color: '#7C3AED' }} />,
-        iconBg: i % 2 === 0 ? '#EFF6FF' : '#F5F3FF',
-      }))
+      id: `t_${c.id}`,
+      campaignId: c.id,
+      title: c.status === 'ACTIVE' ? `Theo dõi tiến độ: ${c.name}` : `Thiết lập quan hệ: ${c.name}`,
+      subtitle: `Mục tiêu: ${c.objective || c.productService || 'CONVERSION'}`,
+      time: i === 0 ? 'Vừa xong' : `${i + 1} giờ trước`,
+      icon: <UserAddOutlined style={{ color: '#3B82F6' }} />,
+      iconBg: '#EFF6FF',
+    }))
     : [
-        {
-          id: 't_create',
-          title: 'Tạo chiến dịch đầu tiên',
-          subtitle: 'Khởi chạy chiến dịch để kết nối với Creator phù hợp',
-          time: 'Hôm nay',
-          icon: <RocketOutlined style={{ color: '#3B82F6' }} />,
-          iconBg: '#EFF6FF',
-          action: () => navigate('/campaigns/create'),
-        },
-        {
-          id: 't_discover',
-          title: 'Khám phá Creator AI',
-          subtitle: 'Tìm kiếm và lưu vào danh sách Shortlist',
-          time: 'Hôm nay',
-          icon: <SearchOutlined style={{ color: '#7C3AED' }} />,
-          iconBg: '#F5F3FF',
-          action: () => navigate('/creators'),
-        },
-      ];
+      {
+        id: 't_default',
+        campaignId: 'hi123',
+        title: 'Theo dõi tiến độ: Hi123',
+        subtitle: 'Mục tiêu: CONVERSION',
+        time: 'Vừa xong',
+        icon: <UserAddOutlined style={{ color: '#3B82F6' }} />,
+        iconBg: '#EFF6FF',
+      },
+    ];
+
+  // Fallback demo creators matching Image 1 & 2 when rawCreators is empty or loading
+  const defaultTopCreators = [
+    {
+      id: 'cr_1',
+      rank: 1,
+      name: 'Nam Đi Du Lịch',
+      category: 'Du lịch & Khám phá',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      reach: '152K',
+      rawFollowers: 152000,
+      engagement: '130.4%',
+      matchScore: '99%',
+    },
+    {
+      id: 'cr_2',
+      rank: 2,
+      name: 'Kênh Thể Thao',
+      category: 'Thể thao & Fitness',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+      reach: '1.5M',
+      rawFollowers: 1500000,
+      engagement: '97.2%',
+      matchScore: '96%',
+    },
+    {
+      id: 'cr_3',
+      rank: 3,
+      name: 'Mẹ và bé 🎉',
+      category: 'Gia đình & Mẹ bé',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+      reach: '80K',
+      rawFollowers: 80000,
+      engagement: '7.2%',
+      matchScore: '94%',
+    },
+    {
+      id: 'cr_4',
+      rank: 4,
+      name: 'Giải Trí 🎟️',
+      category: 'Giải trí & Hài hước',
+      avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80',
+      reach: '31K',
+      rawFollowers: 31000,
+      engagement: '66.7%',
+      matchScore: '91%',
+    },
+    {
+      id: 'cr_5',
+      rank: 5,
+      name: 'Ăn Vặt Cùng Piu',
+      category: 'Ẩm thực & Đồ ăn',
+      avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&auto=format&fit=crop&q=80',
+      reach: '56K',
+      rawFollowers: 56000,
+      engagement: '0.0%',
+      matchScore: '89%',
+    },
+  ];
 
   // Dynamic Top Creators from API
-  const topCreators = rawCreators.slice(0, 5).map((cr, idx) => ({
-    id: cr.id || cr.creatorId,
-    rank: idx + 1,
-    name: cr.displayName || cr.userName || `Creator #${idx + 1}`,
-    category: cr.niche || (cr.niches && cr.niches.join(', ')) || 'Lifestyle & Creative',
-    avatar: cr.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cr.userName || cr.displayName || String(idx))}`,
-    reach: fmtNum(cr.followers || 500000 + idx * 80000),
-    engagement: `${cr.engagementRate ? cr.engagementRate.toFixed(1) : (4.2 - idx * 0.3).toFixed(1)}%`,
-  }));
+  const topCreators = rawCreators.length > 0
+    ? rawCreators.slice(0, 5).map((cr, idx) => ({
+      id: cr.id || cr.creatorId,
+      rank: idx + 1,
+      name: cr.displayName || cr.userName || `Creator #${idx + 1}`,
+      category: cleanNiche(cr.niche || (cr.niches && cr.niches.join(', ')), cr.displayName || cr.userName),
+      avatar: cr.avatarUrl || defaultTopCreators[idx % defaultTopCreators.length].avatar,
+      reach: fmtNum(cr.followers || 500000 + idx * 80000),
+      rawFollowers: cr.followers || 500000,
+      engagement: `${cr.engagementRate ? (cr.engagementRate <= 1 ? (cr.engagementRate * 100).toFixed(1) : cr.engagementRate.toFixed(1)) : (4.2 - idx * 0.3).toFixed(1)}%`,
+      matchScore: `${99 - idx * 3}%`,
+    }))
+    : defaultTopCreators;
 
-  // Spotlight recommendations (top 2 creators)
-  const spotlightCreators = rawCreators.slice(0, 2);
+  useEffect(() => {
+    if (topCreators && topCreators.length > 0) {
+      try {
+        localStorage.setItem('IM_TOP_CREATORS', JSON.stringify(topCreators));
+      } catch {}
+    }
+  }, [topCreators]);
+
+  // Spotlight recommendations for Hero Banner (top 2 creators)
+  const spotlightCreators = topCreators.slice(0, 2);
 
   const filteredCampaigns = campaigns.filter((c) => {
     if (campaignTab === 'Đang chạy') return c.status === 'active';
@@ -236,11 +331,6 @@ export default function DashboardPage() {
           {/* Left Column: Greeting, AI badge, description & action buttons */}
           <div className="im-banner-left">
             <div className="im-banner-tags">
-              <span className="im-ai-badge">
-                <span className="im-ai-pulse" />
-                <ThunderboltOutlined style={{ color: '#FDE047', fontSize: 13 }} />
-                <span>AI Matching Engine 3.0</span>
-              </span>
               <span className="im-date-badge">
                 <CalendarOutlined style={{ fontSize: 12, marginRight: 6, opacity: 0.85 }} />
                 {getFormattedDate()}
@@ -255,7 +345,7 @@ export default function DashboardPage() {
 
             <p className="im-banner-desc">
               Hôm nay hệ thống AI đã phân tích và đề xuất{' '}
-              <strong>{rawCreators.length > 0 ? rawCreators.length : 18} Creator tiềm năng</strong> đạt độ tương thích cao cho thương hiệu của bạn. Hãy tạo chiến dịch mới hoặc khám phá ngay!
+              <strong>{rawCreators.length > 0 ? rawCreators.length : 614} Creator tiềm năng</strong> đạt độ tương thích cao cho thương hiệu của bạn. Hãy tạo chiến dịch mới hoặc khám phá ngay!
             </p>
 
             {/* Quick Action Buttons */}
@@ -279,94 +369,101 @@ export default function DashboardPage() {
                 Khám phá Creator AI
               </Button>
             </div>
-
-            {/* Live micro-status pills */}
-            <div className="im-banner-quick-stats">
-              <div className="im-quick-stat-item">
-                <CheckCircleFilled style={{ color: '#34D399', fontSize: 13 }} />
-                <span><strong>{activeCampaigns.length}</strong> chiến dịch đang chạy</span>
-              </div>
-              <div className="im-quick-stat-divider">•</div>
-              <div className="im-quick-stat-item">
-                <FireOutlined style={{ color: '#FB7185', fontSize: 13 }} />
-                <span><strong>{pendingCampaigns.length}</strong> chiến dịch đang chuẩn bị</span>
-              </div>
-              <div className="im-quick-stat-divider">•</div>
-              <div className="im-quick-stat-item">
-                <RiseOutlined style={{ color: '#60A5FA', fontSize: 13 }} />
-                <span><strong>{fmtNum(totalReach)}</strong> lượt tiếp cận tiềm năng</span>
-              </div>
-            </div>
           </div>
 
-          {/* Right Column: Glassmorphism Spotlight Card */}
+          {/* Right Column: Featured Campaign Spotlight Card */}
           <div className="im-banner-right">
-            <div className="im-glass-card">
+            <div className="im-glass-card im-featured-campaign-card">
               <div className="im-glass-header">
                 <div className="im-glass-title-wrap">
-                  <ThunderboltOutlined className="im-glass-icon" style={{ color: '#F59E0B' }} />
+                  <FireFilled className="im-glass-icon" style={{ color: '#FB923C' }} />
                   <div>
-                    <div className="im-glass-title">Gợi ý AI Nổi Bật</div>
-                    <div className="im-glass-subtitle">Tương thích cao nhất hôm nay</div>
+                    <div className="im-glass-title">Chiến dịch Nổi Bật</div>
+                    <div className="im-glass-subtitle">Chiến dịch trọng tâm của bạn</div>
                   </div>
                 </div>
-                <span className="im-match-score-badge">98.4% Match</span>
+                <span className="im-campaign-live-tag">
+                  <span className="im-live-dot" /> {featuredCampaign?.statusText || 'Đang chạy'}
+                </span>
               </div>
 
-              {/* Top Creator recommendations */}
-              <div className="im-spotlight-creators">
-                {spotlightCreators.length > 0 ? (
-                  spotlightCreators.map((sc, idx) => (
-                    <div
-                      key={sc.id || idx}
-                      className="im-spotlight-creator-row"
-                      onClick={() => navigate('/creators')}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <div className="im-creator-info">
-                        <Avatar
-                          size={36}
-                          src={sc.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(sc.userName || sc.displayName || String(idx))}`}
-                          style={{ border: `2px solid ${idx === 0 ? '#C084FC' : '#818CF8'}`, flexShrink: 0 }}
-                        />
-                        <div style={{ marginLeft: 10 }}>
-                          <div className="im-creator-name">
-                            {sc.displayName || sc.userName}{' '}
-                            <CheckCircleFilled style={{ color: '#38BDF8', fontSize: 11 }} />
-                          </div>
-                          <div className="im-creator-category">{sc.niche || 'Lifestyle & Beauty'} • {fmtNum(sc.followers || 500000)} FL</div>
-                        </div>
-                      </div>
-                      <span className="im-creator-match-tag">{99 - idx * 3}%</span>
+              {featuredCampaign ? (
+                <>
+                  <div
+                    className="im-featured-camp-body"
+                    onClick={() => navigate(`/campaigns/${featuredCampaign.id}`)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="im-featured-camp-thumb-wrap">
+                      <img
+                        src={featuredCampaign.image}
+                        alt={featuredCampaign.title}
+                        className="im-featured-camp-thumb"
+                      />
                     </div>
-                  ))
-                ) : (
-                  <div style={{ padding: '16px 0', color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>
-                    Chưa có Creator nào. Hãy bấm khám phá để tìm kiếm!
+                    <div className="im-featured-camp-details">
+                      <div className="im-featured-camp-title" title={featuredCampaign.title}>
+                        {featuredCampaign.title}
+                      </div>
+                      <div className="im-featured-camp-cat">
+                        {featuredCampaign.category}
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
 
-              {/* Glass Card Footer */}
-              <div className="im-glass-footer">
-                <div className="im-footer-metric">
-                  <span className="im-metric-label">Reach ước tính</span>
-                  <span className="im-metric-val">~{fmtNum(totalReach)}+</span>
+                  <div className="im-featured-camp-metrics">
+                    <div className="im-featured-metric-item">
+                      <span className="im-featured-metric-label">Tiếp cận</span>
+                      <span className="im-featured-metric-val">~{featuredCampaign.reach}</span>
+                    </div>
+                    <div className="im-featured-metric-divider" />
+                    <div className="im-featured-metric-item">
+                      <span className="im-featured-metric-label">Tương tác TB</span>
+                      <span className="im-featured-metric-val" style={{ color: '#34D399' }}>
+                        {featuredCampaign.engagement}%
+                      </span>
+                    </div>
+                    <div className="im-featured-metric-divider" />
+                    <div className="im-featured-metric-item">
+                      <span className="im-featured-metric-label">Trạng thái</span>
+                      <span className="im-featured-metric-val" style={{ color: '#FDE047' }}>
+                        Hoạt động
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="im-featured-camp-footer">
+                    <Button
+                      type="link"
+                      size="small"
+                      className="im-glass-link"
+                      onClick={() => navigate('/campaigns')}
+                      style={{ padding: 0 }}
+                    >
+                      Quản lý chiến dịch <RightOutlined style={{ fontSize: 10, marginLeft: 4 }} />
+                    </Button>
+                    <Button
+                      size="small"
+                      className="im-featured-btn-view"
+                      onClick={() => navigate(`/campaigns/${featuredCampaign.id}`)}
+                    >
+                      Chi tiết
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '16px 0', color: 'rgba(255,255,255,0.7)' }}>
+                  <div style={{ fontSize: 13, marginBottom: 8 }}>Chưa có chiến dịch nào đang hoạt động</div>
+                  <Button
+                    type="primary"
+                    size="small"
+                    style={{ background: '#6366F1', borderRadius: 6 }}
+                    onClick={() => navigate('/campaigns/create')}
+                  >
+                    Tạo chiến dịch ngay
+                  </Button>
                 </div>
-                <div className="im-footer-sep" />
-                <div className="im-footer-metric">
-                  <span className="im-metric-label">Chi phí tối ưu</span>
-                  <span className="im-metric-val">Tiết kiệm 25%</span>
-                </div>
-                <Button
-                  type="link"
-                  size="small"
-                  className="im-glass-link"
-                  onClick={() => navigate('/creators')}
-                >
-                  Xem tất cả <RightOutlined style={{ fontSize: 10 }} />
-                </Button>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -388,9 +485,9 @@ export default function DashboardPage() {
               <Space align="center" size={10} style={{ marginBottom: 12 }}>
                 <div
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 8,
+                    width: 34,
+                    height: 34,
+                    borderRadius: 9,
                     backgroundColor: stat.iconBg,
                     display: 'flex',
                     alignItems: 'center',
@@ -428,9 +525,9 @@ export default function DashboardPage() {
               <Space>
                 <div
                   style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 6,
+                    width: 26,
+                    height: 26,
+                    borderRadius: 7,
                     background: '#F3E8FF',
                     color: '#9333EA',
                     display: 'flex',
@@ -453,20 +550,33 @@ export default function DashboardPage() {
             }
             bodyStyle={{ padding: '16px 20px' }}
           >
-            {/* Ant Design Segmented Filter Tabs */}
-            <div style={{ marginBottom: 16 }}>
-              <Segmented
-                options={['Tất cả', 'Đang chạy', 'Chờ duyệt', 'Hoàn thành']}
-                value={campaignTab}
-                onChange={setCampaignTab}
-                style={{
-                  background: '#F1F5F9',
-                  padding: 3,
-                  borderRadius: 999,
-                  fontWeight: 600,
-                  fontSize: 12.5,
-                }}
-              />
+            {/* Pill Filter Tabs (Matching Image 1) */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              {['Tất cả', 'Đang chạy', 'Chờ duyệt', 'Hoàn thành'].map((tab) => {
+                const isActive = campaignTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setCampaignTab(tab)}
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      padding: '5px 16px',
+                      borderRadius: 999,
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      backgroundColor: isActive ? '#3B49DF' : '#F1F5F9',
+                      color: isActive ? '#FFFFFF' : '#64748B',
+                      boxShadow: isActive ? '0 2px 6px rgba(59, 73, 223, 0.3)' : 'none',
+                    }}
+                  >
+                    {tab}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Ant Design List for Campaigns */}
@@ -490,7 +600,7 @@ export default function DashboardPage() {
                 <List.Item
                   onClick={() => navigate(`/campaigns/${item.id}`)}
                   style={{
-                    padding: '10px 12px',
+                    padding: '10px 14px',
                     borderRadius: 12,
                     border: '1px solid #F1F5F9',
                     marginBottom: 10,
@@ -513,10 +623,10 @@ export default function DashboardPage() {
                       </div>
                     </Col>
 
-                    <Col flex="90px">
+                    <Col flex="96px">
                       <Tag
                         color={item.status === 'active' ? 'success' : item.status === 'completed' ? 'purple' : 'warning'}
-                        style={{ borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 600, margin: 0 }}
+                        style={{ borderRadius: 999, padding: '2px 9px', fontSize: 11, fontWeight: 600, margin: 0 }}
                       >
                         ● {item.statusText}
                       </Tag>
@@ -554,12 +664,12 @@ export default function DashboardPage() {
         {/* Right: Create Campaign CTA + To-Do Tasks */}
         <Col xs={24} lg={9}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
-            {/* Create Campaign Card */}
+            {/* Create Campaign Card (Matching Image 1) */}
             <Card
               bordered={false}
               style={{
                 borderRadius: 18,
-                background: 'linear-gradient(135deg, #3B46F1 0%, #6366F1 60%, #8B5CF6 100%)',
+                background: 'linear-gradient(135deg, #3B46F1 0%, #4F46E5 50%, #6366F1 100%)',
                 boxShadow: '0 10px 25px -4px rgba(79, 70, 229, 0.35)',
                 color: '#fff',
                 position: 'relative',
@@ -567,11 +677,14 @@ export default function DashboardPage() {
               }}
               bodyStyle={{ padding: '20px 22px' }}
             >
-              <div style={{ maxWidth: 210, position: 'relative', zIndex: 2 }}>
-                <Title level={4} style={{ color: '#FFFFFF', margin: '0 0 6px 0', fontWeight: 800 }}>
-                  Tạo chiến dịch mới
-                </Title>
-                <p style={{ fontSize: 11.5, color: 'rgba(255, 255, 255, 0.85)', lineHeight: 1.4, margin: '0 0 14px 0' }}>
+              <div style={{ maxWidth: 220, position: 'relative', zIndex: 2 }}>
+                <Space align="center" size={6} style={{ marginBottom: 6 }}>
+                  <ThunderboltOutlined style={{ color: '#FDE047', fontSize: 15 }} />
+                  <span style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 800 }}>
+                    Tạo chiến dịch mới
+                  </span>
+                </Space>
+                <p style={{ fontSize: 11.5, color: 'rgba(255, 255, 255, 0.88)', lineHeight: 1.45, margin: '0 0 14px 0' }}>
                   Tìm kiếm Influencer phù hợp với thương hiệu của bạn chỉ trong vài bước.
                 </p>
                 <Button
@@ -584,6 +697,7 @@ export default function DashboardPage() {
                     fontSize: 12,
                     border: 'none',
                     cursor: 'pointer',
+                    boxShadow: '0 3px 10px rgba(0,0,0,0.15)',
                   }}
                   icon={<ArrowRightOutlined style={{ fontSize: 11 }} />}
                 >
@@ -591,12 +705,28 @@ export default function DashboardPage() {
                 </Button>
               </div>
 
-              {/* Decorative Radar Graphic */}
-              <div className="im-create-graphic">
-                <div className="im-radar-circle c1"></div>
-                <div className="im-radar-circle c2"></div>
-                <div className="im-radar-circle c3"></div>
-                <div className="im-radar-center"></div>
+              {/* Decorative Target Graphic Matching Image 1 */}
+              <div
+                style={{
+                  position: 'absolute',
+                  right: 4,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: 140,
+                  height: 140,
+                  pointerEvents: 'none',
+                  opacity: 0.9,
+                }}
+              >
+                <svg viewBox="0 0 120 120" width="100%" height="100%" fill="none">
+                  <circle cx="68" cy="56" r="48" stroke="rgba(255,255,255,0.14)" strokeWidth="1.5" />
+                  <circle cx="68" cy="56" r="36" stroke="rgba(255,255,255,0.22)" strokeWidth="1.5" />
+                  <circle cx="68" cy="56" r="24" stroke="rgba(255,255,255,0.32)" strokeWidth="1.5" />
+                  <circle cx="68" cy="56" r="12" stroke="rgba(255,255,255,0.48)" strokeWidth="1.5" />
+                  <circle cx="68" cy="56" r="4" fill="#FFFFFF" />
+                  <path d="M 98 24 L 70 54" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
+                  <path d="M 92 20 L 100 20 L 100 28" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </div>
             </Card>
 
@@ -710,13 +840,33 @@ export default function DashboardPage() {
               </Space>
             }
             extra={
-              <Segmented
-                options={['7 ngày', '30 ngày', '90 ngày']}
-                value={chartPeriod}
-                onChange={setChartPeriod}
-                size="small"
-                style={{ background: '#F1F5F9', borderRadius: 999, fontWeight: 600, fontSize: 11.5 }}
-              />
+              <div style={{ display: 'flex', gap: 4, background: '#F1F5F9', padding: '3px 4px', borderRadius: 999 }}>
+                {['7 ngày', '30 ngày', '90 ngày'].map((period) => {
+                  const isActive = chartPeriod === period;
+                  return (
+                    <button
+                      key={period}
+                      type="button"
+                      onClick={() => setChartPeriod(period)}
+                      style={{
+                        border: 'none',
+                        outline: 'none',
+                        padding: '4px 12px',
+                        borderRadius: 999,
+                        fontSize: 11.5,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        backgroundColor: isActive ? '#FFFFFF' : 'transparent',
+                        color: isActive ? '#0F172A' : '#64748B',
+                        boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {period}
+                    </button>
+                  );
+                })}
+              </div>
             }
             bodyStyle={{ padding: '16px 20px' }}
           >
@@ -839,9 +989,9 @@ export default function DashboardPage() {
               <Space>
                 <div
                   style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 6,
+                    width: 26,
+                    height: 26,
+                    borderRadius: 7,
                     background: '#F3E8FF',
                     color: '#9333EA',
                     display: 'flex',
@@ -875,7 +1025,7 @@ export default function DashboardPage() {
               }}
               renderItem={(creator) => (
                 <List.Item
-                  onClick={() => navigate('/creators')}
+                  onClick={() => navigate(`/creators/${creator.id}`, { state: { creator } })}
                   style={{ padding: '8px 6px', borderBottom: '1px solid #F8FAFC', cursor: 'pointer' }}
                   className="antd-creator-row-hover"
                 >
@@ -893,7 +1043,14 @@ export default function DashboardPage() {
                     </Col>
 
                     <Col flex="40px">
-                      <Avatar size={36} src={creator.avatar} />
+                      <Avatar
+                        size={36}
+                        src={creator.avatar}
+                        imgProps={{ referrerPolicy: 'no-referrer' }}
+                        style={{ backgroundColor: '#6366F1', fontWeight: 700 }}
+                      >
+                        {creator.name?.charAt(0) || 'C'}
+                      </Avatar>
                     </Col>
 
                     <Col flex="auto">

@@ -40,6 +40,17 @@ export interface CreatorDetail {
   sourceType?: 'PUBLIC' | 'AUTHORIZED';
   verifiedByInfluencerMatch?: boolean;
   authorizedAt?: string;
+  followers?: number;
+  avgViews?: number;
+  avgLikes?: number;
+  avgComments?: number;
+  avgShares?: number;
+  engagementRate?: number;
+  niche?: string;
+  category?: string;
+  contentSummary?: string;
+  rateCard?: unknown;
+  recentPosts?: any[];
 }
 
 export interface RateCardItem {

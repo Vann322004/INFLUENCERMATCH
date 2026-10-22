@@ -69,28 +69,34 @@ export const campaignService = {
    * Lấy danh sách các chiến dịch của brand hiện tại
    */
   async getCampaigns(page = 0, size = 20, brandId?: string): Promise<CampaignResponse[]> {
+    // Backend có thể trả mảng, hoặc trang dạng { items | content | data }
+    const extract = (raw: any): CampaignResponse[] => {
+      const d = raw?.data ?? raw;
+      if (Array.isArray(d)) return d;
+      const inner = d?.items ?? d?.content ?? d?.data ?? d?.campaigns;
+      return Array.isArray(inner) ? inner : [];
+    };
+
     try {
       const targetBrandId = brandId || await this.resolveCurrentBrandId();
-      const response = await apiClient.get<ApiResponse<PageResponse<CampaignResponse> | CampaignResponse[]>>(
+      const response = await apiClient.get(
         `/brands/${targetBrandId}/campaigns`,
         { params: { page, size } }
       );
-      const data = response.data?.data;
-      if (Array.isArray(data)) return data;
-      return (data as PageResponse<CampaignResponse>)?.items || [];
-    } catch {
-      // Fallback
-      try {
-        const response = await apiClient.get<ApiResponse<PageResponse<CampaignResponse> | CampaignResponse[]>>(
-          '/campaigns',
-          { params: { page, size } }
-        );
-        const data = response.data?.data;
-        if (Array.isArray(data)) return data;
-        return (data as PageResponse<CampaignResponse>)?.items || [];
-      } catch {
-        return [];
-      }
+      const list = extract(response.data);
+      if (list.length > 0) return list;
+      console.warn('[campaignService] /brands/:id/campaigns trả về rỗng', targetBrandId, response.data);
+    } catch (err) {
+      console.error('[campaignService] Lỗi tải chiến dịch theo brand:', err);
+    }
+
+    // Fallback
+    try {
+      const response = await apiClient.get('/campaigns', { params: { page, size } });
+      return extract(response.data);
+    } catch (err) {
+      console.error('[campaignService] Lỗi tải /campaigns:', err);
+      return [];
     }
   },
 

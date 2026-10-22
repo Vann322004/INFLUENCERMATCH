@@ -8,14 +8,37 @@
 }
 
 @keyframes waveHand {
-  0% { transform: rotate(0deg); }
-  10% { transform: rotate(14deg); }
-  20% { transform: rotate(-8deg); }
-  30% { transform: rotate(14deg); }
-  40% { transform: rotate(-4deg); }
-  50% { transform: rotate(10deg); }
-  60% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  10% {
+    transform: rotate(14deg);
+  }
+
+  20% {
+    transform: rotate(-8deg);
+  }
+
+  30% {
+    transform: rotate(14deg);
+  }
+
+  40% {
+    transform: rotate(-4deg);
+  }
+
+  50% {
+    transform: rotate(10deg);
+  }
+
+  60% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
 }
 
 /* Ant Design Hover States */
@@ -57,9 +80,20 @@
   transform: translate(-50%, -50%);
 }
 
-.im-radar-circle.c1 { width: 45px; height: 45px; }
-.im-radar-circle.c2 { width: 90px; height: 90px; }
-.im-radar-circle.c3 { width: 135px; height: 135px; }
+.im-radar-circle.c1 {
+  width: 45px;
+  height: 45px;
+}
+
+.im-radar-circle.c2 {
+  width: 90px;
+  height: 90px;
+}
+
+.im-radar-circle.c3 {
+  width: 135px;
+  height: 135px;
+}
 
 .im-radar-center {
   position: absolute;
@@ -77,9 +111,9 @@
   position: relative;
   overflow: hidden;
   border-radius: 24px;
-  background: linear-gradient(135deg, #1E1B4B 0%, #2E1065 38%, #4338CA 72%, #6366F1 100%);
+  background: linear-gradient(135deg, #372875 0%, #4E3296 38%, #673EB8 72%, #7E4AD4 100%);
   padding: 32px 36px;
-  box-shadow: 0 16px 40px -8px rgba(67, 56, 202, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  box-shadow: 0 16px 40px -8px rgba(78, 50, 150, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
   color: #FFFFFF;
   margin-bottom: 2px;
 }
@@ -91,7 +125,7 @@
   right: -40px;
   width: 380px;
   height: 380px;
-  background: radial-gradient(circle, rgba(236, 72, 153, 0.38) 0%, rgba(168, 85, 247, 0.18) 45%, transparent 70%);
+  background: radial-gradient(circle, rgba(244, 114, 182, 0.32) 0%, rgba(192, 132, 252, 0.18) 45%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
   filter: blur(40px);
@@ -104,7 +138,7 @@
   left: 10%;
   width: 320px;
   height: 320px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.32) 0%, rgba(99, 102, 241, 0.12) 50%, transparent 70%);
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.3) 0%, rgba(167, 139, 250, 0.12) 50%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
   filter: blur(45px);
@@ -123,8 +157,15 @@
 }
 
 @keyframes bannerPulse {
-  0% { transform: scale(0.95) translate(0, 0); opacity: 0.8; }
-  100% { transform: scale(1.1) translate(-15px, 15px); opacity: 1; }
+  0% {
+    transform: scale(0.95) translate(0, 0);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1.1) translate(-15px, 15px);
+    opacity: 1;
+  }
 }
 
 /* Subtle modern mesh grid pattern */
@@ -158,7 +199,7 @@
 /* Left side content */
 .im-banner-left {
   flex: 1;
-  max-width: 720px;
+  max-width: 680px;
 }
 
 .im-banner-tags {
@@ -194,8 +235,17 @@
 }
 
 @keyframes pulseDot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.8); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
 }
 
 .im-date-badge {
@@ -221,11 +271,8 @@
 }
 
 .im-banner-name {
-  background: linear-gradient(90deg, #F9A8D4 0%, #FDE047 50%, #A7F3D0 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 900;
+  color: #FDA4AF;
+  font-weight: 800;
 }
 
 .im-banner-desc {
@@ -375,98 +422,152 @@
   color: rgba(255, 255, 255, 0.65);
 }
 
-.im-match-score-badge {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  color: #FFFFFF;
+/* Featured Campaign Live Tag */
+.im-campaign-live-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34D399;
   font-size: 11px;
-  font-weight: 800;
-  padding: 3px 9px;
+  font-weight: 700;
+  padding: 3px 10px;
   border-radius: 999px;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+  backdrop-filter: blur(8px);
 }
 
-/* Spotlight creators list */
-.im-spotlight-creators {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 14px;
+.im-live-dot {
+  width: 6px;
+  height: 6px;
+  background: #34D399;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #34D399;
+  animation: pulseDot 1.5s infinite;
 }
 
-.im-spotlight-creator-row {
+/* Featured Campaign Body */
+.im-featured-camp-body {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  border-radius: 12px;
+  gap: 12px;
+  padding: 10px 12px;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  transition: all 0.25s ease;
+  margin-bottom: 10px;
 }
 
-.im-spotlight-creator-row:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.25);
+.im-featured-camp-body:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
 }
 
-.im-creator-info {
-  display: flex;
-  align-items: center;
+.im-featured-camp-thumb-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.im-creator-name {
-  font-size: 12.5px;
+.im-featured-camp-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.im-featured-camp-body:hover .im-featured-camp-thumb {
+  transform: scale(1.08);
+}
+
+.im-featured-camp-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.im-featured-camp-title {
+  font-size: 13.5px;
   font-weight: 700;
   color: #FFFFFF;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
-.im-creator-category {
+.im-featured-camp-cat {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
 }
 
-.im-creator-match-tag {
-  font-size: 11.5px;
-  font-weight: 800;
-  color: #FDE047;
-  background: rgba(253, 224, 71, 0.15);
-  border: 1px solid rgba(253, 224, 71, 0.3);
-  padding: 2px 8px;
-  border-radius: 8px;
-}
-
-/* Glass card footer */
-.im-glass-footer {
+.im-featured-camp-metrics {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 12px;
 }
 
-.im-footer-metric {
+.im-featured-metric-item {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 1px;
 }
 
-.im-metric-label {
-  font-size: 10.5px;
-  color: rgba(255, 255, 255, 0.65);
+.im-featured-metric-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-.im-metric-val {
+.im-featured-metric-val {
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 800;
   color: #FFFFFF;
 }
 
-.im-footer-sep {
+.im-featured-metric-divider {
   width: 1px;
-  height: 22px;
-  background: rgba(255, 255, 255, 0.15);
+  height: 18px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.im-featured-camp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.im-featured-btn-view {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: #FFFFFF !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  border-radius: 7px !important;
+  height: 26px !important;
+  padding: 0 10px !important;
+  transition: all 0.2s ease !important;
+}
+
+.im-featured-btn-view:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .im-glass-link {
@@ -482,4 +583,3 @@
 .im-glass-link:hover {
   color: #34D399 !important;
 }
-

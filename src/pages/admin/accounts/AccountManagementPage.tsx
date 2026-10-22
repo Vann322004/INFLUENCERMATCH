@@ -51,7 +51,8 @@ export default function AccountManagementPage() {
     try {
       setLoading(true);
       const res = await adminService.getUsers({ size: 100 });
-      setData(res.content ?? []);
+      const list = res.items ?? res.content ?? (Array.isArray(res) ? res : []);
+      setData(list);
     } catch {
       // apiClient interceptor already shows error toast
     } finally {
@@ -117,8 +118,8 @@ export default function AccountManagementPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Avatar src={r.avatar} size={36} style={{ border: '1.5px solid rgba(99,102,241,0.3)', flexShrink: 0 }} />
           <div>
-            <div style={{ color: '#F1F5F9', fontWeight: 700, fontSize: 13, lineHeight: 1.2 }}>{r.name}</div>
-            <div style={{ color: '#64748B', fontSize: 11.5, lineHeight: 1.2 }}>{r.email}</div>
+            <div style={{ color: '#0F172A', fontWeight: 700, fontSize: 13.5, lineHeight: 1.25 }}>{r.name}</div>
+            <div style={{ color: '#64748B', fontSize: 12, lineHeight: 1.25, marginTop: 2 }}>{r.email}</div>
           </div>
         </div>
       ),

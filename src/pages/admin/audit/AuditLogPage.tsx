@@ -43,8 +43,9 @@ export default function AuditLogPage() {
         action: actionFilter !== 'all' ? (actionFilter as AuditAction) : undefined,
         resource: resourceFilter !== 'all' ? resourceFilter : undefined,
       });
-      setLogs(res.content ?? []);
-      setTotal(res.totalElements ?? 0);
+      const list = res.items ?? res.content ?? (Array.isArray(res) ? res : []);
+      setLogs(list);
+      setTotal(res.totalElements ?? list.length);
     } catch {
       // handled by apiClient interceptor
     } finally {

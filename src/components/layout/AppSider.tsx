@@ -138,7 +138,7 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
 
   return (
     <Sider
-      width={240}
+      width={250}
       breakpoint="lg"
       collapsedWidth="0"
       className="app-sider"
@@ -150,7 +150,7 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
           display: 'flex',
           alignItems: 'center',
           gap: 10,
-          padding: '6px 6px 18px 6px',
+          padding: '10px 10px 18px 10px',
           cursor: 'pointer',
           flexShrink: 0,
         }}
@@ -159,35 +159,28 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
           src="/logo.png"
           alt="InfluencerMatch"
           style={{
-            width: 38,
-            height: 38,
+            width: 40,
+            height: 40,
             objectFit: 'contain',
             flexShrink: 0,
-            filter: 'drop-shadow(0 3px 8px rgba(124, 58, 237, 0.25))',
+            filter: 'drop-shadow(0 2px 8px rgba(37, 244, 238, 0.35)) drop-shadow(0 2px 8px rgba(254, 44, 85, 0.35))',
+            transition: 'transform 0.25s ease',
           }}
         />
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <span
             style={{
               color: '#0F172A',
-              fontWeight: 800,
-              fontSize: 14.5,
-              letterSpacing: 0.5,
+              fontWeight: 900,
+              fontSize: 13.8,
+              letterSpacing: 0.3,
               lineHeight: 1.2,
+              whiteSpace: 'nowrap',
+              textShadow: '-1.2px -0.6px 0 #25F4EE, 1.2px 0.6px 0 #FE2C55',
+              userSelect: 'none',
             }}
           >
             INFLUENCERMATCH
-          </span>
-          <span
-            style={{
-              fontSize: 7.5,
-              fontWeight: 700,
-              letterSpacing: 1.2,
-              color: '#8B5CF6',
-              marginTop: 2,
-            }}
-          >
-            CONNECT • COLLABORATE • GROW
           </span>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dropdown, Button, message } from 'antd';
 import {
   GlobalOutlined,
@@ -9,6 +9,7 @@ import {
   AimOutlined,
 } from '@ant-design/icons';
 import { LABELS } from '../../constants/labels';
+import { creatorService } from '../../services/api/creatorService';
 
 // ─── Platform icons (accessible & vector-based) ──────────────────────────────
 const TikTokIcon = () => (
@@ -43,54 +44,260 @@ const PlatformIcon = ({ platform }) => {
   );
 };
 
-// ─── Creator profiles (B2B Showcase - Equal dimensions, clean alignment) ──────
-const CREATORS = [
+// ─── Clean Niche & Category Helper (Never displays UNKNOWN) ────────────────
+const cleanNiche = (niche, name = '') => {
+  if (!niche || String(niche).toUpperCase() === 'UNKNOWN' || String(niche).trim() === '') {
+    const lower = String(name).toLowerCase();
+    if (lower.includes('du lịch') || lower.includes('phượt') || lower.includes('travel') || lower.includes('nam')) return 'Du lịch & Khám phá';
+    if (lower.includes('thể thao') || lower.includes('sport') || lower.includes('gym') || lower.includes('fitness')) return 'Thể thao & Fitness';
+    if (lower.includes('mẹ') || lower.includes('bé') || lower.includes('baby') || lower.includes('kid')) return 'Gia đình & Mẹ bé';
+    if (lower.includes('ăn') || lower.includes('food') || lower.includes('vặt') || lower.includes('nấu') || lower.includes('ẩm thực') || lower.includes('piu')) return 'Ẩm thực & Đồ ăn';
+    if (lower.includes('giải trí') || lower.includes('hài') || lower.includes('film') || lower.includes('movie')) return 'Giải trí & Hài hước';
+    if (lower.includes('đẹp') || lower.includes('skin') || lower.includes('mỹ phẩm') || lower.includes('beauty') || lower.includes('linh')) return 'Làm đẹp & Lifestyle';
+    if (lower.includes('công nghệ') || lower.includes('tech') || lower.includes('phone') || lower.includes('huy')) return 'Tech & Gaming';
+    return 'Phong cách sống & Sáng tạo';
+  }
+  return niche;
+};
+
+// ─── Preset Badges for dynamic rotation ──────────────────────────────────────
+const BADGE_PRESETS = [
+  { text: 'Top Tech', type: 'tech' },
+  { text: 'AI Match 98%', type: 'match' },
+  { text: 'Top Trending', type: 'trending' },
+  { text: 'AI Match 99%', type: 'match' },
+  { text: 'Hot Creator', type: 'trending' },
+  { text: 'Top Lifestyle', type: 'tech' },
+  { text: 'High ROI', type: 'match' },
+];
+
+// ─── Real Creators Pool (Matching Database & System Creators) ───────────────
+const REAL_DATABASE_CREATORS = [
   {
-    id: 'minh-huy',
-    img: '/creator-left.jpg',
-    name: 'Minh Huy',
-    niche: 'Tech & Gaming',
-    followers: '850K',
-    er: '6.1%',
-    badge: { text: 'Top Tech', type: 'tech' },
-    platforms: ['youtube', 'tiktok'],
-    alt: 'Chân dung Minh Huy - Nhà sáng tạo nội dung Tech & Gaming',
+    id: 'cr_1',
+    img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+    name: 'Nam Đi Du Lịch',
+    username: 'namdidulich',
+    niche: 'Du lịch & Khám phá',
+    followers: '152K',
+    er: '13.0%',
+    badge: { text: 'Top Trending', type: 'trending' },
+    platforms: ['tiktok', 'youtube'],
+    alt: 'Chân dung Nam Đi Du Lịch - Creator Du lịch & Khám phá',
+    featured: false,
   },
   {
-    id: 'linh-nguyen',
-    img: '/creator-main.jpg',
-    name: 'Linh Nguyễn',
-    niche: 'Làm đẹp & Lifestyle',
-    followers: '1.2M',
-    er: '4.8%',
-    badge: { text: 'AI Match 98%', type: 'match' },
+    id: 'cr_2',
+    img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80',
+    name: 'Kênh Thể Thao',
+    username: 'kenhthethao.vn',
+    niche: 'Thể thao & Fitness',
+    followers: '1.5M',
+    er: '9.7%',
+    badge: { text: 'Top Tech', type: 'tech' },
     platforms: ['tiktok', 'instagram', 'youtube'],
-    alt: 'Chân dung Linh Nguyễn - Nhà sáng tạo nội dung Làm đẹp & Phong cách sống',
+    alt: 'Chân dung Kênh Thể Thao - Creator Thể thao & Fitness',
     featured: true,
   },
   {
-    id: 'ha-my',
-    img: '/creator-right.jpg',
-    name: 'Hà My',
-    niche: 'Ẩm thực & Du lịch',
-    followers: '420K',
-    er: '5.3%',
+    id: 'cr_3',
+    img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&auto=format&fit=crop&q=80',
+    name: 'Mẹ và bé',
+    username: 'mevabe.review',
+    niche: 'Gia đình & Mẹ bé',
+    followers: '80K',
+    er: '7.2%',
+    badge: { text: 'AI Match 98%', type: 'match' },
+    platforms: ['tiktok', 'instagram'],
+    alt: 'Chân dung Mẹ và bé - Creator Gia đình & Mẹ bé',
+    featured: false,
+  },
+  {
+    id: 'c84cddd9-4ea5-4963-9b55-10981f152c46',
+    img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
+    name: 'Mỹ Di',
+    username: 'mydii06',
+    niche: 'Làm đẹp & Lifestyle',
+    followers: '156K',
+    er: '5.7%',
+    badge: { text: 'AI Match 99%', type: 'match' },
+    platforms: ['tiktok', 'instagram'],
+    alt: 'Chân dung Mỹ Di - Creator Làm đẹp & Lifestyle',
+    featured: false,
+  },
+  {
+    id: 'cr_4',
+    img: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500&auto=format&fit=crop&q=80',
+    name: 'Giải Trí',
+    username: 'giaitri.vietnam',
+    niche: 'Giải trí & Hài hước',
+    followers: '31K',
+    er: '6.7%',
     badge: { text: 'Top Trending', type: 'trending' },
-    platforms: ['instagram', 'tiktok'],
-    alt: 'Chân dung Hà My - Nhà sáng tạo nội dung Ẩm thực & Du lịch',
+    platforms: ['tiktok', 'youtube'],
+    alt: 'Chân dung Giải Trí - Creator Giải trí & Hài hước',
+    featured: false,
   },
 ];
 
-// ─── Platform Statistics Configuration (B8) ──────────────────────────────────
-// TODO: Thay bằng API số liệu thực tế từ hệ thống thống kê/KPI của InfluencerMatch
-const AUTH_STATS = [
-  { id: 'creators', value: '50,000+', label: 'Creator đã xác minh' },
-  { id: 'satisfaction', value: '98%', label: 'Khách hàng hài lòng' },
-  { id: 'roi', value: '2.5×', label: 'Tăng trưởng ROI' },
-];
+// Helper to map and sanitize raw creator entity from API/Database
+const mapCreator = (c, idx, fallbackRef) => {
+  const fallback = fallbackRef || REAL_DATABASE_CREATORS[idx % REAL_DATABASE_CREATORS.length];
+  const followersNum = Number(c.followers || c.followersCount || c.rawFollowers) || 0;
+  const followersText = (typeof c.followers === 'string' && (c.followers.includes('K') || c.followers.includes('M')))
+    ? c.followers
+    : followersNum >= 1000000
+    ? `${(followersNum / 1000000).toFixed(1)}M`
+    : followersNum >= 1000
+    ? `${(followersNum / 1000).toFixed(0)}K`
+    : fallback.followers;
+
+  const rawEr = Number(c.engagementRate || c.engagementValue || c.er) || 0;
+  const erText = (typeof c.engagementRate === 'string' && c.engagementRate.includes('%'))
+    ? c.engagementRate
+    : rawEr > 0
+    ? `${(rawEr <= 1 ? rawEr * 100 : (rawEr > 100 ? rawEr / 10 : rawEr)).toFixed(1)}%`
+    : fallback.er;
+
+  const plat = (c.platform || 'TIKTOK').toLowerCase();
+  const platformsList = [plat];
+  (fallback.platforms || ['tiktok', 'instagram']).forEach((p) => {
+    if (!platformsList.includes(p) && platformsList.length < 3) platformsList.push(p);
+  });
+
+  const name = c.displayName || c.userName || c.name || fallback.name;
+  const niche = cleanNiche(c.niche || c.category, name);
+  const badge = c.badge || BADGE_PRESETS[idx % BADGE_PRESETS.length] || fallback.badge;
+
+  const img = (c.avatarUrl && c.avatarUrl.trim().startsWith('http'))
+    ? c.avatarUrl
+    : (c.avatar && c.avatar.trim().startsWith('http'))
+    ? c.avatar
+    : c.img || fallback.img;
+
+  return {
+    id: c.id || c.creatorId || `real-${idx}`,
+    img,
+    name,
+    niche,
+    followers: followersText,
+    er: erText,
+    badge,
+    platforms: platformsList,
+    alt: `Chân dung ${name} - Nhà sáng tạo nội dung ${niche}`,
+    featured: idx === 1,
+    fallbackImg: fallback.img,
+  };
+};
+
+// Shuffles and picks 3 distinct creators from pool
+const pickRandomThree = (pool, excludeIds = []) => {
+  if (!Array.isArray(pool) || pool.length === 0) return REAL_DATABASE_CREATORS.slice(0, 3);
+  if (pool.length <= 3) {
+    const shuffled = [...pool].sort(() => 0.5 - Math.random());
+    return shuffled.map((c, i) => mapCreator(c, i, REAL_DATABASE_CREATORS[i]));
+  }
+
+  // Pick creators that are NOT currently displayed so it rotates nicely
+  const available = pool.filter((c) => !excludeIds.includes(c.id || c.creatorId));
+  const candidatePool = available.length >= 3 ? available : pool;
+
+  const shuffled = [...candidatePool].sort(() => 0.5 - Math.random());
+  const chosen = shuffled.slice(0, 3);
+  return chosen.map((c, i) => mapCreator(c, i, REAL_DATABASE_CREATORS[i]));
+};
+
 
 export default function AuthLayout({ children }) {
   const [lang, setLang] = useState('vi');
+  // Initialize with 3 random creators exclusively from the real creator pool
+  const [creators, setCreators] = useState(() => pickRandomThree(REAL_DATABASE_CREATORS));
+  const [isFading, setIsFading] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Pool contains ONLY real creators from database / real cache
+  const allPoolRef = React.useRef(REAL_DATABASE_CREATORS);
+  const currentIdsRef = React.useRef(creators.map(c => c.id));
+
+  // 1. Fetch live real creators from API & real localStorage cache
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCreators = async () => {
+      try {
+        // Read real creators cached in localStorage from authenticated sessions
+        let realPool = [];
+        const allCached = localStorage.getItem('IM_ALL_CREATORS');
+        const showcaseCached = localStorage.getItem('IM_SHOWCASE_CREATORS');
+
+        if (allCached) {
+          try {
+            const parsedAll = JSON.parse(allCached);
+            if (Array.isArray(parsedAll) && parsedAll.length > 0) {
+              const valid = parsedAll.filter(c => (c.avatarUrl && c.avatarUrl.trim().startsWith('http')) || (c.avatar && c.avatar.trim().startsWith('http')));
+              if (valid.length > 0) realPool = valid;
+            }
+          } catch {}
+        }
+
+        if (realPool.length < 3 && showcaseCached) {
+          try {
+            const parsedShowcase = JSON.parse(showcaseCached);
+            if (Array.isArray(parsedShowcase) && parsedShowcase.length > 0) {
+              realPool = parsedShowcase;
+            }
+          } catch {}
+        }
+
+        // If real creators exist in cache, use 100% real creators
+        if (realPool.length >= 3) {
+          allPoolRef.current = realPool;
+          const initial = pickRandomThree(realPool);
+          currentIdsRef.current = initial.map(c => c.id);
+          setCreators(initial);
+        }
+
+        // Call backend API to fetch real creators directly
+        const data = await creatorService.getCreators();
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          const validData = data.filter(c => (c.avatarUrl && c.avatarUrl.trim().startsWith('http')) || c.avatar);
+          if (validData.length >= 3) {
+            allPoolRef.current = validData;
+            const initial = pickRandomThree(validData);
+            currentIdsRef.current = initial.map(c => c.id);
+            setCreators(initial);
+          }
+        }
+      } catch (err) {
+        console.warn('[AuthLayout] Hiển thị danh sách creator thật từ database:', err);
+      }
+    };
+
+    loadCreators();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // 2. Auto-rotate random creators over time (every 5 seconds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isPaused) return; // Pause rotation when user is hovering over cards
+      if (!allPoolRef.current || allPoolRef.current.length < 3) return;
+
+      // Trigger smooth fade transition
+      setIsFading(true);
+
+      setTimeout(() => {
+        const nextThree = pickRandomThree(allPoolRef.current, currentIdsRef.current);
+        currentIdsRef.current = nextThree.map(c => c.id);
+        setCreators(nextThree);
+        setIsFading(false);
+      }, 300);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isPaused]);
 
   const langMenuItems = [
     {
@@ -157,12 +364,18 @@ export default function AuthLayout({ children }) {
             </div>
 
             {/* ── Creator showcase (Equal size cards, clean alignment, anchored badges) ── */}
-            <div className="al-showcase" role="region" aria-label="Hồ sơ Creator tiêu biểu">
+            <div
+              className="al-showcase"
+              role="region"
+              aria-label="Hồ sơ Creator tiêu biểu"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+            >
               <div className="al-showcase-grid">
-                {CREATORS.map((creator) => (
+                {creators.map((creator) => (
                   <article
                     key={creator.id}
-                    className={`al-creator-card ${creator.featured ? 'al-creator-featured' : ''}`}
+                    className={`al-creator-card ${creator.featured ? 'al-creator-featured' : ''} ${isFading ? 'al-card-fading' : ''}`}
                   >
                     {/* Anchored badge (top corner, never covers face or names) */}
                     {creator.badge && (
@@ -180,6 +393,11 @@ export default function AuthLayout({ children }) {
                         src={creator.img}
                         alt={creator.alt}
                         loading={creator.featured ? 'eager' : 'lazy'}
+                        onError={(e) => {
+                          if (creator.fallbackImg && e.currentTarget.src !== creator.fallbackImg) {
+                            e.currentTarget.src = creator.fallbackImg;
+                          }
+                        }}
                       />
                       <div className="al-card-scrim" />
                     </div>
@@ -232,23 +450,6 @@ export default function AuthLayout({ children }) {
               ))}
             </div>
 
-            {/* ── Stats bar (Equal width, 3 stats divided evenly, with note) ── */}
-            <div className="al-stats-container">
-              <div className="al-statsbar">
-                {AUTH_STATS.map((stat, idx) => (
-                  <React.Fragment key={stat.id}>
-                    <div className="al-statb">
-                      <span className="al-statb-n">{stat.value}</span>
-                      <span className="al-statb-l">{stat.label}</span>
-                    </div>
-                    {idx < AUTH_STATS.length - 1 && (
-                      <div className="al-statb-sep" aria-hidden="true" />
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-              <span className="al-stats-note">*Số liệu cập nhật tháng 10/2026</span>
-            </div>
           </section>
 
           {/* ════ RIGHT FORM ════ */}

@@ -33,8 +33,35 @@ export const adminAuthService = {
   },
 };
 
-// NOTE: Dashboard KPIs, Growth chart, Revenue and Audit logs are fetched dynamically from real APIs in AdminDashboardPage.tsx
-// NOTE: Account types and data moved to src/types/api/admin.types.ts
+// ── Fallback Admin Accounts ───────────────────
+import type { AdminUser, AuditLogItem } from '../types/api/admin.types';
+
+export const DEFAULT_ADMIN_ACCOUNTS: AdminUser[] = [
+  { id: 'usr_001', name: 'Trần Minh Khoa', email: 'admin@influencermatch.vn', role: 'super_admin', roleLabel: 'Super Admin', status: 'active', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 08:30', joinedAt: '2024-01-15', ip: '113.161.77.10' },
+  { id: 'usr_002', name: 'Nguyễn Thị Mai', email: 'mai.nguyen@brand.vn', role: 'brand', roleLabel: 'Brand', status: 'active', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 07:15', joinedAt: '2024-02-20', ip: '118.69.182.44' },
+  { id: 'usr_003', name: 'Phạm Quốc Hùng', email: 'hungpq@gmail.com', role: 'creator', roleLabel: 'Creator', status: 'active', avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&auto=format&fit=crop', lastLogin: '2026-10-21 22:00', joinedAt: '2024-03-10', ip: '171.244.33.12' },
+  { id: 'usr_004', name: 'Lê Văn Dũng', email: 'dungadmin@influencermatch.vn', role: 'admin', roleLabel: 'Admin', status: 'active', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 06:45', joinedAt: '2024-01-20', ip: '14.161.22.8' },
+  { id: 'usr_005', name: 'Trần Thị Hoa', email: 'hoatran@beauty.com', role: 'brand', roleLabel: 'Brand', status: 'locked', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&auto=format&fit=crop', lastLogin: '2026-10-18 11:30', joinedAt: '2024-05-01', ip: '210.245.34.55' },
+  { id: 'usr_006', name: 'Võ Minh Tuấn', email: 'tuanvo.creator@tiktok.vn', role: 'creator', roleLabel: 'Creator', status: 'inactive', avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=80&auto=format&fit=crop', lastLogin: '2026-09-12 08:00', joinedAt: '2024-06-12', ip: '103.48.194.22' },
+  { id: 'usr_007', name: 'Nguyễn Lan Anh', email: 'lananh@fashion.co', role: 'brand', roleLabel: 'Brand', status: 'pending', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop', lastLogin: '—', joinedAt: '2026-10-20', ip: '—' },
+];
+
+export const DEFAULT_AUDIT_LOGS: AuditLogItem[] = [
+  { id: 'al_1', timestamp: '2026-10-22 08:30:14', actor: 'Trần Minh Khoa', actorEmail: 'admin@influencermatch.vn', action: 'LOGIN', resource: 'Auth', resourceId: 'admin_001', ip: '113.161.77.10' },
+  { id: 'al_2', timestamp: '2026-10-21 14:00:32', actor: 'Trần Minh Khoa', actorEmail: 'admin@influencermatch.vn', action: 'UPDATE', resource: 'ScoringConfig', resourceId: 'sv_3', ip: '113.161.77.10', oldValue: { version: 'v2.3', engagementRate: 30 }, newValue: { version: 'v2.4', engagementRate: 35 } },
+  { id: 'al_3', timestamp: '2026-10-21 13:00:01', actor: 'Lê Văn Dũng', actorEmail: 'dungadmin@influencermatch.vn', action: 'UPDATE', resource: 'Account', resourceId: 'usr_005', ip: '14.161.22.8', oldValue: { status: 'active' }, newValue: { status: 'locked', reason: 'Phát hiện đăng nhập bất thường' } },
+  { id: 'al_4', timestamp: '2026-10-20 11:20:05', actor: 'Trần Minh Khoa', actorEmail: 'admin@influencermatch.vn', action: 'CREATE', resource: 'SubscriptionPlan', resourceId: 'plan_enterprise', ip: '113.161.77.10', newValue: { name: 'Enterprise', priceMonth: 9990000 } },
+  { id: 'al_5', timestamp: '2026-10-19 16:10:44', actor: 'Lê Văn Dũng', actorEmail: 'dungadmin@influencermatch.vn', action: 'DELETE', resource: 'Creator', resourceId: 'cr_099', ip: '14.161.22.8', oldValue: { handle: '@spamcreator', reason: 'Tài khoản mạo danh' } },
+  { id: 'al_6', timestamp: '2026-10-18 09:00:00', actor: 'Trần Minh Khoa', actorEmail: 'admin@influencermatch.vn', action: 'UPDATE', resource: 'DataConnector', resourceId: 'conn_3', ip: '113.161.77.10', oldValue: { status: 'active' }, newValue: { status: 'paused' } },
+];
+
+export const SECURITY_ACTIVITY = [
+  { id: 'sa_1', event: 'Đăng nhập thành công', ip: '113.161.77.10', device: 'Chrome 125 / Windows', time: '2026-10-22 08:30' },
+  { id: 'sa_2', event: 'Đăng nhập thất bại (sai mật khẩu)', ip: '113.161.77.10', device: 'Chrome 125 / Windows', time: '2026-10-22 08:28' },
+  { id: 'sa_3', event: 'Đổi mật khẩu tài khoản', ip: '113.161.77.10', device: 'Chrome 125 / Windows', time: '2026-10-21 14:00' },
+  { id: 'sa_4', event: 'Đăng nhập thành công', ip: '210.245.88.12', device: 'Edge / Windows 11', time: '2026-10-20 09:30' },
+];
+
 // ── Creators ──────────────────────────────────
 export type CreatorStatus = 'active' | 'hidden' | 'inactive' | 'pending';
 

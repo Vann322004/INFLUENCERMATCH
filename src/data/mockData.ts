@@ -238,7 +238,7 @@ export interface QuotaMetric {
   unit: string;
   description: string;
   color: string;
-  bgLight: string;
+  bgLight?: string;
 }
 
 export interface PaymentInvoice {
@@ -248,7 +248,7 @@ export interface PaymentInvoice {
   planName: string;
   billingPeriod: string;
   amount: number;
-  currency: string;
+  currency?: string;
   method: string;
   status: 'success' | 'pending' | 'failed';
   statusText: string;

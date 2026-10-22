@@ -39,17 +39,14 @@ import {
   CalendarOutlined,
 } from '@ant-design/icons';
 import {
-  QUOTA_METRICS_DATA,
-  PAYMENT_INVOICES_DATA,
-  CURRENT_SUBSCRIPTION_INFO,
-} from '../../data/mockData';
-import type {
   SubscriptionPlan,
   QuotaMetric,
   PaymentInvoice,
 } from '../../data/mockData';
 import { subscriptionService } from '../../services/api/subscriptionService';
-import type { PlanResponse } from '../../types/api/subscription.types';
+import { brandService } from '../../services/api/brandService';
+import { campaignService } from '../../services/api/campaignService';
+import type { PlanResponse, SubscriptionResponse } from '../../types/api/subscription.types';
 import { getErrorMessage } from '../../services/apiClient';
 import './SubscriptionPage.css';
 
@@ -67,20 +64,44 @@ export default function SubscriptionPage() {
   const [voucherApplied, setVoucherApplied] = useState(false);
   const [paying, setPaying] = useState<boolean>(false);
 
+  // Active Subscription Info from API
+  const [subInfo, setSubInfo] = useState({
+    currentPlanName: 'Professional',
+    renewalDate: '18 thg 10, 2026',
+    daysRemaining: 18,
+    isActive: true,
+    usedCampaigns: 0,
+    totalCampaigns: 15,
+    usedRefresh: 0,
+    totalRefresh: 50,
+  });
+
   // Dynamic Quota State to allow interactive add-on quota buying
-  const [quotas, setQuotas] = useState<QuotaMetric[]>(QUOTA_METRICS_DATA);
+  const [quotas, setQuotas] = useState<QuotaMetric[]>([]);
   const [selectedAddon, setSelectedAddon] = useState<{ id: string; name: string; add: number; unit: string; price: number } | null>(null);
 
-  // Invoice detail modal state
+  // Invoice state from API / Active Subscription
+  const [invoices, setInvoices] = useState<PaymentInvoice[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<PaymentInvoice | null>(null);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
-    const loadPlans = async () => {
+    const loadData = async () => {
       setLoadingPlans(true);
       try {
-        const remotePlans: PlanResponse[] = await subscriptionService.getPlans();
+        const [remotePlans, brand, campaigns] = await Promise.all([
+          subscriptionService.getPlans().catch(() => []),
+          brandService.getMyBrand().catch(() => null),
+          campaignService.getCampaigns(0, 100).catch(() => []),
+        ]);
+
+        let activeSub: SubscriptionResponse | null = null;
+        if (brand?.id) {
+          const subs = await subscriptionService.getBrandSubscriptions(brand.id);
+          activeSub = subs.find((s) => s.status === 'ACTIVE') || (subs.length > 0 ? subs[0] : null);
+        }
+
         if (isMounted) {
           const mapped: SubscriptionPlan[] = remotePlans.map((p, idx) => ({
             id: p.id,
@@ -88,8 +109,8 @@ export default function SubscriptionPage() {
             subtitle: p.description || 'Gói dịch vụ chuyên nghiệp dành cho doanh nghiệp',
             priceMonthly: p.price,
             priceYearly: p.price * 10,
-            isCurrent: idx === 0,
-            popular: idx === 1,
+            isCurrent: activeSub ? p.id === activeSub.plan?.id : idx === 0,
+            popular: idx === 1 || p.planName.toLowerCase().includes('pro'),
             badge: idx === 1 ? 'Khuyên Dùng • Phổ Biến' : undefined,
             features: [
               { text: `Tối đa ${p.campaignQuota} chiến dịch hoạt động`, included: true },
@@ -100,15 +121,150 @@ export default function SubscriptionPage() {
             ],
           }));
           setPlans(mapped);
+
+          if (activeSub) {
+            const planName = activeSub.plan?.planName?.replace(/-[0-9]+$/, '') || 'Professional';
+            const expTime = new Date(activeSub.expirationDate).getTime();
+            const daysRemaining = Math.max(0, Math.ceil((expTime - Date.now()) / (1000 * 60 * 60 * 24)));
+            const renewalDate = new Date(activeSub.expirationDate).toLocaleDateString('vi-VN', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            });
+            const totalCamp = activeSub.plan?.campaignQuota || 15;
+            const usedCamp = activeSub.usedCampaignQuota || campaigns.length || 0;
+            const totalReco = activeSub.plan?.recommendationQuota || 500;
+            const usedReco = activeSub.usedRecommendationQuota || 0;
+            const totalRef = activeSub.plan?.refreshQuota || 50;
+            const usedRef = activeSub.usedRefreshQuota || 0;
+
+            setSubInfo({
+              currentPlanName: planName,
+              renewalDate,
+              daysRemaining,
+              isActive: activeSub.status === 'ACTIVE',
+              usedCampaigns: usedCamp,
+              totalCampaigns: totalCamp,
+              usedRefresh: usedRef,
+              totalRefresh: totalRef,
+            });
+
+            setQuotas([
+              {
+                id: 'q-campaigns',
+                title: 'Chiến dịch hoạt động',
+                used: usedCamp,
+                total: totalCamp,
+                unit: 'chiến dịch',
+                color: '#6366F1',
+                description: 'Số lượng chiến dịch Influencer marketing đang vận hành',
+              },
+              {
+                id: 'q-discovery',
+                title: 'Khám phá & AI Semantic Search',
+                used: usedReco,
+                total: totalReco,
+                unit: 'lượt',
+                color: '#3B82F6',
+                description: 'Lượt gợi ý Creator phù hợp từ mô hình AI Search',
+              },
+              {
+                id: 'q-refresh',
+                title: 'Làm mới số liệu AI (Refresh)',
+                used: usedRef,
+                total: totalRef,
+                unit: 'lượt',
+                color: '#10B981',
+                description: 'Lượt cập nhật trực tiếp tương tác, follower Creator từ MXH',
+              },
+              {
+                id: 'q-seats',
+                title: 'Thành viên & Phân quyền',
+                used: 1,
+                total: 5,
+                unit: 'tài khoản',
+                color: '#EC4899',
+                description: 'Số lượng nhân sự cùng tham gia quản trị thương hiệu',
+              },
+            ]);
+
+            setInvoices([
+              {
+                id: activeSub.id,
+                code: `VNP-${activeSub.id.slice(0, 8).toUpperCase()}`,
+                planName: `Gói ${planName}`,
+                billingPeriod: `${new Date(activeSub.startDate).toLocaleDateString('vi-VN')} – ${renewalDate}`,
+                date: new Date(activeSub.startDate).toLocaleDateString('vi-VN'),
+                amount: activeSub.plan?.price || 0,
+                method: 'Cổng VNPAY (QR / ATM / Visa)',
+                status: activeSub.status === 'ACTIVE' ? 'success' : 'pending',
+                statusText: activeSub.status === 'ACTIVE' ? 'Đã kích hoạt' : activeSub.status,
+              },
+            ]);
+          } else {
+            // Chưa có subscription -> Free trial
+            const usedCamp = campaigns.length;
+            setSubInfo({
+              currentPlanName: 'Trải Nghiệm (Free Trial)',
+              renewalDate: 'Chưa kích hoạt gói trả phí',
+              daysRemaining: 0,
+              isActive: false,
+              usedCampaigns: usedCamp,
+              totalCampaigns: 3,
+              usedRefresh: 0,
+              totalRefresh: 5,
+            });
+
+            setQuotas([
+              {
+                id: 'q-campaigns',
+                title: 'Chiến dịch hoạt động',
+                used: usedCamp,
+                total: 3,
+                unit: 'chiến dịch',
+                color: '#6366F1',
+                description: 'Số lượng chiến dịch Influencer marketing đang vận hành',
+              },
+              {
+                id: 'q-discovery',
+                title: 'Khám phá & AI Semantic Search',
+                used: 0,
+                total: 20,
+                unit: 'lượt',
+                color: '#3B82F6',
+                description: 'Lượt gợi ý Creator phù hợp từ mô hình AI Search',
+              },
+              {
+                id: 'q-refresh',
+                title: 'Làm mới số liệu AI (Refresh)',
+                used: 0,
+                total: 5,
+                unit: 'lượt',
+                color: '#10B981',
+                description: 'Lượt cập nhật trực tiếp tương tác, follower Creator từ MXH',
+              },
+              {
+                id: 'q-seats',
+                title: 'Thành viên & Phân quyền',
+                used: 1,
+                total: 1,
+                unit: 'tài khoản',
+                color: '#EC4899',
+                description: 'Số lượng nhân sự cùng tham gia quản trị thương hiệu',
+              },
+            ]);
+
+            setInvoices([]);
+          }
         }
       } catch (err) {
-        console.error('Failed to load plans:', err);
+        console.error('Failed to load subscription data:', err);
       } finally {
         if (isMounted) setLoadingPlans(false);
       }
     };
 
-    loadPlans();
+    loadData();
     return () => {
       isMounted = false;
     };
@@ -300,19 +456,26 @@ export default function SubscriptionPage() {
                   backdropFilter: 'blur(4px)',
                 }}
               >
-                <CrownOutlined style={{ color: '#FDE047' }} /> Gói Đang Kích Hoạt
+                <CrownOutlined style={{ color: '#FDE047' }} />{' '}
+                {subInfo.isActive ? 'Gói Đang Kích Hoạt' : 'Gói Trải Nghiệm'}
               </span>
               <span style={{ fontSize: 13, opacity: 0.85 }}>
-                • Tự động gia hạn vào <strong>{CURRENT_SUBSCRIPTION_INFO.renewalDate}</strong>
+                • {subInfo.isActive ? (
+                  <>Tự động gia hạn vào <strong>{subInfo.renewalDate}</strong></>
+                ) : (
+                  <strong>Chưa kích hoạt gói dịch vụ trả phí</strong>
+                )}
               </span>
             </div>
 
             <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>
-              Gói {CURRENT_SUBSCRIPTION_INFO.currentPlanName}
+              Gói {subInfo.currentPlanName}
             </div>
 
             <div style={{ fontSize: 13.5, opacity: 0.9, marginTop: 4, maxWidth: 560 }}>
-              Bạn đang được tiếp cận đầy đủ các tính năng phân tích AI thông minh, mở rộng chiến dịch và khám phá Creator không giới hạn.
+              {subInfo.isActive
+                ? 'Bạn đang được tiếp cận đầy đủ các tính năng phân tích AI thông minh, mở rộng chiến dịch và khám phá Creator không giới hạn.'
+                : 'Bạn đang sử dụng phiên bản cơ bản. Nâng cấp ngay để mở khóa toàn bộ tính năng phân tích AI, mở rộng hạn mức chiến dịch và khám phá Creator không giới hạn.'}
             </div>
           </Col>
 
@@ -331,11 +494,15 @@ export default function SubscriptionPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                 <span style={{ fontSize: 12.5, opacity: 0.9 }}>Thời hạn chu kỳ:</span>
                 <span style={{ fontWeight: 700, color: '#FDE047' }}>
-                  Còn {CURRENT_SUBSCRIPTION_INFO.daysRemaining} ngày
+                  {subInfo.isActive ? `Còn ${subInfo.daysRemaining} ngày` : 'Chưa kích hoạt'}
                 </span>
               </div>
               <Progress
-                percent={Math.round(((30 - CURRENT_SUBSCRIPTION_INFO.daysRemaining) / 30) * 100)}
+                percent={
+                  subInfo.isActive
+                    ? Math.max(5, Math.min(100, Math.round(((30 - subInfo.daysRemaining) / 30) * 100)))
+                    : 0
+                }
                 strokeColor="#FDE047"
                 railColor="rgba(255, 255, 255, 0.25)"
                 showInfo={false}
@@ -354,7 +521,7 @@ export default function SubscriptionPage() {
                   }}
                   onClick={() => setActiveTab('plans')}
                 >
-                  Nâng cấp gói
+                  {subInfo.isActive ? 'Nâng cấp gói' : 'Chọn gói ngay'}
                 </Button>
                 <Button
                   size="middle"
@@ -564,7 +731,9 @@ export default function SubscriptionPage() {
                       <InfoCircleOutlined style={{ fontSize: 20, color: '#2563EB' }} />
                       <div>
                         <div style={{ fontWeight: 700, color: '#1E3A8A', fontSize: 13.5 }}>
-                          Chu kỳ hạn mức của bạn được làm mới vào ngày 18 hàng tháng
+                          {subInfo.isActive
+                            ? `Chu kỳ hạn mức của bạn được làm mới vào ngày ${subInfo.renewalDate}`
+                            : 'Bạn đang dùng gói trải nghiệm cơ bản, chưa kích hoạt chu kỳ trả phí'}
                         </div>
                         <div style={{ color: '#3B82F6', fontSize: 12 }}>
                           Các chỉ số chưa dùng hết trong tháng sẽ không được cộng dồn sang chu kỳ tiếp theo.
@@ -761,10 +930,21 @@ export default function SubscriptionPage() {
 
                   <Table
                     columns={invoiceColumns}
-                    dataSource={PAYMENT_INVOICES_DATA}
+                    dataSource={invoices}
                     rowKey="id"
                     pagination={false}
                     className="styled-table"
+                    locale={{
+                      emptyText: (
+                        <div style={{ padding: '32px 0', textAlign: 'center', color: '#64748B' }}>
+                          <HistoryOutlined style={{ fontSize: 32, color: '#CBD5E1', marginBottom: 8 }} />
+                          <div style={{ fontWeight: 600, color: '#334155' }}>Chưa có giao dịch thanh toán nào phát sinh</div>
+                          <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>
+                            Hóa đơn điện tử sẽ tự động tạo và lưu trữ tại đây ngay khi bạn thanh toán gói qua cổng VNPAY.
+                          </div>
+                        </div>
+                      ),
+                    }}
                   />
                 </div>
               ),

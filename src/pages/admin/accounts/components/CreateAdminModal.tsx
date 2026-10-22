@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Form, Input, Select, Button, message } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import type { AdminUser } from '../../../../types/api/admin.types';
+import { adminService } from '../../../../services/api/adminService';
 
 const { Option } = Select;
 
@@ -19,9 +20,12 @@ export default function CreateAdminModal({ open, onClose, onCreate }: CreateAdmi
     try {
       const values = await form.validateFields();
       setLoading(true);
-      // NOTE: Backend may not have POST /admin/users yet.
-      // We simulate creation and notify parent to refetch.
-      await new Promise(r => setTimeout(r, 600));
+      await adminService.createAdmin({
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        role: values.role || 'admin',
+      });
       form.resetFields();
       message.success(`Đã tạo tài khoản admin cho ${values.name}!`);
       onCreate();

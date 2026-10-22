@@ -15,7 +15,18 @@ export const creatorService = {
    */
   async getCreators(): Promise<CreatorItem[]> {
     const response = await apiClient.get<ApiResponse<CreatorItem[]>>('/creators');
-    return response.data.data || [];
+    const items = response.data.data || [];
+    if (Array.isArray(items) && items.length > 0) {
+      try {
+        const withAvatars = items.filter((c) => c.avatarUrl && c.avatarUrl.trim().startsWith('http'));
+        if (withAvatars.length > 0) {
+          localStorage.setItem('IM_SHOWCASE_CREATORS', JSON.stringify(withAvatars.slice(0, 6)));
+        }
+      } catch {
+        // ignore storage quota error
+      }
+    }
+    return items;
   },
 
   /**

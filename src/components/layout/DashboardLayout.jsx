@@ -115,7 +115,7 @@ export default function DashboardLayout({ children }) {
     <Layout style={{ height: '100vh', maxHeight: '100vh', overflow: 'hidden' }}>
       {/* SIDER WITH LIGHT LINEAR GRADIENT */}
       <Sider
-        width={260}
+        width={250}
         theme="light"
         className="antd-custom-sider"
         style={{
@@ -131,38 +131,39 @@ export default function DashboardLayout({ children }) {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
-            padding: '4px 6px 14px 6px',
+            gap: 10,
+            padding: '10px 10px 18px 10px',
             cursor: 'pointer',
             flexShrink: 0,
           }}
         >
-          <div
+          <img
+            src="/logo.png"
+            alt="InfluencerMatch"
             style={{
-              width: 38,
-              height: 38,
-              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%)',
-              borderRadius: 10,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'relative',
-              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
-              color: '#fff',
-              fontWeight: 800,
-              fontSize: 16,
+              width: 40,
+              height: 40,
+              objectFit: 'contain',
               flexShrink: 0,
+              filter: 'drop-shadow(0 2px 8px rgba(37, 244, 238, 0.35)) drop-shadow(0 2px 8px rgba(254, 44, 85, 0.35))',
+              transition: 'transform 0.25s ease',
             }}
-          >
-            iM
-          </div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 14.5, color: '#0F172A', letterSpacing: 0.5, lineHeight: 1.2 }}>
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <span
+              style={{
+                color: '#0F172A',
+                fontWeight: 900,
+                fontSize: 13.8,
+                letterSpacing: 0.3,
+                lineHeight: 1.2,
+                whiteSpace: 'nowrap',
+                textShadow: '-1.2px -0.6px 0 #25F4EE, 1.2px 0.6px 0 #FE2C55',
+                userSelect: 'none',
+              }}
+            >
               INFLUENCERMATCH
-            </div>
-            <div style={{ fontSize: 7.5, fontWeight: 700, letterSpacing: 1.2, color: '#8B5CF6' }}>
-              CONNECT • COLLABORATE • GROW
-            </div>
+            </span>
           </div>
         </div>
 

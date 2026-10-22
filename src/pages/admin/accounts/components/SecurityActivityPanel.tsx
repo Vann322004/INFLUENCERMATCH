@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Timeline, Tag, Typography, Spin } from 'antd';
 import {
   LoginOutlined, WarningOutlined, KeyOutlined, MobileOutlined,
@@ -27,7 +27,10 @@ export default function SecurityActivityPanel({ userId }: SecurityActivityPanelP
   useEffect(() => {
     setLoading(true);
     adminService.getAuditLogs({ actorId: userId, size: 10 })
-      .then(res => setActivities(res.content ?? []))
+      .then(res => {
+        const list = res.items ?? res.content ?? (Array.isArray(res) ? res : []);
+        setActivities(list);
+      })
       .catch(() => setActivities([]))
       .finally(() => setLoading(false));
   }, [userId]);

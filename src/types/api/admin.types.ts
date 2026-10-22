@@ -1,4 +1,4 @@
-﻿// =============================================
+// =============================================
 // ADMIN API TYPES - InfluencerMatch
 // Maps to: GET /admin/users, PATCH /admin/users/{id}/status,
 //          PATCH /admin/users/{id}/role, GET /admin/audit-logs,
@@ -22,23 +22,27 @@ export interface AdminUser {
   ip?: string;
   createdAt?: string;
   updatedAt?: string;
+  fullName?: string;
 }
 
 export interface AdminUsersResponse {
-  content: AdminUser[];
+  items?: AdminUser[];
+  content?: AdminUser[];
   totalElements: number;
   totalPages: number;
-  number: number;
+  number?: number;
+  page?: number;
   size: number;
 }
 
 export interface UpdateStatusPayload {
-  status: AdminUserStatus;
+  status: AdminUserStatus | 'ACTIVE' | 'LOCKED' | 'DISABLED';
   reason?: string;
 }
 
 export interface UpdateRolePayload {
-  role: AdminUserRole;
+  role: AdminUserRole | 'ADMIN' | 'DATA_MANAGER' | 'BRAND' | 'CREATOR';
+  reason?: string;
 }
 
 // -- Data Quality / Claims ------------------
@@ -75,11 +79,26 @@ export interface AuditLogItem {
 }
 
 export interface AuditLogsResponse {
-  content: AuditLogItem[];
+  items?: AuditLogItem[];
+  content?: AuditLogItem[];
   totalElements: number;
   totalPages: number;
-  number: number;
+  number?: number;
+  page?: number;
   size: number;
+}
+
+// -- Role & Permissions ---------------------
+export interface RoleCapability {
+  name: string;
+  enabled: boolean;
+  description?: string;
+}
+
+export interface RoleView {
+  role: 'ADMIN' | 'DATA_MANAGER' | 'BRAND' | 'CREATOR' | string;
+  version?: number;
+  permissions?: (string | RoleCapability)[];
 }
 
 // -- Admin Subscriptions --------------------

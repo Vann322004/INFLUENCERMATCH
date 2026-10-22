@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Card, Table, Tag, Avatar, Button, Input, Select, Space,
   Drawer, Descriptions, Modal, Form, Badge,
@@ -293,8 +293,9 @@ export default function CreatorClaimReviewPage() {
       setLoading(true);
       const statusParam = tab === "pending" ? "PENDING" : statusFilter !== "ALL" ? statusFilter : undefined;
       const res = await claimService.getClaims({ status: statusParam as any, page: p - 1, size: 10 });
-      setClaims(res.content ?? []);
-      setTotal(res.totalElements ?? 0);
+      const list = res.items ?? res.content ?? (Array.isArray(res) ? res : []);
+      setClaims(list);
+      setTotal(res.totalElements ?? list.length);
     } catch { setClaims([]); } finally { setLoading(false); }
   }, [tab, statusFilter]);
 

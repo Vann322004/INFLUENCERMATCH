@@ -1,11 +1,89 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Progress } from 'antd';
-import { CrownFilled, ArrowRightOutlined, ThunderboltFilled } from '@ant-design/icons';
+import { CrownFilled, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { CURRENT_SUBSCRIPTION_INFO } from '../../data/mockData';
+import { brandService } from '../../services/api/brandService';
+import { subscriptionService } from '../../services/api/subscriptionService';
+import { campaignService } from '../../services/api/campaignService';
+import type { SubscriptionResponse } from '../../types/api/subscription.types';
 
 export default function SidebarPromo() {
   const navigate = useNavigate();
+  const [subInfo, setSubInfo] = useState({
+    planName: 'Professional',
+    daysRemaining: 18,
+    usedCampaigns: 0,
+    totalCampaigns: 15,
+    usedRefresh: 0,
+    totalRefresh: 50,
+    percent: 30,
+    isPro: true,
+    hasActiveSub: true,
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadData = async () => {
+      try {
+        const [brand, campaigns] = await Promise.all([
+          brandService.getMyBrand().catch(() => null),
+          campaignService.getCampaigns(0, 100).catch(() => []),
+        ]);
+
+        let activeSub: SubscriptionResponse | null = null;
+        if (brand?.id) {
+          const subs = await subscriptionService.getBrandSubscriptions(brand.id);
+          activeSub = subs.find((s) => s.status === 'ACTIVE') || (subs.length > 0 ? subs[0] : null);
+        }
+
+        if (isMounted) {
+          if (activeSub) {
+            const planName = activeSub.plan?.planName?.replace(/-[0-9]+$/, '') || 'Professional';
+            const expTime = new Date(activeSub.expirationDate).getTime();
+            const daysRemaining = Math.max(0, Math.ceil((expTime - Date.now()) / (1000 * 60 * 60 * 24)));
+            const totalCamp = activeSub.plan?.campaignQuota || 15;
+            const usedCamp = activeSub.usedCampaignQuota || campaigns.length || 0;
+            const totalRef = activeSub.plan?.refreshQuota || 50;
+            const usedRef = activeSub.usedRefreshQuota || 0;
+            const pct = Math.min(100, Math.round((usedCamp / (totalCamp || 1)) * 100));
+
+            setSubInfo({
+              planName,
+              daysRemaining,
+              usedCampaigns: usedCamp,
+              totalCampaigns: totalCamp,
+              usedRefresh: usedRef,
+              totalRefresh: totalRef,
+              percent: pct,
+              isPro: !planName.toLowerCase().includes('free'),
+              hasActiveSub: true,
+            });
+          } else {
+            // Free / Trial account
+            const usedCamp = campaigns.length;
+            setSubInfo({
+              planName: 'Trải Nghiệm',
+              daysRemaining: 0,
+              usedCampaigns: usedCamp,
+              totalCampaigns: 3,
+              usedRefresh: 0,
+              totalRefresh: 5,
+              percent: Math.min(100, Math.round((usedCamp / 3) * 100)),
+              isPro: false,
+              hasActiveSub: false,
+            });
+          }
+        }
+      } catch (err) {
+        console.error('[SidebarPromo] Error loading subscription data:', err);
+      }
+    };
+
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div
@@ -67,12 +145,14 @@ export default function SidebarPromo() {
                 textOverflow: 'ellipsis',
               }}
             >
-              Gói {CURRENT_SUBSCRIPTION_INFO.currentPlanName}
+              Gói {subInfo.planName}
             </span>
             <span
               style={{
-                background: 'linear-gradient(135deg, #FDE047 0%, #F59E0B 100%)',
-                color: '#78350F',
+                background: subInfo.isPro
+                  ? 'linear-gradient(135deg, #FDE047 0%, #F59E0B 100%)'
+                  : '#CBD5E1',
+                color: subInfo.isPro ? '#78350F' : '#334155',
                 fontWeight: 800,
                 fontSize: 9,
                 padding: '1.5px 5px',
@@ -82,7 +162,7 @@ export default function SidebarPromo() {
                 flexShrink: 0,
               }}
             >
-              PRO
+              {subInfo.isPro ? 'PRO' : 'FREE'}
             </span>
           </div>
 
@@ -97,7 +177,9 @@ export default function SidebarPromo() {
               textOverflow: 'ellipsis',
             }}
           >
-            Còn {CURRENT_SUBSCRIPTION_INFO.daysRemaining} ngày chu kỳ
+            {subInfo.hasActiveSub
+              ? `Còn ${subInfo.daysRemaining} ngày chu kỳ`
+              : 'Chưa kích hoạt gói'}
           </div>
         </div>
       </div>
@@ -116,11 +198,11 @@ export default function SidebarPromo() {
           }}
         >
           <span>Dung lượng sử dụng</span>
-          <span style={{ color: '#4F46E5', fontWeight: 700 }}>68%</span>
+          <span style={{ color: '#4F46E5', fontWeight: 700 }}>{subInfo.percent}%</span>
         </div>
 
         <Progress
-          percent={68}
+          percent={subInfo.percent}
           size="small"
           showInfo={false}
           strokeColor={{
@@ -141,8 +223,8 @@ export default function SidebarPromo() {
             fontWeight: 500,
           }}
         >
-          <span>8/15 chiến dịch</span>
-          <span>34/50 refresh</span>
+          <span>{subInfo.usedCampaigns}/{subInfo.totalCampaigns} chiến dịch</span>
+          <span>{subInfo.usedRefresh}/{subInfo.totalRefresh} refresh</span>
         </div>
       </div>
 
@@ -170,7 +252,7 @@ export default function SidebarPromo() {
           navigate('/subscription');
         }}
       >
-        <span>Quản lý & Hạn mức</span>
+        <span>{subInfo.hasActiveSub ? 'Quản lý & Hạn mức' : 'Nâng cấp gói ngay'}</span>
         <ArrowRightOutlined style={{ fontSize: 9.5 }} />
       </Button>
     </div>

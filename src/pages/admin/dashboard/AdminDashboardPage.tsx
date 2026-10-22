@@ -141,7 +141,8 @@ export default function AdminDashboardPage() {
       // 1. Users
       if (results[0].status === 'fulfilled') {
         const uRes = results[0].value;
-        setUsers(uRes?.content || []);
+        const uList = uRes?.items ?? uRes?.content ?? (Array.isArray(uRes) ? uRes : []);
+        setUsers(uList);
       }
 
       // 2. Creators
@@ -171,7 +172,8 @@ export default function AdminDashboardPage() {
       // 6. Audit logs
       if (results[5].status === 'fulfilled') {
         const logRes = results[5].value;
-        setAuditLogs(logRes?.content || []);
+        const logList = logRes?.items ?? logRes?.content ?? (Array.isArray(logRes) ? logRes : []);
+        setAuditLogs(logList);
       }
 
       setLastRefreshed(new Date());
