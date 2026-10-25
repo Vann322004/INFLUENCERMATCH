@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, Menu, Avatar, Dropdown, Typography, Badge } from 'antd';
 import type { MenuProps } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -54,10 +54,23 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
     ? 'campaigns'
     : 'dashboard';
 
+  // Sub-items grouped under "Chiến dịch" parent menu
+  const CAMPAIGN_GROUP_KEY = 'campaign-group';
+  const campaignChildKeys = ['collaboration', 'campaign-management', 'reports', 'history'];
+  const isInCampaignGroup = activeKey === 'campaigns' || campaignChildKeys.includes(activeKey);
+
+  const [openKeys, setOpenKeys] = useState<string[]>(['campaign-group']);
+
+  useEffect(() => {
+    if (isInCampaignGroup) {
+      setOpenKeys((prev) => (prev.includes(CAMPAIGN_GROUP_KEY) ? prev : [...prev, CAMPAIGN_GROUP_KEY]));
+    }
+  }, [isInCampaignGroup]);
+
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     if (key === 'dashboard') {
       navigate('/dashboard');
-    } else if (key === 'campaigns') {
+    } else if (key === 'campaigns' || key === CAMPAIGN_GROUP_KEY) {
       navigate('/campaigns');
     } else if (key === 'creators') {
       navigate('/creators');
@@ -85,9 +98,38 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       label: 'Dashboard',
     },
     {
-      key: 'campaigns',
+      key: CAMPAIGN_GROUP_KEY,
       icon: <NotificationOutlined />,
       label: 'Chiến dịch',
+      className:
+        activeKey === 'campaigns'
+          ? 'sidebar-submenu-active'
+          : campaignChildKeys.includes(activeKey)
+          ? 'sidebar-submenu-parent'
+          : undefined,
+      onTitleClick: () => navigate('/campaigns'),
+      children: [
+        {
+          key: 'collaboration',
+          icon: <FileDoneOutlined />,
+          label: 'Vận hành & Hợp tác',
+        },
+        {
+          key: 'campaign-management',
+          icon: <ApartmentOutlined />,
+          label: 'Quản lý chiến dịch',
+        },
+        {
+          key: 'reports',
+          icon: <BarChartOutlined />,
+          label: 'Hiệu suất & ROI',
+        },
+        {
+          key: 'history',
+          icon: <ClockCircleOutlined />,
+          label: 'Lịch sử Chiến dịch',
+        },
+      ],
     },
     {
       key: 'creators',
@@ -103,26 +145,6 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       key: 'crm',
       icon: <TeamOutlined />,
       label: 'Tiếp cận & CRM',
-    },
-    {
-      key: 'collaboration',
-      icon: <FileDoneOutlined />,
-      label: 'Vận hành & Hợp tác',
-    },
-    {
-      key: 'campaign-management',
-      icon: <ApartmentOutlined />,
-      label: 'Quản lý chiến dịch',
-    },
-    {
-      key: 'reports',
-      icon: <BarChartOutlined />,
-      label: 'Hiệu suất & ROI',
-    },
-    {
-      key: 'history',
-      icon: <ClockCircleOutlined />,
-      label: 'Lịch sử Chiến dịch',
     },
     {
       key: 'messages',
@@ -190,6 +212,8 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
         <Menu
           mode="inline"
           selectedKeys={[activeKey]}
+          openKeys={openKeys}
+          onOpenChange={(keys) => setOpenKeys(keys as string[])}
           onClick={handleMenuClick}
           items={menuItems}
           className="sidebar-menu"

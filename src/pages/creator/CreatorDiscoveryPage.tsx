@@ -18,7 +18,7 @@ import {
   Radio,
   Spin,
 } from 'antd';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
   SearchOutlined,
   ThunderboltOutlined,
@@ -379,8 +379,9 @@ const mapApiCampaignToItem = (c: CampaignResponse): BrandCampaignItem => {
 
 export default function CreatorDiscoveryPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const initialCampId = searchParams.get('campaignId') || null;
+  const initialCampId = searchParams.get('campaignId') || (location.state as any)?.campaignId || localStorage.getItem('IM_SELECTED_CAMPAIGN_ID') || null;
 
   // Real Brand Campaigns loaded from API
   const [campaignsList, setCampaignsList] = useState<BrandCampaignItem[]>([]);
@@ -399,34 +400,111 @@ export default function CreatorDiscoveryPage() {
       setLoadingCampaigns(true);
       try {
         const apiCampaigns = await campaignService.getCampaigns(0, 50);
-        if (isMounted) {
-          if (Array.isArray(apiCampaigns) && apiCampaigns.length > 0) {
-            const mapped = apiCampaigns.map(mapApiCampaignToItem);
-            setCampaignsList(mapped);
-            if (initialCampId) {
-              const matched = mapped.find((c) => c.id === initialCampId);
-              if (matched) {
-                setMatchedCampaign(matched);
-                setSelectedCampaignId(initialCampId);
+        if (!isMounted) return;
+
+        let mapped: BrandCampaignItem[] = [];
+        if (Array.isArray(apiCampaigns) && apiCampaigns.length > 0) {
+          mapped = apiCampaigns.map(mapApiCampaignToItem);
+        } else {
+          mapped = [...BRAND_CAMPAIGNS];
+        }
+
+        const targetId = initialCampId;
+        if (targetId) {
+          let matched = mapped.find((c) => c.id === targetId);
+
+          // If not in the list, check location.state or fetch by ID
+          if (!matched) {
+            const passedCampaign = (location.state as any)?.createdCampaign;
+            if (passedCampaign && (passedCampaign.id === targetId || !passedCampaign.id)) {
+              matched = mapApiCampaignToItem(passedCampaign);
+            } else {
+              try {
+                const fetched = await campaignService.getCampaignById(targetId);
+                if (fetched) {
+                  matched = mapApiCampaignToItem(fetched);
+                }
+              } catch {
+                try {
+                  const stored = localStorage.getItem('IM_MATCHED_CAMPAIGN');
+                  if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (parsed.id === targetId || targetId) {
+                      matched = {
+                        id: targetId,
+                        name: parsed.name || 'Chiến dịch mới',
+                        tag: parsed.category || 'Mới khởi tạo',
+                        budget: parsed.budget || '25.0M VND',
+                        targetAudience: parsed.targetAudience || 'Khán giả mục tiêu',
+                        category: parsed.category || 'Làm đẹp',
+                        channels: parsed.channels || ['tiktok'],
+                        status: 'ACTIVE',
+                        requirements: parsed.requirements || '',
+                      };
+                    }
+                  }
+                } catch {}
               }
             }
-          } else {
-            // Không có campaign từ API, fallback sang mock mẫu để Brand tham khảo
-            setCampaignsList(BRAND_CAMPAIGNS);
-            if (initialCampId) {
-              const matched = BRAND_CAMPAIGNS.find((c) => c.id === initialCampId);
-              if (matched) setMatchedCampaign(matched);
+
+            if (matched) {
+              mapped = [matched, ...mapped.filter((c) => c.id !== matched!.id)];
             }
           }
+
+          setCampaignsList(mapped);
+
+          if (matched) {
+            setSelectedCampaignId(matched.id);
+            setMatchedCampaign(matched);
+            setSortBy('match');
+            setCurrentPage(1);
+            message.success({
+              content: `🎯 Đã tự động chọn dự án "${matched.name}" để đề xuất Creator!`,
+              key: 'auto_selected_campaign',
+              duration: 2.5,
+            });
+          }
+        } else {
+          setCampaignsList(mapped);
         }
       } catch (err) {
         console.warn('Lỗi khi tải chiến dịch thực tế từ API, dùng danh sách mẫu:', err);
         if (isMounted) {
-          setCampaignsList(BRAND_CAMPAIGNS);
-          if (initialCampId) {
-            const matched = BRAND_CAMPAIGNS.find((c) => c.id === initialCampId);
-            if (matched) setMatchedCampaign(matched);
+          let mapped = [...BRAND_CAMPAIGNS];
+          const targetId = initialCampId;
+          if (targetId) {
+            const passedCampaign = (location.state as any)?.createdCampaign;
+            let matched: BrandCampaignItem | undefined;
+            if (passedCampaign) {
+              matched = mapApiCampaignToItem(passedCampaign);
+            } else {
+              try {
+                const stored = localStorage.getItem('IM_MATCHED_CAMPAIGN');
+                if (stored) {
+                  const parsed = JSON.parse(stored);
+                  matched = {
+                    id: targetId,
+                    name: parsed.name || 'Chiến dịch mới',
+                    tag: parsed.category || 'Mới khởi tạo',
+                    budget: parsed.budget || '25.0M VND',
+                    targetAudience: parsed.targetAudience || 'Khán giả mục tiêu',
+                    category: parsed.category || 'Làm đẹp',
+                    channels: parsed.channels || ['tiktok'],
+                    status: 'ACTIVE',
+                    requirements: parsed.requirements || '',
+                  };
+                }
+              } catch {}
+            }
+            if (matched) {
+              mapped = [matched, ...mapped];
+              setSelectedCampaignId(matched.id);
+              setMatchedCampaign(matched);
+              setSortBy('match');
+            }
           }
+          setCampaignsList(mapped);
         }
       } finally {
         if (isMounted) setLoadingCampaigns(false);
@@ -437,7 +515,7 @@ export default function CreatorDiscoveryPage() {
     return () => {
       isMounted = false;
     };
-  }, [initialCampId]);
+  }, [initialCampId, location.state]);
 
   const handleTriggerMatch = () => {
     if (!selectedCampaignId) {
@@ -1091,7 +1169,15 @@ export default function CreatorDiscoveryPage() {
                 placeholder={loadingCampaigns ? 'Đang tải chiến dịch...' : 'Chọn chiến dịch'}
                 value={selectedCampaignId}
                 loading={loadingCampaigns}
-                onChange={(val) => setSelectedCampaignId(val)}
+                onChange={(val) => {
+                  setSelectedCampaignId(val);
+                  const camp = campaignsList.find((c) => c.id === val) || BRAND_CAMPAIGNS.find((c) => c.id === val);
+                  if (camp) {
+                    setMatchedCampaign(camp);
+                    setSortBy('match');
+                    setCurrentPage(1);
+                  }
+                }}
                 style={{ width: 280 }}
                 notFoundContent={
                   <div style={{ padding: '8px 12px', textAlign: 'center' }}>

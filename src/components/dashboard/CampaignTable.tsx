@@ -11,6 +11,10 @@ import {
   Button,
   Dropdown,
   Pagination,
+  Modal,
+  Form,
+  InputNumber,
+  message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
@@ -20,10 +24,13 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
+  ExclamationCircleOutlined,
+  SaveOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
-import type { CampaignResponse } from '../../types/api/campaign.types';
+import { getErrorMessage } from '../../services/apiClient';
+import type { CampaignResponse, CampaignStatus, CampaignObjective, CampaignPlatform } from '../../types/api/campaign.types';
 import type { Campaign } from '../../data/mockData';
 
 export const mapApiCampaignToUi = (c: CampaignResponse): Campaign => {
@@ -82,7 +89,15 @@ export default function CampaignTable() {
         setLoading(true);
         const data = await campaignService.getCampaigns(0, 50);
         if (isMounted && Array.isArray(data)) {
-          setCampaigns(data.map(mapApiCampaignToUi));
+          let deletedIds: string[] = [];
+          try {
+            deletedIds = JSON.parse(localStorage.getItem('IM_DELETED_CAMPAIGN_IDS') || '[]');
+          } catch {}
+
+          const activeList = data.filter(
+            (c) => c.status !== 'ARCHIVED' && !deletedIds.includes(c.id)
+          );
+          setCampaigns(activeList.map(mapApiCampaignToUi));
         }
       } catch (err) {
         console.error('Lỗi khi tải chiến dịch:', err);
@@ -125,18 +140,191 @@ export default function CampaignTable() {
     return list;
   }, [campaigns, activeTab, searchText, sortBy]);
 
-  const actionItems: MenuProps['items'] = [
-    { key: 'view', icon: <EyeOutlined />, label: 'Xem chi tiết' },
-    { key: 'edit', icon: <EditOutlined />, label: 'Chỉnh sửa' },
-    { type: 'divider' },
-    { key: 'delete', icon: <DeleteOutlined />, danger: true, label: 'Xóa chiến dịch' },
-  ];
+  // Edit & Delete State
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editForm, setEditForm] = useState<{
+    name: string;
+    budget: number;
+    status: CampaignStatus;
+    objective: CampaignObjective;
+    platforms: CampaignPlatform[];
+  }>({
+    name: '',
+    budget: 25000000,
+    status: 'ACTIVE',
+    objective: 'AWARENESS',
+    platforms: ['TIKTOK', 'INSTAGRAM'],
+  });
 
-  const handleActionMenu = (key: string, record?: Campaign) => {
-    if (key === 'view' && record) {
+  const handleOpenEdit = (record: Campaign) => {
+    setEditingCampaign(record);
+    const revStatusMap: Record<string, CampaignStatus> = {
+      running: 'ACTIVE',
+      draft: 'DRAFT',
+      completed: 'COMPLETED',
+    };
+
+    const revObjectiveMap: Record<string, CampaignObjective> = {
+      'Tăng doanh số': 'CONVERSION',
+      'Độ nhận diện': 'AWARENESS',
+      'Tương tác': 'ENGAGEMENT',
+      'Lưu lượng truy cập': 'TRAFFIC',
+      'CONVERSION': 'CONVERSION',
+      'AWARENESS': 'AWARENESS',
+      'ENGAGEMENT': 'ENGAGEMENT',
+      'TRAFFIC': 'TRAFFIC',
+    };
+
+    const primaryTag = record.tags[0] || 'AWARENESS';
+    const parsedObj = revObjectiveMap[primaryTag] || 'AWARENESS';
+    const parsedPlatforms = record.tags
+      .slice(1)
+      .map((t) => t.toUpperCase())
+      .filter((p) => ['TIKTOK', 'INSTAGRAM', 'YOUTUBE', 'FACEBOOK'].includes(p)) as CampaignPlatform[];
+
+    setEditForm({
+      name: record.title,
+      budget: record.spentNumber || 25000000,
+      status: revStatusMap[record.status] || 'ACTIVE',
+      objective: parsedObj,
+      platforms: parsedPlatforms.length > 0 ? parsedPlatforms : ['TIKTOK', 'INSTAGRAM'],
+    });
+    setEditModalVisible(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingCampaign) return;
+    if (!editForm.name.trim()) {
+      message.warning('Vui lòng nhập tên chiến dịch!');
+      return;
+    }
+
+    try {
+      setSavingEdit(true);
+      message.loading({ content: 'Đang lưu cập nhật chiến dịch...', key: 'edit_camp' });
+
+      await campaignService.updateCampaign(editingCampaign.id, {
+        name: editForm.name.trim(),
+        budgetMax: editForm.budget,
+        objective: editForm.objective,
+        platforms: editForm.platforms,
+      });
+
+      if (editForm.status) {
+        await campaignService.updateStatus(editingCampaign.id, editForm.status).catch(() => {});
+      }
+
+      const statusMap: Record<string, 'running' | 'draft' | 'completed'> = {
+        ACTIVE: 'running',
+        READY_FOR_DISCOVERY: 'running',
+        DRAFT: 'draft',
+        COMPLETED: 'completed',
+        ARCHIVED: 'completed',
+      };
+      const statusTextMap: Record<string, string> = {
+        ACTIVE: 'Đang chạy',
+        READY_FOR_DISCOVERY: 'Sẵn sàng AI',
+        DRAFT: 'Bản nháp',
+        COMPLETED: 'Đã hoàn thành',
+        ARCHIVED: 'Đã lưu trữ',
+      };
+
+      const budgetNum = editForm.budget || 0;
+      const budgetText = budgetNum > 0 ? `${(budgetNum / 1_000_000).toFixed(0)}M ₫` : 'Chưa định mức';
+
+      setCampaigns((prev) =>
+        prev.map((c) => {
+          if (c.id === editingCampaign.id) {
+            return {
+              ...c,
+              title: editForm.name.trim(),
+              status: statusMap[editForm.status] || c.status,
+              statusText: statusTextMap[editForm.status] || c.statusText,
+              spent: budgetText,
+              spentNumber: budgetNum,
+              tags: [editForm.objective, ...editForm.platforms.map((p) => p.toLowerCase())],
+            };
+          }
+          return c;
+        })
+      );
+
+      // Cập nhật localStorage nếu là chiến dịch đang chọn
+      try {
+        const stored = localStorage.getItem('IM_MATCHED_CAMPAIGN');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.id === editingCampaign.id) {
+            localStorage.setItem(
+              'IM_MATCHED_CAMPAIGN',
+              JSON.stringify({
+                ...parsed,
+                name: editForm.name.trim(),
+                budget: budgetText,
+              })
+            );
+          }
+        }
+      } catch {}
+
+      message.success({ content: '🎉 Đã cập nhật chiến dịch thành công!', key: 'edit_camp' });
+      setEditModalVisible(false);
+      setEditingCampaign(null);
+    } catch (err) {
+      message.error({ content: getErrorMessage(err, 'Không thể cập nhật chiến dịch.'), key: 'edit_camp' });
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteCampaign = (record: Campaign) => {
+    Modal.confirm({
+      title: 'Xóa chiến dịch',
+      icon: <ExclamationCircleOutlined style={{ color: '#EF4444' }} />,
+      content: (
+        <div>
+          Bạn có chắc chắn muốn xóa chiến dịch <strong style={{ color: '#0F172A' }}>"{record.title}"</strong> không?
+          <div style={{ color: '#64748B', fontSize: 12.5, marginTop: 6 }}>
+            Thao tác này sẽ gỡ bỏ chiến dịch khỏi danh sách và cập nhật ngay lập tức.
+          </div>
+        </div>
+      ),
+      okText: 'Xóa chiến dịch',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      maskClosable: true,
+      async onOk() {
+        try {
+          message.loading({ content: `Đang xóa chiến dịch "${record.title}"...`, key: 'del_camp' });
+          await campaignService.deleteCampaign(record.id);
+
+          setCampaigns((prev) => prev.filter((c) => c.id !== record.id));
+
+          try {
+            const stored = localStorage.getItem('IM_MATCHED_CAMPAIGN');
+            if (stored && JSON.parse(stored)?.id === record.id) {
+              localStorage.removeItem('IM_MATCHED_CAMPAIGN');
+              localStorage.removeItem('IM_SELECTED_CAMPAIGN_ID');
+            }
+          } catch {}
+
+          message.success({ content: `🗑️ Đã xóa chiến dịch "${record.title}" thành công!`, key: 'del_camp' });
+        } catch (err) {
+          message.error({ content: getErrorMessage(err, 'Không thể xóa chiến dịch.'), key: 'del_camp' });
+        }
+      },
+    });
+  };
+
+  const handleActionMenu = (key: string, record: Campaign) => {
+    if (key === 'view') {
       navigate(`/campaigns/${record.id}`);
     } else if (key === 'edit') {
-      navigate('/campaigns/create');
+      handleOpenEdit(record);
+    } else if (key === 'delete') {
+      handleDeleteCampaign(record);
     }
   };
 
@@ -306,19 +494,31 @@ export default function CampaignTable() {
       title: '',
       key: 'action',
       width: 44,
-      render: () => (
-        <Dropdown
-          menu={{ items: actionItems, onClick: ({ key }) => handleActionMenu(key) }}
-          trigger={['click']}
-          placement="bottomRight"
-        >
-          <Button
-            type="text"
-            size="small"
-            icon={<EllipsisOutlined style={{ fontSize: 16, color: '#94A3B8' }} />}
-          />
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const actionMenuItems: MenuProps['items'] = [
+          { key: 'view', icon: <EyeOutlined />, label: 'Xem chi tiết' },
+          { key: 'edit', icon: <EditOutlined />, label: 'Chỉnh sửa' },
+          { type: 'divider' },
+          { key: 'delete', icon: <DeleteOutlined />, danger: true, label: 'Xóa chiến dịch' },
+        ];
+
+        return (
+          <Dropdown
+            menu={{
+              items: actionMenuItems,
+              onClick: ({ key }) => handleActionMenu(key, record),
+            }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Button
+              type="text"
+              size="small"
+              icon={<EllipsisOutlined style={{ fontSize: 16, color: '#94A3B8' }} />}
+            />
+          </Dropdown>
+        );
+      },
     },
   ];
 
@@ -440,6 +640,118 @@ export default function CampaignTable() {
           />
         )}
       </div>
+
+      {/* Edit Campaign Modal */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 700 }}>
+            <EditOutlined style={{ color: '#2563EB' }} />
+            <span>Chỉnh sửa thông tin chiến dịch</span>
+          </div>
+        }
+        open={editModalVisible}
+        onCancel={() => {
+          setEditModalVisible(false);
+          setEditingCampaign(null);
+        }}
+        onOk={handleSaveEdit}
+        confirmLoading={savingEdit}
+        okText="Lưu thay đổi"
+        cancelText="Hủy"
+        width={560}
+        destroyOnClose
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 12 }}>
+          <div>
+            <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
+              Tên chiến dịch <span style={{ color: '#EF4444' }}>*</span>
+            </label>
+            <Input
+              size="large"
+              placeholder="Nhập tên chiến dịch..."
+              value={editForm.name}
+              onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+              style={{ borderRadius: 8 }}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
+                Trạng thái
+              </label>
+              <Select
+                size="large"
+                style={{ width: '100%' }}
+                value={editForm.status}
+                onChange={(val) => setEditForm((prev) => ({ ...prev, status: val }))}
+                options={[
+                  { value: 'ACTIVE', label: '🟢 Đang chạy (Active)' },
+                  { value: 'READY_FOR_DISCOVERY', label: '⚡ Sẵn sàng AI' },
+                  { value: 'DRAFT', label: '📝 Bản nháp (Draft)' },
+                  { value: 'COMPLETED', label: '🏁 Đã hoàn thành' },
+                  { value: 'ARCHIVED', label: '📦 Lưu trữ' },
+                ]}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
+                Mục tiêu chính
+              </label>
+              <Select
+                size="large"
+                style={{ width: '100%' }}
+                value={editForm.objective}
+                onChange={(val) => setEditForm((prev) => ({ ...prev, objective: val }))}
+                options={[
+                  { value: 'AWARENESS', label: '📢 Tăng nhận diện' },
+                  { value: 'CONVERSION', label: '🛒 Thúc đẩy doanh số' },
+                  { value: 'ENGAGEMENT', label: '💬 Tương tác cộng đồng' },
+                  { value: 'TRAFFIC', label: '🚀 Kéo Traffic website' },
+                ]}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
+                Ngân sách dự kiến (VND)
+              </label>
+              <InputNumber
+                size="large"
+                style={{ width: '100%', borderRadius: 8 }}
+                value={editForm.budget}
+                min={1000000}
+                step={1000000}
+                formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={(val) => Number(val?.replace(/\$\s?|(,*)/g, '') || 0)}
+                onChange={(val) => setEditForm((prev) => ({ ...prev, budget: Number(val) || 0 }))}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
+                Nền tảng ưu tiên
+              </label>
+              <Select
+                mode="multiple"
+                size="large"
+                style={{ width: '100%' }}
+                value={editForm.platforms}
+                onChange={(val) => setEditForm((prev) => ({ ...prev, platforms: val }))}
+                options={[
+                  { value: 'TIKTOK', label: 'TikTok' },
+                  { value: 'INSTAGRAM', label: 'Instagram' },
+                  { value: 'YOUTUBE', label: 'YouTube' },
+                  { value: 'FACEBOOK', label: 'Facebook' },
+                ]}
+              />
+            </div>
+          </div>
+        </div>
+      </Modal>
     </Card>
   );
 }

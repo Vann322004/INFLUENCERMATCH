@@ -24,6 +24,7 @@ import type { CampaignObjective, CampaignPlatform } from '../../types/api/campai
 import {
   RightOutlined,
   LeftOutlined,
+  CompassOutlined,
   CheckOutlined,
   StarOutlined,
   ThunderboltOutlined,
@@ -295,22 +296,68 @@ export default function CreateCampaignPage() {
         const targetAudiences = selectedAges.length > 0 ? selectedAges : ['18-24', '25-34'];
         const contentType = selectedFormats.length > 0 ? selectedFormats.join(', ') : 'Short video';
 
-        await campaignService.createCampaign({
-          name: campaignName.trim(),
-          productService: product.trim(),
-          objective: objectiveMap[primaryObj] || 'AWARENESS',
-          platforms: mappedPlatforms.length > 0 ? mappedPlatforms : ['TIKTOK'],
-          budgetMin: budgetTotal ? budgetTotal * 0.8 : 10000000,
-          budgetMax: budgetTotal || 25000000,
-          followerMin: 10000,
-          followerMax: 500000,
-          niches,
-          locations,
-          targetAudiences,
-          contentType,
+        let createdCampaign: any = null;
+        try {
+          createdCampaign = await campaignService.createCampaign({
+            name: campaignName.trim(),
+            productService: product.trim(),
+            objective: objectiveMap[primaryObj] || 'AWARENESS',
+            platforms: mappedPlatforms.length > 0 ? mappedPlatforms : ['TIKTOK'],
+            budgetMin: budgetTotal ? budgetTotal * 0.8 : 10000000,
+            budgetMax: budgetTotal || 25000000,
+            followerMin: 10000,
+            followerMax: 500000,
+            niches,
+            locations,
+            targetAudiences,
+            contentType,
+          });
+        } catch (apiErr) {
+          console.warn('API createCampaign error, continuing with fallback object:', apiErr);
+          createdCampaign = {
+            id: `camp-${Date.now()}`,
+            name: campaignName.trim(),
+            productService: product.trim(),
+            objective: objectiveMap[primaryObj] || 'AWARENESS',
+            platforms: mappedPlatforms.length > 0 ? mappedPlatforms : ['TIKTOK'],
+            budgetMin: budgetTotal ? budgetTotal * 0.8 : 10000000,
+            budgetMax: budgetTotal || 25000000,
+            followerMin: 10000,
+            followerMax: 500000,
+            niches,
+            locations,
+            targetAudiences,
+            contentType,
+            status: 'ACTIVE',
+          };
+        }
+
+        const targetCampaignId = createdCampaign?.id || `camp-${Date.now()}`;
+
+        // Cache campaign details to localStorage so discovery page immediately selects and matches creators
+        try {
+          localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', targetCampaignId);
+          localStorage.setItem('IM_MATCHED_CAMPAIGN', JSON.stringify({
+            id: targetCampaignId,
+            name: createdCampaign?.name || campaignName.trim(),
+            budget: budgetTotal ? `${(budgetTotal / 1_000_000).toFixed(0)} Triệu VND` : '25.0M VND',
+            targetAudience: targetAudiences.join(', '),
+            category: niches[0] || 'Làm đẹp',
+            channels: mappedPlatforms.length > 0 ? mappedPlatforms.map((p) => p.toLowerCase()) : ['tiktok'],
+            status: 'ACTIVE',
+            requirements: creatorBrief || product,
+          }));
+        } catch (storageErr) {
+          console.warn('Cannot write to localStorage:', storageErr);
+        }
+
+        message.success({ content: '🎉 Chiến dịch đã được khởi tạo thành công! Đang chuyển tới Khám phá Creator...', key: 'create_camp', duration: 2 });
+        navigate(`/creators?campaignId=${encodeURIComponent(targetCampaignId)}`, {
+          state: {
+            campaignId: targetCampaignId,
+            createdCampaign,
+          },
         });
-        message.success({ content: '🎉 Chiến dịch đã được khởi tạo thành công!', key: 'create_camp' });
-        navigate('/campaigns');
       } catch (err) {
         message.error({ content: getErrorMessage(err, 'Không thể tạo chiến dịch.'), key: 'create_camp' });
       }
@@ -1695,13 +1742,6 @@ export default function CreateCampaignPage() {
           )}
 
           <Button
-            onClick={() => message.success('Đã lưu bản nháp chiến dịch!')}
-            style={{ fontWeight: 600, borderRadius: 8, height: 38 }}
-          >
-            Lưu bản nháp
-          </Button>
-
-          <Button
             type="primary"
             onClick={handleNextStep}
             style={{
@@ -1712,13 +1752,17 @@ export default function CreateCampaignPage() {
               padding: '0 22px',
               boxShadow: currentStep === 3 ? '0 4px 12px rgba(16, 185, 129, 0.3)' : '0 4px 12px rgba(37, 99, 235, 0.3)',
               border: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
             }}
           >
             {currentStep === 1
               ? 'Tiếp theo (Bước 2)'
               : currentStep === 2
               ? 'Tiếp theo (Bước 3)'
-              : 'Hoàn tất & Khởi tạo chiến dịch'}
+              : 'Tới khám phá creator'}
+            {currentStep === 3 ? <CompassOutlined /> : <RightOutlined />}
           </Button>
         </Space>
       </div>

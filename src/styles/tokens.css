@@ -1,0 +1,48 @@
+/* ==========================================================================
+   INFLUENCERMATCH design tokens – "Biển hiệu Sài Gòn" (enamel sign) world
+   See .impeccable/surfaces/src-app-tsx.md for the direction contract.
+   Only tokens that are NOT already declared in index.css live here
+   (index.css owns --im-primary, --im-text-*, --im-border*, --im-error*,
+   --im-radius-sm/md/lg/xl, --im-shadow-card/sm used by the auth screens).
+   ========================================================================== */
+:root {
+  /* Shell rail */
+  --im-enamel: #1D3F8F;
+  --im-enamel-deep: #16326F;
+  --im-on-enamel-2: rgba(255, 255, 255, 0.82);
+  --im-on-enamel-3: rgba(255, 255, 255, 0.58);
+
+  /* Sign colours */
+  --im-yellow: #F2C200;
+  --im-yellow-deep: #C29B00;
+  --im-yellow-soft: #FDF3C4;
+  --im-red: #C8102E;
+  --im-red-soft: #FBE7EA;
+
+  /* Ink & ground */
+  --im-ink: #141414;
+  --im-ink-2: #3A3A3A;
+  --im-ink-3: #6B6B6B;
+  --im-ground: #FAF7F0;
+  --im-surface: #FFFFFF;
+  --im-surface-2: #F3EFE4;
+  --im-line: #E4DED0;
+  --im-rule: #141414;
+
+  /* Type */
+  --im-font-sans: 'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --im-font-num: 'Barlow Condensed', 'Be Vietnam Pro', 'Inter', sans-serif;
+  --im-fs-xs: 11px;
+  --im-fs-sm: 12.5px;
+  --im-fs-md: 14px;
+  --im-fs-lg: 18px;
+  --im-fs-2xl: 28px;
+
+  /* Shape & depth */
+  --im-radius: 6px;
+  --im-shadow-2: 0 2px 0 rgba(20, 20, 20, 0.08);
+
+  /* Motion (Animate UI transition.color) */
+  --im-dur-color: 200ms;
+  --im-ease-color: cubic-bezier(0.25, 0.1, 0.25, 1);
+}

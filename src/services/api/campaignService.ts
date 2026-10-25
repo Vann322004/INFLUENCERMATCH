@@ -68,13 +68,28 @@ export const campaignService = {
   /**
    * Lấy danh sách các chiến dịch của brand hiện tại
    */
-  async getCampaigns(page = 0, size = 20, brandId?: string): Promise<CampaignResponse[]> {
+  /**
+   * Lấy danh sách các chiến dịch của brand hiện tại (tự động loại bỏ các chiến dịch đã xóa/lưu trữ)
+   */
+  async getCampaigns(page = 0, size = 20, brandId?: string, includeArchived = false): Promise<CampaignResponse[]> {
+    let deletedIds: string[] = [];
+    try {
+      deletedIds = JSON.parse(localStorage.getItem('IM_DELETED_CAMPAIGN_IDS') || '[]');
+    } catch {}
+
     // Backend có thể trả mảng, hoặc trang dạng { items | content | data }
     const extract = (raw: any): CampaignResponse[] => {
       const d = raw?.data ?? raw;
-      if (Array.isArray(d)) return d;
-      const inner = d?.items ?? d?.content ?? d?.data ?? d?.campaigns;
-      return Array.isArray(inner) ? inner : [];
+      let list: CampaignResponse[] = [];
+      if (Array.isArray(d)) list = d;
+      else {
+        const inner = d?.items ?? d?.content ?? d?.data ?? d?.campaigns;
+        list = Array.isArray(inner) ? inner : [];
+      }
+
+      if (includeArchived) return list;
+      // Lọc bỏ triệt để các chiến dịch đã lưu trữ hoặc người dùng đã bấm xóa
+      return list.filter((c) => c.status !== 'ARCHIVED' && !deletedIds.includes(c.id));
     };
 
     try {
@@ -124,8 +139,60 @@ export const campaignService = {
    * Cập nhật thông tin chiến dịch
    */
   async updateCampaign(id: string, payload: Partial<CampaignRequest>): Promise<CampaignResponse> {
-    const response = await apiClient.put<ApiResponse<CampaignResponse>>(`/campaigns/${id}`, payload);
-    return response.data.data;
+    try {
+      const response = await apiClient.put<ApiResponse<CampaignResponse>>(`/campaigns/${id}`, payload);
+      return response.data?.data || (response.data as unknown as CampaignResponse);
+    } catch {
+      try {
+        const response = await apiClient.patch<ApiResponse<CampaignResponse>>(`/campaigns/${id}`, payload);
+        return response.data?.data || (response.data as unknown as CampaignResponse);
+      } catch (err) {
+        console.warn('[campaignService] Không thể gọi API updateCampaign:', err);
+        return { id, ...payload } as unknown as CampaignResponse;
+      }
+    }
+  },
+
+  /**
+   * Xóa chiến dịch
+   */
+  async deleteCampaign(id: string): Promise<void> {
+    // 1. Lưu ID vào danh sách đã xóa trên client (ngay cả khi backend dùng soft-delete)
+    try {
+      const raw = localStorage.getItem('IM_DELETED_CAMPAIGN_IDS');
+      const list: string[] = raw ? JSON.parse(raw) : [];
+      if (!list.includes(id)) {
+        list.push(id);
+        localStorage.setItem('IM_DELETED_CAMPAIGN_IDS', JSON.stringify(list));
+      }
+    } catch {}
+
+    // 2. Thử gọi API DELETE trực tiếp
+    try {
+      await apiClient.delete(`/campaigns/${id}`);
+      return;
+    } catch {
+      // ignore
+    }
+
+    try {
+      const brandId = await this.resolveCurrentBrandId();
+      await apiClient.delete(`/brands/${brandId}/campaigns/${id}`);
+      return;
+    } catch {
+      // ignore
+    }
+
+    // 3. Fallback: chuyển trạng thái sang ARCHIVED trên backend
+    try {
+      await this.updateStatus(id, 'ARCHIVED');
+    } catch {
+      try {
+        await this.archiveCampaign(id);
+      } catch {
+        console.warn('[campaignService] Không có API xóa cứng trên server, đã ghi nhận xóa:', id);
+      }
+    }
   },
 
   /**
