@@ -107,75 +107,30 @@
 /* ============================================================
    PREMIUM MODERN HERO WELCOME BANNER
    ============================================================ */
+/* ============================================================
+   AESTHETIC MODERN HERO WELCOME BANNER (Signature Purple Gradient)
+   ============================================================ */
 .im-welcome-banner {
   position: relative;
   overflow: hidden;
-  border-radius: 24px;
-  background: linear-gradient(135deg, #372875 0%, #4E3296 38%, #673EB8 72%, #7E4AD4 100%);
-  padding: 32px 36px;
-  box-shadow: 0 16px 40px -8px rgba(78, 50, 150, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #3B1B7A 0%, #5B21B6 45%, #6D28D9 80%, #7C3AED 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 28px 32px;
+  box-shadow: 0 10px 30px -5px rgba(91, 33, 182, 0.28);
   color: #FFFFFF;
   margin-bottom: 2px;
 }
 
-/* Ambient Ambient Glows */
-.im-banner-glow-1 {
-  position: absolute;
-  top: -80px;
-  right: -40px;
-  width: 380px;
-  height: 380px;
-  background: radial-gradient(circle, rgba(244, 114, 182, 0.32) 0%, rgba(192, 132, 252, 0.18) 45%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(40px);
-  animation: bannerPulse 8s ease-in-out infinite alternate;
-}
-
-.im-banner-glow-2 {
-  position: absolute;
-  bottom: -100px;
-  left: 10%;
-  width: 320px;
-  height: 320px;
-  background: radial-gradient(circle, rgba(129, 140, 248, 0.3) 0%, rgba(167, 139, 250, 0.12) 50%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(45px);
-}
-
+/* Ambient glow subtle layers */
+.im-banner-glow-1,
+.im-banner-glow-2,
 .im-banner-glow-3 {
-  position: absolute;
-  top: 40%;
-  left: 45%;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(244, 63, 94, 0.18) 0%, transparent 65%);
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(35px);
+  display: none;
 }
 
-@keyframes bannerPulse {
-  0% {
-    transform: scale(0.95) translate(0, 0);
-    opacity: 0.8;
-  }
-
-  100% {
-    transform: scale(1.1) translate(-15px, 15px);
-    opacity: 1;
-  }
-}
-
-/* Subtle modern mesh grid pattern */
 .im-banner-grid-overlay {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
-  background-size: 24px 24px;
-  opacity: 0.28;
-  pointer-events: none;
+  display: none;
 }
 
 /* Layout container */
@@ -192,95 +147,51 @@
   .im-banner-content {
     flex-direction: column;
     align-items: flex-start;
-    gap: 24px;
+    gap: 20px;
   }
 }
 
 /* Left side content */
 .im-banner-left {
   flex: 1;
-  max-width: 680px;
+  max-width: 660px;
 }
 
 .im-banner-tags {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
-}
-
-.im-ai-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(10px);
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #FFFFFF;
-  letter-spacing: 0.2px;
-}
-
-.im-ai-pulse {
-  width: 7px;
-  height: 7px;
-  background: #34D399;
-  border-radius: 50%;
-  box-shadow: 0 0 8px #34D399;
-  animation: pulseDot 1.8s infinite;
-}
-
-@keyframes pulseDot {
-
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.4;
-    transform: scale(0.8);
-  }
 }
 
 .im-date-badge {
   display: inline-flex;
   align-items: center;
   padding: 4px 12px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 999px;
   font-size: 12px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.85);
+  color: #F3E8FF;
 }
 
 .im-banner-title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.5px;
   line-height: 1.25;
   margin: 0 0 10px 0;
   color: #FFFFFF;
 }
 
-.im-banner-name {
-  color: #FDA4AF;
-  font-weight: 800;
-}
-
 .im-banner-desc {
-  font-size: 14.5px;
+  font-size: 14px;
   line-height: 1.6;
-  color: rgba(241, 245, 249, 0.88);
+  color: #E9D5FF;
   margin: 0 0 22px 0;
-  max-width: 620px;
+  max-width: 580px;
 }
 
 .im-banner-desc strong {
@@ -293,78 +204,55 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 22px;
+  margin-bottom: 4px;
   flex-wrap: wrap;
 }
 
 .im-btn-create-campaign {
   background: #FFFFFF !important;
-  color: #1E1B4B !important;
+  color: #5B21B6 !important;
   border: none !important;
   font-weight: 700 !important;
-  border-radius: 12px !important;
-  height: 44px !important;
-  padding: 0 24px !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22) !important;
+  border-radius: 10px !important;
+  height: 42px !important;
+  padding: 0 20px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
   display: inline-flex !important;
   align-items: center !important;
   gap: 8px !important;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .im-btn-create-campaign:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.3) !important;
-  background: #F8FAFC !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22) !important;
+  background: #FAF5FF !important;
+  color: #4C1D95 !important;
 }
 
 .im-btn-discover-creator {
-  background: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
   color: #FFFFFF !important;
   border: 1px solid rgba(255, 255, 255, 0.28) !important;
   font-weight: 600 !important;
-  border-radius: 12px !important;
-  height: 44px !important;
-  padding: 0 22px !important;
-  backdrop-filter: blur(10px) !important;
+  border-radius: 10px !important;
+  height: 42px !important;
+  padding: 0 20px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
   display: inline-flex !important;
   align-items: center !important;
   gap: 8px !important;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .im-btn-discover-creator:hover {
   background: rgba(255, 255, 255, 0.24) !important;
   border-color: rgba(255, 255, 255, 0.45) !important;
   color: #FFFFFF !important;
-  transform: translateY(-2px) !important;
+  transform: translateY(-1px) !important;
 }
 
-/* Quick live status indicators */
-.im-banner-quick-stats {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.85);
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.im-quick-stat-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 500;
-}
-
-.im-quick-stat-divider {
-  opacity: 0.4;
-  font-size: 10px;
-}
-
-/* Right side: Glass Spotlight Card */
+/* Right side: Spotlight Card */
 .im-banner-right {
   flex-shrink: 0;
   width: 360px;
@@ -378,26 +266,24 @@
 
 .im-glass-card {
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-radius: 20px;
-  padding: 18px 20px;
-  box-shadow: 0 16px 36px 0 rgba(0, 0, 0, 0.28);
-  transition: transform 0.3s ease, border-color 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(16px);
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  color: #FFFFFF;
+  transition: border-color 0.2s ease;
 }
 
 .im-glass-card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(255, 255, 255, 0.36);
-  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .im-glass-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .im-glass-title-wrap {
@@ -407,7 +293,7 @@
 }
 
 .im-glass-icon {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .im-glass-title {
@@ -419,7 +305,7 @@
 
 .im-glass-subtitle {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.65);
+  color: #DDD6FE;
 }
 
 /* Featured Campaign Live Tag */
@@ -429,21 +315,19 @@
   gap: 6px;
   background: rgba(16, 185, 129, 0.2);
   border: 1px solid rgba(16, 185, 129, 0.4);
-  color: #34D399;
+  color: #6EE7B7;
   font-size: 11px;
   font-weight: 700;
-  padding: 3px 10px;
+  padding: 2px 8px;
   border-radius: 999px;
-  backdrop-filter: blur(8px);
 }
 
 .im-live-dot {
   width: 6px;
   height: 6px;
-  background: #34D399;
+  background: #10B981;
   border-radius: 50%;
-  box-shadow: 0 0 6px #34D399;
-  animation: pulseDot 1.5s infinite;
+  box-shadow: 0 0 6px #10B981;
 }
 
 /* Featured Campaign Body */
@@ -451,39 +335,32 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
-  transition: all 0.25s ease;
+  padding: 9px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  transition: all 0.2s ease;
   margin-bottom: 10px;
 }
 
 .im-featured-camp-body:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .im-featured-camp-thumb-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .im-featured-camp-thumb {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.im-featured-camp-body:hover .im-featured-camp-thumb {
-  transform: scale(1.08);
 }
 
 .im-featured-camp-details {
@@ -492,7 +369,7 @@
 }
 
 .im-featured-camp-title {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   color: #FFFFFF;
   white-space: nowrap;
@@ -503,7 +380,7 @@
 
 .im-featured-camp-cat {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.72);
+  color: #E9D5FF;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -515,9 +392,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.22);
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 12px;
 }
 
@@ -530,21 +407,21 @@
 
 .im-featured-metric-label {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.6);
+  color: #DDD6FE;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 
 .im-featured-metric-val {
   font-size: 12.5px;
-  font-weight: 800;
+  font-weight: 700;
   color: #FFFFFF;
 }
 
 .im-featured-metric-divider {
   width: 1px;
   height: 18px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .im-featured-camp-footer {
@@ -557,23 +434,24 @@
   background: rgba(255, 255, 255, 0.18) !important;
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
   color: #FFFFFF !important;
-  font-size: 11px !important;
+  font-size: 11.5px !important;
   font-weight: 600 !important;
-  border-radius: 7px !important;
+  border-radius: 6px !important;
   height: 26px !important;
   padding: 0 10px !important;
   transition: all 0.2s ease !important;
 }
 
 .im-featured-btn-view:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.28) !important;
   border-color: rgba(255, 255, 255, 0.5) !important;
+  color: #FFFFFF !important;
 }
 
 .im-glass-link {
-  color: #A7F3D0 !important;
-  font-weight: 700 !important;
-  font-size: 11.5px !important;
+  color: #FDE047 !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
   padding: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -581,5 +459,6 @@
 }
 
 .im-glass-link:hover {
-  color: #34D399 !important;
+  color: #FEF08A !important;
+  text-decoration: underline !important;
 }

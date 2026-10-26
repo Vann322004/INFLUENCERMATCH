@@ -208,7 +208,7 @@ export default function DashboardPage() {
       id: `t_${c.id}`,
       campaignId: c.id,
       title: c.status === 'ACTIVE' ? `Theo dõi tiến độ: ${c.name}` : `Thiết lập quan hệ: ${c.name}`,
-      subtitle: `Mục tiêu: ${c.objective || c.productService || 'CONVERSION'}`,
+      subtitle: `Mục tiêu: ${c.objective === 'AWARENESS' ? 'Độ nhận diện' : c.objective === 'ENGAGEMENT' ? 'Tương tác' : c.objective === 'TRAFFIC' ? 'Lưu lượng truy cập' : (c.productService || 'Chuyển đổi')}`,
       time: i === 0 ? 'Vừa xong' : `${i + 1} giờ trước`,
       icon: <UserAddOutlined style={{ color: '#3B82F6' }} />,
       iconBg: '#EFF6FF',
@@ -218,7 +218,7 @@ export default function DashboardPage() {
         id: 't_default',
         campaignId: 'hi123',
         title: 'Theo dõi tiến độ: Hi123',
-        subtitle: 'Mục tiêu: CONVERSION',
+        subtitle: 'Mục tiêu: Tăng trưởng chuyển đổi',
         time: 'Vừa xong',
         icon: <UserAddOutlined style={{ color: '#3B82F6' }} />,
         iconBg: '#EFF6FF',
@@ -332,20 +332,18 @@ export default function DashboardPage() {
           <div className="im-banner-left">
             <div className="im-banner-tags">
               <span className="im-date-badge">
-                <CalendarOutlined style={{ fontSize: 12, marginRight: 6, opacity: 0.85 }} />
+                <CalendarOutlined style={{ fontSize: 12, marginRight: 6, color: '#DDD6FE' }} />
                 {getFormattedDate()}
               </span>
             </div>
 
             <div className="im-banner-title">
-              {greeting.text},{' '}
-              <span className="im-banner-name">{userName}!</span>{' '}
-              <span className="im-hand-wave">👋</span>
+              {greeting.text}, <span style={{ color: '#FDE047' }}>{userName}</span>!
             </div>
 
             <p className="im-banner-desc">
-              Hôm nay hệ thống AI đã phân tích và đề xuất{' '}
-              <strong>{rawCreators.length > 0 ? rawCreators.length : 614} Creator tiềm năng</strong> đạt độ tương thích cao cho thương hiệu của bạn. Hãy tạo chiến dịch mới hoặc khám phá ngay!
+              Hệ thống đã chọn lọc và đề xuất{' '}
+              <strong>{rawCreators.length > 0 ? rawCreators.length.toLocaleString() : '1.446'} Creator tiềm năng</strong> đạt độ tương thích cao cho thương hiệu của bạn. Hãy tạo chiến dịch mới hoặc bắt đầu khám phá ngay!
             </p>
 
             {/* Quick Action Buttons */}
@@ -354,7 +352,7 @@ export default function DashboardPage() {
                 type="primary"
                 size="large"
                 className="im-btn-create-campaign"
-                icon={<RocketOutlined style={{ fontSize: 16 }} />}
+                icon={<PlusOutlined style={{ fontSize: 15 }} />}
                 onClick={() => navigate('/campaigns/create')}
               >
                 Tạo chiến dịch mới
@@ -366,7 +364,7 @@ export default function DashboardPage() {
                 icon={<SearchOutlined style={{ fontSize: 15 }} />}
                 onClick={() => navigate('/creators')}
               >
-                Khám phá Creator AI
+                Khám phá Creator
               </Button>
             </div>
           </div>
@@ -936,7 +934,7 @@ export default function DashboardPage() {
                 >
                   <PlusOutlined />
                 </div>
-                <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Top Creator</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Top Creator Nổi bật</span>
               </Space>
             }
             extra={

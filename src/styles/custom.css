@@ -6,7 +6,7 @@ body {
 }
 
 /* ==========================================================================
-   Sidebar: Light Linear Gradient Tone (Nền Linear Sáng Trước Đó)
+   Sidebar: Original Signature Purple Gradient Tone (No Scroll, Premium Violet)
    ========================================================================== */
 .app-sider {
   background: linear-gradient(180deg, #FFFFFF 0%, #FAF5FF 40%, #EEF2FF 75%, #E0E7FF 100%) !important;
@@ -16,120 +16,138 @@ body {
   top: 0;
   left: 0;
   z-index: 50;
-  box-shadow: 2px 0 16px rgba(99, 102, 241, 0.05);
+  box-shadow: 2px 0 16px rgba(124, 58, 237, 0.06) !important;
+  overflow: hidden !important;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+.app-sider,
+.app-sider *,
+.sidebar-menu,
+.sidebar-menu-wrapper {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.app-sider::-webkit-scrollbar,
+.app-sider *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .app-sider .ant-layout-sider-children {
   display: flex !important;
   flex-direction: column !important;
   height: 100vh !important;
-  padding: 16px 12px 14px 12px !important;
+  padding: 14px 10px 14px 10px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
+  justify-content: space-between !important;
 }
 
 /* Sidebar Menu Items */
-.sidebar-menu .ant-menu-item,
-.sidebar-menu .ant-menu-submenu-title {
+.sidebar-menu .ant-menu-item {
   color: #475569 !important;
-  border-radius: 10px !important;
-  margin: 3px 0 !important;
+  border-radius: 9px !important;
+  margin: 2px 0 !important;
+  height: 38px !important;
+  line-height: 38px !important;
   font-size: 13.5px !important;
   font-weight: 600 !important;
-  transition: all 0.2s ease !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  transition: all 0.15s ease !important;
 }
 
-.sidebar-menu .ant-menu-item .ant-menu-item-icon,
-.sidebar-menu .ant-menu-submenu-title .ant-menu-item-icon,
-.sidebar-menu .ant-menu-submenu-arrow {
-  color: inherit !important;
+.sidebar-menu .ant-menu-item .ant-menu-item-icon {
+  color: #64748B !important;
+  font-size: 16px !important;
+  transition: color 0.15s ease !important;
 }
 
-.sidebar-menu .ant-menu-item:hover,
-.sidebar-menu .ant-menu-submenu-title:hover {
+.sidebar-menu .ant-menu-item:hover {
   color: #7C3AED !important;
   background: rgba(139, 92, 246, 0.08) !important;
-  transform: translateX(2px);
+  transform: none !important;
 }
 
+.sidebar-menu .ant-menu-item:hover .ant-menu-item-icon {
+  color: #7C3AED !important;
+}
+
+/* Active Menu Item: Signature Purple Pill */
 .sidebar-menu .ant-menu-item-selected {
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
+  background: linear-gradient(135deg, #7C3AED 0%, #5B5BF0 100%) !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3) !important;
 }
 
 .sidebar-menu .ant-menu-item-selected .ant-menu-item-icon {
   color: #FFFFFF !important;
 }
 
-/* Parent "Chiến dịch" when on /campaigns page */
-.sidebar-menu .sidebar-submenu-active > .ant-menu-submenu-title {
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
-  color: #FFFFFF !important;
-  font-weight: 700 !important;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
+/* Action Pill at Top (Tạo chiến dịch mới) - Signature Violet Gradient */
+.chatgpt-new-action-pill {
+  background: linear-gradient(135deg, #7C3AED 0%, #5B5BF0 100%);
+  border: none;
+  border-radius: 9px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-bottom: 12px;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.28);
 }
 
-.sidebar-menu .sidebar-submenu-active > .ant-menu-submenu-title .ant-menu-item-icon,
-.sidebar-menu .sidebar-submenu-active > .ant-menu-submenu-title .ant-menu-submenu-arrow {
-  color: #FFFFFF !important;
+.chatgpt-new-action-pill:hover {
+  background: linear-gradient(135deg, #6D28D9 0%, #4F46E5 100%);
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.38);
+  transform: translateY(-1px);
 }
 
-/* Parent "Chiến dịch" when one of its children is active */
-.sidebar-menu .sidebar-submenu-parent > .ant-menu-submenu-title {
-  color: #7C3AED !important;
-  font-weight: 700 !important;
-  background: rgba(139, 92, 246, 0.08) !important;
+/* Bottom Pill Button (Quản lý gói & Hạn mức) */
+.chatgpt-claim-pill-btn {
+  width: 100%;
+  height: 34px;
+  border-radius: 9999px;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  background: rgba(124, 58, 237, 0.08);
+  color: #7C3AED;
+  font-weight: 600;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(124, 58, 237, 0.06);
+  transition: all 0.15s ease;
+  outline: none;
+  margin-top: 8px;
 }
 
-.sidebar-menu .sidebar-submenu-parent > .ant-menu-submenu-title .ant-menu-item-icon,
-.sidebar-menu .sidebar-submenu-parent > .ant-menu-submenu-title .ant-menu-submenu-arrow {
-  color: #7C3AED !important;
+.chatgpt-claim-pill-btn:hover {
+  background: rgba(124, 58, 237, 0.15);
+  border-color: rgba(124, 58, 237, 0.45);
+  color: #6D28D9;
 }
 
-/* Submenu branch lines & item spacing */
-.sidebar-menu .ant-menu-sub.ant-menu-inline {
-  background: transparent !important;
-  border: none !important;
-  margin-left: 14px !important;
-  padding-left: 6px !important;
-  border-left: 1.5px solid #E2E8F0 !important;
-}
-
-.sidebar-menu .ant-menu-sub .ant-menu-item {
-  font-size: 13px !important;
-  height: 38px !important;
-  line-height: 38px !important;
-  padding-left: 12px !important;
-  margin: 2px 0 !important;
-}
-
-/* Sidebar Promo & Subscription Banner */
-.sidebar-subscription-card {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sidebar-subscription-card:hover {
-  transform: translateY(-2px);
-  border-color: #8B5CF6 !important;
-  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.16) !important;
-}
-
-/* Sidebar Bottom User (Pinned at bottom) */
+/* Sidebar Bottom User Container */
 .sidebar-user-card {
   border-top: 1px solid #E2E8F0;
   padding-top: 10px;
   margin-top: auto;
-  cursor: pointer;
-  border-radius: 10px;
-  transition: background 0.2s;
   flex-shrink: 0;
   width: 100%;
-}
-
-.sidebar-user-card:hover {
-  background: rgba(139, 92, 246, 0.08);
 }
 
 /* Header - Standalone Floating Action Buttons for Dashboard */

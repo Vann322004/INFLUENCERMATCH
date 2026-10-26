@@ -97,7 +97,7 @@ export default function AppHeader() {
                 {currentUser?.fullName || currentUser?.email || 'Người dùng'}
               </span>
               <span style={{ fontSize: 10.5, color: '#64748B', whiteSpace: 'nowrap' }}>
-                {currentUser?.role || 'BRAND'}
+                {currentUser?.role === 'ADMIN' ? 'Quản trị viên' : 'Thương hiệu'}
               </span>
             </div>
             <DownOutlined style={{ fontSize: 10, color: '#94A3B8', marginLeft: 2, marginRight: 2 }} />

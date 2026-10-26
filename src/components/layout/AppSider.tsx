@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Typography, Badge } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Typography, Badge, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -18,8 +18,12 @@ import {
   CrownOutlined,
   FileDoneOutlined,
   ClockCircleOutlined,
+  AimOutlined,
+  EditOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  GiftOutlined,
 } from '@ant-design/icons';
-import SidebarPromo from '../dashboard/SidebarPromo';
 import { authService } from '../../services/api/authService';
 
 const { Sider } = Layout;
@@ -28,24 +32,36 @@ interface AppSiderProps {
   collapsed?: boolean;
 }
 
-export default function AppSider({ collapsed = false }: AppSiderProps) {
+export default function AppSider({ collapsed: initialCollapsed = false }: AppSiderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const currentUser = authService.getCurrentUser();
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
+
+  // User initials (e.g. "VN" or "VY")
+  const getInitials = () => {
+    if (currentUser?.fullName) {
+      const parts = currentUser.fullName.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      }
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return 'VN';
+  };
+
+  const initials = getInitials();
+  const userName = currentUser?.fullName || 'Vy Huynh';
 
   // Determine active key from current path
   const activeKey = location.pathname.includes('subscription') || location.pathname.includes('billing') || location.pathname.includes('plans')
     ? 'subscription'
+    : location.pathname.includes('recommendation') || location.search.includes('tab=recommendation')
+    ? 'recommendation'
     : location.pathname.includes('crm') || location.pathname.includes('outreach') || location.pathname.includes('relationship')
     ? 'crm'
-    : location.pathname.includes('collaboration') || location.pathname.includes('collab') || location.pathname.includes('operations')
-    ? 'collaboration'
     : location.pathname.includes('performance') || location.pathname.includes('reports') || location.pathname.includes('analytics')
-    ? 'reports'
-    : location.pathname.includes('campaign-history') || location.pathname.includes('/history')
-    ? 'history'
-    : location.pathname.includes('campaign-management') || location.pathname.includes('pipeline')
-    ? 'campaign-management'
+    ? 'performance'
     : location.pathname.includes('shortlist')
     ? 'shortlists'
     : location.pathname.includes('creator')
@@ -54,38 +70,28 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
     ? 'campaigns'
     : 'dashboard';
 
-  // Sub-items grouped under "Chiến dịch" parent menu
-  const CAMPAIGN_GROUP_KEY = 'campaign-group';
-  const campaignChildKeys = ['collaboration', 'campaign-management', 'reports', 'history'];
-  const isInCampaignGroup = activeKey === 'campaigns' || campaignChildKeys.includes(activeKey);
-
-  const [openKeys, setOpenKeys] = useState<string[]>(['campaign-group']);
-
-  useEffect(() => {
-    if (isInCampaignGroup) {
-      setOpenKeys((prev) => (prev.includes(CAMPAIGN_GROUP_KEY) ? prev : [...prev, CAMPAIGN_GROUP_KEY]));
-    }
-  }, [isInCampaignGroup]);
-
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     if (key === 'dashboard') {
       navigate('/dashboard');
-    } else if (key === 'campaigns' || key === CAMPAIGN_GROUP_KEY) {
+    } else if (key === 'campaigns') {
       navigate('/campaigns');
     } else if (key === 'creators') {
       navigate('/creators');
     } else if (key === 'shortlists') {
       navigate('/shortlists');
+    } else if (key === 'recommendation') {
+      const savedCampId = localStorage.getItem('last_active_campaign_id') || sessionStorage.getItem('current_campaign_id');
+      if (savedCampId && savedCampId !== 'all') {
+        navigate(`/campaign-management/${savedCampId}?tab=recommendation`);
+      } else {
+        navigate('/recommendations?tab=recommendation');
+      }
     } else if (key === 'crm') {
       navigate('/crm');
-    } else if (key === 'collaboration') {
-      navigate('/collaboration');
-    } else if (key === 'reports') {
+    } else if (key === 'performance') {
       navigate('/performance');
-    } else if (key === 'history') {
-      navigate('/campaign-history');
-    } else if (key === 'campaign-management') {
-      navigate('/campaign-management');
+    } else if (key === 'messages') {
+      navigate('/messages');
     } else if (key === 'subscription') {
       navigate('/subscription');
     }
@@ -95,41 +101,12 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
     {
       key: 'dashboard',
       icon: <AppstoreOutlined />,
-      label: 'Dashboard',
+      label: 'Tổng quan',
     },
     {
-      key: CAMPAIGN_GROUP_KEY,
+      key: 'campaigns',
       icon: <NotificationOutlined />,
       label: 'Chiến dịch',
-      className:
-        activeKey === 'campaigns'
-          ? 'sidebar-submenu-active'
-          : campaignChildKeys.includes(activeKey)
-          ? 'sidebar-submenu-parent'
-          : undefined,
-      onTitleClick: () => navigate('/campaigns'),
-      children: [
-        {
-          key: 'collaboration',
-          icon: <FileDoneOutlined />,
-          label: 'Vận hành & Hợp tác',
-        },
-        {
-          key: 'campaign-management',
-          icon: <ApartmentOutlined />,
-          label: 'Quản lý chiến dịch',
-        },
-        {
-          key: 'reports',
-          icon: <BarChartOutlined />,
-          label: 'Hiệu suất & ROI',
-        },
-        {
-          key: 'history',
-          icon: <ClockCircleOutlined />,
-          label: 'Lịch sử Chiến dịch',
-        },
-      ],
     },
     {
       key: 'creators',
@@ -142,9 +119,19 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       label: 'Danh sách chọn',
     },
     {
+      key: 'recommendation',
+      icon: <AimOutlined />,
+      label: 'Đề xuất Four-Memory',
+    },
+    {
       key: 'crm',
       icon: <TeamOutlined />,
       label: 'Tiếp cận & CRM',
+    },
+    {
+      key: 'performance',
+      icon: <BarChartOutlined />,
+      label: 'Hiệu suất & ROI',
     },
     {
       key: 'messages',
@@ -152,70 +139,139 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
       label: (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <span>Tin nhắn</span>
-          <Badge count={3} style={{ backgroundColor: '#8B5CF6', color: '#fff' }} />
+          <Badge count={3} style={{ backgroundColor: '#7C3AED', color: '#fff', fontSize: 10 }} />
         </div>
       ),
     },
   ];
 
+  const handleLogout = () => {
+    authService.logout();
+    navigate('/login');
+  };
+
+  const userDropdownItems: MenuProps['items'] = [
+    { key: 'profile', icon: <UserOutlined />, label: 'Hồ sơ Thương hiệu', onClick: () => navigate('/brand-profile') },
+    { key: 'billing', icon: <CrownOutlined />, label: 'Gói & Hạn mức', onClick: () => navigate('/subscription') },
+    { type: 'divider' },
+    { key: 'logout', icon: <LogoutOutlined />, danger: true, label: 'Đăng xuất', onClick: handleLogout },
+  ];
+
   return (
     <Sider
-      width={250}
-      breakpoint="lg"
-      collapsedWidth="0"
+      width={240}
+      collapsedWidth={62}
+      collapsed={collapsed}
       className="app-sider"
     >
-      {/* Brand Logo */}
+      {/* 1. Header: Logo + Brand Name + ChatGPT-style Toggle */}
       <div
-        onClick={() => navigate('/dashboard')}
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 10,
-          padding: '10px 10px 18px 10px',
-          cursor: 'pointer',
-          flexShrink: 0,
+          justifyContent: collapsed ? 'center' : 'space-between',
+          padding: collapsed ? '4px 0 12px 0' : '4px 4px 12px 6px',
+          borderBottom: '1px solid rgba(124, 58, 237, 0.08)',
+          marginBottom: 10,
         }}
       >
-        <img
-          src="/logo.png"
-          alt="InfluencerMatch"
+        <div
+          onClick={() => navigate('/dashboard')}
           style={{
-            width: 40,
-            height: 40,
-            objectFit: 'contain',
-            flexShrink: 0,
-            filter: 'drop-shadow(0 2px 8px rgba(37, 244, 238, 0.35)) drop-shadow(0 2px 8px rgba(254, 44, 85, 0.35))',
-            transition: 'transform 0.25s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 9,
+            cursor: 'pointer',
           }}
-        />
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <span
+        >
+          <img
+            src="/logo.png"
+            alt="Logo"
             style={{
-              color: '#0F172A',
-              fontWeight: 900,
-              fontSize: 13.8,
-              letterSpacing: 0.3,
-              lineHeight: 1.2,
-              whiteSpace: 'nowrap',
-              textShadow: '-1.2px -0.6px 0 #25F4EE, 1.2px 0.6px 0 #FE2C55',
-              userSelect: 'none',
+              width: 28,
+              height: 28,
+              objectFit: 'contain',
+              flexShrink: 0,
             }}
-          >
-            INFLUENCERMATCH
-          </span>
+          />
+          {!collapsed && (
+            <span
+              style={{
+                color: '#0F172A',
+                fontWeight: 700,
+                fontSize: 14.5,
+                letterSpacing: -0.3,
+                lineHeight: 1.2,
+                userSelect: 'none',
+              }}
+            >
+              InfluencerMatch
+            </span>
+          )}
         </div>
+
+        <Tooltip title={collapsed ? 'Mở rộng menu' : 'Thu gọn menu'} placement="right">
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#64748B',
+              padding: '4px 6px',
+              borderRadius: 6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            {collapsed ? <MenuUnfoldOutlined style={{ fontSize: 13 }} /> : <MenuFoldOutlined style={{ fontSize: 13 }} />}
+          </button>
+        </Tooltip>
       </div>
 
-      {/* Menu List */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      {/* 2. ChatGPT "New chat" Style Quick Action Pill */}
+      {!collapsed ? (
+        <div
+          onClick={() => navigate('/campaigns/create')}
+          className="chatgpt-new-action-pill"
+        >
+          <EditOutlined style={{ fontSize: 15, color: '#FFFFFF' }} />
+          <span>Tạo chiến dịch mới</span>
+        </div>
+      ) : (
+        <Tooltip title="Tạo chiến dịch mới" placement="right">
+          <div
+            onClick={() => navigate('/campaigns/create')}
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 8,
+              background: 'linear-gradient(135deg, #7C3AED 0%, #5B5BF0 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              margin: '0 auto 10px auto',
+              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.28)',
+            }}
+          >
+            <EditOutlined style={{ fontSize: 15, color: '#FFFFFF' }} />
+          </div>
+        </Tooltip>
+      )}
+
+      {/* 3. Navigation Menu Items - No scrolling */}
+      <div style={{ flex: 1, overflow: 'hidden' }}>
         <Menu
           mode="inline"
           selectedKeys={[activeKey]}
-          openKeys={openKeys}
-          onOpenChange={(keys) => setOpenKeys(keys as string[])}
           onClick={handleMenuClick}
           items={menuItems}
+          inlineCollapsed={collapsed}
           className="sidebar-menu"
           style={{
             background: 'transparent',
@@ -224,9 +280,81 @@ export default function AppSider({ collapsed = false }: AppSiderProps) {
         />
       </div>
 
-      {/* AI Promo Card */}
-      <div style={{ marginTop: 'auto', paddingTop: 12, flexShrink: 0 }}>
-        <SidebarPromo />
+      {/* 4. ChatGPT-Style Bottom User Card (Image 2 & 3) */}
+      <div className="sidebar-user-card">
+        <Dropdown menu={{ items: userDropdownItems }} placement="topRight" trigger={['click']}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              gap: 10,
+              padding: collapsed ? '6px 0' : '6px 4px',
+              borderRadius: 8,
+              cursor: 'pointer',
+              transition: 'background 0.15s ease',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(139, 92, 246, 0.08)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            {/* Salmon / Coral Avatar with Initials like ChatGPT's VN circle */}
+            <Avatar
+              size={34}
+              src={currentUser?.avatar}
+              style={{
+                backgroundColor: '#8B5CF6',
+                color: '#FFFFFF',
+                fontWeight: 700,
+                fontSize: 12.5,
+                flexShrink: 0,
+                border: '1px solid rgba(124, 58, 237, 0.2)',
+              }}
+            >
+              {initials}
+            </Avatar>
+
+            {!collapsed && (
+              <div style={{ flex: 1, minWidth: 0, lineHeight: 1.25 }}>
+                <div
+                  style={{
+                    color: '#0F172A',
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {userName}
+                </div>
+                <div
+                  style={{
+                    color: '#64748B',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    marginTop: 2,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  Gói Doanh Nghiệp (Cao cấp)
+                </div>
+              </div>
+            )}
+          </div>
+        </Dropdown>
+
+        {/* ChatGPT "Claim offer" style pill button */}
+        {!collapsed && (
+          <button
+            onClick={() => navigate('/subscription')}
+            className="chatgpt-claim-pill-btn"
+          >
+            <CrownOutlined style={{ fontSize: 13, color: '#7C3AED' }} />
+            <span>Quản lý gói & Hạn mức</span>
+          </button>
+        )}
       </div>
     </Sider>
   );
