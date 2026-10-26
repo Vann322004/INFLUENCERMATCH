@@ -7,6 +7,8 @@ import {
   RateCardResponse,
   ShortlistItem,
   AddShortlistItemPayload,
+  SendInvitationRequest,
+  InvitationResponse,
 } from '../../types/api/creator.types';
 
 export const creatorService = {
@@ -121,5 +123,16 @@ export const creatorService = {
       { creatorIds }
     );
     return response.data;
+  },
+
+  /**
+   * Gửi lời mời tham gia chiến dịch tới Creator (POST /creators/{id}/invite)
+   */
+  async sendInvitation(creatorId: string, payload: SendInvitationRequest): Promise<InvitationResponse> {
+    const response = await apiClient.post<ApiResponse<InvitationResponse>>(
+      `/creators/${creatorId}/invite`,
+      { creatorId, ...payload }
+    );
+    return response.data?.data || (response.data as unknown as InvitationResponse);
   },
 };

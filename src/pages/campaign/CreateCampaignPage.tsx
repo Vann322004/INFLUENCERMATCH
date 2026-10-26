@@ -16,6 +16,7 @@ import {
   DatePicker,
   Divider,
   message,
+  Tooltip,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
@@ -60,6 +61,7 @@ export default function CreateCampaignPage() {
 
   // Wizard Step State (1: Thông tin chiến dịch, 2: Yêu cầu creator, 3: Chỉ số & ngân sách)
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const [isAiSummaryOpen, setIsAiSummaryOpen] = useState<boolean>(false);
 
   // ================= Step 1 State =================
   const [campaignName, setCampaignName] = useState('Summer Glow Skincare Launch 2025');
@@ -67,6 +69,8 @@ export default function CreateCampaignPage() {
   const [selectedObjectives, setSelectedObjectives] = useState<string[]>(['sales', 'awareness']);
   const [selectedFormats, setSelectedFormats] = useState<string[]>(['short_video', 'image_post']);
   const [aiPrompt, setAiPrompt] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null);
 
   // ================= Step 2 State =================
   const [creatorQuantity, setCreatorQuantity] = useState<number>(20);
@@ -235,12 +239,53 @@ export default function CreateCampaignPage() {
     );
   };
 
-  const handleAiSuggest = () => {
-    if (!aiPrompt) {
-      message.info('Vui lòng nhập mô tả mục tiêu để AI gợi ý!');
+  const handleAiSuggest = async () => {
+    if (!aiPrompt || aiPrompt.trim().length < 5) {
+      message.warning('Vui lòng nhập mô tả mục tiêu chi tiết hơn (tối thiểu 5 ký tự) để AI gợi ý!');
       return;
     }
-    message.success('AI đang phân tích và tối ưu hóa thông tin chiến dịch cho bạn!');
+    setIsAiLoading(true);
+    try {
+      message.loading({ content: 'AI đang phân tích và tối ưu hóa thông tin chiến dịch...', key: 'ai_suggest' });
+      const result = await campaignService.autofillCampaign(aiPrompt.trim());
+      if (result) {
+        if (result.name) setCampaignName(result.name);
+        if (result.productService) setProduct(result.productService);
+        if (result.objective) {
+          const objLower = String(result.objective).toLowerCase();
+          if (objLower.includes('conversion') || objLower.includes('sales')) setSelectedObjectives(['sales']);
+          else if (objLower.includes('engagement')) setSelectedObjectives(['engagement']);
+          else if (objLower.includes('traffic')) setSelectedObjectives(['traffic']);
+          else setSelectedObjectives(['awareness']);
+        }
+        if (result.platforms && Array.isArray(result.platforms) && result.platforms.length > 0) {
+          setSelectedPlatforms(result.platforms.map((p) => p.toLowerCase()));
+        }
+        if (result.targetAudiences && Array.isArray(result.targetAudiences) && result.targetAudiences.length > 0) {
+          setSelectedAges(result.targetAudiences);
+        }
+        if (result.niches && Array.isArray(result.niches) && result.niches.length > 0) {
+          setInterests(result.niches.join(', '));
+        }
+        if (result.locations && Array.isArray(result.locations) && result.locations.length > 0) {
+          setLocation(result.locations[0]);
+        }
+        if (result.budgetMax) {
+          setBudgetTotal(result.budgetMax);
+        } else if (result.budgetMin) {
+          setBudgetTotal(result.budgetMin);
+        }
+        if (result.aiExplanation) {
+          setAiExplanation(result.aiExplanation);
+        }
+        message.success({ content: 'AI đã điền tự động các thông số chiến dịch thành công!', key: 'ai_suggest' });
+      }
+    } catch (error) {
+      console.error('Error autofilling campaign with AI:', error);
+      message.error({ content: getErrorMessage(error) || 'Không thể kết nối đến Trợ lý AI lúc này.', key: 'ai_suggest' });
+    } finally {
+      setIsAiLoading(false);
+    }
   };
 
   const scrollToTop = () => {
@@ -549,10 +594,10 @@ export default function CreateCampaignPage() {
         </Row>
       </Card>
 
-      {/* 3. Main Content: Left Dynamic Form / Right Sticky Summary */}
+      {/* 3. Main Content: Dynamic Form Blocks */}
       <Row gutter={[20, 20]}>
-        {/* ===================== LEFT COLUMN (FORM BLOCKS) ===================== */}
-        <Col xs={24} xl={16}>
+        {/* ===================== FULL WIDTH FORM COLUMN ===================== */}
+        <Col xs={24}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {/* AI Assistant Banner Box */}
             <Card
@@ -625,6 +670,7 @@ export default function CreateCampaignPage() {
                 />
                 <Button
                   type="primary"
+                  loading={isAiLoading}
                   onClick={handleAiSuggest}
                   style={{
                     background: '#5B5BF0',
@@ -639,6 +685,26 @@ export default function CreateCampaignPage() {
                   Gợi ý ngay
                 </Button>
               </div>
+
+              {aiExplanation && (
+                <div
+                  style={{
+                    marginTop: 12,
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    background: 'rgba(255, 255, 255, 0.85)',
+                    border: '1px solid #DDD6FE',
+                    fontSize: 12.5,
+                    color: '#4C1D95',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                    <RobotOutlined /> Giải thích từ AI:
+                  </strong>{' '}
+                  {aiExplanation}
+                </div>
+              )}
             </Card>
 
             {/* ========================================================================= */}
@@ -1427,38 +1493,205 @@ export default function CreateCampaignPage() {
             )}
           </div>
         </Col>
+      </Row>
 
-        {/* ===================== RIGHT COLUMN (SUMMARY & AI CARDS) ===================== */}
-        <Col xs={24} xl={8}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* 4. Floating AI Assessment & Readiness FAB Widget */}
+      <Tooltip title={isAiSummaryOpen ? 'Đóng đánh giá AI' : 'Xem đánh giá & gợi ý AI cho chiến dịch'} placement="left">
+        <button
+          type="button"
+          onClick={() => setIsAiSummaryOpen(!isAiSummaryOpen)}
+          aria-label="Đánh giá chiến dịch bằng AI"
+          style={{
+            position: 'fixed',
+            bottom: 84,
+            right: 28,
+            width: 64,
+            height: 64,
+            borderRadius: '50%',
+            background: isAiSummaryOpen
+              ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
+              : 'linear-gradient(135deg, #7C3AED 0%, #6366F1 100%)',
+            boxShadow: isAiSummaryOpen
+              ? '0 8px 24px rgba(239, 68, 68, 0.45)'
+              : '0 8px 28px rgba(124, 58, 237, 0.45), 0 2px 8px rgba(0, 0, 0, 0.12)',
+            border: '2.5px solid #FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            zIndex: 1050,
+            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+            transform: isAiSummaryOpen ? 'scale(0.95)' : 'scale(1)',
+            outline: 'none',
+            padding: 0,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = isAiSummaryOpen ? 'scale(1)' : 'scale(1.08)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = isAiSummaryOpen ? 'scale(0.95)' : 'scale(1)';
+          }}
+        >
+          {isAiSummaryOpen ? (
+            <CloseOutlined style={{ fontSize: 22, color: '#FFFFFF' }} />
+          ) : (
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Progress
+                type="circle"
+                percent={readinessPercent}
+                size={50}
+                strokeColor="#FFFFFF"
+                trailColor="rgba(255, 255, 255, 0.28)"
+                strokeWidth={8}
+                format={(percent) => (
+                  <span style={{ fontWeight: 800, fontSize: 11, color: '#FFFFFF' }}>
+                    {percent}%
+                  </span>
+                )}
+              />
+              <span
+                style={{
+                  position: 'absolute',
+                  top: -5,
+                  right: -5,
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: '#10B981',
+                  border: '2px solid #FFFFFF',
+                  boxShadow: '0 2px 6px rgba(16, 185, 129, 0.6)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFFFFF',
+                  fontSize: 10,
+                }}
+              >
+                <RobotOutlined />
+              </span>
+            </div>
+          )}
+        </button>
+      </Tooltip>
+
+      {/* Floating AI Assessment Popup Panel */}
+      {isAiSummaryOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 156,
+            right: 28,
+            width: 410,
+            maxWidth: 'calc(100vw - 36px)',
+            maxHeight: 'calc(100vh - 190px)',
+            background: '#FFFFFF',
+            borderRadius: 20,
+            border: '1.5px solid #DDD6FE',
+            boxShadow: '0 20px 48px rgba(30, 27, 75, 0.22), 0 4px 18px rgba(124, 58, 237, 0.15)',
+            zIndex: 1050,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {/* Header */}
+          <div
+            style={{
+              padding: '16px 20px',
+              background: 'linear-gradient(135deg, #7C3AED 0%, #6366F1 100%)',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexShrink: 0,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backdropFilter: 'blur(4px)',
+                }}
+              >
+                <RobotOutlined style={{ fontSize: 18, color: '#FFFFFF' }} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 14, color: '#FFFFFF' }}>
+                  Đánh giá & Gợi ý từ AI
+                </div>
+                <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.85)' }}>
+                  Độ sẵn sàng: {readinessPercent}% • Cập nhật theo từng bước
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAiSummaryOpen(false)}
+              style={{
+                border: 'none',
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)')}
+            >
+              <CloseOutlined style={{ fontSize: 14 }} />
+            </button>
+          </div>
+
+          {/* Scrollable Content Container */}
+          <div
+            style={{
+              padding: '16px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+              background: '#F8FAFC',
+            }}
+          >
             {/* Card 1: Độ sẵn sàng của chiến dịch */}
             <Card
               bordered
-              style={{ borderRadius: 16, borderColor: '#EEF0F6' }}
-              bodyStyle={{ padding: '18px 20px' }}
+              style={{ borderRadius: 14, borderColor: '#EEF0F6', background: '#FFFFFF' }}
+              bodyStyle={{ padding: '16px' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <ClockCircleOutlined style={{ color: '#2563EB', fontSize: 15 }} />
-                <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
+                <span style={{ fontWeight: 700, fontSize: 13, color: '#0F172A' }}>
                   Độ sẵn sàng của chiến dịch
                 </span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <Progress
                   type="circle"
                   percent={readinessPercent}
-                  size={68}
+                  size={64}
                   strokeColor="#2563EB"
                   strokeWidth={9}
                   format={(percent) => (
-                    <span style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
+                    <span style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A' }}>
                       {percent}%
                     </span>
                   )}
                 />
                 <div>
-                  <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A', marginBottom: 3 }}>
+                  <div style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A', marginBottom: 3 }}>
                     {currentStep === 3 ? 'Hoàn hảo!' : 'Tốt lắm!'}
                   </div>
                   <div style={{ fontSize: 11.5, color: '#64748B', lineHeight: 1.4 }}>
@@ -1475,41 +1708,39 @@ export default function CreateCampaignPage() {
             {/* Card 2: Gợi ý từ AI */}
             <Card
               bordered
-              style={{ borderRadius: 16, borderColor: '#EEF0F6' }}
-              bodyStyle={{ padding: '18px 20px' }}
+              style={{ borderRadius: 14, borderColor: '#EEF0F6', background: '#FFFFFF' }}
+              bodyStyle={{ padding: '16px' }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <Space size={6}>
-                  <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
-                    Gợi ý từ AI
-                  </span>
-                </Space>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <span style={{ fontWeight: 700, fontSize: 13, color: '#0F172A' }}>
+                  Gợi ý từ AI
+                </span>
                 <Button type="link" size="small" style={{ color: '#2563EB', fontSize: 11.5, padding: 0, fontWeight: 600 }}>
                   Xem tất cả
                 </Button>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {/* Suggestion 1 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                   <div
                     style={{
-                      width: 32,
-                      height: 32,
+                      width: 30,
+                      height: 30,
                       borderRadius: 8,
                       background: '#EFF6FF',
                       color: '#3B82F6',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: 14,
+                      fontSize: 13,
                       flexShrink: 0,
                     }}
                   >
                     <TeamOutlined />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A' }}>
+                    <div style={{ fontWeight: 700, fontSize: 12, color: '#0F172A' }}>
                       Nhóm creator phù hợp
                     </div>
                     <div style={{ fontSize: 11, color: '#64748B', lineHeight: 1.3 }}>
@@ -1523,22 +1754,22 @@ export default function CreateCampaignPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                   <div
                     style={{
-                      width: 32,
-                      height: 32,
+                      width: 30,
+                      height: 30,
                       borderRadius: 8,
                       background: '#F5F3FF',
                       color: '#8B5CF6',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: 14,
+                      fontSize: 13,
                       flexShrink: 0,
                     }}
                   >
                     <DollarOutlined />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A' }}>
+                    <div style={{ fontWeight: 700, fontSize: 12, color: '#0F172A' }}>
                       Ngân sách đề xuất
                     </div>
                     <div style={{ fontSize: 11, color: '#64748B', lineHeight: 1.3 }}>
@@ -1552,22 +1783,22 @@ export default function CreateCampaignPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                   <div
                     style={{
-                      width: 32,
-                      height: 32,
+                      width: 30,
+                      height: 30,
                       borderRadius: 8,
                       background: '#EFF6FF',
                       color: '#3B82F6',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: 14,
+                      fontSize: 13,
                       flexShrink: 0,
                     }}
                   >
                     <BarChartOutlined />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A' }}>
+                    <div style={{ fontWeight: 700, fontSize: 12, color: '#0F172A' }}>
                       KPI gợi ý
                     </div>
                     <div style={{ fontSize: 11, color: '#64748B', lineHeight: 1.3 }}>
@@ -1583,19 +1814,19 @@ export default function CreateCampaignPage() {
             <Card
               bordered={false}
               style={{
-                borderRadius: 16,
+                borderRadius: 14,
                 background: 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)',
                 border: '1px solid #DDD6FE',
               }}
-              bodyStyle={{ padding: '18px 20px' }}
+              bodyStyle={{ padding: '16px' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontWeight: 700, fontSize: 13, color: '#0F172A' }}>
                   Tăng hiệu quả chiến dịch cùng AI
                 </span>
               </div>
 
-              <div style={{ fontSize: 11.5, color: '#64748B', lineHeight: 1.4, marginBottom: 14 }}>
+              <div style={{ fontSize: 11, color: '#64748B', lineHeight: 1.4, marginBottom: 12 }}>
                 AI sẽ phân tích xu hướng, hành vi người dùng và đề xuất creator phù hợp nhất với thương hiệu của bạn.
               </div>
 
@@ -1605,9 +1836,9 @@ export default function CreateCampaignPage() {
                 style={{
                   background: '#5B5BF0',
                   fontWeight: 700,
-                  fontSize: 12.5,
+                  fontSize: 12,
                   borderRadius: 10,
-                  height: 38,
+                  height: 36,
                   boxShadow: '0 4px 14px rgba(91, 91, 240, 0.3)',
                 }}
                 icon={<RobotOutlined />}
@@ -1620,15 +1851,15 @@ export default function CreateCampaignPage() {
             {/* Card 4: Thông tin nhanh */}
             <Card
               bordered
-              style={{ borderRadius: 16, borderColor: '#EEF0F6' }}
-              bodyStyle={{ padding: '18px 20px' }}
+              style={{ borderRadius: 14, borderColor: '#EEF0F6', background: '#FFFFFF' }}
+              bodyStyle={{ padding: '16px' }}
             >
-              <div style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A', marginBottom: 14 }}>
+              <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A', marginBottom: 12 }}>
                 Thông tin nhanh
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div
                     style={{
                       width: 28,
@@ -1639,20 +1870,20 @@ export default function CreateCampaignPage() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: 13,
+                      fontSize: 12,
                     }}
                   >
                     <AimOutlined />
                   </div>
                   <div>
                     <div style={{ fontSize: 10.5, color: '#94A3B8' }}>Ước tính lượt tiếp cận</div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A' }}>
+                    <div style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A' }}>
                       {targetReach} – 2.5M
                     </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div
                     style={{
                       width: 28,
@@ -1663,20 +1894,20 @@ export default function CreateCampaignPage() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: 13,
+                      fontSize: 12,
                     }}
                   >
                     💰
                   </div>
                   <div>
                     <div style={{ fontSize: 10.5, color: '#94A3B8' }}>Tổng ngân sách</div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A' }}>
+                    <div style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A' }}>
                       {(budgetTotal / 1000000).toFixed(0)} Triệu VNĐ
                     </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div
                     style={{
                       width: 28,
@@ -1687,14 +1918,14 @@ export default function CreateCampaignPage() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: 13,
+                      fontSize: 12,
                     }}
                   >
                     ⏱️
                   </div>
                   <div>
                     <div style={{ fontSize: 10.5, color: '#94A3B8' }}>Thời gian triển khai</div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A' }}>
+                    <div style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A' }}>
                       {campaignDuration === '2_weeks' ? '2 tuần' : campaignDuration === '4_weeks' ? '4 tuần' : '8 tuần'}
                     </div>
                   </div>
@@ -1702,8 +1933,8 @@ export default function CreateCampaignPage() {
               </div>
             </Card>
           </div>
-        </Col>
-      </Row>
+        </div>
+      )}
 
       {/* 4. Bottom Sticky Actions Bar */}
       <div

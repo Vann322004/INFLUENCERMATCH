@@ -26,6 +26,7 @@ import {
   CheckCircleFilled,
   EnvironmentOutlined,
   WomanOutlined,
+  ManOutlined,
   UserOutlined,
   ClockCircleOutlined,
   EyeOutlined,
@@ -317,6 +318,146 @@ const splitCategories = (cats: string[] | string | undefined): string[] => {
   return ['Lối sống & Sáng tạo'];
 };
 
+const detectCreatorGender = (
+  rawGender?: string,
+  name = '',
+  username = '',
+  bio = ''
+): 'Nam' | 'Nữ' => {
+  if (rawGender) {
+    const g = String(rawGender).trim().toUpperCase();
+    if (g === 'MALE' || g === 'NAM' || g === 'TRAI' || g === 'BOY' || g === 'MAN' || g === 'M') return 'Nam';
+    if (g === 'FEMALE' || g === 'NU' || g === 'NỮ' || g === 'GIRL' || g === 'WOMAN' || g === 'F') return 'Nữ';
+  }
+
+  // Combine full name, username and bio
+  const text = `${name} ${username} ${bio}`.toLowerCase();
+
+  // Distinct Vietnamese male indicators
+  const malePatterns = [
+    /\bhuy\b/i,
+    /\bnam\b/i,
+    /\btuấn\b|\btuan\b/i,
+    /\bphong\b/i,
+    /\blong\b/i,
+    /\bđức\b|\bduc\b/i,
+    /\bminh\b/i,
+    /\bhải\b|\bhai\b/i,
+    /\bhùng\b|\bhung\b/i,
+    /\bdũng\b|\bdung\b/i,
+    /\bhoàng\b|\bhoang\b/i,
+    /\bphúc\b|\bphuc\b/i,
+    /\bquân\b|\bquan\b/i,
+    /\bsơn\b|\bson\b/i,
+    /\bkhoa\b/i,
+    /\bđạt\b|\bdat\b/i,
+    /\btùng\b|\btung\b/i,
+    /\bcường\b|\bcuong\b/i,
+    /\btiến\b|\btien\b/i,
+    /\bthắng\b|\bthang\b/i,
+    /\bhiếu\b|\bhieu\b/i,
+    /\bduy\b/i,
+    /\bkhang\b/i,
+    /\btrí\b|\btri\b/i,
+    /\bnghĩa\b|\bnghia\b/i,
+    /\bkiên\b|\bkien\b/i,
+    /\bluân\b|\bluan\b/i,
+    /\bbảo\b|\bbao\b/i,
+    /\bthịnh\b|\bthinh\b/i,
+    /\bphát\b|\bphat\b/i,
+    /\btài\b|\btai\b/i,
+    /\bkhôi\b|\bkhoi\b/i,
+    /\bvũ\b|\bvu\b/i,
+    /\bviệt\b|\bviet\b/i,
+    /\bhưng\b/i,
+    /\bthành\b|\bthanh\b/i,
+    /\blâm\b|\blam\b/i,
+    /\bvinh\b/i,
+    /\btrung\b/i,
+    /\bquang\b/i,
+    /\bkhánh\b|\bkhanh\b/i,
+    /\bbách\b|\bbach\b/i,
+    /\btriết\b|\btriet\b/i,
+    /\btrọng\b|\btrong\b/i,
+    /\bđăng\b|\bdang\b/i,
+    /\bnhật\b|\bnhat\b/i,
+    /\bchí\b/i,
+    /\bvăn\b/i,
+    /\banh trai\b/i,
+    /\bchàng trai\b/i,
+    /\bcon trai\b/i,
+    /\bông chú\b/i,
+    /\bboy\b/i,
+    /\bmr\b/i,
+    /\bman\b/i,
+    /\bmen\b/i,
+  ];
+
+  // Distinct Vietnamese female indicators
+  const femalePatterns = [
+    /\blinh\b/i,
+    /\btrang\b/i,
+    /\bhương\b|\bhuong\b/i,
+    /\bthảo\b|\bthao\b/i,
+    /\bnga\b/i,
+    /\bmai\b/i,
+    /\blan\b/i,
+    /\bvy\b/i,
+    /\btrâm\b|\btram\b/i,
+    /\bphương\b|\bphuong\b/i,
+    /\bquỳnh\b|\bquynh\b/i,
+    /\bmy\b|\bmỹ\b/i,
+    /\bdi\b/i,
+    /\bngọc\b|\bngoc\b/i,
+    /\bhà\b|\bha\b/i,
+    /\bhằng\b|\bhang\b/i,
+    /\bthùy\b|\bthuy\b/i,
+    /\btrinh\b/i,
+    /\bly\b/i,
+    /\byến\b|\byen\b/i,
+    /\bnhung\b/i,
+    /\boanh\b/i,
+    /\bchi\b/i,
+    /\bhoa\b/i,
+    /\bchâu\b|\bchau\b/i,
+    /\buyên\b|\buyen\b/i,
+    /\btrúc\b|\btruc\b/i,
+    /\btâm\b|\btam\b/i,
+    /\bdiệp\b|\bdiep\b/i,
+    /\bthư\b|\bthu\b/i,
+    /\bloan\b/i,
+    /\bvân\b/i,
+    /\bnhi\b/i,
+    /\bhuyền\b|\bhuyen\b/i,
+    /\bbích\b|\bbich\b/i,
+    /\bphượng\b/i,
+    /\btiên\b/i,
+    /\bhạnh\b/i,
+    /\bthị\b/i,
+    /\bgirl\b/i,
+    /\bmiss\b/i,
+    /\bmrs\b/i,
+    /\bms\b/i,
+    /\bchị gái\b/i,
+    /\bcô gái\b/i,
+    /\bnàng\b/i,
+    /\bmẹ bé\b/i,
+  ];
+
+  const isMale = malePatterns.some((pattern) => pattern.test(text));
+  const isFemale = femalePatterns.some((pattern) => pattern.test(text));
+
+  if (isMale && !isFemale) return 'Nam';
+  if (isFemale && !isMale) return 'Nữ';
+
+  // If both or neither match, check the first word of the name
+  const firstWord = name.trim().split(/\s+/)[0]?.toLowerCase() || '';
+  if (malePatterns.some((p) => p.test(firstWord))) return 'Nam';
+  if (femalePatterns.some((p) => p.test(firstWord))) return 'Nữ';
+
+  return 'Nam';
+};
+
 const buildAiScores = (
   matchScore: number,
   niche: string,
@@ -578,7 +719,12 @@ export default function CreatorDetailPage() {
         profileUrl: target.profileUrl || '',
         platform,
         location: locationStr,
-        gender: target.gender || 'Nữ',
+        gender: detectCreatorGender(
+          target.gender || (routeCreator as any)?.gender,
+          rawName,
+          cleanUsername,
+          target.bio || target.contentSummary || ''
+        ),
         lastActive: 'Hoạt động gần đây',
         bio: target.bio || target.contentSummary || `Creator trên ${platform} chuyên về ${safeNiche}.`,
         categories: cleanCategories,
@@ -741,7 +887,12 @@ export default function CreatorDetailPage() {
           profileUrl: detail?.profileUrl || anyItem?.profileUrl || routeCreator?.profileUrl || '',
           platform,
           location: locationStr,
-          gender: routeCreator?.gender || 'Nữ',
+          gender: detectCreatorGender(
+            (detail as any)?.gender || anyItem?.gender || routeCreator?.gender,
+            rawName,
+            cleanUsername,
+            bio
+          ),
           lastActive: 'Hoạt động gần đây',
           bio,
           categories: cleanCategories,
@@ -1017,7 +1168,11 @@ export default function CreatorDetailPage() {
                   {creator.location}
                 </span>
                 <span className="creator-meta-item">
-                  <WomanOutlined style={{ color: '#64748B' }} />
+                  {creator.gender === 'Nam' ? (
+                    <ManOutlined style={{ color: '#2563EB' }} />
+                  ) : (
+                    <WomanOutlined style={{ color: '#EC4899' }} />
+                  )}
                   {creator.gender}
                 </span>
                 <span className="creator-meta-item" style={{ color: '#10B981', fontWeight: 600 }}>
@@ -1844,7 +1999,7 @@ export default function CreatorDetailPage() {
               <div style={{ fontSize: 24, marginBottom: 8 }}>👥</div>
               <div style={{ fontWeight: 700, fontSize: 14, color: '#0F172A', marginBottom: 4 }}>2. Đối soát nhân khẩu học</div>
               <div style={{ fontSize: 12.5, color: '#64748B', lineHeight: 1.5 }}>
-                So khớp tỷ lệ giới tính (Nữ {creator.demographics.gender[0].percent}%), độ tuổi mục tiêu ({creator.demographics.age[0].label}) và địa lý (VN) với tệp khách hàng tiềm năng.
+                So khớp tỷ lệ giới tính ({creator.demographics.gender[0]?.label || 'Nữ'} {creator.demographics.gender[0]?.percent || 60}%), độ tuổi mục tiêu ({creator.demographics.age[0]?.label || '18-24'}) và địa lý (VN) với tệp khách hàng tiềm năng.
               </div>
             </div>
 

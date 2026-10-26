@@ -46,6 +46,8 @@ import {
   EnvironmentOutlined,
   SaveOutlined,
   MessageOutlined,
+  RobotOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
 import AiBriefAssistant from '../../components/ai/AiBriefAssistant';
 import type { StructuredBrief } from '../../components/ai/AiBriefAssistant';
@@ -150,111 +152,156 @@ export const mapApiCreatorToUi = (item: CreatorItem): Creator => {
   };
 };
 
+// Bộ từ điển phân nhóm ngành hàng chuẩn xác (Domain Semantic Clusters)
+const DOMAIN_CLUSTERS = {
+  TECH: ['công nghệ', 'tech', 'sạc', 'điện tử', 'phụ kiện', 'laptop', 'điện thoại', 'máy tính', 'gadget', 'game', 'gaming', 'tai nghe', 'audio', 'số', 'thiết bị'],
+  BEAUTY: ['mỹ phẩm', 'làm đẹp', 'skincare', 'chăm sóc da', 'son', 'makeup', 'trang điểm', 'nước hoa', 'dưỡng da'],
+  FOOD: ['thực phẩm', 'ẩm thực', 'ăn uống', 'food', 'nấu ăn', 'quán', 'món ăn', 'đồ ăn', 'đầu bếp'],
+  FASHION: ['thời trang', 'trang phục', 'quần áo', 'ootd', 'giày', 'sneaker', 'túi xách', 'outfit'],
+  FITNESS: ['sức khỏe', 'thể thao', 'cơ bắp', 'fitness', 'gym', 'yoga', 'workout', 'thể hình'],
+};
+
+const STOP_WORDS = new Set([
+  'sản phẩm', 'chiến dịch', 'quảng bá', 'dự án', 'mục tiêu', 'phẩm', 'hàng',
+  'thương hiệu', 'và', 'cho', 'của', 'với', 'trong', 'các', 'những', 'để', 'mới'
+]);
+
 export const computeCreatorMatch = (
   creator: Creator,
   camp: BrandCampaignItem
 ): { matchRate: number; matchLevel: 'high' | 'medium' | 'low'; reason: string } => {
-  // 1. Phân tích ngữ nghĩa chiến dịch
-  const campKeywords = [
+  // 1. Chuẩn hóa từ khóa chiến dịch & loại bỏ stop words
+  const rawCampText = [
     camp.name || '',
     camp.tag || '',
     camp.target || '',
     camp.suggestedCategory || '',
-  ]
-    .join(' ')
-    .toLowerCase();
+  ].join(' ').toLowerCase();
 
   const cCats = (creator.categories || []).map((c) => c.toLowerCase());
   const cBio = (creator.bio || '').toLowerCase();
   const cName = (creator.name || '').toLowerCase();
+  const creatorFullText = `${cCats.join(' ')} ${cBio} ${cName}`;
 
-  // 2. Điểm ngành hàng (Category Relevance): 10 - 40 điểm
-  let categoryScore = 12;
-  const matchedCategories: string[] = [];
+  // 2. Xác định Domain chính của Campaign
+  const isCampTech = DOMAIN_CLUSTERS.TECH.some((kw) => rawCampText.includes(kw));
+  const isCampBeauty = DOMAIN_CLUSTERS.BEAUTY.some((kw) => rawCampText.includes(kw));
+  const isCampFood = DOMAIN_CLUSTERS.FOOD.some((kw) => rawCampText.includes(kw));
+  const isCampFashion = DOMAIN_CLUSTERS.FASHION.some((kw) => rawCampText.includes(kw));
+  const isCampFitness = DOMAIN_CLUSTERS.FITNESS.some((kw) => rawCampText.includes(kw));
 
-  cCats.forEach((cat) => {
-    const subCats = cat.split(/[,/&]+/).map((s) => s.trim().toLowerCase());
-    subCats.forEach((sc) => {
-      if (sc && (campKeywords.includes(sc) || (sc.length > 3 && campKeywords.split(/[\s,]+/).some((w) => sc.includes(w))))) {
-        if (!matchedCategories.includes(sc)) matchedCategories.push(sc);
-      }
-    });
-  });
+  // 3. Xác định Domain của Creator
+  const isCreatorTech = DOMAIN_CLUSTERS.TECH.some((kw) => creatorFullText.includes(kw));
+  const isCreatorBeauty = DOMAIN_CLUSTERS.BEAUTY.some((kw) => creatorFullText.includes(kw));
+  const isCreatorFood = DOMAIN_CLUSTERS.FOOD.some((kw) => creatorFullText.includes(kw));
+  const isCreatorFashion = DOMAIN_CLUSTERS.FASHION.some((kw) => creatorFullText.includes(kw));
+  const isCreatorFitness = DOMAIN_CLUSTERS.FITNESS.some((kw) => creatorFullText.includes(kw));
 
-  if (matchedCategories.length >= 2) {
-    categoryScore = 38;
-  } else if (matchedCategories.length === 1) {
-    categoryScore = 30;
+  // 4. Kiểm tra mức độ tương thích ngành hàng thực tế (Tránh lỗi "Sản phẩm" dính "Thực phẩm")
+  let categoryScore = 0;
+  let isStrictMismatch = false;
+
+  if (isCampTech) {
+    if (isCreatorTech) {
+      categoryScore = 40; // Khớp chuẩn xác ngành công nghệ
+    } else if (isCreatorBeauty || isCreatorFood || isCreatorFitness) {
+      isStrictMismatch = true; // Chiến dịch công nghệ nhưng Creator là Mỹ phẩm/Thực phẩm/Thể hình
+      categoryScore = 0;
+    } else {
+      categoryScore = 15; // Ngành chung / Lifestyle
+    }
+  } else if (isCampBeauty) {
+    if (isCreatorBeauty) {
+      categoryScore = 40;
+    } else if (isCreatorTech || isCreatorFood) {
+      isStrictMismatch = true;
+      categoryScore = 5;
+    } else {
+      categoryScore = 15;
+    }
+  } else if (isCampFood) {
+    if (isCreatorFood) {
+      categoryScore = 40;
+    } else if (isCreatorTech) {
+      isStrictMismatch = true;
+      categoryScore = 5;
+    } else {
+      categoryScore = 15;
+    }
+  } else if (isCampFashion) {
+    if (isCreatorFashion) {
+      categoryScore = 40;
+    } else {
+      categoryScore = isCreatorBeauty ? 25 : 10;
+    }
   } else {
-    const words = campKeywords.split(/[\s,]+/);
-    const hasWordMatch = words.some((w) => w.length > 2 && (cBio.includes(w) || cName.includes(w)));
-    categoryScore = hasWordMatch ? 22 : 12;
+    // Trường hợp chung: kiểm tra từng từ có nghĩa (bỏ qua stop words)
+    const validWords = rawCampText
+      .split(/[\s,./&+-]+/)
+      .map((w) => w.trim())
+      .filter((w) => w.length >= 3 && !STOP_WORDS.has(w));
+
+    const matchedWord = validWords.find((w) => creatorFullText.includes(w));
+    if (matchedWord) {
+      categoryScore = 30;
+    } else {
+      categoryScore = 10;
+    }
   }
 
-  // 3. Điểm chất lượng tương tác (Engagement Score): 4 - 32 điểm
-  // Phân cấp chuẩn xác: creator có tương tác 0.002% không thể có điểm cao
+  // 5. Điểm chất lượng tương tác (Engagement Score): 4 - 28 điểm
   const eng = creator.engagementValue || 0;
   let engagementScore = 6;
-  if (eng >= 5.0) {
-    engagementScore = 32;
-  } else if (eng >= 3.0) {
-    engagementScore = 26;
-  } else if (eng >= 1.5) {
-    engagementScore = 20;
-  } else if (eng >= 0.5) {
-    engagementScore = 14;
-  } else if (eng >= 0.05) {
-    engagementScore = 9;
-  } else {
-    engagementScore = 4;
-  }
+  if (eng >= 5.0) engagementScore = 28;
+  else if (eng >= 3.0) engagementScore = 22;
+  else if (eng >= 1.5) engagementScore = 16;
+  else if (eng >= 0.5) engagementScore = 10;
 
-  // 4. Điểm quy mô người theo dõi (Follower Scale Fit): 8 - 18 điểm
+  // 6. Điểm quy mô người theo dõi: 6 - 16 điểm
   const followers = creator.followersCount || 0;
-  let followerScore = 12;
-  if (followers >= 50000 && followers <= 500000) {
-    followerScore = 18; // Micro/Mid-tier creator tối ưu ROI cho chiến dịch
-  } else if (followers > 500000 && followers <= 2000000) {
-    followerScore = 16;
-  } else if (followers > 2000000) {
-    followerScore = 14;
-  } else {
-    followerScore = 8;
-  }
+  let followerScore = 10;
+  if (followers >= 50000 && followers <= 500000) followerScore = 16;
+  else if (followers > 500000 && followers <= 2000000) followerScore = 14;
+  else if (followers > 2000000) followerScore = 12;
 
-  // 5. Uy tín & Xác minh
-  const verifyScore = creator.isVerified ? 5 : 2;
+  const verifyScore = creator.isVerified ? 4 : 1;
 
-  // 6. Tính toán hash ngẫu nhiên có kiểm soát theo Creator ID + Campaign ID
-  // Giúp tạo độ phân bổ tự nhiên, tránh bị trùng điểm đồng loạt
+  // Seed tính toán
   const seed = `${creator.id || creator.username}_${camp.id || camp.name}`;
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
     hash = (hash * 37 + seed.charCodeAt(i)) & 0x7fffffff;
   }
-  const variance = (hash % 11) - 5; // -5 đến +5
+  const variance = (hash % 7) - 3; // -3 đến +3
 
-  // Tổng hợp điểm số (52% - 98%)
-  const rawScore = categoryScore + engagementScore + followerScore + verifyScore + variance;
-  const finalScore = Math.min(97, Math.max(52, rawScore));
+  let finalScore = categoryScore + engagementScore + followerScore + verifyScore + variance;
 
+  // Xử lý nghiêm ngặt khi KHÔNG KHỚP NGÀNH HÀNG
+  if (isStrictMismatch) {
+    // Ép trần điểm: tối đa chỉ từ 32% - 46% (Mức Thấp, không được phép lên 90% Khớp cao)
+    finalScore = Math.min(46, Math.max(30, 28 + (hash % 15)));
+    const catStr = creator.categories.length > 0 ? creator.categories.slice(0, 2).join(', ') : 'Khác';
+    return {
+      matchRate: finalScore,
+      matchLevel: 'low',
+      reason: `Ngành hàng (${catStr}) không tương thích với sản phẩm ${camp.name || 'công nghệ'}. Cần ưu tiên Creator chuyên Tech / Review đồ số.`,
+    };
+  }
+
+  finalScore = Math.min(96, Math.max(50, finalScore));
   const level: 'high' | 'medium' | 'low' =
-    finalScore >= 80 ? 'high' : finalScore >= 65 ? 'medium' : 'low';
+    finalScore >= 78 ? 'high' : finalScore >= 60 ? 'medium' : 'low';
 
-  // 7. Tạo lý do AI Matching động, thực tế, phân hóa theo từng creator
-  const femaleRatio = 55 + (hash % 36); // dao động tự nhiên từ 55% đến 90%
+  const femaleRatio = 55 + (hash % 36);
   const ageGroup = (hash % 3 === 0) ? '18-24 tuổi' : (hash % 3 === 1) ? '22-30 tuổi' : '20-35 tuổi';
 
   let reason = '';
-  if (matchedCategories.length > 0) {
-    const catStr = matchedCategories.slice(0, 2).map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(', ');
-    reason = `Khớp ngành hàng ${catStr}. Tệp khán giả ~${femaleRatio}% Nữ (${ageGroup}), ${
-      eng >= 1.0 ? `tương tác ${creator.engagementRate} tốt` : `quy mô ${creator.followers} người theo dõi phù hợp`
-    }.`;
-  } else if (eng >= 2.0) {
-    reason = `Chỉ số tương tác ${creator.engagementRate} ấn tượng. Tệp ${creator.followers} người theo dõi, ~${femaleRatio}% Nữ (${ageGroup}) tiềm năng cho nhận diện thương hiệu.`;
+  if (categoryScore >= 35) {
+    reason = `Khớp chuẩn xác ngành hàng mục tiêu. Tệp khán giả quan tâm sản phẩm công nghệ / đời sống, tương tác ${creator.engagementRate} tốt.`;
+  } else if (categoryScore >= 15) {
+    reason = `Creator phong cách sống / đời sống số, tệp ${creator.followers} người theo dõi có thể mở rộng tiếp cận tệp Gen Z (${ageGroup}).`;
   } else {
-    reason = `Độ phủ ${creator.followers} người theo dõi, tệp khán giả Gen Z (${ageGroup}) tương thích với mục tiêu mở rộng thị trường.`;
+    reason = `Chỉ số tương tác ${creator.engagementRate}, cần cân nhắc thêm độ phù hợp nội dung trước khi gửi lời mời.`;
   }
 
   return { matchRate: finalScore, matchLevel: level, reason };
@@ -322,8 +369,14 @@ export interface BrandCampaignItem {
   id: string;
   name: string;
   tag: string;
-  target: string;
+  target?: string;
   suggestedCategory?: string;
+  budget?: string;
+  targetAudience?: string;
+  category?: string;
+  channels?: string[];
+  status?: string;
+  requirements?: string;
 }
 
 export const BRAND_CAMPAIGNS: BrandCampaignItem[] = [
@@ -434,6 +487,7 @@ export default function CreatorDiscoveryPage() {
                         id: targetId,
                         name: parsed.name || 'Chiến dịch mới',
                         tag: parsed.category || 'Mới khởi tạo',
+                        target: parsed.target || parsed.targetAudience || 'Khán giả mục tiêu',
                         budget: parsed.budget || '25.0M VND',
                         targetAudience: parsed.targetAudience || 'Khán giả mục tiêu',
                         category: parsed.category || 'Làm đẹp',
@@ -487,6 +541,7 @@ export default function CreatorDiscoveryPage() {
                     id: targetId,
                     name: parsed.name || 'Chiến dịch mới',
                     tag: parsed.category || 'Mới khởi tạo',
+                    target: parsed.target || parsed.targetAudience || 'Khán giả mục tiêu',
                     budget: parsed.budget || '25.0M VND',
                     targetAudience: parsed.targetAudience || 'Khán giả mục tiêu',
                     category: parsed.category || 'Làm đẹp',
@@ -599,6 +654,54 @@ export default function CreatorDiscoveryPage() {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [discoveryMode, setDiscoveryMode] = useState<'database' | 'external'>('database');
   const [isRefreshingCreator, setIsRefreshingCreator] = useState(false);
+  const [isSemanticSearching, setIsSemanticSearching] = useState(false);
+  const [semanticActive, setSemanticActive] = useState(false);
+
+  const handleSemanticSearch = async () => {
+    if (!searchTerm || searchTerm.trim().length < 2) {
+      message.info('Vui lòng nhập từ khóa hoặc mô tả ngắn để tìm kiếm ngữ nghĩa AI!');
+      return;
+    }
+    setIsSemanticSearching(true);
+    message.loading({ content: 'AI đang phân tích ngữ nghĩa và tìm kiếm Creator tương thích...', key: 'semantic_search' });
+    try {
+      const results = await creatorService.searchSemantic(searchTerm.trim(), 15);
+      if (Array.isArray(results) && results.length > 0) {
+        const similarityMap = new Map<string, number>();
+        results.forEach((r) => {
+          similarityMap.set(r.id, r.similarity);
+          if (r.userName) similarityMap.set(r.userName.replace(/^@+/, ''), r.similarity);
+        });
+
+        setCreators((prev) => {
+          return prev.map((c) => {
+            const sim = similarityMap.get(c.id) ?? (c.username ? similarityMap.get(c.username) : undefined);
+            if (sim !== undefined) {
+              const simPercent = Math.min(99, Math.max(50, Math.round(sim * 100)));
+              return {
+                ...c,
+                matchRate: simPercent,
+                matchLevel: simPercent >= 80 ? 'high' : simPercent >= 65 ? 'medium' : 'low',
+                matchReason: `Khớp ngữ nghĩa AI vector (${simPercent}%) với "${searchTerm.trim()}"`,
+              };
+            }
+            return c;
+          });
+        });
+        setSortBy('match');
+        setSemanticActive(true);
+        setCurrentPage(1);
+        message.success({ content: `Đã tìm thấy ${results.length} Creator phù hợp theo ngữ nghĩa AI vector!`, key: 'semantic_search' });
+      } else {
+        message.info({ content: 'Không có kết quả vector vượt trội, hiển thị kết quả tìm kiếm tiêu chuẩn.', key: 'semantic_search' });
+      }
+    } catch (err) {
+      console.warn('Semantic search error:', err);
+      message.info({ content: 'Đang áp dụng bộ lọc từ khóa thông thường.', key: 'semantic_search' });
+    } finally {
+      setIsSemanticSearching(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -1050,23 +1153,6 @@ export default function CreatorDiscoveryPage() {
             Tìm creator phù hợp với thương hiệu bằng ghép nối AI và bộ lọc chuyên sâu.
           </Text>
         </div>
-
-        <Button
-          type="primary"
-          icon={<ThunderboltOutlined />}
-          onClick={() => navigate('/campaigns/create')}
-          style={{
-            background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
-            fontWeight: 700,
-            borderRadius: 10,
-            height: 40,
-            padding: '0 18px',
-            boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
-            border: 'none',
-          }}
-        >
-          Tạo chiến dịch
-        </Button>
       </div>
 
       {/* Mode tabs (underline style) */}
@@ -1109,134 +1195,206 @@ export default function CreatorDiscoveryPage() {
         <ExternalDiscovery />
       ) : (
         <>
-          {/* 1.5. CAMPAIGN MATCHING BAR */}
-          <div
+          {/* 1.5. CAMPAIGN MATCHING BAR (REDESIGNED) */}
+          <Card
+            bordered
             style={{
-              background: matchedCampaign ? 'linear-gradient(135deg, #FAF5FF 0%, #EEF2FF 100%)' : '#FFFFFF',
-              border: `1px solid ${matchedCampaign ? '#C4B5FD' : '#E8ECF4'}`,
-              borderRadius: 14,
-              padding: '14px 18px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-              flexWrap: 'wrap',
+              borderRadius: 16,
+              borderColor: matchedCampaign ? '#DDD6FE' : '#EEF0F6',
+              background: matchedCampaign
+                ? 'linear-gradient(135deg, #FAF5FF 0%, #F5F3FF 50%, #EEF2FF 100%)'
+                : '#FFFFFF',
+              boxShadow: matchedCampaign
+                ? '0 4px 18px rgba(124, 58, 237, 0.06)'
+                : '0 2px 10px rgba(0, 0, 0, 0.02)',
               transition: 'all 0.3s ease',
             }}
+            bodyStyle={{ padding: '14px 20px' }}
           >
             <div
               style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                background: matchedCampaign ? 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)' : '#F1F5F9',
-                color: matchedCampaign ? '#FFFFFF' : '#64748B',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 18,
-                flexShrink: 0,
+                justifyContent: 'space-between',
+                gap: 16,
+                flexWrap: 'wrap',
               }}
             >
-              <AimOutlined />
-            </div>
+              {/* Left project info */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: '1 1 280px', minWidth: 240 }}>
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 10,
+                    background: matchedCampaign
+                      ? 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)'
+                      : '#F1F5F9',
+                    color: matchedCampaign ? '#FFFFFF' : '#64748B',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 18,
+                    flexShrink: 0,
+                    boxShadow: matchedCampaign ? '0 3px 10px rgba(99, 102, 241, 0.3)' : 'none',
+                  }}
+                >
+                  <AimOutlined />
+                </div>
 
-            <div style={{ flex: '1 1 260px', minWidth: 0 }}>
-              <div style={{ fontWeight: 700, fontSize: 14, color: '#0F172A' }}>
-                {matchedCampaign ? 'Đang ghép theo chiến dịch' : 'Ghép creator theo chiến dịch'}
-                {matchedCampaign && (
-                  <Tag color="purple" style={{ marginLeft: 8, borderRadius: 999, fontSize: 11, fontWeight: 700 }}>
-                    Đã kích hoạt
-                  </Tag>
-                )}
-              </div>
-              <div style={{ fontSize: 12.5, color: '#64748B', marginTop: 2 }}>
-                {matchedCampaign
-                  ? `Điểm khớp được tính theo "${matchedCampaign.name}" (${matchedCampaign.tag})`
-                  : 'Chọn một chiến dịch để AI chấm điểm độ khớp cho từng creator.'}
-              </div>
-            </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
+                      Dự án ghép nối
+                    </span>
+                    {matchedCampaign ? (
+                      <Tag
+                        color="purple"
+                        style={{
+                          borderRadius: 999,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          padding: '1px 8px',
+                          background: '#EDE9FE',
+                          borderColor: '#DDD6FE',
+                          color: '#6D28D9',
+                          margin: 0,
+                        }}
+                      >
+                        Đang áp dụng
+                      </Tag>
+                    ) : (
+                      <span style={{ fontSize: 11.5, color: '#94A3B8' }}>(Tùy chọn)</span>
+                    )}
+                  </div>
 
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleTriggerMatch();
-                }
-              }}
-            >
-              <Select
-                size="large"
-                placeholder={loadingCampaigns ? 'Đang tải chiến dịch...' : 'Chọn chiến dịch'}
-                value={selectedCampaignId}
-                loading={loadingCampaigns}
-                onChange={(val) => {
-                  setSelectedCampaignId(val);
-                  const camp = campaignsList.find((c) => c.id === val) || BRAND_CAMPAIGNS.find((c) => c.id === val);
-                  if (camp) {
-                    setMatchedCampaign(camp);
-                    setSortBy('match');
-                    setCurrentPage(1);
+                  <div
+                    style={{
+                      fontSize: 12.5,
+                      color: '#64748B',
+                      marginTop: 2,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {matchedCampaign ? (
+                      <>
+                        Khớp theo: <strong style={{ color: '#4F46E5' }}>{matchedCampaign.name}</strong>
+                        {matchedCampaign.tag && <span style={{ color: '#94A3B8' }}> • {matchedCampaign.tag}</span>}
+                      </>
+                    ) : (
+                      'Chọn chiến dịch để AI phân tích và xếp hạng Creator phù hợp nhất.'
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right controls */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  flex: '1 1 360px',
+                  justifyContent: 'flex-end',
+                  flexWrap: 'wrap',
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleTriggerMatch();
                   }
                 }}
-                style={{ width: 280 }}
-                notFoundContent={
-                  <div style={{ padding: '8px 12px', textAlign: 'center' }}>
-                    <div style={{ color: '#64748B', fontSize: 13, marginBottom: 6 }}>
-                      Chưa có chiến dịch nào được tạo
-                    </div>
-                    <Button
-                      type="link"
-                      size="small"
-                      onClick={() => navigate('/campaigns/create')}
-                      style={{ padding: 0, fontWeight: 700 }}
-                    >
-                      + Tạo chiến dịch mới ngay
-                    </Button>
-                  </div>
-                }
-                options={campaignsList.map((camp) => ({
-                  value: camp.id,
-                  label: (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                      <span style={{ fontWeight: 600 }}>{camp.name}</span>
-                      <span style={{ fontSize: 11, color: '#94A3B8' }}>({camp.tag})</span>
-                    </div>
-                  ),
-                }))}
-              />
-
-              <Button
-                type="primary"
-                size="large"
-                loading={isMatching}
-                icon={<RocketOutlined />}
-                onClick={handleTriggerMatch}
-                style={{
-                  background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
-                  border: 'none',
-                  fontWeight: 700,
-                  borderRadius: 10,
-                  boxShadow: '0 4px 14px rgba(124, 58, 237, 0.3)',
-                }}
               >
-                Tìm creator phù hợp
-              </Button>
-
-              {matchedCampaign && (
-                <Button
+                <Select
                   size="large"
-                  type="text"
-                  onClick={handleClearMatch}
-                  style={{ borderRadius: 10, color: '#64748B', fontWeight: 600 }}
-                >
-                  Bỏ lọc ✕
-                </Button>
-              )}
-            </div>
-          </div>
+                  placeholder={loadingCampaigns ? 'Đang tải chiến dịch...' : 'Chọn chiến dịch'}
+                  value={selectedCampaignId}
+                  loading={loadingCampaigns}
+                  popupMatchSelectWidth={false}
+                  onChange={(val) => {
+                    setSelectedCampaignId(val);
+                    const camp = campaignsList.find((c) => c.id === val) || BRAND_CAMPAIGNS.find((c) => c.id === val);
+                    if (camp) {
+                      setMatchedCampaign(camp);
+                      setSortBy('match');
+                      setCurrentPage(1);
+                    }
+                  }}
+                  style={{
+                    minWidth: 240,
+                    maxWidth: 360,
+                    flex: 1,
+                  }}
+                  notFoundContent={
+                    <div style={{ padding: '8px 12px', textAlign: 'center' }}>
+                      <div style={{ color: '#64748B', fontSize: 13, marginBottom: 6 }}>
+                        Chưa có chiến dịch nào được tạo
+                      </div>
+                      <Button
+                        type="link"
+                        size="small"
+                        onClick={() => navigate('/campaigns/create')}
+                        style={{ padding: 0, fontWeight: 700 }}
+                      >
+                        + Tạo chiến dịch mới ngay
+                      </Button>
+                    </div>
+                  }
+                  options={campaignsList.map((camp) => ({
+                    value: camp.id,
+                    label: (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '2px 0' }}>
+                        <span style={{ fontWeight: 600, color: '#0F172A' }}>{camp.name}</span>
+                        <span style={{ fontSize: 11, color: '#94A3B8' }}>{camp.tag}</span>
+                      </div>
+                    ),
+                  }))}
+                />
 
-          {/* AI Brief Assistant Box */}
-          <AiBriefAssistant onApplyBrief={handleApplyBrief} onReset={handleResetFilters} />
+                <Button
+                  type="primary"
+                  size="large"
+                  loading={isMatching}
+                  icon={<RocketOutlined />}
+                  onClick={handleTriggerMatch}
+                  style={{
+                    background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+                    border: 'none',
+                    fontWeight: 700,
+                    borderRadius: 10,
+                    height: 40,
+                    padding: '0 18px',
+                    boxShadow: '0 4px 14px rgba(124, 58, 237, 0.28)',
+                    flexShrink: 0,
+                  }}
+                >
+                  Tìm creator phù hợp
+                </Button>
+
+                {matchedCampaign && (
+                  <Button
+                    size="large"
+                    type="text"
+                    icon={<CloseOutlined />}
+                    onClick={handleClearMatch}
+                    style={{
+                      borderRadius: 10,
+                      color: '#EF4444',
+                      fontWeight: 600,
+                      height: 40,
+                      padding: '0 12px',
+                      background: '#FEF2F2',
+                      border: '1px solid #FEE2E2',
+                      flexShrink: 0,
+                    }}
+                  >
+                    Bỏ lọc
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
 
           {/* 2. Metrics Summary Overview Row (4 KPI Cards) */}
       <Row gutter={[14, 14]}>
@@ -1405,7 +1563,7 @@ export default function CreatorDiscoveryPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Row 1: Search, Sort & View Switcher */}
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 280 }}>
+            <div style={{ flex: 1, minWidth: 280, display: 'flex', gap: 8 }}>
               <Input
                 size="large"
                 value={searchTerm}
@@ -1413,7 +1571,8 @@ export default function CreatorDiscoveryPage() {
                   setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
-                placeholder="Tìm kiếm creator theo tên, lĩnh vực, từ khóa hoặc @tênngười dùng..."
+                onPressEnter={handleSemanticSearch}
+                placeholder="Tìm kiếm creator theo tên, lĩnh vực, từ khóa hoặc phong cách nội dung..."
                 prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 16, marginRight: 6 }} />}
                 allowClear
                 style={{
@@ -1421,8 +1580,25 @@ export default function CreatorDiscoveryPage() {
                   fontSize: 13,
                   borderColor: '#E2E8F0',
                   height: 40,
+                  flex: 1,
                 }}
               />
+              <Button
+                type="primary"
+                loading={isSemanticSearching}
+                icon={<RobotOutlined />}
+                onClick={handleSemanticSearch}
+                style={{
+                  height: 40,
+                  borderRadius: 10,
+                  background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+                  border: 'none',
+                  fontWeight: 600,
+                  boxShadow: '0 2px 8px rgba(99, 102, 241, 0.25)',
+                }}
+              >
+                Tìm AI
+              </Button>
             </div>
 
             {/* Sort Dropdown */}
@@ -2401,6 +2577,9 @@ export default function CreatorDiscoveryPage() {
           }
         }}
       />
+
+      {/* Floating AI Brief Assistant Chatbot Widget */}
+      <AiBriefAssistant onApplyBrief={handleApplyBrief} onReset={handleResetFilters} />
     </div>
   );
 }

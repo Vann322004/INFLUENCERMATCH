@@ -22,6 +22,28 @@ export interface CampaignRequest {
   budgetMax?: number;
 }
 
+export interface CampaignAutofillRequest {
+  prompt: string;
+}
+
+export interface CampaignAutofillResponse {
+  name?: string;
+  productService?: string;
+  objective?: CampaignObjective;
+  targetAudiences?: string[];
+  contentType?: string;
+  startDate?: string;
+  endDate?: string;
+  platforms?: CampaignPlatform[];
+  niches?: string[];
+  locations?: string[];
+  followerMin?: number;
+  followerMax?: number;
+  budgetMin?: number;
+  budgetMax?: number;
+  aiExplanation?: string;
+}
+
 export interface CampaignResponse {
   id: string;
   brandId: string;

@@ -1,112 +1,595 @@
-﻿/* PerformancePage.css */
-.perf-page { padding: 24px; background: #f6f7fb; min-height: 100vh; }
+/* PerformancePage.css - Premium Modern Analytics UI */
+.perf-page {
+  padding: 24px 32px 60px;
+  background: #F8FAFC;
+  min-height: 100vh;
+}
 
 /* ── Header ────────────────────────────────── */
 .perf-header {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  flex-wrap: wrap; gap: 14px; margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
 }
-.perf-title {
-  font-size: 26px; font-weight: 900; margin: 0;
-  background: linear-gradient(135deg,#6366f1,#8b5cf6);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-.perf-subtitle { color: #888; font-size: 13.5px; margin: 4px 0 0; }
-.perf-header-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
-/* ── KPI Row ────────────────────────────────── */
-.perf-kpi-row {
+.perf-title {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.perf-subtitle {
+  color: #64748B;
+  font-size: 13.5px;
+  margin: 4px 0 0;
+  font-weight: 400;
+}
+
+.perf-header-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── KPI Tier 1: Primary Return Grid (4 Columns) ────────────────── */
+.perf-kpi-grid-primary {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 12px; margin-bottom: 16px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
 }
-.perf-kpi-card {
-  background: #fff; border-radius: 12px;
-  padding: 14px 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.06);
-  display: flex; align-items: flex-start; gap: 12px;
-  transition: box-shadow .2s, transform .2s;
+
+@media (max-width: 1200px) {
+  .perf-kpi-grid-primary {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
-.perf-kpi-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.10); transform: translateY(-2px); }
-.perf-kpi-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-.perf-kpi-body { flex: 1; }
-.perf-kpi-value { font-size: 17px; font-weight: 900; color: #111; line-height: 1.2; }
-.perf-kpi-label { font-size: 11px; color: #999; margin-top: 2px; }
-.perf-kpi-sub { font-size: 10px; color: #bbb; margin-top: 1px; }
-.perf-kpi-trend { font-size: 11px; font-weight: 700; white-space: nowrap; }
-.perf-kpi-trend.up { color: #10b981; }
-.perf-kpi-trend.down { color: #ef4444; }
+
+@media (max-width: 640px) {
+  .perf-kpi-grid-primary {
+    grid-template-columns: 1fr;
+  }
+}
+
+.perf-card-primary {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 20px 22px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(15, 23, 42, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.perf-card-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+  border-color: #CBD5E1;
+}
+
+.perf-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.perf-card-icon-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  flex-shrink: 0;
+}
+
+.perf-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.perf-pill-badge.green {
+  background: #ECFDF5;
+  color: #059669;
+}
+
+.perf-pill-badge.indigo {
+  background: #EEF2FF;
+  color: #4F46E5;
+}
+
+.perf-pill-badge.amber {
+  background: #FFFBEB;
+  color: #D97706;
+}
+
+.perf-card-val {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.perf-card-lbl {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 4px;
+}
+
+.perf-card-sub {
+  font-size: 11.5px;
+  color: #94A3B8;
+  line-height: 1.4;
+}
+
+/* ── KPI Tier 2: Operational Secondary Ribbon (3 Columns) ────────── */
+.perf-kpi-grid-secondary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .perf-kpi-grid-secondary {
+    grid-template-columns: 1fr;
+  }
+}
+
+.perf-card-secondary {
+  background: #FFFFFF;
+  border-radius: 14px;
+  padding: 16px 20px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.2s ease;
+}
+
+.perf-card-secondary:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.perf-sec-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  flex-shrink: 0;
+}
+
+.perf-sec-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.perf-sec-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.perf-sec-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.perf-sec-lbl {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.perf-sec-sub {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-top: 2px;
+}
 
 /* ── Self-reported Banner ───────────────────── */
 .perf-self-reported-banner {
-  display: flex; align-items: center; gap: 10px;
-  background: #fffbeb; border: 1px solid #fde68a;
-  border-radius: 10px; padding: 10px 16px;
-  font-size: 13px; color: #92400e; margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 13px;
+  color: #92400E;
+  margin-bottom: 24px;
 }
 
-/* ── Tabs ───────────────────────────────────── */
-.perf-tabs { background: transparent; }
-.perf-tabs .ant-tabs-nav { background: #fff; border-radius: 12px 12px 0 0; padding: 0 20px; margin-bottom: 0; }
-.perf-tabs .ant-tabs-content-holder { background: transparent; }
+.perf-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-/* ── Card ───────────────────────────────────── */
-.perf-card { border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); border: 1px solid #f0f0f0; }
-.perf-card .ant-card-head { border-bottom: 1px solid #f5f5f5; font-weight: 700; min-height: 46px; }
+/* ── Tabs Navigation ────────────────────────── */
+.perf-tabs-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #F1F5F9;
+  padding: 5px;
+  border-radius: 14px;
+  border: 1px solid #E2E8F0;
+  margin-bottom: 20px;
+}
 
-/* ── ROAS Gauge ─────────────────────────────── */
-.perf-roas-gauge { padding: 10px 14px; background: #fafafa; border-radius: 10px; border: 1px solid #f0f0f0; }
+.perf-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
 
-/* ── Review Summary Strip ───────────────────── */
+.perf-tab-btn:hover {
+  color: #1E293B;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.perf-tab-btn.active {
+  background: #FFFFFF;
+  color: #4F46E5;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.12), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Analytics Cards ────────────────────────── */
+.perf-analytics-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  padding: 22px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+}
+
+.perf-analytics-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.perf-analytics-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+}
+
+/* Campaign Performance Bar Item */
+.perf-campaign-item {
+  padding: 16px;
+  border-radius: 12px;
+  background: #F8FAFC;
+  border: 1px solid #EEF2F6;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.perf-campaign-item:hover {
+  border-color: #CBD5E1;
+  background: #F1F5F9;
+}
+
+.perf-dual-bar-container {
+  height: 22px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  background: #E2E8F0;
+  gap: 2px;
+}
+
+.perf-bar-segment {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.perf-bar-segment.cost {
+  background: linear-gradient(90deg, #6366F1 0%, #4F46E5 100%);
+  border-radius: 6px 0 0 6px;
+}
+
+.perf-bar-segment.profit {
+  background: linear-gradient(90deg, #10B981 0%, #059669 100%);
+  border-radius: 0 6px 6px 0;
+}
+
+/* ROAS Target Gauge Box */
+.perf-roas-box {
+  padding: 18px;
+  border-radius: 14px;
+  background: #F8FAFC;
+  border: 1px solid #EEF2F6;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.roas-milestones {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: #94A3B8;
+  font-weight: 600;
+}
+
+/* Summary Grid at Bottom */
+.perf-summary-tile {
+  background: #F8FAFC;
+  border-radius: 12px;
+  padding: 16px 18px;
+  border: 1px solid #EEF2F6;
+  transition: all 0.2s;
+}
+
+.perf-summary-tile:hover {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+}
+
+/* Review Summary Strip */
 .review-summary-strip {
-  display: flex; align-items: center; gap: 0;
-  background: #fff; border-radius: 14px;
-  padding: 20px 28px; box-shadow: 0 2px 10px rgba(0,0,0,.07);
-  flex-wrap: wrap; gap: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 22px 28px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 20px;
 }
-.rsm-block { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.rsm-num { font-size: 32px; font-weight: 900; line-height: 1; }
-.rsm-label { font-size: 11px; color: #999; }
-.rsm-divider { width: 1px; height: 50px; background: #f0f0f0; flex-shrink: 0; }
-.rsm-dim { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; min-width: 80px; }
 
-/* ── Pending Review Cards ───────────────────── */
-.review-pending-grid { display: flex; flex-direction: column; gap: 12px; }
-.review-pending-card {
-  display: flex; align-items: center; gap: 14px;
-  background: #fafafe; border: 1.5px dashed #c7d2fe;
-  border-radius: 12px; padding: 14px 18px;
-  transition: background .2s;
+.rsm-block {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
-.review-pending-card:hover { background: #f0f0ff; }
 
-/* ── Review Cards Grid ──────────────────────── */
-.review-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px,1fr)); gap: 16px; }
+.rsm-num {
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.rsm-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.rsm-divider {
+  width: 1px;
+  height: 52px;
+  background: #E2E8F0;
+  flex-shrink: 0;
+}
+
+/* Review Cards Grid */
+.review-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
 .review-card-item {
-  background: #fff; border: 1.5px solid #ede9fe;
-  border-radius: 14px; padding: 18px;
-  box-shadow: 0 2px 8px rgba(99,102,241,.07);
-  transition: box-shadow .2s, transform .2s;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.review-card-item:hover { box-shadow: 0 8px 24px rgba(99,102,241,.15); transform: translateY(-2px); }
-.review-card-top { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
-.review-dims-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 
-/* ── Score Row ──────────────────────────────── */
-.score-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-.score-icon { font-size: 13px; width: 18px; flex-shrink: 0; }
-.score-label { flex: 1; color: #555; font-weight: 500; }
-.score-num { font-weight: 800; color: #333; width: 28px; text-align: right; font-size: 12px; }
+.review-card-item:hover {
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-2px);
+  border-color: #CBD5E1;
+}
 
-/* ── Review Comment Box ─────────────────────── */
+.review-card-top {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.review-dims-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #F8FAFC;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+}
+
+.score-icon {
+  font-size: 14px;
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.score-label {
+  flex: 1;
+  color: #475569;
+  font-weight: 600;
+}
+
+.score-num {
+  font-weight: 800;
+  color: #0F172A;
+  width: 32px;
+  text-align: right;
+  font-size: 12px;
+}
+
 .review-comment-box {
-  background: linear-gradient(135deg, #f9f7ff, #fff);
-  border-left: 3px solid #8b5cf6;
+  background: #FAF5FF;
+  border-left: 3px solid #8B5CF6;
   border-radius: 0 8px 8px 0;
-  padding: 8px 12px;
-  font-size: 12.5px; color: #555; font-style: italic; line-height: 1.6;
-  margin-top: 6px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: #475569;
+  font-style: italic;
+  line-height: 1.5;
+  margin-top: 8px;
 }
 
-/* ── Review Modal Criteria ──────────────────── */
-.review-modal-criteria { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; margin-bottom: 16px; }
+.review-modal-criteria {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 20px;
+  margin-bottom: 16px;
+}
+
+/* ── Chart Switcher Group ───────────────────── */
+.perf-chart-toggle-group {
+  display: inline-flex;
+  background: #F1F5F9;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid #E2E8F0;
+}
+
+.perf-chart-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.perf-chart-toggle-btn:hover {
+  color: #0F172A;
+}
+
+.perf-chart-toggle-btn.active {
+  background: #FFFFFF;
+  color: #4F46E5;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ── ROAS Legend Panel ──────────────────────── */
+.perf-roas-legend-panel {
+  margin-top: auto;
+  padding: 14px 16px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  border: 1px solid #EEF2F6;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.perf-roas-legend-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.perf-roas-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.perf-roas-dot.green {
+  background: #10B981;
+}
+
+.perf-roas-dot.amber {
+  background: #F59E0B;
+}
+
+.perf-roas-dot.red {
+  background: #EF4444;
+}
+
+.perf-roas-legend-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.4;
+}
+
+.perf-roas-legend-text strong {
+  color: #0F172A;
+  font-size: 12px;
+}
+
+.perf-roas-legend-text span {
+  color: #64748B;
+  font-size: 11.5px;
+}
+

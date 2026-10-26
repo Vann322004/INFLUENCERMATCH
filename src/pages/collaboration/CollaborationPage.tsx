@@ -43,6 +43,7 @@ import {
   ShoppingOutlined,
   RiseOutlined,
   SendOutlined,
+  FilterOutlined,
 } from '@ant-design/icons';
 import './CollaborationPage.css';
 
@@ -376,7 +377,30 @@ export default function CollaborationPage() {
 
   // Partners state
   const [partners, setPartners] = useState<CollabPartner[]>([]);
-  const [partnerFilter, setPartnerFilter] = useState('all');
+  const [partnerFilter, setPartnerFilter] = useState<'all' | 'in_progress' | 'review_pending' | 'published'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const inProgressCount = partners.filter(
+    (p) => p.stage !== 'review_pending' && p.stage !== 'published'
+  ).length;
+  const reviewPendingCount = partners.filter((p) => p.stage === 'review_pending').length;
+  const publishedCount = partners.filter((p) => p.stage === 'published').length;
+
+  const filteredPartners = partners.filter((p) => {
+    const matchesFilter =
+      partnerFilter === 'all'
+        ? true
+        : partnerFilter === 'in_progress'
+        ? p.stage !== 'review_pending' && p.stage !== 'published'
+        : p.stage === partnerFilter;
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      p.creatorName.toLowerCase().includes(q) ||
+      p.handle.toLowerCase().includes(q) ||
+      p.deliverableSummary.toLowerCase().includes(q);
+    return matchesFilter && matchesSearch;
+  });
 
   // Review state (Deliverables)
   const [deliverables, setDeliverables] = useState<DeliverableReviewItem[]>(INITIAL_DELIVERABLES);
@@ -496,8 +520,13 @@ export default function CollaborationPage() {
     };
   }, [selectedCampaign]);
 
-  // Current deliverable
   const activeDeliverable = deliverables.find((d) => d.id === selectedDeliverableId) || deliverables[0];
+
+  // Helper to load sample partners for demo
+  const handleLoadDemoPartners = () => {
+    setPartners(INITIAL_PARTNERS);
+    message.success('Đã nạp 5 đối tác mẫu vào chiến dịch để thử nghiệm đầy đủ quy trình!');
+  };
 
   // Add timestamp comment
   const handleAddComment = () => {
@@ -725,8 +754,12 @@ export default function CollaborationPage() {
             <DollarOutlined />
           </div>
           <div>
-            <div className="c-stat-val">26.200.000 ₫</div>
-            <div className="c-stat-lbl">Đã giải ngân tạm ứng (49%)</div>
+            <div className="c-stat-val">
+              {partners.length === 0 ? '0 ₫' : '26.200.000 ₫'}
+            </div>
+            <div className="c-stat-lbl">
+              {partners.length === 0 ? 'Chưa phát sinh giải ngân' : 'Đã giải ngân tạm ứng (49%)'}
+            </div>
           </div>
         </div>
 
@@ -735,7 +768,9 @@ export default function CollaborationPage() {
             <RiseOutlined />
           </div>
           <div>
-            <div className="c-stat-val">1.372.000 Views</div>
+            <div className="c-stat-val">
+              {partners.length === 0 ? '0 Views' : '1.372.000 Views'}
+            </div>
             <div className="c-stat-lbl">Tổng lượt xem thực tế ghi nhận</div>
           </div>
         </div>
@@ -758,7 +793,9 @@ export default function CollaborationPage() {
         >
           <VideoCameraOutlined />
           <span>2. Duyệt ấn phẩm (Deliverable Review)</span>
-          <span className="collab-tab-badge alert">{deliverables.filter((d) => d.status === 'pending').length} chờ duyệt</span>
+          <span className={`collab-tab-badge ${partners.length > 0 && deliverables.filter((d) => d.status === 'pending').length > 0 ? 'alert' : ''}`}>
+            {partners.length === 0 ? '0 chờ duyệt' : `${deliverables.filter((d) => d.status === 'pending').length} chờ duyệt`}
+          </span>
         </button>
 
         <button
@@ -767,7 +804,7 @@ export default function CollaborationPage() {
         >
           <DollarOutlined />
           <span>3. Quản lý thù lao & Đối soát (Fee Tracking)</span>
-          <span className="collab-tab-badge">{feeItems.length}</span>
+          <span className="collab-tab-badge">{partners.length === 0 ? 0 : feeItems.length}</span>
         </button>
 
         <button
@@ -785,19 +822,74 @@ export default function CollaborationPage() {
           ========================================================================= */}
       {activeTab === 'list' && (
         <div className="collab-list-section">
-          {/* Table Controls */}
+          {/* Modern Filter Toolbar */}
           <div className="table-controls-row">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Lọc tiến độ:</span>
-              <Radio.Group
-                value={partnerFilter}
-                onChange={(e) => setPartnerFilter(e.target.value)}
-                size="small"
-              >
-                <Radio.Button value="all">Tất cả ({partners.length})</Radio.Button>
-                <Radio.Button value="review_pending">Chờ duyệt bài</Radio.Button>
-                <Radio.Button value="published">Đã đăng</Radio.Button>
-              </Radio.Group>
+            <div className="collab-filter-left">
+              <div className="collab-filter-label">
+                <FilterOutlined style={{ fontSize: 13, color: '#6366F1' }} />
+                <span>Tiến độ hợp tác:</span>
+              </div>
+              <div className="collab-pill-segmented">
+                <button
+                  type="button"
+                  className={`collab-pill-btn ${partnerFilter === 'all' ? 'active' : ''}`}
+                  onClick={() => setPartnerFilter('all')}
+                >
+                  <span>Tất cả</span>
+                  <span className="collab-pill-count">{partners.length}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`collab-pill-btn ${partnerFilter === 'in_progress' ? 'active' : ''}`}
+                  onClick={() => setPartnerFilter('in_progress')}
+                >
+                  <span className="status-dot in-progress" />
+                  <span>Đang thực hiện</span>
+                  <span className="collab-pill-count">{inProgressCount}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`collab-pill-btn ${partnerFilter === 'review_pending' ? 'active' : ''}`}
+                  onClick={() => setPartnerFilter('review_pending')}
+                >
+                  <span className="status-dot pending" />
+                  <span>Chờ duyệt bài</span>
+                  {reviewPendingCount > 0 ? (
+                    <span className="collab-pill-count alert">{reviewPendingCount}</span>
+                  ) : (
+                    <span className="collab-pill-count">0</span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  className={`collab-pill-btn ${partnerFilter === 'published' ? 'active' : ''}`}
+                  onClick={() => setPartnerFilter('published')}
+                >
+                  <span className="status-dot published" />
+                  <span>Đã đăng tải</span>
+                  <span className={`collab-pill-count ${publishedCount > 0 ? 'success' : ''}`}>
+                    {publishedCount}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Right: Search Input & counter */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Input
+                prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
+                placeholder="Tìm tên creator, handle..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                allowClear
+                className="collab-search-input"
+              />
+              <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                Hiển thị {filteredPartners.length}/{partners.length}
+              </span>
             </div>
           </div>
 
@@ -822,25 +914,63 @@ export default function CollaborationPage() {
                       <Spin description="Đang tải dữ liệu đối tác hợp tác..." />
                     </td>
                   </tr>
-                ) : partners.filter((p) => (partnerFilter === 'all' ? true : p.stage === partnerFilter)).length === 0 ? (
+                ) : filteredPartners.length === 0 ? (
                   <tr>
                     <td colSpan={8} style={{ textAlign: 'center', padding: '48px 0' }}>
-                      <Empty
-                        description={
-                          <span>
-                            Chưa có đối tác nào trong chiến dịch này.{' '}
-                            <Button type="link" onClick={() => navigate('/creators')}>
-                              Khám phá Creator ngay
-                            </Button>
-                          </span>
-                        }
-                      />
+                      {partners.length === 0 ? (
+                        <Empty
+                          description={
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                              <span style={{ color: '#475569', fontSize: 13.5, fontWeight: 600 }}>
+                                Chiến dịch này chưa có Creator nào được kết nối trong database.
+                              </span>
+                              <span style={{ color: '#94A3B8', fontSize: 12, maxWidth: 460 }}>
+                                Dữ liệu đang kết nối trực tiếp với API backend (GET /campaigns/:id/relationships). Bạn có thể tìm và mời Creator, hoặc nạp đối tác mẫu để thử nghiệm.
+                              </span>
+                              <div style={{ display: 'flex', gap: 12, marginTop: 6 }}>
+                                <Button
+                                  type="primary"
+                                  icon={<SearchOutlined />}
+                                  onClick={() => navigate('/creators')}
+                                  style={{ background: '#4F46E5', borderRadius: 8, height: 36 }}
+                                >
+                                  Khám phá Creator để mời hợp tác
+                                </Button>
+                                <Button
+                                  onClick={handleLoadDemoPartners}
+                                  style={{ borderRadius: 8, borderColor: '#CBD5E1', height: 36 }}
+                                >
+                                  ⚡ Nạp đối tác mẫu (Demo)
+                                </Button>
+                              </div>
+                            </div>
+                          }
+                        />
+                      ) : (
+                        <Empty
+                          description={
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                              <span style={{ color: '#475569', fontSize: 13, fontWeight: 500 }}>
+                                Không có đối tác nào phù hợp với bộ lọc hiện tại.
+                              </span>
+                              <Button
+                                size="small"
+                                onClick={() => {
+                                  setPartnerFilter('all');
+                                  setSearchQuery('');
+                                }}
+                                style={{ borderRadius: 8 }}
+                              >
+                                Đặt lại bộ lọc
+                              </Button>
+                            </div>
+                          }
+                        />
+                      )}
                     </td>
                   </tr>
                 ) : (
-                  partners
-                    .filter((p) => (partnerFilter === 'all' ? true : p.stage === partnerFilter))
-                    .map((p) => (
+                  filteredPartners.map((p) => (
                       <tr key={p.id}>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

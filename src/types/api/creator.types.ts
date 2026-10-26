@@ -86,3 +86,18 @@ export interface AddShortlistItemPayload {
 export interface ShortlistCompareRequest {
   creatorIds: string[];
 }
+
+export interface SendInvitationRequest {
+  creatorId?: string;
+  email: string;
+  campaignId?: string;
+}
+
+export interface InvitationResponse {
+  id?: string;
+  creatorId?: string;
+  email?: string;
+  campaignId?: string;
+  status?: string;
+  createdAt?: string;
+}

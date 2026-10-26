@@ -279,8 +279,32 @@ const INITIAL_INVITATIONS: CollaborationInvitation[] = [
 
 export default function OutreachCrmPage() {
   const navigate = useNavigate();
+  const [campaignList, setCampaignList] = useState<{ value: string; label: string }[]>(CAMPAIGN_OPTIONS);
   const [selectedCampaign, setSelectedCampaign] = useState('camp-1');
   const [activeSubTab, setActiveSubTab] = useState<'email' | 'crm' | 'invitation'>('email');
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchCampaigns = async () => {
+      try {
+        const camps = await campaignService.getCampaigns(0, 50);
+        if (isMounted && Array.isArray(camps) && camps.length > 0) {
+          const mapped = camps.map((c) => ({
+            value: c.id,
+            label: c.name || 'Chiến dịch',
+          }));
+          setCampaignList(mapped);
+          setSelectedCampaign(mapped[0].value);
+        }
+      } catch (err) {
+        console.warn('Lỗi tải danh sách chiến dịch trong CRM:', err);
+      }
+    };
+    fetchCampaigns();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Tab 1: Outreach Email State
   const [emails, setEmails] = useState<OutreachEmail[]>(INITIAL_EMAILS);
@@ -338,15 +362,17 @@ export default function OutreachCrmPage() {
       let subject = '';
       let body = '';
 
+      const campName = campaignList.find((c) => c.value === selectedCampaign)?.label.replace(/^[^\w\s]*\s*/, '') || 'Chiến dịch mới';
+
       if (aiTone === 'formal') {
         subject = 'Thư mời hợp tác chiến dịch truyền thông thương hiệu GlowBeauty';
-        body = `Kính gửi bạn,\n\nĐại diện cho nhãn hàng GlowBeauty, chúng tôi rất trân trọng những giá trị nội dung chỉn chu và uy tín mà kênh của bạn đã xây dựng.\n\nNhân dịp ra mắt chiến dịch "${CAMPAIGN_OPTIONS.find((c) => c.value === selectedCampaign)?.label.replace(/^[^\w\s]*\s*/, '')}", chúng tôi trân trọng kính mời bạn đồng hành cùng nhãn hàng với vai trò Key Creator. Chi tiết quyền lợi bao gồm:\n• Thù lao hợp tác thỏa thuận cạnh tranh\n• Bộ sản phẩm trải nghiệm cao cấp gửi tận nơi\n• Quyền sử dụng mã giảm giá độc quyền cho cộng đồng của bạn\n\nRất mong nhận được phản hồi từ bạn trước ngày 05/10/2026.\n\nTrân trọng,\nĐội ngũ Influencer Marketing GlowBeauty.`;
+        body = `Kính gửi bạn,\n\nĐại diện cho nhãn hàng GlowBeauty, chúng tôi rất trân trọng những giá trị nội dung chỉn chu và uy tín mà kênh của bạn đã xây dựng.\n\nNhân dịp ra mắt chiến dịch "${campName}", chúng tôi trân trọng kính mời bạn đồng hành cùng nhãn hàng với vai trò Key Creator. Chi tiết quyền lợi bao gồm:\n• Thù lao hợp tác thỏa thuận cạnh tranh\n• Bộ sản phẩm trải nghiệm cao cấp gửi tận nơi\n• Quyền sử dụng mã giảm giá độc quyền cho cộng đồng của bạn\n\nRất mong nhận được phản hồi từ bạn trước ngày 05/10/2026.\n\nTrân trọng,\nĐội ngũ Influencer Marketing GlowBeauty.`;
       } else if (aiTone === 'friendly') {
         subject = '✨ Lời mời hợp tác siêu ngọt ngào cùng GlowBeauty x Bạn!';
-        body = `Chào bạn ơi,\n\nTeam GlowBeauty theo dõi kênh của bạn từ lâu và cực kỳ mê phong cách chia sẻ tự nhiên, gần gũi của bạn luôn ấy! 💖\n\nTụi mình chuẩn bị tung ra chiến dịch "${CAMPAIGN_OPTIONS.find((c) => c.value === selectedCampaign)?.label.replace(/^[^\w\s]*\s*/, '')}" với những sản phẩm cực hot cho mùa hè này. Team rất muốn mời bạn là một trong những người đầu tiên bóc hộp và trải nghiệm sản phẩm cùng tụi mình.\n\nNếu bạn có hứng thú, hãy reply lại email này nhé, tụi mình sẽ gửi ngay brief chi tiết và hộp quà xinh xắn đến bạn liền nha!\n\nChúc bạn một ngày tràn đầy năng lượng! ✨`;
+        body = `Chào bạn ơi,\n\nTeam GlowBeauty theo dõi kênh của bạn từ lâu và cực kỳ mê phong cách chia sẻ tự nhiên, gần gũi của bạn luôn ấy! 💖\n\nTụi mình chuẩn bị tung ra chiến dịch "${campName}" với những sản phẩm cực hot cho mùa hè này. Team rất muốn mời bạn là một trong những người đầu tiên bóc hộp và trải nghiệm sản phẩm cùng tụi mình.\n\nNếu bạn có hứng thú, hãy reply lại email này nhé, tụi mình sẽ gửi ngay brief chi tiết và hộp quà xinh xắn đến bạn liền nha!\n\nChúc bạn một ngày tràn đầy năng lượng! ✨`;
       } else {
         subject = 'Cơ hội hợp tác chiến dịch ra mắt: GlowBeauty 2026';
-        body = `Chào bạn,\n\nChúng tôi đại diện cho nhãn hàng GlowBeauty. Chúng tôi đang tìm kiếm Creator phù hợp cho chiến dịch "${CAMPAIGN_OPTIONS.find((c) => c.value === selectedCampaign)?.label.replace(/^[^\w\s]*\s*/, '')}".\n\n• Ấn phẩm yêu cầu: 1 Video review 45-60s\n• Thời gian bàn giao: Tháng 10/2026\n• Ngân sách đề xuất: Thỏa thuận theo báo giá của bạn\n\nVui lòng phản hồi kèm báo giá (rate card) mới nhất nếu bạn quan tâm hợp tác. Cảm ơn bạn!`;
+        body = `Chào bạn,\n\nChúng tôi đại diện cho nhãn hàng GlowBeauty. Chúng tôi đang tìm kiếm Creator phù hợp cho chiến dịch "${campName}".\n\n• Ấn phẩm yêu cầu: 1 Video review 45-60s\n• Thời gian bàn giao: Tháng 10/2026\n• Ngân sách đề xuất: Thỏa thuận theo báo giá của bạn\n\nVui lòng phản hồi kèm báo giá (rate card) mới nhất nếu bạn quan tâm hợp tác. Cảm ơn bạn!`;
       }
 
       setEmailSubject(subject);
@@ -524,7 +550,7 @@ export default function OutreachCrmPage() {
               value={selectedCampaign}
               onChange={setSelectedCampaign}
               style={{ width: 240 }}
-              options={CAMPAIGN_OPTIONS}
+              options={campaignList}
             />
           </div>
 

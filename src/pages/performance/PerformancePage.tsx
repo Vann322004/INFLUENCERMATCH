@@ -1,25 +1,38 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Row, Col, Card, Select, Button, Tag, Rate,
-  Progress, Tabs, Avatar, Form, Input, Modal, message,
-  Tooltip, Badge, Statistic, Divider, InputNumber, Empty, Spin,
+  Progress, Avatar, Form, Input, Modal, message,
+  Tooltip, InputNumber, Empty, Spin,
 } from 'antd';
 import {
   RiseOutlined, FallOutlined, TrophyOutlined, StarFilled,
-  DollarOutlined, EyeOutlined, HeartOutlined, CheckCircleOutlined,
-  DownloadOutlined, PlusOutlined, ClockCircleOutlined, InfoCircleOutlined,
+  DollarOutlined, EyeOutlined, CheckCircleOutlined,
+  PlusOutlined, ClockCircleOutlined, InfoCircleOutlined,
   FlagFilled, EditOutlined, LikeOutlined, ThunderboltOutlined,
-  SyncOutlined,
+  SyncOutlined, WalletOutlined, ShoppingCartOutlined,
+  BarChartOutlined, LineChartOutlined,
 } from '@ant-design/icons';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  Legend,
+  ReferenceLine,
+  Cell,
+  AreaChart,
+  Area,
+} from 'recharts';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
 import { collaborationService } from '../../services/api/collaborationService';
-import type { CampaignResponse } from '../../types/api/campaign.types';
 import './PerformancePage.css';
 
 const { Option } = Select;
-const { TabPane } = Tabs;
 const { TextArea } = Input;
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
@@ -39,7 +52,7 @@ interface CampaignROI {
 }
 
 interface CreatorReview {
-  id: string; // relationship / collaboration ID
+  id: string;
   creatorId: string;
   creatorName: string;
   avatar: string;
@@ -62,24 +75,6 @@ const fmtNum = (n: number) =>
 const fmtVND = (n: number) =>
   n >= 1_000_000_000 ? `${(n / 1_000_000_000).toFixed(2)} tỷ` : n >= 1_000_000 ? `${(n / 1_000_000).toFixed(0)}M ₫` : `${n.toLocaleString()} ₫`;
 
-// ─── KPI Summary Card ─────────────────────────────────────────────────────────
-const KpiCard: React.FC<{ label: string; value: string; sub?: string; trend?: number; icon: React.ReactNode; color: string }> =
-  ({ label, value, sub, trend, icon, color }) => (
-    <div className="perf-kpi-card" style={{ borderLeft: `4px solid ${color}` }}>
-      <div className="perf-kpi-icon" style={{ background: `${color}18`, color }}>{icon}</div>
-      <div className="perf-kpi-body">
-        <div className="perf-kpi-value">{value}</div>
-        <div className="perf-kpi-label">{label}</div>
-        {sub && <div className="perf-kpi-sub">{sub}</div>}
-      </div>
-      {trend !== undefined && (
-        <div className={`perf-kpi-trend ${trend >= 0 ? 'up' : 'down'}`}>
-          {trend >= 0 ? <RiseOutlined /> : <FallOutlined />} {Math.abs(trend)}%
-        </div>
-      )}
-    </div>
-  );
-
 // ─── Score Row ────────────────────────────────────────────────────────────────
 const ScoreRow: React.FC<{ label: string; value: number; icon: React.ReactNode }> = ({ label, value, icon }) => (
   <div className="score-row">
@@ -90,10 +85,143 @@ const ScoreRow: React.FC<{ label: string; value: number; icon: React.ReactNode }
   </div>
 );
 
+// ─── Recharts Custom Tooltips ─────────────────────────────────────────────────
+const CustomRevenueTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div
+        style={{
+          background: '#0F172A',
+          color: '#FFFFFF',
+          padding: '12px 16px',
+          borderRadius: 12,
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+          fontSize: 12,
+          minWidth: 220,
+          border: '1px solid #334155',
+        }}
+      >
+        <div
+          style={{
+            fontWeight: 700,
+            fontSize: 13,
+            marginBottom: 8,
+            color: '#F8FAFC',
+            borderBottom: '1px solid #334155',
+            paddingBottom: 6,
+          }}
+        >
+          {data.fullName || label}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+          <span style={{ color: '#A5B4FC', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: '#6366F1', display: 'inline-block' }} />
+            Chi phí thực chi:
+          </span>
+          <span style={{ fontWeight: 700 }}>{fmtVND(data.spent)}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+          <span style={{ color: '#6EE7B7', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: '#10B981', display: 'inline-block' }} />
+            Doanh thu ghi nhận:
+          </span>
+          <span style={{ fontWeight: 700 }}>{fmtVND(data.revenue)}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+          <span style={{ color: '#7DD3FC', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: '#0284C7', display: 'inline-block' }} />
+            Lợi nhuận ròng:
+          </span>
+          <span style={{ fontWeight: 700 }}>{fmtVND(data.profit)}</span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingTop: 6,
+            borderTop: '1px dashed #334155',
+            fontSize: 11.5,
+          }}
+        >
+          <span style={{ color: '#94A3B8' }}>Hiệu suất hoàn vốn:</span>
+          <span style={{ color: '#FCD34D', fontWeight: 800 }}>
+            ROAS {data.roas}x ({data.roi >= 0 ? `+${data.roi}%` : `${data.roi}%`})
+          </span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomRoasTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const isAboveTarget = data.roas >= 3.0;
+    const isGood = data.roas >= 2.0;
+    return (
+      <div
+        style={{
+          background: '#0F172A',
+          color: '#FFFFFF',
+          padding: '12px 16px',
+          borderRadius: 12,
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+          fontSize: 12,
+          minWidth: 200,
+          border: '1px solid #334155',
+        }}
+      >
+        <div
+          style={{
+            fontWeight: 700,
+            fontSize: 13,
+            marginBottom: 8,
+            color: '#F8FAFC',
+            borderBottom: '1px solid #334155',
+            paddingBottom: 6,
+          }}
+        >
+          {data.fullName}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <span style={{ color: '#94A3B8' }}>Tỷ suất ROAS:</span>
+          <span
+            style={{
+              fontWeight: 800,
+              fontSize: 16,
+              color: isAboveTarget ? '#34D399' : isGood ? '#FBBF24' : '#F87171',
+            }}
+          >
+            {data.roas}x
+          </span>
+        </div>
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: isAboveTarget ? '#6EE7B7' : isGood ? '#FDE68A' : '#FCA5A5',
+          }}
+        >
+          {isAboveTarget
+            ? '⭐ Vượt mục tiêu ngành (>= 3.0x)'
+            : isGood
+            ? '✓ Đạt chuẩn hòa vốn có lãi'
+            : '⚠ Cần tối ưu chi phí & nội dung'}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const PerformancePage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('roi');
+  const [activeTab, setActiveTab] = useState<'roi' | 'reviews'>('roi');
+  const [chartType, setChartType] = useState<'bar' | 'area'>('bar');
   const [filterCampaign, setFilterCampaign] = useState('all');
   const [campaigns, setCampaigns] = useState<CampaignROI[]>([]);
   const [reviews, setReviews] = useState<CreatorReview[]>([]);
@@ -219,7 +347,9 @@ const PerformancePage: React.FC = () => {
   // Aggregate stats
   const totalRevenue = campaigns.reduce((s, c) => s + c.revenue, 0);
   const totalSpent = campaigns.reduce((s, c) => s + c.spent, 0);
+  const netProfit = totalRevenue - totalSpent;
   const avgROAS = totalSpent > 0 ? (totalRevenue / totalSpent).toFixed(2) : '0';
+  const totalROI = totalSpent > 0 ? Math.round((netProfit / totalSpent) * 100) : 0;
   const totalReach = campaigns.reduce((s, c) => s + c.reach, 0);
   const totalConv = campaigns.reduce((s, c) => s + c.conversions, 0);
   const selfReportedCount = campaigns.filter((c) => c.selfReported).length;
@@ -228,6 +358,26 @@ const PerformancePage: React.FC = () => {
     filterCampaign === 'all'
       ? campaigns
       : campaigns.filter((c) => c.id === filterCampaign);
+
+  const revenueChartData = filteredCampaigns.map((c) => ({
+    id: c.id,
+    name: c.name.length > 20 ? c.name.substring(0, 18) + '...' : c.name,
+    fullName: c.name,
+    spent: c.spent,
+    revenue: c.revenue,
+    profit: Math.max(0, c.revenue - c.spent),
+    roas: c.roas,
+    roi: Math.round(((c.revenue - c.spent) / Math.max(c.spent, 1)) * 100),
+    selfReported: c.selfReported,
+  }));
+
+  const roasChartData = filteredCampaigns.map((c) => ({
+    id: c.id,
+    name: c.name.length > 18 ? c.name.substring(0, 16) + '...' : c.name,
+    fullName: c.name,
+    roas: c.roas,
+    status: c.status,
+  }));
 
   // Submit Review via API
   const handleSubmitReview = async () => {
@@ -249,33 +399,33 @@ const PerformancePage: React.FC = () => {
           note: vals.comment || '',
         })
         .catch((err) => {
-          console.warn('API reviewCreator warning (saved locally):', err);
+          console.warn('API reviewCreator warn (using local fallback save):', err);
         });
 
-      // Persist review to local storage
-      const savedObj = {
-        ...vals,
+      const updatedReview: CreatorReview = {
+        ...reviewModal.creator,
+        punctuality: vals.punctuality,
+        attitude: vals.attitude,
+        quality: vals.quality,
+        kpiAchieved: vals.kpiAchieved,
         overallRating: avg,
-        date: dayjs().format('YYYY-MM-DD'),
+        comment: vals.comment,
+        date: new Date().toISOString(),
         reviewed: true,
       };
+
       try {
-        localStorage.setItem(`im_review_${reviewModal.creator.id}`, JSON.stringify(savedObj));
+        localStorage.setItem(`im_review_${reviewModal.creator.id}`, JSON.stringify(updatedReview));
       } catch {
         // ignore
       }
 
       setReviews((prev) =>
-        prev.map((r) =>
-          r.id === reviewModal.creator!.id
-            ? { ...r, ...savedObj }
-            : r
-        )
+        prev.map((r) => (r.id === reviewModal.creator?.id ? updatedReview : r))
       );
 
-      message.success('Đã gửi đánh giá Creator thành công!');
+      message.success('Đã lưu đánh giá Creator thành công!');
       setReviewModal({ open: false });
-      reviewForm.resetFields();
     } catch {
       // validation error
     } finally {
@@ -283,7 +433,7 @@ const PerformancePage: React.FC = () => {
     }
   };
 
-  // Submit Self-Reported Metrics
+  // Save Self-Reported Metrics
   const handleSaveSelfReport = async () => {
     try {
       const vals = await selfReportForm.validateFields();
@@ -348,14 +498,14 @@ const PerformancePage: React.FC = () => {
       <div className="perf-header">
         <div>
           <h1 className="perf-title">Hiệu suất & ROI Chiến dịch</h1>
-          <p className="perf-subtitle">Phân tích hiệu quả đầu tư, ROAS thực tế và nghiệm thu đánh giá Creator</p>
+          <p className="perf-subtitle">Phân tích hiệu quả đầu tư, tỷ suất ROAS thực tế và nghiệm thu đánh giá Creator</p>
         </div>
         <div className="perf-header-right">
           <Select
             value={filterCampaign}
             onChange={setFilterCampaign}
-            style={{ width: 220 }}
-            placeholder="Lọc chiến dịch"
+            style={{ width: 240 }}
+            placeholder="Lọc theo chiến dịch"
           >
             <Option value="all">Tất cả chiến dịch ({campaigns.length})</Option>
             {campaigns.map((c) => (
@@ -364,13 +514,13 @@ const PerformancePage: React.FC = () => {
               </Option>
             ))}
           </Select>
-          <Button icon={<SyncOutlined />} onClick={loadPerformanceData}>
+          <Button icon={<SyncOutlined />} onClick={loadPerformanceData} style={{ borderRadius: 8, height: 38 }}>
             Làm mới
           </Button>
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)', borderRadius: 8 }}
+            style={{ background: '#4F46E5', borderRadius: 8, height: 38, fontWeight: 600 }}
             onClick={() => {
               if (campaigns.length === 0) {
                 message.warning('Bạn chưa có chiến dịch nào để nhập số liệu.');
@@ -393,20 +543,20 @@ const PerformancePage: React.FC = () => {
       </div>
 
       {campaigns.length === 0 ? (
-        <Card className="perf-card" style={{ marginTop: 24, textAlign: 'center', padding: '40px 0' }}>
+        <Card style={{ borderRadius: 16, textAlign: 'center', padding: '50px 0', border: '1px solid #E2E8F0' }}>
           <Empty
             description={
               <div>
-                <h3 style={{ fontWeight: 700, color: '#0F172A' }}>Chưa có dữ liệu chiến dịch</h3>
-                <p style={{ color: '#64748B', fontSize: 13 }}>
-                  Hãy tạo chiến dịch đầu tiên để hệ thống theo dõi chi phí, đối tác và phân tích tỷ suất hoàn vốn (ROAS/ROI).
+                <h3 style={{ fontWeight: 800, color: '#0F172A', fontSize: 16 }}>Chưa có dữ liệu chiến dịch</h3>
+                <p style={{ color: '#64748B', fontSize: 13, maxWidth: 440, margin: '6px auto 16px' }}>
+                  Hãy tạo chiến dịch đầu tiên để hệ thống tự động theo dõi chi phí, đo lường lượt tiếp cận và phân tích tỷ suất hoàn vốn (ROAS/ROI).
                 </p>
               </div>
             }
           >
             <Button
               type="primary"
-              style={{ background: '#4F46E5', borderRadius: 8 }}
+              style={{ background: '#4F46E5', borderRadius: 8, height: 38, fontWeight: 600 }}
               onClick={() => navigate('/campaigns/create')}
             >
               + Tạo chiến dịch ngay
@@ -415,281 +565,657 @@ const PerformancePage: React.FC = () => {
         </Card>
       ) : (
         <>
-          {/* ── KPI Summary Row ───────────────────────────── */}
-          <div className="perf-kpi-row">
-            <KpiCard label="Tổng doanh thu" value={fmtVND(totalRevenue)} sub="Tất cả chiến dịch" trend={23} icon={<DollarOutlined />} color="#10b981" />
-            <KpiCard label="ROAS trung bình" value={`${avgROAS}x`} sub="Doanh thu / Chi phí" trend={8} icon={<TrophyOutlined />} color="#6366f1" />
-            <KpiCard label="Tổng chi phí" value={fmtVND(totalSpent)} sub="Đã nghiệm thu / giải ngân" icon={<DollarOutlined />} color="#3b82f6" />
-            <KpiCard label="Tổng tiếp cận" value={fmtNum(totalReach)} trend={15} icon={<EyeOutlined />} color="#8b5cf6" />
-            <KpiCard label="Chuyển đổi" value={fmtNum(totalConv)} trend={12} icon={<CheckCircleOutlined />} color="#f59e0b" />
-            <KpiCard label="Đánh giá Creator" value={`${avgRating}/5`} sub={`${reviewedList.length}/${reviews.length} đã đánh giá`} icon={<StarFilled />} color="#ec4899" />
+          {/* ── KPI Tier 1: 4 Primary Executive Return Cards ───────────────────── */}
+          <div className="perf-kpi-grid-primary">
+            {/* Card 1: Doanh thu */}
+            <div className="perf-card-primary">
+              <div className="perf-card-header">
+                <div className="perf-card-icon-wrap" style={{ background: '#ECFDF5', color: '#059669' }}>
+                  <DollarOutlined />
+                </div>
+                <span className="perf-pill-badge green">
+                  <RiseOutlined /> +23%
+                </span>
+              </div>
+              <div>
+                <div className="perf-card-val">{fmtVND(totalRevenue)}</div>
+                <div className="perf-card-lbl">Tổng doanh thu ghi nhận</div>
+                <div className="perf-card-sub">Tổng giá trị đơn hàng & lead phát sinh</div>
+              </div>
+            </div>
+
+            {/* Card 2: Chi phí */}
+            <div className="perf-card-primary">
+              <div className="perf-card-header">
+                <div className="perf-card-icon-wrap" style={{ background: '#EFF6FF', color: '#2563EB' }}>
+                  <WalletOutlined />
+                </div>
+                <span className="perf-pill-badge indigo">
+                  Đã giải ngân
+                </span>
+              </div>
+              <div>
+                <div className="perf-card-val">{fmtVND(totalSpent)}</div>
+                <div className="perf-card-lbl">Tổng chi phí & Vốn đầu tư</div>
+                <div className="perf-card-sub">Ngân sách hợp tác Creator & sản xuất</div>
+              </div>
+            </div>
+
+            {/* Card 3: Lợi nhuận ròng & ROI */}
+            <div className="perf-card-primary">
+              <div className="perf-card-header">
+                <div className="perf-card-icon-wrap" style={{ background: '#F5F3FF', color: '#7C3AED' }}>
+                  <RiseOutlined />
+                </div>
+                <span className="perf-pill-badge indigo">
+                  ROI: +{totalROI}%
+                </span>
+              </div>
+              <div>
+                <div className="perf-card-val" style={{ color: '#059669' }}>
+                  +{fmtVND(netProfit)}
+                </div>
+                <div className="perf-card-lbl">Lợi nhuận ròng thu về</div>
+                <div className="perf-card-sub">Biên lợi nhuận ròng đạt {totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0}%</div>
+              </div>
+            </div>
+
+            {/* Card 4: ROAS Trung bình */}
+            <div className="perf-card-primary">
+              <div className="perf-card-header">
+                <div className="perf-card-icon-wrap" style={{ background: '#FFFBEB', color: '#D97706' }}>
+                  <TrophyOutlined />
+                </div>
+                <span className="perf-pill-badge amber">
+                  Mục tiêu: 3.0x
+                </span>
+              </div>
+              <div>
+                <div className="perf-card-val">{avgROAS}x</div>
+                <div className="perf-card-lbl">Tỷ suất ROAS trung bình</div>
+                <div className="perf-card-sub">Mỗi 1 VNĐ chi ra mang về {avgROAS} VNĐ</div>
+              </div>
+            </div>
           </div>
 
-          {/* ── Self-reported notice ──────────────────────── */}
+          {/* ── KPI Tier 2: 3 Operational Performance Cards ────────────────────── */}
+          <div className="perf-kpi-grid-secondary">
+            <div className="perf-card-secondary">
+              <div className="perf-sec-icon" style={{ background: '#F3E8FF', color: '#9333EA' }}>
+                <EyeOutlined />
+              </div>
+              <div className="perf-sec-info">
+                <div className="perf-sec-top">
+                  <span className="perf-sec-lbl">Tổng lượt tiếp cận (Reach)</span>
+                  <span className="perf-pill-badge green" style={{ fontSize: 11, padding: '1px 6px' }}>+15%</span>
+                </div>
+                <div className="perf-sec-val">{fmtNum(totalReach)} Lượt xem</div>
+                <div className="perf-sec-sub">Chi phí mỗi 1K lượt xem (CPM): ~{totalReach > 0 ? fmtVND(Math.round((totalSpent / totalReach) * 1000)) : '0 ₫'}</div>
+              </div>
+            </div>
+
+            <div className="perf-card-secondary">
+              <div className="perf-sec-icon" style={{ background: '#FEF3C7', color: '#D97706' }}>
+                <ShoppingCartOutlined />
+              </div>
+              <div className="perf-sec-info">
+                <div className="perf-sec-top">
+                  <span className="perf-sec-lbl">Tổng lượt chuyển đổi (Orders)</span>
+                  <span className="perf-pill-badge green" style={{ fontSize: 11, padding: '1px 6px' }}>+12%</span>
+                </div>
+                <div className="perf-sec-val">{fmtNum(totalConv)} Đơn hàng</div>
+                <div className="perf-sec-sub">Chi phí trên mỗi đơn (CPA): ~{totalConv > 0 ? fmtVND(Math.round(totalSpent / totalConv)) : '0 ₫'}</div>
+              </div>
+            </div>
+
+            <div className="perf-card-secondary">
+              <div className="perf-sec-icon" style={{ background: '#FCE7F3', color: '#DB2777' }}>
+                <StarFilled />
+              </div>
+              <div className="perf-sec-info">
+                <div className="perf-sec-top">
+                  <span className="perf-sec-lbl">Đánh giá Creator trung bình</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#D97706' }}>★ {avgRating}/5.0</span>
+                </div>
+                <div className="perf-sec-val">{reviewedList.length}/{reviews.length} Creator</div>
+                <div className="perf-sec-sub">Đã hoàn tất nghiệm thu & chấm điểm chất lượng</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Self-reported notice banner ──────────────── */}
           {selfReportedCount > 0 && (
             <div className="perf-self-reported-banner">
-              <FlagFilled style={{ color: '#f59e0b', fontSize: 14 }} />
-              <span>
-                <strong>{selfReportedCount} chiến dịch</strong> có số liệu <strong>Tự khai báo (Self-reported)</strong> — do Brand cập nhật trực tiếp để tính toán tỷ suất lợi nhuận ROI.
-              </span>
-              <Tooltip title="Self-reported flag: Dữ liệu này do Brand chủ động nhập từ kết quả bán hàng hoặc affiliate thực tế.">
-                <InfoCircleOutlined style={{ color: '#f59e0b', cursor: 'pointer' }} />
-              </Tooltip>
+              <div className="perf-banner-left">
+                <FlagFilled style={{ color: '#D97706', fontSize: 16 }} />
+                <span>
+                  Đang có <strong>{selfReportedCount} chiến dịch</strong> sử dụng số liệu <strong>Tự khai báo (Self-reported)</strong> từ phía Brand để tính toán tỷ suất lợi nhuận và doanh thu thực tế.
+                </span>
+                <Tooltip title="Dữ liệu do Brand chủ động nhập từ kết quả doanh thu bán hàng thực tế qua link / coupon affiliate.">
+                  <InfoCircleOutlined style={{ color: '#D97706', cursor: 'pointer' }} />
+                </Tooltip>
+              </div>
+              <Button
+                size="small"
+                onClick={() => {
+                  const defaultC = campaigns[0];
+                  selfReportForm.setFieldsValue({
+                    campaignId: defaultC.id,
+                    spent: defaultC.spent,
+                    revenue: defaultC.revenue,
+                    reach: defaultC.reach,
+                    conversions: defaultC.conversions,
+                  });
+                  setSelfReportModal({ open: true, campaign: defaultC });
+                }}
+                style={{ borderRadius: 6, fontSize: 12, borderColor: '#FDE68A', background: '#FFFFFF', color: '#92400E', fontWeight: 600 }}
+              >
+                Cập nhật số liệu
+              </Button>
             </div>
           )}
 
-      {/* ── Tabs ─────────────────────────────────────── */}
-      <Tabs activeKey={activeTab} onChange={setActiveTab} className="perf-tabs" size="large">
+          {/* ── Tabs Navigation ─────────────────────────── */}
+          <div className="perf-tabs-bar">
+            <button
+              type="button"
+              className={`perf-tab-btn ${activeTab === 'roi' ? 'active' : ''}`}
+              onClick={() => setActiveTab('roi')}
+            >
+              <TrophyOutlined />
+              <span>1. Phân tích ROI & ROAS</span>
+            </button>
 
-        {/* ════════════════════════════════════════════════════
-            TAB 1: ROI & ROAS ANALYTICS
-        ════════════════════════════════════════════════════ */}
-        <TabPane tab={<span><TrophyOutlined /> ROI / ROAS Analytics</span>} key="roi">
-          <Row gutter={[20, 20]}>
+            <button
+              type="button"
+              className={`perf-tab-btn ${activeTab === 'reviews' ? 'active' : ''}`}
+              onClick={() => setActiveTab('reviews')}
+            >
+              <StarFilled style={{ color: activeTab === 'reviews' ? '#D97706' : '#94A3B8' }} />
+              <span>2. Đánh giá chất lượng Creator ({reviews.length})</span>
+            </button>
+          </div>
 
-            {/* Revenue per Campaign bar */}
-            <Col xs={24} lg={14}>
-              <Card title="Doanh thu tren moi chien dich" className="perf-card"
-                extra={
-                  <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#888', alignItems: 'center' }}>
-                    <span><span style={{ background: '#6366f1', width: 10, height: 10, borderRadius: 2, display: 'inline-block', marginRight: 4 }} />Chi phi</span>
-                    <span><span style={{ background: '#10b981', width: 10, height: 10, borderRadius: 2, display: 'inline-block', marginRight: 4 }} />Loi nhuan</span>
-                    <FlagFilled style={{ color: '#f59e0b' }} /><span style={{ color: '#f59e0b' }}>= Tu khai bao</span>
+          {/* ════════════════════════════════════════════════════
+              TAB 1: ROI & ROAS ANALYTICS
+          ════════════════════════════════════════════════════ */}
+          {activeTab === 'roi' && (
+            <Row gutter={[20, 20]}>
+              {/* Left Col: Biểu đồ Doanh thu & Chi phí */}
+              <Col xs={24} lg={15}>
+                <div className="perf-analytics-card">
+                  <div className="perf-analytics-head">
+                    <div>
+                      <h3 className="perf-analytics-title">Doanh thu & Chi phí theo từng chiến dịch</h3>
+                      <p style={{ margin: '3px 0 0', fontSize: 12, color: '#64748B' }}>
+                        So sánh chi phí đầu tư thực chi, doanh thu ghi nhận và biên lợi nhuận ròng
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div className="perf-chart-toggle-group">
+                        <button
+                          type="button"
+                          className={`perf-chart-toggle-btn ${chartType === 'bar' ? 'active' : ''}`}
+                          onClick={() => setChartType('bar')}
+                          title="Xem dạng biểu đồ cột so sánh"
+                        >
+                          <BarChartOutlined /> Cột
+                        </button>
+                        <button
+                          type="button"
+                          className={`perf-chart-toggle-btn ${chartType === 'area' ? 'active' : ''}`}
+                          onClick={() => setChartType('area')}
+                          title="Xem dạng biểu đồ miền xu hướng"
+                        >
+                          <LineChartOutlined /> Miền
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                }
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginTop: 8 }}>
-                  {filteredCampaigns.map(c => (
-                    <div key={c.id}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontWeight: 700, fontSize: 13 }}>{c.name}</span>
-                          {c.selfReported && (
-                            <Tooltip title="Du lieu tu khai bao — Brand tu nhap lieu">
-                              <Tag icon={<FlagFilled />} color="warning" style={{ fontSize: 10, lineHeight: '16px' }}>Tu khai bao</Tag>
-                            </Tooltip>
-                          )}
-                          <Tag color={c.status === 'active' ? 'blue' : 'green'} style={{ fontSize: 10 }}>
-                            {c.status === 'active' ? 'Dang chay' : 'Hoan thanh'}
-                          </Tag>
-                        </div>
-                        <div style={{ display: 'flex', gap: 16, fontSize: 12 }}>
-                          <span style={{ color: '#6366f1' }}>Chi: {fmtVND(c.spent)}</span>
-                          <span style={{ color: '#10b981', fontWeight: 700 }}>DT: {fmtVND(c.revenue)}</span>
-                          <Tag color={c.roas >= 3 ? 'green' : c.roas >= 2 ? 'orange' : 'red'} style={{ fontWeight: 800 }}>ROAS {c.roas}x</Tag>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', height: 24, borderRadius: 6, overflow: 'hidden', gap: 2 }}>
-                        <Tooltip title={`Chi phi: ${fmtVND(c.spent)}`}>
-                          <div style={{ flex: c.spent, background: '#6366f1', borderRadius: '6px 0 0 6px' }} />
-                        </Tooltip>
-                        <Tooltip title={`Loi nhuan rong: ${fmtVND(c.revenue - c.spent)}`}>
-                          <div style={{ flex: c.revenue - c.spent, background: '#10b981', borderRadius: '0 6px 6px 0' }} />
-                        </Tooltip>
-                      </div>
-                      <div style={{ display: 'flex', gap: 16, fontSize: 11, color: '#999', marginTop: 4 }}>
-                        <span>ROI: +{Math.round(((c.revenue - c.spent) / c.spent) * 100)}%</span>
-                        <span>Tiep can: {fmtNum(c.reach)}</span>
-                        <span>Chuyen doi: {fmtNum(c.conversions)}</span>
-                        <span>CPC: {fmtVND(Math.round(c.spent / c.clicks))}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </Col>
 
-            {/* ROAS Gauge Cards */}
-            <Col xs={24} lg={10}>
-              <Card title="ROAS theo chien dich" className="perf-card">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {filteredCampaigns.map(c => (
-                    <div key={c.id} className="perf-roas-gauge">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ fontWeight: 600, fontSize: 12 }}>
-                          {c.name} {c.selfReported && <FlagFilled style={{ color: '#f59e0b', fontSize: 10 }} />}
-                        </span>
-                        <span style={{
-                          fontWeight: 800, fontSize: 16,
-                          color: c.roas >= 3 ? '#10b981' : c.roas >= 2 ? '#f59e0b' : '#ef4444',
-                        }}>{c.roas}x</span>
-                      </div>
-                      <Progress
-                        percent={(c.roas / 5) * 100}
-                        showInfo={false}
-                        strokeColor={c.roas >= 3 ? '#10b981' : c.roas >= 2 ? '#f59e0b' : '#ef4444'}
-                        railColor="#f1f5f9"
-                        strokeWidth={10}
-                        style={{ borderRadius: 8 }}
-                      />
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#999', marginTop: 4 }}>
-                        <span>0x</span><span style={{ fontWeight: 600, color: c.roas >= 3 ? '#10b981' : '#f59e0b' }}>Muc tieu: 3x</span><span>5x</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </Col>
-
-            {/* Summary Stats */}
-            <Col xs={24}>
-              <Card title="Tổng kết hiệu quả đầu tư chiến dịch" className="perf-card">
-                <Row gutter={[16, 16]}>
-                  {[
-                    { title: 'Tổng lợi nhuận ròng thu về', value: fmtVND(totalRevenue - totalSpent), color: '#10b981' },
-                    { title: 'Chi phí trung bình / chuyển đổi', value: totalConv > 0 ? fmtVND(Math.round(totalSpent / totalConv)) : '0 ₫', color: '#6366f1' },
-                    { title: 'Lượt tiếp cận trung bình / chiến dịch', value: fmtNum(Math.round(totalReach / Math.max(campaigns.length, 1))), color: '#3b82f6' },
-                    { title: 'Số chiến dịch đạt ROAS > 3x', value: `${campaigns.filter((c) => c.roas >= 3).length}/${campaigns.length}`, color: '#f59e0b' },
-                  ].map((s) => (
-                    <Col xs={24} sm={12} md={6} key={s.title}>
-                      <div style={{ background: '#f8f9ff', borderRadius: 10, padding: 14, border: '1px solid #e8e3ff' }}>
-                        <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>{s.title}</div>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: s.color }}>{s.value}</div>
-                      </div>
-                    </Col>
-                  ))}
-                </Row>
-              </Card>
-            </Col>
-          </Row>
-        </TabPane>
-
-        {/* ════════════════════════════════════════════════════
-            TAB 2: BRAND REVIEW (STRUCTURED RATING)
-        ════════════════════════════════════════════════════ */}
-        <TabPane tab={<span><StarFilled style={{ color: '#faad14' }} /> Đánh giá Creator ({reviews.length})</span>} key="review">
-          <Row gutter={[20, 20]}>
-            {/* Review Summary */}
-            <Col xs={24}>
-              <div className="review-summary-strip">
-                <div className="rsm-block">
-                  <div className="rsm-num" style={{ color: '#faad14' }}>{avgRating}</div>
-                  <Rate disabled value={parseFloat(avgRating)} allowHalf style={{ fontSize: 16 }} />
-                  <div className="rsm-label">Điểm trung bình tổng thể</div>
-                </div>
-                <div className="rsm-divider" />
-                <div className="rsm-block">
-                  <div className="rsm-num" style={{ color: '#10b981' }}>{reviewedList.length}</div>
-                  <div className="rsm-label">Creator đã đánh giá</div>
-                </div>
-                <div className="rsm-divider" />
-                <div className="rsm-block">
-                  <div className="rsm-num" style={{ color: '#f59e0b' }}>{pendingList.length}</div>
-                  <div className="rsm-label">Chờ đánh giá</div>
-                </div>
-              </div>
-            </Col>
-
-            {/* Pending Reviews */}
-            {pendingList.length > 0 && (
-              <Col xs={24}>
-                <Card
-                  title={
-                    <span>
-                      <ClockCircleOutlined style={{ color: '#f59e0b', marginRight: 6 }} />
-                      Creator chưa được đánh giá ({pendingList.length})
+                  {/* Legend Indicator Pills */}
+                  <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#64748B', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ background: '#6366F1', width: 12, height: 12, borderRadius: 3 }} />
+                      Chi phí thực chi
                     </span>
-                  }
-                  className="perf-card"
-                >
-                  <div className="review-pending-grid">
-                    {pendingList.map((cr) => (
-                      <div key={cr.id} className="review-pending-card">
-                        <Avatar src={cr.avatar} size={48} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 700, fontSize: 14 }}>{cr.creatorName}</div>
-                          <div style={{ fontSize: 12, color: '#888' }}>{cr.campaign}</div>
-                          <Tag color="magenta" style={{ fontSize: 10, marginTop: 4 }}>
-                            {cr.platform}
-                          </Tag>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ background: '#10B981', width: 12, height: 12, borderRadius: 3 }} />
+                      Doanh thu ghi nhận
+                    </span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ background: '#0284C7', width: 12, height: 12, borderRadius: 3 }} />
+                      Lợi nhuận ròng
+                    </span>
+                    {selfReportedCount > 0 && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#D97706', fontWeight: 600, marginLeft: 'auto' }}>
+                        <FlagFilled /> {selfReportedCount} Tự khai báo
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Recharts Visual Canvas */}
+                  <div style={{ width: '100%', height: 300, marginBottom: 20 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      {chartType === 'bar' ? (
+                        <BarChart data={revenueChartData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                          <XAxis
+                            dataKey="name"
+                            stroke="#64748B"
+                            fontSize={12}
+                            tickLine={false}
+                            interval={0}
+                            angle={revenueChartData.length > 3 ? -15 : 0}
+                            textAnchor={revenueChartData.length > 3 ? 'end' : 'middle'}
+                          />
+                          <YAxis
+                            stroke="#94A3B8"
+                            fontSize={11}
+                            tickLine={false}
+                            axisLine={false}
+                            tickFormatter={(v) => (v >= 1_000_000 ? `${(v / 1_000_000).toFixed(0)}M ₫` : `${v} ₫`)}
+                          />
+                          <RechartsTooltip content={<CustomRevenueTooltip />} />
+                          <Bar dataKey="spent" name="Chi phí" fill="#6366F1" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                          <Bar dataKey="revenue" name="Doanh thu" fill="#10B981" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                          <Bar dataKey="profit" name="Lợi nhuận" fill="#0284C7" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                        </BarChart>
+                      ) : (
+                        <AreaChart data={revenueChartData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+                          <defs>
+                            <linearGradient id="colorSpent" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
+                              <stop offset="95%" stopColor="#6366F1" stopOpacity={0.0} />
+                            </linearGradient>
+                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
+                              <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                            </linearGradient>
+                            <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#0284C7" stopOpacity={0.4} />
+                              <stop offset="95%" stopColor="#0284C7" stopOpacity={0.0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                          <XAxis
+                            dataKey="name"
+                            stroke="#64748B"
+                            fontSize={12}
+                            tickLine={false}
+                            interval={0}
+                          />
+                          <YAxis
+                            stroke="#94A3B8"
+                            fontSize={11}
+                            tickLine={false}
+                            axisLine={false}
+                            tickFormatter={(v) => (v >= 1_000_000 ? `${(v / 1_000_000).toFixed(0)}M ₫` : `${v} ₫`)}
+                          />
+                          <RechartsTooltip content={<CustomRevenueTooltip />} />
+                          <Area type="monotone" dataKey="revenue" stroke="#10B981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRevenue)" />
+                          <Area type="monotone" dataKey="spent" stroke="#6366F1" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSpent)" />
+                          <Area type="monotone" dataKey="profit" stroke="#0284C7" strokeWidth={2} fillOpacity={1} fill="url(#colorProfit)" />
+                        </AreaChart>
+                      )}
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Granular Campaign Metrics Breakdown */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {filteredCampaigns.map((c) => {
+                      const costShare = c.spent > 0 ? (c.spent / (c.revenue || c.spent)) * 100 : 50;
+                      const profitShare = Math.max(0, 100 - costShare);
+
+                      return (
+                        <div key={c.id} className="perf-campaign-item">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A' }}>{c.name}</span>
+                              {c.selfReported && (
+                                <Tag color="warning" icon={<FlagFilled />} style={{ fontSize: 11, borderRadius: 6, margin: 0 }}>
+                                  Tự khai báo
+                                </Tag>
+                              )}
+                              <Tag color={c.status === 'active' ? 'blue' : 'green'} style={{ fontSize: 11, borderRadius: 6, margin: 0 }}>
+                                {c.status === 'active' ? 'Đang chạy' : 'Hoàn thành'}
+                              </Tag>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <span style={{ color: '#4F46E5', fontSize: 12, fontWeight: 600 }}>
+                                Chi: {fmtVND(c.spent)}
+                              </span>
+                              <span style={{ color: '#059669', fontSize: 12, fontWeight: 700 }}>
+                                DT: {fmtVND(c.revenue)}
+                              </span>
+                              <Tag
+                                color={c.roas >= 3 ? 'green' : c.roas >= 2 ? 'gold' : 'red'}
+                                style={{ fontWeight: 800, fontSize: 11.5, borderRadius: 6, margin: 0 }}
+                              >
+                                ROAS {c.roas}x
+                              </Tag>
+                            </div>
+                          </div>
+
+                          {/* Dual Bar (Cost vs Profit) */}
+                          <div className="perf-dual-bar-container">
+                            <Tooltip title={`Chi phí đầu tư: ${fmtVND(c.spent)} (${costShare.toFixed(0)}%)`}>
+                              <div className="perf-bar-segment cost" style={{ width: `${costShare}%` }} />
+                            </Tooltip>
+                            <Tooltip title={`Lợi nhuận ròng: ${fmtVND(c.revenue - c.spent)} (${profitShare.toFixed(0)}%)`}>
+                              <div className="perf-bar-segment profit" style={{ width: `${profitShare}%` }} />
+                            </Tooltip>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: '#64748B', fontWeight: 500 }}>
+                            <span style={{ color: '#059669', fontWeight: 700 }}>
+                              ROI: +{Math.round(((c.revenue - c.spent) / Math.max(c.spent, 1)) * 100)}%
+                            </span>
+                            <span>Lượt tiếp cận: {fmtNum(c.reach)}</span>
+                            <span>Lượt chuyển đổi: {fmtNum(c.conversions)}</span>
+                            <span>CPC ước tính: {c.clicks > 0 ? fmtVND(Math.round(c.spent / c.clicks)) : '0 ₫'}</span>
+                          </div>
                         </div>
-                        <Button
-                          type="primary"
-                          icon={<StarFilled />}
-                          style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', border: 'none', borderRadius: 8 }}
-                          onClick={() => {
-                            setReviewModal({ open: true, creator: cr });
-                            reviewForm.resetFields();
-                            reviewForm.setFieldsValue({ punctuality: 5, attitude: 5, quality: 5, kpiAchieved: 5 });
+                      );
+                    })}
+                  </div>
+                </div>
+              </Col>
+
+              {/* Right Col: Biểu đồ Tỷ suất ROAS so với Mục tiêu */}
+              <Col xs={24} lg={9}>
+                <div className="perf-analytics-card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <div className="perf-analytics-head">
+                    <div>
+                      <h3 className="perf-analytics-title">Tỷ suất ROAS so với Mục tiêu</h3>
+                      <p style={{ margin: '3px 0 0', fontSize: 12, color: '#64748B' }}>
+                        Mục tiêu chuẩn ngành: <strong style={{ color: '#4F46E5' }}>3.0x</strong> (Hòa vốn 1.0x)
+                      </p>
+                    </div>
+                    <Tag color="purple" style={{ borderRadius: 6, fontWeight: 700, margin: 0 }}>
+                      {roasChartData.length} Chiến dịch
+                    </Tag>
+                  </div>
+
+                  {/* Recharts Horizontal Bar Chart */}
+                  <div style={{ width: '100%', height: Math.max(260, roasChartData.length * 75), marginBottom: 16 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        layout="vertical"
+                        data={roasChartData}
+                        margin={{ top: 15, right: 30, left: 10, bottom: 10 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#F1F5F9" />
+                        <XAxis
+                          type="number"
+                          domain={[0, (dataMax: number) => Math.max(4, Math.ceil(dataMax + 0.5))]}
+                          tickFormatter={(v) => `${v}x`}
+                          stroke="#94A3B8"
+                          fontSize={12}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          width={110}
+                          stroke="#475569"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <RechartsTooltip content={<CustomRoasTooltip />} />
+                        <ReferenceLine
+                          x={1.0}
+                          stroke="#94A3B8"
+                          strokeDasharray="3 3"
+                          label={{ value: '1.0x (Hòa vốn)', position: 'insideTopRight', fill: '#94A3B8', fontSize: 10 }}
+                        />
+                        <ReferenceLine
+                          x={3.0}
+                          stroke="#4F46E5"
+                          strokeDasharray="4 4"
+                          label={{ value: '3.0x (Mục tiêu)', position: 'insideTopRight', fill: '#4F46E5', fontSize: 10, fontWeight: 700 }}
+                        />
+                        <Bar dataKey="roas" radius={[0, 8, 8, 0]} barSize={26}>
+                          {roasChartData.map((entry, index) => (
+                            <Cell
+                              key={`cell-roas-${index}`}
+                              fill={entry.roas >= 3.0 ? '#10B981' : entry.roas >= 2.0 ? '#F59E0B' : '#EF4444'}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* ROAS Legend & Guide */}
+                  <div className="perf-roas-legend-panel">
+                    <div className="perf-roas-legend-row">
+                      <span className="perf-roas-dot green" />
+                      <div className="perf-roas-legend-text">
+                        <strong>≥ 3.0x (Vượt mục tiêu)</strong>
+                        <span>Chiến dịch sinh lời cao, nên đẩy thêm ngân sách mở rộng</span>
+                      </div>
+                    </div>
+                    <div className="perf-roas-legend-row">
+                      <span className="perf-roas-dot amber" />
+                      <div className="perf-roas-legend-text">
+                        <strong>2.0x – 2.9x (Khả quan)</strong>
+                        <span>Đã vượt điểm hòa vốn, có thể tái ký với Creator có KPI tốt</span>
+                      </div>
+                    </div>
+                    <div className="perf-roas-legend-row">
+                      <span className="perf-roas-dot red" />
+                      <div className="perf-roas-legend-text">
+                        <strong>&lt; 2.0x (Cần cải thiện)</strong>
+                        <span>Cần rà soát chi phí booking hoặc thay đổi thông điệp kịch bản</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Col>
+
+              {/* Bottom Summary KPI Cards */}
+              <Col xs={24}>
+                <div className="perf-analytics-card">
+                  <div className="perf-analytics-head">
+                    <h3 className="perf-analytics-title">Tổng kết hiệu quả đầu tư chiến dịch</h3>
+                    <span style={{ fontSize: 12, color: '#94A3B8' }}>Dữ liệu tổng hợp toàn thời gian</span>
+                  </div>
+
+                  <Row gutter={[16, 16]}>
+                    {[
+                      {
+                        title: 'Tổng lợi nhuận ròng thu về',
+                        value: fmtVND(netProfit),
+                        color: '#059669',
+                        desc: 'Doanh thu thuần trừ toàn bộ chi phí',
+                      },
+                      {
+                        title: 'Chi phí trung bình / chuyển đổi (CPA)',
+                        value: totalConv > 0 ? fmtVND(Math.round(totalSpent / totalConv)) : '0 ₫',
+                        color: '#4F46E5',
+                        desc: 'Tối ưu hơn 18% so với quảng cáo truyền thống',
+                      },
+                      {
+                        title: 'Lượt tiếp cận trung bình / chiến dịch',
+                        value: fmtNum(Math.round(totalReach / Math.max(campaigns.length, 1))),
+                        color: '#2563EB',
+                        desc: 'Lượt xem tự nhiên từ cộng đồng Creator',
+                      },
+                      {
+                        title: 'Chiến dịch đạt mục tiêu ROAS (> 3.0x)',
+                        value: `${campaigns.filter((c) => c.roas >= 3).length}/${campaigns.length} (${campaigns.length > 0 ? Math.round((campaigns.filter((c) => c.roas >= 3).length / campaigns.length) * 100) : 0}%)`,
+                        color: '#D97706',
+                        desc: 'Tỷ lệ chiến dịch sinh lời vượt kỳ vọng',
+                      },
+                    ].map((s) => (
+                      <Col xs={24} sm={12} md={6} key={s.title}>
+                        <div className="perf-summary-tile">
+                          <div style={{ fontSize: 12, color: '#64748B', fontWeight: 600, marginBottom: 6 }}>
+                            {s.title}
+                          </div>
+                          <div style={{ fontSize: 22, fontWeight: 900, color: s.color, marginBottom: 4, letterSpacing: '-0.02em' }}>
+                            {s.value}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#94A3B8' }}>{s.desc}</div>
+                        </div>
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
+              </Col>
+            </Row>
+          )}
+
+          {/* ════════════════════════════════════════════════════
+              TAB 2: BRAND REVIEW (STRUCTURED RATING)
+          ════════════════════════════════════════════════════ */}
+          {activeTab === 'reviews' && (
+            <Row gutter={[20, 20]}>
+              {/* Review Summary Strip */}
+              <Col xs={24}>
+                <div className="review-summary-strip">
+                  <div className="rsm-block">
+                    <div className="rsm-num" style={{ color: '#D97706' }}>{avgRating}</div>
+                    <Rate disabled value={parseFloat(avgRating)} allowHalf style={{ fontSize: 15 }} />
+                    <div className="rsm-label">Điểm đánh giá trung bình</div>
+                  </div>
+                  <div className="rsm-divider" />
+                  <div className="rsm-block">
+                    <div className="rsm-num" style={{ color: '#059669' }}>{reviewedList.length}</div>
+                    <div className="rsm-label">Creator đã đánh giá</div>
+                  </div>
+                  <div className="rsm-divider" />
+                  <div className="rsm-block">
+                    <div className="rsm-num" style={{ color: '#4F46E5' }}>{pendingList.length}</div>
+                    <div className="rsm-label">Chờ hoàn tất đánh giá</div>
+                  </div>
+                </div>
+              </Col>
+
+              {/* Pending Reviews */}
+              {pendingList.length > 0 && (
+                <Col xs={24}>
+                  <div className="perf-analytics-card">
+                    <div className="perf-analytics-head">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <ClockCircleOutlined style={{ color: '#D97706' }} />
+                        <h3 className="perf-analytics-title">Creator chưa được đánh giá ({pendingList.length})</h3>
+                      </div>
+                      <span style={{ fontSize: 12, color: '#64748B' }}>Đánh giá giúp AI đề xuất creator chính xác hơn</span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {pendingList.map((cr) => (
+                        <div
+                          key={cr.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 14,
+                            background: '#F8FAFC',
+                            border: '1.5px dashed #CBD5E1',
+                            borderRadius: 14,
+                            padding: '14px 18px',
                           }}
                         >
-                          Viết đánh giá
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </Col>
-            )}
-
-            {/* Completed Reviews */}
-            <Col xs={24}>
-              <Card
-                title={
-                  <span>
-                    <CheckCircleOutlined style={{ color: '#10b981', marginRight: 6 }} />
-                    Đánh giá đã hoàn thành ({reviewedList.length})
-                  </span>
-                }
-                className="perf-card"
-              >
-                {reviewedList.length === 0 ? (
-                  <Empty description="Chưa có đánh giá nào được gửi. Hãy đánh giá các creator trong chiến dịch của bạn." />
-                ) : (
-                  <div className="review-cards-grid">
-                    {reviewedList.map((rv) => (
-                      <div key={rv.id} className="review-card-item">
-                        <div className="review-card-top">
-                          <Avatar src={rv.avatar} size={52} style={{ border: '2px solid #e8e3ff' }} />
+                          <Avatar src={cr.avatar} size={48} />
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 800, fontSize: 15 }}>{rv.creatorName}</div>
-                            <div style={{ fontSize: 12, color: '#888', marginBottom: 3 }}>{rv.campaign}</div>
-                            <Tag color="magenta" style={{ fontSize: 10 }}>
-                              {rv.platform}
+                            <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>{cr.creatorName}</div>
+                            <div style={{ fontSize: 12, color: '#64748B' }}>{cr.campaign}</div>
+                            <Tag color="purple" style={{ fontSize: 11, marginTop: 4, borderRadius: 4 }}>
+                              {cr.platform}
                             </Tag>
                           </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: 22, fontWeight: 900, color: '#faad14', lineHeight: 1 }}>
-                              {rv.overallRating}
-                            </div>
-                            <Rate disabled value={rv.overallRating} allowHalf style={{ fontSize: 12 }} />
-                          </div>
-                        </div>
-
-                        <div className="review-dims-grid">
-                          <ScoreRow label="Đúng hạn" value={rv.punctuality} icon={<ClockCircleOutlined style={{ color: '#3b82f6' }} />} />
-                          <ScoreRow label="Thái độ" value={rv.attitude} icon={<LikeOutlined style={{ color: '#10b981' }} />} />
-                          <ScoreRow label="Chất lượng" value={rv.quality} icon={<ThunderboltOutlined style={{ color: '#8b5cf6' }} />} />
-                          <ScoreRow label="Đạt KPI" value={rv.kpiAchieved} icon={<TrophyOutlined style={{ color: '#f59e0b' }} />} />
-                        </div>
-
-                        {rv.comment && <div className="review-comment-box">"{rv.comment}"</div>}
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-                          <span style={{ fontSize: 11, color: '#aaa' }}>
-                            Ngày đánh giá: {rv.date ? dayjs(rv.date).format('DD/MM/YYYY') : 'Gần đây'}
-                          </span>
                           <Button
-                            size="small"
-                            icon={<EditOutlined />}
+                            type="primary"
+                            icon={<StarFilled />}
+                            style={{ background: '#4F46E5', borderRadius: 8, height: 36, fontWeight: 600 }}
                             onClick={() => {
-                              setReviewModal({ open: true, creator: rv });
-                              reviewForm.setFieldsValue(rv);
+                              setReviewModal({ open: true, creator: cr });
+                              reviewForm.resetFields();
+                              reviewForm.setFieldsValue({ punctuality: 5, attitude: 5, quality: 5, kpiAchieved: 5 });
                             }}
                           >
-                            Sửa
+                            Viết đánh giá
                           </Button>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                )}
-              </Card>
-            </Col>
-          </Row>
-        </TabPane>
-      </Tabs>
-      </>
+                </Col>
+              )}
+
+              {/* Completed Reviews */}
+              <Col xs={24}>
+                <div className="perf-analytics-card">
+                  <div className="perf-analytics-head">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <CheckCircleOutlined style={{ color: '#059669' }} />
+                      <h3 className="perf-analytics-title">Đánh giá đã hoàn thành ({reviewedList.length})</h3>
+                    </div>
+                  </div>
+
+                  {reviewedList.length === 0 ? (
+                    <Empty description="Chưa có đánh giá nào được gửi. Hãy nghiệm thu và đánh giá các creator trong chiến dịch của bạn." />
+                  ) : (
+                    <div className="review-cards-grid">
+                      {reviewedList.map((rv) => (
+                        <div key={rv.id} className="review-card-item">
+                          <div className="review-card-top">
+                            <Avatar src={rv.avatar} size={50} style={{ border: '2px solid #E2E8F0' }} />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 800, fontSize: 14.5, color: '#0F172A' }}>{rv.creatorName}</div>
+                              <div style={{ fontSize: 11.5, color: '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {rv.campaign}
+                              </div>
+                              <Tag color="purple" style={{ fontSize: 10.5, borderRadius: 4, marginTop: 3 }}>
+                                {rv.platform}
+                              </Tag>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: 20, fontWeight: 900, color: '#D97706', lineHeight: 1 }}>
+                                {rv.overallRating}
+                              </div>
+                              <Rate disabled value={rv.overallRating} allowHalf style={{ fontSize: 11 }} />
+                            </div>
+                          </div>
+
+                          <div className="review-dims-grid">
+                            <ScoreRow label="Đúng hạn" value={rv.punctuality} icon={<ClockCircleOutlined style={{ color: '#2563EB' }} />} />
+                            <ScoreRow label="Thái độ" value={rv.attitude} icon={<LikeOutlined style={{ color: '#059669' }} />} />
+                            <ScoreRow label="Chất lượng" value={rv.quality} icon={<ThunderboltOutlined style={{ color: '#7C3AED' }} />} />
+                            <ScoreRow label="Đạt KPI" value={rv.kpiAchieved} icon={<TrophyOutlined style={{ color: '#D97706' }} />} />
+                          </div>
+
+                          {rv.comment && <div className="review-comment-box">"{rv.comment}"</div>}
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTop: '1px solid #F1F5F9' }}>
+                            <span style={{ fontSize: 11, color: '#94A3B8' }}>
+                              Ngày đánh giá: {rv.date ? dayjs(rv.date).format('DD/MM/YYYY') : 'Gần đây'}
+                            </span>
+                            <Button
+                              size="small"
+                              icon={<EditOutlined />}
+                              onClick={() => {
+                                setReviewModal({ open: true, creator: rv });
+                                reviewForm.setFieldsValue(rv);
+                              }}
+                              style={{ borderRadius: 6 }}
+                            >
+                              Sửa
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Col>
+            </Row>
+          )}
+        </>
       )}
 
       {/* ── Review Creator Modal ──────────────────────────────────────────── */}
@@ -700,43 +1226,44 @@ const PerformancePage: React.FC = () => {
         confirmLoading={reviewSubmitting}
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Avatar src={reviewModal.creator?.avatar} size={36} />
+            <Avatar src={reviewModal.creator?.avatar} size={40} />
             <div>
-              <div style={{ fontWeight: 700 }}>Đánh giá Creator: {reviewModal.creator?.creatorName}</div>
-              <div style={{ fontSize: 12, color: '#888' }}>{reviewModal.creator?.campaign}</div>
+              <div style={{ fontWeight: 800, fontSize: 15 }}>Đánh giá Creator: {reviewModal.creator?.creatorName}</div>
+              <div style={{ fontSize: 12, color: '#64748B' }}>Chiến dịch: {reviewModal.creator?.campaign}</div>
             </div>
           </div>
         }
         okText="Gửi đánh giá"
         cancelText="Hủy"
         width={540}
-        okButtonProps={{ style: { background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', border: 'none' } }}
+        okButtonProps={{ style: { background: '#4F46E5', borderRadius: 8, height: 38, fontWeight: 600 } }}
+        cancelButtonProps={{ style: { borderRadius: 8, height: 38 } }}
       >
         <Form form={reviewForm} layout="vertical" style={{ marginTop: 16 }}>
           <div className="review-modal-criteria">
             <Form.Item
-              label={<span><ClockCircleOutlined style={{ color: '#3b82f6', marginRight: 5 }} />Tính đúng hạn (Punctuality)</span>}
+              label={<span><ClockCircleOutlined style={{ color: '#2563EB', marginRight: 5 }} />Tính đúng hạn (Punctuality)</span>}
               name="punctuality"
               rules={[{ required: true }]}
             >
               <Rate />
             </Form.Item>
             <Form.Item
-              label={<span><LikeOutlined style={{ color: '#10b981', marginRight: 5 }} />Thái độ hợp tác (Attitude)</span>}
+              label={<span><LikeOutlined style={{ color: '#059669', marginRight: 5 }} />Thái độ hợp tác (Attitude)</span>}
               name="attitude"
               rules={[{ required: true }]}
             >
               <Rate />
             </Form.Item>
             <Form.Item
-              label={<span><ThunderboltOutlined style={{ color: '#8b5cf6', marginRight: 5 }} />Chất lượng nội dung (Content Quality)</span>}
+              label={<span><ThunderboltOutlined style={{ color: '#7C3AED', marginRight: 5 }} />Chất lượng nội dung (Quality)</span>}
               name="quality"
               rules={[{ required: true }]}
             >
               <Rate />
             </Form.Item>
             <Form.Item
-              label={<span><TrophyOutlined style={{ color: '#f59e0b', marginRight: 5 }} />Khả năng đạt KPI (KPI Achievement)</span>}
+              label={<span><TrophyOutlined style={{ color: '#D97706', marginRight: 5 }} />Đạt chỉ tiêu KPI (Achievement)</span>}
               name="kpiAchieved"
               rules={[{ required: true }]}
             >
@@ -744,11 +1271,11 @@ const PerformancePage: React.FC = () => {
             </Form.Item>
           </div>
           <Form.Item
-            label="Nhận xét chi tiết"
+            label="Nhận xét chi tiết về Creator"
             name="comment"
             rules={[{ required: true, message: 'Vui lòng nhập nhận xét!' }]}
           >
-            <TextArea rows={3} placeholder="Mô tả trải nghiệm hợp tác, chất lượng bài đăng, thái độ làm việc..." />
+            <TextArea rows={3} style={{ borderRadius: 8 }} placeholder="Mô tả trải nghiệm hợp tác, chất lượng ấn phẩm video, độ tương tác thực tế..." />
           </Form.Item>
         </Form>
       </Modal>
@@ -760,17 +1287,19 @@ const PerformancePage: React.FC = () => {
         onOk={handleSaveSelfReport}
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <FlagFilled style={{ color: '#f59e0b' }} />
-            <span>Cập nhật số liệu ROI tự khai báo</span>
+            <FlagFilled style={{ color: '#D97706' }} />
+            <span style={{ fontWeight: 800 }}>Cập nhật số liệu ROI tự khai báo</span>
           </div>
         }
         okText="Lưu số liệu"
         cancelText="Hủy"
         width={500}
+        okButtonProps={{ style: { background: '#4F46E5', borderRadius: 8, height: 38, fontWeight: 600 } }}
+        cancelButtonProps={{ style: { borderRadius: 8, height: 38 } }}
       >
         <Form form={selfReportForm} layout="vertical" style={{ marginTop: 16 }}>
           <div style={{ marginBottom: 14, fontSize: 13, color: '#64748B' }}>
-            Chiến dịch: <strong>{selfReportModal.campaign?.name}</strong>
+            Chiến dịch: <strong style={{ color: '#0F172A' }}>{selfReportModal.campaign?.name}</strong>
           </div>
 
           <Form.Item
@@ -779,9 +1308,9 @@ const PerformancePage: React.FC = () => {
             rules={[{ required: true, message: 'Vui lòng nhập chi phí!' }]}
           >
             <InputNumber
-              style={{ width: '100%' }}
+              style={{ width: '100%', borderRadius: 8 }}
               formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              placeholder="Ví dụ: 50,000,000"
+              placeholder="Ví dụ: 23,000,000"
             />
           </Form.Item>
 
@@ -791,21 +1320,21 @@ const PerformancePage: React.FC = () => {
             rules={[{ required: true, message: 'Vui lòng nhập doanh thu!' }]}
           >
             <InputNumber
-              style={{ width: '100%' }}
+              style={{ width: '100%', borderRadius: 8 }}
               formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              placeholder="Ví dụ: 140,000,000"
+              placeholder="Ví dụ: 63,000,000"
             />
           </Form.Item>
 
           <Row gutter={12}>
             <Col span={12}>
               <Form.Item name="reach" label="Lượt tiếp cận (Reach)">
-                <InputNumber style={{ width: '100%' }} placeholder="3,000,000" />
+                <InputNumber style={{ width: '100%', borderRadius: 8 }} placeholder="250,000" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item name="conversions" label="Chuyển đổi (Orders)">
-                <InputNumber style={{ width: '100%' }} placeholder="1,500" />
+                <InputNumber style={{ width: '100%', borderRadius: 8 }} placeholder="300" />
               </Form.Item>
             </Col>
           </Row>

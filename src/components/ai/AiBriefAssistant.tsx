@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { Card, Input, Button, Tag, Space, Typography, Spin, message, Row, Col } from 'antd';
+import { Card, Input, Button, Tag, Space, Typography, Tooltip, message } from 'antd';
 import {
   ThunderboltFilled,
   SendOutlined,
   CheckCircleFilled,
   ReloadOutlined,
-  FireOutlined,
+  CloseOutlined,
   RobotOutlined,
 } from '@ant-design/icons';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 const { TextArea } = Input;
 
 export interface StructuredBrief {
@@ -32,8 +32,8 @@ interface AiBriefAssistantProps {
 
 const SAMPLE_PROMPTS = [
   {
-    label: '💄 Review Mỹ phẩm Gen-Z tại TP.HCM',
-    text: 'Cần tìm 3 bạn nữ Gen-Z tại TP. Hồ Chí Minh chuyên về Làm đẹp & Chăm sóc da, tỷ lệ tương tác cao trên 5%, chi phí dưới $1,000.',
+    label: '💄 Mỹ phẩm Gen-Z TP.HCM',
+    text: 'Cần tìm 3 bạn nữ Gen-Z tại TP. Hồ Chí Minh chuyên về Làm đẹp & Chăm sóc da, tương tác cao trên 5%, chi phí dưới $1,000.',
     brief: {
       category: 'Làm đẹp & Chăm sóc da',
       categoryLabel: 'Làm đẹp & Chăm sóc da',
@@ -48,8 +48,8 @@ const SAMPLE_PROMPTS = [
     },
   },
   {
-    label: '📱 Review Công nghệ tại Hà Nội',
-    text: 'Tìm Creator chuyên unbox đồ công nghệ, điện thoại tại Hà Nội, nội dung uy tín, tương tác tốt.',
+    label: '📱 Công nghệ & Game Hà Nội',
+    text: 'Tìm Creator chuyên unbox đồ công nghệ, sạc dự phòng, điện thoại tại Hà Nội, nội dung uy tín, tương tác tốt.',
     brief: {
       category: 'Công nghệ & Game',
       categoryLabel: 'Công nghệ & Game',
@@ -60,7 +60,7 @@ const SAMPLE_PROMPTS = [
       price: 'high',
       priceLabel: 'Mức giá > $1,000',
       query: 'công nghệ unbox',
-      reason: 'Đã tìm thấy các reviewer công nghệ có lượt xem video YouTube & TikTok cao.',
+      reason: 'Đã tìm thấy các reviewer công nghệ có lượt tương tác cao.',
     },
   },
   {
@@ -76,12 +76,13 @@ const SAMPLE_PROMPTS = [
       price: 'all',
       priceLabel: 'Mọi mức giá',
       query: 'healthy eat clean',
-      reason: 'Đã lọc các nhà sáng tạo có cộng đồng người theo dõi cam kết cao.',
+      reason: 'Đã lọc các nhà sáng tạo có cộng đồng cam kết cao.',
     },
   },
 ];
 
 export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssistantProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [promptText, setPromptText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [parsedResult, setParsedResult] = useState<StructuredBrief | null>(null);
@@ -93,37 +94,37 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
     }
 
     setIsAnalyzing(true);
-    message.loading({ content: 'AI đang phân tích ngôn ngữ tự nhiên (NLP) & bóc tách Brief...', key: 'ai_brief' });
+    message.loading({ content: 'AI đang phân tích yêu cầu & trích xuất tiêu chí...', key: 'ai_brief' });
 
     setTimeout(() => {
       let targetBrief = customBrief;
       if (!targetBrief) {
-        // Fallback smart parser
+        const lower = promptText.toLowerCase();
+        let cat = 'Làm đẹp & Chăm sóc da';
+        if (lower.includes('công nghệ') || lower.includes('sạc') || lower.includes('điện tử') || lower.includes('tech')) {
+          cat = 'Công nghệ & Game';
+        } else if (lower.includes('thời trang') || lower.includes('quần áo') || lower.includes('giày')) {
+          cat = 'Thời trang';
+        } else if (lower.includes('ẩm thực') || lower.includes('ăn') || lower.includes('quán')) {
+          cat = 'Ẩm thực & Đồ uống';
+        } else if (lower.includes('thể thao') || lower.includes('gym') || lower.includes('sức khỏe')) {
+          cat = 'Thể hình & Sức khỏe';
+        }
+
+        const isHn = lower.includes('hà nội');
+        const isHcm = lower.includes('hồ chí minh') || lower.includes('hcm') || lower.includes('sài gòn');
+
         targetBrief = {
-          category: promptText.toLowerCase().includes('công nghệ')
-            ? 'Công nghệ & Game'
-            : promptText.toLowerCase().includes('thời trang')
-            ? 'Thời trang'
-            : promptText.toLowerCase().includes('ẩm thực') || promptText.toLowerCase().includes('ăn')
-            ? 'Ẩm thực & Đồ uống'
-            : 'Làm đẹp & Chăm sóc da',
-          categoryLabel: 'Làm đẹp & Chăm sóc da',
-          location: promptText.toLowerCase().includes('hà nội')
-            ? 'Thành phố Hà Nội'
-            : promptText.toLowerCase().includes('hồ chí minh') || promptText.toLowerCase().includes('hcm')
-            ? 'Thành phố Hồ Chí Minh'
-            : 'all',
-          locationLabel: promptText.toLowerCase().includes('hà nội')
-            ? '📍 Hà Nội'
-            : promptText.toLowerCase().includes('hồ chí minh')
-            ? '📍 TP. Hồ Chí Minh'
-            : 'Toàn quốc',
+          category: cat,
+          categoryLabel: cat,
+          location: isHn ? 'Thành phố Hà Nội' : isHcm ? 'Thành phố Hồ Chí Minh' : 'all',
+          locationLabel: isHn ? '📍 Hà Nội' : isHcm ? '📍 TP. Hồ Chí Minh' : 'Toàn quốc',
           engagement: 'high',
           engagementLabel: 'Tương tác cao (> 5%)',
           price: 'mid',
           priceLabel: 'Mức giá $500 – $1,000',
           query: promptText.split(' ').slice(0, 3).join(' '),
-          reason: 'AI đã trích xuất tiêu chí và tự động điều chỉnh bộ lọc cho bạn.',
+          reason: `AI đã phân tích ngữ nghĩa và trích xuất tiêu chí ngành ${cat} thành công.`,
         };
       }
 
@@ -131,11 +132,11 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
       setIsAnalyzing(false);
       onApplyBrief(targetBrief);
       message.success({
-        content: 'AI đã trích xuất Structured Brief và lọc Creator phù hợp!',
+        content: 'AI đã trích xuất tiêu chí và tự động áp dụng bộ lọc!',
         key: 'ai_brief',
         duration: 3,
       });
-    }, 900);
+    }, 700);
   };
 
   const handleSelectSample = (sample: (typeof SAMPLE_PROMPTS)[0]) => {
@@ -151,149 +152,275 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
   };
 
   return (
-    <Card
-      style={{
-        borderRadius: 16,
-        background: 'linear-gradient(135deg, #FAF5FF 0%, #F5F3FF 50%, #EEF2FF 100%)',
-        border: '1.5px solid #DDD6FE',
-        boxShadow: '0 4px 18px rgba(124, 58, 237, 0.08)',
-        marginBottom: 16,
-      }}
-      bodyStyle={{ padding: '18px 20px' }}
-    >
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 8,
-              background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF',
-              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.35)',
-            }}
-          >
-            <ThunderboltFilled style={{ fontSize: 14 }} />
-          </div>
-          <span style={{ fontWeight: 800, fontSize: 15, color: '#1E1B4B' }}>
-            AI Brief Assistant
-          </span>
-        </div>
-
-        {parsedResult && (
-          <Button
-            size="small"
-            type="text"
-            icon={<ReloadOutlined />}
-            onClick={handleClear}
-            style={{ color: '#64748B', fontSize: 12 }}
-          >
-            Xóa Brief AI
-          </Button>
-        )}
-      </div>
-
-      {/* Input box */}
-      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-        <TextArea
-          rows={2}
-          value={promptText}
-          onChange={(e) => setPromptText(e.target.value)}
-          placeholder="Ví dụ: Cần tìm 3 bạn nữ Gen-Z tại Sài Gòn review son môi và serum dưỡng ẩm, tương tác trên 5%, ngân sách dưới $1,000/video..."
+    <>
+      {/* 1. Floating Circular Icon Button (Chatbot Widget) */}
+      <Tooltip title={isOpen ? 'Đóng Trợ lý AI' : 'Trợ lý AI Brief (Click để mở)'} placement="left">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label="AI Brief Assistant"
           style={{
-            borderRadius: 10,
-            background: '#FFFFFF',
-            borderColor: '#C7D2FE',
-            fontSize: 13,
+            position: 'fixed',
+            bottom: 28,
+            right: 28,
+            width: 58,
+            height: 58,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 50%, #EC4899 100%)',
+            boxShadow: isOpen
+              ? '0 6px 20px rgba(124, 58, 237, 0.5)'
+              : '0 8px 28px rgba(124, 58, 237, 0.42), 0 2px 8px rgba(0, 0, 0, 0.12)',
+            border: '2px solid rgba(255, 255, 255, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            zIndex: 1050,
+            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+            transform: isOpen ? 'scale(0.95)' : 'scale(1)',
           }}
-          onPressEnter={(e) => {
-            if (!e.shiftKey) {
-              e.preventDefault();
-              handleAnalyze();
-            }
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = isOpen ? 'scale(1)' : 'scale(1.08)';
           }}
-        />
-
-        <Button
-          type="primary"
-          loading={isAnalyzing}
-          icon={<SendOutlined />}
-          onClick={() => handleAnalyze()}
-          style={{
-            background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
-            height: 54,
-            padding: '0 20px',
-            borderRadius: 10,
-            fontWeight: 700,
-            boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
-            border: 'none',
-            flexShrink: 0,
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = isOpen ? 'scale(0.95)' : 'scale(1)';
           }}
         >
-          AI Phân tích
-        </Button>
-      </div>
+          {isOpen ? (
+            <CloseOutlined style={{ fontSize: 20, color: '#FFFFFF' }} />
+          ) : (
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ThunderboltFilled style={{ fontSize: 24, color: '#FFFFFF' }} />
+              <span
+                style={{
+                  position: 'absolute',
+                  top: -6,
+                  right: -6,
+                  width: 11,
+                  height: 11,
+                  borderRadius: '50%',
+                  background: '#10B981',
+                  border: '2px solid #FFFFFF',
+                  boxShadow: '0 0 6px rgba(16, 185, 129, 0.8)',
+                }}
+              />
+            </div>
+          )}
+        </button>
+      </Tooltip>
 
-      {/* Sample Quick Chips */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 11.5, color: '#64748B', fontWeight: 600 }}>Gợi ý mẫu:</span>
-        {SAMPLE_PROMPTS.map((sample, idx) => (
-          <Tag
-            key={idx}
-            onClick={() => handleSelectSample(sample)}
-            style={{
-              cursor: 'pointer',
-              borderRadius: 6,
-              background: '#FFFFFF',
-              borderColor: '#DDD6FE',
-              color: '#4338CA',
-              fontSize: 11.5,
-              padding: '2px 8px',
-              transition: 'all 0.2s',
-            }}
-          >
-            {sample.label}
-          </Tag>
-        ))}
-      </div>
-
-      {/* Parsed Structured Brief Display */}
-      {parsedResult && (
+      {/* 2. Floating Chat Box Card (Toggled on click) */}
+      {isOpen && (
         <div
           style={{
-            marginTop: 14,
-            background: 'rgba(255, 255, 255, 0.9)',
-            border: '1px solid #C7D2FE',
-            borderRadius: 12,
-            padding: '12px 16px',
+            position: 'fixed',
+            bottom: 98,
+            right: 28,
+            width: 440,
+            maxWidth: 'calc(100vw - 36px)',
+            background: 'linear-gradient(180deg, #FFFFFF 0%, #FAF5FF 100%)',
+            borderRadius: 20,
+            border: '1.5px solid #DDD6FE',
+            boxShadow: '0 20px 48px rgba(30, 27, 75, 0.22), 0 4px 18px rgba(124, 58, 237, 0.15)',
+            zIndex: 1050,
+            overflow: 'hidden',
+            animation: 'fadeInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ fontWeight: 700, fontSize: 12.5, color: '#1E1B4B', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <CheckCircleFilled style={{ color: '#10B981' }} />
-              Structured Brief được AI trích xuất:
-            </span>
-            <span style={{ fontSize: 11, color: '#059669', fontWeight: 600 }}>
-              Đã tự động áp dụng vào bộ lọc ✓
-            </span>
+          {/* Header */}
+          <div
+            style={{
+              padding: '16px 18px',
+              background: 'linear-gradient(135deg, #7C3AED 0%, #6366F1 100%)',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backdropFilter: 'blur(4px)',
+                }}
+              >
+                <ThunderboltFilled style={{ fontSize: 16, color: '#FDE047' }} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 14.5, color: '#FFFFFF', lineHeight: 1.2 }}>
+                  Trợ lý AI Brief
+                </div>
+                <div style={{ fontSize: 11, color: '#E0E7FF', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80' }} />
+                  Tự động trích xuất bộ lọc Creator
+                </div>
+              </div>
+            </div>
+
+            <Button
+              type="text"
+              shape="circle"
+              size="small"
+              icon={<CloseOutlined style={{ color: '#FFFFFF', fontSize: 13 }} />}
+              onClick={() => setIsOpen(false)}
+              style={{ background: 'rgba(255, 255, 255, 0.15)', border: 'none' }}
+            />
           </div>
 
-          <Space size={8} wrap>
-            <Tag color="purple">Ngành: {parsedResult.categoryLabel}</Tag>
-            <Tag color="blue">{parsedResult.locationLabel}</Tag>
-            <Tag color="cyan">{parsedResult.engagementLabel}</Tag>
-            <Tag color="gold">{parsedResult.priceLabel}</Tag>
-          </Space>
+          {/* Body */}
+          <div style={{ padding: '16px 18px', maxHeight: '72vh', overflowY: 'auto' }}>
+            {/* AI Greeting Message Bubble */}
+            <div
+              style={{
+                background: '#F5F3FF',
+                border: '1px solid #E9D5FF',
+                borderRadius: '14px 14px 14px 4px',
+                padding: '12px 14px',
+                marginBottom: 14,
+                fontSize: 12.5,
+                color: '#3B0764',
+                lineHeight: 1.5,
+              }}
+            >
+              👋 Chào bạn! Hãy mô tả nhanh yêu cầu tìm Creator (sản phẩm, khu vực, tương tác...), AI sẽ tự động phân tích và áp dụng bộ lọc phù hợp nhất.
+            </div>
 
-          <div style={{ fontSize: 11.5, color: '#475569', marginTop: 8 }}>
-            💡 <em>{parsedResult.reason}</em>
+            {/* Quick Sample Chips */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: '#64748B', fontWeight: 700, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Gợi ý mẫu:
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {SAMPLE_PROMPTS.map((sample, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => handleSelectSample(sample)}
+                    style={{
+                      cursor: 'pointer',
+                      padding: '7px 10px',
+                      background: '#FFFFFF',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: 8,
+                      fontSize: 12,
+                      color: '#4338CA',
+                      fontWeight: 600,
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#EEF2FF';
+                      e.currentTarget.style.borderColor = '#C7D2FE';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#FFFFFF';
+                      e.currentTarget.style.borderColor = '#E2E8F0';
+                    }}
+                  >
+                    <span>{sample.label}</span>
+                    <span style={{ fontSize: 11, color: '#94A3B8' }}>Dùng ngay →</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Chat Input */}
+            <div style={{ marginTop: 12 }}>
+              <TextArea
+                rows={3}
+                value={promptText}
+                onChange={(e) => setPromptText(e.target.value)}
+                placeholder="Ví dụ: Cần tìm 3 Creator nữ tại TP.HCM review son môi & serum, tương tác > 5%..."
+                style={{
+                  borderRadius: 10,
+                  background: '#FFFFFF',
+                  borderColor: '#C7D2FE',
+                  fontSize: 12.5,
+                  padding: '10px 12px',
+                }}
+                onPressEnter={(e) => {
+                  if (!e.shiftKey) {
+                    e.preventDefault();
+                    handleAnalyze();
+                  }
+                }}
+              />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                {parsedResult ? (
+                  <Button
+                    size="small"
+                    type="text"
+                    icon={<ReloadOutlined />}
+                    onClick={handleClear}
+                    style={{ color: '#64748B', fontSize: 11.5 }}
+                  >
+                    Xóa Brief
+                  </Button>
+                ) : <span />}
+
+                <Button
+                  type="primary"
+                  loading={isAnalyzing}
+                  icon={<SendOutlined />}
+                  onClick={() => handleAnalyze()}
+                  style={{
+                    background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)',
+                    borderRadius: 8,
+                    fontWeight: 700,
+                    fontSize: 12.5,
+                    height: 36,
+                    padding: '0 16px',
+                    boxShadow: '0 2px 8px rgba(124, 58, 237, 0.3)',
+                    border: 'none',
+                  }}
+                >
+                  AI Phân tích & Lọc
+                </Button>
+              </div>
+            </div>
+
+            {/* Parsed Result Display */}
+            {parsedResult && (
+              <div
+                style={{
+                  marginTop: 14,
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  border: '1px solid #C7D2FE',
+                  borderRadius: 12,
+                  padding: '12px 14px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontWeight: 700, fontSize: 12, color: '#1E1B4B', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <CheckCircleFilled style={{ color: '#10B981' }} />
+                    Tiêu chí trích xuất:
+                  </span>
+                  <Tag color="success" style={{ margin: 0, fontSize: 10.5 }}>Đã áp dụng ✓</Tag>
+                </div>
+
+                <Space orientation="horizontal" size={[4, 6]} wrap>
+                  <Tag color="purple">{parsedResult.categoryLabel}</Tag>
+                  <Tag color="blue">{parsedResult.locationLabel}</Tag>
+                  <Tag color="cyan">{parsedResult.engagementLabel}</Tag>
+                  <Tag color="gold">{parsedResult.priceLabel}</Tag>
+                </Space>
+
+                <div style={{ fontSize: 11.5, color: '#475569', marginTop: 8 }}>
+                  💡 <em>{parsedResult.reason}</em>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
-    </Card>
+    </>
   );
 }

@@ -661,75 +661,9 @@ export default function DashboardPage() {
           </Card>
         </Col>
 
-        {/* Right: Create Campaign CTA + To-Do Tasks */}
+        {/* Right: To-Do Tasks */}
         <Col xs={24} lg={9}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
-            {/* Create Campaign Card (Matching Image 1) */}
-            <Card
-              bordered={false}
-              style={{
-                borderRadius: 18,
-                background: 'linear-gradient(135deg, #3B46F1 0%, #4F46E5 50%, #6366F1 100%)',
-                boxShadow: '0 10px 25px -4px rgba(79, 70, 229, 0.35)',
-                color: '#fff',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-              bodyStyle={{ padding: '20px 22px' }}
-            >
-              <div style={{ maxWidth: 220, position: 'relative', zIndex: 2 }}>
-                <Space align="center" size={6} style={{ marginBottom: 6 }}>
-                  <ThunderboltOutlined style={{ color: '#FDE047', fontSize: 15 }} />
-                  <span style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 800 }}>
-                    Tạo chiến dịch mới
-                  </span>
-                </Space>
-                <p style={{ fontSize: 11.5, color: 'rgba(255, 255, 255, 0.88)', lineHeight: 1.45, margin: '0 0 14px 0' }}>
-                  Tìm kiếm Influencer phù hợp với thương hiệu của bạn chỉ trong vài bước.
-                </p>
-                <Button
-                  shape="round"
-                  onClick={() => navigate('/campaigns/create')}
-                  style={{
-                    background: '#FFFFFF',
-                    color: '#1E1B4B',
-                    fontWeight: 700,
-                    fontSize: 12,
-                    border: 'none',
-                    cursor: 'pointer',
-                    boxShadow: '0 3px 10px rgba(0,0,0,0.15)',
-                  }}
-                  icon={<ArrowRightOutlined style={{ fontSize: 11 }} />}
-                >
-                  Tạo chiến dịch
-                </Button>
-              </div>
-
-              {/* Decorative Target Graphic Matching Image 1 */}
-              <div
-                style={{
-                  position: 'absolute',
-                  right: 4,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: 140,
-                  height: 140,
-                  pointerEvents: 'none',
-                  opacity: 0.9,
-                }}
-              >
-                <svg viewBox="0 0 120 120" width="100%" height="100%" fill="none">
-                  <circle cx="68" cy="56" r="48" stroke="rgba(255,255,255,0.14)" strokeWidth="1.5" />
-                  <circle cx="68" cy="56" r="36" stroke="rgba(255,255,255,0.22)" strokeWidth="1.5" />
-                  <circle cx="68" cy="56" r="24" stroke="rgba(255,255,255,0.32)" strokeWidth="1.5" />
-                  <circle cx="68" cy="56" r="12" stroke="rgba(255,255,255,0.48)" strokeWidth="1.5" />
-                  <circle cx="68" cy="56" r="4" fill="#FFFFFF" />
-                  <path d="M 98 24 L 70 54" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
-                  <path d="M 92 20 L 100 20 L 100 28" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </Card>
-
             {/* To-Do Tasks Card */}
             <Card
               bordered

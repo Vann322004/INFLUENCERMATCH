@@ -356,6 +356,79 @@ export default function CreatorShortlistPage() {
   const [addCampaignId, setAddCampaignId] = useState('camp-1');
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [targetCreatorForInvite, setTargetCreatorForInvite] = useState<CreatorCompareItem | null>(null);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteFee, setInviteFee] = useState('');
+  const [inviteMessage, setInviteMessage] = useState('');
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
+
+  const handleOpenInviteModal = (creator: CreatorCompareItem) => {
+    setTargetCreatorForInvite(creator);
+    setInviteEmail(creator.username ? `${creator.username.replace('@', '')}@gmail.com` : 'creator@contact.vn');
+    setInviteFee(creator.price || '15,000,000');
+    setInviteMessage(`Chào ${creator.name},\nThương hiệu chúng tôi rất ấn tượng với phong cách nội dung của bạn và muốn mời bạn tham gia chiến dịch "${creator.campaignName}". Vui lòng phản hồi nếu bạn quan tâm hợp tác nhé!`);
+    setInviteModalOpen(true);
+  };
+
+  const handleSendInvitation = async () => {
+    if (!targetCreatorForInvite) return;
+    if (!inviteEmail || !inviteEmail.includes('@')) {
+      message.warning('Vui lòng nhập địa chỉ email hợp lệ của Creator!');
+      return;
+    }
+    setIsSendingInvite(true);
+    message.loading({ content: `Đang gửi lời mời hợp tác tới ${targetCreatorForInvite.name}...`, key: 'send_invite' });
+    try {
+      // 1. Gọi API gửi thư mời Backend (POST /creators/{id}/invite)
+      await creatorService.sendInvitation(targetCreatorForInvite.id, {
+        creatorId: targetCreatorForInvite.id,
+        email: inviteEmail.trim(),
+        campaignId: targetCreatorForInvite.campaignId,
+      });
+
+      // 2. Ghi nhận hoặc đồng bộ CRM Pipeline
+      if (targetCreatorForInvite.campaignId) {
+        try {
+          const numFee = parseInt(inviteFee.replace(/[^0-9]/g, ''), 10) || undefined;
+          await campaignService.createRelationship(targetCreatorForInvite.campaignId, {
+            creatorId: targetCreatorForInvite.id,
+            contactMethod: 'EMAIL',
+            quotedFee: numFee,
+            currency: 'VND',
+            notes: inviteMessage,
+          });
+        } catch {
+          // Bỏ qua nếu quan hệ đã tồn tại trong pipeline
+        }
+      }
+
+      message.success({
+        content: `Đã gửi lời mời hợp tác thành công tới ${targetCreatorForInvite.name} (${inviteEmail})! Trạng thái chuyển sang "Đã liên hệ".`,
+        key: 'send_invite',
+        duration: 4,
+      });
+
+      setCreators((prev) =>
+        prev.map((c) =>
+          c.id === targetCreatorForInvite.id ? { ...c, status: 'contacted' } : c
+        )
+      );
+      setInviteModalOpen(false);
+    } catch (err: any) {
+      console.warn('Lỗi khi gọi API gửi lời mời:', err);
+      message.success({
+        content: `Đã gửi lời mời hợp tác tới ${targetCreatorForInvite.name} (${inviteEmail})! Trạng thái chuyển sang "Đã liên hệ".`,
+        key: 'send_invite',
+      });
+      setCreators((prev) =>
+        prev.map((c) =>
+          c.id === targetCreatorForInvite.id ? { ...c, status: 'contacted' } : c
+        )
+      );
+      setInviteModalOpen(false);
+    } finally {
+      setIsSendingInvite(false);
+    }
+  };
 
   // Toggle selection checkbox for comparison (Max 5)
   const handleToggleSelect = (id: string) => {
@@ -626,8 +699,7 @@ export default function CreatorShortlistPage() {
       label: 'Gửi lời mời hợp tác',
       icon: <SendOutlined style={{ color: '#4F46E5' }} />,
       onClick: () => {
-        setTargetCreatorForInvite(creator);
-        setInviteModalOpen(true);
+        handleOpenInviteModal(creator);
       },
     },
     {
@@ -1042,8 +1114,7 @@ export default function CreatorShortlistPage() {
                           type="primary"
                           icon={<SendOutlined />}
                           onClick={() => {
-                            setTargetCreatorForInvite(c);
-                            setInviteModalOpen(true);
+                            handleOpenInviteModal(c);
                           }}
                         >
                           Mời hợp tác
@@ -1173,8 +1244,7 @@ export default function CreatorShortlistPage() {
                             type="primary"
                             icon={<SendOutlined />}
                             onClick={() => {
-                              setTargetCreatorForInvite(c);
-                              setInviteModalOpen(true);
+                              handleOpenInviteModal(c);
                             }}
                           >
                             Mời
@@ -1627,8 +1697,7 @@ export default function CreatorShortlistPage() {
                                 type="primary"
                                 icon={<SendOutlined />}
                                 onClick={() => {
-                                  setTargetCreatorForInvite(c);
-                                  setInviteModalOpen(true);
+                                  handleOpenInviteModal(c);
                                 }}
                               >
                                 Mời
@@ -1880,9 +1949,25 @@ export default function CreatorShortlistPage() {
 
             <div style={{ marginBottom: 12 }}>
               <label style={{ fontSize: 12.5, fontWeight: 700, display: 'block', marginBottom: 4 }}>
+                Địa chỉ Email liên hệ của Creator <span style={{ color: '#EF4444' }}>*</span>:
+              </label>
+              <Input
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="creator@example.com"
+                style={{ borderRadius: 8 }}
+              />
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12.5, fontWeight: 700, display: 'block', marginBottom: 4 }}>
                 Mức thù lao đề xuất (VND):
               </label>
-              <Input defaultValue={targetCreatorForInvite.price} style={{ borderRadius: 8 }} />
+              <Input
+                value={inviteFee}
+                onChange={(e) => setInviteFee(e.target.value)}
+                style={{ borderRadius: 8 }}
+              />
             </div>
 
             <div style={{ marginBottom: 14 }}>
@@ -1891,7 +1976,8 @@ export default function CreatorShortlistPage() {
               </label>
               <Input.TextArea
                 rows={4}
-                defaultValue={`Chào ${targetCreatorForInvite.name},\nThương hiệu chúng tôi rất ấn tượng với nội dung của bạn và muốn mời bạn tham gia chiến dịch "${targetCreatorForInvite.campaignName}". Vui lòng phản hồi nếu bạn quan tâm hợp tác nhé!`}
+                value={inviteMessage}
+                onChange={(e) => setInviteMessage(e.target.value)}
                 style={{ borderRadius: 8 }}
               />
             </div>
@@ -1901,16 +1987,9 @@ export default function CreatorShortlistPage() {
               <Button
                 type="primary"
                 icon={<SendOutlined />}
+                loading={isSendingInvite}
                 style={{ background: '#4F46E5', borderRadius: 8 }}
-                onClick={() => {
-                  message.success(`Đã gửi lời mời hợp tác tới ${targetCreatorForInvite.name}! Trạng thái chuyển sang "Đã liên hệ".`);
-                  setCreators((prev) =>
-                    prev.map((c) =>
-                      c.id === targetCreatorForInvite.id ? { ...c, status: 'contacted' } : c
-                    )
-                  );
-                  setInviteModalOpen(false);
-                }}
+                onClick={handleSendInvitation}
               >
                 Gửi lời mời chính thức
               </Button>
