@@ -5,7 +5,6 @@ import {
   SearchOutlined,
   FilterOutlined,
   PlusOutlined,
-  ThunderboltOutlined,
   CheckCircleOutlined,
   SyncOutlined,
   CloseCircleOutlined,
@@ -15,6 +14,7 @@ import {
 import { MOCK_JOBS, type CollectionJob, type JobStatus } from '../../../mock/adminData';
 import JobDetailModal from './components/JobDetailModal';
 import RetryCancelActions from './components/RetryCancelActions';
+import DataPipelineWorkflowBar from '../../../components/admin/DataPipelineWorkflowBar';
 
 const { Text } = Typography;
 
@@ -184,6 +184,14 @@ export default function CollectionJobsPage() {
 
   return (
     <div>
+      {/* 0. Unified Data Pipeline Stepper */}
+      <DataPipelineWorkflowBar
+        currentStep="jobs"
+        runningJobsCount={runningCount}
+        activeConnectorsCount={4}
+        pendingQualityCount={5}
+      />
+
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>

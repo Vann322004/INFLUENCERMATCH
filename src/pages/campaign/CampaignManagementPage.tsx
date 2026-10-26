@@ -8,7 +8,7 @@ import {
   Form,
   Spin,
 } from 'antd';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import {
   SearchOutlined,
   FilterOutlined,
@@ -23,6 +23,7 @@ import {
 import { campaignService } from '../../services/api/campaignService';
 import type { CampaignResponse, RelationshipDto, RelationshipStage } from '../../types/api/campaign.types';
 import AiRecommendationTab from '../../components/campaign/AiRecommendationTab';
+import CampaignWorkflowBar from '../../components/campaign/CampaignWorkflowBar';
 import './CampaignManagementPage.css';
 
 export interface PipelineCreator {
@@ -59,6 +60,7 @@ const stageUiToBackend: Record<PipelineCreator['stage'], RelationshipStage> = {
 
 export default function CampaignManagementPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
 
@@ -72,8 +74,12 @@ export default function CampaignManagementPage() {
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
 
   // Tab: 'kanban' (Outreach CRM) vs 'recommendation' (Four-Memory)
-  const initialTab = searchParams.get('tab') === 'recommendation' ? 'recommendation' : 'kanban';
-  const [activeViewTab, setActiveViewTab] = useState<'kanban' | 'recommendation'>(initialTab);
+  const isRecView =
+    searchParams.get('tab') === 'recommendation' ||
+    location.pathname.includes('recommendation');
+  const [activeViewTab, setActiveViewTab] = useState<'kanban' | 'recommendation'>(
+    isRecView ? 'recommendation' : 'kanban'
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -85,7 +91,13 @@ export default function CampaignManagementPage() {
           setAvailableCampaigns(allCamps);
         }
 
-        let currentCampId = id;
+        let currentCampId =
+          id ||
+          searchParams.get('campaignId') ||
+          sessionStorage.getItem('current_campaign_id') ||
+          localStorage.getItem('last_active_campaign_id') ||
+          undefined;
+
         if (!currentCampId || !allCamps.some((c) => c.id === currentCampId)) {
           if (allCamps.length > 0) {
             currentCampId = allCamps[0].id;
@@ -99,7 +111,11 @@ export default function CampaignManagementPage() {
           ]);
 
           if (isMounted) {
-            if (campDetail) setCampaign(campDetail);
+            if (campDetail) {
+              setCampaign(campDetail);
+              sessionStorage.setItem('current_campaign_id', campDetail.id);
+              localStorage.setItem('last_active_campaign_id', campDetail.id);
+            }
             const mapped: PipelineCreator[] = rels.map((r: RelationshipDto) => {
               const feeNum = r.agreedFee || r.quotedFee || 0;
               const feeText = feeNum > 0 ? `${(feeNum / 1_000_000).toFixed(1)}M ₫` : 'Thỏa thuận';
@@ -284,6 +300,23 @@ export default function CampaignManagementPage() {
 
   return (
     <div className="pipeline-page-container">
+      {/* 0. Unified Campaign Funnel Stepper */}
+      <CampaignWorkflowBar
+        currentStep={activeViewTab === 'recommendation' ? 'recommendation' : 'crm'}
+        campaignId={campaign?.id}
+        campaignName={campaign?.name}
+        availableCampaigns={availableCampaigns.map((c) => ({ id: c.id, name: c.name }))}
+        onSelectCampaign={(val) => {
+          sessionStorage.setItem('current_campaign_id', val);
+          localStorage.setItem('last_active_campaign_id', val);
+          if (activeViewTab === 'recommendation' || location.pathname.includes('recommendation')) {
+            navigate(`/recommendations?campaignId=${val}&tab=recommendation`);
+          } else {
+            navigate(`/campaign-management/${val}`);
+          }
+        }}
+      />
+
       {/* 1. Header Title Row */}
       <div className="pipeline-header-row">
         <div>
@@ -421,7 +454,15 @@ export default function CampaignManagementPage() {
                 <Select
                   className="campaign-select-pill-select"
                   value={campaign?.id || (availableCampaigns[0] && availableCampaigns[0].id)}
-                  onChange={(newCampId) => navigate(`/campaign-management/${newCampId}`)}
+                  onChange={(newCampId) => {
+                    sessionStorage.setItem('current_campaign_id', newCampId);
+                    localStorage.setItem('last_active_campaign_id', newCampId);
+                    if (activeViewTab === 'recommendation' || location.pathname.includes('recommendation')) {
+                      navigate(`/recommendations?campaignId=${newCampId}&tab=recommendation`);
+                    } else {
+                      navigate(`/campaign-management/${newCampId}`);
+                    }
+                  }}
                   style={{ minWidth: 240, height: 32 }}
                   options={availableCampaigns.map((c) => ({
                     value: c.id,

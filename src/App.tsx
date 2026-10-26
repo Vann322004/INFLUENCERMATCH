@@ -39,6 +39,7 @@ import SubscriptionPlansPage from './pages/admin/subscriptions/SubscriptionPlans
 import PaymentsPage from './pages/admin/payments/PaymentsPage';
 import AuditLogPage from './pages/admin/audit/AuditLogPage';
 import CreatorClaimReviewPage from './pages/admin/claims/CreatorClaimReviewPage';
+import DataQualityPage from './pages/admin/quality/DataQualityPage';
 
 const { Content } = Layout;
 
@@ -361,6 +362,24 @@ export default function App() {
             }
           />
 
+          {/* AI Recommendation Routes */}
+          <Route
+            path="/recommendations"
+            element={
+              <MainLayout>
+                <CampaignManagementPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/ai-recommendations"
+            element={
+              <MainLayout>
+                <CampaignManagementPage />
+              </MainLayout>
+            }
+          />
+
           {/* Performance & Analytics Routes */}
           <Route
             path="/performance"
@@ -474,8 +493,9 @@ export default function App() {
             <Route path="creators" element={<CreatorCatalogPage />} />
             {/* Phase 5 — Data Sources */}
             <Route path="data-sources" element={<DataSourcesPage />} />
-            {/* Phase 6 — Collection Jobs & Scoring Config */}
+            {/* Phase 6 — Collection Jobs, Data Quality & Scoring Config */}
             <Route path="jobs" element={<CollectionJobsPage />} />
+            <Route path="data-quality" element={<DataQualityPage />} />
             <Route path="scoring" element={<ScoringConfigPage />} />
             {/* Phase 7 — Subscriptions & Payments */}
             <Route path="subscriptions" element={<SubscriptionPlansPage />} />

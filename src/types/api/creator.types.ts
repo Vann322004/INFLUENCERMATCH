@@ -75,12 +75,24 @@ export interface ShortlistItem {
   priority: ShortlistPriority;
   note?: string;
   addedAt: string;
+  avatarUrl?: string;
+  platform?: string;
+  followers?: number;
+  engagementRate?: number;
+  niche?: string;
+  status?: string;
 }
 
 export interface AddShortlistItemPayload {
   creatorId: string;
   priority: ShortlistPriority;
   note?: string;
+  creatorName?: string;
+  avatarUrl?: string;
+  platform?: string;
+  followers?: number;
+  niche?: string;
+  engagementRate?: number;
 }
 
 export interface ShortlistCompareRequest {

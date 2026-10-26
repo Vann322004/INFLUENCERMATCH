@@ -71,6 +71,9 @@ export default function AddToShortlistModal({
 
       await creatorService.addToShortlist(values.campaignId, {
         creatorId: creator.id,
+        creatorName: creator.name,
+        avatarUrl: creator.avatar,
+        niche: creator.niche,
         priority: values.priority as ShortlistPriority,
         note: values.note || undefined,
       });

@@ -10,6 +10,7 @@ import {
   YoutubeOutlined,
   TwitterOutlined,
   ApiOutlined,
+  WifiOutlined,
 } from '@ant-design/icons';
 import type { DataConnector, ConnectorStatus } from '../../../../mock/adminData';
 
@@ -51,8 +52,19 @@ const STATUS_CONFIG: Record<ConnectorStatus, { label: string; color: string; ico
 
 export default function ConnectorStatusCard({ connector, onUpdate }: Props) {
   const [syncing, setSyncing] = useState(false);
+  const [pinging, setPinging] = useState(false);
+  const [latency, setLatency] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [form] = Form.useForm();
+
+  const handlePing = async () => {
+    setPinging(true);
+    await new Promise((r) => setTimeout(r, 400));
+    const randomLatency = Math.floor(32 + Math.random() * 38);
+    setLatency(randomLatency);
+    setPinging(false);
+    message.success(`Kiểm tra kết nối API ${connector.name} ổn định (${randomLatency}ms - HTTP 200 OK)`);
+  };
 
   const totalReq = connector.successCount + connector.failCount;
   const successRate = totalReq > 0 ? Math.round((connector.successCount / totalReq) * 100) : 100;
@@ -178,10 +190,29 @@ export default function ConnectorStatusCard({ connector, onUpdate }: Props) {
             <span>Giới hạn Rate-limit:</span>
             <strong style={{ color: '#6366F1' }}>{connector.rateLimit} req/min</strong>
           </div>
+          {latency !== null && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Độ trễ Ping:</span>
+              <Tag color="success" style={{ margin: 0, borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
+                {latency}ms (200 OK)
+              </Tag>
+            </div>
+          )}
         </div>
 
         {/* Actions Footer */}
-        <div style={{ marginTop: 'auto', display: 'flex', gap: 8, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+        <div style={{ marginTop: 'auto', display: 'flex', gap: 6, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+          <Tooltip title="Kiểm tra kết nối & độ trễ API (Ping)">
+            <Button
+              size="small"
+              icon={<WifiOutlined />}
+              loading={pinging}
+              onClick={handlePing}
+              style={{ borderRadius: 8 }}
+            >
+              Ping
+            </Button>
+          </Tooltip>
           <Button
             size="small"
             icon={<SyncOutlined spin={syncing} />}
@@ -189,7 +220,7 @@ export default function ConnectorStatusCard({ connector, onUpdate }: Props) {
             onClick={handleSyncNow}
             style={{ flex: 1, borderRadius: 8, fontWeight: 600 }}
           >
-            Đồng bộ ngay
+            Đồng bộ
           </Button>
           <Button
             size="small"

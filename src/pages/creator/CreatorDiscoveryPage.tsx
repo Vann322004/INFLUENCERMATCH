@@ -55,6 +55,7 @@ import ExternalDiscovery from '../../components/discovery/ExternalDiscovery';
 import AddToShortlistModal from '../../components/discovery/AddToShortlistModal';
 import { campaignService } from '../../services/api/campaignService';
 import type { CampaignResponse } from '../../types/api/campaign.types';
+import CampaignWorkflowBar from '../../components/campaign/CampaignWorkflowBar';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -1309,6 +1310,24 @@ export default function CreatorDiscoveryPage() {
         <ExternalDiscovery />
       ) : (
         <>
+          {/* 1. Unified Campaign Funnel Stepper */}
+          <CampaignWorkflowBar
+            currentStep="discovery"
+            campaignId={selectedCampaignId}
+            campaignName={matchedCampaign?.name || campaignsList.find((c) => c.id === selectedCampaignId)?.name}
+            availableCampaigns={campaignsList.map((c) => ({ id: c.id, name: c.name }))}
+            onSelectCampaign={(val) => {
+              setSelectedCampaignId(val);
+              const camp = campaignsList.find((c) => c.id === val) || BRAND_CAMPAIGNS.find((c) => c.id === val);
+              if (camp) {
+                setMatchedCampaign(camp);
+                setSortBy('match');
+                setCurrentPage(1);
+                handleTriggerMatch(camp);
+              }
+            }}
+          />
+
           {/* 1.5. CAMPAIGN MATCHING BAR (REDESIGNED) */}
           <Card
             bordered

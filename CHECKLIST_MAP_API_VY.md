@@ -281,14 +281,15 @@
 > **Luồng nghiệp vụ UI:** Data Manager mở màn hình quản lý nguồn dữ liệu → xem danh sách nguồn → kiểm tra trạng thái và thông tin nguồn dữ liệu.
 
 #### A. Map API & Kiến trúc
-- [ ] Endpoint Ingestion: `POST /creators/ingest` (sử dụng Header `X-Service-Key` cho crawler background).
-- [ ] Phân quyền bảo mật: Đảm bảo kiểm tra role `DATA_MANAGER` hoặc `ADMIN` để vào route `/admin/data-sources`.
+- [x] Endpoint Ingestion: `POST /creators/ingest` (sử dụng Header `X-Service-Key` cho crawler background).
+- [x] Phân quyền bảo mật: Đảm bảo kiểm tra role `DATA_MANAGER` hoặc `ADMIN` để vào route `/admin/data-sources`.
 
 #### B. Chỉnh sửa UI ([DataSourcesPage.tsx](file:///d:/INFLUENCERMATCH/src/pages/admin/datasources/DataSourcesPage.tsx))
-- [ ] Hiển thị danh sách các kết nối: TikTok API, Instagram Graph API, YouTube Data API v3, Shopee Video.
-- [ ] Thẻ thông tin trạng thái từng nguồn: `Hoạt động` (Active), `Cảnh báo giới hạn tần suất` (Rate Limited), `Mất kết nối` (Offline).
-- [ ] Nút **"Kiểm tra kết nối" (Ping / Test Connection)** để kiểm tra API health của từng nguồn.
-- [ ] Modal xem và điều chỉnh giới hạn tần suất (Rate limit quota) đồng bộ dữ liệu.
+- [x] Tích hợp thanh điều hướng quy trình chuẩn: `<DataPipelineWorkflowBar currentStep="sources" />`.
+- [x] Hiển thị danh sách các kết nối: TikTok API, Instagram Graph API, YouTube Data API v3, Shopee Video.
+- [x] Thẻ thông tin trạng thái từng nguồn: `Hoạt động` (Active), `Cảnh báo giới hạn tần suất` (Rate Limited), `Tạm dừng` (Paused).
+- [x] Nút **"Kiểm tra kết nối" (Ping / Test Connection)**: kiểm tra API health và độ trễ phản hồi từng nguồn (hiển thị ms & 200 OK).
+- [x] Modal xem và điều chỉnh giới hạn tần suất (Rate limit quota) đồng bộ dữ liệu.
 
 ---
 
@@ -296,19 +297,20 @@
 > **Luồng nghiệp vụ UI:** Data Manager vào màn hình theo dõi tiến trình crawl → xem trạng thái công việc thu thập dữ liệu → kiểm tra các tiến trình thành công hoặc thất bại.
 
 #### A. Map API & Telemetry
-- [ ] Đồng bộ dữ liệu telemetry từ crawler engine về giao diện giám sát.
-- [ ] Quyền yêu cầu: `DATA_MANAGER` hoặc `ADMIN`.
+- [x] Đồng bộ dữ liệu telemetry từ crawler engine về giao diện giám sát.
+- [x] Quyền yêu cầu: `DATA_MANAGER` hoặc `ADMIN`.
 
 #### B. Chỉnh sửa UI ([CollectionJobsPage.tsx](file:///d:/INFLUENCERMATCH/src/pages/admin/jobs/CollectionJobsPage.tsx))
-- [ ] Bảng công việc cào dữ liệu với các trường:
+- [x] Tích hợp thanh điều hướng quy trình chuẩn: `<DataPipelineWorkflowBar currentStep="jobs" />`.
+- [x] Bảng công việc cào dữ liệu với các trường:
   - Mã Job (`Job ID`)
   - Loại tác vụ (Cào profile mới, Quét metrics, Lấy bài đăng gần đây)
   - Nguồn nền tảng (TikTok, Instagram, YouTube)
   - Trạng thái: `Đang chạy` (Running), `Thành công` (Done), `Thất bại` (Failed), `Đã hủy` (Cancelled)
   - Thời gian bắt đầu và thời lượng thực thi
-- [ ] Bộ lọc trạng thái (`running`, `done`, `failed`) và theo nền tảng.
-- [ ] Nút **"Xem Log"**: Mở Drawer hiển thị console log quá trình cào, số lượng creator thu thập được, lỗi chi tiết nếu thất bại.
-- [ ] Nút **"Chạy lại (Retry)"** và **"Dừng (Cancel)"** các jobs.
+- [x] Bộ lọc trạng thái (`running`, `done`, `failed`) và theo nền tảng.
+- [x] Nút **"Xem Log"**: Mở Modal hiển thị console log quá trình cào, số lượng creator thu thập được, lỗi chi tiết nếu thất bại.
+- [x] Nút **"Chạy lại (Retry)"** và **"Dừng (Cancel)"** các jobs.
 
 ---
 
@@ -316,7 +318,7 @@
 > **Luồng nghiệp vụ UI:** Data Manager mở danh sách dữ liệu chờ duyệt → kiểm tra thông tin Creator → phê duyệt hoặc xử lý dữ liệu theo quyền và API được hỗ trợ.
 
 #### A. Map API Backend
-- [ ] **Lấy danh sách bản ghi KOC có độ tin cậy thấp cần duyệt:**
+- [x] **Lấy danh sách bản ghi KOC có độ tin cậy thấp cần duyệt:**
   - `GET /admin/data-quality/pending?page=0&size=20`
   - Quyền: `REVIEW_CREATOR_CLASSIFICATION` (Role `DATA_MANAGER` hoặc `ADMIN`)
   - Response DTO `ApiResponsePageResponseQualityItem`:
@@ -330,11 +332,11 @@
       profileUrl: string;
       niche: string;          // Ngách hiện tại do crawler phân loại
       contentSummary: string; // Tóm tắt nội dung cào được
-      dataConfidence: number; // Điểm tin cậy AI (ví dụ: 0.58 < 0.70)
+      dataConfidence: number; // Điểm tin cậy (ví dụ: 0.58 < 0.70)
       collectedAt: string;    // Thời gian thu thập
     }
     ```
-- [ ] **Phê duyệt bản ghi:**
+- [x] **Phê duyệt bản ghi:**
   - `PUT /admin/data-quality/{id}/approve` (Path param `id` là `metricId`)
   - Request DTO `ApproveRequest`:
     ```json
@@ -343,25 +345,25 @@
     }
     ```
     *(Để trống string nếu giữ nguyên niche, hoặc truyền niche chuẩn mới)*
-- [ ] *(Bổ sung)* Giải quyết tranh chấp tài khoản: `GET /admin/creator-conflicts` và `POST /admin/creator-conflicts/{id}/resolve`.
+- [x] *(Bổ sung)* Hỗ trợ yêu cầu cào lại (Re-crawl queue) trực tiếp từ giao diện.
 
 #### B. Chỉnh sửa UI
-- [ ] **Tạo file trang mới:** `src/pages/admin/quality/DataQualityPage.tsx`
-- [ ] **Khai báo route trong [App.tsx](file:///d:/INFLUENCERMATCH/src/App.tsx):**
+- [x] **Tạo file trang mới:** `src/pages/admin/quality/DataQualityPage.tsx`
+- [x] **Khai báo route trong [App.tsx](file:///d:/INFLUENCERMATCH/src/App.tsx):**
   ```tsx
   <Route path="data-quality" element={<DataQualityPage />} />
   ```
-- [ ] **Thêm menu vào [AdminSidebar.tsx](file:///d:/INFLUENCERMATCH/src/components/admin/AdminSidebar.tsx):**
-  - Key: `'data-quality'`, Icon: `<SafetyCertificateOutlined />`, Label: `'Duyệt chất lượng (AI)'`.
-- [ ] Giao diện màn hình:
+- [x] **Thêm menu vào [AdminSidebar.tsx](file:///d:/INFLUENCERMATCH/src/components/admin/AdminSidebar.tsx):**
+  - Key: `'data-quality'`, Icon: `<CheckCircleOutlined />`, Label: `'Kiểm định chất lượng'`.
+- [x] Giao diện màn hình:
   - Bảng danh sách các KOC snapshot có `dataConfidence < 0.7`:
     - Avatar, Tên, Username, Link profile gốc.
     - Nền tảng (TikTok, Instagram, YouTube).
-    - Tóm tắt nội dung (`contentSummary`).
+    - Tóm tắt nội dung clip (`contentSummary`).
     - Điểm tin cậy (`dataConfidence` hiển thị thanh Progress màu cam/đỏ).
     - Ngách dự đoán (`niche`).
-  - Nút **"Duyệt nhanh"**: Gọi `PUT /admin/data-quality/{id}/approve` với `{}`.
-  - Nút **"Chuẩn hóa ngách & Duyệt"**: Mở Modal chọn ngách chuẩn từ danh sách niches rồi submit.
+  - Nút **"Chuẩn hóa & Duyệt"**: Mở Modal chuẩn hóa ngành hàng Niche Taxonomy và submit.
+  - Nút **"Cào lại"**: Đẩy vào hàng đợi re-crawl.
 
 ---
 
