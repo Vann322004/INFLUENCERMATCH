@@ -73,7 +73,7 @@
 > **Luồng nghiệp vụ UI:** Brand nhập mô tả chiến dịch → AI hỗ trợ phân tích và điền thông tin Brief nếu được hỗ trợ → Brand kiểm tra, chỉnh sửa và xác nhận.
 
 #### A. Map API Backend
-- [ ] **Endpoint AI Autofill:** `POST /ai/campaign-autofill`
+- [x] **Endpoint AI Autofill:** `POST /ai/campaign-autofill`
   - Permission: `CREATE_CAMPAIGN`
   - Request DTO:
     ```json
@@ -100,12 +100,12 @@
     ```
 
 #### B. Chỉnh sửa UI ([CreateCampaignPage.tsx](file:///d:/INFLUENCERMATCH/src/pages/campaign/CreateCampaignPage.tsx) & [AiBriefAssistant.tsx](file:///d:/INFLUENCERMATCH/src/components/ai/AiBriefAssistant.tsx))
-- [ ] Khung nhập văn bản Prompt trên trang tạo Campaign:
+- [x] Khung nhập văn bản Prompt trên trang tạo Campaign:
   - Nhập prompt ➔ Click nút **"Phân tích bằng AI"** ➔ hiển thị loading `Spin`.
   - Đổ toàn bộ giá trị trả về vào form các Step (Step 1: Tên, Sản phẩm, Mục tiêu; Step 2: Niche, Nền tảng, Tệp tuổi; Step 3: Ngân sách).
   - Hiển thị hộp Callout/Alert nổi bật chứa `aiExplanation` để Brand đọc lý do phân tích.
   - Cho phép Brand tự do kiểm tra và sửa đổi từng ô trước khi gửi đi.
-- [ ] Tại [AiBriefAssistant.tsx](file:///d:/INFLUENCERMATCH/src/components/ai/AiBriefAssistant.tsx) ở màn hình Creator Discovery:
+- [x] Tại [AiBriefAssistant.tsx](file:///d:/INFLUENCERMATCH/src/components/ai/AiBriefAssistant.tsx) ở màn hình Creator Discovery:
   - Thay thế mock `setTimeout` bằng việc gọi thực tế `campaignService.autofillCampaign()`.
 
 ---
@@ -114,21 +114,22 @@
 > **Luồng nghiệp vụ UI:** Brand vào Creator Discovery → nhập từ khóa, chọn nền tảng và bộ lọc → xem danh sách KOC/KOL → mở hồ sơ chi tiết → đánh giá chỉ số và mức độ phù hợp.
 
 #### A. Map API Backend
-- [ ] **Lấy danh mục ngách chuẩn:** `GET /taxonomies/niches`
-- [ ] **Discovery Pipeline theo chiến dịch (4-Stage Hybrid Pipeline):**
+- [x] **Lấy danh mục ngách chuẩn:** `GET /taxonomies/niches`
+- [x] **Discovery Pipeline theo chiến dịch (4-Stage Hybrid Pipeline):**
+  - Swagger Tag: `Creator Discovery` | OperationId: `discoverCreators`
   - `GET /campaigns/{campaignId}/discovery`
   - Query params: `keyword`, `niche`, `minFollowers`, `maxFollowers`, `page`, `size`.
-- [ ] **Semantic Vector Search:**
+- [x] **Semantic Vector Search:**
   - `GET /creators/search/semantic?q={keyword}&limit=20` (Model BKAI 768-dim pgvector).
-- [ ] **Chi tiết KOC:** `GET /creators/{id}` (Lấy metrics, rateCard, recentPosts, linkedAccounts).
-- [ ] **Thêm vào Shortlist:** `POST /campaigns/{campaignId}/shortlist` với `{ "creatorId": "..." }`.
+- [x] **Chi tiết KOC:** `GET /creators/{id}` (Lấy metrics, rateCard, recentPosts, linkedAccounts).
+- [x] **Thêm vào Shortlist:** `POST /campaigns/{campaignId}/shortlist` với `{ "creatorId": "..." }`.
 
 #### B. Chỉnh sửa UI ([CreatorDiscoveryPage.tsx](file:///d:/INFLUENCERMATCH/src/pages/creator/CreatorDiscoveryPage.tsx) & [CreatorDetailPage.tsx](file:///d:/INFLUENCERMATCH/src/pages/creator/CreatorDetailPage.tsx))
-- [ ] Tích hợp lấy ngách động từ `/taxonomies/niches` cho Dropdown Niche thay vì danh sách tĩnh.
-- [ ] Thêm nút gạt chuyển chế độ: **"Tìm kiếm thường"** vs **"Tìm kiếm AI ngữ nghĩa (Semantic)"**.
-- [ ] Chuẩn hóa `engagementRate`: Xử lý giá trị float (ví dụ `0.0489` hiển thị `4.89%`).
-- [ ] Click vào Creator Card ➔ chuyển hướng sang `/creators/${creator.id}`.
-- [ ] Tại CreatorDetailPage:
+- [x] Tích hợp lấy ngách động từ `/taxonomies/niches` cho Dropdown Niche thay vì danh sách tĩnh.
+- [x] Thêm nút gạt chuyển chế độ: **"Tìm kiếm thường"** vs **"Tìm kiếm AI ngữ nghĩa (Semantic)"**.
+- [x] Chuẩn hóa `engagementRate`: Xử lý giá trị float (ví dụ `0.0489` hiển thị `4.89%`).
+- [x] Click vào Creator Card ➔ chuyển hướng sang `/creators/${creator.id}`.
+- [x] Tại CreatorDetailPage:
   - Hiển thị đầy đủ số liệu: Followers, Engagement Rate, Avg Views, Avg Likes, Bảng giá tham khảo (`rateCard`), Bài đăng gần đây (`recentPosts`).
   - Nút **"Lưu vào Shortlist"** mở Modal chọn Campaign và gọi `POST /campaigns/{campaignId}/shortlist`.
 

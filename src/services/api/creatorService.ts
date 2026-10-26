@@ -9,9 +9,30 @@ import {
   AddShortlistItemPayload,
   SendInvitationRequest,
   InvitationResponse,
+  DiscoverCreatorsParams,
+  CreatorDiscoveryPageResponse,
 } from '../../types/api/creator.types';
 
 export const creatorService = {
+  /**
+   * Khám phá Creator cho chiến dịch qua 4-Stage Hybrid Discovery Pipeline
+   * Swagger Tag: "Creator Discovery"
+   * GET /campaigns/{campaignId}/discovery
+   * OperationId: discoverCreators
+   * Summary: Discover creators for campaign
+   * Description: Executes the 4-Stage Hybrid Discovery Pipeline (Hard Filters + Semantic & FTS Search + Rank Fusion + Fallback) to find creators.
+   * Query params: keyword, niche, minFollowers, maxFollowers, page, size
+   */
+  async discoverCreators(
+    campaignId: string,
+    params?: DiscoverCreatorsParams
+  ): Promise<CreatorDiscoveryPageResponse> {
+    const response = await apiClient.get<ApiResponse<CreatorDiscoveryPageResponse>>(
+      `/campaigns/${campaignId}/discovery`,
+      { params }
+    );
+    return response.data?.data || (response.data as unknown as CreatorDiscoveryPageResponse);
+  },
   /**
    * Lấy danh sách toàn bộ creator công khai
    */
@@ -32,42 +53,52 @@ export const creatorService = {
   },
 
   /**
-   * Lấy thông tin chi tiết của creator theo ID
+   * Lấy thông tin chi tiết của creator theo ID (GET /creators/{id})
    */
   async getCreatorById(id: string): Promise<CreatorDetail> {
     const response = await apiClient.get<ApiResponse<CreatorDetail>>(`/creators/${id}`);
-    return response.data.data;
+    return response.data?.data || (response.data as unknown as CreatorDetail);
   },
 
   /**
    * Tìm kiếm creator bằng ngữ nghĩa / AI vector search
+   * GET /creators/search/semantic?q={keyword}&limit=20 (Model BKAI 768-dim pgvector)
    */
-  async searchSemantic(query: string, limit = 10): Promise<CreatorVectorSearchItem[]> {
+  async searchSemantic(query: string, limit = 20): Promise<CreatorVectorSearchItem[]> {
     const response = await apiClient.get<ApiResponse<CreatorVectorSearchItem[]>>(
       `/creators/search/semantic`,
       {
         params: { q: query, limit },
       }
     );
-    return response.data.data || [];
+    const data = response.data?.data ?? response.data;
+    return Array.isArray(data) ? data : [];
   },
 
   /**
-   * Lấy bảng giá (rate card) của creator
+   * Lấy bảng giá (rate card) của creator (GET /creators/{id}/rate-card)
    */
   async getRateCard(creatorId: string): Promise<RateCardResponse> {
     const response = await apiClient.get<ApiResponse<RateCardResponse>>(
       `/creators/${creatorId}/rate-card`
     );
-    return response.data.data;
+    return response.data?.data || (response.data as unknown as RateCardResponse);
   },
 
   /**
-   * Lấy danh mục các niches/ngành hàng
+   * Lấy danh mục các niches/ngành hàng chuẩn (GET /taxonomies/niches)
    */
   async getNiches(): Promise<string[]> {
-    const response = await apiClient.get<string[]>('/taxonomies/niches');
-    return Array.isArray(response.data) ? response.data : [];
+    try {
+      const response = await apiClient.get<any>('/taxonomies/niches');
+      const raw = response.data;
+      if (Array.isArray(raw)) return raw;
+      if (Array.isArray(raw?.data)) return raw.data;
+      return [];
+    } catch (err) {
+      console.warn('[creatorService] Lỗi khi tải /taxonomies/niches:', err);
+      return [];
+    }
   },
 
   /**

@@ -1,5 +1,5 @@
 import { apiClient } from '../apiClient';
-import { ApiResponse, PageResponse } from '../../types/api/common.types';
+import { ApiResponse } from '../../types/api/common.types';
 import {
   CampaignRequest,
   CampaignResponse,
@@ -220,14 +220,14 @@ export const campaignService = {
       // Nếu backend thiếu GEMINI_API_KEY hoặc lỗi kết nối, kích hoạt bộ phân tích thông minh dự phòng
       const lower = prompt.toLowerCase();
       let niches = ['Phong cách sống', 'Xu hướng'];
-      let platforms: ('TIKTOK' | 'INSTAGRAM' | 'YOUTUBE')[] = ['TIKTOK', 'INSTAGRAM'];
+      let platforms: ('TIKTOK' | 'INSTAGRAM' | 'FACEBOOK')[] = ['TIKTOK', 'INSTAGRAM'];
       let objective: 'AWARENESS' | 'CONVERSION' | 'ENGAGEMENT' = 'AWARENESS';
       let audiences = ['18-24', '25-34'];
       let budget = 25000000;
 
       if (lower.includes('công nghệ') || lower.includes('sạc') || lower.includes('điện thoại') || lower.includes('phụ kiện') || lower.includes('tech')) {
         niches = ['Công nghệ', 'Đời sống số', 'Tiện ích công nghệ'];
-        platforms = ['TIKTOK', 'YOUTUBE'];
+        platforms = ['TIKTOK', 'FACEBOOK'];
         objective = 'CONVERSION';
         budget = 30000000;
       } else if (lower.includes('skincare') || lower.includes('mỹ phẩm') || lower.includes('làm đẹp') || lower.includes('serum') || lower.includes('son')) {
@@ -316,24 +316,49 @@ export const campaignService = {
   },
 
   /**
-   * Kích hoạt thuật toán AI Discovery tìm creator cho chiến dịch
+   * Khám phá Creator cho chiến dịch qua 4-Stage Hybrid Discovery Pipeline
+   * Swagger Tag: "Creator Discovery"
+   * GET /campaigns/{campaignId}/discovery
+   * OperationId: discoverCreators
+   * Summary: Discover creators for campaign
+   * Description: Executes the 4-Stage Hybrid Discovery Pipeline (Hard Filters + Semantic & FTS Search + Rank Fusion + Fallback) to find creators.
+   * Query params: keyword, niche, minFollowers, maxFollowers, page, size
    */
-  async discoverCreators(id: string): Promise<unknown> {
+  async discoverCreators(
+    campaignId: string,
+    params?: {
+      keyword?: string;
+      niche?: string;
+      minFollowers?: number;
+      maxFollowers?: number;
+      page?: number;
+      size?: number;
+    }
+  ): Promise<any> {
     try {
-      const response = await apiClient.get(`/campaigns/${id}/discover`);
-      return response.data;
-    } catch {
-      const response = await apiClient.post(`/campaigns/${id}/discover`);
-      return response.data;
+      const response = await apiClient.get(`/campaigns/${campaignId}/discovery`, { params });
+      return response.data?.data ?? response.data;
+    } catch (err) {
+      console.warn('[campaignService] Lỗi khi gọi GET /campaigns/:id/discovery:', err);
+      throw err;
     }
   },
 
   /**
-   * Lấy kết quả AI Discovery của chiến dịch
+   * Alias cho discoverCreators (GET /campaigns/{campaignId}/discovery)
    */
-  async getDiscoveryResults(id: string): Promise<unknown> {
-    const response = await apiClient.get(`/campaigns/${id}/discovery`);
-    return response.data.data;
+  async getDiscoveryResults(
+    campaignId: string,
+    params?: {
+      keyword?: string;
+      niche?: string;
+      minFollowers?: number;
+      maxFollowers?: number;
+      page?: number;
+      size?: number;
+    }
+  ): Promise<any> {
+    return this.discoverCreators(campaignId, params);
   },
 
   // ── CRM / Relationships ────────────────────────────

@@ -17,6 +17,8 @@ import {
   Divider,
   message,
   Tooltip,
+  Alert,
+  Spin,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
@@ -52,10 +54,26 @@ import {
   WalletOutlined,
   CheckCircleFilled,
   SaveOutlined,
+  ThunderboltFilled,
 } from '@ant-design/icons';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
+
+const AI_SAMPLE_PROMPTS = [
+  {
+    label: '🧴 Kem dưỡng phục hồi da Gen-Z',
+    prompt: 'Quảng bá dòng kem dưỡng phục hồi da dành cho giới trẻ 18-24 tuổi tại Hà Nội và TP.HCM, ngân sách tầm 25 triệu trên TikTok và Instagram',
+  },
+  {
+    label: '⚡ Phụ kiện sạc nhanh công nghệ',
+    prompt: 'Tìm kiếm creator công nghệ review phụ kiện sạc nhanh cho người trẻ 18-35 tuổi, ngân sách 30 triệu trên TikTok và Facebook',
+  },
+  {
+    label: '👗 Thời trang dạo phố OOTD',
+    prompt: 'Quảng bá BST thời trang dạo phố năng động cho nữ giới 18-24 tuổi tại TP.HCM, ngân sách 20 triệu trên Instagram và TikTok',
+  },
+];
 
 export default function CreateCampaignPage() {
   const navigate = useNavigate();
@@ -242,15 +260,16 @@ export default function CreateCampaignPage() {
     );
   };
 
-  const handleAiSuggest = async () => {
-    if (!aiPrompt || aiPrompt.trim().length < 5) {
+  const handleAiSuggest = async (overridePrompt?: string) => {
+    const promptToUse = (typeof overridePrompt === 'string' ? overridePrompt : aiPrompt).trim();
+    if (!promptToUse || promptToUse.length < 5) {
       message.warning('Vui lòng nhập mô tả mục tiêu chi tiết hơn (tối thiểu 5 ký tự) để AI gợi ý!');
       return;
     }
     setIsAiLoading(true);
     try {
       message.loading({ content: 'AI đang phân tích và tối ưu hóa thông tin chiến dịch...', key: 'ai_suggest' });
-      const result = await campaignService.autofillCampaign(aiPrompt.trim());
+      const result = await campaignService.autofillCampaign(promptToUse);
       if (result) {
         if (result.name) setCampaignName(result.name);
         if (result.productService) setProduct(result.productService);
@@ -262,7 +281,10 @@ export default function CreateCampaignPage() {
           else setSelectedObjectives(['awareness']);
         }
         if (result.platforms && Array.isArray(result.platforms) && result.platforms.length > 0) {
-          setSelectedPlatforms(result.platforms.map((p) => p.toLowerCase()));
+          const cleanP = result.platforms
+            .map((p) => p.toLowerCase())
+            .filter((p) => ['tiktok', 'instagram', 'facebook'].includes(p));
+          if (cleanP.length > 0) setSelectedPlatforms(cleanP);
         }
         if (result.targetAudiences && Array.isArray(result.targetAudiences) && result.targetAudiences.length > 0) {
           setSelectedAges(result.targetAudiences);
@@ -278,10 +300,22 @@ export default function CreateCampaignPage() {
         } else if (result.budgetMin) {
           setBudgetTotal(result.budgetMin);
         }
+        if (result.contentType) {
+          const ct = result.contentType.toLowerCase();
+          const fList: string[] = [];
+          if (ct.includes('video') || ct.includes('short')) fList.push('short_video');
+          if (ct.includes('image') || ct.includes('post') || ct.includes('ảnh')) fList.push('image_post');
+          if (ct.includes('review') || ct.includes('unbox')) fList.push('review_unboxing');
+          if (ct.includes('live')) fList.push('livestream');
+          if (fList.length > 0) setSelectedFormats(fList);
+        }
+        if (promptToUse) {
+          setCreatorBrief(`Yêu cầu sáng tạo: Video review trải nghiệm thực tế ${result.productService || product}, nêu bật công dụng nổi bật và hướng dẫn sử dụng sản phẩm.`);
+        }
         if (result.aiExplanation) {
           setAiExplanation(result.aiExplanation);
         }
-        message.success({ content: 'AI đã điền tự động các thông số chiến dịch thành công!', key: 'ai_suggest' });
+        message.success({ content: '🎉 AI đã điền tự động các thông số chiến dịch thành công!', key: 'ai_suggest', duration: 3 });
       }
     } catch (error) {
       console.error('Error autofilling campaign with AI:', error);
@@ -737,52 +771,125 @@ export default function CreateCampaignPage() {
                 <Input
                   value={aiPrompt}
                   onChange={(e) => setAiPrompt(e.target.value)}
-                  placeholder="Ví dụ: Quảng bá sản phẩm chăm sóc da cho nữ 18-35 tuổi, ưu tiên creator làm đẹp..."
+                  placeholder="Ví dụ: Quảng bá dòng kem dưỡng phục hồi da dành cho giới trẻ 18-24 tuổi tại Hà Nội và TP.HCM, ngân sách tầm 25 triệu trên TikTok và Instagram..."
                   style={{
                     borderRadius: 10,
                     background: '#FFFFFF',
                     borderColor: '#DDD6FE',
-                    height: 40,
-                    fontSize: 12.5,
+                    height: 42,
+                    fontSize: 13,
                   }}
-                  onPressEnter={handleAiSuggest}
+                  onPressEnter={() => handleAiSuggest()}
                 />
                 <Button
                   type="primary"
+                  icon={<ThunderboltFilled />}
                   loading={isAiLoading}
-                  onClick={handleAiSuggest}
+                  onClick={() => handleAiSuggest()}
                   style={{
                     background: '#5B5BF0',
                     fontWeight: 700,
                     borderRadius: 10,
-                    height: 40,
-                    padding: '0 18px',
+                    height: 42,
+                    padding: '0 20px',
                     boxShadow: '0 4px 12px rgba(91, 91, 240, 0.3)',
                     flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
                   }}
                 >
-                  Gợi ý ngay
+                  Phân tích bằng AI
                 </Button>
               </div>
 
-              {aiExplanation && (
+              {/* Sample Prompt Chips */}
+              <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11.5, color: '#64748B', fontWeight: 600 }}>Gợi ý nhanh:</span>
+                {AI_SAMPLE_PROMPTS.map((item, idx) => (
+                  <Tag
+                    key={idx}
+                    onClick={() => {
+                      setAiPrompt(item.prompt);
+                      handleAiSuggest(item.prompt);
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      fontSize: 11.5,
+                      padding: '2px 10px',
+                      borderRadius: 999,
+                      background: '#FFFFFF',
+                      borderColor: '#DDD6FE',
+                      color: '#6D28D9',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {item.label}
+                  </Tag>
+                ))}
+              </div>
+
+              {/* AI Processing Spin Indicator */}
+              {isAiLoading && (
                 <div
                   style={{
-                    marginTop: 12,
-                    padding: '10px 14px',
-                    borderRadius: 10,
-                    background: 'rgba(255, 255, 255, 0.85)',
-                    border: '1px solid #DDD6FE',
-                    fontSize: 12.5,
-                    color: '#4C1D95',
-                    lineHeight: 1.5,
+                    marginTop: 14,
+                    padding: '12px 16px',
+                    borderRadius: 12,
+                    background: 'rgba(237, 233, 254, 0.65)',
+                    border: '1px dashed #A78BFA',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
                   }}
                 >
-                  <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                    <RobotOutlined /> Giải thích từ AI:
-                  </strong>{' '}
-                  {aiExplanation}
+                  <Spin size="small" />
+                  <span style={{ fontSize: 12.5, color: '#6D28D9', fontWeight: 600 }}>
+                    Trợ lý AI đang phân tích yêu cầu, tự động trích xuất các thông số và điền vào từng bước...
+                  </span>
                 </div>
+              )}
+
+              {/* AI Explanation Callout / Alert */}
+              {aiExplanation && !isAiLoading && (
+                <Alert
+                  style={{
+                    marginTop: 14,
+                    borderRadius: 12,
+                    border: '1px solid #C4B5FD',
+                    background: 'linear-gradient(135deg, #FDF4FF 0%, #F5F3FF 50%, #EDE9FE 100%)',
+                  }}
+                  message={
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontWeight: 700, color: '#5B21B6', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5 }}>
+                        <RobotOutlined style={{ fontSize: 16, color: '#7C3AED' }} /> Chiến lược phân tích từ AI
+                      </span>
+                      <Tag color="purple" style={{ borderRadius: 999, fontSize: 11, fontWeight: 700, margin: 0 }}>
+                        ✓ Đã tự động điền các bước bên dưới
+                      </Tag>
+                    </div>
+                  }
+                  description={
+                    <div>
+                      <p style={{ margin: '4px 0 10px 0', fontSize: 12.5, color: '#4C1D95', lineHeight: 1.6 }}>
+                        {aiExplanation}
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        <Tag style={{ background: '#FFFFFF', borderColor: '#DDD6FE', color: '#6D28D9', fontSize: 11, borderRadius: 6, fontWeight: 600 }}>
+                          ✓ Bước 1: Tên, Sản phẩm & Mục tiêu
+                        </Tag>
+                        <Tag style={{ background: '#FFFFFF', borderColor: '#DDD6FE', color: '#6D28D9', fontSize: 11, borderRadius: 6, fontWeight: 600 }}>
+                          ✓ Bước 2: Nền tảng, Niche & Độ tuổi
+                        </Tag>
+                        <Tag style={{ background: '#FFFFFF', borderColor: '#DDD6FE', color: '#6D28D9', fontSize: 11, borderRadius: 6, fontWeight: 600 }}>
+                          ✓ Bước 3: Ngân sách & Định dạng
+                        </Tag>
+                      </div>
+                    </div>
+                  }
+                  type="info"
+                  showIcon={false}
+                />
               )}
             </Card>
 

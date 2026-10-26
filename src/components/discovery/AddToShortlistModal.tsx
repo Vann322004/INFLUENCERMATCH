@@ -75,7 +75,20 @@ export default function AddToShortlistModal({
         note: values.note || undefined,
       });
 
-      message.success(`Đã thêm ${creator.name} vào Danh sách chọn (Shortlist)!`);
+      message.success({
+        content: (
+          <span>
+            Đã thêm <b>{creator.name}</b> vào Shortlist!{' '}
+            <a
+              style={{ fontWeight: 700, marginLeft: 8, color: '#4F46E5', textDecoration: 'underline' }}
+              onClick={() => navigate(`/creators/shortlist?campaignId=${values.campaignId}`)}
+            >
+              Xem Shortlist ➔
+            </a>
+          </span>
+        ),
+        duration: 4,
+      });
       onClose();
       form.resetFields();
       onSuccess?.(values.campaignId);

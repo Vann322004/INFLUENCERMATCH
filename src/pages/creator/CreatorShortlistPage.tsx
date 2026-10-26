@@ -25,6 +25,7 @@ import {
   UserOutlined,
   EyeOutlined,
   ThunderboltOutlined,
+  ThunderboltFilled,
   HeartFilled,
   MessageOutlined,
   ShareAltOutlined,
@@ -769,6 +770,27 @@ export default function CreatorShortlistPage() {
           >
             Lưu danh sách
           </Button>
+
+          {selectedCampaign && selectedCampaign !== 'all' && (
+            <Button
+              type="primary"
+              icon={<ThunderboltFilled />}
+              onClick={() => {
+                navigate(`/campaign-management/${selectedCampaign}?tab=recommendation`, {
+                  state: { campaignId: selectedCampaign, fromShortlist: true },
+                });
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)',
+                borderColor: 'transparent',
+                fontWeight: 700,
+                borderRadius: 8,
+                boxShadow: '0 4px 14px rgba(168, 85, 247, 0.35)',
+              }}
+            >
+              ⚡ Đề xuất AI Four-Memory ➔
+            </Button>
+          )}
 
           <Button
             className="btn-add-creator-primary"
