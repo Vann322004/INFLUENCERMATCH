@@ -11,11 +11,11 @@
 | STT | Chức năng chính | Method | Endpoint Swagger | Quyền (Permission) | Tệp Frontend phụ trách | Trạng thái tích hợp |
 | :---: | :--- | :---: | :--- | :--- | :--- | :---: |
 | **1** | Campaign Management | `GET`<br>`POST`<br>`PUT`<br>`PATCH` | `/brands/{brandId}/campaigns`<br>`/campaigns/{id}`<br>`/campaigns/{id}/status`<br>`/campaigns/{id}/archive` | `VIEW_OWN_CAMPAIGN`<br>`CREATE_CAMPAIGN`<br>`UPDATE_CAMPAIGN`<br>`CHANGE_CAMPAIGN_STATUS` | `src/services/api/campaignService.ts`<br>`src/pages/campaign/CreateCampaignPage.tsx`<br>`src/pages/campaign/CampaignListPage.tsx` | 🟢 **Hoàn thành** |
-| **2** | Campaign Brief / AI Brief | `POST` | `/ai/campaign-autofill` | `CREATE_CAMPAIGN` | `src/services/api/campaignService.ts`<br>`src/pages/campaign/CreateCampaignPage.tsx`<br>`src/components/ai/AiBriefAssistant.tsx` | 🟡 Cần gắn API thực tế cho popup Brief tại Discovery |
-| **3** | Creator Discovery | `GET`<br>`GET`<br>`GET`<br>`POST` | `/taxonomies/niches`<br>`/creators`<br>`/campaigns/{campaignId}/discovery`<br>`/creators/{id}`<br>`/campaigns/{campaignId}/shortlist` | `SEARCH_CREATOR`<br>`VIEW_CREATOR_PROFILE`<br>`MANAGE_OWN_SHORTLIST` | `src/services/api/creatorService.ts`<br>`src/pages/creator/CreatorDiscoveryPage.tsx`<br>`src/pages/creator/CreatorDetailPage.tsx` | 🟡 Cần lấy niches động & query discovery pipeline |
-| **4** | AI Recommendation (Four-Memory) | `POST` | `/campaigns/{campaignId}/ai-recommendations` | `RUN_RECOMMENDATION` | `src/services/api/aiRecommendationService.ts` *(Mới)*<br>`src/pages/campaign/CampaignManagementPage.tsx` | 🔴 **Chưa map API** (đang dùng widget giả lập) |
-| **5** | AI Run History | `GET` | `/campaigns/{campaignId}/ai-recommendations/runs` | `VIEW_OWN_RECOMMENDATION` | `src/services/api/aiRecommendationService.ts` *(Mới)*<br>`src/pages/campaign/CampaignHistoryPage.tsx` | 🔴 **Chưa map API** |
-| **6** | AI Feedback (Context Evolution) | `POST` | `/campaigns/{campaignId}/ai-recommendations/feedback` | `RUN_RECOMMENDATION` | `src/services/api/aiRecommendationService.ts` *(Mới)*<br>Recommendation Card UI | 🔴 **Chưa map API** |
+| **2** | Campaign Brief / AI Brief | `POST` | `/ai/campaign-autofill` | `CREATE_CAMPAIGN` | `src/services/api/campaignService.ts`<br>`src/pages/campaign/CreateCampaignPage.tsx`<br>`src/components/ai/AiBriefAssistant.tsx` | 🟢 **Hoàn thành** |
+| **3** | Creator Discovery | `GET`<br>`GET`<br>`GET`<br>`POST` | `/taxonomies/niches`<br>`/creators`<br>`/campaigns/{campaignId}/discovery`<br>`/creators/{id}`<br>`/campaigns/{campaignId}/shortlist` | `SEARCH_CREATOR`<br>`VIEW_CREATOR_PROFILE`<br>`MANAGE_OWN_SHORTLIST` | `src/services/api/creatorService.ts`<br>`src/pages/creator/CreatorDiscoveryPage.tsx`<br>`src/pages/creator/CreatorDetailPage.tsx` | 🟢 **Hoàn thành** |
+| **4** | AI Recommendation (Four-Memory) | `POST` | `/campaigns/{campaignId}/ai-recommendations` | `RUN_RECOMMENDATION` | `src/services/api/aiRecommendationService.ts`<br>`src/components/campaign/AiRecommendationTab.tsx`<br>`src/pages/campaign/CampaignManagementPage.tsx` | 🟢 **Hoàn thành** |
+| **5** | AI Run History | `GET` | `/campaigns/{campaignId}/ai-recommendations/runs` | `VIEW_OWN_RECOMMENDATION` | `src/services/api/aiRecommendationService.ts`<br>`src/components/campaign/AiRecommendationTab.tsx`<br>`src/pages/campaign/CampaignManagementPage.tsx` | 🟢 **Hoàn thành** |
+| **6** | AI Feedback (Context Evolution) | `POST` | `/campaigns/{campaignId}/ai-recommendations/feedback` | `RUN_RECOMMENDATION` | `src/services/api/aiRecommendationService.ts`<br>`src/components/campaign/AiRecommendationTab.tsx` | 🟢 **Hoàn thành** |
 | **7** | Data Sources Management | `GET`<br>`POST` | `/creators/ingest`<br>Quản lý connector & trạng thái nguồn | `DATA_MANAGER` / `ADMIN` | `src/pages/admin/datasources/DataSourcesPage.tsx` | 🟡 Đã có giao diện, cần kiểm tra phân quyền & cấu hình Ingest |
 | **8** | Crawler Jobs Monitor | `GET`<br>`POST` | Worker/Crawler Jobs telemetry & cào dữ liệu | `DATA_MANAGER` / `ADMIN` | `src/pages/admin/jobs/CollectionJobsPage.tsx` | 🟢 Đã có giao diện, cần nối telemetry real-time |
 | **9** | Data Quality Review | `GET`<br>`PUT` | `/admin/data-quality/pending`<br>`/admin/data-quality/{id}/approve` | `REVIEW_CREATOR_CLASSIFICATION` | `src/services/api/adminService.ts`<br>`src/pages/admin/quality/DataQualityPage.tsx` *(Mới)* | 🔴 **Chưa có trang UI**, service đã có sẵn hàm |
@@ -139,7 +139,7 @@
 > **Luồng nghiệp vụ UI:** Brand chọn Campaign → chạy đề xuất AI → xem danh sách Creator được xếp hạng → kiểm tra Match Score, thông tin và lý do đề xuất → chọn Creator phù hợp.
 
 #### A. Map API Backend
-- [ ] **Tạo Service mới hoặc bổ sung vào `campaignService.ts`:**
+- [x] **Tạo Service mới hoặc bổ sung vào `campaignService.ts`:**
   - `POST /campaigns/{campaignId}/ai-recommendations?limit=10`
   - Quyền yêu cầu: `hasAuthority('RUN_RECOMMENDATION')`
   - Response DTO `ApiResponseRecommendationResponseDto`:
@@ -182,16 +182,16 @@
     ```
 
 #### B. Chỉnh sửa UI
-- [ ] Xây dựng Tab / Component **"AI Recommendation"** tại [CampaignManagementPage.tsx](file:///d:/INFLUENCERMATCH/src/pages/campaign/CampaignManagementPage.tsx):
-  - [ ] Nút hành động nổi bật: **"⚡ Chạy đề xuất AI Four-Memory"**.
-  - [ ] Loading trạng thái sinh động thể hiện tiến trình 4 bộ nhớ: *"Đang phân tích Brand Profile (M1), Đánh giá Performance (M2), Đối chiếu Lịch sử (M4)..."*
-  - [ ] Danh sách KOC xếp hạng tự động giảm dần theo `finalScore`.
-  - [ ] **Huy hiệu Match Score:** Hiển thị Badge % (ví dụ: `92% Match Score`).
-  - [ ] **Thẻ lý do đề xuất (Reasoning Card):**
+- [x] Xây dựng Tab / Component **"AI Recommendation"** tại [CampaignManagementPage.tsx](file:///d:/INFLUENCERMATCH/src/pages/campaign/CampaignManagementPage.tsx):
+  - [x] Nút hành động nổi bật: **"⚡ Chạy đề xuất AI Four-Memory"**.
+  - [x] Loading trạng thái sinh động thể hiện tiến trình 4 bộ nhớ: *"Đang phân tích Brand Profile (M1), Đánh giá Performance (M2), Đối chiếu Lịch sử (M4)..."*
+  - [x] Danh sách KOC xếp hạng tự động giảm dần theo `finalScore`.
+  - [x] **Huy hiệu Match Score:** Hiển thị Badge % (ví dụ: `92% Match Score`).
+  - [x] **Thẻ lý do đề xuất (Reasoning Card):**
     - Đoạn tóm tắt `reasoning.summary`.
     - Các bullet điểm mạnh từ `reasoning.reasons`.
-  - [ ] **Popover / Tooltip Score Breakdown:** Khi hover vào điểm số, hiển thị chi tiết điểm: Điểm hồ sơ, Điểm tương tác, Điểm ngữ cảnh.
-  - [ ] Nút **"Chọn Creator này" / "Thêm vào Shortlist"**: Gọi `POST /campaigns/{campaignId}/shortlist`.
+  - [x] **Popover / Tooltip Score Breakdown:** Khi hover vào điểm số, hiển thị chi tiết điểm: Điểm hồ sơ, Điểm tương tác, Điểm ngữ cảnh.
+  - [x] Nút **"Chọn Creator này" / "Thêm vào Shortlist"**: Gọi `POST /campaigns/{campaignId}/shortlist`.
 
 ---
 
@@ -199,7 +199,7 @@
 > **Luồng nghiệp vụ UI:** Brand mở lịch sử AI → xem các lần chạy đề xuất trước đó → kiểm tra kết quả từng lần chạy.
 
 #### A. Map API Backend
-- [ ] **Endpoint lấy lịch sử đề xuất:**
+- [x] **Endpoint lấy lịch sử đề xuất:**
   - `GET /campaigns/{campaignId}/ai-recommendations/runs`
   - Quyền yêu cầu: `hasAuthority('VIEW_OWN_RECOMMENDATION')`
   - Response DTO `ApiResponseListRecommendationRun`:
@@ -215,15 +215,15 @@
     ```
 
 #### B. Chỉnh sửa UI
-- [ ] Thêm Tab hoặc Drawer **"Lịch sử đề xuất AI"** tại [CampaignManagementPage.tsx](file:///d:/INFLUENCERMATCH/src/pages/campaign/CampaignManagementPage.tsx) hoặc [CampaignHistoryPage.tsx](file:///d:/INFLUENCERMATCH/src/pages/history/CampaignHistoryPage.tsx):
-  - [ ] Bảng hiển thị danh sách các phiên chạy:
+- [x] Thêm Tab hoặc Drawer **"Lịch sử đề xuất AI"** tại [CampaignManagementPage.tsx](file:///d:/INFLUENCERMATCH/src/pages/campaign/CampaignManagementPage.tsx) hoặc [CampaignHistoryPage.tsx](file:///d:/INFLUENCERMATCH/src/pages/history/CampaignHistoryPage.tsx):
+  - [x] Bảng hiển thị danh sách các phiên chạy:
     - Cột 1: Mã phiên & Phiên bản ngữ cảnh (`v{contextVersion}`).
     - Cột 2: Thời gian thực hiện (định dạng `dd/MM/yyyy HH:mm`).
     - Cột 3: Tóm tắt yêu cầu brief (`queryBrief`).
     - Cột 4: Số lượng Creator tìm thấy (`candidatesCount`).
     - Cột 5: Trạng thái (Tag xanh `THÀNH CÔNG` hoặc vàng `ĐANG XỬ LÝ`).
     - Cột 6: Hành động: Nút **"Xem kết quả"** để xem lại danh sách KOC được đề xuất tại thời điểm đó.
-  - [ ] Xử lý giao diện trống (Empty State) khi chưa có lần chạy nào.
+  - [x] Xử lý giao diện trống (Empty State) khi chưa có lần chạy nào.
 
 ---
 
@@ -231,7 +231,7 @@
 > **Luồng nghiệp vụ UI:** Brand xem kết quả đề xuất → gửi phản hồi về mức độ phù hợp hoặc chất lượng đề xuất theo các lựa chọn UI/API hỗ trợ.
 
 #### A. Map API Backend
-- [ ] **Endpoint gửi Feedback:**
+- [x] **Endpoint gửi Feedback:**
   - `POST /campaigns/{campaignId}/ai-recommendations/feedback`
   - Quyền yêu cầu: `hasAuthority('RUN_RECOMMENDATION')`
   - Request DTO `RecommendationFeedbackRequest`:
@@ -258,11 +258,11 @@
     ```
 
 #### B. Chỉnh sửa UI
-- [ ] Thiết kế 2 nút hành động trên mỗi thẻ KOC được đề xuất:
-  - [ ] **Nút "Phù hợp / Thêm vào chiến dịch" (`action: 'ACCEPT'`):**
+- [x] Thiết kế 2 nút hành động trên mỗi thẻ KOC được đề xuất:
+  - [x] **Nút "Phù hợp / Thêm vào chiến dịch" (`action: 'ACCEPT'`):**
     - Gọi API feedback với `action: 'ACCEPT'`.
     - Đồng thời thêm vào Shortlist của chiến dịch.
-  - [ ] **Nút "Không phù hợp" (`action: 'REJECT'`):**
+  - [x] **Nút "Không phù hợp" (`action: 'REJECT'`):**
     - Mở Modal/Popover **"Đóng góp ý kiến cho AI"**.
     - Danh sách Radio chọn mã lý do (`reasonCode`):
       - `PRICE_TOO_HIGH`: Chi phí báo giá quá cao
@@ -271,7 +271,7 @@
       - `BRAND_CONFLICT`: Đã hợp tác với đối thủ cạnh tranh
       - `OTHER`: Lý do khác
     - Ô nhập ghi chú chi tiết (`reasonNote`).
-  - [ ] Xử lý phản hồi từ Server:
+  - [x] Xử lý phản hồi từ Server:
     - Ẩn Creator bị Reject khỏi danh sách.
     - Hiển thị Toast thông báo: *"Đã ghi nhận phản hồi. AI đã nâng cấp bộ nhớ ngữ cảnh lên v{newContextVersion} và sẽ không đề xuất lại Creator này."*
 

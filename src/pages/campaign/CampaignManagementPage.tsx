@@ -8,7 +8,7 @@ import {
   Form,
   Spin,
 } from 'antd';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   SearchOutlined,
   FilterOutlined,
@@ -22,6 +22,7 @@ import {
 } from '@ant-design/icons';
 import { campaignService } from '../../services/api/campaignService';
 import type { CampaignResponse, RelationshipDto, RelationshipStage } from '../../types/api/campaign.types';
+import AiRecommendationTab from '../../components/campaign/AiRecommendationTab';
 import './CampaignManagementPage.css';
 
 export interface PipelineCreator {
@@ -59,6 +60,7 @@ const stageUiToBackend: Record<PipelineCreator['stage'], RelationshipStage> = {
 export default function CampaignManagementPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
 
   const [campaign, setCampaign] = useState<CampaignResponse | null>(null);
   const [availableCampaigns, setAvailableCampaigns] = useState<CampaignResponse[]>([]);
@@ -68,6 +70,10 @@ export default function CampaignManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+
+  // Tab: 'kanban' (Outreach CRM) vs 'recommendation' (Four-Memory)
+  const initialTab = searchParams.get('tab') === 'recommendation' ? 'recommendation' : 'kanban';
+  const [activeViewTab, setActiveViewTab] = useState<'kanban' | 'recommendation'>(initialTab);
 
   useEffect(() => {
     let isMounted = true;
@@ -354,26 +360,79 @@ export default function CampaignManagementPage() {
         </div>
       </div>
 
-      {/* 4. Filter & Channel Tabs Bar */}
-      <div className="pipeline-filters-bar">
-        <div className="pipeline-channels-group">
-          {/* Campaign dropdown switcher */}
-          {availableCampaigns.length > 0 ? (
-            <Select
-              className="campaign-select-pill-select"
-              value={campaign?.id || (availableCampaigns[0] && availableCampaigns[0].id)}
-              onChange={(newCampId) => navigate(`/campaign-management/${newCampId}`)}
-              style={{ minWidth: 240, height: 32 }}
-              options={availableCampaigns.map((c) => ({
-                value: c.id,
-                label: c.name,
-              }))}
-            />
-          ) : (
-            <div className="campaign-select-pill">
-              <span>{campaign?.name || 'Chiến dịch hiện tại'}</span>
-            </div>
-          )}
+      {/* 3.1. Main Tab Switcher: Kanban Pipeline vs AI Recommendation */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, marginTop: 12, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 8, background: '#F1F5F9', padding: 4, borderRadius: 12 }}>
+          <Button
+            type={activeViewTab === 'kanban' ? 'primary' : 'text'}
+            icon={<FilterOutlined />}
+            onClick={() => setActiveViewTab('kanban')}
+            style={{
+              borderRadius: 8,
+              fontWeight: 700,
+              background: activeViewTab === 'kanban' ? '#4F46E5' : 'transparent',
+              color: activeViewTab === 'kanban' ? '#fff' : '#64748B',
+            }}
+          >
+            📊 Pipeline Kanban ({pipelineCreators.length})
+          </Button>
+
+          <Button
+            type={activeViewTab === 'recommendation' ? 'primary' : 'text'}
+            icon={<ThunderboltFilled style={{ color: activeViewTab === 'recommendation' ? '#fff' : '#8B5CF6' }} />}
+            onClick={() => setActiveViewTab('recommendation')}
+            style={{
+              borderRadius: 8,
+              fontWeight: 700,
+              background: activeViewTab === 'recommendation' ? 'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)' : 'transparent',
+              color: activeViewTab === 'recommendation' ? '#fff' : '#6D28D9',
+              boxShadow: activeViewTab === 'recommendation' ? '0 4px 12px rgba(168, 85, 247, 0.35)' : 'none',
+            }}
+          >
+            ⚡ AI Recommendation (Four-Memory)
+          </Button>
+        </div>
+
+        {campaign?.id && (
+          <Button
+            icon={<RightOutlined />}
+            onClick={() => navigate(`/creators/shortlist?campaignId=${campaign.id}`)}
+            style={{ borderRadius: 8, fontWeight: 600, color: '#4F46E5', borderColor: '#C7D2FE', background: '#EEF2FF' }}
+          >
+            Bảng Shortlist của chiến dịch ➔
+          </Button>
+        )}
+      </div>
+
+      {activeViewTab === 'recommendation' ? (
+        <AiRecommendationTab
+          campaign={campaign}
+          onAddedToShortlist={() => {
+            message.info('Đã cập nhật KOC vào Shortlist chiến dịch.');
+          }}
+        />
+      ) : (
+        <>
+          {/* 4. Filter & Channel Tabs Bar */}
+          <div className="pipeline-filters-bar">
+            <div className="pipeline-channels-group">
+              {/* Campaign dropdown switcher */}
+              {availableCampaigns.length > 0 ? (
+                <Select
+                  className="campaign-select-pill-select"
+                  value={campaign?.id || (availableCampaigns[0] && availableCampaigns[0].id)}
+                  onChange={(newCampId) => navigate(`/campaign-management/${newCampId}`)}
+                  style={{ minWidth: 240, height: 32 }}
+                  options={availableCampaigns.map((c) => ({
+                    value: c.id,
+                    label: c.name,
+                  }))}
+                />
+              ) : (
+                <div className="campaign-select-pill">
+                  <span>{campaign?.name || 'Chiến dịch hiện tại'}</span>
+                </div>
+              )}
 
           {/* Channels Pills */}
           <div
@@ -522,6 +581,8 @@ export default function CampaignManagementPage() {
           {/* Pipeline Kanban Board takes full space */}
         </div>
       )}
+      </>
+      )}
 
       {/* Floating AI Assistant Round Avatar & Panel */}
       <div className="floating-ai-assistant-wrapper">
@@ -558,7 +619,10 @@ export default function CampaignManagementPage() {
               <div className="widget-ai-recommendations-list">
                 <div
                   className="ai-recommendation-item"
-                  onClick={() => message.info('Đang phân tích độ tương tác và lịch sử hợp tác...')}
+                  onClick={() => {
+                    setActiveViewTab('recommendation');
+                    setAiAssistantOpen(false);
+                  }}
                 >
                   <div className="ai-rec-title">
                     <span>Creator có khả năng phản hồi cao</span>
@@ -585,9 +649,12 @@ export default function CampaignManagementPage() {
 
               <Button
                 className="btn-view-ai-proposals"
-                onClick={() => message.success('Đang phân tích toàn diện chiến dịch qua AI...')}
+                onClick={() => {
+                  setActiveViewTab('recommendation');
+                  setAiAssistantOpen(false);
+                }}
               >
-                Xem đề xuất AI
+                ⚡ Xem đề xuất AI Four-Memory
               </Button>
 
               {/* Thông tin nhanh Widget */}

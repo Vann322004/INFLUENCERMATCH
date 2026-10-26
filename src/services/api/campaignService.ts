@@ -24,6 +24,7 @@ export type {
   CollaborationResponse,
 };
 import { brandService } from './brandService';
+import { aiRecommendationService } from './aiRecommendationService';
 
 let cachedBrandId: string | null = null;
 
@@ -442,5 +443,31 @@ export const campaignService = {
     } catch {
       return [];
     }
+  },
+
+  // ── AI Recommendations (Four-Memory) ─────────────
+
+  /**
+   * Kích hoạt thuật toán Đề xuất AI Four-Memory cho chiến dịch
+   * POST /campaigns/{campaignId}/ai-recommendations?limit=10
+   */
+  async runRecommendation(campaignId: string, limit = 10) {
+    return aiRecommendationService.runRecommendation(campaignId, limit);
+  },
+
+  /**
+   * Lấy lịch sử các lần chạy đề xuất AI
+   * GET /campaigns/{campaignId}/ai-recommendations/runs
+   */
+  async getRecommendationRuns(campaignId: string) {
+    return aiRecommendationService.getRecommendationRuns(campaignId);
+  },
+
+  /**
+   * Gửi phản hồi đánh giá KOC (Feedback Loop)
+   * POST /campaigns/{campaignId}/ai-recommendations/feedback
+   */
+  async submitFeedback(campaignId: string, payload: any) {
+    return aiRecommendationService.submitFeedback(campaignId, payload);
   },
 };
