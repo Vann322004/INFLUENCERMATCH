@@ -98,6 +98,7 @@ import { campaignService } from '../../services/api/campaignService';
 import type { CreatorItem, ShortlistItem } from '../../types/api/creator.types';
 import type { CampaignResponse } from '../../types/api/campaign.types';
 import CampaignWorkflowBar from '../../components/campaign/CampaignWorkflowBar';
+import { useShortlistRealtime } from '../../hooks/useShortlistRealtime';
 
 export const normalizeNiche = (niche?: string): string => {
   if (!niche || niche.toUpperCase() === 'UNKNOWN' || niche.trim() === '') {
@@ -412,6 +413,14 @@ export default function CreatorShortlistPage() {
     message.info(`Đang xem danh sách: ${targetLabel}`);
     await loadShortlist(val, campaigns, creatorsMap);
   };
+
+  // Lắng nghe realtime SSE endpoint cập nhật số liệu crawl tự động
+  useShortlistRealtime(
+    selectedCampaign && selectedCampaign !== 'all' ? selectedCampaign : undefined,
+    () => {
+      loadShortlist(selectedCampaign, campaigns, creatorsMap);
+    }
+  );
   const [viewMode, setViewMode] = useState<'board' | 'compare'>('board');
   const [boardLayout, setBoardLayout] = useState<'grid' | 'table'>('grid');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
