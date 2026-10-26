@@ -232,7 +232,14 @@ export default function FeaturedCampaign({ campaign }: FeaturedCampaignProps) {
       <Button
         type="primary"
         block
-        onClick={() => navigate(detailLink)}
+        onClick={() => {
+          if (campaign?.id) {
+            sessionStorage.setItem('current_campaign_id', campaign.id);
+            navigate('/campaigns/detail', { state: { id: campaign.id } });
+          } else {
+            navigate('/campaign-management');
+          }
+        }}
         style={{
           background: '#5B5BF0',
           fontWeight: 700,

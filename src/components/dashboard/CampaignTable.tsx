@@ -318,9 +318,14 @@ export default function CampaignTable() {
     });
   };
 
+  const handleOpenDetail = (record: Campaign) => {
+    sessionStorage.setItem('current_campaign_id', record.id);
+    navigate('/campaigns/detail', { state: { id: record.id } });
+  };
+
   const handleActionMenu = (key: string, record: Campaign) => {
     if (key === 'view') {
-      navigate(`/campaigns/${record.id}`);
+      handleOpenDetail(record);
     } else if (key === 'edit') {
       handleOpenEdit(record);
     } else if (key === 'delete') {
@@ -338,7 +343,7 @@ export default function CampaignTable() {
           size={12}
           align="center"
           style={{ cursor: 'pointer' }}
-          onClick={() => navigate(`/campaigns/${record.id}`)}
+          onClick={() => handleOpenDetail(record)}
         >
           <Avatar
             shape="square"

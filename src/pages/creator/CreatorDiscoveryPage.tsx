@@ -446,6 +446,22 @@ export default function CreatorDiscoveryPage() {
   const [isMatching, setIsMatching] = useState(false);
   const [shortlistModalCreator, setShortlistModalCreator] = useState<Creator | null>(null);
 
+  // Tự động làm sạch URL bar: ẩn campaignId khỏi thanh tìm kiếm trình duyệt
+  useEffect(() => {
+    if (searchParams.has('campaignId')) {
+      const cid = searchParams.get('campaignId');
+      if (cid) {
+        localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', cid);
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('campaignId');
+        navigate(
+          { pathname: location.pathname, search: newParams.toString() ? `?${newParams.toString()}` : '' },
+          { replace: true, state: { campaignId: cid } }
+        );
+      }
+    }
+  }, [searchParams, navigate, location.pathname]);
+
   // Fetch real campaigns from backend API
   useEffect(() => {
     let isMounted = true;

@@ -128,7 +128,31 @@ export default function App() {
             }
           />
 
-          {/* Campaign Detail Route */}
+          {/* Campaign Detail Route (Hỗ trợ URL sạch không lộ ID) */}
+          <Route
+            path="/campaigns/detail"
+            element={
+              <MainLayout>
+                <CampaignDetailPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/campaign-detail"
+            element={
+              <MainLayout>
+                <CampaignDetailPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/campaign-management/detail"
+            element={
+              <MainLayout>
+                <CampaignDetailPage />
+              </MainLayout>
+            }
+          />
           <Route
             path="/campaigns/:id"
             element={

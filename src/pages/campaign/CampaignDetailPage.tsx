@@ -34,7 +34,7 @@ import {
   ClockCircleOutlined,
   ApartmentOutlined,
 } from '@ant-design/icons';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
 import type { RelationshipDto } from '../../services/api/campaignService';
 import type { CampaignResponse } from '../../types/api/campaign.types';
@@ -61,8 +61,25 @@ interface CampaignCreatorRow {
 }
 
 export default function CampaignDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Nhận diện ID từ params, navigation state hoặc sessionStorage (để ẩn ID trên thanh địa chỉ URL)
+  const resolvedId =
+    paramId ||
+    (location.state as any)?.id ||
+    (location.state as any)?.campaignId ||
+    sessionStorage.getItem('current_campaign_id') ||
+    '22222222-2222-2222-2222-222222222241';
+
+  // Nếu trên thanh tìm kiếm / URL có chứa UUID, tự động làm sạch URL sang /campaigns/detail
+  useEffect(() => {
+    if (paramId) {
+      sessionStorage.setItem('current_campaign_id', paramId);
+      navigate('/campaigns/detail', { replace: true, state: { id: paramId } });
+    }
+  }, [paramId, navigate]);
 
   const [rawCampaign, setRawCampaign] = useState<CampaignResponse | null>(null);
   const [campaign, setCampaign] = useState<Campaign | null>(null);
@@ -79,12 +96,12 @@ export default function CampaignDetailPage() {
   useEffect(() => {
     let isMounted = true;
     const loadCampaign = async () => {
-      if (!id) return;
+      if (!resolvedId) return;
       try {
         setLoading(true);
         const [data, rels] = await Promise.all([
-          campaignService.getCampaignById(id),
-          campaignService.getRelationships(id).catch(() => []),
+          campaignService.getCampaignById(resolvedId),
+          campaignService.getRelationships(resolvedId).catch(() => []),
         ]);
         if (isMounted && data) {
           setRawCampaign(data);
@@ -125,10 +142,10 @@ export default function CampaignDetailPage() {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [resolvedId]);
 
   const campaignData: Campaign = campaign || {
-    id: id || 'camp-1',
+    id: resolvedId || 'camp-1',
     title: rawCampaign?.name || 'Chiến dịch',
     tags: rawCampaign?.niches || ['Chiến dịch tiếp thị'],
     thumbnail: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=100&auto=format&fit=crop&q=80',
@@ -155,8 +172,8 @@ export default function CampaignDetailPage() {
       onOk: async () => {
         try {
           message.loading({ content: 'Đang kích hoạt chiến dịch trên hệ thống...', key: 'act_camp' });
-          if (id) {
-            const updated = await campaignService.activateCampaign(id);
+          if (resolvedId) {
+            const updated = await campaignService.activateCampaign(resolvedId);
             if (updated) {
               setRawCampaign(updated);
               setCampaign(mapApiCampaignToUi(updated));
@@ -202,8 +219,8 @@ export default function CampaignDetailPage() {
       onOk: async () => {
         try {
           message.loading({ content: 'Đang đánh dấu hoàn thành chiến dịch...', key: 'comp_camp' });
-          if (id) {
-            const updated = await campaignService.updateStatus(id, 'COMPLETED');
+          if (resolvedId) {
+            const updated = await campaignService.updateStatus(resolvedId, 'COMPLETED');
             if (updated) {
               setRawCampaign(updated);
               setCampaign(mapApiCampaignToUi(updated));
@@ -225,8 +242,8 @@ export default function CampaignDetailPage() {
       message.warning('Vui lòng nhập lý do hủy chiến dịch!');
       return;
     }
-    if (id) {
-      await campaignService.archiveCampaign(id).catch(() => {});
+    if (resolvedId) {
+      await campaignService.archiveCampaign(resolvedId).catch(() => {});
     }
     setCurrentStatus('cancelled');
     setIsCancelModalOpen(false);
@@ -620,7 +637,10 @@ export default function CampaignDetailPage() {
                         type="primary"
                         icon={<PlusOutlined />}
                         style={{ background: '#5B5BF0', borderRadius: 8 }}
-                        onClick={() => navigate(`/creators?campaignId=${id}`)}
+                        onClick={() => {
+                          localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', resolvedId);
+                          navigate('/creators', { state: { campaignId: resolvedId } });
+                        }}
                       >
                         Tìm thêm Creator bằng AI
                       </Button>
@@ -645,7 +665,10 @@ export default function CampaignDetailPage() {
                       </div>
                       <Button
                         type="primary"
-                        onClick={() => navigate(`/creators?campaignId=${id}`)}
+                        onClick={() => {
+                          localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', resolvedId);
+                          navigate('/creators', { state: { campaignId: resolvedId } });
+                        }}
                         style={{ background: '#5B5BF0', borderRadius: 8 }}
                       >
                         Khám phá Creator ngay
