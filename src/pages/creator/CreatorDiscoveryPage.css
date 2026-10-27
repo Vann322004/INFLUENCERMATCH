@@ -72,6 +72,45 @@
   margin: 0;
 }
 
+/* ── Mode Navigation Tabs (Khám phá hệ thống / Quét kênh ngoài) ── */
+.cdiscovery-mode-tabs {
+  display: inline-flex;
+  align-items: center;
+  background: #F1F5F9;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  gap: 4px;
+}
+
+.cdiscovery-tab-btn {
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.cdiscovery-tab-btn:hover {
+  color: #1E293B;
+}
+
+.cdiscovery-tab-btn.active {
+  background: #FFFFFF;
+  color: #4F46E5;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
 /* ── 2. Top Stepper 5 bước (Top Stepper Bar) ── */
 .cdiscovery-top-stepper {
   background: #FFFFFF;
@@ -409,13 +448,13 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-/* 8 Filter Dropdown Pills */
+/* ── Filter Dropdown Pills (Tinh gọn & Luxe) ── */
 .cdiscovery-filter-pills-row {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: 1px solid #F1F5F9;
 }
 
@@ -423,26 +462,49 @@
   border-radius: 9999px !important;
   height: 34px !important;
   border-color: #E2E8F0 !important;
-  background: #FFFFFF !important;
-  padding: 0 12px !important;
+  background: #F8FAFC !important;
+  padding: 0 14px !important;
   display: flex !important;
   align-items: center !important;
   font-size: 12.5px !important;
   font-weight: 500 !important;
   color: #334155 !important;
-  transition: all 0.2s ease !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
 }
 
 .cdiscovery-pill-select:hover .ant-select-selector {
   border-color: #CBD5E1 !important;
-  background: #F8FAFC !important;
+  background: #FFFFFF !important;
+  color: #0F172A !important;
 }
 
 .cdiscovery-pill-select.has-value .ant-select-selector {
-  border-color: #C7D2FE !important;
+  border-color: #A5B4FC !important;
   background: #EEF2FF !important;
   color: #4F46E5 !important;
   font-weight: 600 !important;
+}
+
+.cdiscovery-filter-reset-btn {
+  color: #DC2626 !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  padding: 0 10px !important;
+  height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  border-radius: 9999px !important;
+  background: #FEF2F2 !important;
+  border: 1px solid #FEE2E2 !important;
+  transition: all 0.15s ease !important;
+}
+
+.cdiscovery-filter-reset-btn:hover {
+  background: #FEE2E2 !important;
+  color: #B91C1C !important;
+  border-color: #FECACA !important;
 }
 
 /* ── 6. Results Toolbar ── */
@@ -948,7 +1010,7 @@
   color: #64748B;
 }
 
-/* ── Responsive ── */
+/* ── Responsive Hoàn Chỉnh (Mobile, Tablet, Desktop) ── */
 @media (max-width: 1200px) {
   .cdiscovery-cards-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -958,20 +1020,60 @@
 @media (max-width: 992px) {
   .cdiscovery-layout-wrap {
     flex-direction: column;
+    gap: 20px;
   }
   .cdiscovery-sidebar-col {
     width: 100%;
     position: static;
   }
+  /* Hàng pills cuộn ngang cảm ứng êm ái trên tablet/mobile */
+  .cdiscovery-filter-pills-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .cdiscovery-filter-pills-row::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @media (max-width: 640px) {
+  .cdiscovery-container {
+    padding: 6px 12px 40px 12px;
+    gap: 12px;
+  }
+  .cdiscovery-header-title {
+    font-size: 20px;
+  }
+  .cdiscovery-header-sub {
+    font-size: 12.5px;
+  }
+  .cdiscovery-mode-tabs {
+    width: 100%;
+    display: flex;
+  }
+  .cdiscovery-tab-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
   .cdiscovery-cards-grid {
     grid-template-columns: 1fr;
   }
   .cdiscovery-top-stepper {
     overflow-x: auto;
     padding: 10px 14px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cdiscovery-top-stepper::-webkit-scrollbar {
+    display: none;
+  }
+  .cdiscovery-step-item {
+    flex-shrink: 0;
   }
   .cdiscovery-active-campaign-card {
     flex-direction: column;
@@ -980,5 +1082,38 @@
   .cdiscovery-btn-view-camp {
     width: 100%;
     justify-content: center;
+  }
+  .cdiscovery-filter-row-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cdiscovery-search-input-group {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+  .cdiscovery-sort-group {
+    justify-content: space-between;
+    width: 100%;
+  }
+  .cdiscovery-sort-select {
+    flex: 1;
+  }
+  .cdiscovery-results-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .cdiscovery-results-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .cdiscovery-btn-bulk-shortlist {
+    flex: 1;
+    justify-content: center;
+  }
+  .cdiscovery-pagination-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
   }
 }

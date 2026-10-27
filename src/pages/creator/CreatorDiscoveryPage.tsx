@@ -137,6 +137,10 @@ export const mapApiCreatorToUi = (item: CreatorItem): Creator => {
     .filter(Boolean);
   const categoriesList = parsedCategories.length > 0 ? parsedCategories : [cleanNiche];
 
+  const cleanBio = (item.contentSummary && item.contentSummary.trim().toLowerCase() !== 'creator' && item.contentSummary.trim().length > 5)
+    ? item.contentSummary.trim()
+    : `Nhà sáng tạo nội dung chuyên về ${categoriesList.join(', ')}, chia sẻ trải nghiệm thực tế và truyền cảm hứng ✨`;
+
   return {
     id: item.creatorId || item.id,
     name: cleanName,
@@ -148,7 +152,7 @@ export const mapApiCreatorToUi = (item: CreatorItem): Creator => {
     matchReason: '',
     platforms: [platformLower],
     categories: categoriesList.slice(0, 3),
-    bio: item.contentSummary || `Creator trên ${item.platform} chuyên về ${categoriesList.join(', ')}.`,
+    bio: cleanBio,
     followers: followersText,
     followersCount: followersNum,
     engagementRate: `${engVal}%`,
@@ -159,6 +163,18 @@ export const mapApiCreatorToUi = (item: CreatorItem): Creator => {
     language: 'vi',
     saved: false,
   };
+};
+
+// Helper tạo Bio tiếng Việt tự nhiên, có chiều sâu cho KOC khi dữ liệu gốc bị thiếu hoặc là chữ "Creator"
+export const getDisplayBio = (creator: { bio?: string; categories?: string[]; name?: string; platform?: string }): string => {
+  const rawBio = (creator.bio || '').trim();
+  if (!rawBio || rawBio.toLowerCase() === 'creator' || rawBio.length < 6) {
+    const cats = creator.categories && creator.categories.length > 0
+      ? creator.categories.join(', ')
+      : 'Làm đẹp & Đời sống';
+    return `KOC chuyên sáng tạo nội dung ${cats}, chia sẻ trải nghiệm thực tế và đánh giá chất lượng ✨`;
+  }
+  return rawBio;
 };
 
 // Bộ từ điển phân nhóm ngành hàng chuẩn xác (Domain Semantic Clusters)
@@ -1127,6 +1143,8 @@ export default function CreatorDiscoveryPage() {
     setFollowerTier('all');
     setEngagementTier('all');
     setPriceTier('all');
+    setAudienceAge('all');
+    setAudienceGender('all');
     setSelectedLocation('all');
     setSortBy('match');
     setCurrentPage(1);
@@ -1283,9 +1301,10 @@ export default function CreatorDiscoveryPage() {
     if (followerTier !== 'all') count++;
     if (engagementTier !== 'all') count++;
     if (priceTier !== 'all') count++;
-    if (selectedLocation !== 'all') count++;
+    if (audienceAge !== 'all') count++;
+    if (audienceGender !== 'all') count++;
     return count;
-  }, [selectedPlatform, selectedCategory, followerTier, engagementTier, priceTier, selectedLocation]);
+  }, [selectedPlatform, selectedCategory, followerTier, engagementTier, priceTier, audienceAge, audienceGender]);
 
   // Dynamic Real Metrics tailored for Brand: Shortlisted Creators & Campaign Matching
   const shortlistedCount = useMemo(() => {
@@ -1655,7 +1674,7 @@ export default function CreatorDiscoveryPage() {
                       </div>
                     </div>
 
-                    {/* Dòng 2: 8 Pill Filter Dropdown Capsules */}
+                    {/* Dòng 2: Thanh bộ lọc tinh gọn, sang trọng (Pills Filter Capsules) */}
                     <div className="cdiscovery-filter-pills-row">
                       {/* 1. Nền tảng */}
                       <Select
@@ -1666,14 +1685,14 @@ export default function CreatorDiscoveryPage() {
                         }}
                         className={`cdiscovery-pill-select ${selectedPlatform !== 'all' ? 'has-value' : ''}`}
                         popupMatchSelectWidth={false}
-                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: '#94A3B8' }} />}
+                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: selectedPlatform !== 'all' ? '#4F46E5' : '#94A3B8' }} />}
                         options={[
-                          { value: 'all', label: '🌐 Nền tảng: Tất cả' },
-                          { value: 'tiktok', label: '🎵 TikTok' },
-                          { value: 'instagram', label: '📸 Instagram' },
-                          { value: 'youtube', label: '▶️ YouTube' },
-                          { value: 'facebook', label: '📘 Facebook' },
-                          { value: 'x', label: '✖️ X (Twitter)' },
+                          { value: 'all', label: 'Nền tảng: Tất cả' },
+                          { value: 'tiktok', label: 'TikTok' },
+                          { value: 'instagram', label: 'Instagram' },
+                          { value: 'youtube', label: 'YouTube' },
+                          { value: 'facebook', label: 'Facebook' },
+                          { value: 'x', label: 'X (Twitter)' },
                         ]}
                       />
 
@@ -1686,67 +1705,14 @@ export default function CreatorDiscoveryPage() {
                         }}
                         className={`cdiscovery-pill-select ${selectedCategory !== 'all' ? 'has-value' : ''}`}
                         popupMatchSelectWidth={false}
-                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: '#94A3B8' }} />}
+                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: selectedCategory !== 'all' ? '#4F46E5' : '#94A3B8' }} />}
                         options={[
-                          { value: 'all', label: '🏷️ Ngành hàng: Tất cả' },
-                          ...categoriesList.map((c) => ({ value: c, label: `🏷️ ${c}` })),
+                          { value: 'all', label: 'Ngành hàng: Tất cả' },
+                          ...categoriesList.map((c) => ({ value: c, label: c })),
                         ]}
                       />
 
-                      {/* 3. Độ tuổi khán giả */}
-                      <Select
-                        value={audienceAge}
-                        onChange={(val) => {
-                          setAudienceAge(val);
-                          setCurrentPage(1);
-                        }}
-                        className={`cdiscovery-pill-select ${audienceAge !== 'all' ? 'has-value' : ''}`}
-                        popupMatchSelectWidth={false}
-                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: '#94A3B8' }} />}
-                        options={[
-                          { value: 'all', label: '👤 Độ tuổi khán giả' },
-                          { value: '18-24', label: '18 – 24 tuổi' },
-                          { value: '25-34', label: '25 – 34 tuổi' },
-                          { value: '35+', label: '35+ tuổi' },
-                        ]}
-                      />
-
-                      {/* 4. Giới tính khán giả */}
-                      <Select
-                        value={audienceGender}
-                        onChange={(val) => {
-                          setAudienceGender(val);
-                          setCurrentPage(1);
-                        }}
-                        className={`cdiscovery-pill-select ${audienceGender !== 'all' ? 'has-value' : ''}`}
-                        popupMatchSelectWidth={false}
-                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: '#94A3B8' }} />}
-                        options={[
-                          { value: 'all', label: '🚻 Giới tính khán giả' },
-                          { value: 'female', label: 'Nữ giới (> 60%)' },
-                          { value: 'male', label: 'Nam giới (> 60%)' },
-                          { value: 'balanced', label: 'Cân bằng (50/50)' },
-                        ]}
-                      />
-
-                      {/* 5. Khu vực */}
-                      <Select
-                        showSearch
-                        value={selectedLocation}
-                        onChange={(val) => {
-                          setSelectedLocation(val);
-                          setCurrentPage(1);
-                        }}
-                        className={`cdiscovery-pill-select ${selectedLocation !== 'all' ? 'has-value' : ''}`}
-                        popupMatchSelectWidth={false}
-                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: '#94A3B8' }} />}
-                        options={provinceOptions}
-                        filterOption={(input, option) =>
-                          (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
-                        }
-                      />
-
-                      {/* 6. Lượt theo dõi */}
+                      {/* 3. Lượt theo dõi / Quy mô */}
                       <Select
                         value={followerTier}
                         onChange={(val) => {
@@ -1755,17 +1721,17 @@ export default function CreatorDiscoveryPage() {
                         }}
                         className={`cdiscovery-pill-select ${followerTier !== 'all' ? 'has-value' : ''}`}
                         popupMatchSelectWidth={false}
-                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: '#94A3B8' }} />}
+                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: followerTier !== 'all' ? '#4F46E5' : '#94A3B8' }} />}
                         options={[
-                          { value: 'all', label: '👥 Lượt theo dõi' },
+                          { value: 'all', label: 'Quy mô: Tất cả' },
                           { value: 'nano', label: 'Nano (< 50K)' },
                           { value: 'micro', label: 'Micro (50K – 200K)' },
                           { value: 'macro', label: 'Macro (200K – 1M)' },
-                          { value: 'mega', label: 'Mega (1M+)' },
+                          { value: 'mega', label: 'Mega (Trên 1M)' },
                         ]}
                       />
 
-                      {/* 7. Tỷ lệ tương tác */}
+                      {/* 4. Tỷ lệ tương tác */}
                       <Select
                         value={engagementTier}
                         onChange={(val) => {
@@ -1774,15 +1740,51 @@ export default function CreatorDiscoveryPage() {
                         }}
                         className={`cdiscovery-pill-select ${engagementTier !== 'all' ? 'has-value' : ''}`}
                         popupMatchSelectWidth={false}
-                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: '#94A3B8' }} />}
+                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: engagementTier !== 'all' ? '#4F46E5' : '#94A3B8' }} />}
                         options={[
-                          { value: 'all', label: '📈 Tỷ lệ tương tác' },
-                          { value: 'high', label: 'Cao (≥ 5%)' },
+                          { value: 'all', label: 'Tương tác: Tất cả' },
+                          { value: 'high', label: 'Tương tác cao (≥ 5%)' },
                           { value: 'vhigh', label: 'Rất cao (≥ 8%)' },
                         ]}
                       />
 
-                      {/* 8. Bộ lọc khác */}
+                      {/* 5. Độ tuổi khán giả */}
+                      <Select
+                        value={audienceAge}
+                        onChange={(val) => {
+                          setAudienceAge(val);
+                          setCurrentPage(1);
+                        }}
+                        className={`cdiscovery-pill-select ${audienceAge !== 'all' ? 'has-value' : ''}`}
+                        popupMatchSelectWidth={false}
+                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: audienceAge !== 'all' ? '#4F46E5' : '#94A3B8' }} />}
+                        options={[
+                          { value: 'all', label: 'Độ tuổi: Tất cả' },
+                          { value: '18-24', label: '18 – 24 tuổi' },
+                          { value: '25-34', label: '25 – 34 tuổi' },
+                          { value: '35+', label: '35+ tuổi' },
+                        ]}
+                      />
+
+                      {/* 6. Giới tính khán giả */}
+                      <Select
+                        value={audienceGender}
+                        onChange={(val) => {
+                          setAudienceGender(val);
+                          setCurrentPage(1);
+                        }}
+                        className={`cdiscovery-pill-select ${audienceGender !== 'all' ? 'has-value' : ''}`}
+                        popupMatchSelectWidth={false}
+                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: audienceGender !== 'all' ? '#4F46E5' : '#94A3B8' }} />}
+                        options={[
+                          { value: 'all', label: 'Giới tính: Tất cả' },
+                          { value: 'female', label: 'Nữ giới (> 60%)' },
+                          { value: 'male', label: 'Nam giới (> 60%)' },
+                          { value: 'balanced', label: 'Cân bằng (50/50)' },
+                        ]}
+                      />
+
+                      {/* 7. Mức ngân sách / Báo giá */}
                       <Select
                         value={priceTier}
                         onChange={(val) => {
@@ -1791,12 +1793,12 @@ export default function CreatorDiscoveryPage() {
                         }}
                         className={`cdiscovery-pill-select ${priceTier !== 'all' ? 'has-value' : ''}`}
                         popupMatchSelectWidth={false}
-                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: '#94A3B8' }} />}
+                        suffixIcon={<DownOutlined style={{ fontSize: 10, color: priceTier !== 'all' ? '#4F46E5' : '#94A3B8' }} />}
                         options={[
-                          { value: 'all', label: '⚙️ Bộ lọc khác' },
-                          { value: 'low', label: 'Giá < $500' },
-                          { value: 'mid', label: 'Giá $500 – $1,000' },
-                          { value: 'high', label: 'Giá > $1,000' },
+                          { value: 'all', label: 'Báo giá: Tất cả' },
+                          { value: 'low', label: 'Dưới $500' },
+                          { value: 'mid', label: '$500 – $1,000' },
+                          { value: 'high', label: 'Trên $1,000' },
                         ]}
                       />
 
@@ -1806,9 +1808,9 @@ export default function CreatorDiscoveryPage() {
                           type="link"
                           size="small"
                           onClick={handleResetFilters}
-                          style={{ color: '#EF4444', fontWeight: 600, padding: '0 6px', fontSize: 12 }}
+                          className="cdiscovery-filter-reset-btn"
                         >
-                          Đặt lại ({activeFiltersCount})
+                          <CloseOutlined style={{ fontSize: 10 }} /> Đặt lại ({activeFiltersCount})
                         </Button>
                       )}
                     </div>
@@ -1992,21 +1994,21 @@ export default function CreatorDiscoveryPage() {
                         <div className="cdiscovery-card-metrics-box">
                           <div className="cdiscovery-metric-col">
                             <span className="cdiscovery-metric-number">{creator.followers}</span>
-                            <span className="cdiscovery-metric-caption">Followers</span>
+                            <span className="cdiscovery-metric-caption">Người theo dõi</span>
                           </div>
                           <div className="cdiscovery-metric-col">
                             <span className="cdiscovery-metric-number">{creator.engagementRate}</span>
-                            <span className="cdiscovery-metric-caption">Eng. Rate</span>
+                            <span className="cdiscovery-metric-caption">Tương tác</span>
                           </div>
                           <div className="cdiscovery-metric-col">
                             <span className="cdiscovery-metric-number">{creator.avgPrice}</span>
-                            <span className="cdiscovery-metric-caption">Giá TB / Bài</span>
+                            <span className="cdiscovery-metric-caption">Báo giá tham khảo</span>
                           </div>
                         </div>
 
-                        {/* Hàng 4: Bio ngắn */}
-                        <div className="cdiscovery-card-bio-text" title={creator.bio}>
-                          {creator.bio || 'Chia sẻ skincare & lifestyle cho Gen Z ✨'}
+                        {/* Hàng 4: Bio ngắn (Tự động tinh chỉnh tiếng Việt mượt mà) */}
+                        <div className="cdiscovery-card-bio-text" title={getDisplayBio(creator)}>
+                          {getDisplayBio(creator)}
                         </div>
 
                         {/* Hàng 5: 2 Nút hành động ở chân thẻ */}
@@ -2071,7 +2073,7 @@ export default function CreatorDiscoveryPage() {
                                     </span>
                                   </div>
                                   <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
-                                    @{creator.username} • 📍 {creator.location}
+                                    @{creator.username}
                                   </div>
                                 </div>
                               </div>
@@ -2084,19 +2086,19 @@ export default function CreatorDiscoveryPage() {
                                 <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
                                   {creator.followers}
                                 </div>
-                                <div style={{ fontSize: 11, color: '#94A3B8' }}>Followers</div>
+                                <div style={{ fontSize: 11, color: '#94A3B8' }}>Người theo dõi</div>
                               </div>
                               <div>
                                 <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
                                   {creator.engagementRate}
                                 </div>
-                                <div style={{ fontSize: 11, color: '#94A3B8' }}>Eng. Rate</div>
+                                <div style={{ fontSize: 11, color: '#94A3B8' }}>Tương tác</div>
                               </div>
                               <div>
                                 <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
                                   {creator.avgPrice}
                                 </div>
-                                <div style={{ fontSize: 11, color: '#94A3B8' }}>Giá TB/Bài</div>
+                                <div style={{ fontSize: 11, color: '#94A3B8' }}>Báo giá tham khảo</div>
                               </div>
                             </div>
                           </Col>
@@ -2114,7 +2116,7 @@ export default function CreatorDiscoveryPage() {
                                 className="cdiscovery-btn-shortlist-card"
                                 onClick={(e) => handleOpenShortlist(creator, e)}
                               >
-                                {creator.saved ? 'Đã lưu' : '+ Thêm vào shortlist'}
+                                {creator.saved ? '✓ Đã lưu' : '+ Thêm vào shortlist'}
                               </Button>
                             </Space>
                           </Col>
@@ -2140,7 +2142,7 @@ export default function CreatorDiscoveryPage() {
                 />
 
                 <div className="cdiscovery-page-size-wrap">
-                  <span>Số rows:</span>
+                  <span>Hiển thị:</span>
                   <Select
                     value={pageSize}
                     onChange={(val) => {
@@ -2148,12 +2150,12 @@ export default function CreatorDiscoveryPage() {
                       setCurrentPage(1);
                     }}
                     options={[
-                      { value: 6, label: '6' },
-                      { value: 9, label: '9' },
-                      { value: 12, label: '12' },
-                      { value: 18, label: '18' },
+                      { value: 6, label: '6 / trang' },
+                      { value: 9, label: '9 / trang' },
+                      { value: 12, label: '12 / trang' },
+                      { value: 18, label: '18 / trang' },
                     ]}
-                    style={{ width: 68 }}
+                    style={{ width: 112 }}
                   />
                 </div>
               </div>
@@ -2228,14 +2230,6 @@ export default function CreatorDiscoveryPage() {
                           <span className="cdiscovery-summary-attr-value">TikTok (ưu tiên)</span>
                         </div>
                       </div>
-
-                      <div className="cdiscovery-summary-attr-item">
-                        <span className="cdiscovery-summary-icon">📍</span>
-                        <div className="cdiscovery-summary-attr-content">
-                          <span className="cdiscovery-summary-attr-label">Khu vực</span>
-                          <span className="cdiscovery-summary-attr-value">Hà Nội, TP. Hồ Chí Minh</span>
-                        </div>
-                      </div>
                     </div>
 
                     <div className="cdiscovery-summary-divider" />
@@ -2293,14 +2287,6 @@ export default function CreatorDiscoveryPage() {
                           <span>Giới tính</span>
                         </div>
                         <span className="cdiscovery-crit-val-col">Tất cả</span>
-                      </div>
-
-                      <div className="cdiscovery-crit-item">
-                        <div className="cdiscovery-crit-label-col">
-                          <span>🌐</span>
-                          <span>Khu vực</span>
-                        </div>
-                        <span className="cdiscovery-crit-val-col">Toàn quốc</span>
                       </div>
                     </div>
 
