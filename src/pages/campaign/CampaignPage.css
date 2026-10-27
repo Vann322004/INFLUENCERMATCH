@@ -1,30 +1,63 @@
-/* Styles for Campaign Page matching luxury SaaS Dashboard design tokens */
+/* Styles for Campaign Page matching luxury SaaS Dashboard design tokens & responsive */
 
 .campaign-page-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-bottom: 30px;
+  gap: 14px;
+  padding-bottom: 24px;
+  width: 100%;
 }
 
-/* Stat Cards (3 top cards) */
+/* 2-Column Responsive Flex Layout */
+.campaign-main-layout {
+  display: flex;
+  gap: 18px;
+  align-items: stretch;
+  width: 100%;
+}
+
+.campaign-content-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.campaign-sidebar-col {
+  width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* 3 Stat Cards Grid */
+.campaign-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
 .campaign-stat-card {
   background: #ffffff;
   border: 1px solid #E2E8F0;
-  border-radius: 16px;
-  padding: 16px 18px;
+  border-radius: 14px;
+  padding: 13px 15px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-  height: 100%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
 .campaign-stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
   border-color: #CBD5E1;
 }
 
@@ -34,8 +67,8 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: nowrap;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 11px;
   width: 100%;
 }
 
@@ -49,7 +82,7 @@
 .campaign-tools-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
@@ -57,16 +90,16 @@
 .campaign-tab-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
+  gap: 4px;
+  padding: 4.5px 10px;
   border-radius: 999px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid #E2E8F0;
   background: #ffffff;
   color: #64748B;
-  transition: all 0.18s ease;
+  transition: all 0.16s ease;
   user-select: none;
   white-space: nowrap;
 }
@@ -82,18 +115,18 @@
   color: #ffffff;
   border-color: #4F46E5;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.22);
 }
 
 .campaign-tab-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 17px;
-  height: 17px;
+  min-width: 16px;
+  height: 16px;
   padding: 0 4px;
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
   background: #F1F5F9;
   color: #64748B;
@@ -108,15 +141,15 @@
 .campaign-row-card {
   background: #ffffff;
   border: 1px solid #E2E8F0;
-  border-radius: 14px;
-  padding: 13px 18px;
+  border-radius: 13px;
+  padding: 11px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 12px;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
-  margin-bottom: 10px;
+  margin-bottom: 9px;
   cursor: pointer;
   box-sizing: border-box;
 }
@@ -124,7 +157,7 @@
 .campaign-row-card:hover {
   transform: translateY(-2px);
   border-color: #CBD5E1;
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
 }
 
 .campaign-row-card:last-child {
@@ -136,11 +169,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 9px 12px;
-  border-radius: 11px;
-  transition: all 0.16s ease;
+  padding: 8px 10px;
+  border-radius: 10px;
+  transition: all 0.15s ease;
   cursor: pointer;
-  gap: 10px;
+  gap: 8px;
 }
 
 .task-item-row:hover {
@@ -241,17 +274,57 @@
 .im-campaign-side-card {
   background: #ffffff;
   border: 1px solid #E2E8F0;
-  border-radius: 16px;
-  padding: 18px 20px;
+  border-radius: 15px;
+  padding: 16px 18px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   box-sizing: border-box;
-  transition: all 0.22s ease;
+  transition: all 0.2s ease;
 }
 
 .im-campaign-side-card:hover {
   border-color: #CBD5E1;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.03);
+}
+
+/* Responsive Media Queries */
+@media (max-width: 1080px) {
+  .campaign-main-layout {
+    flex-direction: column;
+  }
+  .campaign-sidebar-col {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .campaign-sidebar-col {
+    grid-template-columns: 1fr;
+  }
+  .campaign-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .campaign-filter-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .campaign-tabs-group {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+  .campaign-tools-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .campaign-row-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
 }
