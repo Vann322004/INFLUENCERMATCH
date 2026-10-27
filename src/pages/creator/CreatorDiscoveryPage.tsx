@@ -1242,31 +1242,9 @@ message.success({
 {/* 1. Header Hero & Mode Tabs */}
       <div className="cdiscovery-header">
         <div className="cdiscovery-title-group">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <Title level={2} className="cdiscovery-title">
-              Khám phá Creator
-            </Title>
-            {matchedCampaign && (
-              <Tag
-                color="purple"
-                style={{
-                  borderRadius: 999,
-                  fontWeight: 700,
-                  fontSize: 12,
-                  padding: '3px 12px',
-                  background: '#EDE9FE',
-                  borderColor: '#DDD6FE',
-                  color: '#6D28D9',
-                  margin: 0,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-              >
-                🎯 {matchedCampaign.name}
-              </Tag>
-            )}
-          </div>
+          <Title level={2} className="cdiscovery-title">
+            Khám phá Creator
+          </Title>
           <Text className="cdiscovery-subtitle">
             Tìm kiếm KOC/Creator phù hợp theo tên, ngành hàng, tương tác và phong cách nội dung.
           </Text>
@@ -1317,6 +1295,174 @@ message.success({
               }
             }}
           />
+
+          {/* 2. Dự án ghép nối Creator (Project Matching Executive Card) */}
+          <Card
+            className={`cdiscovery-match-card ${matchedCampaign ? 'is-matched' : ''}`}
+            styles={{ body: { padding: '16px 20px' } }}
+          >
+            <div className="cdiscovery-match-inner">
+              {/* Left: Campaign Details */}
+              <div className="cdiscovery-match-left">
+                <div className="cdiscovery-match-iconbox">
+                  <AimOutlined />
+                </div>
+                <div className="cdiscovery-match-info">
+                  <div className="cdiscovery-match-title-row">
+                    <span className="cdiscovery-match-title">Dự án ghép nối Creator</span>
+                    {matchedCampaign ? (
+                      <Tag
+                        style={{
+                          fontSize: 11.5,
+                          fontWeight: 700,
+                          padding: '2px 10px',
+                          borderRadius: 999,
+                          background: '#EEF2FF',
+                          borderColor: '#C7D2FE',
+                          color: '#4F46E5',
+                          margin: 0,
+                        }}
+                      >
+                        Đang áp dụng
+                      </Tag>
+                    ) : (
+                      <span style={{ fontSize: 12, color: '#94A3B8' }}>(Tùy chọn)</span>
+                    )}
+                  </div>
+
+                  <div className="cdiscovery-match-desc">
+                    {matchedCampaign ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 3 }}>
+                        <span style={{ color: '#64748B', fontSize: 13 }}>Mục tiêu:</span>
+                        <strong style={{ color: '#0F172A', fontWeight: 700, fontSize: 13.5 }}>
+                          {matchedCampaign.name}
+                        </strong>
+                        {(matchedCampaign.tag || matchedCampaign.category) && (
+                          <Tag
+                            style={{
+                              background: '#EEF2FF',
+                              color: '#4F46E5',
+                              borderColor: '#C7D2FE',
+                              borderRadius: 999,
+                              fontWeight: 600,
+                              fontSize: 11.5,
+                              padding: '1px 9px',
+                              margin: 0,
+                            }}
+                          >
+                            Ngành: {matchedCampaign.tag || matchedCampaign.category}
+                          </Tag>
+                        )}
+                      </div>
+                    ) : (
+                      <span style={{ color: '#64748B', fontSize: 13 }}>
+                        Chọn chiến dịch để hệ thống tự động đối soát tệp khán giả, tính điểm tương thích và xếp hạng KOC tối ưu.
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Select & Actions */}
+              <div
+                className="cdiscovery-match-right"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleTriggerMatch();
+                  }
+                }}
+              >
+                <Select
+                  size="large"
+                  placeholder={loadingCampaigns ? 'Đang tải chiến dịch...' : 'Chọn chiến dịch để ghép nối'}
+                  value={selectedCampaignId || undefined}
+                  loading={loadingCampaigns}
+                  popupMatchSelectWidth={false}
+                  onChange={(val) => {
+                    setSelectedCampaignId(val);
+                    const camp = campaignsList.find((c) => c.id === val) || BRAND_CAMPAIGNS.find((c) => c.id === val);
+                    if (camp) {
+                      setMatchedCampaign(camp);
+                      setSortBy('match');
+                      setCurrentPage(1);
+                      handleTriggerMatch(camp);
+                    }
+                  }}
+                  className="cdiscovery-campaign-select"
+                  notFoundContent={
+                    <div style={{ padding: '8px 12px', textAlign: 'center' }}>
+                      <div style={{ color: '#64748B', fontSize: 13, marginBottom: 6 }}>
+                        Chưa có chiến dịch nào được tạo
+                      </div>
+                      <Button
+                        type="link"
+                        size="small"
+                        onClick={() => navigate('/campaigns/create')}
+                        style={{ padding: 0, fontWeight: 700, color: '#4F46E5' }}
+                      >
+                        + Tạo chiến dịch mới ngay
+                      </Button>
+                    </div>
+                  }
+                  options={campaignsList.map((camp) => ({
+                    value: camp.id,
+                    label: camp.name,
+                    category: camp.tag || camp.category,
+                  }))}
+                  optionRender={(option) => {
+                    const camp = campaignsList.find((c) => c.id === option.data.value);
+                    const cat = camp?.tag || camp?.category || (option.data as any).category;
+                    return (
+                      <div style={{ padding: '4px 2px', minWidth: 260 }}>
+                        <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 13.5 }}>
+                          {option.data.label}
+                        </div>
+                        {cat && (
+                          <div style={{ fontSize: 11.5, color: '#4F46E5', fontWeight: 600, marginTop: 2 }}>
+                            Ngành: {cat}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }}
+                />
+
+                <Button
+                  type="primary"
+                  size="large"
+                  loading={isMatching}
+                  icon={<RocketOutlined />}
+                  onClick={() => handleTriggerMatch()}
+                  className="cdiscovery-btn-match"
+                >
+                  Tìm creator phù hợp
+                </Button>
+
+                {selectedCampaignId && (
+                  <Button
+                    size="large"
+                    icon={<UnorderedListOutlined />}
+                    onClick={() => navigate(`/creators/shortlist?campaignId=${selectedCampaignId}`)}
+                    className="cdiscovery-btn-shortlist-link"
+                  >
+                    Xem Shortlist ➔
+                  </Button>
+                )}
+
+                {matchedCampaign && (
+                  <Button
+                    size="large"
+                    type="text"
+                    icon={<CloseOutlined />}
+                    onClick={handleClearMatch}
+                    className="cdiscovery-btn-clear-match"
+                  >
+                    Bỏ chọn
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
 
           {/* 2. Dải thống kê mỏng nhẹ, dịu mắt (Slim Stats Row) */}
           <div
@@ -1530,12 +1676,12 @@ message.success({
                   style={{
                     height: 40,
                     borderRadius: 10,
-                    background: '#2563EB',
+                    background: '#4F46E5',
                     fontWeight: 600,
                     fontSize: 13,
                     padding: '0 18px',
                     border: 'none',
-                    boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
+                    boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
                   }}
                 >
                   Tìm kiếm
@@ -1779,7 +1925,7 @@ message.success({
                 <Button
                   type="primary"
                   onClick={handleResetFilters}
-                  style={{ background: '#2563EB', borderRadius: 10, height: 40, fontWeight: 700 }}
+                  style={{ background: '#4F46E5', borderRadius: 10, height: 40, fontWeight: 700 }}
                 >
                   Đặt lại bộ lọc
                 </Button>
@@ -1817,7 +1963,7 @@ message.success({
                                   {creator.name}
                                 </span>
                                 {creator.isVerified && (
-                                  <CheckCircleFilled style={{ color: '#2563EB', fontSize: 14 }} />
+                                  <CheckCircleFilled style={{ color: '#4F46E5', fontSize: 14 }} />
                                 )}
                               </div>
                               <div className="cdiscovery-card-username">
@@ -2002,7 +2148,7 @@ message.success({
                                   {creator.name}
                                 </span>
                                 {creator.isVerified && (
-                                  <CheckCircleFilled style={{ color: '#2563EB', fontSize: 13 }} />
+                                  <CheckCircleFilled style={{ color: '#4F46E5', fontSize: 13 }} />
                                 )}
                                 {matchedCampaign ? (
                                   <span className={`cdiscovery-match-badge ${isHighMatch ? 'high' : 'medium'}`}>
@@ -2067,7 +2213,7 @@ message.success({
                               type="primary"
                               onClick={() => handleOpenCreator(creator)}
                               style={{
-                                background: '#2563EB',
+                                background: '#4F46E5',
                                 borderRadius: 10,
                                 height: 38,
                                 padding: '0 20px',
@@ -2241,7 +2387,7 @@ message.success({
                 Kênh hoạt động & Địa điểm
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <EnvironmentOutlined style={{ color: '#2563EB' }} />
+                <EnvironmentOutlined style={{ color: '#4F46E5' }} />
                 <span style={{ fontSize: 12.5, color: '#334155' }}>{selectedCreator.location}</span>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -2257,7 +2403,7 @@ message.success({
                 icon={<ThunderboltOutlined />}
                 onClick={() => handleOpenShortlist(selectedCreator)}
                 style={{
-                  background: '#2563EB',
+                  background: '#4F46E5',
                   fontWeight: 700,
                   height: 40,
                   borderRadius: 10,
