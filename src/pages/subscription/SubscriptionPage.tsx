@@ -390,18 +390,18 @@ export default function SubscriptionPage() {
       return;
     }
 
-    // Xử lý gói Trả phí qua VNPay
-    message.loading({ content: 'Đang kết nối cổng thanh toán VNPay...', key: 'upgrade_msg' });
+    // Xử lý gói Trả phí qua VNPAY
+    message.loading({ content: 'Đang kết nối cổng thanh toán VNPAY...', key: 'upgrade_msg' });
     try {
       const res = await subscriptionService.subscribeVNPay(selectedPlanForUpgrade.id);
       if (res?.paymentUrl) {
-        message.success({ content: 'Đang chuyển hướng tới cổng thanh toán VNPay...', key: 'upgrade_msg' });
+        message.success({ content: 'Đang chuyển hướng tới cổng thanh toán VNPAY...', key: 'upgrade_msg' });
         window.location.href = res.paymentUrl;
       } else {
         message.error({ content: 'Không tìm thấy liên kết thanh toán.', key: 'upgrade_msg' });
       }
     } catch (err) {
-      message.error({ content: getErrorMessage(err, 'Khởi tạo thanh toán VNPay thất bại.'), key: 'upgrade_msg' });
+      message.error({ content: getErrorMessage(err, 'Khởi tạo thanh toán VNPAY thất bại.'), key: 'upgrade_msg' });
     } finally {
       setPaying(false);
     }
@@ -1335,23 +1335,23 @@ export default function SubscriptionPage() {
                   <Radio.Group
                     value={paymentMethod}
                     onChange={(e) => setPaymentMethod(e.target.value)}
-                    style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}
+                    style={{ width: '100%' }}
                   >
                     <Radio
                       value="vnpay"
                       style={{
-                        border: paymentMethod === 'vnpay' ? '1.5px solid #5B5BF0' : '1px solid #E2E8F0',
+                        border: '1.5px solid #0284C7',
                         borderRadius: 10,
                         padding: '12px 16px',
                         width: '100%',
-                        background: paymentMethod === 'vnpay' ? '#FAF5FF' : '#FFFFFF',
+                        background: '#F0F9FF',
                       }}
                     >
                       <Space align="center">
-                        <QrcodeOutlined style={{ fontSize: 18, color: '#0284C7' }} />
+                        <QrcodeOutlined style={{ fontSize: 20, color: '#0284C7' }} />
                         <div>
                           <span style={{ fontWeight: 700, color: '#0F172A' }}>
-                            Cổng thanh toán VNPAY Sandbox
+                            Cổng thanh toán VNPAY
                           </span>
                           <div style={{ fontSize: 11.5, color: '#64748B' }}>
                             Hỗ trợ quét VNPAY-QR, VietQR, Thẻ ATM 40+ Ngân hàng và Thẻ Visa/Mastercard
@@ -1376,16 +1376,20 @@ export default function SubscriptionPage() {
                 loading={paying}
                 icon={<CheckOutlined />}
                 style={{
-                  background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+                  background:
+                    selectedPlanForUpgrade.priceMonthly <= 0
+                      ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                      : 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
                   fontWeight: 700,
                   borderRadius: 10,
                   padding: '0 24px',
+                  border: 'none',
                 }}
                 onClick={handleConfirmPayment}
               >
                 {selectedPlanForUpgrade.priceMonthly <= 0
                   ? 'Kích hoạt Gói dùng thử ngay'
-                  : 'Chuyển sang Cổng VNPAY Sandbox'}
+                  : 'Thanh toán qua Cổng VNPAY'}
               </Button>
             </div>
           </div>
