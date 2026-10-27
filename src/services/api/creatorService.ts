@@ -156,29 +156,13 @@ export const creatorService = {
     }
 
     try {
-      let list: any[] = [];
-      try {
-        const response = await apiClient.get<ApiResponse<any>>(
-          `/campaigns/${campaignId}/shortlist`,
-          { params: { page: 0, size: 100 } }
-        );
-        const raw = response.data;
-        const d = (raw as any)?.data ?? raw;
-        list = Array.isArray(d) ? d : (d?.content || d?.items || []);
-      } catch (e) {
-        console.warn(`[creatorService] /shortlist endpoint error for ${campaignId}, trying /items:`, e);
-      }
-
-      if (!list || list.length === 0) {
-        try {
-          const resp2 = await apiClient.get<ApiResponse<any>>(
-            `/campaigns/${campaignId}/shortlist/items`,
-            { params: { page: 0, size: 100 } }
-          );
-          const d2 = (resp2.data as any)?.data ?? resp2.data;
-          list = Array.isArray(d2) ? d2 : (d2?.content || d2?.items || []);
-        } catch {}
-      }
+      const response = await apiClient.get<ApiResponse<any>>(
+        `/campaigns/${campaignId}/shortlist`,
+        { params: { page: 0, size: 100 } }
+      );
+      const raw = response.data;
+      const d = (raw as any)?.data ?? raw;
+      const list = Array.isArray(d) ? d : (d?.content || d?.items || []);
 
       return (list || []).map((it: any) => ({
         id: it.id || it.shortlistItemId || it.creatorId,
@@ -195,8 +179,8 @@ export const creatorService = {
         addedAt: it.addedAt || new Date().toISOString(),
         status: it.status || 'SAVED',
       }));
-    } catch (err) {
-      console.warn(`[creatorService] getShortlist từ backend cho campaign ${campaignId} lỗi:`, err);
+    } catch {
+      // Backend shortlist trống hoặc trả mã lỗi, fallback về mảng rỗng nhẹ nhàng
       return [];
     }
   },

@@ -161,9 +161,15 @@ export default function DashboardPage() {
 
       // Compute Brand-specific shortlist items & count trực tiếp từ Database
       try {
-        const campIdsToQuery = new Set(validCList.map((c) => c.id).filter(Boolean));
+        const campIdsToQuery = new Set(
+          validCList
+            .map((c) => c.id)
+            .filter((id) => Boolean(id) && !id.startsWith('22222222') && !id.startsWith('camp_mock'))
+        );
         const storedCampId = sessionStorage.getItem('current_campaign_id') || localStorage.getItem('IM_SELECTED_CAMPAIGN_ID');
-        if (storedCampId) campIdsToQuery.add(storedCampId);
+        if (storedCampId && !storedCampId.startsWith('22222222') && !storedCampId.startsWith('camp_mock')) {
+          campIdsToQuery.add(storedCampId);
+        }
 
         let backendShortlist = [];
         if (campIdsToQuery.size > 0) {
@@ -644,7 +650,7 @@ export default function DashboardPage() {
                 Xem tất cả <RightOutlined style={{ fontSize: 9, marginLeft: 2 }} />
               </Button>
             }
-            bodyStyle={{ padding: '12px 16px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}
+            styles={{ body: { padding: '12px 16px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 } }}
           >
             {/* Filter Tabs with horizontal scroll on mobile */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
@@ -796,7 +802,7 @@ export default function DashboardPage() {
                 Xem tất cả <RightOutlined style={{ fontSize: 9, marginLeft: 2 }} />
               </Button>
             }
-            bodyStyle={{ padding: '12px 16px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}
+            styles={{ body: { padding: '12px 16px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 } }}
           >
             {/* Symmetrical Filter Tabs with horizontal scroll on mobile */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
@@ -915,7 +921,7 @@ export default function DashboardPage() {
                 })}
               </div>
             }
-            bodyStyle={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}
+            styles={{ body: { padding: '16px 20px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' } }}
           >
             <Row gutter={[14, 14]} align="middle">
               {/* Spline Area Chart */}
@@ -1063,7 +1069,7 @@ export default function DashboardPage() {
                 Xem tất cả <RightOutlined style={{ fontSize: 9, marginLeft: 2 }} />
               </Button>
             }
-            bodyStyle={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'flex-start' }}
+            styles={{ body: { padding: '12px 16px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'flex-start' } }}
           >
             {topCreatorsList.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
