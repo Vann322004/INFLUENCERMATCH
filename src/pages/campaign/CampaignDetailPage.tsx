@@ -459,13 +459,28 @@ export default function CampaignDetailPage() {
     }
   };
 
+  const handleNavigateToEdit = () => {
+    const targetId = resolvedId || rawCampaign?.id || campaign?.id;
+    if (targetId) {
+      navigate(`/campaigns/${targetId}/edit`, {
+        state: {
+          campaignId: targetId,
+          campaign: rawCampaign,
+          campaignData: rawCampaign,
+        },
+      });
+    } else {
+      navigate('/campaigns');
+    }
+  };
+
   // Menu More actions
   const moreMenuItems: MenuProps['items'] = [
     {
       key: 'edit',
       label: 'Chỉnh sửa thông tin chiến dịch',
       icon: <EditOutlined />,
-      onClick: () => navigate('/campaigns'),
+      onClick: handleNavigateToEdit,
     },
     {
       type: 'divider',
@@ -901,7 +916,7 @@ export default function CampaignDetailPage() {
                     <button
                       type="button"
                       className="cdetail-card-action-btn"
-                      onClick={() => navigate('/campaigns')}
+                      onClick={handleNavigateToEdit}
                     >
                       <EditOutlined style={{ fontSize: 12 }} />
                       Chỉnh sửa

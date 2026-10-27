@@ -217,6 +217,24 @@ export default function App() {
             }
           />
 
+          {/* Edit Campaign Routes */}
+          <Route
+            path="/campaigns/:id/edit"
+            element={
+              <MainLayout>
+                <CreateCampaignPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/campaigns/edit/:id"
+            element={
+              <MainLayout>
+                <CreateCampaignPage />
+              </MainLayout>
+            }
+          />
+
           {/* Discover Creators Route */}
           <Route
             path="/creators"

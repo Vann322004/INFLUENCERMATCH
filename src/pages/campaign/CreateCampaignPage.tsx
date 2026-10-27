@@ -20,7 +20,7 @@ import {
   Alert,
   Spin,
 } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
 import { getErrorMessage } from '../../services/apiClient';
 import type { CampaignObjective, CampaignPlatform } from '../../types/api/campaign.types';
@@ -56,6 +56,10 @@ import {
   CheckCircleFilled,
   SaveOutlined,
   ThunderboltFilled,
+  LockOutlined,
+  ArrowLeftOutlined,
+  InfoCircleOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 
 const { Title, Text, Paragraph } = Typography;
@@ -78,12 +82,28 @@ const AI_SAMPLE_PROMPTS = [
 
 export default function CreateCampaignPage() {
   const navigate = useNavigate();
+  const { id: paramId } = useParams<{ id?: string }>();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+
+  // Nhận diện Edit Mode dựa trên URL param hoặc state
+  const resolvedCampaignId =
+    paramId ||
+    searchParams.get('id') ||
+    (location.state as any)?.campaignId ||
+    (location.state as any)?.id ||
+    null;
+  const isEditMode = Boolean(resolvedCampaignId);
 
   // Wizard Step State (1: Thông tin chiến dịch, 2: Yêu cầu creator, 3: Chỉ số & ngân sách)
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isAiSummaryOpen, setIsAiSummaryOpen] = useState<boolean>(false);
   const [isSavingDraft, setIsSavingDraft] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Trạng thái chiến dịch (DRAFT, READY_FOR_DISCOVERY, ACTIVE, COMPLETED, ARCHIVED)
+  const [campaignStatus, setCampaignStatus] = useState<string>('DRAFT');
+  const [isLoadingCampaign, setIsLoadingCampaign] = useState<boolean>(false);
 
   // ================= Step 1 State =================
   const [campaignName, setCampaignName] = useState('Summer Glow Skincare Launch 2025');
@@ -102,7 +122,7 @@ export default function CreateCampaignPage() {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['tiktok', 'instagram']);
   const [selectedAges, setSelectedAges] = useState<string[]>(['18-24', '25-34']);
   const [selectedGender, setSelectedGender] = useState<string>('all');
-  const [location, setLocation] = useState<string>('nationwide');
+  const [locationState, setLocationState] = useState<string>('nationwide');
   const [interests, setInterests] = useState<string>('Làm đẹp, chăm sóc da, phong cách sống');
   const [creatorBrief, setCreatorBrief] = useState<string>(
     'Yêu cầu video trải nghiệm thực tế sản phẩm từ 30s - 60s, quay rõ texture serum, nêu bật khả năng cấp ẩm và làm sáng da sau 7 ngày.'
@@ -157,6 +177,122 @@ export default function CreateCampaignPage() {
       isMounted = false;
     };
   }, []);
+
+  // Load campaign detail when in Edit Mode
+  useEffect(() => {
+    if (!isEditMode || !resolvedCampaignId) return;
+
+    let isMounted = true;
+    const loadCampaignDetail = async () => {
+      setIsLoadingCampaign(true);
+      try {
+        const applyCampaignData = (camp: any) => {
+          if (!camp) return;
+          if (camp.status) setCampaignStatus(camp.status);
+          if (camp.name) setCampaignName(camp.name);
+          if (camp.productService) setProduct(camp.productService);
+          if (camp.description) setCreatorBrief(camp.description);
+
+          // Mục tiêu chiến dịch
+          if (camp.objective) {
+            const obj = String(camp.objective).toUpperCase();
+            if (obj === 'CONVERSION' || obj === 'SALES') setSelectedObjectives(['sales']);
+            else if (obj === 'ENGAGEMENT') setSelectedObjectives(['engagement']);
+            else if (obj === 'TRAFFIC') setSelectedObjectives(['traffic']);
+            else setSelectedObjectives(['awareness']);
+          }
+
+          // Nền tảng
+          if (camp.platforms && Array.isArray(camp.platforms) && camp.platforms.length > 0) {
+            const cleanP = camp.platforms
+              .map((p: string) => String(p).toLowerCase())
+              .filter((p: string) => ['tiktok', 'instagram', 'facebook'].includes(p));
+            if (cleanP.length > 0) setSelectedPlatforms(cleanP);
+          }
+
+          // Ngân sách
+          if (camp.budgetMax) setBudgetTotal(camp.budgetMax);
+          else if (camp.budgetMin) setBudgetTotal(camp.budgetMin);
+
+          // Ngành hàng / Niches
+          if (camp.niches && Array.isArray(camp.niches)) {
+            setInterests(camp.niches.join(', '));
+          }
+
+          // Địa điểm
+          if (camp.locations && Array.isArray(camp.locations) && camp.locations.length > 0) {
+            setLocationState(camp.locations[0]);
+          }
+
+          // Đối tượng người xem (Target audiences)
+          if (camp.targetAudiences && Array.isArray(camp.targetAudiences)) {
+            const ages = camp.targetAudiences.filter((a: string) =>
+              ['13-17', '18-24', '25-34', '35-44', '45+'].includes(a)
+            );
+            if (ages.length > 0) setSelectedAges(ages);
+            if (
+              camp.targetAudiences.some((a: string) =>
+                a.toLowerCase().includes('nữ') || a.toLowerCase().includes('female')
+              )
+            ) {
+              setSelectedGender('female');
+            } else if (
+              camp.targetAudiences.some((a: string) =>
+                a.toLowerCase().includes('nam') || a.toLowerCase().includes('male')
+              )
+            ) {
+              setSelectedGender('male');
+            }
+          }
+
+          // Phân khúc Creator (Follower range)
+          if (camp.followerMin !== undefined || camp.followerMax !== undefined) {
+            const maxF = camp.followerMax || 200000;
+            if (maxF <= 50000) setCreatorTier('nano');
+            else if (maxF <= 200000) setCreatorTier('micro');
+            else if (maxF <= 1000000) setCreatorTier('macro');
+            else setCreatorTier('mega');
+          }
+
+          // Định dạng nội dung
+          if (camp.contentType) {
+            const rawFormat = String(camp.contentType).toLowerCase();
+            const formats: string[] = [];
+            if (rawFormat.includes('video') || rawFormat.includes('short')) formats.push('short_video');
+            if (rawFormat.includes('ảnh') || rawFormat.includes('image') || rawFormat.includes('post'))
+              formats.push('image_post');
+            if (rawFormat.includes('dài') || rawFormat.includes('long')) formats.push('long_video');
+            if (rawFormat.includes('live')) formats.push('livestream');
+            if (rawFormat.includes('review') || rawFormat.includes('unbox'))
+              formats.push('review_unboxing');
+            if (formats.length > 0) setSelectedFormats(formats);
+          }
+        };
+
+        // Ưu tiên load ngay từ state passed nếu có
+        const passedCamp =
+          (location.state as any)?.campaign || (location.state as any)?.campaignData;
+        if (passedCamp) {
+          applyCampaignData(passedCamp);
+        }
+
+        // Tải dữ liệu mới nhất từ backend API GET /campaigns/{id}
+        const remoteData = await campaignService.getCampaignById(resolvedCampaignId);
+        if (isMounted && remoteData) {
+          applyCampaignData(remoteData);
+        }
+      } catch (err) {
+        console.warn('Lỗi khi tải thông tin chiến dịch để chỉnh sửa:', err);
+      } finally {
+        if (isMounted) setIsLoadingCampaign(false);
+      }
+    };
+
+    loadCampaignDetail();
+    return () => {
+      isMounted = false;
+    };
+  }, [isEditMode, resolvedCampaignId]);
 
   // Objectives List
   const objectives = [
@@ -294,7 +430,7 @@ export default function CreateCampaignPage() {
           setInterests(result.niches.join(', '));
         }
         if (result.locations && Array.isArray(result.locations) && result.locations.length > 0) {
-          setLocation(result.locations[0]);
+          setLocationState(result.locations[0]);
         }
         if (result.budgetMax) {
           setBudgetTotal(result.budgetMax);
@@ -366,7 +502,7 @@ export default function CreateCampaignPage() {
     const niches = interests
       ? interests.split(',').map((s) => s.trim()).filter(Boolean)
       : ['Làm đẹp & Mỹ phẩm', 'Chăm sóc da'];
-    const locations = location && location !== 'nationwide' ? [location] : ['Toàn quốc'];
+    const locations = locationState && locationState !== 'nationwide' ? [locationState] : ['Toàn quốc'];
     
     // Tích hợp độ tuổi và giới tính vào targetAudiences
     const audiences = [...selectedAges];
@@ -390,6 +526,84 @@ export default function CreateCampaignPage() {
       targetAudiences: audiences.length > 0 ? audiences : ['18-24', '25-34'],
       contentType,
     };
+  };
+
+  // Helper hiển thị badge trạng thái
+  const getStatusBadge = (st: string) => {
+    switch (st) {
+      case 'ACTIVE':
+        return { label: 'Đang triển khai', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0', text: 'Chiến dịch đang chạy thực tế' };
+      case 'READY_FOR_DISCOVERY':
+        return { label: 'Sẵn sàng đề xuất', color: '#0284C7', bg: '#F0F9FF', border: '#BAE6FD', text: 'Đang tìm kiếm & kết nối KOC' };
+      case 'COMPLETED':
+        return { label: 'Đã hoàn thành', color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE', text: 'Chiến dịch đã kết thúc' };
+      case 'ARCHIVED':
+        return { label: 'Đã lưu trữ', color: '#64748B', bg: '#F8FAFC', border: '#E2E8F0', text: 'Chiến dịch đã lưu trữ' };
+      default:
+        return { label: 'Bản nháp', color: '#D97706', bg: '#FFFBEB', border: '#FDE68A', text: 'Chưa khởi chạy chính thức' };
+    }
+  };
+
+  // Khóa trường dữ liệu khi chiến dịch không còn là DRAFT
+  // Cụ thể: Sản phẩm quảng bá không thể đổi vì đã brief / ký hợp đồng với KOC
+  const isProductLocked = isEditMode && campaignStatus !== 'DRAFT';
+  const isPlatformLocked = isEditMode && (campaignStatus === 'ACTIVE' || campaignStatus === 'COMPLETED');
+
+  // Handler: Cập nhật thông tin chiến dịch (Update Mode)
+  const handleUpdateCampaign = async () => {
+    if (!campaignName.trim()) {
+      message.warning('Vui lòng nhập tên chiến dịch!');
+      return;
+    }
+    if (!product.trim()) {
+      message.warning('Vui lòng nhập sản phẩm / dịch vụ quảng bá!');
+      return;
+    }
+    if (selectedObjectives.length === 0) {
+      message.warning('Vui lòng chọn ít nhất 1 mục tiêu chiến dịch!');
+      return;
+    }
+    if (selectedPlatforms.length === 0) {
+      message.warning('Vui lòng chọn ít nhất 1 nền tảng quảng bá!');
+      return;
+    }
+    if (!budgetTotal || budgetTotal <= 0) {
+      message.warning('Vui lòng nhập tổng ngân sách hợp lệ cho chiến dịch!');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      message.loading({ content: 'Đang lưu cập nhật thông tin chiến dịch...', key: 'update_camp' });
+      const payload = buildCampaignPayload();
+
+      // Gọi API cập nhật thông tin chiến dịch chuẩn Swagger PUT /campaigns/{id}
+      await campaignService.updateCampaign(resolvedCampaignId!, payload);
+
+      // Cập nhật lại sessionStorage nếu có cache
+      try {
+        const cachedRaw = sessionStorage.getItem('current_campaign_data');
+        if (cachedRaw) {
+          const parsed = JSON.parse(cachedRaw);
+          sessionStorage.setItem(
+            'current_campaign_data',
+            JSON.stringify({
+              ...parsed,
+              ...payload,
+              id: resolvedCampaignId,
+            })
+          );
+        }
+      } catch {}
+
+      message.success({ content: '🎉 Cập nhật thông tin chiến dịch thành công!', key: 'update_camp', duration: 2 });
+      navigate(`/campaigns/${resolvedCampaignId}`);
+    } catch (err) {
+      console.error('Lỗi cập nhật chiến dịch:', err);
+      message.error({ content: getErrorMessage(err, 'Không thể cập nhật chiến dịch lúc này.'), key: 'update_camp' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Handler: Lưu bản nháp (Save Draft)
@@ -539,9 +753,40 @@ export default function CreateCampaignPage() {
       {/* 1. Header Section */}
       <div className="ccreate-header">
         <div className="ccreate-title-wrap">
-          <h1>Tạo chiến dịch mới</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+            {isEditMode && (
+              <Button
+                type="text"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigate(resolvedCampaignId ? `/campaigns/${resolvedCampaignId}` : '/campaigns')}
+                style={{ padding: '4px 8px', borderRadius: 8, color: '#4F46E5', fontWeight: 600, fontSize: 13 }}
+              >
+                Quay lại chi tiết
+              </Button>
+            )}
+            <h1 style={{ margin: 0 }}>
+              {isEditMode ? 'Chỉnh sửa thông tin chiến dịch' : 'Tạo chiến dịch mới'}
+            </h1>
+            {isEditMode && (
+              <Tag
+                style={{
+                  backgroundColor: getStatusBadge(campaignStatus).bg,
+                  borderColor: getStatusBadge(campaignStatus).border,
+                  color: getStatusBadge(campaignStatus).color,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  padding: '2px 10px',
+                  borderRadius: 8,
+                }}
+              >
+                {getStatusBadge(campaignStatus).label}
+              </Tag>
+            )}
+          </div>
           <p>
-            Thiết lập thông tin chiến dịch để AI gợi ý chiến lược, đối tượng và tối ưu hóa hiệu quả thực thi.
+            {isEditMode
+              ? `Cập nhật thông số chiến lược, mục tiêu và ngân sách cho chiến dịch: ${campaignName}`
+              : 'Thiết lập thông tin chiến dịch để AI gợi ý chiến lược, đối tượng và tối ưu hóa hiệu quả thực thi.'}
           </p>
         </div>
 
@@ -632,6 +877,39 @@ export default function CreateCampaignPage() {
       <Row gutter={[20, 20]}>
         <Col xs={24}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {/* Edit Mode Alert Banner */}
+            {isEditMode && (
+              <Alert
+                message={
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+                    <div style={{ fontSize: 13, color: '#1E293B', lineHeight: 1.5 }}>
+                      <strong>Chế độ chỉnh sửa chiến dịch: </strong>
+                      <span>
+                        {isProductLocked
+                          ? `Chiến dịch đang ${getStatusBadge(campaignStatus).label}. Bạn có thể cập nhật tên chiến dịch, mô tả brief, ngân sách và tiêu chí KOC. Sản phẩm quảng bá được khóa để bảo vệ hợp đồng.`
+                          : 'Bạn có thể tự do cập nhật mọi thông tin chiến lược, đối tượng và ngân sách của chiến dịch.'}
+                      </span>
+                    </div>
+                    <Tag
+                      style={{
+                        backgroundColor: getStatusBadge(campaignStatus).bg,
+                        borderColor: getStatusBadge(campaignStatus).border,
+                        color: getStatusBadge(campaignStatus).color,
+                        fontWeight: 700,
+                        borderRadius: 6,
+                        margin: 0,
+                      }}
+                    >
+                      {getStatusBadge(campaignStatus).label}
+                    </Tag>
+                  </div>
+                }
+                type={isProductLocked ? 'warning' : 'info'}
+                showIcon
+                style={{ borderRadius: 12, border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}
+              />
+            )}
+
             {/* AI Assistant Studio Card */}
             <div className="ccreate-ai-card">
               <div className="ccreate-ai-header">
@@ -806,16 +1084,38 @@ export default function CreateCampaignPage() {
                     </Col>
 
                     <Col xs={24} md={12}>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', marginBottom: 6 }}>
-                        Sản phẩm / Dịch vụ được quảng bá <span style={{ color: '#EF4444' }}>*</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A' }}>
+                          Sản phẩm / Dịch vụ được quảng bá <span style={{ color: '#EF4444' }}>*</span>
+                        </div>
+                        {isProductLocked && (
+                          <Tooltip title="Chiến dịch đã khởi chạy hoặc chốt KOC. Tên sản phẩm được khóa để bảo vệ tính nhất quán của hợp đồng.">
+                            <Tag color="orange" icon={<LockOutlined />} style={{ borderRadius: 6, fontSize: 11, cursor: 'help', margin: 0 }}>
+                              Đã khóa
+                            </Tag>
+                          </Tooltip>
+                        )}
                       </div>
                       <Input
                         value={product}
                         onChange={(e) => setProduct(e.target.value)}
                         placeholder="Nhập tên sản phẩm hoặc dịch vụ (ví dụ: Serum dưỡng sáng da, Khóa học...)"
-                        style={{ borderRadius: 10, height: 40, fontSize: 13 }}
-                        allowClear
+                        style={{
+                          borderRadius: 10,
+                          height: 40,
+                          fontSize: 13,
+                          backgroundColor: isProductLocked ? '#F8FAFC' : undefined,
+                          borderColor: isProductLocked ? '#E2E8F0' : undefined,
+                        }}
+                        disabled={isProductLocked}
+                        suffix={isProductLocked ? <LockOutlined style={{ color: '#94A3B8' }} /> : undefined}
+                        allowClear={!isProductLocked}
                       />
+                      {isProductLocked && (
+                        <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                          🔒 Tên sản phẩm cố định theo chiến dịch đã ký kết với creator.
+                        </div>
+                      )}
                     </Col>
                   </Row>
 
@@ -1250,8 +1550,8 @@ export default function CreateCampaignPage() {
                       <Select
                         showSearch
                         loading={loadingProvinces}
-                        value={location}
-                        onChange={setLocation}
+                        value={locationState}
+                        onChange={setLocationState}
                         style={{ width: '100%', height: 40 }}
                         filterOption={(input, option) =>
                           (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
@@ -1886,46 +2186,84 @@ export default function CreateCampaignPage() {
       <div className="ccreate-bottom-actions">
         <Button
           type="text"
-          onClick={() => navigate('/campaigns')}
+          onClick={() => navigate(isEditMode && resolvedCampaignId ? `/campaigns/${resolvedCampaignId}` : '/campaigns')}
           className="ccreate-btn-cancel"
         >
-          ✕ Hủy
+          {isEditMode ? '✕ Hủy & Quay lại' : '✕ Hủy'}
         </Button>
 
         <Space size={12}>
-          {/* Nút Lưu bản nháp (Save Draft) */}
-          <Button
-            icon={<SaveOutlined />}
-            onClick={handleSaveDraft}
-            loading={isSavingDraft}
-            className="ccreate-btn-draft"
-          >
-            Lưu bản nháp
-          </Button>
+          {/* Ở Edit Mode: Luôn có nút Lưu thay đổi tức thì */}
+          {isEditMode ? (
+            <>
+              {currentStep > 1 && (
+                <Button
+                  icon={<LeftOutlined />}
+                  onClick={handlePrevStep}
+                  className="ccreate-btn-back"
+                >
+                  Bước trước
+                </Button>
+              )}
 
-          {currentStep > 1 && (
-            <Button
-              icon={<LeftOutlined />}
-              onClick={handlePrevStep}
-              className="ccreate-btn-back"
-            >
-              Quay lại
-            </Button>
+              {currentStep < 3 && (
+                <Button
+                  onClick={handleNextStep}
+                  className="ccreate-btn-next"
+                >
+                  {currentStep === 1 ? 'Bước 2: Yêu cầu Creator' : 'Bước 3: Ngân sách'}
+                  <RightOutlined />
+                </Button>
+              )}
+
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
+                onClick={handleUpdateCampaign}
+                loading={isSubmitting}
+                className="ccreate-btn-next"
+                style={{ background: '#4F46E5', borderColor: '#4F46E5' }}
+              >
+                Lưu thay đổi
+              </Button>
+            </>
+          ) : (
+            <>
+              {/* Nút Lưu bản nháp (Save Draft) - Create Mode */}
+              <Button
+                icon={<SaveOutlined />}
+                onClick={handleSaveDraft}
+                loading={isSavingDraft}
+                className="ccreate-btn-draft"
+              >
+                Lưu bản nháp
+              </Button>
+
+              {currentStep > 1 && (
+                <Button
+                  icon={<LeftOutlined />}
+                  onClick={handlePrevStep}
+                  className="ccreate-btn-back"
+                >
+                  Quay lại
+                </Button>
+              )}
+
+              <Button
+                type="primary"
+                onClick={handleNextStep}
+                loading={isSubmitting}
+                className="ccreate-btn-next"
+              >
+                {currentStep === 1
+                  ? 'Tiếp theo (Bước 2)'
+                  : currentStep === 2
+                  ? 'Tiếp theo (Bước 3)'
+                  : 'Tiếp tục chạy đề xuất'}
+                {currentStep === 3 ? <CompassOutlined /> : <RightOutlined />}
+              </Button>
+            </>
           )}
-
-          <Button
-            type="primary"
-            onClick={handleNextStep}
-            loading={isSubmitting}
-            className="ccreate-btn-next"
-          >
-            {currentStep === 1
-              ? 'Tiếp theo (Bước 2)'
-              : currentStep === 2
-              ? 'Tiếp theo (Bước 3)'
-              : 'Tiếp tục chạy đề xuất'}
-            {currentStep === 3 ? <CompassOutlined /> : <RightOutlined />}
-          </Button>
         </Space>
       </div>
     </div>
