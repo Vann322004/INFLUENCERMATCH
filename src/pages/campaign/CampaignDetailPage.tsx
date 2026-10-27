@@ -503,7 +503,7 @@ export default function CampaignDetailPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Avatar src={record.avatar} size={40} />
           <div>
-            <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>{text}</div>
+            <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>{text}</div>
             <div style={{ fontSize: 12, color: '#64748B' }}>{record.username}</div>
           </div>
         </div>
@@ -1390,19 +1390,19 @@ export default function CampaignDetailPage() {
               </div>
               <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>Quy định gắn hashtag bắt buộc</div>
+                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>Quy định gắn hashtag bắt buộc</div>
                   <div style={{ fontSize: 13, color: '#4F46E5', fontWeight: 600, marginTop: 4 }}>
                     #SummerGlow2026 #SunscreenReview #SkincareRoutine #KemChongNang
                   </div>
                 </div>
                 <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>Thông điệp then chốt (Key Messages)</div>
+                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>Thông điệp then chốt (Key Messages)</div>
                   <div style={{ fontSize: 13, color: '#475569', marginTop: 4, lineHeight: 1.6 }}>
                     Kem chống nắng nâng tone tự nhiên không gây nhờn rít, bảo vệ quang phổ rộng SPF50+ PA++++ suốt ngày dài năng động.
                   </div>
                 </div>
                 <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>Yêu cầu kiểm duyệt nội dung</div>
+                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>Yêu cầu kiểm duyệt nội dung</div>
                   <div style={{ fontSize: 13, color: '#475569', marginTop: 4, lineHeight: 1.6 }}>
                     KOC cần gửi kịch bản trước khi quay 3 ngày và gửi video thô trước khi đăng tải 48 giờ để nhãn hàng duyệt.
                   </div>
