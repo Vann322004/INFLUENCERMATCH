@@ -53,11 +53,10 @@ interface AiRecommendationTabProps {
 }
 
 const REJECTION_REASONS = [
-  { value: 'PRICE_TOO_HIGH', label: 'Báo giá vượt ngân sách cho phép' },
-  { value: 'CONTENT_MISMATCH', label: 'Phong cách nội dung chưa phù hợp thương hiệu' },
-  { value: 'POOR_ENGAGEMENT', label: 'Chỉ số tương tác thực tế thấp hoặc ảo' },
-  { value: 'COMPETITOR_CONFLICT', label: 'Đang hợp tác với đối thủ cạnh tranh trực tiếp' },
-  { value: 'LOCATION_UNSUITABLE', label: 'Khu vực hoạt động chưa khớp thị trường mục tiêu' },
+  { value: 'PRICE_TOO_HIGH', label: 'Chi phí báo giá quá cao' },
+  { value: 'NOT_TARGET_NICHE', label: 'Sai tệp khách hàng / sai phong cách' },
+  { value: 'POOR_ENGAGEMENT', label: 'Tương tác thấp hoặc nghi ngờ tương tác ảo' },
+  { value: 'BRAND_CONFLICT', label: 'Đã hợp tác với đối thủ cạnh tranh' },
   { value: 'OTHER', label: 'Lý do khác' },
 ];
 
@@ -165,39 +164,47 @@ export default function AiRecommendationTab({
     }
   }, [campaign?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Handle Accept
+  // Handle Accept: Gửi feedback ACCEPT và đồng thời thêm vào Shortlist của chiến dịch
   const handleAcceptCreator = async (creator: CreatorRecommendationItemDto) => {
-    if (!campaign?.id) return;
+    if (!campaign?.id) {
+      message.warning('Vui lòng chọn chiến dịch trước khi thực hiện!');
+      return;
+    }
+    setShortlistingId(creator.creatorId);
     try {
-      message.loading({ content: `Đang chấp thuận @${creator.userName}...`, key: 'feedback_act' });
-      const res = await aiRecommendationService.submitFeedback(campaign.id, {
+      // 1. Gửi feedback ACCEPT tới backend
+      await aiRecommendationService.submitFeedback(campaign.id, {
         creatorId: creator.creatorId,
         action: 'ACCEPT',
       });
+
+      // 2. Đồng thời thêm vào Shortlist của chiến dịch
+      await creatorService.addToShortlist(campaign.id, {
+        creatorId: creator.creatorId,
+        priority: 'HIGH',
+        note: `AI Four-Memory (Khớp ${Math.round(creator.finalScore * 100)}%)`,
+      });
+
+      // 3. Cập nhật state UI
+      setRecommendations((prev) =>
+        prev.map((c) => (c.creatorId === creator.creatorId ? { ...c, inShortlist: true } : c))
+      );
+      onAddedToShortlist?.(creator.creatorId);
+
       message.success({
-        content: `🎉 ${res.message || `Đã chấp thuận @${creator.userName}!`}`,
+        content: `🎉 Đã ghi nhận phù hợp và thêm @${creator.userName} vào chiến dịch thành công!`,
         key: 'feedback_act',
         duration: 3,
       });
-      // Tự động thêm vào shortlist nếu chưa có
-      if (!creator.inShortlist) {
-        await creatorService.addToShortlist(campaign.id, {
-          creatorId: creator.creatorId,
-          priority: 'HIGH',
-          note: `Được AI Four-Memory đề xuất với điểm khớp ${Math.round(creator.finalScore * 100)}%`,
-        });
-        setRecommendations((prev) =>
-          prev.map((c) => (c.creatorId === creator.creatorId ? { ...c, inShortlist: true } : c))
-        );
-        onAddedToShortlist?.(creator.creatorId);
-      }
     } catch (err) {
-      console.error('Lỗi khi submit feedback accept:', err);
-      message.error('Không thể gửi phản hồi lúc này.');
+      console.error('Lỗi khi gửi feedback accept:', err);
+      message.error('Không thể hoàn tất phản hồi lúc này.');
+    } finally {
+      setShortlistingId(null);
     }
   };
 
-  // Open Reject Modal
+  // Open Reject Modal: "Đóng góp ý kiến cho AI"
   const handleOpenReject = (creator: CreatorRecommendationItemDto) => {
     setSelectedCreatorForFeedback(creator);
     rejectForm.resetFields();
@@ -205,7 +212,7 @@ export default function AiRecommendationTab({
     setRejectModalOpen(true);
   };
 
-  // Submit Reject
+  // Submit Reject: Gửi feedback REJECT, cập nhật context version và ẩn creator khỏi danh sách
   const handleSubmitReject = async () => {
     if (!campaign?.id || !selectedCreatorForFeedback) return;
     try {
@@ -218,20 +225,24 @@ export default function AiRecommendationTab({
         reasonNote: values.reasonNote,
       });
 
+      const nextVersion = res?.newContextVersion || contextVersion + 1;
+
+      // Toast thông báo chính xác theo yêu cầu:
       message.success({
-        content: `Đã loại trừ @${selectedCreatorForFeedback.userName}. ${res.message || 'Hệ thống đã ghi nhớ vào bộ nhớ M4.'}`,
-        duration: 3,
+        content: `Đã ghi nhận phản hồi. AI đã nâng cấp bộ nhớ ngữ cảnh lên v${nextVersion} và sẽ không đề xuất lại Creator này.`,
+        duration: 4,
       });
 
-      // Remove creator from current recommendation view
+      // Ẩn Creator bị Reject khỏi danh sách
       setRecommendations((prev) =>
         prev.filter((c) => c.creatorId !== selectedCreatorForFeedback.creatorId)
       );
-      setContextVersion(res.newContextVersion || contextVersion + 1);
+      setContextVersion(nextVersion);
       setRejectModalOpen(false);
     } catch (err: any) {
       if (err?.errorFields) return;
-      message.error('Không thể gửi phản hồi từ chối.');
+      console.error('Lỗi khi submit feedback reject:', err);
+      message.error('Không thể gửi phản hồi từ chối lúc này.');
     } finally {
       setFeedbackSubmitting(false);
     }
@@ -305,11 +316,11 @@ export default function AiRecommendationTab({
       <Card
         style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%)',
+          background: 'linear-gradient(135deg, #3B1B7A 0%, #5B21B6 50%, #7C3AED 100%)',
           color: '#fff',
           marginBottom: 20,
           border: 'none',
-          boxShadow: '0 10px 25px -5px rgba(49, 46, 129, 0.4)',
+          boxShadow: '0 10px 25px -5px rgba(124, 58, 237, 0.3)',
         }}
         bodyStyle={{ padding: '24px 28px' }}
       >
@@ -637,66 +648,66 @@ export default function AiRecommendationTab({
                               </div>
                             </Popover>
 
-                            {/* Actions Group */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 140 }}>
+                            {/* 2 Action Buttons for AI Recommendation Feedback */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, minWidth: 170 }}>
+                              {/* 1. Nút "Phù hợp / Thêm vào chiến dịch" (action: 'ACCEPT') */}
                               {creator.inShortlist ? (
                                 <Button
-                                  size="small"
+                                  size="middle"
                                   disabled
                                   icon={<CheckCircleFilled style={{ color: '#10B981' }} />}
-                                  style={{ borderRadius: 8, fontWeight: 600 }}
+                                  style={{
+                                    borderRadius: 9,
+                                    fontWeight: 700,
+                                    fontSize: 12,
+                                    background: '#ECFDF5',
+                                    borderColor: '#A7F3D0',
+                                    color: '#065F46',
+                                    height: 36,
+                                  }}
                                 >
-                                  Đã trong Shortlist
+                                  Đã thêm vào chiến dịch
                                 </Button>
                               ) : (
                                 <Button
-                                  size="small"
+                                  size="middle"
                                   type="primary"
                                   loading={shortlistingId === creator.creatorId}
-                                  onClick={() => handleAddToShortlist(creator)}
+                                  icon={<CheckCircleFilled />}
+                                  onClick={() => handleAcceptCreator(creator)}
                                   style={{
-                                    background: '#4F46E5',
-                                    borderRadius: 8,
+                                    borderRadius: 9,
                                     fontWeight: 700,
+                                    fontSize: 12,
+                                    height: 36,
+                                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                                    borderColor: '#10B981',
+                                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)',
                                   }}
                                 >
-                                  + Thêm vào Shortlist
+                                  Phù hợp / Thêm vào chiến dịch
                                 </Button>
                               )}
 
-                              <Space size={6}>
-                                <Button
-                                  size="small"
-                                  type="default"
-                                  icon={<CheckCircleFilled style={{ color: '#10B981' }} />}
-                                  onClick={() => handleAcceptCreator(creator)}
-                                  style={{
-                                    borderRadius: 8,
-                                    fontWeight: 600,
-                                    flex: 1,
-                                    borderColor: '#A7F3D0',
-                                    color: '#065F46',
-                                    background: '#ECFDF5',
-                                  }}
-                                >
-                                  Chấp thuận
-                                </Button>
-
-                                <Button
-                                  size="small"
-                                  type="text"
-                                  danger
-                                  icon={<CloseCircleFilled />}
-                                  onClick={() => handleOpenReject(creator)}
-                                  style={{
-                                    borderRadius: 8,
-                                    fontWeight: 600,
-                                    background: '#FEF2F2',
-                                  }}
-                                >
-                                  Từ chối
-                                </Button>
-                              </Space>
+                              {/* 2. Nút "Không phù hợp" (action: 'REJECT') */}
+                              <Button
+                                size="middle"
+                                type="default"
+                                danger
+                                icon={<CloseCircleFilled />}
+                                onClick={() => handleOpenReject(creator)}
+                                style={{
+                                  borderRadius: 9,
+                                  fontWeight: 600,
+                                  fontSize: 12,
+                                  height: 34,
+                                  background: '#FEF2F2',
+                                  borderColor: '#FECACA',
+                                  color: '#DC2626',
+                                }}
+                              >
+                                Không phù hợp
+                              </Button>
                             </div>
                           </div>
                         </Col>
@@ -824,52 +835,114 @@ export default function AiRecommendationTab({
         </Card>
       )}
 
-      {/* 5. Feedback Reject Modal */}
+      {/* 5. Feedback Reject Modal: "Đóng góp ý kiến cho AI" */}
       <Modal
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 700, color: '#EF4444' }}>
-            <CloseCircleFilled />
-            <span>Từ chối Creator & Huấn luyện Bộ nhớ M4</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 16, fontWeight: 700, color: '#0F172A' }}>
+            <CloseCircleFilled style={{ color: '#EF4444', fontSize: 18 }} />
+            <span>Đóng góp ý kiến cho AI</span>
           </div>
         }
         open={rejectModalOpen}
         onCancel={() => setRejectModalOpen(false)}
         footer={null}
         destroyOnClose
+        centered
+        width={520}
       >
-        <p style={{ fontSize: 13, color: '#64748B', marginBottom: 16 }}>
-          Phản hồi của bạn giúp AI ghi nhớ gu thẩm mỹ và loại trừ các KOC không phù hợp trong các đợt đề xuất sau của thương hiệu.
+        <p style={{ fontSize: 13, color: '#64748B', margin: '4px 0 16px 0', lineHeight: 1.5 }}>
+          Phản hồi của bạn giúp AI Four-Memory ghi nhận lý do không phù hợp và nâng cấp bộ nhớ ngữ cảnh để tránh đề xuất lại Creator này cho chiến dịch.
         </p>
+
+        {selectedCreatorForFeedback && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '10px 14px',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              borderRadius: 12,
+              marginBottom: 18,
+            }}
+          >
+            <Avatar
+              size={42}
+              src={selectedCreatorForFeedback.avatarUrl}
+              style={{ backgroundColor: '#7C3AED', fontWeight: 700, flexShrink: 0 }}
+            >
+              {selectedCreatorForFeedback.displayName?.charAt(0) || 'K'}
+            </Avatar>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {selectedCreatorForFeedback.displayName}
+              </div>
+              <div style={{ fontSize: 12, color: '#64748B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                @{selectedCreatorForFeedback.userName} • {selectedCreatorForFeedback.niche}
+              </div>
+            </div>
+            <Tag color="purple" style={{ fontWeight: 800, borderRadius: 999, margin: 0 }}>
+              Khớp {Math.round(selectedCreatorForFeedback.finalScore * 100)}%
+            </Tag>
+          </div>
+        )}
 
         <Form form={rejectForm} layout="vertical" onFinish={handleSubmitReject}>
           <Form.Item
             name="reasonCode"
-            label={<span style={{ fontWeight: 600 }}>Lý do từ chối chính:</span>}
-            rules={[{ required: true, message: 'Vui lòng chọn lý do từ chối!' }]}
+            label={<span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>Lý do không phù hợp:</span>}
+            rules={[{ required: true, message: 'Vui lòng chọn lý do không phù hợp!' }]}
           >
-            <Select options={REJECTION_REASONS} size="large" />
+            <Radio.Group style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+              {REJECTION_REASONS.map((reason) => (
+                <Radio
+                  key={reason.value}
+                  value={reason.value}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '9px 14px',
+                    borderRadius: 9,
+                    border: '1px solid #E2E8F0',
+                    margin: 0,
+                    transition: 'all 0.15s ease',
+                    background: '#FFFFFF',
+                    fontSize: 13,
+                    fontWeight: 500,
+                  }}
+                >
+                  {reason.label}
+                </Radio>
+              ))}
+            </Radio.Group>
           </Form.Item>
 
           <Form.Item
             name="reasonNote"
-            label={<span style={{ fontWeight: 600 }}>Ghi chú chi tiết thêm (Tùy chọn):</span>}
+            label={<span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>Ghi chú chi tiết (Tùy chọn):</span>}
           >
             <Input.TextArea
               rows={3}
-              placeholder="Ví dụ: KOC báo giá vượt 15 triệu ngân sách hoặc hình ảnh chưa chuẩn gu sang trọng..."
+              placeholder="Ví dụ: Báo giá vượt mức chi trả của đợt này..."
+              maxLength={300}
+              showCount
+              style={{ borderRadius: 8 }}
             />
           </Form.Item>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
-            <Button onClick={() => setRejectModalOpen(false)}>Hủy</Button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 18 }}>
+            <Button onClick={() => setRejectModalOpen(false)} style={{ borderRadius: 8 }}>
+              Hủy
+            </Button>
             <Button
               type="primary"
               danger
               htmlType="submit"
               loading={feedbackSubmitting}
-              style={{ fontWeight: 700 }}
+              style={{ borderRadius: 8, fontWeight: 700, minWidth: 140 }}
             >
-              Xác nhận từ chối & Cập nhật AI
+              Gửi phản hồi cho AI
             </Button>
           </div>
         </Form>

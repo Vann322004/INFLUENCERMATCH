@@ -54,20 +54,25 @@ function SessionSyncHandler() {
 // Main App Layout Wrapper with Light Linear Sidebar & Top Header
 function MainLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Layout style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden' }}>
+    <Layout hasSider style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden', width: '100vw' }}>
       {/* Light Linear Gradient Sidebar */}
       <AppSider />
 
       {/* Main Content Area */}
-      <Layout style={{ background: '#F5F6FA', height: '100vh', overflow: 'hidden' }}>
+      <Layout style={{ background: '#F5F6FA', height: '100vh', overflow: 'hidden', minWidth: 0, flex: 1 }}>
         <AppHeader />
 
         <Content
           style={{
             background: '#F5F6FA',
-            padding: '20px 28px 20px 28px',
+            padding: '8px 24px 24px 24px',
             overflowY: 'auto',
+            overflowX: 'hidden',
             boxSizing: 'border-box',
+            minWidth: 0,
+            width: '100%',
+            scrollBehavior: 'smooth',
+            scrollSnapType: 'y proximity',
           }}
         >
           {children}

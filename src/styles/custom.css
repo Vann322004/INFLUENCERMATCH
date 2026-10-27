@@ -12,12 +12,11 @@ body {
   background: linear-gradient(180deg, #FFFFFF 0%, #FAF5FF 40%, #EEF2FF 75%, #E0E7FF 100%) !important;
   border-right: 1px solid #E2E8F0 !important;
   height: 100vh;
-  position: sticky;
-  top: 0;
-  left: 0;
+  position: relative !important;
   z-index: 50;
   box-shadow: 2px 0 16px rgba(124, 58, 237, 0.06) !important;
   overflow: hidden !important;
+  flex-shrink: 0 !important;
   transition: all 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
 }
 
@@ -88,42 +87,444 @@ body {
   color: #FFFFFF !important;
 }
 
-/* Action Pill at Top (Tạo chiến dịch mới) - Signature Violet Gradient */
-.chatgpt-new-action-pill {
-  background: linear-gradient(135deg, #7C3AED 0%, #5B5BF0 100%);
+/* ==========================================================================
+   ChatGPT-Style Capsule Tooltip (Sleek Black Pill + Shortcut Badge)
+   ========================================================================== */
+.chatgpt-capsule-tooltip .ant-tooltip-inner {
+  background: #0D0D0D !important;
+  color: #FFFFFF !important;
+  border-radius: 9999px !important;
+  padding: 5px 12px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  min-height: auto !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.chatgpt-capsule-tooltip .ant-tooltip-arrow {
+  display: none !important;
+}
+
+.chatgpt-tooltip-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.3;
+}
+
+.chatgpt-tooltip-text {
+  color: #FFFFFF;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+}
+
+.chatgpt-tooltip-shortcut {
+  background: #27272A;
+  color: #D4D4D8;
+  border-radius: 5px;
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 1.5px 6px;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Sidebar Rail Buttons (Collapsed Mode)
+   ========================================================================== */
+.sidebar-rail-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   border: none;
-  border-radius: 9px;
-  height: 38px;
+  background: transparent;
+  color: #475569;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 14px;
-  gap: 8px;
-  font-weight: 600;
-  font-size: 13px;
-  color: #FFFFFF;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  margin-bottom: 12px;
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.28);
+  transition: all 0.15s ease;
+  outline: none;
+  padding: 0;
+  margin: 0 auto;
 }
 
-.chatgpt-new-action-pill:hover {
-  background: linear-gradient(135deg, #6D28D9 0%, #4F46E5 100%);
-  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.38);
-  transform: translateY(-1px);
-}
-
-/* Bottom Pill Button (Quản lý gói & Hạn mức) */
-.chatgpt-claim-pill-btn {
-  width: 100%;
-  height: 34px;
-  border-radius: 9999px;
-  border: 1px solid rgba(124, 58, 237, 0.25);
-  background: rgba(124, 58, 237, 0.08);
+.sidebar-rail-btn:hover {
+  background: rgba(139, 92, 246, 0.09);
   color: #7C3AED;
+}
+
+.sidebar-rail-btn.active {
+  background: linear-gradient(135deg, #7C3AED 0%, #5B5BF0 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.28);
+}
+
+.sidebar-rail-btn.active svg {
+  stroke: #FFFFFF !important;
+}
+
+/* ==========================================================================
+   Sidebar Top Logo & Toggle Switch (ChatGPT-style morph on hover)
+   ========================================================================== */
+.sidebar-logo-icon-box {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.sidebar-logo-img {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 1;
+  transform: scale(1);
+}
+
+.sidebar-toggle-glyph {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7C3AED;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Expanded Mode Header Row */
+.sidebar-expanded-header {
+  padding: 2px 0 14px 0;
+  width: 100%;
+}
+
+.sidebar-brand-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  background: transparent;
+  width: 100%;
+  box-sizing: border-box;
+  transition: background 0.15s ease;
+  user-select: none;
+  border: none;
+}
+
+.sidebar-brand-btn:hover {
+  background: rgba(124, 58, 237, 0.08);
+}
+
+.sidebar-brand-name {
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.3px;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s ease;
+}
+
+.sidebar-brand-btn:hover .sidebar-brand-name {
+  color: #7C3AED;
+}
+
+/* Collapsed Mode Rail Logo Button */
+.sidebar-rail-logo-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.sidebar-rail-logo-btn:hover {
+  background: rgba(124, 58, 237, 0.08);
+  border-color: rgba(124, 58, 237, 0.15);
+}
+
+/* Morph on Hover: Logo hides, Sidebar Toggle Icon reveals */
+.sidebar-brand-btn:hover .sidebar-logo-img,
+.sidebar-rail-logo-btn:hover .sidebar-logo-img {
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+}
+
+.sidebar-brand-btn:hover .sidebar-toggle-glyph,
+.sidebar-rail-logo-btn:hover .sidebar-toggle-glyph {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.sidebar-rail-avatar-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #F27A63;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 6px rgba(242, 122, 99, 0.35);
+}
+
+.sidebar-rail-avatar-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 10px rgba(242, 122, 99, 0.45);
+}
+
+/* Navigation Menu Items */
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  height: 42px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13.5px;
   font-weight: 600;
-  font-size: 12px;
+  color: #334155;
+  transition: all 0.15s ease;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.sidebar-nav-item:hover {
+  background: #F5F3FF;
+  color: #7C3AED;
+}
+
+.sidebar-nav-item:hover .sidebar-nav-icon {
+  color: #7C3AED;
+}
+
+.sidebar-nav-item:hover .sidebar-nav-icon svg {
+  stroke: #7C3AED;
+}
+
+.sidebar-nav-item.active {
+  background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%) !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35) !important;
+}
+
+.sidebar-nav-item.active-parent {
+  background: #F5F3FF !important;
+  color: #6D28D9 !important;
+  font-weight: 700 !important;
+  border: 1px solid rgba(124, 58, 237, 0.15) !important;
+}
+
+.sidebar-nav-item.active-parent .sidebar-nav-icon,
+.sidebar-nav-item.active-parent .sidebar-nav-icon svg {
+  color: #6D28D9 !important;
+  stroke: #6D28D9 !important;
+}
+
+.sidebar-nav-item.active .sidebar-nav-icon,
+.sidebar-nav-item.active .sidebar-nav-icon svg,
+.sidebar-nav-item.active .sidebar-nav-icon .anticon {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+.sidebar-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #64748B;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.sidebar-nav-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.1px;
+}
+
+.sidebar-nav-badge {
+  background: #7C3AED;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-nav-item.active .sidebar-nav-badge {
+  background: #FFFFFF;
+  color: #7C3AED;
+}
+
+/* ==========================================================================
+   Sidebar Sub-Menu Container (Indented Campaign Workflow)
+   ========================================================================== */
+.sidebar-sub-menu-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 12px;
+  margin: 4px 0 6px 18px;
+  position: relative;
+  border-left: 2px solid rgba(124, 58, 237, 0.16);
+}
+
+.sidebar-sub-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.sidebar-sub-nav-item:hover {
+  color: #7C3AED;
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.sidebar-sub-nav-item.active {
+  color: #7C3AED !important;
+  font-weight: 700 !important;
+  background: rgba(139, 92, 246, 0.12) !important;
+}
+
+.sidebar-sub-nav-bullet {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #94A3B8;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.sidebar-sub-nav-item:hover .sidebar-sub-nav-bullet {
+  background: #7C3AED;
+  transform: scale(1.3);
+}
+
+.sidebar-sub-nav-item.active .sidebar-sub-nav-bullet {
+  background: #7C3AED;
+  box-shadow: 0 0 6px rgba(124, 58, 237, 0.6);
+  transform: scale(1.3);
+}
+
+/* Bottom User Card */
+.sidebar-bottom-user-section {
+  border-top: 1px solid #ECEEF3;
+  padding-top: 12px;
+  margin-top: auto;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.sidebar-user-info-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.sidebar-user-info-row:hover {
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.sidebar-user-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #F06543;
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(240, 101, 67, 0.35);
+}
+
+.sidebar-user-details {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.sidebar-user-name {
+  color: #0F172A;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-role {
+  color: #64748B;
+  font-size: 11.5px;
+  font-weight: 500;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-claim-pill-btn {
+  width: 100%;
+  height: 36px;
+  border-radius: 9999px;
+  border: 1px solid #DDD6FE;
+  background: #EDE9FE;
+  color: #6D28D9;
+  font-weight: 600;
+  font-size: 12.5px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -132,38 +533,146 @@ body {
   box-shadow: 0 1px 2px rgba(124, 58, 237, 0.06);
   transition: all 0.15s ease;
   outline: none;
-  margin-top: 8px;
+  margin-top: 10px;
+  box-sizing: border-box;
 }
 
-.chatgpt-claim-pill-btn:hover {
-  background: rgba(124, 58, 237, 0.15);
-  border-color: rgba(124, 58, 237, 0.45);
-  color: #6D28D9;
-}
-
-/* Sidebar Bottom User Container */
-.sidebar-user-card {
-  border-top: 1px solid #E2E8F0;
-  padding-top: 10px;
-  margin-top: auto;
-  flex-shrink: 0;
-  width: 100%;
+.sidebar-claim-pill-btn:hover {
+  background: #E0E7FF;
+  border-color: #C7D2FE;
+  color: #5B21B6;
 }
 
 /* Header - Standalone Floating Action Buttons for Dashboard */
+/* Header - Modern SaaS Breadcrumbs, Search & Live Indicator */
 .app-header {
   background: transparent !important;
-  height: auto !important;
-  min-height: 52px !important;
+  height: 44px !important;
+  min-height: 44px !important;
   line-height: normal !important;
-  padding: 12px 28px 4px 28px !important;
+  padding: 6px 24px 0 24px !important;
   border-bottom: none !important;
   position: relative;
   z-index: 40;
   display: flex !important;
   align-items: center !important;
-  justify-content: flex-end !important;
+  justify-content: space-between !important;
   box-shadow: none !important;
+  gap: 16px;
+}
+
+.header-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  user-select: none;
+}
+
+.header-bc-root {
+  color: #64748B;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease;
+}
+
+.header-bc-root:hover {
+  color: #6366F1;
+}
+
+.header-bc-current {
+  color: #0F172A;
+  font-weight: 700;
+}
+
+.header-quick-search-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  padding: 5px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+  max-width: 320px;
+  flex: 1;
+}
+
+.header-quick-search-pill:hover {
+  border-color: #CBD5E1;
+  background: #F8FAFC;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.08);
+}
+
+.header-search-text {
+  font-size: 11.5px;
+  color: #94A3B8;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-search-kbd {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #64748B;
+  background: #F1F5F9;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid #E2E8F0;
+  line-height: 1.2;
+}
+
+.header-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: #475569;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.header-live-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+@media (max-width: 900px) {
+  .header-quick-search-pill {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .header-live-badge {
+    display: none;
+  }
+}
+
+.header-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.15s ease;
+}
+
+.header-brand-logo:hover {
+  opacity: 0.88;
 }
 
 /* Auth Top Header - Brand Logo on Left, Language Dropdown on Right */
@@ -185,26 +694,32 @@ body {
 }
 
 .standalone-action-btn {
-  width: 38px !important;
-  height: 38px !important;
+  width: 36px !important;
+  height: 36px !important;
   background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
+  border: 1px solid rgba(124, 58, 237, 0.18) !important;
   border-radius: 50% !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
-  color: #475569 !important;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  color: #6D28D9 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   cursor: pointer !important;
+  outline: none !important;
 }
 
 .standalone-action-btn:hover {
-  background: #F8FAFC !important;
-  border-color: #CBD5E1 !important;
-  color: #5B5BF0 !important;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(91, 91, 240, 0.12) !important;
+  background: #F5F3FF !important;
+  border-color: #7C3AED !important;
+  color: #7C3AED !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.2) !important;
+}
+
+.standalone-action-btn:active {
+  transform: translateY(0) scale(0.95);
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.12) !important;
 }
 
 .standalone-user-btn {
