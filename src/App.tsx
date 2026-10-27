@@ -42,6 +42,11 @@ import AuditLogPage from './pages/admin/audit/AuditLogPage';
 import CreatorClaimReviewPage from './pages/admin/claims/CreatorClaimReviewPage';
 import DataQualityPage from './pages/admin/quality/DataQualityPage';
 
+// ── Creator Actor Imports ──────────────────────────────
+import CreatorLayout from './components/creator/CreatorLayout';
+import CreatorProtectedRoute from './components/creator/CreatorProtectedRoute';
+import CreatorPortalPage from './pages/creator/portal/CreatorPortalPage';
+
 import { useMultiTabSessionSync } from './hooks/useMultiTabSessionSync';
 
 const { Content } = Layout;
@@ -520,6 +525,25 @@ export default function App() {
             <Route path="audit" element={<AdminProtectedRoute requireAdmin><AuditLogPage /></AdminProtectedRoute>} />
             {/* Phase 9 — Creator Claim Review (Admin & Manager) */}
             <Route path="creator-claims" element={<CreatorClaimReviewPage />} />
+          </Route>
+
+          {/* ── Creator Actor Routes (/creator/*) ──────────── */}
+          <Route
+            path="/creator"
+            element={
+              <CreatorProtectedRoute>
+                <CreatorLayout />
+              </CreatorProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/creator/dashboard" replace />} />
+            <Route path="portal" element={<CreatorPortalPage />} />
+            <Route path="dashboard" element={<CreatorPortalPage />} />
+            <Route path="reach" element={<CreatorPortalPage />} />
+            <Route path="verification" element={<CreatorPortalPage />} />
+            <Route path="social-accounts" element={<CreatorPortalPage />} />
+            <Route path="rate-card" element={<CreatorPortalPage />} />
+            <Route path="bookings" element={<CreatorPortalPage />} />
           </Route>
 
           {/* Admin root redirect */}

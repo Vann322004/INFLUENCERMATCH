@@ -23,6 +23,8 @@ export default function LoginPage() {
   const redirectByRole = (user) => {
     if (user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'DATA_MANAGER')) {
       navigate('/admin/dashboard');
+    } else if (user && (user.role === 'CREATOR' || user.role === 'creator')) {
+      navigate('/creator/dashboard');
     } else {
       navigate(ROUTES.DASHBOARD || '/dashboard');
     }
@@ -207,6 +209,13 @@ export default function LoginPage() {
           ⚡ Tài khoản trải nghiệm nhanh:
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button
+            size="small"
+            style={{ fontSize: 11, borderColor: '#10B981', color: '#059669', borderRadius: 6, fontWeight: 600 }}
+            onClick={() => form.setFieldsValue({ email: 'creator@influencermatch.vn', password: 'creator123' })}
+          >
+            Điền Creator
+          </Button>
           <Button
             size="small"
             style={{ fontSize: 11, borderColor: '#06B6D4', color: '#0891B2', borderRadius: 6 }}
