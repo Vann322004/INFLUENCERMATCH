@@ -61,13 +61,34 @@ const MiniBarChart = ({ color = '#6366F1' }) => (
   </svg>
 );
 
-// Global In-Memory Cache (Eliminates Re-loading Flash when switching tabs)
+// Global In-Memory & Session Cache (Eliminates Re-loading Flash when switching tabs or refreshing)
 const dashboardCache = {
   rawCampaigns: null,
   rawCreators: null,
   shortlistItems: null,
   shortlistCount: null,
   lastLoaded: 0,
+};
+
+const loadCachedDashboard = () => {
+  if (dashboardCache.rawCampaigns) {
+    return dashboardCache;
+  }
+  try {
+    const raw = sessionStorage.getItem('IM_DASHBOARD_CACHE');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.rawCampaigns)) {
+        dashboardCache.rawCampaigns = parsed.rawCampaigns;
+        dashboardCache.rawCreators = parsed.rawCreators || [];
+        dashboardCache.shortlistItems = parsed.shortlistItems || [];
+        dashboardCache.shortlistCount = parsed.shortlistCount ?? 0;
+        dashboardCache.lastLoaded = parsed.lastLoaded || Date.now();
+        return parsed;
+      }
+    }
+  } catch {}
+  return null;
 };
 
 export default function DashboardPage() {
@@ -98,13 +119,14 @@ export default function DashboardPage() {
     userProfile?.displayName?.trim() ||
     (userProfile?.email ? userProfile.email.split('@')[0] : '');
 
-  // Instant render from memory cache if available (Prevents spinner reload flash)
-  const hasCache = !!dashboardCache.rawCampaigns;
+  // Instant render from persistent cache if available (Prevents spinner reload flash)
+  const initialCache = loadCachedDashboard();
+  const hasCache = !!initialCache?.rawCampaigns;
   const [loading, setLoading] = useState(!hasCache);
-  const [rawCampaigns, setRawCampaigns] = useState(() => dashboardCache.rawCampaigns || []);
-  const [rawCreators, setRawCreators] = useState(() => dashboardCache.rawCreators || []);
-  const [shortlistItems, setShortlistItems] = useState(() => dashboardCache.shortlistItems || []);
-  const [shortlistCount, setShortlistCount] = useState(() => dashboardCache.shortlistCount ?? 0);
+  const [rawCampaigns, setRawCampaigns] = useState(() => initialCache?.rawCampaigns || []);
+  const [rawCreators, setRawCreators] = useState(() => initialCache?.rawCreators || []);
+  const [shortlistItems, setShortlistItems] = useState(() => initialCache?.shortlistItems || []);
+  const [shortlistCount, setShortlistCount] = useState(() => initialCache?.shortlistCount ?? 0);
 
   const [campaignTab, setCampaignTab] = useState('all');
   const [activityTab, setActivityTab] = useState('all');
@@ -163,6 +185,18 @@ export default function DashboardPage() {
         setShortlistCount(finalShortlist.length);
         dashboardCache.shortlistItems = finalShortlist;
         dashboardCache.shortlistCount = finalShortlist.length;
+        try {
+          sessionStorage.setItem(
+            'IM_DASHBOARD_CACHE',
+            JSON.stringify({
+              rawCampaigns: validCList,
+              rawCreators: validCrList,
+              shortlistItems: finalShortlist,
+              shortlistCount: finalShortlist.length,
+              lastLoaded: Date.now(),
+            })
+          );
+        } catch {}
       } catch {
         // ignore error
       }
@@ -399,9 +433,9 @@ export default function DashboardPage() {
 
     if (total === 0) {
       return [
-        { label: 'TikTok', percent: 55, color: '#2563EB' },
-        { label: 'Instagram', percent: 30, color: '#06B6D4' },
-        { label: 'Facebook', percent: 15, color: '#10B981' },
+        { label: 'TikTok', percent: 0, color: '#2563EB' },
+        { label: 'Instagram', percent: 0, color: '#06B6D4' },
+        { label: 'Facebook', percent: 0, color: '#10B981' },
       ];
     }
 
@@ -879,10 +913,10 @@ export default function DashboardPage() {
                       paddingBottom: 18,
                     }}
                   >
-                    <span>{fmtNum(totalReach * 1.5 || 300000)}</span>
-                    <span>{fmtNum(totalReach || 200000)}</span>
-                    <span>{fmtNum(totalReach * 0.6 || 100000)}</span>
-                    <span>{fmtNum(totalReach * 0.3 || 50000)}</span>
+                    <span>{totalReach > 0 ? fmtNum(Math.round(totalReach * 1.5)) : '0'}</span>
+                    <span>{totalReach > 0 ? fmtNum(totalReach) : '0'}</span>
+                    <span>{totalReach > 0 ? fmtNum(Math.round(totalReach * 0.6)) : '0'}</span>
+                    <span>{totalReach > 0 ? fmtNum(Math.round(totalReach * 0.3)) : '0'}</span>
                     <span>0</span>
                   </div>
 

@@ -42,7 +42,6 @@ import { mapApiCampaignToUi } from '../../components/dashboard/CampaignTable';
 import type { Campaign } from '../../data/mockData';
 import './CampaignDetailPage.css';
 
-import { DEFAULT_CAMPAIGNS } from './CampaignPage';
 import type { CampaignItemUI } from './CampaignPage';
 
 const { Title, Text } = Typography;
@@ -84,7 +83,7 @@ export default function CampaignDetailPage() {
     (location.state as any)?.id ||
     (location.state as any)?.campaignId ||
     sessionStorage.getItem('current_campaign_id') ||
-    DEFAULT_CAMPAIGNS[0].id;
+    '';
 
   // Cập nhật sessionStorage khi có paramId mà không gây remount lặp
   useEffect(() => {
@@ -104,7 +103,7 @@ export default function CampaignDetailPage() {
         if (parsed && (parsed.id === resolvedId || !resolvedId)) return parsed;
       }
     } catch {}
-    return DEFAULT_CAMPAIGNS.find((c) => c.id === resolvedId) || DEFAULT_CAMPAIGNS[0];
+    return null;
   })();
 
   const cached = campaignDetailCache.get(resolvedId);
@@ -246,20 +245,20 @@ export default function CampaignDetailPage() {
   }, [resolvedId]);
 
   const campaignData: Campaign = campaign || {
-    id: resolvedId || DEFAULT_CAMPAIGNS[0].id,
-    title: rawCampaign?.name || passedItem?.name || DEFAULT_CAMPAIGNS[0].name,
-    tags: rawCampaign?.niches || passedItem?.niches || DEFAULT_CAMPAIGNS[0].niches,
-    thumbnail: passedItem?.thumbnail || DEFAULT_CAMPAIGNS[0].thumbnail,
+    id: resolvedId || passedItem?.id || '',
+    title: rawCampaign?.name || passedItem?.name || 'Chiến dịch',
+    tags: rawCampaign?.niches || passedItem?.niches || ['Nội dung đa dạng'],
+    thumbnail: passedItem?.thumbnail || 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80',
     status: currentStatus,
     statusText: currentStatus === 'running' ? 'Đang triển khai' : currentStatus === 'completed' ? 'Đã hoàn thành' : 'Bản nháp',
     creatorsCount: participatingCreators.length || passedItem?.creatorsCount || 0,
-    reach: '500K+',
-    reachNumber: 500000,
-    engagement: '5.2%',
-    engagementNumber: 5.2,
-    spent: rawCampaign?.budgetMax ? `${(rawCampaign.budgetMax / 1_000_000).toFixed(0)}M ₫` : (passedItem?.budgetFormatted || '200.000.000 ₫'),
-    spentNumber: rawCampaign?.budgetMax || passedItem?.budgetRaw || 200000000,
-    date: rawCampaign?.startDate ? `${new Date(rawCampaign.startDate).toLocaleDateString('vi-VN')} – ${rawCampaign.endDate ? new Date(rawCampaign.endDate).toLocaleDateString('vi-VN') : ''}` : (passedItem?.dateRange || '15 Jun 2026 – 31 Aug 2026'),
+    reach: '0',
+    reachNumber: 0,
+    engagement: '0%',
+    engagementNumber: 0,
+    spent: rawCampaign?.budgetMax ? `${(rawCampaign.budgetMax / 1_000_000).toFixed(0)}M ₫` : (passedItem?.budgetFormatted || '0 ₫'),
+    spentNumber: rawCampaign?.budgetMax || passedItem?.budgetRaw || 0,
+    date: rawCampaign?.startDate ? `${new Date(rawCampaign.startDate).toLocaleDateString('vi-VN')} – ${rawCampaign.endDate ? new Date(rawCampaign.endDate).toLocaleDateString('vi-VN') : ''}` : (passedItem?.dateRange || 'Thời gian linh hoạt'),
   };
 
   // Handle Lifecycle actions
