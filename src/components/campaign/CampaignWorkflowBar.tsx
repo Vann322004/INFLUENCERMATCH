@@ -2,14 +2,10 @@ import React, { useState } from 'react';
 import { Select, Button, Badge, Tooltip } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
-  CheckCircleFilled,
-  CompassOutlined,
-  UnorderedListOutlined,
-  AimOutlined,
-  TeamOutlined,
+  CheckOutlined,
   RightOutlined,
-  DownOutlined,
   UpOutlined,
+  DownOutlined,
 } from '@ant-design/icons';
 
 export type WorkflowStep = 'create' | 'discovery' | 'shortlist' | 'recommendation' | 'crm';
@@ -37,51 +33,53 @@ export default function CampaignWorkflowBar({
   const activeId = campaignId || availableCampaigns[0]?.id || 'current';
   const displayName = campaignName || availableCampaigns.find((c) => c.id === activeId)?.name || 'Chiến dịch hiện tại';
 
-  // 5 bước quy trình ngắn gọn, rõ ràng
-  const steps: { key: WorkflowStep; title: string; icon: React.ReactNode; path: string }[] = [
+  // 5 bước quy trình dạng tiến trình số chuẩn mực
+  const steps: { key: WorkflowStep; stepNum: number; title: string; path: string }[] = [
     {
       key: 'create',
+      stepNum: 1,
       title: 'Tạo Brief',
-      icon: <CheckCircleFilled style={{ color: currentStep === 'create' ? '#FFFFFF' : '#10B981', fontSize: 13 }} />,
       path: '/campaigns/create',
     },
     {
       key: 'discovery',
+      stepNum: 2,
       title: 'Khám phá KOC',
-      icon: <CompassOutlined style={{ fontSize: 13 }} />,
       path: `/creators${activeId !== 'current' ? `?campaignId=${activeId}` : ''}`,
     },
     {
       key: 'shortlist',
+      stepNum: 3,
       title: 'Danh sách chọn',
-      icon: <UnorderedListOutlined style={{ fontSize: 13 }} />,
       path: `/creators/shortlist${activeId !== 'current' ? `?campaignId=${activeId}` : ''}`,
     },
     {
       key: 'recommendation',
+      stepNum: 4,
       title: 'Đề xuất AI',
-      icon: <AimOutlined style={{ fontSize: 13 }} />,
       path: activeId !== 'current' ? `/campaign-management/${activeId}?tab=recommendation` : '/recommendations?tab=recommendation',
     },
     {
       key: 'crm',
+      stepNum: 5,
       title: 'Tiếp cận CRM',
-      icon: <TeamOutlined style={{ fontSize: 13 }} />,
       path: activeId !== 'current' ? `/campaign-management/${activeId}` : '/crm',
     },
   ];
+
+  const currentIdx = steps.findIndex((s) => s.key === currentStep);
 
   const handleStepClick = (step: typeof steps[0]) => {
     navigate(step.path);
   };
 
-  // Trạng thái thu nhỏ (Mini Floating Pill)
+  // Trạng thái thu gọn (Mini Pill)
   if (collapsed) {
     return (
       <div
         style={{
           position: 'fixed',
-          bottom: 20,
+          bottom: 16,
           left: 'calc(50% + 120px)',
           transform: 'translateX(-50%)',
           zIndex: 1000,
@@ -93,57 +91,58 @@ export default function CampaignWorkflowBar({
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 8,
-            padding: '8px 16px',
-            background: 'rgba(15, 23, 42, 0.92)',
+            gap: 6,
+            height: 32,
+            padding: '0 14px',
+            background: 'rgba(15, 23, 42, 0.9)',
             backdropFilter: 'blur(12px)',
             color: '#FFFFFF',
             border: 'none',
             borderRadius: 999,
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
             cursor: 'pointer',
-            fontSize: 12.5,
+            fontSize: 12,
             fontWeight: 600,
-            transition: 'all 0.2s ease',
           }}
         >
-          <span>🎯 Quy trình chiến dịch</span>
-          <UpOutlined style={{ fontSize: 11 }} />
+          <span>🎯 Tiến trình: {currentIdx + 1}/5</span>
+          <UpOutlined style={{ fontSize: 10 }} />
         </button>
       </div>
     );
   }
 
-  // Trạng thái chuẩn: 1 hàng duy nhất cực kỳ thanh mảnh, hợp lý và êm mắt
+  // Dạng Thanh Tiến Trình Siêu Gọn (Slimline Progress Bar - Height 36px)
   return (
     <div
       className="im-workflow-bottom-dock"
       style={{
         position: 'fixed',
-        bottom: 20,
+        bottom: 16,
         left: 'calc(50% + 120px)',
         transform: 'translateX(-50%)',
         width: 'fit-content',
         maxWidth: 'calc(100vw - 280px)',
+        height: 38,
         zIndex: 1000,
-        background: 'rgba(255, 255, 255, 0.96)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        background: 'rgba(255, 255, 255, 0.94)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
         border: '1px solid #E2E8F0',
         borderRadius: 999,
-        boxShadow: '0 8px 30px -4px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04)',
-        padding: '5px 8px 5px 14px',
+        boxShadow: '0 6px 20px -2px rgba(15, 23, 42, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04)',
+        padding: '0 6px 0 12px',
         boxSizing: 'border-box',
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
+        gap: 8,
         flexWrap: 'nowrap',
         whiteSpace: 'nowrap',
         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
-      {/* 1. Chiến dịch đang chọn */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+      {/* 1. Tên chiến dịch nhỏ gọn */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
         {availableCampaigns.length > 0 ? (
           <Select
             value={activeId}
@@ -160,11 +159,11 @@ export default function CampaignWorkflowBar({
             popupMatchSelectWidth={false}
             bordered={false}
             size="small"
-            style={{ width: 170 }}
+            style={{ width: 145 }}
             options={availableCampaigns.map((c) => ({
               value: c.id,
               label: (
-                <span style={{ fontWeight: 700, color: '#0F172A', fontSize: 12.5 }}>
+                <span style={{ fontWeight: 700, color: '#0F172A', fontSize: 12 }}>
                   🎯 {c.name}
                 </span>
               ),
@@ -174,13 +173,12 @@ export default function CampaignWorkflowBar({
           <span
             style={{
               fontWeight: 700,
-              fontSize: 12.5,
+              fontSize: 12,
               color: '#0F172A',
-              maxWidth: 160,
+              maxWidth: 140,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
-              display: 'inline-block',
             }}
             title={displayName}
           >
@@ -190,20 +188,20 @@ export default function CampaignWorkflowBar({
       </div>
 
       {/* Vạch ngăn cách */}
-      <div style={{ height: 18, width: 1, background: '#E2E8F0', flexShrink: 0 }} />
+      <div style={{ height: 14, width: 1, background: '#E2E8F0', flexShrink: 0 }} />
 
-      {/* 2. Stepper 5 bước trên 1 hàng */}
+      {/* 2. Thanh tiến trình 5 nấc siêu gọn */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 3,
+          gap: 2,
           flexShrink: 0,
         }}
       >
         {steps.map((st, idx) => {
           const isActive = st.key === currentStep;
-          const isCompleted = steps.findIndex((s) => s.key === currentStep) > idx;
+          const isCompleted = currentIdx > idx;
 
           return (
             <React.Fragment key={st.key}>
@@ -213,23 +211,48 @@ export default function CampaignWorkflowBar({
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 5,
-                  padding: isActive ? '5px 12px' : '5px 8px',
+                  gap: 4,
+                  height: 26,
+                  padding: isActive ? '0 10px' : '0 6px',
                   borderRadius: 999,
                   border: 'none',
                   cursor: 'pointer',
-                  background: isActive
-                    ? 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)'
-                    : 'transparent',
+                  background: isActive ? '#4F46E5' : 'transparent',
                   color: isActive ? '#FFFFFF' : isCompleted ? '#4F46E5' : '#64748B',
                   fontWeight: isActive ? 700 : isCompleted ? 600 : 500,
-                  fontSize: 12,
-                  boxShadow: isActive ? '0 2px 8px rgba(79, 70, 229, 0.25)' : 'none',
+                  fontSize: 11.5,
                   transition: 'all 0.15s ease',
                 }}
               >
-                <span>{st.icon}</span>
+                {/* Số thứ tự hoặc Icon đã hoàn thành */}
+                <span
+                  style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 9.5,
+                    fontWeight: 800,
+                    background: isActive
+                      ? '#FFFFFF'
+                      : isCompleted
+                      ? '#EEF2FF'
+                      : '#F1F5F9',
+                    color: isActive
+                      ? '#4F46E5'
+                      : isCompleted
+                      ? '#4F46E5'
+                      : '#94A3B8',
+                  }}
+                >
+                  {isCompleted ? <CheckOutlined style={{ fontSize: 9 }} /> : st.stepNum}
+                </span>
+
                 <span>{st.title}</span>
+
+                {/* Badge số KOC trong danh sách chọn */}
                 {st.key === 'shortlist' && typeof shortlistCount === 'number' && shortlistCount > 0 && (
                   <Badge
                     count={shortlistCount}
@@ -238,10 +261,11 @@ export default function CampaignWorkflowBar({
                       color: isActive ? '#4F46E5' : '#FFFFFF',
                       fontWeight: 800,
                       boxShadow: 'none',
-                      fontSize: 10,
-                      height: 16,
-                      lineHeight: '16px',
-                      minWidth: 16,
+                      fontSize: 9.5,
+                      height: 15,
+                      lineHeight: '15px',
+                      minWidth: 15,
+                      padding: '0 4px',
                     }}
                   />
                 )}
@@ -250,7 +274,7 @@ export default function CampaignWorkflowBar({
               {idx < steps.length - 1 && (
                 <RightOutlined
                   style={{
-                    fontSize: 8,
+                    fontSize: 7.5,
                     color: isCompleted ? '#818CF8' : '#CBD5E1',
                     margin: '0 1px',
                   }}
@@ -262,27 +286,26 @@ export default function CampaignWorkflowBar({
       </div>
 
       {/* Vạch ngăn cách */}
-      <div style={{ height: 18, width: 1, background: '#E2E8F0', flexShrink: 0 }} />
+      <div style={{ height: 14, width: 1, background: '#E2E8F0', flexShrink: 0 }} />
 
-      {/* 3. Nút chuyển tiếp nhanh (Next Action) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+      {/* 3. Nút chuyển tiếp nấc kế tiếp */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
         {currentStep === 'discovery' && (
           <Button
             type="primary"
             size="small"
             onClick={() => navigate(`/creators/shortlist${activeId !== 'current' ? `?campaignId=${activeId}` : ''}`)}
             style={{
-              height: 32,
+              height: 26,
               borderRadius: 999,
               fontWeight: 700,
-              fontSize: 12,
-              background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+              fontSize: 11.5,
+              background: '#4F46E5',
               border: 'none',
-              boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
-              padding: '0 14px',
+              padding: '0 12px',
             }}
           >
-            Sang Danh sách chọn {typeof shortlistCount === 'number' && shortlistCount > 0 ? `(${shortlistCount})` : ''} ➔
+            Sang Danh sách {typeof shortlistCount === 'number' && shortlistCount > 0 ? `(${shortlistCount})` : ''} ➔
           </Button>
         )}
 
@@ -295,14 +318,13 @@ export default function CampaignWorkflowBar({
               navigate(target ? `/campaign-management/${target}?tab=recommendation` : '/recommendations?tab=recommendation');
             }}
             style={{
-              height: 32,
+              height: 26,
               borderRadius: 999,
               fontWeight: 700,
-              fontSize: 12,
-              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+              fontSize: 11.5,
+              background: '#4F46E5',
               border: 'none',
-              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
-              padding: '0 14px',
+              padding: '0 12px',
             }}
           >
             Sang Đề xuất AI ➔
@@ -318,14 +340,13 @@ export default function CampaignWorkflowBar({
               navigate(target ? `/campaign-management/${target}` : '/crm');
             }}
             style={{
-              height: 32,
+              height: 26,
               borderRadius: 999,
               fontWeight: 700,
-              fontSize: 12,
+              fontSize: 11.5,
               background: '#059669',
               border: 'none',
-              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)',
-              padding: '0 14px',
+              padding: '0 12px',
             }}
           >
             Sang Tiếp cận CRM ➔
@@ -333,7 +354,7 @@ export default function CampaignWorkflowBar({
         )}
 
         {/* Nút thu nhỏ */}
-        <Tooltip title="Thu nhỏ thanh điều hướng">
+        <Tooltip title="Ẩn thanh tiến trình">
           <button
             type="button"
             onClick={() => setCollapsed(true)}
@@ -342,15 +363,14 @@ export default function CampaignWorkflowBar({
               background: 'transparent',
               color: '#94A3B8',
               cursor: 'pointer',
-              padding: '4px 6px',
+              padding: '2px 4px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: '50%',
-              transition: 'color 0.2s',
             }}
           >
-            <DownOutlined style={{ fontSize: 11 }} />
+            <DownOutlined style={{ fontSize: 9.5 }} />
           </button>
         </Tooltip>
       </div>
