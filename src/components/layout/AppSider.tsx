@@ -193,9 +193,7 @@ export default function AppSider({ collapsed: initialCollapsed = false }: AppSid
   };
 
   const userDropdownItems: MenuProps['items'] = [
-    { key: 'profile', icon: <UserOutlined />, label: 'Hồ sơ Thương hiệu', onClick: () => navigate('/brand-profile') },
-    { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt hệ thống', onClick: () => navigate('/subscription') },
-    { key: 'billing', icon: <CrownOutlined />, label: 'Quản lý gói & Hạn mức', onClick: () => navigate('/subscription') },
+    { key: 'profile', icon: <UserOutlined />, label: 'Hồ sơ thương hiệu', onClick: () => navigate('/brand-profile') },
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, danger: true, label: 'Đăng xuất', onClick: handleLogout },
   ];
@@ -303,12 +301,12 @@ export default function AppSider({ collapsed: initialCollapsed = false }: AppSid
 
           {/* Bottom Section: Settings Icon + Brand User Avatar */}
           <div style={{ marginTop: 'auto', paddingTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <ChatGptTooltip title="Cài đặt hệ thống">
+            <ChatGptTooltip title="Hồ sơ & Cài đặt">
               <button
                 type="button"
-                className={`sidebar-rail-btn ${activeKey === 'subscription' ? 'active' : ''}`}
-                onClick={() => navigate('/subscription')}
-                aria-label="Cài đặt hệ thống"
+                className={`sidebar-rail-btn ${activeKey === 'profile' ? 'active' : ''}`}
+                onClick={() => navigate('/brand-profile')}
+                aria-label="Hồ sơ & Cài đặt"
               >
                 <SettingOutlined style={{ fontSize: 17 }} />
               </button>

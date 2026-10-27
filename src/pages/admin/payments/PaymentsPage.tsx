@@ -184,7 +184,16 @@ export default function PaymentsPage() {
   return (
     <div>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
+          gap: 12,
+          marginBottom: 20,
+        }}
+      >
         <div>
           <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>Payments & Transaction Management</div>
           <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
@@ -194,7 +203,7 @@ export default function PaymentsPage() {
 
         <Button
           icon={<DownloadOutlined />}
-          onClick={() => message.success('Đã xuất báo cáo giao dịch (CSV)!')}
+          onClick={() => message.success('Đang xuất báo cáo giao dịch (CSV)...')}
           style={{ borderRadius: 8, fontWeight: 600 }}
         >
           Xuất báo cáo
@@ -203,8 +212,8 @@ export default function PaymentsPage() {
 
       {/* Financial KPI Cards */}
       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
-        <Col xs={12} sm={6}>
-          <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>DOANH THU THỰC NHẬN</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#10B981', marginTop: 4 }}>
               {(totalRevenue / 1e6).toFixed(2)} tr
@@ -213,8 +222,8 @@ export default function PaymentsPage() {
           </Card>
         </Col>
 
-        <Col xs={12} sm={6}>
-          <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>ĐANG CHỜ THANH TOÁN</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#3B82F6', marginTop: 4 }}>
               {(totalPending / 1e6).toFixed(2)} tr
@@ -223,8 +232,8 @@ export default function PaymentsPage() {
           </Card>
         </Col>
 
-        <Col xs={12} sm={6}>
-          <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>TIỀN ĐÃ HOÀN TRẢ</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#EF4444', marginTop: 4 }}>
               {(totalRefunded / 1e6).toFixed(2)} tr
@@ -233,8 +242,8 @@ export default function PaymentsPage() {
           </Card>
         </Col>
 
-        <Col xs={12} sm={6}>
-          <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>TỔNG GIAO DỊCH</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#6366F1', marginTop: 4 }}>
               {transactions.length} đơn
@@ -248,7 +257,7 @@ export default function PaymentsPage() {
       <Card
         bordered={false}
         style={{ borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', overflow: 'hidden' }}
-        bodyStyle={{ padding: 20 }}
+        bodyStyle={{ padding: '16px 20px' }}
       >
         {/* Filters */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
@@ -257,14 +266,14 @@ export default function PaymentsPage() {
             prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ width: 280, borderRadius: 8 }}
+            style={{ flex: '1 1 240px', minWidth: 200, borderRadius: 8 }}
             allowClear
           />
 
           <Select
             value={statusFilter}
             onChange={setStatusFilter}
-            style={{ width: 160 }}
+            style={{ flex: '0 1 160px', minWidth: 140 }}
           >
             <Select.Option value="all">Tất cả trạng thái</Select.Option>
             <Select.Option value="paid">Thành công</Select.Option>
@@ -276,22 +285,23 @@ export default function PaymentsPage() {
           <Select
             value={gatewayFilter}
             onChange={setGatewayFilter}
-            style={{ width: 160 }}
+            style={{ flex: '0 1 160px', minWidth: 140 }}
           >
             <Select.Option value="all">Tất cả cổng</Select.Option>
             <Select.Option value="VNPAY">VNPAY</Select.Option>
             <Select.Option value="MoMo">MoMo</Select.Option>
-            <Select.Option value="Bank Transfer">Chuyển khoản ngân hàng</Select.Option>
+            <Select.Option value="Bank Transfer">Chuyển khoản</Select.Option>
           </Select>
         </div>
 
-        {/* Table */}
+        {/* Table with responsive horizontal scroll */}
         <Table
           columns={columns}
           dataSource={filtered}
           rowKey="id"
-          pagination={{ pageSize: 8, showTotal: (t) => `Tổng số ${t} giao dịch` }}
+          pagination={{ pageSize: 8, showTotal: (t) => `Tổng số ${t} giao dịch`, responsive: true }}
           size="middle"
+          scroll={{ x: 860 }}
         />
       </Card>
 

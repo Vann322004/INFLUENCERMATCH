@@ -18,15 +18,46 @@ interface PageResponsePlan {
   last: boolean;
 }
 
+let cachedPlans: { data: PlanResponse[]; timestamp: number } | null = null;
+let inFlightPlansPromise: Promise<PlanResponse[]> | null = null;
+const PLANS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export const subscriptionService = {
   /**
-   * Get all active subscription plans.
+   * Get all active subscription plans (with 5-minute memory cache & deduplication).
    */
-  async getPlans(page = 0, size = 20): Promise<PlanResponse[]> {
-    const response = await apiClient.get<ApiResponse<PageResponsePlan>>('/plans', {
-      params: { page, size },
-    });
-    return response.data?.data?.content || [];
+  async getPlans(page = 0, size = 20, forceRefresh = false): Promise<PlanResponse[]> {
+    if (!forceRefresh && cachedPlans && Date.now() - cachedPlans.timestamp < PLANS_CACHE_TTL) {
+      return cachedPlans.data;
+    }
+
+    if (inFlightPlansPromise) {
+      return inFlightPlansPromise;
+    }
+
+    inFlightPlansPromise = (async () => {
+      try {
+        const response = await apiClient.get<ApiResponse<PageResponsePlan>>('/plans', {
+          params: { page, size },
+        });
+        const list = response.data?.data?.content || [];
+        if (list.length > 0) {
+          cachedPlans = { data: list, timestamp: Date.now() };
+        }
+        return list;
+      } finally {
+        inFlightPlansPromise = null;
+      }
+    })();
+
+    return inFlightPlansPromise;
+  },
+
+  /**
+   * Clear in-memory plans cache when plans are updated or refreshed.
+   */
+  clearPlansCache() {
+    cachedPlans = null;
   },
 
   /**
@@ -41,6 +72,7 @@ export const subscriptionService = {
    * Create a new plan (Admin).
    */
   async createPlan(payload: PlanCreateRequest): Promise<PlanResponse> {
+    cachedPlans = null;
     const response = await apiClient.post<ApiResponse<PlanResponse>>('/plans', payload);
     return response.data.data;
   },
@@ -49,6 +81,7 @@ export const subscriptionService = {
    * Update an existing plan (Admin).
    */
   async updatePlan(id: string, payload: PlanUpdateRequest): Promise<PlanResponse> {
+    cachedPlans = null;
     const response = await apiClient.put<ApiResponse<PlanResponse>>(`/plans/${id}`, payload);
     return response.data.data;
   },
@@ -57,6 +90,7 @@ export const subscriptionService = {
    * Delete a plan by ID (Admin).
    */
   async deletePlan(id: string): Promise<void> {
+    cachedPlans = null;
     await apiClient.delete(`/plans/${id}`);
   },
 

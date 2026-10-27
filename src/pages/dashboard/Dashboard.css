@@ -668,3 +668,74 @@
   font-weight: 800;
   flex-shrink: 0;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   RESPONSIVE MEDIA QUERIES (Mobile, Tablet, Desktop)
+   ════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 991px) {
+  .im-welcome-hero {
+    padding: 24px 24px !important;
+    min-height: auto !important;
+  }
+  .im-welcome-graphic-col {
+    display: none !important;
+  }
+  .im-dashboard-card {
+    height: auto !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .im-welcome-hero {
+    padding: 20px 18px !important;
+    border-radius: 16px !important;
+  }
+  .im-welcome-heading {
+    font-size: 21px !important;
+    line-height: 1.3 !important;
+  }
+  .im-welcome-desc {
+    font-size: 13px !important;
+    margin-bottom: 16px !important;
+  }
+  .im-welcome-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+  .im-welcome-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .im-kpi-card {
+    padding: 16px 16px !important;
+  }
+  .im-kpi-val {
+    font-size: 23px !important;
+  }
+  .im-kpi-title {
+    font-size: 13px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .im-campaign-progress-box {
+    display: none !important;
+  }
+  .im-campaign-row-item {
+    padding: 8px 6px !important;
+  }
+  .im-campaign-thumb {
+    width: 30px !important;
+    height: 30px !important;
+    margin-right: 8px !important;
+  }
+  .im-activity-card-item {
+    padding: 8px 6px !important;
+  }
+  .im-kpi-body {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+}

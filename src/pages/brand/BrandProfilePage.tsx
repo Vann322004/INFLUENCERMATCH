@@ -59,12 +59,12 @@ const EMPTY_BRAND_PROFILE: BrandProfileState = {
   coverImage: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop&q=80',
   website: '',
   location: '',
-  industry: 'Mỹ phẩm & Chăm sóc cá nhân',
-  subCategories: ['Chăm sóc da'],
-  targetLocations: ['Toàn quốc'],
-  targetAgeRange: ['18 - 24 tuổi', '25 - 34 tuổi'],
-  brandTone: 'Thân thiện',
-  preferredPlatforms: ['TIKTOK', 'INSTAGRAM', 'FACEBOOK'],
+  industry: '',
+  subCategories: [],
+  targetLocations: [],
+  targetAgeRange: [],
+  brandTone: '',
+  preferredPlatforms: [],
 };
 
 export default function BrandProfilePage() {
@@ -90,26 +90,14 @@ export default function BrandProfilePage() {
             ...prev,
             brandName: brand.businessName || '',
             description: brand.description || '',
-            industry: brand.industry || prev.industry,
-            subCategories:
-              brand.productCategories && brand.productCategories.length > 0
-                ? brand.productCategories
-                : prev.subCategories,
+            industry: brand.industry || '',
+            subCategories: brand.productCategories || [],
             website: brand.website || '',
             location: brand.location || '',
-            targetLocations:
-              brand.targetMarkets && brand.targetMarkets.length > 0
-                ? brand.targetMarkets
-                : prev.targetLocations,
-            targetAgeRange:
-              brand.targetAudiences && brand.targetAudiences.length > 0
-                ? brand.targetAudiences
-                : prev.targetAgeRange,
-            brandTone: brand.brandTone || prev.brandTone,
-            preferredPlatforms:
-              brand.preferredPlatforms && brand.preferredPlatforms.length > 0
-                ? brand.preferredPlatforms
-                : prev.preferredPlatforms,
+            targetLocations: brand.targetMarkets || [],
+            targetAgeRange: brand.targetAudiences || [],
+            brandTone: brand.brandTone || '',
+            preferredPlatforms: brand.preferredPlatforms || [],
           }));
         }
       } catch (err) {
@@ -224,12 +212,8 @@ export default function BrandProfilePage() {
         </div>
       </div>
 
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <Spin size="large" description="Đang tải dữ liệu hồ sơ thương hiệu từ máy chủ..." />
-        </div>
-      ) : (
-        <>
+      <Spin spinning={loading} tip="Đang đồng bộ dữ liệu hồ sơ thương hiệu...">
+        <div style={{ marginTop: 8 }}>
           {/* 2. Cover Banner & Header Card */}
           <div className="brand-cover-wrapper">
             <img src={profile.coverImage} alt="Cover" className="brand-cover-img" />
@@ -629,8 +613,8 @@ export default function BrandProfilePage() {
               ]}
             />
           </Card>
-        </>
-      )}
+        </div>
+      </Spin>
     </div>
   );
 }

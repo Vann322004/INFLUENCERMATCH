@@ -46,7 +46,6 @@ import {
 } from '../../data/mockData';
 import { subscriptionService } from '../../services/api/subscriptionService';
 import { brandService } from '../../services/api/brandService';
-import { campaignService } from '../../services/api/campaignService';
 import type { PlanResponse, SubscriptionResponse } from '../../types/api/subscription.types';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getErrorMessage, getAccessToken } from '../../services/apiClient';
@@ -82,14 +81,14 @@ export default function SubscriptionPage() {
 
   // Active Subscription Info from API
   const [subInfo, setSubInfo] = useState({
-    currentPlanName: 'Professional',
-    renewalDate: '18 thg 10, 2026',
-    daysRemaining: 18,
-    isActive: true,
+    currentPlanName: '',
+    renewalDate: '',
+    daysRemaining: 0,
+    isActive: false,
     usedCampaigns: 0,
-    totalCampaigns: 15,
+    totalCampaigns: 0,
     usedRefresh: 0,
-    totalRefresh: 50,
+    totalRefresh: 0,
   });
 
   // Dynamic Quota State to allow interactive add-on quota buying
@@ -116,20 +115,37 @@ export default function SubscriptionPage() {
     const loadData = async () => {
       setLoadingPlans(true);
       try {
-        const [remotePlans, brand, campaigns] = await Promise.all([
+        const cachedBrandId = (() => {
+          try {
+            return localStorage.getItem('influencermatch_brand_id');
+          } catch {
+            return null;
+          }
+        })();
+
+        // Bắn đồng thời cả 3 request cùng 1 lúc song song
+        const [remotePlans, brand, preloadedSubs] = await Promise.all([
           subscriptionService.getPlans().catch((err) => {
             console.warn('[SubscriptionPage] Không thể lấy plans từ API:', err);
             return [];
           }),
           brandService.getMyBrand().catch(() => null),
-          campaignService.getCampaigns(0, 100).catch(() => []),
+          cachedBrandId
+            ? subscriptionService.getBrandSubscriptions(cachedBrandId).catch(() => [])
+            : Promise.resolve([]),
         ]);
 
         let activeSub: SubscriptionResponse | null = null;
         let hadTrial = false;
-        if (brand?.id) {
-          setCurrentBrandId(brand.id);
-          const subs = await subscriptionService.getBrandSubscriptions(brand.id);
+        const effectiveBrandId = brand?.id || cachedBrandId;
+
+        if (effectiveBrandId) {
+          setCurrentBrandId(effectiveBrandId);
+          const subs =
+            preloadedSubs && preloadedSubs.length > 0
+              ? preloadedSubs
+              : await subscriptionService.getBrandSubscriptions(effectiveBrandId).catch(() => []);
+
           activeSub = (subs || []).find((s) => s.status === 'ACTIVE') || null;
           hadTrial = (subs || []).some((s) => {
             const p = s.plan;
@@ -207,7 +223,7 @@ export default function SubscriptionPage() {
               year: 'numeric',
             });
             const totalCamp = activeSub.plan?.campaignQuota || 15;
-            const usedCamp = activeSub.usedCampaignQuota || campaigns.length || 0;
+            const usedCamp = activeSub.usedCampaignQuota || 0;
             const totalReco = activeSub.plan?.recommendationQuota || 500;
             const usedReco = activeSub.usedRecommendationQuota || 0;
             const totalRef = activeSub.plan?.refreshQuota || 50;
@@ -278,7 +294,7 @@ export default function SubscriptionPage() {
             ]);
           } else {
             // Chưa có subscription hoạt động
-            const usedCamp = campaigns.length;
+            const usedCamp = 0;
             setSubInfo({
               currentPlanName: hadTrial ? 'Đã hết hạn dùng thử' : 'Chưa kích hoạt',
               renewalDate: 'Chưa kích hoạt',
@@ -575,7 +591,12 @@ export default function SubscriptionPage() {
 
       {/* 2. Current Subscription Highlight Card */}
       <div className="sub-current-card">
-        <Row gutter={[20, 20]} align="middle">
+        {loadingPlans ? (
+          <div style={{ textAlign: 'center', padding: '36px 0', color: '#FFFFFF' }}>
+            <Spin size="large" tip="Đang tải thông tin gói dịch vụ..." />
+          </div>
+        ) : (
+          <Row gutter={[20, 20]} align="middle">
           <Col xs={24} md={15}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <span
@@ -674,6 +695,7 @@ export default function SubscriptionPage() {
             </div>
           </Col>
         </Row>
+        )}
       </div>
 
       {/* 3. Main Navigation Tabs */}
