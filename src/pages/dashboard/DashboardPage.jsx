@@ -164,10 +164,10 @@ export default function DashboardPage() {
         const campIdsToQuery = new Set(
           validCList
             .map((c) => c.id)
-            .filter((id) => Boolean(id) && !id.startsWith('22222222') && !id.startsWith('camp_mock'))
+            .filter((id) => Boolean(id) && !id.startsWith('camp_mock'))
         );
         const storedCampId = sessionStorage.getItem('current_campaign_id') || localStorage.getItem('IM_SELECTED_CAMPAIGN_ID');
-        if (storedCampId && !storedCampId.startsWith('22222222') && !storedCampId.startsWith('camp_mock')) {
+        if (storedCampId && !storedCampId.startsWith('camp_mock')) {
           campIdsToQuery.add(storedCampId);
         }
 
