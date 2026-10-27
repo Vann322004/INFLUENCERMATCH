@@ -1091,8 +1091,16 @@ export default function CreatorDiscoveryPage() {
     return count;
   }, [selectedPlatform, selectedCategory, followerTier, engagementTier, priceTier, selectedLocation]);
 
-  // Dynamic Real Metrics based on actual creators in system & active filter/campaign state
-  const totalCreatorsCount = creators.length;
+  // Dynamic Real Metrics tailored for Brand: Shortlisted Creators & Campaign Matching
+  const shortlistedCount = useMemo(() => {
+    try {
+      const local = creatorService.getLocalShortlist(selectedCampaignId || 'all');
+      const inStateSaved = creators.filter((c) => c.saved).length;
+      return Math.max(local.length, inStateSaved);
+    } catch {
+      return creators.filter((c) => c.saved).length;
+    }
+  }, [creators, selectedCampaignId]);
 
   const matchingCreatorsCount = useMemo(() => {
     if (matchedCampaign) {
@@ -1565,8 +1573,8 @@ export default function CreatorDiscoveryPage() {
                   width: 38,
                   height: 38,
                   borderRadius: 10,
-                  background: '#EFF6FF',
-                  color: '#2563EB',
+                  background: '#FEF3C7',
+                  color: '#D97706',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1574,13 +1582,13 @@ export default function CreatorDiscoveryPage() {
                   flexShrink: 0,
                 }}
               >
-                <EyeOutlined />
+                <StarFilled />
               </div>
               <div>
                 <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', lineHeight: 1.2 }}>
-                  {loading ? <Spin size="small" /> : totalCreatorsCount.toLocaleString('vi-VN')}
+                  {loading ? <Spin size="small" /> : shortlistedCount.toLocaleString('vi-VN')}
                 </div>
-                <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>Tổng số Creator</div>
+                <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>Creator trong Shortlist</div>
               </div>
             </div>
           </Card>
