@@ -44,6 +44,7 @@ import {
   UserOutlined,
   WalletOutlined,
   CopyOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
@@ -610,7 +611,7 @@ export default function CampaignDetailPage() {
 
           <p className="cdetail-hero-desc">
             {rawCampaign?.description ||
-              'Ra mắt kem chống nắng dưỡng trắng dành cho mùa hè 2026, tập trung nâng cao nhận thức thương hiệu và giới thiệu sản phẩm đến nhóm khách hàng mục tiêu thông qua các nhà sáng tạo nội dung trên TikTok và Instagram.'}
+              'Chiến dịch ra mắt kem chống nắng dưỡng trắng hè 2026, tiếp cận tệp khách hàng trẻ qua TikTok & Instagram.'}
           </p>
         </div>
 
@@ -619,7 +620,7 @@ export default function CampaignDetailPage() {
           <div className="cdetail-hero-workflow">
             <span className="cdetail-workflow-label">Quy trình:</span>
             <span className="cdetail-workflow-pill active">
-              <CompassOutlined /> 1. Khám phá KOC AI
+              <SearchOutlined /> 1. Tìm kiếm KOC
             </span>
             <span className="cdetail-workflow-sep">➔</span>
             <span className="cdetail-workflow-pill active">
@@ -627,12 +628,12 @@ export default function CampaignDetailPage() {
             </span>
             <span className="cdetail-workflow-sep">➔</span>
             <span className="cdetail-workflow-pill">
-              <WalletOutlined /> 3. Nghiệm thu & Thanh toán
+              <WalletOutlined /> 3. Quyết toán chi phí
             </span>
           </div>
 
           <div className="cdetail-hero-actions-group">
-            {/* Nút 1 (Chính): 🧭 Khám phá KOC bằng AI */}
+            {/* Nút 1: Tìm kiếm KOC */}
             <button
               type="button"
               className="cdetail-hero-btn ai-discovery"
@@ -642,8 +643,8 @@ export default function CampaignDetailPage() {
                 navigate(`/discovery?campaignId=${cId}`, { state: { campaignId: cId } });
               }}
             >
-              <CompassOutlined style={{ fontSize: 14 }} />
-              Khám phá KOC bằng AI
+              <SearchOutlined style={{ fontSize: 14 }} />
+              Tìm kiếm KOC
             </button>
 
             {/* Nút 2 (Phụ): 🗂 Tiến độ hợp tác */}
@@ -775,7 +776,7 @@ export default function CampaignDetailPage() {
             </svg>
           </div>
           <div className="cdetail-metric-footer">
-            <span>Tiêu chuẩn lọc ghép nối AI</span>
+            <span>Tiêu chuẩn tương tác ngành</span>
           </div>
         </div>
 
@@ -868,15 +869,15 @@ export default function CampaignDetailPage() {
       <div className="cdetail-tab-content-wrap">
         {/* TAB 1: TỔNG QUAN CHIẾN DỊCH */}
           {activeTab === 'overview' && (
-            <div className="cdetail-overview-layout">
-              {/* Cột trái (62%): Thông tin sản phẩm, Định vị, Mục tiêu truyền thông */}
-              <div className="cdetail-overview-col">
-                {/* Card 1: Sản phẩm trọng tâm & Định vị */}
+            <div className="cdetail-overview-rows">
+              {/* HÀNG 1: Khung đều nhau trên & dưới (Sản phẩm & Thông tin vận hành) */}
+              <div className="cdetail-overview-row">
+                {/* Card 1: Sản phẩm & Thông điệp */}
                 <div className="cdetail-card-modern">
                   <div className="cdetail-card-header">
                     <span className="cdetail-card-title">
                       <FileTextOutlined style={{ color: '#4F46E5' }} />
-                      Sản phẩm trọng tâm & Định vị thương hiệu
+                      Sản phẩm trọng tâm & Định vị
                     </span>
                     <button
                       type="button"
@@ -909,81 +910,31 @@ export default function CampaignDetailPage() {
 
                   {/* Thông điệp then chốt */}
                   <div className="cdetail-bullet-group">
-                    <span className="cdetail-bullet-title">Thông điệp then chốt (Key Message)</span>
+                    <span className="cdetail-bullet-title">Thông điệp then chốt</span>
                     <div className="cdetail-key-message-box">
-                      "Bảo vệ tối đa trước ánh nắng mặt trời - Tự tin nâng tone da sáng hồng tự nhiên suốt ngày dài năng động"
+                      "Bảo vệ toàn diện SPF50+ • Nâng tone sáng hồng tự nhiên suốt ngày dài"
                     </div>
                   </div>
 
                   {/* Đặc tính nổi bật USP */}
                   <div className="cdetail-bullet-group">
-                    <span className="cdetail-bullet-title">Đặc tính nổi bật của sản phẩm (USP)</span>
+                    <span className="cdetail-bullet-title">Đặc tính nổi bật</span>
                     <div className="cdetail-bullet-item">
                       <span className="cdetail-bullet-icon">✓</span>
-                      Chống nắng quang phổ rộng SPF50+ PA++++ bảo vệ da toàn diện trước tia UVA/UVB và ánh sáng xanh
+                      <div><strong>SPF50+ PA++++:</strong> Chống tia UVA/UVB & ánh sáng xanh</div>
                     </div>
                     <div className="cdetail-bullet-item">
                       <span className="cdetail-bullet-icon">✓</span>
-                      Nâng tone trắng hồng tự nhiên, kiềm dầu kiểm soát bã nhờn 8 giờ không gây bết rít hay vệt trắng
+                      <div><strong>Nâng tone tự nhiên:</strong> Kiềm dầu 8 giờ, không bết dính hay vệt trắng</div>
                     </div>
                     <div className="cdetail-bullet-item">
                       <span className="cdetail-bullet-icon">✓</span>
-                      Chiết xuất rau má làm dịu, Niacinamide dưỡng sáng da, lành tính an toàn cho da nhạy cảm
+                      <div><strong>Thành phần dịu nhẹ:</strong> Chiết xuất rau má & Niacinamide cho da nhạy cảm</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Card 2: Mục tiêu chiến dịch & KPI */}
-                <div className="cdetail-card-modern">
-                  <div className="cdetail-card-header">
-                    <span className="cdetail-card-title">
-                      <AimOutlined style={{ color: '#4F46E5' }} />
-                      Mục tiêu chiến dịch & Chỉ số đo lường (KPI)
-                    </span>
-                  </div>
-
-                  <div className="cdetail-bullet-group">
-                    <div className="cdetail-bullet-item">
-                      <span className="cdetail-bullet-icon">🎯</span>
-                      <div>
-                        <strong>Nhận diện thương hiệu:</strong> Tiếp cận tối thiểu 500.000+ lượt xem tự nhiên trên nền tảng TikTok & Instagram
-                      </div>
-                    </div>
-                    <div className="cdetail-bullet-item">
-                      <span className="cdetail-bullet-icon">🎯</span>
-                      <div>
-                        <strong>Cảm nhận chân thực:</strong> KOC review chất kem thực tế trên mặt mộc, thử nghiệm độ bám nước và kiềm dầu
-                      </div>
-                    </div>
-                    <div className="cdetail-bullet-item">
-                      <span className="cdetail-bullet-icon">🎯</span>
-                      <div>
-                        <strong>Tối ưu chuyển đổi:</strong> Đính kèm liên kết giỏ hàng TikTok Shop và voucher độc quyền để thúc đẩy đơn hàng
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="cdetail-bullet-group" style={{ marginTop: 6 }}>
-                    <span className="cdetail-bullet-title">Nền tảng truyền thông ưu tiên</span>
-                    <div className="cdetail-platform-badges">
-                      <span className="cdetail-platform-badge tiktok">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
-                        </svg>
-                        TikTok (Video ngắn 60s - 90s)
-                      </span>
-                      <span className="cdetail-platform-badge instagram">
-                        <InstagramOutlined style={{ fontSize: 12 }} />
-                        Instagram Reels & Story
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Cột phải (38%): Thông tin quản trị & 3 Bước theo luồng nghiệp vụ */}
-              <div className="cdetail-overview-col">
-                {/* Card 1: Thông tin vận hành & Quản trị */}
+                {/* Card 2: Thông tin vận hành & Quản trị */}
                 <div className="cdetail-card-modern">
                   <div className="cdetail-card-header">
                     <span className="cdetail-card-title">
@@ -1019,20 +970,18 @@ export default function CampaignDetailPage() {
                           src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&auto=format&fit=crop&q=80"
                           size={22}
                         />
-                        Phòng Tiếp thị Thương hiệu (Brand Marketing)
+                        Brand Marketing Team
                       </span>
                     </div>
 
                     <div className="cdetail-ops-row">
-                      <span className="cdetail-ops-label">Đối tượng khán giả</span>
-                      <span className="cdetail-ops-value">
-                        {(rawCampaign?.targetAudiences || ['Nữ 18–28', 'Dân văn phòng', 'Học sinh sinh viên']).join(', ')}
-                      </span>
+                      <span className="cdetail-ops-label">Khán giả mục tiêu</span>
+                      <span className="cdetail-ops-value">Nữ 18–28 (Trẻ, năng động)</span>
                     </div>
 
                     <div className="cdetail-ops-row">
                       <span className="cdetail-ops-label">Khu vực ưu tiên</span>
-                      <span className="cdetail-ops-value">Toàn quốc (Trọng tâm TP.HCM, Hà Nội)</span>
+                      <span className="cdetail-ops-value">TP.HCM, Hà Nội & Toàn quốc</span>
                     </div>
 
                     <div className="cdetail-ops-row">
@@ -1050,8 +999,52 @@ export default function CampaignDetailPage() {
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Card 2: Lối tắt 3 bước chuẩn nghiệp vụ */}
+              {/* HÀNG 2: Khung đều nhau trên & dưới (Mục tiêu & Luồng vận hành) */}
+              <div className="cdetail-overview-row">
+                {/* Card 3: Mục tiêu chiến dịch & Kênh */}
+                <div className="cdetail-card-modern">
+                  <div className="cdetail-card-header">
+                    <span className="cdetail-card-title">
+                      <AimOutlined style={{ color: '#4F46E5' }} />
+                      Mục tiêu & Kênh phân phối
+                    </span>
+                  </div>
+
+                  <div className="cdetail-bullet-group">
+                    <div className="cdetail-bullet-item">
+                      <span className="cdetail-bullet-icon">🎯</span>
+                      <div><strong>500.000+ Lượt tiếp cận:</strong> Độ phủ tự nhiên trên TikTok & Instagram</div>
+                    </div>
+                    <div className="cdetail-bullet-item">
+                      <span className="cdetail-bullet-icon">💬</span>
+                      <div><strong>Trải nghiệm chân thực:</strong> Đánh giá cận cảnh chất kem và độ kiềm dầu</div>
+                    </div>
+                    <div className="cdetail-bullet-item">
+                      <span className="cdetail-bullet-icon">🛍️</span>
+                      <div><strong>Thúc đẩy chuyển đổi:</strong> Gắn link TikTok Shop & Shopee Mall</div>
+                    </div>
+                  </div>
+
+                  <div className="cdetail-bullet-group" style={{ marginTop: 10 }}>
+                    <span className="cdetail-bullet-title">Kênh truyền thông ưu tiên</span>
+                    <div className="cdetail-platform-badges">
+                      <span className="cdetail-platform-badge tiktok">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
+                        </svg>
+                        TikTok Video ngắn (60s)
+                      </span>
+                      <span className="cdetail-platform-badge instagram">
+                        <InstagramOutlined style={{ fontSize: 12 }} />
+                        Instagram Reels & Story
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 4: Luồng vận hành chuẩn */}
                 <div className="cdetail-card-modern">
                   <div className="cdetail-card-header">
                     <span className="cdetail-card-title">
@@ -1072,11 +1065,11 @@ export default function CampaignDetailPage() {
                       }}
                     >
                       <div className="cdetail-action-step-icon" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
-                        <CompassOutlined />
+                        <SearchOutlined />
                       </div>
                       <div className="cdetail-action-step-content">
-                        <div className="cdetail-action-step-title">Bước 1: Khám phá KOC bằng AI</div>
-                        <div className="cdetail-action-step-desc">Tìm kiếm và ghép nối thêm Nhà sáng tạo phù hợp</div>
+                        <div className="cdetail-action-step-title">Bước 1: Tìm kiếm KOC</div>
+                        <div className="cdetail-action-step-desc">Chọn lọc nhà sáng tạo phù hợp nhãn hàng</div>
                       </div>
                       <RightOutlined style={{ fontSize: 12, color: '#94A3B8' }} />
                     </div>
@@ -1107,7 +1100,7 @@ export default function CampaignDetailPage() {
                       </div>
                       <div className="cdetail-action-step-content">
                         <div className="cdetail-action-step-title">Bước 3: Chi phí & Thanh toán</div>
-                        <div className="cdetail-action-step-desc">Theo dõi hạn mức ngân sách và nghiệm thu chi trả</div>
+                        <div className="cdetail-action-step-desc">Theo dõi hạn mức ngân sách & nghiệm thu</div>
                       </div>
                       <RightOutlined style={{ fontSize: 12, color: '#94A3B8' }} />
                     </div>
