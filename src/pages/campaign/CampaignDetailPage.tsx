@@ -470,10 +470,10 @@ export default function CampaignDetailPage() {
   return (
     <div className="campaign-detail-container">
       {/* ==========================================================================
-          1. Luxury Travertine Hero Banner
+          1. Modern Luxe Hero Welcome Banner (Đồng bộ với Dashboard)
           ========================================================================== */}
       <div className="cdetail-hero-banner">
-        {/* Banner Top Row: Back button & Slogan */}
+        {/* Banner Top Bar: Back button & Date Range */}
         <div className="cdetail-hero-top-row">
           <button
             type="button"
@@ -484,15 +484,21 @@ export default function CampaignDetailPage() {
             Quay lại danh sách
           </button>
 
-          <div className="cdetail-hero-slogan">
-            Glow Confidently Everyday
+          <div className="cdetail-hero-date-chip">
+            <CalendarOutlined style={{ color: '#6366F1' }} />
+            <span>
+              {rawCampaign?.startDate ? new Date(rawCampaign.startDate).toLocaleDateString('vi-VN') : '26/10/2026'}
+              {' – '}
+              {rawCampaign?.endDate ? new Date(rawCampaign.endDate).toLocaleDateString('vi-VN') : '25/12/2026'}
+            </span>
           </div>
         </div>
 
-        {/* Banner Middle Content: Status, Title, Tags */}
+        {/* Banner Middle Content: Badges, Title, Description */}
         <div className="cdetail-hero-meta">
           <div className="cdetail-hero-badge-row">
             <span className={`cdetail-hero-status-tag ${currentStatus}`}>
+              <span className="cdetail-status-dot-pulse" />
               {currentStatus === 'running'
                 ? 'ĐANG TRIỂN KHAI'
                 : currentStatus === 'completed'
@@ -501,112 +507,137 @@ export default function CampaignDetailPage() {
                 ? 'ĐÃ LƯU TRỮ'
                 : 'BẢN NHÁP'}
             </span>
-            <span className="cdetail-hero-date">
-              {rawCampaign?.startDate
-                ? new Date(rawCampaign.startDate).toLocaleDateString('vi-VN')
-                : '26/10/2026'}
-            </span>
-          </div>
 
-          <h1 className="cdetail-hero-title">
-            {campaignTitle}
-          </h1>
-
-          <div className="cdetail-hero-tags-row">
             <span className="cdetail-hero-tag highlight">
               {rawCampaign?.objective || 'AWARENESS'}
             </span>
+
             {((rawCampaign?.platforms && rawCampaign.platforms.length > 0)
               ? rawCampaign.platforms
               : (['TIKTOK', 'INSTAGRAM'] as any[])
             )
               .filter((p: any) => String(p).toUpperCase() !== 'YOUTUBE')
               .map((p: any) => (
-                <span key={p} className="cdetail-hero-tag">
-                  {String(p).toUpperCase() === 'TIKTOK' ? 'TikTok' : String(p).toUpperCase() === 'INSTAGRAM' ? 'Instagram' : p}
+                <span key={p} className={`cdetail-hero-tag platform ${String(p).toLowerCase()}`}>
+                  {String(p).toUpperCase() === 'TIKTOK' ? (
+                    <>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
+                      </svg>
+                      TikTok
+                    </>
+                  ) : (
+                    <>
+                      <InstagramOutlined style={{ fontSize: 13, color: '#E1306C' }} />
+                      Instagram
+                    </>
+                  )}
                 </span>
               ))}
+
             {(rawCampaign?.niches || ['Beauty', 'Skincare', 'Lifestyle']).map((n) => (
               <span key={n} className="cdetail-hero-tag">
                 {n}
               </span>
             ))}
           </div>
+
+          <h1 className="cdetail-hero-title">
+            {campaignTitle}
+          </h1>
+
+          <p className="cdetail-hero-desc">
+            {rawCampaign?.description ||
+              'Ra mắt kem chống nắng dưỡng trắng dành cho mùa hè 2026, tập trung nâng cao nhận thức thương hiệu và giới thiệu sản phẩm đến nhóm khách hàng mục tiêu thông qua các nhà sáng tạo nội dung trên TikTok và Instagram.'}
+          </p>
         </div>
 
-        {/* Banner Bottom Row: Action Toolbar (Thiết kế tinh gọn, chuẩn nghiệp vụ) */}
-        <div className="cdetail-hero-actions-row">
-          {/* Nút 1 (Chính - Nổi bật): 🧭 Khám phá KOC AI */}
-          <button
-            type="button"
-            className="cdetail-hero-btn ai-discovery"
-            onClick={() => {
-              const cId = resolvedId || 'camp_sg2026';
-              sessionStorage.setItem('current_campaign_id', cId);
-              navigate(`/discovery?campaignId=${cId}`, { state: { campaignId: cId } });
-            }}
-          >
-            <CompassOutlined style={{ fontSize: 14 }} />
-            Khám phá KOC AI
-          </button>
+        {/* Banner Bottom Row: Action Toolbar (Cân đối 2 bên) */}
+        <div className="cdetail-hero-toolbar">
+          <div className="cdetail-hero-quick-chips">
+            <div className="cdetail-quick-chip">
+              <span className="chip-label">Ngân sách kế hoạch:</span>
+              <span className="chip-val">{campaignBudgetFormatted}</span>
+            </div>
+            <div className="cdetail-quick-chip">
+              <span className="chip-label">KOC trong Pipeline:</span>
+              <span className="chip-val">{participatingCreators.length} Creator</span>
+            </div>
+          </div>
 
-          {/* Nút 2 (Phụ): 🗂 Pipeline Kanban */}
-          <button
-            type="button"
-            className="cdetail-hero-btn dark-outline"
-            onClick={() => {
-              sessionStorage.setItem('current_campaign_id', resolvedId);
-              navigate('/crm');
-            }}
-          >
-            <ApartmentOutlined style={{ fontSize: 14 }} />
-            Pipeline Kanban
-          </button>
-
-          {/* Nút 3: Kích hoạt (nếu DRAFT) */}
-          {currentStatus === 'draft' && (
+          <div className="cdetail-hero-actions-group">
+            {/* Nút 1 (Chính - Nổi bật): 🧭 Khám phá KOC AI */}
             <button
               type="button"
-              className="cdetail-hero-btn primary"
-              onClick={handleActivate}
+              className="cdetail-hero-btn ai-discovery"
+              onClick={() => {
+                const cId = resolvedId || 'camp_sg2026';
+                sessionStorage.setItem('current_campaign_id', cId);
+                navigate(`/discovery?campaignId=${cId}`, { state: { campaignId: cId } });
+              }}
             >
-              <PlayCircleFilled style={{ fontSize: 14 }} />
-              Kích hoạt chiến dịch
+              <CompassOutlined style={{ fontSize: 14 }} />
+              Khám phá KOC AI
             </button>
-          )}
 
-          {/* Nút 4: Hoàn thành chiến dịch (nếu đang chạy) */}
-          {currentStatus !== 'completed' && currentStatus !== 'draft' && currentStatus !== 'cancelled' && (
+            {/* Nút 2 (Phụ): 🗂 Pipeline Kanban */}
             <button
               type="button"
-              className="cdetail-hero-btn success-outline"
-              onClick={handleComplete}
+              className="cdetail-hero-btn ghost"
+              onClick={() => {
+                sessionStorage.setItem('current_campaign_id', resolvedId);
+                navigate('/crm');
+              }}
             >
-              <CheckOutlined style={{ fontSize: 13 }} />
-              Hoàn thành
+              <ApartmentOutlined style={{ fontSize: 14 }} />
+              Pipeline Kanban
             </button>
-          )}
 
-          {/* Nút 5: Tùy chọn khác (...) đặt ở cuối thanh */}
-          <Dropdown menu={{ items: moreMenuItems }} trigger={['click']} placement="bottomRight">
-            <button type="button" className="cdetail-hero-btn icon-only" title="Tùy chọn khác">
-              <EllipsisOutlined style={{ fontSize: 18 }} />
-            </button>
-          </Dropdown>
+            {/* Nút 3: Kích hoạt (nếu DRAFT) */}
+            {currentStatus === 'draft' && (
+              <button
+                type="button"
+                className="cdetail-hero-btn success"
+                onClick={handleActivate}
+              >
+                <PlayCircleFilled style={{ fontSize: 14 }} />
+                Kích hoạt
+              </button>
+            )}
+
+            {/* Nút 4: Hoàn thành (nếu đang chạy) */}
+            {currentStatus !== 'completed' && currentStatus !== 'draft' && currentStatus !== 'cancelled' && (
+              <button
+                type="button"
+                className="cdetail-hero-btn outline-success"
+                onClick={handleComplete}
+              >
+                <CheckOutlined style={{ fontSize: 13 }} />
+                Hoàn thành
+              </button>
+            )}
+
+            {/* Nút 5: Tùy chọn khác (...) */}
+            <Dropdown menu={{ items: moreMenuItems }} trigger={['click']} placement="bottomRight">
+              <button type="button" className="cdetail-hero-btn icon-btn" title="Tùy chọn khác">
+                <EllipsisOutlined style={{ fontSize: 18 }} />
+              </button>
+            </Dropdown>
+          </div>
         </div>
       </div>
 
       {/* ==========================================================================
-          2. 4 Metric KPI Cards Row
+          2. 4 Metric KPI Cards Row (Đồng bộ chuẩn im-kpi-card Dashboard)
           ========================================================================== */}
       <div className="cdetail-metrics-grid">
         {/* Card 1: Ngân sách dự kiến */}
         <div className="cdetail-metric-card">
           <div className="cdetail-metric-top">
-            <div className="cdetail-metric-icon-box" style={{ background: '#EEF2FF', color: '#6366F1' }}>
+            <div className="cdetail-metric-icon-box" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
               <WalletOutlined />
             </div>
-            <span className="cdetail-metric-title">Ngân sách dự kiến</span>
+            <span className="cdetail-metric-title">Ngân sách kế hoạch</span>
           </div>
           <div>
             <div className="cdetail-metric-value">{campaignBudgetFormatted}</div>
@@ -679,14 +710,14 @@ export default function CampaignDetailPage() {
           onClick={() => setActiveTab('creators')}
         >
           <div className="cdetail-metric-top">
-            <div className="cdetail-metric-icon-box" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
+            <div className="cdetail-metric-icon-box" style={{ background: '#ECFDF5', color: '#059669' }}>
               <UserOutlined />
             </div>
-            <span className="cdetail-metric-title">Creator tham gia</span>
+            <span className="cdetail-metric-title">Creator trong Pipeline</span>
           </div>
           <div className="cdetail-metric-mid-row">
             <div className="cdetail-metric-value">
-              {participatingCreators.length}
+              {participatingCreators.length} KOC
             </div>
             <RightOutlined style={{ fontSize: 14, color: '#94A3B8' }} />
           </div>
@@ -713,62 +744,69 @@ export default function CampaignDetailPage() {
       </div>
 
       {/* ==========================================================================
-          3. Main 2-Column Section (70% Left / 30% Right)
+          3. Modern Pill-Segmented Tabs Navigation (Đồng bộ chuẩn Dashboard)
+          ========================================================================== */}
+      <div className="cdetail-nav-tabs-wrap">
+        <div className="cdetail-segmented-tabs">
+          <button
+            type="button"
+            className={`cdetail-seg-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            Tổng quan chiến dịch
+          </button>
+          <button
+            type="button"
+            className={`cdetail-seg-tab-btn ${activeTab === 'creators' ? 'active' : ''}`}
+            onClick={() => setActiveTab('creators')}
+          >
+            Creator tham gia ({participatingCreators.length})
+          </button>
+          <button
+            type="button"
+            className={`cdetail-seg-tab-btn ${activeTab === 'budget' ? 'active' : ''}`}
+            onClick={() => setActiveTab('budget')}
+          >
+            Phân bổ ngân sách
+          </button>
+          <button
+            type="button"
+            className={`cdetail-seg-tab-btn ${activeTab === 'timeline' ? 'active' : ''}`}
+            onClick={() => setActiveTab('timeline')}
+          >
+            Mốc thời gian (Timeline)
+          </button>
+          <button
+            type="button"
+            className={`cdetail-seg-tab-btn ${activeTab === 'guidelines' ? 'active' : ''}`}
+            onClick={() => setActiveTab('guidelines')}
+          >
+            Tệp yêu cầu & Brief
+          </button>
+        </div>
+      </div>
+
+      {/* ==========================================================================
+          4. Main 2-Column Section (70% Left / 30% Right)
           ========================================================================== */}
       <div className="cdetail-main-layout">
-        {/* Left Column (70%) */}
+        {/* Left Column */}
         <div className="cdetail-left-col">
-          {/* Underline Tabs Header */}
-          <div className="cdetail-tabs-bar">
-            <button
-              type="button"
-              className={`cdetail-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-              onClick={() => setActiveTab('overview')}
-            >
-              Tổng quan
-            </button>
-            <button
-              type="button"
-              className={`cdetail-tab-btn ${activeTab === 'creators' ? 'active' : ''}`}
-              onClick={() => setActiveTab('creators')}
-            >
-              Creator tham gia ({participatingCreators.length})
-            </button>
-            <button
-              type="button"
-              className={`cdetail-tab-btn ${activeTab === 'budget' ? 'active' : ''}`}
-              onClick={() => setActiveTab('budget')}
-            >
-              Phân bổ ngân sách
-            </button>
-            <button
-              type="button"
-              className={`cdetail-tab-btn ${activeTab === 'timeline' ? 'active' : ''}`}
-              onClick={() => setActiveTab('timeline')}
-            >
-              Mốc thời gian (Timeline)
-            </button>
-            <button
-              type="button"
-              className={`cdetail-tab-btn ${activeTab === 'guidelines' ? 'active' : ''}`}
-              onClick={() => setActiveTab('guidelines')}
-            >
-              Tệp yêu cầu & Hướng dẫn
-            </button>
-          </div>
-
-          {/* TAB 1: TỔNG QUAN (Exact Match to Mockup Image 1) */}
+          {/* TAB 1: TỔNG QUAN */}
           {activeTab === 'overview' && (
             <>
               {/* Row 1: Two-Card Grid */}
               <div className="cdetail-brief-grid">
                 {/* Left Subcard: Tóm tắt chiến dịch */}
-                <div className="cdetail-subcard">
-                  <div className="cdetail-subcard-header">
-                    <span className="cdetail-subcard-title">Tóm tắt chiến dịch</span>
+                <div className="cdetail-card-modern">
+                  <div className="cdetail-card-header">
+                    <span className="cdetail-card-title">
+                      <FileTextOutlined style={{ color: '#4F46E5' }} />
+                      Tóm tắt chiến dịch
+                    </span>
                     <button
                       type="button"
-                      className="cdetail-subcard-action-btn"
+                      className="cdetail-card-action-btn"
                       onClick={() => navigate('/campaigns')}
                     >
                       <EditOutlined style={{ fontSize: 12 }} />
@@ -778,7 +816,7 @@ export default function CampaignDetailPage() {
 
                   <p className="cdetail-brief-desc">
                     {rawCampaign?.description ||
-                      'Ra mắt kem chống nắng dưỡng trắng dành cho mùa hè 2026, tập trung nâng cao nhận thức thương hiệu và giới thiệu sản phẩm đến nhóm khách hàng mục tiêu thông qua các nhà sáng tạo nội dung trên TikTok và YouTube.'}
+                      'Ra mắt kem chống nắng dưỡng trắng dành cho mùa hè 2026, tập trung nâng cao nhận thức thương hiệu và giới thiệu sản phẩm đến nhóm khách hàng mục tiêu thông qua các nhà sáng tạo nội dung trên TikTok và Instagram.'}
                   </p>
 
                   {/* Sản phẩm / dịch vụ trọng tâm */}
@@ -806,9 +844,18 @@ export default function CampaignDetailPage() {
                   {/* Mục tiêu chiến dịch */}
                   <div className="cdetail-bullet-group">
                     <span className="cdetail-bullet-title">Mục tiêu chiến dịch</span>
-                    <div className="cdetail-bullet-item">Tăng nhận diện thương hiệu</div>
-                    <div className="cdetail-bullet-item">Giới thiệu sản phẩm mới</div>
-                    <div className="cdetail-bullet-item">Thúc đẩy tìm hiểu & cân nhắc mua hàng</div>
+                    <div className="cdetail-bullet-item">
+                      <span className="cdetail-bullet-icon">✓</span>
+                      Tăng nhận diện thương hiệu cho dòng sản phẩm mới
+                    </div>
+                    <div className="cdetail-bullet-item">
+                      <span className="cdetail-bullet-icon">✓</span>
+                      Giới thiệu tính năng chống nắng nâng tone tự nhiên
+                    </div>
+                    <div className="cdetail-bullet-item">
+                      <span className="cdetail-bullet-icon">✓</span>
+                      Thúc đẩy tìm hiểu và chuyển đổi đơn hàng qua Creator
+                    </div>
                   </div>
 
                   {/* Nền tảng ưu tiên */}
@@ -830,11 +877,14 @@ export default function CampaignDetailPage() {
                 </div>
 
                 {/* Right Subcard: Thông tin vận hành */}
-                <div className="cdetail-subcard">
-                  <div className="cdetail-subcard-header">
-                    <span className="cdetail-subcard-title">Thông tin vận hành</span>
+                <div className="cdetail-card-modern">
+                  <div className="cdetail-card-header">
+                    <span className="cdetail-card-title">
+                      <SettingOutlined style={{ color: '#4F46E5' }} />
+                      Thông tin vận hành
+                    </span>
                     <Dropdown menu={{ items: moreMenuItems }} trigger={['click']}>
-                      <button type="button" className="cdetail-subcard-action-btn" title="Thao tác">
+                      <button type="button" className="cdetail-card-action-btn" title="Thao tác">
                         <EllipsisOutlined />
                       </button>
                     </Dropdown>
@@ -998,11 +1048,14 @@ export default function CampaignDetailPage() {
 
           {/* TAB 2: CREATOR THAM GIA (Full Table View) */}
           {activeTab === 'creators' && (
-            <div className="cdetail-subcard">
-              <div className="cdetail-subcard-header">
+            <div className="cdetail-card-modern">
+              <div className="cdetail-card-header">
                 <div>
-                  <span className="cdetail-subcard-title">Danh sách Creator tham gia</span>
-                  <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
+                  <span className="cdetail-card-title">
+                    <TeamOutlined style={{ color: '#4F46E5' }} />
+                    Danh sách Creator tham gia ({participatingCreators.length})
+                  </span>
+                  <div style={{ fontSize: 12.5, color: '#64748B', marginTop: 3 }}>
                     Quản lý thông tin, hợp đồng và tiến độ deliverables của từng Influencer
                   </div>
                 </div>
@@ -1010,7 +1063,7 @@ export default function CampaignDetailPage() {
                   <Button
                     type="primary"
                     icon={<CompassOutlined />}
-                    style={{ background: '#4F46E5', borderRadius: 8 }}
+                    style={{ background: '#4F46E5', borderRadius: 10, height: 38, fontWeight: 600 }}
                     onClick={() => {
                       sessionStorage.setItem('current_campaign_id', resolvedId);
                       navigate(`/discovery?campaignId=${resolvedId}`);
@@ -1033,29 +1086,34 @@ export default function CampaignDetailPage() {
 
           {/* TAB 3: PHÂN BỔ NGÂN SÁCH */}
           {activeTab === 'budget' && (
-            <div className="cdetail-subcard">
-              <span className="cdetail-subcard-title">Phân bổ ngân sách chi tiết</span>
+            <div className="cdetail-card-modern">
+              <div className="cdetail-card-header">
+                <span className="cdetail-card-title">
+                  <DollarOutlined style={{ color: '#4F46E5' }} />
+                  Phân bổ ngân sách chi tiết
+                </span>
+              </div>
               <Row gutter={[16, 16]} style={{ marginTop: 8 }}>
                 <Col xs={24} md={8}>
-                  <div style={{ background: '#F8FAFC', padding: 18, borderRadius: 12, textAlign: 'center' }}>
-                    <div style={{ color: '#64748B', fontSize: 12 }}>Ngân sách kế hoạch</div>
-                    <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', marginTop: 4 }}>
+                  <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: 20, borderRadius: 14, textAlign: 'center' }}>
+                    <div style={{ color: '#64748B', fontSize: 12.5, fontWeight: 500 }}>Ngân sách kế hoạch</div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', marginTop: 6, letterSpacing: '-0.3px' }}>
                       {campaignBudgetFormatted}
                     </div>
                   </div>
                 </Col>
                 <Col xs={24} md={8}>
-                  <div style={{ background: '#F8FAFC', padding: 18, borderRadius: 12, textAlign: 'center' }}>
-                    <div style={{ color: '#64748B', fontSize: 12 }}>Đã cam kết chi trả</div>
-                    <div style={{ fontSize: 24, fontWeight: 800, color: '#4F46E5', marginTop: 4 }}>
+                  <div style={{ background: '#EEF2FF', border: '1px solid #E0E7FF', padding: 20, borderRadius: 14, textAlign: 'center' }}>
+                    <div style={{ color: '#4338CA', fontSize: 12.5, fontWeight: 500 }}>Đã cam kết chi trả</div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#4F46E5', marginTop: 6, letterSpacing: '-0.3px' }}>
                       {allocatedBudget > 0 ? `${allocatedBudget.toLocaleString('vi-VN')} đ` : '0 đ'}
                     </div>
                   </div>
                 </Col>
                 <Col xs={24} md={8}>
-                  <div style={{ background: '#F8FAFC', padding: 18, borderRadius: 12, textAlign: 'center' }}>
-                    <div style={{ color: '#64748B', fontSize: 12 }}>Hạn mức còn lại</div>
-                    <div style={{ fontSize: 24, fontWeight: 800, color: '#10B981', marginTop: 4 }}>
+                  <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', padding: 20, borderRadius: 14, textAlign: 'center' }}>
+                    <div style={{ color: '#047857', fontSize: 12.5, fontWeight: 500 }}>Hạn mức còn lại</div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#059669', marginTop: 6, letterSpacing: '-0.3px' }}>
                       {remainingBudget.toLocaleString('vi-VN')} đ
                     </div>
                   </div>
@@ -1066,8 +1124,13 @@ export default function CampaignDetailPage() {
 
           {/* TAB 4: MỐC THỜI GIAN (TIMELINE) */}
           {activeTab === 'timeline' && (
-            <div className="cdetail-subcard">
-              <span className="cdetail-subcard-title">Mốc thời gian (Timeline) chiến dịch</span>
+            <div className="cdetail-card-modern">
+              <div className="cdetail-card-header">
+                <span className="cdetail-card-title">
+                  <CalendarOutlined style={{ color: '#4F46E5' }} />
+                  Mốc thời gian (Timeline) chiến dịch
+                </span>
+              </div>
               <div style={{ marginTop: 16, maxWidth: 640 }}>
                 <Timeline
                   items={[
@@ -1112,24 +1175,29 @@ export default function CampaignDetailPage() {
 
           {/* TAB 5: TỆP YÊU CẦU & HƯỚNG DẪN */}
           {activeTab === 'guidelines' && (
-            <div className="cdetail-subcard">
-              <span className="cdetail-subcard-title">Tệp yêu cầu & Hướng dẫn (Creative Brief)</span>
+            <div className="cdetail-card-modern">
+              <div className="cdetail-card-header">
+                <span className="cdetail-card-title">
+                  <FileTextOutlined style={{ color: '#4F46E5' }} />
+                  Tệp yêu cầu & Hướng dẫn (Creative Brief)
+                </span>
+              </div>
               <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div>
-                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>Quy định gắn hashtag bắt buộc</div>
-                  <div style={{ fontSize: 12.5, color: '#4F46E5', fontWeight: 600, marginTop: 4 }}>
+                <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>Quy định gắn hashtag bắt buộc</div>
+                  <div style={{ fontSize: 13, color: '#4F46E5', fontWeight: 600, marginTop: 4 }}>
                     #SummerGlow2026 #SunscreenReview #SkincareRoutine #KemChongNang
                   </div>
                 </div>
-                <div>
-                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>Key Messages (Thông điệp chính)</div>
-                  <div style={{ fontSize: 12.5, color: '#475569', marginTop: 4 }}>
+                <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>Key Messages (Thông điệp chính)</div>
+                  <div style={{ fontSize: 13, color: '#475569', marginTop: 4, lineHeight: 1.6 }}>
                     Kem chống nắng nâng tone tự nhiên không gây nhờn rít, bảo vệ quang phổ rộng SPF50+ PA++++ suốt ngày dài năng động.
                   </div>
                 </div>
-                <div>
-                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>Yêu cầu kiểm duyệt nội dung</div>
-                  <div style={{ fontSize: 12.5, color: '#475569', marginTop: 4 }}>
+                <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>Yêu cầu kiểm duyệt nội dung</div>
+                  <div style={{ fontSize: 13, color: '#475569', marginTop: 4, lineHeight: 1.6 }}>
                     KOC cần gửi kịch bản trước khi quay 3 ngày và gửi video thô trước khi đăng tải 48 giờ để nhãn hàng duyệt.
                   </div>
                 </div>
