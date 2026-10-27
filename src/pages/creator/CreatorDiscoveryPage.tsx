@@ -737,7 +737,7 @@ export default function CreatorDiscoveryPage() {
 
     setIsMatching(true);
     message.loading({
-      content: `AI đang kích hoạt 4-Stage Discovery Pipeline cho dự án "${camp.name}"...`,
+      content: `Đang tìm kiếm KOC phù hợp cho chiến dịch "${camp.name}"...`,
       key: 'campaign_match',
     });
 
@@ -828,11 +828,7 @@ export default function CreatorDiscoveryPage() {
         });
       }
 
-      message.success({
-        content: `Đã hoàn tất tính toán tương thích 4-Stage Pipeline cho dự án "${camp.name}"!`,
-        key: 'campaign_match',
-        duration: 3,
-      });
+      message.destroy('campaign_match');
     } finally {
       setIsMatching(false);
     }
