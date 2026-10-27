@@ -43,6 +43,7 @@ import {
   CheckOutlined,
   UserOutlined,
   WalletOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
@@ -247,13 +248,13 @@ export default function CampaignDetailPage() {
           // Tải danh sách KOC từ Pipeline Relationship
           let rels: RelationshipDto[] = [];
           try {
-            rels = await campaignService.getCampaignRelationships(resolvedId);
+            rels = await campaignService.getRelationships(resolvedId);
           } catch {
             rels = [];
           }
 
           if (isMounted && rels && rels.length > 0) {
-            const mappedCreators: CampaignCreatorRow[] = rels.map((r, idx) => ({
+            const mappedCreators: CampaignCreatorRow[] = rels.map((r: any, idx) => ({
               id: r.id || `rel_${idx}`,
               name: r.creatorName || `Creator #${idx + 1}`,
               username: r.creatorUsername ? `@${r.creatorUsername.replace('@', '')}` : `@creator_${idx + 1}`,
@@ -262,7 +263,7 @@ export default function CampaignDetailPage() {
               followers: r.followersCount ? `${(r.followersCount / 1000).toFixed(0)}K` : '50K+',
               fee: r.agreedFee ? `${r.agreedFee.toLocaleString('vi-VN')} ₫` : 'Thỏa thuận',
               stageText: r.stage || 'Đang kết nối',
-              stageColor: r.stage === 'CONFIRMED' || r.stage === 'COMPLETED' ? '#10B981' : '#6366F1',
+              stageColor: (r.stage === 'CONFIRMED' || (r.stage as any) === 'COMPLETED') ? '#10B981' : '#6366F1',
               deliverableStatus: r.deliverableStatus || 'Đang thực hiện',
               deliverableColor: r.deliverableStatus === 'APPROVED' ? 'green' : 'blue',
             }));

@@ -308,17 +308,6 @@ export const campaignService = {
   },
 
   /**
-   * Lưu trữ (Archive) chiến dịch
-   */
-  async archiveCampaign(id: string): Promise<void> {
-    try {
-      await apiClient.patch(`/campaigns/${id}/archive`);
-    } catch {
-      await apiClient.post(`/campaigns/${id}/archive`);
-    }
-  },
-
-  /**
    * Khám phá Creator cho chiến dịch qua 4-Stage Hybrid Discovery Pipeline
    * Swagger Tag: "Creator Discovery"
    * GET /campaigns/{campaignId}/discovery
