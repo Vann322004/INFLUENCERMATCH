@@ -41,7 +41,15 @@ import AuditLogPage from './pages/admin/audit/AuditLogPage';
 import CreatorClaimReviewPage from './pages/admin/claims/CreatorClaimReviewPage';
 import DataQualityPage from './pages/admin/quality/DataQualityPage';
 
+import { useMultiTabSessionSync } from './hooks/useMultiTabSessionSync';
+
 const { Content } = Layout;
+
+// Đồng bộ trạng thái đăng nhập giữa các tab
+function SessionSyncHandler() {
+  useMultiTabSessionSync();
+  return null;
+}
 
 // Main App Layout Wrapper with Light Linear Sidebar & Top Header
 function MainLayout({ children }: { children: React.ReactNode }) {
@@ -73,6 +81,7 @@ export default function App() {
   return (
     <ConfigProvider theme={themeConfig}>
       <AntdApp>
+        <SessionSyncHandler />
         <BrowserRouter>
         <Routes>
           {/* Auth Routes */}
