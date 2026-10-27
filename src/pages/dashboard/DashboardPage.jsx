@@ -529,7 +529,7 @@ export default function DashboardPage() {
         {/* ROW 2: 3 KPI Metrics Cards (Full Width 3 Columns) */}
         <Row gutter={[16, 16]} align="stretch">
           {kpiCards.map((kpi) => (
-            <Col xs={24} sm={8} key={kpi.id} style={{ display: 'flex', minWidth: 0 }}>
+            <Col xs={24} sm={12} md={8} key={kpi.id} style={{ display: 'flex', minWidth: 0 }}>
               <div className="im-kpi-card" style={{ flex: 1 }}>
                 <div className="im-kpi-header">
                   <div className="im-kpi-icon-box" style={{ backgroundColor: kpi.iconBg }}>
@@ -598,8 +598,8 @@ export default function DashboardPage() {
             }
             bodyStyle={{ padding: '12px 16px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}
           >
-            {/* Filter Tabs */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+            {/* Filter Tabs with horizontal scroll on mobile */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
               {[
                 { key: 'all', label: `Tất cả (${campaignCounts.total})` },
                 { key: 'running', label: `Đang chạy (${campaignCounts.running})` },
@@ -667,7 +667,7 @@ export default function DashboardPage() {
                       </Tag>
                     </div>
 
-                    <div style={{ width: 95, padding: '0 6px', flexShrink: 0 }}>
+                    <div className="im-campaign-progress-box" style={{ width: 95, padding: '0 6px', flexShrink: 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>
                         <span>Tiến độ</span>
                         <span>{c.progress}%</span>
@@ -750,8 +750,8 @@ export default function DashboardPage() {
             }
             bodyStyle={{ padding: '12px 16px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}
           >
-            {/* Symmetrical Filter Tabs matching Left Card */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+            {/* Symmetrical Filter Tabs with horizontal scroll on mobile */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
               {[
                 { key: 'all', label: `Tất cả (${activityCounts.total})` },
                 { key: 'shortlist', label: `Giỏ chọn lọc (${activityCounts.shortlist})` },

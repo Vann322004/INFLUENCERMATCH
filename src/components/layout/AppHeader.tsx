@@ -19,7 +19,7 @@ export default function AppHeader() {
     if (p.includes('/crm')) return { root: 'Trang chủ', sub: 'Tiếp cận & Kết nối' };
     if (p.includes('/collaboration')) return { root: 'Trang chủ', sub: 'Hợp tác & Vận hành' };
     if (p.includes('/performance')) return { root: 'Trang chủ', sub: 'Báo cáo & Hiệu suất' };
-    if (p.includes('/subscription')) return { root: 'Trang chủ', sub: 'Cài đặt hệ thống' };
+    if (p.includes('/subscription') || p.includes('/billing') || p.includes('/plans')) return { root: 'Trang chủ', sub: 'Quản lý gói & Hạn mức' };
     if (p.includes('/brand-profile')) return { root: 'Trang chủ', sub: 'Hồ sơ thương hiệu' };
     return { root: 'Trang chủ', sub: 'Tổng quan' };
   };

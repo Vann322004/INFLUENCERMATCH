@@ -1,23 +1,29 @@
 import { useEffect, useRef } from 'react';
 import { message } from 'antd';
-import { STORAGE_KEYS, getAccessToken } from '../services/apiClient';
+import { STORAGE_KEYS, getAccessToken, getStoredUser } from '../services/apiClient';
 
 /**
  * Hook tự động đồng bộ phiên đăng nhập giữa các tab trên cùng trình duyệt.
- * - Ngăn chặn tình trạng Tab 1 thao tác ghi đè nhầm dữ liệu vào tài khoản vừa đăng nhập ở Tab 2.
- * - Khi phát hiện tab khác đăng xuất hoặc đổi tài khoản -> tự động cảnh báo & reload/redirect.
+ * - So sánh theo User ID (thay vì chuỗi token) để tránh báo nhầm khi token tự động refresh sau thời gian dài không dùng.
+ * - Khi phát hiện tab khác đăng xuất hoặc đổi sang tài khoản khác -> tự động cảnh báo & reload/redirect.
  */
 export function useMultiTabSessionSync() {
+  const getUserId = () => {
+    const user = getStoredUser();
+    return user?.id || user?.userId || user?.email || null;
+  };
+
   const currentTokenRef = useRef<string | null>(getAccessToken());
+  const currentUserIdRef = useRef<string | null>(getUserId());
 
   useEffect(() => {
     // 1. Lắng nghe sự kiện Storage thay đổi từ tab khác trong thời gian thực
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEYS.ACCESS_TOKEN) {
-        // Trường hợp A: Tab khác bấm Đăng xuất (token bị xóa)
+        // Tab khác bấm Đăng xuất (token bị xóa hẳn)
         if (!e.newValue && e.oldValue) {
           message.warning({
-            content: 'Bạn đã đăng xuất ở một tab khác. Đang chuyển về trang đăng nhập...',
+            content: 'Tài khoản đã đăng xuất ở tab khác. Đang chuyển về trang đăng nhập...',
             key: 'session_sync_alert',
             duration: 3,
           });
@@ -33,17 +39,41 @@ export function useMultiTabSessionSync() {
           return;
         }
 
-        // Trường hợp B: Tab khác đăng nhập tài khoản khác (token bị thay đổi)
-        if (e.newValue && e.newValue !== currentTokenRef.current) {
-          message.info({
-            content: 'Tài khoản đăng nhập đã thay đổi ở tab khác. Trang sẽ tự động tải lại...',
-            key: 'session_sync_alert',
-            duration: 3,
-          });
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-          return;
+        // Tab khác đổi token: kiểm tra xem có phải cùng 1 user không (token rotation)
+        if (e.newValue) {
+          const newUserId = getUserId();
+          if (newUserId && currentUserIdRef.current && newUserId !== currentUserIdRef.current) {
+            message.info({
+              content: 'Tài khoản đăng nhập đã thay đổi ở tab khác. Trang sẽ tự động tải lại...',
+              key: 'session_sync_alert',
+              duration: 3,
+            });
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+            return;
+          }
+          // Cùng 1 user (chỉ là token refresh): cập nhật ref ngầm, không reload phiền phức
+          currentTokenRef.current = e.newValue;
+        }
+      }
+
+      if (e.key === STORAGE_KEYS.USER && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          const newId = parsed?.id || parsed?.userId || parsed?.email || null;
+          if (newId && currentUserIdRef.current && newId !== currentUserIdRef.current) {
+            message.info({
+              content: 'Tài khoản đăng nhập đã thay đổi ở tab khác. Trang sẽ tự động tải lại...',
+              key: 'session_sync_alert',
+              duration: 3,
+            });
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          }
+        } catch {
+          // ignore json parse error
         }
       }
     };
@@ -51,26 +81,10 @@ export function useMultiTabSessionSync() {
     // 2. Khi người dùng click quay lại tab này (cửa sổ nhận focus)
     const handleWindowFocus = () => {
       const activeToken = getAccessToken();
-      const isAuthPage =
-        window.location.pathname === '/login' ||
-        window.location.pathname === '/register' ||
-        window.location.pathname === '/forgot-password';
+      const activeUserId = getUserId();
 
-      // Nếu trước đó đang đăng nhập mà giờ trong localStorage đã mất token
-      if (currentTokenRef.current && !activeToken && !isAuthPage) {
-        message.warning({
-          content: 'Phiên đăng nhập đã kết thúc ở tab khác. Đang chuyển về trang đăng nhập...',
-          key: 'session_sync_alert',
-          duration: 3,
-        });
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 600);
-        return;
-      }
-
-      // Nếu token trong localStorage bị đổi sang token của user khác
-      if (activeToken && currentTokenRef.current && activeToken !== currentTokenRef.current) {
+      // Chỉ cảnh báo nếu thực sự đổi sang USER KHÁC
+      if (activeUserId && currentUserIdRef.current && activeUserId !== currentUserIdRef.current) {
         message.info({
           content: 'Phát hiện đổi tài khoản từ tab khác. Đang đồng bộ lại dữ liệu...',
           key: 'session_sync_alert',
@@ -79,6 +93,15 @@ export function useMultiTabSessionSync() {
         setTimeout(() => {
           window.location.reload();
         }, 600);
+        return;
+      }
+
+      // Cập nhật lại ref nếu chỉ là token refresh bình thường cùng user
+      if (activeToken) {
+        currentTokenRef.current = activeToken;
+      }
+      if (activeUserId) {
+        currentUserIdRef.current = activeUserId;
       }
     };
 
