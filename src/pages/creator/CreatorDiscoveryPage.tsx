@@ -56,6 +56,7 @@ import AddToShortlistModal from '../../components/discovery/AddToShortlistModal'
 import { campaignService } from '../../services/api/campaignService';
 import type { CampaignResponse } from '../../types/api/campaign.types';
 import CampaignWorkflowBar from '../../components/campaign/CampaignWorkflowBar';
+import './CreatorDiscoveryPage.css';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -548,11 +549,16 @@ export default function CreatorDiscoveryPage() {
             setMatchedCampaign(matched);
             setSortBy('match');
             setCurrentPage(1);
-            message.success({
+message.success({
               content: `🎯 Đã tự động chọn dự án "${matched.name}" để đề xuất Creator!`,
               key: 'auto_selected_campaign',
               duration: 2.5,
             });
+            if (searchParams.get('autoRun') === 'true') {
+              setTimeout(() => {
+                handleTriggerMatch(matched);
+              }, 400);
+            }
           }
         } else {
           setCampaignsList(mapped);
@@ -1246,70 +1252,38 @@ export default function CreatorDiscoveryPage() {
   };
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: 'calc(100vh - 110px)',
-        gap: 16,
-      }}
-    >
-      {/* 1. Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          flexWrap: 'wrap',
-          gap: 16,
-        }}
-      >
-        <div>
-          <Title
-            level={2}
-            style={{ fontWeight: 800, fontSize: 26, color: '#0F172A', margin: 0, letterSpacing: -0.5 }}
-          >
+    <div className="cdiscovery-container">
+      {/* 1. Header Hero & Mode Tabs */}
+      <div className="cdiscovery-header">
+        <div className="cdiscovery-title-group">
+          <Title level={2} className="cdiscovery-title">
             Khám phá Creator
           </Title>
-          <Text style={{ color: '#64748B', fontSize: 13.5 }}>
-            Tìm creator phù hợp với thương hiệu bằng ghép nối AI và bộ lọc chuyên sâu.
+          <Text className="cdiscovery-subtitle">
+            Tìm kiếm & ghép nối Creator/KOC phù hợp nhất với thương hiệu bằng AI Matching và bộ lọc đa chiều.
           </Text>
         </div>
-      </div>
 
-      {/* Mode tabs (underline style) */}
-      <div style={{ display: 'flex', gap: 24, borderBottom: '1px solid #E8ECF4' }}>
-        {[
-          { key: 'database', label: 'Khám phá hệ thống', icon: null },
-          { key: 'external', label: 'Quét kênh ngoài', icon: <GlobalOutlined /> },
-        ].map((tab) => {
-          const active = discoveryMode === tab.key;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setDiscoveryMode(tab.key as any)}
-              style={{
-                background: 'none',
-                border: 'none',
-                borderBottom: `2px solid ${active ? '#4F46E5' : 'transparent'}`,
-                marginBottom: -1,
-                padding: '8px 2px 12px',
-                fontSize: 14,
-                fontWeight: active ? 700 : 500,
-                color: active ? '#4F46E5' : '#64748B',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                transition: 'color 0.2s, border-color 0.2s',
-              }}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          );
-        })}
+        {/* Mode Navigation Tabs */}
+        <div className="cdiscovery-mode-tabs">
+          {[
+            { key: 'database', label: 'Khám phá hệ thống', icon: <TeamOutlined /> },
+            { key: 'external', label: 'Quét kênh ngoài', icon: <GlobalOutlined /> },
+          ].map((tab) => {
+            const active = discoveryMode === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setDiscoveryMode(tab.key as any)}
+                className={`cdiscovery-tab-btn ${active ? 'active' : ''}`}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* RENDER EXTERNAL DISCOVERY MODE */}
@@ -1320,7 +1294,7 @@ export default function CreatorDiscoveryPage() {
           {/* 1. Unified Campaign Funnel Stepper */}
           <CampaignWorkflowBar
             currentStep="discovery"
-            campaignId={selectedCampaignId}
+            campaignId={selectedCampaignId || undefined}
             campaignName={matchedCampaign?.name || campaignsList.find((c) => c.id === selectedCampaignId)?.name}
             availableCampaigns={campaignsList.map((c) => ({ id: c.id, name: c.name }))}
             onSelectCampaign={(val) => {
@@ -1335,57 +1309,23 @@ export default function CreatorDiscoveryPage() {
             }}
           />
 
-          {/* 1.5. CAMPAIGN MATCHING BAR (REDESIGNED) */}
+          {/* 1.5. CAMPAIGN MATCHING HERO BAR */}
           <Card
-            bordered
-            style={{
-              borderRadius: 16,
-              borderColor: matchedCampaign ? '#DDD6FE' : '#EEF0F6',
-              background: matchedCampaign
-                ? 'linear-gradient(135deg, #FAF5FF 0%, #F5F3FF 50%, #EEF2FF 100%)'
-                : '#FFFFFF',
-              boxShadow: matchedCampaign
-                ? '0 4px 18px rgba(124, 58, 237, 0.06)'
-                : '0 2px 10px rgba(0, 0, 0, 0.02)',
-              transition: 'all 0.3s ease',
-            }}
-            bodyStyle={{ padding: '14px 20px' }}
+            bordered={false}
+            className={`cdiscovery-match-card ${matchedCampaign ? 'is-matched' : ''}`}
+            bodyStyle={{ padding: '16px 22px' }}
           >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 16,
-                flexWrap: 'wrap',
-              }}
-            >
-              {/* Left project info */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: '1 1 280px', minWidth: 240 }}>
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 10,
-                    background: matchedCampaign
-                      ? 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)'
-                      : '#F1F5F9',
-                    color: matchedCampaign ? '#FFFFFF' : '#64748B',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 18,
-                    flexShrink: 0,
-                    boxShadow: matchedCampaign ? '0 3px 10px rgba(99, 102, 241, 0.3)' : 'none',
-                  }}
-                >
+            <div className="cdiscovery-match-inner">
+              {/* Left Project Info */}
+              <div className="cdiscovery-match-left">
+                <div className="cdiscovery-match-iconbox">
                   <AimOutlined />
                 </div>
 
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
-                      Dự án ghép nối
+                <div className="cdiscovery-match-info">
+                  <div className="cdiscovery-match-title-row">
+                    <span className="cdiscovery-match-title">
+                      Dự án ghép nối Creator
                     </span>
                     {matchedCampaign ? (
                       <Tag
@@ -1394,7 +1334,7 @@ export default function CreatorDiscoveryPage() {
                           borderRadius: 999,
                           fontSize: 11,
                           fontWeight: 700,
-                          padding: '1px 8px',
+                          padding: '1px 10px',
                           background: '#EDE9FE',
                           borderColor: '#DDD6FE',
                           color: '#6D28D9',
@@ -1404,42 +1344,26 @@ export default function CreatorDiscoveryPage() {
                         Đang áp dụng
                       </Tag>
                     ) : (
-                      <span style={{ fontSize: 11.5, color: '#94A3B8' }}>(Tùy chọn)</span>
+                      <span style={{ fontSize: 12, color: '#94A3B8' }}>(Tùy chọn)</span>
                     )}
                   </div>
 
-                  <div
-                    style={{
-                      fontSize: 12.5,
-                      color: '#64748B',
-                      marginTop: 2,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
+                  <div className="cdiscovery-match-desc">
                     {matchedCampaign ? (
                       <>
-                        Khớp theo: <strong style={{ color: '#4F46E5' }}>{matchedCampaign.name}</strong>
-                        {matchedCampaign.tag && <span style={{ color: '#94A3B8' }}> • {matchedCampaign.tag}</span>}
+                        Mục tiêu: <strong style={{ color: '#4F46E5' }}>{matchedCampaign.name}</strong>
+                        {matchedCampaign.tag && <span style={{ color: '#94A3B8' }}> • Ngành {matchedCampaign.tag}</span>}
                       </>
                     ) : (
-                      'Chọn chiến dịch để AI phân tích và xếp hạng Creator phù hợp nhất.'
+                      'Chọn chiến dịch để AI tự động đối soát tệp khán giả, tính điểm tương thích và xếp hạng KOC tối ưu.'
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Right controls */}
+              {/* Right Controls */}
               <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  flex: '1 1 360px',
-                  justifyContent: 'flex-end',
-                  flexWrap: 'wrap',
-                }}
+                className="cdiscovery-match-right"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     handleTriggerMatch();
@@ -1448,7 +1372,7 @@ export default function CreatorDiscoveryPage() {
               >
                 <Select
                   size="large"
-                  placeholder={loadingCampaigns ? 'Đang tải chiến dịch...' : 'Chọn chiến dịch'}
+                  placeholder={loadingCampaigns ? 'Đang tải chiến dịch...' : 'Chọn chiến dịch để ghép nối'}
                   value={selectedCampaignId}
                   loading={loadingCampaigns}
                   popupMatchSelectWidth={false}
@@ -1462,11 +1386,7 @@ export default function CreatorDiscoveryPage() {
                       handleTriggerMatch(camp);
                     }
                   }}
-                  style={{
-                    minWidth: 240,
-                    maxWidth: 360,
-                    flex: 1,
-                  }}
+                  className="cdiscovery-campaign-select"
                   notFoundContent={
                     <div style={{ padding: '8px 12px', textAlign: 'center' }}>
                       <div style={{ color: '#64748B', fontSize: 13, marginBottom: 6 }}>
@@ -1498,17 +1418,8 @@ export default function CreatorDiscoveryPage() {
                   size="large"
                   loading={isMatching}
                   icon={<RocketOutlined />}
-                  onClick={handleTriggerMatch}
-                  style={{
-                    background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
-                    border: 'none',
-                    fontWeight: 700,
-                    borderRadius: 10,
-                    height: 40,
-                    padding: '0 18px',
-                    boxShadow: '0 4px 14px rgba(124, 58, 237, 0.28)',
-                    flexShrink: 0,
-                  }}
+                  onClick={() => handleTriggerMatch()}
+                  className="cdiscovery-btn-match"
                 >
                   Tìm creator phù hợp
                 </Button>
@@ -1518,17 +1429,7 @@ export default function CreatorDiscoveryPage() {
                     size="large"
                     icon={<UnorderedListOutlined />}
                     onClick={() => navigate(`/creators/shortlist?campaignId=${selectedCampaignId}`)}
-                    style={{
-                      borderRadius: 10,
-                      fontWeight: 700,
-                      height: 40,
-                      padding: '0 16px',
-                      color: '#4F46E5',
-                      background: '#EEF2FF',
-                      border: '1px solid #C7D2FE',
-                      boxShadow: '0 2px 8px rgba(79, 70, 229, 0.12)',
-                      flexShrink: 0,
-                    }}
+                    className="cdiscovery-btn-shortlist-link"
                   >
                     Xem Shortlist ➔
                   </Button>
@@ -1540,1061 +1441,798 @@ export default function CreatorDiscoveryPage() {
                     type="text"
                     icon={<CloseOutlined />}
                     onClick={handleClearMatch}
-                    style={{
-                      borderRadius: 10,
-                      color: '#EF4444',
-                      fontWeight: 600,
-                      height: 40,
-                      padding: '0 12px',
-                      background: '#FEF2F2',
-                      border: '1px solid #FEE2E2',
-                      flexShrink: 0,
-                    }}
+                    className="cdiscovery-btn-clear-match"
                   >
-                    Bỏ lọc
+                    Bỏ chọn
                   </Button>
                 )}
               </div>
             </div>
           </Card>
 
-          {/* 2. Metrics Summary Overview Row (4 KPI Cards) */}
-      <Row gutter={[14, 14]}>
-        <Col xs={12} sm={6}>
-          <Card
-            bordered
-            style={{ borderRadius: 14, borderColor: '#EEF0F6' }}
-            bodyStyle={{ padding: '14px 18px' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  background: '#FEF3C7',
-                  color: '#D97706',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 18,
-                  flexShrink: 0,
-                }}
-              >
-                <StarFilled />
-              </div>
-              <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', lineHeight: 1.2 }}>
-                  {loading ? <Spin size="small" /> : shortlistedCount.toLocaleString('vi-VN')}
-                </div>
-                <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>Creator trong Shortlist</div>
-              </div>
-            </div>
-          </Card>
-        </Col>
-
-        <Col xs={12} sm={6}>
-          <Card
-            bordered
-            style={{ borderRadius: 14, borderColor: '#EEF0F6' }}
-            bodyStyle={{ padding: '14px 18px' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  background: (matchedCampaign || activeFiltersCount > 0 || searchTerm.trim()) ? '#ECFDF5' : '#F1F5F9',
-                  color: (matchedCampaign || activeFiltersCount > 0 || searchTerm.trim()) ? '#10B981' : '#94A3B8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 18,
-                  flexShrink: 0,
-                }}
-              >
-                <StarFilled />
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                    color: (matchedCampaign || activeFiltersCount > 0 || searchTerm.trim()) ? '#0F172A' : '#94A3B8',
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {loading ? (
-                    <Spin size="small" />
-                  ) : matchingCreatorsCount !== null ? (
-                    matchingCreatorsCount.toLocaleString('vi-VN')
-                  ) : (
-                    '--'
-                  )}
-                </div>
-                <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>
-                  {matchedCampaign
-                    ? 'Creator phù hợp'
-                    : (activeFiltersCount > 0 || searchTerm.trim())
-                    ? 'Creator khớp bộ lọc'
-                    : 'Độ khớp (Chờ dự án)'}
-                </div>
-              </div>
-            </div>
-          </Card>
-        </Col>
-
-        <Col xs={12} sm={6}>
-          <Card
-            bordered
-            style={{ borderRadius: 14, borderColor: '#EEF0F6' }}
-            bodyStyle={{ padding: '14px 18px' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  background: '#F0F9FF',
-                  color: '#0284C7',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 18,
-                  flexShrink: 0,
-                }}
-              >
-                <BarChartOutlined />
-              </div>
-              <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', lineHeight: 1.2 }}>
-                  {loading ? <Spin size="small" /> : avgEngagementRate}
-                </div>
-                <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>Tỷ lệ tương tác TB</div>
-              </div>
-            </div>
-          </Card>
-        </Col>
-
-        <Col xs={12} sm={6}>
-          <Card
-            bordered
-            style={{ borderRadius: 14, borderColor: '#EEF0F6' }}
-            bodyStyle={{ padding: '14px 18px' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  background: '#F0FDF4',
-                  color: '#059669',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 18,
-                  flexShrink: 0,
-                }}
-              >
-                <TeamOutlined />
-              </div>
-              <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', lineHeight: 1.2 }}>
-                  {loading ? <Spin size="small" /> : totalReachFormatted}
-                </div>
-                <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>Tổng lượt tiếp cận</div>
-              </div>
-            </div>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* 3. BỘ LỌC NGANG TOÀN DIỆN */}
-      <Card
-        bordered
-        style={{
-          borderRadius: 16,
-          borderColor: '#EEF0F6',
-          boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)',
-        }}
-        bodyStyle={{ padding: '16px 20px' }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Row 1: Search, Sort & View Switcher */}
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-            {/* Search Input & Mode Switch */}
-            <div style={{ flex: 1, minWidth: 320, display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 11.5, fontWeight: 700, color: '#475569' }}>Chế độ:</span>
-                  <Radio.Group
-                    value={searchMode}
-                    onChange={(e) => setSearchMode(e.target.value)}
-                    buttonStyle="solid"
-                    size="small"
-                  >
-                    <Radio.Button value="standard" style={{ borderRadius: '6px 0 0 6px', fontWeight: 600, fontSize: 11.5 }}>
-                      🔍 Tìm kiếm thường
-                    </Radio.Button>
-                    <Radio.Button value="semantic" style={{ borderRadius: '0 6px 6px 0', fontWeight: 600, fontSize: 11.5 }}>
-                      ⚡ Tìm kiếm AI ngữ nghĩa (Semantic)
-                    </Radio.Button>
-                  </Radio.Group>
-                </div>
-                {searchMode === 'semantic' && (
-                  <Tag color="purple" style={{ borderRadius: 999, fontSize: 10.5, fontWeight: 600, margin: 0 }}>
-                    Model BKAI 768-dim pgvector
-                  </Tag>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', gap: 8 }}>
-                <Input
-                  size="large"
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  onPressEnter={() => {
-                    if (searchMode === 'semantic') {
-                      handleSemanticSearch();
-                    }
-                  }}
-                  placeholder={
-                    searchMode === 'semantic'
-                      ? 'Nhập mô tả ngữ nghĩa (Ví dụ: reviewer mỹ phẩm da nhạy cảm Gen Z, unbox phụ kiện sạc...)'
-                      : 'Tìm kiếm creator theo tên, username, từ khóa hoặc phong cách nội dung...'
-                  }
-                  prefix={
-                    searchMode === 'semantic' ? (
-                      <RobotOutlined style={{ color: '#8B5CF6', fontSize: 16, marginRight: 6 }} />
-                    ) : (
-                      <SearchOutlined style={{ color: '#94A3B8', fontSize: 16, marginRight: 6 }} />
-                    )
-                  }
-                  allowClear
-                  style={{
-                    borderRadius: 10,
-                    fontSize: 13,
-                    borderColor: searchMode === 'semantic' ? '#C4B5FD' : '#E2E8F0',
-                    height: 40,
-                    flex: 1,
-                  }}
-                />
-                <Button
-                  type="primary"
-                  loading={isSemanticSearching}
-                  icon={searchMode === 'semantic' ? <ThunderboltFilled /> : <SearchOutlined />}
-                  onClick={() => {
-                    if (searchMode === 'semantic') {
-                      handleSemanticSearch();
-                    } else {
-                      setCurrentPage(1);
-                      message.info({ content: `Đang lọc danh sách với từ khóa "${searchTerm}"`, duration: 1.5 });
-                    }
-                  }}
-                  style={{
-                    height: 40,
-                    borderRadius: 10,
-                    background: searchMode === 'semantic'
-                      ? 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)'
-                      : '#2563EB',
-                    border: 'none',
-                    fontWeight: 600,
-                    boxShadow: searchMode === 'semantic'
-                      ? '0 2px 8px rgba(99, 102, 241, 0.25)'
-                      : '0 2px 8px rgba(37, 99, 235, 0.25)',
-                  }}
-                >
-                  {searchMode === 'semantic' ? 'Tìm AI Vector' : 'Tìm kiếm'}
-                </Button>
-              </div>
-            </div>
-
-            {/* Sort Dropdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 12.5, color: '#64748B', whiteSpace: 'nowrap' }}>Sắp xếp:</span>
-              <Select
-                value={sortBy}
-                onChange={setSortBy}
-                style={{ width: 175, height: 40 }}
-                options={[
-                  { value: 'match', label: 'Độ phù hợp (AI)' },
-                  { value: 'followers', label: 'Lượt theo dõi cao' },
-                  { value: 'engagement', label: 'Tương tác cao' },
-                  { value: 'priceAsc', label: 'Giá: Thấp đến cao' },
-                  { value: 'priceDesc', label: 'Giá: Cao đến thấp' },
-                ]}
-              />
-            </div>
-
-            {/* View Switch Buttons */}
-            <div
-              style={{
-                display: 'flex',
-                background: '#F1F5F9',
-                padding: 3,
-                borderRadius: 8,
-                border: '1px solid #E2E8F0',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setViewMode('grid')}
-                style={{
-                  border: 'none',
-                  background: viewMode === 'grid' ? '#2563EB' : 'transparent',
-                  color: viewMode === 'grid' ? '#FFFFFF' : '#64748B',
-                  fontWeight: 600,
-                  fontSize: 12,
-                  padding: '6px 12px',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  transition: 'all 0.2s',
-                }}
-              >
-                <AppstoreOutlined /> Lưới
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('list')}
-                style={{
-                  border: 'none',
-                  background: viewMode === 'list' ? '#2563EB' : 'transparent',
-                  color: viewMode === 'list' ? '#FFFFFF' : '#64748B',
-                  fontWeight: 600,
-                  fontSize: 12,
-                  padding: '6px 12px',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  transition: 'all 0.2s',
-                }}
-              >
-                <UnorderedListOutlined /> Danh sách
-              </button>
-            </div>
-          </div>
-
-          {/* Row 2: Horizontal Dropdown Filters */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 10,
-              paddingTop: 4,
-              borderTop: '1px solid #F1F5F9',
-            }}
-          >
-            {/* Filter: Nền tảng */}
-            <div style={{ minWidth: 155 }}>
-              <Select
-                value={selectedPlatform}
-                onChange={(val) => {
-                  setSelectedPlatform(val);
-                  setCurrentPage(1);
-                }}
-                style={{ width: '100%', height: 38 }}
-                options={[
-                  { value: 'all', label: 'Tất cả nền tảng' },
-                  { value: 'tiktok', label: 'TikTok' },
-                  { value: 'instagram', label: 'Instagram' },
-                  { value: 'youtube', label: 'YouTube' },
-                  { value: 'facebook', label: 'Facebook' },
-                  { value: 'x', label: 'X (Twitter)' },
-                ]}
-              />
-            </div>
-
-            {/* Filter: Lĩnh vực */}
-            <div style={{ minWidth: 180 }}>
-              <Select
-                value={selectedCategory}
-                onChange={(val) => {
-                  setSelectedCategory(val);
-                  setCurrentPage(1);
-                }}
-                style={{ width: '100%', height: 38 }}
-                options={[
-                  { value: 'all', label: 'Tất cả lĩnh vực' },
-                  ...categoriesList.map((c) => ({ value: c, label: c })),
-                ]}
-              />
-            </div>
-
-            {/* Filter: Địa điểm */}
-            <div style={{ minWidth: 165 }}>
-              <Select
-                showSearch
-                loading={loadingProvinces}
-                value={selectedLocation}
-                onChange={(val) => {
-                  setSelectedLocation(val);
-                  setCurrentPage(1);
-                }}
-                style={{ width: '100%', height: 38 }}
-                filterOption={(input, option) =>
-                  (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
-                }
-                options={provinceOptions}
-              />
-            </div>
-
-            {/* Filter: Quy mô người theo dõi */}
-            <div style={{ minWidth: 155 }}>
-              <Select
-                value={followerTier}
-                onChange={(val) => {
-                  setFollowerTier(val);
-                  setCurrentPage(1);
-                }}
-                style={{ width: '100%', height: 38 }}
-                options={[
-                  { value: 'all', label: 'Quy mô: Tất cả' },
-                  { value: 'nano', label: 'Nano (< 50K)' },
-                  { value: 'micro', label: 'Micro (50K – 200K)' },
-                  { value: 'macro', label: 'Macro (200K – 1M)' },
-                  { value: 'mega', label: 'Mega (1M+)' },
-                ]}
-              />
-            </div>
-
-            {/* Filter: Tỷ lệ tương tác */}
-            <div style={{ minWidth: 150 }}>
-              <Select
-                value={engagementTier}
-                onChange={(val) => {
-                  setEngagementTier(val);
-                  setCurrentPage(1);
-                }}
-                style={{ width: '100%', height: 38 }}
-                options={[
-                  { value: 'all', label: 'Tương tác: Tất cả' },
-                  { value: 'high', label: 'Cao (> 5%)' },
-                  { value: 'vhigh', label: 'Rất cao (> 8%)' },
-                ]}
-              />
-            </div>
-
-            {/* Filter: Mức giá */}
-            <div style={{ minWidth: 145 }}>
-              <Select
-                value={priceTier}
-                onChange={(val) => {
-                  setPriceTier(val);
-                  setCurrentPage(1);
-                }}
-                style={{ width: '100%', height: 38 }}
-                options={[
-                  { value: 'all', label: 'Mức giá: Tất cả' },
-                  { value: 'low', label: '< $500' },
-                  { value: 'mid', label: '$500 – $1,000' },
-                  { value: 'high', label: '> $1,000' },
-                ]}
-              />
-            </div>
-
-            {/* Reset Button */}
-            {activeFiltersCount > 0 && (
-              <Button
-                type="dashed"
-                icon={<ReloadOutlined />}
-                onClick={handleResetFilters}
-                style={{
-                  color: '#EF4444',
-                  borderColor: '#FECDD3',
-                  background: '#FFF1F2',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  borderRadius: 8,
-                  height: 38,
-                }}
-              >
-                Đặt lại ({activeFiltersCount})
-              </Button>
-            )}
-          </div>
-
-          {/* Active Filter Chips Preview */}
-          {activeFiltersCount > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', paddingTop: 2 }}>
-              <span style={{ fontSize: 11.5, color: '#64748B', fontWeight: 600 }}>Đang lọc:</span>
-              {selectedPlatform !== 'all' && (
-                <Tag
-                  closable
-                  onClose={() => {
-                    setSelectedPlatform('all');
-                    setCurrentPage(1);
-                  }}
-                  color="blue"
-                  style={{ borderRadius: 6, fontSize: 11 }}
-                >
-                  Nền tảng: {selectedPlatform}
-                </Tag>
-              )}
-              {selectedCategory !== 'all' && (
-                <Tag
-                  closable
-                  onClose={() => {
-                    setSelectedCategory('all');
-                    setCurrentPage(1);
-                  }}
-                  color="purple"
-                  style={{ borderRadius: 6, fontSize: 11 }}
-                >
-                  Lĩnh vực: {selectedCategory}
-                </Tag>
-              )}
-              {selectedLocation !== 'all' && (
-                <Tag
-                  closable
-                  onClose={() => {
-                    setSelectedLocation('all');
-                    setCurrentPage(1);
-                  }}
-                  color="cyan"
-                  style={{ borderRadius: 6, fontSize: 11 }}
-                >
-                  {selectedLocation}
-                </Tag>
-              )}
-              {followerTier !== 'all' && (
-                <Tag
-                  closable
-                  onClose={() => {
-                    setFollowerTier('all');
-                    setCurrentPage(1);
-                  }}
-                  color="green"
-                  style={{ borderRadius: 6, fontSize: 11 }}
-                >
-                  Followers: {followerTier}
-                </Tag>
-              )}
-              {engagementTier !== 'all' && (
-                <Tag
-                  closable
-                  onClose={() => {
-                    setEngagementTier('all');
-                    setCurrentPage(1);
-                  }}
-                  color="orange"
-                  style={{ borderRadius: 6, fontSize: 11 }}
-                >
-                  Tương tác cao
-                </Tag>
-              )}
-              {priceTier !== 'all' && (
-                <Tag
-                  closable
-                  onClose={() => {
-                    setPriceTier('all');
-                    setCurrentPage(1);
-                  }}
-                  color="magenta"
-                  style={{ borderRadius: 6, fontSize: 11 }}
-                >
-                  Mức giá
-                </Tag>
-              )}
-              <button
-                type="button"
-                onClick={handleResetFilters}
-                style={{
-                  border: 'none',
-                  background: 'none',
-                  color: '#2563EB',
-                  fontSize: 11.5,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  padding: '0 4px',
-                }}
-              >
-                Xóa tất cả
-              </button>
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* 4. Creator Grid / List View (Chiếm trọn không gian, đảm bảo phân trang luôn nằm ở đáy) */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {loading ? (
-          <Card
-            bordered
-            style={{ borderRadius: 16, borderColor: '#EEF0F6', textAlign: 'center', padding: '80px 20px', flex: 1 }}
-          >
-            <Spin size="large" />
-            <div style={{ marginTop: 16, color: '#64748B', fontWeight: 600 }}>
-              Đang tải danh sách Creator từ máy chủ...
-            </div>
-          </Card>
-        ) : filteredCreators.length === 0 ? (
-          <Card
-            bordered
-            style={{ borderRadius: 16, borderColor: '#EEF0F6', textAlign: 'center', padding: '60px 20px', flex: 1 }}
-          >
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-            <Title level={4} style={{ color: '#0F172A', marginBottom: 6 }}>
-              Không tìm thấy creator phù hợp
-            </Title>
-            <Paragraph style={{ color: '#64748B', maxWidth: 400, margin: '0 auto 16px auto' }}>
-              Hãy thử điều chỉnh lại từ khóa tìm kiếm hoặc bỏ bớt các tiêu chí lọc để xem thêm kết quả.
-            </Paragraph>
-            <Button type="primary" onClick={handleResetFilters} style={{ background: '#2563EB', borderRadius: 8 }}>
-              Đặt lại bộ lọc
-            </Button>
-          </Card>
-        ) : viewMode === 'grid' ? (
-          /* ================= FULL WIDTH GRID VIEW (3-4 columns) ================= */
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-              gap: 16,
-            }}
-          >
-            {paginatedCreators.map((creator) => {
-              const isHighMatch = creator.matchLevel === 'high';
-              return (
-                <Card
-                  key={creator.id}
-                  bordered
-                  hoverable
-                  style={{
-                    borderRadius: 16,
-                    borderColor: '#EEF0F6',
-                    transition: 'all 0.25s ease',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
-                  }}
-                  bodyStyle={{
-                    padding: '20px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    height: '100%',
-                    boxSizing: 'border-box',
-                  }}
-                >
+          {/* 2. Metrics Summary Overview (4 KPI Cards) */}
+          <Row gutter={[16, 16]}>
+            <Col xs={12} sm={6}>
+              <Card bordered={false} className="cdiscovery-kpi-card" bodyStyle={{ padding: '16px 20px' }}>
+                <div className="cdiscovery-kpi-body">
+                  <div className="cdiscovery-kpi-iconbox" style={{ background: '#FEF3C7', color: '#D97706' }}>
+                    <StarFilled />
+                  </div>
                   <div>
-                    {/* Top Row: Avatar, Name & Match Badge */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                      <div
-                        style={{ display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer' }}
-                        onClick={() => handleOpenCreator(creator)}
-                      >
-                        <CreatorAvatar src={creator.avatar} name={creator.name} size={48} />
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <span style={{ fontWeight: 800, fontSize: 14.5, color: '#0F172A' }}>
-                              {creator.name}
-                            </span>
-                            {creator.isVerified && (
-                              <CheckCircleFilled style={{ color: '#2563EB', fontSize: 13 }} />
-                            )}
-                          </div>
-                          <div style={{ fontSize: 11.5, color: '#94A3B8' }}>
-                            @{creator.username}
-                          </div>
-                          {/* Platform Icons Row */}
-                          <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                            {creator.platforms.map(renderPlatformIcon)}
-                          </div>
-                        </div>
-                      </div>
+                    <div className="cdiscovery-kpi-value">
+                      {loading ? <Spin size="small" /> : shortlistedCount.toLocaleString('vi-VN')}
+                    </div>
+                    <div className="cdiscovery-kpi-label">Đã lưu trong Shortlist</div>
+                  </div>
+                </div>
+              </Card>
+            </Col>
 
-                      {/* Match Rate Badge: Chỉ hiển thị khi đã chọn dự án và bấm tìm */}
-                      {matchedCampaign ? (
-                        <div
-                          style={{
-                            background: isHighMatch ? '#DCFCE7' : '#FEF3C7',
-                            color: isHighMatch ? '#16A34A' : '#D97706',
-                            fontWeight: 700,
-                            fontSize: 10.5,
-                            padding: '3px 8px',
-                            borderRadius: 6,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 3,
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          ★ {creator.matchRate}% {isHighMatch ? 'Khớp cao' : 'Khớp vừa'}
-                        </div>
+            <Col xs={12} sm={6}>
+              <Card bordered={false} className="cdiscovery-kpi-card" bodyStyle={{ padding: '16px 20px' }}>
+                <div className="cdiscovery-kpi-body">
+                  <div
+                    className="cdiscovery-kpi-iconbox"
+                    style={{
+                      background: (matchedCampaign || activeFiltersCount > 0 || searchTerm.trim()) ? '#ECFDF5' : '#F1F5F9',
+                      color: (matchedCampaign || activeFiltersCount > 0 || searchTerm.trim()) ? '#10B981' : '#94A3B8',
+                    }}
+                  >
+                    <AimOutlined />
+                  </div>
+                  <div>
+                    <div
+                      className="cdiscovery-kpi-value"
+                      style={{
+                        color: (matchedCampaign || activeFiltersCount > 0 || searchTerm.trim()) ? '#0F172A' : '#94A3B8',
+                      }}
+                    >
+                      {loading ? (
+                        <Spin size="small" />
+                      ) : matchingCreatorsCount !== null ? (
+                        matchingCreatorsCount.toLocaleString('vi-VN')
                       ) : (
-                        <div
-                          style={{
-                            background: '#F1F5F9',
-                            color: '#94A3B8',
-                            fontWeight: 600,
-                            fontSize: 10,
-                            padding: '3px 8px',
-                            borderRadius: 6,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 3,
-                            whiteSpace: 'nowrap',
-                          }}
-                          title="Chọn dự án phía trên và bấm Tìm Creator phù hợp để tính độ khớp"
-                        >
-                          Chờ chọn dự án
-                        </div>
+                        '--'
                       )}
                     </div>
-
-                    {/* AI Explanation Snippet: Chỉ hiển thị khi đã có dự án đối soát */}
-                    {matchedCampaign && (
-                      <div
-                        style={{
-                          background: '#FAF5FF',
-                          border: '1px solid #E9D5FF',
-                          borderRadius: 8,
-                          padding: '6px 10px',
-                          fontSize: 11,
-                          color: '#6B21A8',
-                          marginBottom: 10,
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        <strong>AI Match ({matchedCampaign.name}):</strong> {creator.matchReason || computeCreatorMatch(creator, matchedCampaign).reason}
-                      </div>
-                    )}
-
-                    {/* Categories Tags */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-                      {creator.categories.map((cat) => (
-                        <Tag
-                          key={cat}
-                          style={{
-                            borderRadius: 6,
-                            fontSize: 10.5,
-                            color: '#475569',
-                            background: '#F8FAFC',
-                            borderColor: '#E2E8F0',
-                            margin: 0,
-                            padding: '1px 8px',
-                          }}
-                        >
-                          {cat}
-                        </Tag>
-                      ))}
-                    </div>
-
-                    {/* Bio snippet */}
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: '#64748B',
-                        lineHeight: 1.4,
-                        minHeight: 34,
-                        marginBottom: 14,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {creator.bio}
-                    </div>
-
-                    {/* 3 Metrics Box */}
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr 1fr',
-                        background: '#F8FAFC',
-                        borderRadius: 10,
-                        padding: '10px 12px',
-                        marginBottom: 16,
-                        textAlign: 'center',
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A' }}>
-                          {creator.followers}
-                        </div>
-                        <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>
-                          Người theo dõi
-                        </div>
-                      </div>
-
-                      <div style={{ borderLeft: '1px solid #E2E8F0', borderRight: '1px solid #E2E8F0' }}>
-                        <div style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A' }}>
-                          {creator.engagementRate}
-                        </div>
-                        <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>
-                          Tỷ lệ tương tác
-                        </div>
-                      </div>
-
-                      <div>
-                        <div style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A' }}>
-                          {creator.avgPrice}
-                        </div>
-                        <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>
-                          Giá TB / Bài
-                        </div>
-                      </div>
+                    <div className="cdiscovery-kpi-label">
+                      {matchedCampaign
+                        ? 'KOC phù hợp mục tiêu'
+                        : (activeFiltersCount > 0 || searchTerm.trim())
+                        ? 'KOC khớp bộ lọc'
+                        : 'Độ khớp (Chờ dự án)'}
                     </div>
                   </div>
+                </div>
+              </Card>
+            </Col>
 
-                  {/* Bottom Buttons */}
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <Button
-                      onClick={() => {
-                        setSelectedCreator(creator);
-                        setDrawerVisible(true);
-                      }}
-                      style={{
-                        borderRadius: 8,
-                        height: 36,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: '#4F46E5',
-                        borderColor: '#C7D2FE',
-                      }}
-                    >
-                      Xem nhanh
-                    </Button>
+            <Col xs={12} sm={6}>
+              <Card bordered={false} className="cdiscovery-kpi-card" bodyStyle={{ padding: '16px 20px' }}>
+                <div className="cdiscovery-kpi-body">
+                  <div className="cdiscovery-kpi-iconbox" style={{ background: '#F0F9FF', color: '#0284C7' }}>
+                    <BarChartOutlined />
+                  </div>
+                  <div>
+                    <div className="cdiscovery-kpi-value">
+                      {loading ? <Spin size="small" /> : avgEngagementRate}
+                    </div>
+                    <div className="cdiscovery-kpi-label">Tỷ lệ tương tác TB</div>
+                  </div>
+                </div>
+              </Card>
+            </Col>
 
+            <Col xs={12} sm={6}>
+              <Card bordered={false} className="cdiscovery-kpi-card" bodyStyle={{ padding: '16px 20px' }}>
+                <div className="cdiscovery-kpi-body">
+                  <div className="cdiscovery-kpi-iconbox" style={{ background: '#F0FDF4', color: '#059669' }}>
+                    <TeamOutlined />
+                  </div>
+                  <div>
+                    <div className="cdiscovery-kpi-value">
+                      {loading ? <Spin size="small" /> : totalReachFormatted}
+                    </div>
+                    <div className="cdiscovery-kpi-label">Tổng lượt tiếp cận</div>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+          </Row>
+
+          {/* 3. CONTROL HUB: BỘ LỌC & TÌM KIẾM TOÀN DIỆN */}
+          <Card bordered={false} className="cdiscovery-filter-card" bodyStyle={{ padding: '18px 22px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Row 1: Search, Sort & View Switcher */}
+              <div className="cdiscovery-search-row">
+                {/* Search Input & Mode Switch */}
+                <div className="cdiscovery-search-box">
+                  <div className="cdiscovery-search-mode-bar">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>Phương thức:</span>
+                      <Radio.Group
+                        value={searchMode}
+                        onChange={(e) => setSearchMode(e.target.value)}
+                        buttonStyle="solid"
+                        size="small"
+                      >
+                        <Radio.Button value="standard" style={{ borderRadius: '6px 0 0 6px', fontWeight: 600, fontSize: 12 }}>
+                          🔍 Tìm kiếm thường
+                        </Radio.Button>
+                        <Radio.Button value="semantic" style={{ borderRadius: '0 6px 6px 0', fontWeight: 600, fontSize: 12 }}>
+                          ⚡ Tìm AI ngữ nghĩa (Semantic)
+                        </Radio.Button>
+                      </Radio.Group>
+                    </div>
+                    {searchMode === 'semantic' && (
+                      <Tag color="purple" style={{ borderRadius: 999, fontSize: 11, fontWeight: 600, margin: 0 }}>
+                        Model BKAI 768-dim pgvector
+                      </Tag>
+                    )}
+                  </div>
+
+                  <div className="cdiscovery-search-input-group">
+                    <Input
+                      size="large"
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      onPressEnter={() => {
+                        if (searchMode === 'semantic') {
+                          handleSemanticSearch();
+                        }
+                      }}
+                      placeholder={
+                        searchMode === 'semantic'
+                          ? 'Nhập mô tả phong cách KOC (Ví dụ: reviewer mỹ phẩm da nhạy cảm Gen Z, unbox phụ kiện công nghệ...)'
+                          : 'Tìm kiếm creator theo tên, username, phong cách hoặc từ khóa chuyên môn...'
+                      }
+                      prefix={
+                        searchMode === 'semantic' ? (
+                          <RobotOutlined style={{ color: '#8B5CF6', fontSize: 16, marginRight: 8 }} />
+                        ) : (
+                          <SearchOutlined style={{ color: '#94A3B8', fontSize: 16, marginRight: 8 }} />
+                        )
+                      }
+                      allowClear
+                      className="cdiscovery-search-input"
+                    />
                     <Button
                       type="primary"
-                      onClick={() => handleOpenCreator(creator)}
+                      loading={isSemanticSearching}
+                      icon={searchMode === 'semantic' ? <ThunderboltFilled /> : <SearchOutlined />}
+                      onClick={() => {
+                        if (searchMode === 'semantic') {
+                          handleSemanticSearch();
+                        } else {
+                          setCurrentPage(1);
+                          message.info({ content: `Đang lọc danh sách với từ khóa "${searchTerm}"`, duration: 1.5 });
+                        }
+                      }}
+                      className="cdiscovery-btn-search"
                       style={{
-                        flex: 1,
-                        background: '#2563EB',
-                        fontWeight: 700,
-                        fontSize: 12.5,
-                        borderRadius: 8,
-                        height: 36,
+                        background: searchMode === 'semantic'
+                          ? 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)'
+                          : '#2563EB',
+                        boxShadow: searchMode === 'semantic'
+                          ? '0 2px 10px rgba(99, 102, 241, 0.3)'
+                          : '0 2px 10px rgba(37, 99, 235, 0.3)',
                       }}
                     >
-                      Chi tiết
+                      {searchMode === 'semantic' ? 'Tìm AI Vector' : 'Tìm kiếm'}
                     </Button>
-
-                    <Button
-                      onClick={(e) => handleOpenShortlist(creator, e)}
-                      icon={creator.saved ? <HeartFilled style={{ color: '#EF4444' }} /> : <HeartOutlined />}
-                      style={{
-                        borderRadius: 8,
-                        height: 36,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: creator.saved ? '#EF4444' : '#64748B',
-                        borderColor: creator.saved ? '#FECDD3' : '#E2E8F0',
-                        background: creator.saved ? '#FFF1F2' : '#FFFFFF',
-                      }}
-                    >
-                      {creator.saved ? 'Đã lưu' : 'Shortlist'}
-                    </Button>
-
-                    <Dropdown
-                      menu={{
-                        items: [
-                          { key: 'shortlist', label: 'Thêm vào Shortlist', icon: <SaveOutlined /> },
-                          { key: 'message', label: 'Gửi tin nhắn', icon: <MessageOutlined /> },
-                          { key: 'invite', label: 'Mời vào chiến dịch', icon: <ThunderboltOutlined /> },
-                          { key: 'share', label: 'Chia sẻ hồ sơ', icon: <GlobalOutlined /> },
-                        ],
-                        onClick: ({ key, domEvent }) => {
-                          domEvent.stopPropagation();
-                          if (key === 'shortlist' || key === 'invite') {
-                            handleOpenShortlist(creator);
-                          } else if (key === 'share') {
-                            navigator.clipboard?.writeText(window.location.origin + '/creators/' + creator.id);
-                            message.success('Đã sao chép liên kết creator!');
-                          } else if (key === 'message') {
-                            navigate('/messages');
-                          }
-                        },
-                      }}
-                      trigger={['click']}
-                    >
-                      <Button
-                        icon={<MoreOutlined />}
-                        style={{
-                          borderRadius: 8,
-                          height: 36,
-                          width: 36,
-                          padding: 0,
-                          color: '#64748B',
-                        }}
-                      />
-                    </Dropdown>
                   </div>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          /* ================= LIST VIEW ================= */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {paginatedCreators.map((creator) => {
-              const isHighMatch = creator.matchLevel === 'high';
-              return (
-                <Card
-                  key={creator.id}
-                  bordered
-                  hoverable
-                  style={{
-                    borderRadius: 14,
-                    borderColor: '#EEF0F6',
+                </div>
+
+                {/* Sort & View Switcher Group */}
+                <div className="cdiscovery-sort-view-group">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 13, color: '#64748B', whiteSpace: 'nowrap', fontWeight: 500 }}>Sắp xếp:</span>
+                    <Select
+                      value={sortBy}
+                      onChange={setSortBy}
+                      style={{ width: 180, height: 42 }}
+                      className="cdiscovery-filter-select"
+                      options={[
+                        { value: 'match', label: 'Độ phù hợp (AI)' },
+                        { value: 'followers', label: 'Followers cao nhất' },
+                        { value: 'engagement', label: 'Tương tác cao nhất' },
+                        { value: 'priceAsc', label: 'Giá: Thấp đến cao' },
+                        { value: 'priceDesc', label: 'Giá: Cao đến thấp' },
+                      ]}
+                    />
+                  </div>
+
+                  {/* View Switch Buttons */}
+                  <div className="cdiscovery-view-switcher">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('grid')}
+                      className={`cdiscovery-view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                    >
+                      <AppstoreOutlined /> Lưới
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('list')}
+                      className={`cdiscovery-view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                    >
+                      <UnorderedListOutlined /> Danh sách
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2: Dropdown Filters Grid */}
+              <div className="cdiscovery-dropdown-filters-row">
+                {/* Filter: Nền tảng */}
+                <Select
+                  value={selectedPlatform}
+                  onChange={(val) => {
+                    setSelectedPlatform(val);
+                    setCurrentPage(1);
                   }}
-                  bodyStyle={{ padding: '16px 20px' }}
+                  className="cdiscovery-filter-select"
+                  options={[
+                    { value: 'all', label: 'Tất cả nền tảng' },
+                    { value: 'tiktok', label: 'TikTok' },
+                    { value: 'instagram', label: 'Instagram' },
+                    { value: 'youtube', label: 'YouTube' },
+                    { value: 'facebook', label: 'Facebook' },
+                    { value: 'x', label: 'X (Twitter)' },
+                  ]}
+                />
+
+                {/* Filter: Lĩnh vực */}
+                <Select
+                  value={selectedCategory}
+                  onChange={(val) => {
+                    setSelectedCategory(val);
+                    setCurrentPage(1);
+                  }}
+                  className="cdiscovery-filter-select"
+                  options={[
+                    { value: 'all', label: 'Tất cả lĩnh vực' },
+                    ...categoriesList.map((c) => ({ value: c, label: c })),
+                  ]}
+                />
+
+                {/* Filter: Địa điểm */}
+                <Select
+                  showSearch
+                  loading={loadingProvinces}
+                  value={selectedLocation}
+                  onChange={(val) => {
+                    setSelectedLocation(val);
+                    setCurrentPage(1);
+                  }}
+                  className="cdiscovery-filter-select"
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                  }
+                  options={provinceOptions}
+                />
+
+                {/* Filter: Quy mô người theo dõi */}
+                <Select
+                  value={followerTier}
+                  onChange={(val) => {
+                    setFollowerTier(val);
+                    setCurrentPage(1);
+                  }}
+                  className="cdiscovery-filter-select"
+                  options={[
+                    { value: 'all', label: 'Quy mô: Tất cả' },
+                    { value: 'nano', label: 'Nano (< 50K)' },
+                    { value: 'micro', label: 'Micro (50K – 200K)' },
+                    { value: 'macro', label: 'Macro (200K – 1M)' },
+                    { value: 'mega', label: 'Mega (1M+)' },
+                  ]}
+                />
+
+                {/* Filter: Tỷ lệ tương tác */}
+                <Select
+                  value={engagementTier}
+                  onChange={(val) => {
+                    setEngagementTier(val);
+                    setCurrentPage(1);
+                  }}
+                  className="cdiscovery-filter-select"
+                  options={[
+                    { value: 'all', label: 'Tương tác: Tất cả' },
+                    { value: 'high', label: 'Cao (> 5%)' },
+                    { value: 'vhigh', label: 'Rất cao (> 8%)' },
+                  ]}
+                />
+
+                {/* Filter: Mức giá */}
+                <Select
+                  value={priceTier}
+                  onChange={(val) => {
+                    setPriceTier(val);
+                    setCurrentPage(1);
+                  }}
+                  className="cdiscovery-filter-select"
+                  options={[
+                    { value: 'all', label: 'Mức giá: Tất cả' },
+                    { value: 'low', label: '< $500' },
+                    { value: 'mid', label: '$500 – $1,000' },
+                    { value: 'high', label: '> $1,000' },
+                  ]}
+                />
+              </div>
+
+              {/* Row 3: Active Filters Chips */}
+              {activeFiltersCount > 0 && (
+                <div className="cdiscovery-active-chips-row">
+                  <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>Đang lọc:</span>
+                  {selectedPlatform !== 'all' && (
+                    <Tag
+                      closable
+                      onClose={() => {
+                        setSelectedPlatform('all');
+                        setCurrentPage(1);
+                      }}
+                      color="blue"
+                      style={{ borderRadius: 999, fontSize: 11.5, padding: '2px 10px' }}
+                    >
+                      Nền tảng: {selectedPlatform}
+                    </Tag>
+                  )}
+                  {selectedCategory !== 'all' && (
+                    <Tag
+                      closable
+                      onClose={() => {
+                        setSelectedCategory('all');
+                        setCurrentPage(1);
+                      }}
+                      color="purple"
+                      style={{ borderRadius: 999, fontSize: 11.5, padding: '2px 10px' }}
+                    >
+                      Lĩnh vực: {selectedCategory}
+                    </Tag>
+                  )}
+                  {selectedLocation !== 'all' && (
+                    <Tag
+                      closable
+                      onClose={() => {
+                        setSelectedLocation('all');
+                        setCurrentPage(1);
+                      }}
+                      color="cyan"
+                      style={{ borderRadius: 999, fontSize: 11.5, padding: '2px 10px' }}
+                    >
+                      📍 {selectedLocation}
+                    </Tag>
+                  )}
+                  {followerTier !== 'all' && (
+                    <Tag
+                      closable
+                      onClose={() => {
+                        setFollowerTier('all');
+                        setCurrentPage(1);
+                      }}
+                      color="green"
+                      style={{ borderRadius: 999, fontSize: 11.5, padding: '2px 10px' }}
+                    >
+                      Quy mô: {followerTier}
+                    </Tag>
+                  )}
+                  {engagementTier !== 'all' && (
+                    <Tag
+                      closable
+                      onClose={() => {
+                        setEngagementTier('all');
+                        setCurrentPage(1);
+                      }}
+                      color="orange"
+                      style={{ borderRadius: 999, fontSize: 11.5, padding: '2px 10px' }}
+                    >
+                      Tương tác cao
+                    </Tag>
+                  )}
+                  {priceTier !== 'all' && (
+                    <Tag
+                      closable
+                      onClose={() => {
+                        setPriceTier('all');
+                        setCurrentPage(1);
+                      }}
+                      color="magenta"
+                      style={{ borderRadius: 999, fontSize: 11.5, padding: '2px 10px' }}
+                    >
+                      Mức giá
+                    </Tag>
+                  )}
+                  <Button
+                    type="link"
+                    size="small"
+                    onClick={handleResetFilters}
+                    style={{
+                      color: '#EF4444',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      padding: '0 6px',
+                    }}
+                  >
+                    Xóa tất cả ({activeFiltersCount})
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* 4. CREATOR GRID / LIST VIEW */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            {loading ? (
+              <Card
+                bordered={false}
+                style={{
+                  borderRadius: 18,
+                  border: '1px solid #E2E8F0',
+                  textAlign: 'center',
+                  padding: '80px 20px',
+                  background: '#FFFFFF',
+                }}
+              >
+                <Spin size="large" />
+                <div style={{ marginTop: 16, color: '#64748B', fontWeight: 600, fontSize: 14 }}>
+                  Đang tải danh sách Creator từ máy chủ...
+                </div>
+              </Card>
+            ) : filteredCreators.length === 0 ? (
+              <Card
+                bordered={false}
+                style={{
+                  borderRadius: 18,
+                  border: '1px solid #E2E8F0',
+                  textAlign: 'center',
+                  padding: '60px 20px',
+                  background: '#FFFFFF',
+                }}
+              >
+                <div style={{ fontSize: 44, marginBottom: 12 }}>🔍</div>
+                <Title level={4} style={{ color: '#0F172A', marginBottom: 6 }}>
+                  Không tìm thấy creator phù hợp
+                </Title>
+                <Paragraph style={{ color: '#64748B', maxWidth: 440, margin: '0 auto 16px auto', fontSize: 13.5 }}>
+                  Hãy thử điều chỉnh lại từ khóa tìm kiếm hoặc bỏ bớt các tiêu chí lọc để xem thêm kết quả phù hợp.
+                </Paragraph>
+                <Button
+                  type="primary"
+                  onClick={handleResetFilters}
+                  style={{ background: '#2563EB', borderRadius: 10, height: 40, fontWeight: 700 }}
                 >
-                  <Row align="middle" gutter={[16, 16]}>
-                    <Col xs={24} sm={10} md={8}>
-                      <div
-                        style={{ display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer' }}
-                        onClick={() => handleOpenCreator(creator)}
-                      >
-                        <CreatorAvatar src={creator.avatar} name={creator.name} size={52} />
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontWeight: 800, fontSize: 14.5, color: '#0F172A' }}>
-                              {creator.name}
-                            </span>
-                            {creator.isVerified && (
-                              <CheckCircleFilled style={{ color: '#2563EB', fontSize: 13 }} />
-                            )}
-                            {matchedCampaign ? (
-                              <span
-                                style={{
-                                  background: isHighMatch ? '#DCFCE7' : '#FEF3C7',
-                                  color: isHighMatch ? '#16A34A' : '#D97706',
-                                  fontWeight: 700,
-                                  fontSize: 10,
-                                  padding: '1px 6px',
-                                  borderRadius: 4,
-                                }}
-                              >
-                                ★ {creator.matchRate}% {isHighMatch ? 'Khớp cao' : 'Khớp vừa'}
-                              </span>
-                            ) : (
-                              <span
-                                style={{
-                                  background: '#F1F5F9',
-                                  color: '#94A3B8',
-                                  fontWeight: 500,
-                                  fontSize: 10,
-                                  padding: '1px 6px',
-                                  borderRadius: 4,
-                                }}
-                                title="Chọn dự án phía trên để tính điểm khớp"
-                              >
-                                Chờ chọn dự án
-                              </span>
-                            )}
+                  Đặt lại bộ lọc
+                </Button>
+              </Card>
+            ) : viewMode === 'grid' ? (
+              /* ================= FULL WIDTH GRID VIEW ================= */
+              <div className="cdiscovery-grid">
+                {paginatedCreators.map((creator) => {
+                  const isHighMatch = creator.matchLevel === 'high';
+                  return (
+                    <Card
+                      key={creator.id}
+                      bordered={false}
+                      className="cdiscovery-creator-card"
+                      bodyStyle={{
+                        padding: '20px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        height: '100%',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <div>
+                        {/* Top Row: Avatar, Name & Match Badge */}
+                        <div className="cdiscovery-card-header">
+                          <div
+                            className="cdiscovery-card-profile"
+                            onClick={() => handleOpenCreator(creator)}
+                          >
+                            <CreatorAvatar src={creator.avatar} name={creator.name} size={50} />
+                            <div className="cdiscovery-card-name-col">
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                <span className="cdiscovery-card-name">
+                                  {creator.name}
+                                </span>
+                                {creator.isVerified && (
+                                  <CheckCircleFilled style={{ color: '#2563EB', fontSize: 14 }} />
+                                )}
+                              </div>
+                              <div className="cdiscovery-card-username">
+                                @{creator.username}
+                              </div>
+                              {/* Platform Icons */}
+                              <div className="cdiscovery-card-platforms">
+                                {creator.platforms.map(renderPlatformIcon)}
+                              </div>
+                            </div>
                           </div>
-                          <div style={{ fontSize: 11.5, color: '#94A3B8' }}>
-                            @{creator.username} • 📍 {creator.location}
+
+                          {/* Match Rate Badge */}
+                          {matchedCampaign ? (
+                            <div className={`cdiscovery-match-badge ${isHighMatch ? 'high' : 'medium'}`}>
+                              ★ {creator.matchRate}% {isHighMatch ? 'Khớp cao' : 'Khớp vừa'}
+                            </div>
+                          ) : (
+                            <div
+                              className="cdiscovery-match-badge pending"
+                              title="Chọn dự án phía trên và bấm Tìm Creator để tính độ khớp"
+                            >
+                              Chờ chọn dự án
+                            </div>
+                          )}
+                        </div>
+
+                        {/* AI Explanation Snippet */}
+                        {matchedCampaign && (
+                          <div className="cdiscovery-ai-insight-box">
+                            <strong>AI Match ({matchedCampaign.name}):</strong>{' '}
+                            {creator.matchReason || computeCreatorMatch(creator, matchedCampaign).reason}
                           </div>
-                          <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                            {creator.platforms.map(renderPlatformIcon)}
+                        )}
+
+                        {/* Categories Tags */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                          {creator.categories.map((cat) => (
+                            <Tag
+                              key={cat}
+                              style={{
+                                borderRadius: 8,
+                                fontSize: 11,
+                                color: '#475569',
+                                background: '#F8FAFC',
+                                borderColor: '#E2E8F0',
+                                margin: 0,
+                                padding: '2px 8px',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {cat}
+                            </Tag>
+                          ))}
+                        </div>
+
+                        {/* Bio snippet */}
+                        <div className="cdiscovery-card-bio">
+                          {creator.bio}
+                        </div>
+
+                        {/* 3 Metrics Box */}
+                        <div className="cdiscovery-card-metrics-box">
+                          <div>
+                            <div className="cdiscovery-card-metric-val">
+                              {creator.followers}
+                            </div>
+                            <div className="cdiscovery-card-metric-lbl">
+                              Người theo dõi
+                            </div>
+                          </div>
+
+                          <div className="cdiscovery-card-metric-divider">
+                            <div className="cdiscovery-card-metric-val">
+                              {creator.engagementRate}
+                            </div>
+                            <div className="cdiscovery-card-metric-lbl">
+                              Tương tác
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="cdiscovery-card-metric-val">
+                              {creator.avgPrice}
+                            </div>
+                            <div className="cdiscovery-card-metric-lbl">
+                              Giá TB / Bài
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </Col>
 
-                    <Col xs={24} sm={8} md={8}>
-                      <div style={{ display: 'flex', gap: 20 }}>
-                        <div>
-                          <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
-                            {creator.followers}
-                          </div>
-                          <div style={{ fontSize: 10.5, color: '#94A3B8' }}>Followers</div>
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
-                            {creator.engagementRate}
-                          </div>
-                          <div style={{ fontSize: 10.5, color: '#94A3B8' }}>Engagement</div>
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
-                            {creator.avgPrice}
-                          </div>
-                          <div style={{ fontSize: 10.5, color: '#94A3B8' }}>Giá TB</div>
-                        </div>
-                      </div>
-                    </Col>
-
-                    <Col xs={24} sm={6} md={8} style={{ textAlign: 'right' }}>
-                      <Space>
+                      {/* Card Action Buttons */}
+                      <div className="cdiscovery-card-actions">
                         <Button
-                          onClick={(e) => toggleSaveCreator(creator.id, e)}
+                          type="primary"
+                          onClick={() => handleOpenCreator(creator)}
+                          className="cdiscovery-card-btn-primary"
+                        >
+                          Chi tiết hồ sơ
+                        </Button>
+
+                        <Button
+                          onClick={(e) => handleOpenShortlist(creator, e)}
                           icon={creator.saved ? <HeartFilled style={{ color: '#EF4444' }} /> : <HeartOutlined />}
+                          className="cdiscovery-card-btn-secondary"
                           style={{
-                            borderRadius: 8,
-                            color: creator.saved ? '#EF4444' : '#64748B',
+                            color: creator.saved ? '#EF4444' : '#334155',
                             borderColor: creator.saved ? '#FECDD3' : '#E2E8F0',
                             background: creator.saved ? '#FFF1F2' : '#FFFFFF',
                           }}
                         >
                           {creator.saved ? 'Đã lưu' : 'Shortlist'}
                         </Button>
+
                         <Button
-                          type="primary"
-                          onClick={() => handleOpenCreator(creator)}
-                          style={{ background: '#2563EB', borderRadius: 8, fontWeight: 700 }}
+                          onClick={() => {
+                            setSelectedCreator(creator);
+                            setDrawerVisible(true);
+                          }}
+                          className="cdiscovery-card-btn-secondary"
+                          style={{ padding: '0 12px' }}
                         >
-                          Xem hồ sơ
+                          Xem nhanh
                         </Button>
-                      </Space>
-                    </Col>
-                  </Row>
-                </Card>
-              );
-            })}
-          </div>
-        )}
 
-        {/* 5. Phân trang cố định sát đáy và chỉ cho phép qua trang khi có creator */}
-        <div
-          style={{
-            marginTop: 'auto',
-            paddingTop: 16,
-            paddingBottom: 8,
-            borderTop: '1px solid #EEF0F6',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 12,
-          }}
-        >
-          <span style={{ fontSize: 12.5, color: '#64748B' }}>
-            {filteredCreators.length === 0 ? (
-              'Không có creator nào'
+                        <Dropdown
+                          menu={{
+                            items: [
+                              { key: 'shortlist', label: 'Thêm vào Shortlist', icon: <SaveOutlined /> },
+                              { key: 'message', label: 'Gửi tin nhắn', icon: <MessageOutlined /> },
+                              { key: 'invite', label: 'Mời vào chiến dịch', icon: <ThunderboltOutlined /> },
+                              { key: 'share', label: 'Chia sẻ hồ sơ', icon: <GlobalOutlined /> },
+                            ],
+                            onClick: ({ key, domEvent }) => {
+                              domEvent.stopPropagation();
+                              if (key === 'shortlist' || key === 'invite') {
+                                handleOpenShortlist(creator);
+                              } else if (key === 'share') {
+                                navigator.clipboard?.writeText(window.location.origin + '/creators/' + creator.id);
+                                message.success('Đã sao chép liên kết creator!');
+                              } else if (key === 'message') {
+                                navigate('/messages');
+                              }
+                            },
+                          }}
+                          trigger={['click']}
+                        >
+                          <Button
+                            icon={<MoreOutlined />}
+                            className="cdiscovery-card-btn-secondary"
+                            style={{ width: 38, padding: 0, color: '#64748B' }}
+                          />
+                        </Dropdown>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
             ) : (
-              <>
-                Hiển thị <strong style={{ color: '#0F172A' }}>{(safeCurrentPage - 1) * pageSize + 1} – {Math.min(safeCurrentPage * pageSize, filteredCreators.length)}</strong> trên tổng số <strong style={{ color: '#0F172A' }}>{filteredCreators.length}</strong> creator
-              </>
-            )}
-          </span>
+              /* ================= LIST VIEW ================= */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {paginatedCreators.map((creator) => {
+                  const isHighMatch = creator.matchLevel === 'high';
+                  return (
+                    <Card
+                      key={creator.id}
+                      bordered={false}
+                      className="cdiscovery-list-card"
+                      bodyStyle={{ padding: '16px 22px' }}
+                    >
+                      <Row align="middle" gutter={[16, 16]}>
+                        <Col xs={24} sm={10} md={9}>
+                          <div
+                            style={{ display: 'flex', gap: 14, alignItems: 'center', cursor: 'pointer' }}
+                            onClick={() => handleOpenCreator(creator)}
+                          >
+                            <CreatorAvatar src={creator.avatar} name={creator.name} size={52} />
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                <span style={{ fontWeight: 800, fontSize: 15, color: '#0F172A' }}>
+                                  {creator.name}
+                                </span>
+                                {creator.isVerified && (
+                                  <CheckCircleFilled style={{ color: '#2563EB', fontSize: 13 }} />
+                                )}
+                                {matchedCampaign ? (
+                                  <span className={`cdiscovery-match-badge ${isHighMatch ? 'high' : 'medium'}`}>
+                                    ★ {creator.matchRate}% {isHighMatch ? 'Khớp cao' : 'Khớp vừa'}
+                                  </span>
+                                ) : (
+                                  <span className="cdiscovery-match-badge pending">
+                                    Chờ chọn dự án
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>
+                                @{creator.username} • 📍 {creator.location}
+                              </div>
+                              <div style={{ display: 'flex', gap: 5, marginTop: 4 }}>
+                                {creator.platforms.map(renderPlatformIcon)}
+                              </div>
+                            </div>
+                          </div>
+                        </Col>
 
-          <Pagination
-            current={safeCurrentPage}
-            pageSize={pageSize}
-            total={filteredCreators.length}
-            onChange={(page) => setCurrentPage(page)}
-            showSizeChanger={false}
-            hideOnSinglePage={false}
-          />
-        </div>
-      </div>
-    </>
-  )}
+                        <Col xs={24} sm={7} md={7}>
+                          <div style={{ display: 'flex', gap: 24 }}>
+                            <div>
+                              <div style={{ fontWeight: 800, fontSize: 14.5, color: '#0F172A' }}>
+                                {creator.followers}
+                              </div>
+                              <div style={{ fontSize: 11, color: '#94A3B8' }}>Followers</div>
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 800, fontSize: 14.5, color: '#0F172A' }}>
+                                {creator.engagementRate}
+                              </div>
+                              <div style={{ fontSize: 11, color: '#94A3B8' }}>Tương tác</div>
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 800, fontSize: 14.5, color: '#0F172A' }}>
+                                {creator.avgPrice}
+                              </div>
+                              <div style={{ fontSize: 11, color: '#94A3B8' }}>Giá TB</div>
+                            </div>
+                          </div>
+                        </Col>
+
+                        <Col xs={24} sm={7} md={8} style={{ textAlign: 'right' }}>
+                          <Space size="middle">
+                            <Button
+                              onClick={(e) => handleOpenShortlist(creator, e)}
+                              icon={creator.saved ? <HeartFilled style={{ color: '#EF4444' }} /> : <HeartOutlined />}
+                              style={{
+                                borderRadius: 10,
+                                height: 38,
+                                fontWeight: 600,
+                                color: creator.saved ? '#EF4444' : '#334155',
+                                borderColor: creator.saved ? '#FECDD3' : '#E2E8F0',
+                                background: creator.saved ? '#FFF1F2' : '#FFFFFF',
+                              }}
+                            >
+                              {creator.saved ? 'Đã lưu' : 'Shortlist'}
+                            </Button>
+                            <Button
+                              type="primary"
+                              onClick={() => handleOpenCreator(creator)}
+                              style={{
+                                background: '#2563EB',
+                                borderRadius: 10,
+                                height: 38,
+                                padding: '0 20px',
+                                fontWeight: 700,
+                              }}
+                            >
+                              Chi tiết hồ sơ
+                            </Button>
+                          </Space>
+                        </Col>
+                      </Row>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 5. Phân trang cố định chuẩn mực */}
+            <div className="cdiscovery-pagination-bar">
+              <span className="cdiscovery-pagination-info">
+                {filteredCreators.length === 0 ? (
+                  'Không có creator nào'
+                ) : (
+                  <>
+                    Hiển thị <strong style={{ color: '#0F172A' }}>{(safeCurrentPage - 1) * pageSize + 1} – {Math.min(safeCurrentPage * pageSize, filteredCreators.length)}</strong> trên tổng số <strong style={{ color: '#0F172A' }}>{filteredCreators.length}</strong> creator
+                  </>
+                )}
+              </span>
+
+              <Pagination
+                current={safeCurrentPage}
+                pageSize={pageSize}
+                total={filteredCreators.length}
+                onChange={(page) => setCurrentPage(page)}
+                showSizeChanger={false}
+                hideOnSinglePage={false}
+              />
+            </div>
+          </div>
+        </>
+      )}
 
       {/* 6. Creator Profile Quick Preview Drawer */}
       <Drawer

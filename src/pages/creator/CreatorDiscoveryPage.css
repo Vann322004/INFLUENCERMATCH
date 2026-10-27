@@ -1,0 +1,660 @@
+/* ============================================================
+   INFLUENCERMATCH - CREATOR DISCOVERY PAGE STYLESHEET
+   Modern Luxe Style, Spacious, Responsive & Harmonious Layout
+   ============================================================ */
+
+/* ── Container chính ── */
+.cdiscovery-container {
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+/* ── 1. Page Header Hero ── */
+.cdiscovery-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 4px 2px 0 2px;
+}
+
+.cdiscovery-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cdiscovery-title {
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  color: #0F172A !important;
+  margin: 0 !important;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cdiscovery-subtitle {
+  font-size: 13.5px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+/* ── Mode Navigation Tabs ── */
+.cdiscovery-mode-tabs {
+  display: flex;
+  gap: 12px;
+  background: #FFFFFF;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.cdiscovery-tab-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 18px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #64748B;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cdiscovery-tab-btn:hover {
+  color: #4F46E5;
+  background: #F8FAFC;
+}
+
+.cdiscovery-tab-btn.active {
+  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
+  color: #FFFFFF;
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.25);
+}
+
+/* ── 2. Campaign Matching Hero Banner ── */
+.cdiscovery-match-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.25s ease !important;
+  overflow: hidden;
+}
+
+.cdiscovery-match-card.is-matched {
+  border-color: #DDD6FE !important;
+  background: linear-gradient(135deg, #FFFFFF 0%, #FAF5FF 60%, #F5F3FF 100%) !important;
+  box-shadow: 0 4px 20px -2px rgba(124, 58, 237, 0.08) !important;
+}
+
+.cdiscovery-match-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.cdiscovery-match-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1 1 340px;
+  min-width: 260px;
+}
+
+.cdiscovery-match-iconbox {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  background: #F1F5F9;
+  color: #64748B;
+  transition: all 0.3s ease;
+}
+
+.cdiscovery-match-card.is-matched .cdiscovery-match-iconbox {
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+
+.cdiscovery-match-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cdiscovery-match-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cdiscovery-match-title {
+  font-weight: 800;
+  font-size: 15px;
+  color: #0F172A;
+}
+
+.cdiscovery-match-desc {
+  font-size: 13px;
+  color: #64748B;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cdiscovery-match-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 420px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.cdiscovery-campaign-select {
+  min-width: 240px;
+  max-width: 380px;
+  flex: 1;
+}
+
+.cdiscovery-campaign-select .ant-select-selector {
+  height: 42px !important;
+  border-radius: 12px !important;
+  border-color: #E2E8F0 !important;
+  display: flex;
+  align-items: center;
+  font-weight: 600 !important;
+}
+
+.cdiscovery-btn-match {
+  height: 42px !important;
+  border-radius: 12px !important;
+  padding: 0 20px !important;
+  font-weight: 700 !important;
+  font-size: 13.5px !important;
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3) !important;
+  color: #FFFFFF !important;
+  flex-shrink: 0;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease !important;
+}
+
+.cdiscovery-btn-match:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4) !important;
+}
+
+.cdiscovery-btn-shortlist-link {
+  height: 42px !important;
+  border-radius: 12px !important;
+  padding: 0 16px !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  background: #EEF2FF !important;
+  border: 1px solid #C7D2FE !important;
+  color: #4F46E5 !important;
+  flex-shrink: 0;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+}
+
+.cdiscovery-btn-shortlist-link:hover {
+  background: #E0E7FF !important;
+  border-color: #A5B4FC !important;
+}
+
+.cdiscovery-btn-clear-match {
+  height: 42px !important;
+  border-radius: 12px !important;
+  padding: 0 14px !important;
+  color: #EF4444 !important;
+  background: #FEF2F2 !important;
+  border: 1px solid #FEE2E2 !important;
+  font-weight: 600 !important;
+  flex-shrink: 0;
+}
+
+/* ── 3. Metrics Overview Cards ── */
+.cdiscovery-kpi-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  height: 100%;
+}
+
+.cdiscovery-kpi-card:hover {
+  border-color: #CBD5E1 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.06) !important;
+}
+
+.cdiscovery-kpi-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cdiscovery-kpi-iconbox {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.cdiscovery-kpi-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.15;
+  letter-spacing: -0.3px;
+}
+
+.cdiscovery-kpi-label {
+  font-size: 12.5px;
+  color: #64748B;
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+/* ── 4. Control Hub (Search & Filters) ── */
+.cdiscovery-filter-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.03) !important;
+}
+
+.cdiscovery-search-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.cdiscovery-search-box {
+  flex: 1 1 360px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cdiscovery-search-mode-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cdiscovery-search-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.cdiscovery-search-input {
+  height: 42px !important;
+  border-radius: 12px !important;
+  border-color: #E2E8F0 !important;
+  font-size: 13.5px !important;
+  flex: 1;
+  transition: all 0.2s ease;
+}
+
+.cdiscovery-search-input:focus,
+.cdiscovery-search-input-focused {
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+}
+
+.cdiscovery-btn-search {
+  height: 42px !important;
+  border-radius: 12px !important;
+  padding: 0 20px !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  border: none !important;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cdiscovery-sort-view-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cdiscovery-view-switcher {
+  display: flex;
+  background: #F1F5F9;
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid #E2E8F0;
+}
+
+.cdiscovery-view-btn {
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-weight: 600;
+  font-size: 12.5px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.cdiscovery-view-btn.active {
+  background: #FFFFFF;
+  color: #0F172A;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.cdiscovery-dropdown-filters-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.cdiscovery-filter-select .ant-select-selector {
+  height: 40px !important;
+  border-radius: 10px !important;
+  border-color: #E2E8F0 !important;
+  display: flex;
+  align-items: center;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+.cdiscovery-active-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+}
+
+/* ── 5. Creator Cards (Grid View) ── */
+.cdiscovery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 18px;
+}
+
+.cdiscovery-creator-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.03) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  height: 100% !important;
+  box-sizing: border-box;
+}
+
+.cdiscovery-creator-card:hover {
+  border-color: #CBD5E1 !important;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px -4px rgba(99, 102, 241, 0.09) !important;
+}
+
+.cdiscovery-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cdiscovery-card-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  min-width: 0;
+  flex: 1;
+}
+
+.cdiscovery-card-name-col {
+  min-width: 0;
+  flex: 1;
+}
+
+.cdiscovery-card-name {
+  font-weight: 800;
+  font-size: 15px;
+  color: #0F172A;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cdiscovery-card-username {
+  font-size: 12px;
+  color: #94A3B8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cdiscovery-card-platforms {
+  display: flex;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+/* Match Rate Pill Badge */
+.cdiscovery-match-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cdiscovery-match-badge.high {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #BBF7D0;
+}
+
+.cdiscovery-match-badge.medium {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+
+.cdiscovery-match-badge.pending {
+  background: #F1F5F9;
+  color: #94A3B8;
+  border: 1px solid #E2E8F0;
+}
+
+/* AI Insight Box */
+.cdiscovery-ai-insight-box {
+  background: #FAF5FF;
+  border: 1px solid #E9D5FF;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 11.5px;
+  color: #6B21A8;
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+/* Bio */
+.cdiscovery-card-bio {
+  font-size: 12.5px;
+  color: #64748B;
+  line-height: 1.5;
+  min-height: 38px;
+  margin-bottom: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Metrics Row inside Card */
+.cdiscovery-card-metrics-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: #F8FAFC;
+  border: 1px solid #F1F5F9;
+  border-radius: 12px;
+  padding: 12px 6px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.cdiscovery-card-metric-val {
+  font-weight: 800;
+  font-size: 14px;
+  color: #0F172A;
+}
+
+.cdiscovery-card-metric-lbl {
+  font-size: 10.5px;
+  color: #94A3B8;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.cdiscovery-card-metric-divider {
+  border-left: 1px solid #E2E8F0;
+  border-right: 1px solid #E2E8F0;
+}
+
+/* Action Buttons inside Card */
+.cdiscovery-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cdiscovery-card-btn-primary {
+  flex: 1 !important;
+  height: 38px !important;
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  background: #2563EB !important;
+  border: none !important;
+}
+
+.cdiscovery-card-btn-primary:hover {
+  background: #1D4ED8 !important;
+}
+
+.cdiscovery-card-btn-secondary {
+  height: 38px !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 12.5px !important;
+  border-color: #E2E8F0 !important;
+  color: #334155 !important;
+}
+
+.cdiscovery-card-btn-secondary:hover {
+  border-color: #CBD5E1 !important;
+  color: #0F172A !important;
+  background: #F8FAFC !important;
+}
+
+/* ── 6. Creator Cards (List View) ── */
+.cdiscovery-list-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+  transition: all 0.2s ease !important;
+}
+
+.cdiscovery-list-card:hover {
+  border-color: #CBD5E1 !important;
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* ── 7. Pagination Bar ── */
+.cdiscovery-pagination-bar {
+  margin-top: auto;
+  padding-top: 18px;
+  padding-bottom: 10px;
+  border-top: 1px solid #E2E8F0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.cdiscovery-pagination-info {
+  font-size: 13px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+/* ── Responsive Rules ── */
+@media (max-width: 992px) {
+  .cdiscovery-dropdown-filters-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .cdiscovery-dropdown-filters-row {
+    grid-template-columns: 1fr;
+  }
+  .cdiscovery-grid {
+    grid-template-columns: 1fr;
+  }
+}
