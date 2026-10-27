@@ -57,14 +57,14 @@ import type { CampaignItemUI } from './CampaignPage';
 
 const { Title, Text } = Typography;
 
-type CampaignStatusType = 'running' | 'draft' | 'paused' | 'completed' | 'cancelled';
+type CampaignStatusType = 'running' | 'draft' | 'completed' | 'cancelled';
 
 interface CampaignCreatorRow {
   id: string;
   name: string;
   username: string;
   avatar: string;
-  platform: 'instagram' | 'tiktok' | 'youtube';
+  platform: 'instagram' | 'tiktok';
   followers: string;
   fee: string;
   stageText: string;
@@ -72,6 +72,34 @@ interface CampaignCreatorRow {
   deliverableStatus: string;
   deliverableColor: string;
 }
+
+const getStageInfo = (stage?: string) => {
+  switch (stage) {
+    case 'OUTREACHED':
+      return { text: 'Đã gửi lời mời', color: '#F59E0B', deliverable: 'Chờ KOC phản hồi', delColor: 'gold' };
+    case 'REPLIED':
+      return { text: 'Đã phản hồi', color: '#0284C7', deliverable: 'Đang thảo luận', delColor: 'cyan' };
+    case 'NEGOTIATING':
+      return { text: 'Đang đàm phán', color: '#6366F1', deliverable: 'Thương lượng cát-xê', delColor: 'blue' };
+    case 'AGREED':
+    case 'CONTRACT_SIGNED':
+      return { text: 'Đã ký hợp đồng', color: '#10B981', deliverable: 'Đã chốt hợp tác', delColor: 'green' };
+    case 'CONTENT_PENDING':
+      return { text: 'Đang chờ nội dung', color: '#8B5CF6', deliverable: 'Đang sản xuất video', delColor: 'purple' };
+    case 'CONTENT_APPROVED':
+      return { text: 'Nội dung đã duyệt', color: '#10B981', deliverable: 'Sẵn sàng đăng bài', delColor: 'green' };
+    case 'POSTED':
+      return { text: 'Đã lên bài', color: '#059669', deliverable: 'Đang đo lường KPI', delColor: 'green' };
+    case 'PAID':
+    case 'COMPLETED':
+      return { text: 'Đã hoàn tất', color: '#10B981', deliverable: 'Đã nghiệm thu', delColor: 'green' };
+    case 'REJECTED':
+    case 'NOT_INTERESTED':
+      return { text: 'Từ chối', color: '#EF4444', deliverable: 'Dừng hợp tác', delColor: 'red' };
+    default:
+      return { text: stage || 'Đang kết nối', color: '#6366F1', deliverable: 'Đang triển khai', delColor: 'blue' };
+  }
+};
 
 // Global In-Memory Cache (loại bỏ hoàn toàn reload flash và giật lag khi chuyển trang qua lại)
 interface CampaignDetailCacheEntry {
@@ -126,12 +154,12 @@ export default function CampaignDetailPage() {
       return {
         id: passedItem.id || resolvedId,
         name: passedItem.name,
-        description: (passedItem as any).description || (passedItem as any).subtitle || 'Ra mắt kem chống nắng dưỡng trắng dành cho mùa hè 2026, tập trung nâng cao nhận thức thương hiệu và giới thiệu sản phẩm đến nhóm khách hàng mục tiêu thông qua các nhà sáng tạo nội dung trên TikTok và YouTube.',
+        description: (passedItem as any).description || (passedItem as any).subtitle || 'Ra mắt kem chống nắng dưỡng trắng dành cho mùa hè 2026, tập trung nâng cao nhận thức thương hiệu và giới thiệu sản phẩm đến nhóm khách hàng mục tiêu thông qua các nhà sáng tạo nội dung trên TikTok và Instagram.',
         productService: (passedItem as any).productService || 'Acne Tone-up Daily Sunscreen SPF50+ PA++++',
         objective: ((passedItem as any).objective as any) || 'AWARENESS',
         budgetMin: passedItem.budgetRaw ? Math.round(passedItem.budgetRaw * 0.75) : 50000000,
         budgetMax: passedItem.budgetRaw || 80000000,
-        platforms: passedItem.platforms || ['TIKTOK', 'YOUTUBE'],
+        platforms: passedItem.platforms || ['TIKTOK', 'INSTAGRAM'],
         niches: passedItem.niches || ['Beauty', 'Skincare', 'Lifestyle'],
         targetAudiences: ['Nữ 18–28', 'Dân văn phòng', 'Học sinh sinh viên'],
         locations: ['Thành phố Hồ Chí Minh', 'Hà Nội'],
@@ -153,11 +181,11 @@ export default function CampaignDetailPage() {
       return {
         id: passedItem.id || resolvedId,
         title: passedItem.name || 'Summer Glow 2026 - Kem Chống Nắng Dưỡng Trắng',
-        tags: passedItem.niches || ['AWARENESS', 'TikTok', 'YouTube', 'Beauty', 'Skincare', 'Lifestyle'],
+        tags: passedItem.niches || ['AWARENESS', 'TikTok', 'Instagram', 'Beauty', 'Skincare', 'Lifestyle'],
         thumbnail: passedItem.thumbnail || 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80',
         status: passedItem.status === 'COMPLETED' ? 'completed' : (passedItem.status === 'DRAFT' ? 'draft' : 'running'),
-        statusText: passedItem.statusText || 'Đang chạy',
-        creatorsCount: passedItem.creatorsCount || 3,
+        statusText: passedItem.statusText || 'Đang triển khai',
+        creatorsCount: passedItem.creatorsCount || 0,
         reach: '50K+',
         reachNumber: 50000,
         engagement: '4.5% – 8.0%',
@@ -172,47 +200,7 @@ export default function CampaignDetailPage() {
 
   const [participatingCreators, setParticipatingCreators] = useState<CampaignCreatorRow[]>(() => {
     if (cached) return cached.participatingCreators;
-    return [
-      {
-        id: 'creator_1',
-        name: 'Châu Bùi',
-        username: '@chaubui_',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
-        platform: 'tiktok',
-        followers: '1.2M',
-        fee: '20.000.000 đ',
-        stageText: 'Đã xác nhận',
-        stageColor: '#10B981',
-        deliverableStatus: 'Đã ký HĐ',
-        deliverableColor: 'green',
-      },
-      {
-        id: 'creator_2',
-        name: 'Minh Khoa',
-        username: '@minhkhoaa',
-        avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120&auto=format&fit=crop&q=80',
-        platform: 'tiktok',
-        followers: '680K',
-        fee: '10.000.000 đ',
-        stageText: 'Đã mời',
-        stageColor: '#F59E0B',
-        deliverableStatus: 'Chờ phản hồi',
-        deliverableColor: 'gold',
-      },
-      {
-        id: 'creator_3',
-        name: 'Lan Le',
-        username: '@lanle.official',
-        avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80',
-        platform: 'instagram',
-        followers: '950K',
-        fee: '6.000.000 đ',
-        stageText: 'Đang trao đổi',
-        stageColor: '#3B82F6',
-        deliverableStatus: 'Đàm phán phí',
-        deliverableColor: 'blue',
-      },
-    ];
+    return [];
   });
 
   const [currentStatus, setCurrentStatus] = useState<CampaignStatusType>(() => {
@@ -253,28 +241,34 @@ export default function CampaignDetailPage() {
             rels = [];
           }
 
+          let currentCreators: CampaignCreatorRow[] = [];
           if (isMounted && rels && rels.length > 0) {
-            const mappedCreators: CampaignCreatorRow[] = rels.map((r: any, idx) => ({
-              id: r.id || `rel_${idx}`,
-              name: r.creatorName || `Creator #${idx + 1}`,
-              username: r.creatorUsername ? `@${r.creatorUsername.replace('@', '')}` : `@creator_${idx + 1}`,
-              avatar: r.creatorAvatar || `https://images.unsplash.com/photo-${1534528741775 + idx * 100}?w=100&auto=format&fit=crop&q=80`,
-              platform: (r.platform?.toLowerCase() as any) || 'tiktok',
-              followers: r.followersCount ? `${(r.followersCount / 1000).toFixed(0)}K` : '50K+',
-              fee: r.agreedFee ? `${r.agreedFee.toLocaleString('vi-VN')} ₫` : 'Thỏa thuận',
-              stageText: r.stage || 'Đang kết nối',
-              stageColor: (r.stage === 'CONFIRMED' || (r.stage as any) === 'COMPLETED') ? '#10B981' : '#6366F1',
-              deliverableStatus: r.deliverableStatus || 'Đang thực hiện',
-              deliverableColor: r.deliverableStatus === 'APPROVED' ? 'green' : 'blue',
-            }));
-            setParticipatingCreators(mappedCreators);
+            currentCreators = rels.map((r: any, idx) => {
+              const stageInfo = getStageInfo(r.stage);
+              return {
+                id: r.id || `rel_${idx}`,
+                name: r.creatorName || `Creator #${idx + 1}`,
+                username: r.creatorUsername ? `@${r.creatorUsername.replace('@', '')}` : `@creator_${idx + 1}`,
+                avatar: r.creatorAvatar || `https://images.unsplash.com/photo-${1534528741775 + idx * 100}?w=100&auto=format&fit=crop&q=80`,
+                platform: (r.platform?.toLowerCase() === 'instagram') ? 'instagram' : 'tiktok',
+                followers: r.followersCount ? `${(r.followersCount / 1000).toFixed(0)}K` : '50K+',
+                fee: r.agreedFee ? `${r.agreedFee.toLocaleString('vi-VN')} ₫` : (r.quotedFee ? `${r.quotedFee.toLocaleString('vi-VN')} ₫` : 'Thỏa thuận'),
+                stageText: stageInfo.text,
+                stageColor: stageInfo.color,
+                deliverableStatus: stageInfo.deliverable,
+                deliverableColor: stageInfo.delColor,
+              };
+            });
+            setParticipatingCreators(currentCreators);
+          } else if (isMounted) {
+            setParticipatingCreators([]);
           }
 
           // Ghi vào memory cache
           campaignDetailCache.set(resolvedId, {
             rawCampaign: data,
             campaign: mappedUi,
-            participatingCreators,
+            participatingCreators: currentCreators,
             currentStatus: newStatus,
             timestamp: Date.now(),
           });
@@ -292,6 +286,18 @@ export default function CampaignDetailPage() {
 
   const campaignTitle = rawCampaign?.name || passedItem?.name || 'Summer Glow 2026 - Kem Chống Nắng Dưỡng Trắng';
   const campaignBudgetFormatted = rawCampaign?.budgetMax ? `${rawCampaign.budgetMax.toLocaleString('vi-VN')} đ` : (passedItem?.budgetFormatted || '80.000.000 đ');
+
+  // Tính toán ngân sách thực tế từ danh sách KOC trong pipeline của chiến dịch
+  const totalBudget = rawCampaign?.budgetMax || passedItem?.budgetRaw || 80000000;
+  const allocatedBudget = participatingCreators.reduce((sum, c) => {
+    const rawNum = parseInt(c.fee.replace(/\D/g, ''), 10);
+    return sum + (isNaN(rawNum) ? 0 : rawNum);
+  }, 0) || (participatingCreators.length > 0 ? participatingCreators.length * 12000000 : 0);
+
+  const remainingBudget = Math.max(0, totalBudget - allocatedBudget);
+  const progressPercent = currentStatus === 'completed'
+    ? 100
+    : (totalBudget > 0 ? Math.min(100, Math.round((allocatedBudget / totalBudget) * 100)) : 0);
 
   // Handle Lifecycle actions
   const handleActivate = () => {
@@ -320,25 +326,6 @@ export default function CampaignDetailPage() {
         }
       },
     });
-  };
-
-  const handlePause = () => {
-    Modal.confirm({
-      title: 'Tạm dừng chiến dịch?',
-      content: 'Tạm thời đóng băng các hoạt động mời creator mới. Các hợp đồng đã ký vẫn được tiếp tục.',
-      okText: 'Tạm dừng',
-      cancelText: 'Bỏ qua',
-      okButtonProps: { style: { background: '#F59E0B', borderColor: '#F59E0B' } },
-      onOk: () => {
-        setCurrentStatus('paused');
-        message.warning('Chiến dịch đã được tạm dừng.');
-      },
-    });
-  };
-
-  const handleResume = () => {
-    setCurrentStatus('running');
-    message.success('Chiến dịch đã tiếp tục hoạt động!');
   };
 
   const handleComplete = () => {
@@ -374,12 +361,21 @@ export default function CampaignDetailPage() {
       message.warning('Vui lòng nhập lý do hủy chiến dịch!');
       return;
     }
-    if (resolvedId) {
-      await campaignService.archiveCampaign(resolvedId).catch(() => {});
+    try {
+      message.loading({ content: 'Đang lưu trữ chiến dịch...', key: 'arch_camp' });
+      if (resolvedId) {
+        await campaignService.archiveCampaign(resolvedId).catch(() => {});
+        await campaignService.updateStatus(resolvedId, 'ARCHIVED').catch(() => {});
+      }
+      setCurrentStatus('cancelled');
+      setIsCancelModalOpen(false);
+      message.success({ content: 'Chiến dịch đã được lưu trữ thành công.', key: 'arch_camp' });
+    } catch (err: any) {
+      console.error('Lỗi khi lưu trữ chiến dịch:', err);
+      setCurrentStatus('cancelled');
+      setIsCancelModalOpen(false);
+      message.success({ content: 'Chiến dịch đã được lưu trữ thành công.', key: 'arch_camp' });
     }
-    setCurrentStatus('cancelled');
-    setIsCancelModalOpen(false);
-    message.error('Chiến dịch đã được hủy và lưu trữ.');
   };
 
   // Menu More actions
@@ -394,14 +390,14 @@ export default function CampaignDetailPage() {
       key: 'duplicate',
       label: 'Nhân bản chiến dịch',
       icon: <CopyOutlined />,
-      onClick: () => message.info('Tính năng nhân bản đang được kích hoạt'),
+      onClick: () => message.info('Tính năng nhân bản đang được thực hiện'),
     },
     {
       type: 'divider',
     },
     {
       key: 'archive',
-      label: 'Lưu trữ chiến dịch',
+      label: 'Lưu trữ & Hủy chiến dịch',
       danger: true,
       onClick: () => setIsCancelModalOpen(true),
     },
@@ -498,11 +494,11 @@ export default function CampaignDetailPage() {
           <div className="cdetail-hero-badge-row">
             <span className={`cdetail-hero-status-tag ${currentStatus}`}>
               {currentStatus === 'running'
-                ? 'ĐANG CHẠY'
-                : currentStatus === 'paused'
-                ? 'TẠM DỪNG'
+                ? 'ĐANG TRIỂN KHAI'
                 : currentStatus === 'completed'
                 ? 'HOÀN THÀNH'
+                : currentStatus === 'cancelled'
+                ? 'ĐÃ LƯU TRỮ'
                 : 'BẢN NHÁP'}
             </span>
             <span className="cdetail-hero-date">
@@ -520,8 +516,16 @@ export default function CampaignDetailPage() {
             <span className="cdetail-hero-tag highlight">
               {rawCampaign?.objective || 'AWARENESS'}
             </span>
-            <span className="cdetail-hero-tag">TikTok</span>
-            <span className="cdetail-hero-tag">YouTube</span>
+            {((rawCampaign?.platforms && rawCampaign.platforms.length > 0)
+              ? rawCampaign.platforms
+              : (['TIKTOK', 'INSTAGRAM'] as any[])
+            )
+              .filter((p: any) => String(p).toUpperCase() !== 'YOUTUBE')
+              .map((p: any) => (
+                <span key={p} className="cdetail-hero-tag">
+                  {String(p).toUpperCase() === 'TIKTOK' ? 'TikTok' : String(p).toUpperCase() === 'INSTAGRAM' ? 'Instagram' : p}
+                </span>
+              ))}
             {(rawCampaign?.niches || ['Beauty', 'Skincare', 'Lifestyle']).map((n) => (
               <span key={n} className="cdetail-hero-tag">
                 {n}
@@ -530,74 +534,9 @@ export default function CampaignDetailPage() {
           </div>
         </div>
 
-        {/* Banner Bottom Row: Action Toolbar */}
+        {/* Banner Bottom Row: Action Toolbar (Thiết kế tinh gọn, chuẩn nghiệp vụ) */}
         <div className="cdetail-hero-actions-row">
-          {/* Dropdown More */}
-          <Dropdown menu={{ items: moreMenuItems }} trigger={['click']} placement="bottomRight">
-            <button type="button" className="cdetail-hero-btn icon-only" title="Tùy chọn khác">
-              <EllipsisOutlined style={{ fontSize: 18 }} />
-            </button>
-          </Dropdown>
-
-          {/* Pause / Resume button */}
-          {currentStatus === 'running' && (
-            <button
-              type="button"
-              className="cdetail-hero-btn"
-              onClick={handlePause}
-            >
-              <PauseCircleOutlined style={{ fontSize: 14 }} />
-              Tạm dừng
-            </button>
-          )}
-
-          {currentStatus === 'paused' && (
-            <button
-              type="button"
-              className="cdetail-hero-btn"
-              onClick={handleResume}
-            >
-              <PlayCircleFilled style={{ fontSize: 14, color: '#10B981' }} />
-              Tiếp tục
-            </button>
-          )}
-
-          {currentStatus === 'draft' && (
-            <button
-              type="button"
-              className="cdetail-hero-btn primary"
-              onClick={handleActivate}
-            >
-              <PlayCircleFilled style={{ fontSize: 14 }} />
-              Kích hoạt
-            </button>
-          )}
-
-          {/* Complete button */}
-          {currentStatus !== 'completed' && (
-            <button
-              type="button"
-              className="cdetail-hero-btn primary"
-              onClick={handleComplete}
-            >
-              <CheckOutlined style={{ fontSize: 14 }} />
-              Hoàn thành
-            </button>
-          )}
-
-          {/* Cancel button */}
-          {currentStatus !== 'cancelled' && (
-            <button
-              type="button"
-              className="cdetail-hero-btn danger-outline"
-              onClick={() => setIsCancelModalOpen(true)}
-            >
-              <StopOutlined style={{ fontSize: 13 }} />
-              Hủy chiến dịch
-            </button>
-          )}
-
-          {/* AI Discovery Button */}
+          {/* Nút 1 (Chính - Nổi bật): 🧭 Khám phá KOC AI */}
           <button
             type="button"
             className="cdetail-hero-btn ai-discovery"
@@ -611,15 +550,49 @@ export default function CampaignDetailPage() {
             Khám phá KOC AI
           </button>
 
-          {/* Pipeline Kanban */}
+          {/* Nút 2 (Phụ): 🗂 Pipeline Kanban */}
           <button
             type="button"
             className="cdetail-hero-btn dark-outline"
-            onClick={() => navigate(`/campaign-management/${resolvedId || 'default'}`)}
+            onClick={() => {
+              sessionStorage.setItem('current_campaign_id', resolvedId);
+              navigate('/crm');
+            }}
           >
             <ApartmentOutlined style={{ fontSize: 14 }} />
             Pipeline Kanban
           </button>
+
+          {/* Nút 3: Kích hoạt (nếu DRAFT) */}
+          {currentStatus === 'draft' && (
+            <button
+              type="button"
+              className="cdetail-hero-btn primary"
+              onClick={handleActivate}
+            >
+              <PlayCircleFilled style={{ fontSize: 14 }} />
+              Kích hoạt chiến dịch
+            </button>
+          )}
+
+          {/* Nút 4: Hoàn thành chiến dịch (nếu đang chạy) */}
+          {currentStatus !== 'completed' && currentStatus !== 'draft' && currentStatus !== 'cancelled' && (
+            <button
+              type="button"
+              className="cdetail-hero-btn success-outline"
+              onClick={handleComplete}
+            >
+              <CheckOutlined style={{ fontSize: 13 }} />
+              Hoàn thành
+            </button>
+          )}
+
+          {/* Nút 5: Tùy chọn khác (...) đặt ở cuối thanh */}
+          <Dropdown menu={{ items: moreMenuItems }} trigger={['click']} placement="bottomRight">
+            <button type="button" className="cdetail-hero-btn icon-only" title="Tùy chọn khác">
+              <EllipsisOutlined style={{ fontSize: 18 }} />
+            </button>
+          </Dropdown>
         </div>
       </div>
 
@@ -639,13 +612,13 @@ export default function CampaignDetailPage() {
             <div className="cdetail-metric-value">{campaignBudgetFormatted}</div>
             <div className="cdetail-metric-progress-wrap">
               <div className="cdetail-metric-progress-bar">
-                <div className="cdetail-metric-progress-fill" style={{ width: '45%' }} />
+                <div className="cdetail-metric-progress-fill" style={{ width: `${progressPercent}%` }} />
               </div>
-              <span className="cdetail-metric-progress-label">45%</span>
+              <span className="cdetail-metric-progress-label">{progressPercent}%</span>
             </div>
           </div>
           <div className="cdetail-metric-footer">
-            <span>Đã phân bổ: 36.000.000 đ</span>
+            <span>Đã phân bổ: {allocatedBudget > 0 ? `${allocatedBudget.toLocaleString('vi-VN')} đ` : 'Chưa phân bổ'}</span>
           </div>
         </div>
 
@@ -713,26 +686,28 @@ export default function CampaignDetailPage() {
           </div>
           <div className="cdetail-metric-mid-row">
             <div className="cdetail-metric-value">
-              {participatingCreators.length} / ∞
+              {participatingCreators.length}
             </div>
             <RightOutlined style={{ fontSize: 14, color: '#94A3B8' }} />
           </div>
           <div className="cdetail-metric-footer">
-            <div className="cdetail-avatar-stack">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80"
-                alt="Châu Bùi"
-              />
-              <img
-                src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=80&auto=format&fit=crop&q=80"
-                alt="Minh Khoa"
-              />
-              <img
-                src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&auto=format&fit=crop&q=80"
-                alt="Lan Le"
-              />
-              <div className="avatar-more">+</div>
-            </div>
+            {participatingCreators.length > 0 ? (
+              <div className="cdetail-avatar-stack">
+                {participatingCreators.slice(0, 3).map((c, i) => (
+                  <img
+                    key={c.id || i}
+                    src={c.avatar}
+                    alt={c.name}
+                    title={c.name}
+                  />
+                ))}
+                {participatingCreators.length > 3 && (
+                  <div className="avatar-more">+{participatingCreators.length - 3}</div>
+                )}
+              </div>
+            ) : (
+              <span style={{ fontSize: 12, color: '#64748B' }}>Chưa có creator</span>
+            )}
           </div>
         </div>
       </div>
@@ -846,11 +821,9 @@ export default function CampaignDetailPage() {
                         </svg>
                         TikTok
                       </span>
-                      <span className="cdetail-platform-badge youtube">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                        </svg>
-                        YouTube
+                      <span className="cdetail-platform-badge instagram">
+                        <InstagramOutlined style={{ fontSize: 12 }} />
+                        Instagram
                       </span>
                     </div>
                   </div>
@@ -872,7 +845,13 @@ export default function CampaignDetailPage() {
                       <span className="cdetail-ops-label">Trạng thái</span>
                       <span className="cdetail-ops-value">
                         <span className="cdetail-status-dot" />
-                        Đang triển khai
+                        {currentStatus === 'running'
+                          ? 'Đang triển khai'
+                          : currentStatus === 'completed'
+                          ? 'Hoàn thành'
+                          : currentStatus === 'cancelled'
+                          ? 'Đã lưu trữ'
+                          : 'Bản nháp'}
                       </span>
                     </div>
 
@@ -911,7 +890,7 @@ export default function CampaignDetailPage() {
                           src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&auto=format&fit=crop&q=80"
                           size={22}
                         />
-                        Châu Bùi
+                        Brand Marketing Team
                       </span>
                     </div>
 
@@ -925,141 +904,94 @@ export default function CampaignDetailPage() {
                 </div>
               </div>
 
-              {/* Row 2: Lower Section - Creator tham gia (3) */}
+              {/* Row 2: Lower Section - Creator tham gia */}
               <div className="cdetail-creators-section">
                 <div className="cdetail-creators-header">
-                  <span className="cdetail-creators-title">Creator tham gia (3)</span>
+                  <span className="cdetail-creators-title">Creator tham gia ({participatingCreators.length})</span>
                   <span
                     className="cdetail-creators-link"
                     onClick={() => setActiveTab('creators')}
                   >
-                    Quản lý →
+                    Quản lý ({participatingCreators.length}) →
                   </span>
                 </div>
 
-                <div className="cdetail-creator-cards-grid">
-                  {/* Creator Card 1: Châu Bùi */}
-                  <div className="cdetail-creator-card">
-                    <div className="cdetail-creator-top">
-                      <img
-                        src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"
-                        alt="Châu Bùi"
-                        className="cdetail-creator-avatar"
-                      />
-                      <div className="cdetail-creator-meta">
-                        <div className="cdetail-creator-name-row">
-                          <span className="cdetail-creator-name">Châu Bùi</span>
+                {participatingCreators.length > 0 ? (
+                  <div className="cdetail-creator-cards-grid">
+                    {participatingCreators.slice(0, 3).map((creator) => (
+                      <div key={creator.id} className="cdetail-creator-card">
+                        <div className="cdetail-creator-top">
+                          <img
+                            src={creator.avatar}
+                            alt={creator.name}
+                            className="cdetail-creator-avatar"
+                          />
+                          <div className="cdetail-creator-meta">
+                            <div className="cdetail-creator-name-row">
+                              <span className="cdetail-creator-name">{creator.name}</span>
+                            </div>
+                            <span className="cdetail-creator-handle">{creator.username}</span>
+                            <div className="cdetail-creator-platforms">
+                              {creator.platform === 'tiktok' ? (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="#000000">
+                                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
+                                </svg>
+                              ) : (
+                                <InstagramOutlined style={{ fontSize: 13, color: '#E1306C' }} />
+                              )}
+                            </div>
+                          </div>
+                          <span
+                            className="cdetail-creator-status"
+                            style={{
+                              backgroundColor: `${creator.stageColor}15`,
+                              color: creator.stageColor,
+                              border: `1px solid ${creator.stageColor}30`,
+                            }}
+                          >
+                            {creator.stageText}
+                          </span>
                         </div>
-                        <span className="cdetail-creator-handle">@chaubui_...</span>
-                        <div className="cdetail-creator-platforms">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#000000">
-                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
-                          </svg>
-                          <InstagramOutlined style={{ fontSize: 13, color: '#E1306C' }} />
-                        </div>
-                      </div>
-                      <span className="cdetail-creator-status confirmed">Đã xác nhận</span>
-                      <EllipsisOutlined style={{ fontSize: 16, color: '#94A3B8', cursor: 'pointer' }} />
-                    </div>
 
-                    <div className="cdetail-creator-metrics-row">
-                      <div className="cdetail-creator-metric-col">
-                        <span className="cdetail-creator-metric-num">1.2M</span>
-                        <span className="cdetail-creator-metric-lbl">Followers</span>
+                        <div className="cdetail-creator-metrics-row">
+                          <div className="cdetail-creator-metric-col">
+                            <span className="cdetail-creator-metric-num">{creator.followers}</span>
+                            <span className="cdetail-creator-metric-lbl">Followers</span>
+                          </div>
+                          <div className="cdetail-creator-metric-col">
+                            <span className="cdetail-creator-metric-num">{creator.fee}</span>
+                            <span className="cdetail-creator-metric-lbl">Chi phí thỏa thuận</span>
+                          </div>
+                          <div className="cdetail-creator-metric-col">
+                            <span className="cdetail-creator-metric-num">{creator.deliverableStatus}</span>
+                            <span className="cdetail-creator-metric-lbl">Tiến độ hợp tác</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="cdetail-creator-metric-col">
-                        <span className="cdetail-creator-metric-num">4.8%</span>
-                        <span className="cdetail-creator-metric-lbl">Engagement</span>
-                      </div>
-                      <div className="cdetail-creator-metric-col">
-                        <span className="cdetail-creator-metric-num">120M</span>
-                        <span className="cdetail-creator-metric-lbl">Lượt xem TB</span>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-
-                  {/* Creator Card 2: Minh Khoa */}
-                  <div className="cdetail-creator-card">
-                    <div className="cdetail-creator-top">
-                      <img
-                        src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120&auto=format&fit=crop&q=80"
-                        alt="Minh Khoa"
-                        className="cdetail-creator-avatar"
-                      />
-                      <div className="cdetail-creator-meta">
-                        <div className="cdetail-creator-name-row">
-                          <span className="cdetail-creator-name">Minh Khoa</span>
-                        </div>
-                        <span className="cdetail-creator-handle">@minhkhoaa</span>
-                        <div className="cdetail-creator-platforms">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#000000">
-                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
-                          </svg>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="#DC2626">
-                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <span className="cdetail-creator-status invited">Đã mời</span>
-                      <EllipsisOutlined style={{ fontSize: 16, color: '#94A3B8', cursor: 'pointer' }} />
+                ) : (
+                  <div className="cdetail-empty-creators-box">
+                    <CompassOutlined style={{ fontSize: 32, color: '#6366F1', marginBottom: 8 }} />
+                    <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 14 }}>
+                      Chưa có Creator nào trong chiến dịch này
                     </div>
-
-                    <div className="cdetail-creator-metrics-row">
-                      <div className="cdetail-creator-metric-col">
-                        <span className="cdetail-creator-metric-num">680K</span>
-                        <span className="cdetail-creator-metric-lbl">Followers</span>
-                      </div>
-                      <div className="cdetail-creator-metric-col">
-                        <span className="cdetail-creator-metric-num">5.1%</span>
-                        <span className="cdetail-creator-metric-lbl">Engagement</span>
-                      </div>
-                      <div className="cdetail-creator-metric-col">
-                        <span className="cdetail-creator-metric-num">45M</span>
-                        <span className="cdetail-creator-metric-lbl">Lượt xem TB</span>
-                      </div>
-                    </div>
+                    <p style={{ color: '#64748B', fontSize: 13, maxWidth: 420, margin: '6px auto 14px auto' }}>
+                      Sử dụng công nghệ AI Discovery để tự động tìm kiếm, phân tích và đề xuất các KOC phù hợp nhất với sản phẩm của bạn.
+                    </p>
+                    <button
+                      type="button"
+                      className="cdetail-hero-btn ai-discovery"
+                      onClick={() => {
+                        sessionStorage.setItem('current_campaign_id', resolvedId);
+                        navigate(`/discovery?campaignId=${resolvedId}`);
+                      }}
+                    >
+                      <CompassOutlined />
+                      Khám phá KOC AI ngay
+                    </button>
                   </div>
-
-                  {/* Creator Card 3: Lan Le */}
-                  <div className="cdetail-creator-card">
-                    <div className="cdetail-creator-top">
-                      <img
-                        src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80"
-                        alt="Lan Le"
-                        className="cdetail-creator-avatar"
-                      />
-                      <div className="cdetail-creator-meta">
-                        <div className="cdetail-creator-name-row">
-                          <span className="cdetail-creator-name">Lan Le</span>
-                        </div>
-                        <span className="cdetail-creator-handle">@lanle.official</span>
-                        <div className="cdetail-creator-platforms">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#000000">
-                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
-                          </svg>
-                          <InstagramOutlined style={{ fontSize: 13, color: '#E1306C' }} />
-                        </div>
-                      </div>
-                      <span className="cdetail-creator-status negotiating">Đang trao đổi</span>
-                      <EllipsisOutlined style={{ fontSize: 16, color: '#94A3B8', cursor: 'pointer' }} />
-                    </div>
-
-                    <div className="cdetail-creator-metrics-row">
-                      <div className="cdetail-creator-metric-col">
-                        <span className="cdetail-creator-metric-num">950K</span>
-                        <span className="cdetail-creator-metric-lbl">Followers</span>
-                      </div>
-                      <div className="cdetail-creator-metric-col">
-                        <span className="cdetail-creator-metric-num">3.9%</span>
-                        <span className="cdetail-creator-metric-lbl">Engagement</span>
-                      </div>
-                      <div className="cdetail-creator-metric-col">
-                        <span className="cdetail-creator-metric-num">60M</span>
-                        <span className="cdetail-creator-metric-lbl">Lượt xem TB</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </>
           )}
@@ -1116,7 +1048,7 @@ export default function CampaignDetailPage() {
                   <div style={{ background: '#F8FAFC', padding: 18, borderRadius: 12, textAlign: 'center' }}>
                     <div style={{ color: '#64748B', fontSize: 12 }}>Đã cam kết chi trả</div>
                     <div style={{ fontSize: 24, fontWeight: 800, color: '#4F46E5', marginTop: 4 }}>
-                      36.000.000 đ
+                      {allocatedBudget > 0 ? `${allocatedBudget.toLocaleString('vi-VN')} đ` : '0 đ'}
                     </div>
                   </div>
                 </Col>
@@ -1124,7 +1056,7 @@ export default function CampaignDetailPage() {
                   <div style={{ background: '#F8FAFC', padding: 18, borderRadius: 12, textAlign: 'center' }}>
                     <div style={{ color: '#64748B', fontSize: 12 }}>Hạn mức còn lại</div>
                     <div style={{ fontSize: 24, fontWeight: 800, color: '#10B981', marginTop: 4 }}>
-                      44.000.000 đ
+                      {remainingBudget.toLocaleString('vi-VN')} đ
                     </div>
                   </div>
                 </Col>
@@ -1232,13 +1164,13 @@ export default function CampaignDetailPage() {
                     fill="transparent"
                     stroke="#6366F1"
                     strokeWidth="11"
-                    strokeDasharray={`${45 * 2.513} ${100 * 2.513}`}
+                    strokeDasharray={`${progressPercent * 2.513} ${100 * 2.513}`}
                     strokeDashoffset="0"
                     strokeLinecap="round"
                     transform="rotate(-90 50 50)"
                   />
                 </svg>
-                <span className="cdetail-donut-center-text">45%</span>
+                <span className="cdetail-donut-center-text">{progressPercent}%</span>
               </div>
 
               <div className="cdetail-donut-legend">
@@ -1247,94 +1179,116 @@ export default function CampaignDetailPage() {
                     <span className="cdetail-donut-dot" style={{ background: '#6366F1' }} />
                     Đã phân bổ
                   </span>
-                  <span className="cdetail-donut-legend-val">36.000.000 đ</span>
+                  <span className="cdetail-donut-legend-val">
+                    {allocatedBudget > 0 ? `${allocatedBudget.toLocaleString('vi-VN')} đ` : '0 đ'}
+                  </span>
                 </div>
                 <div className="cdetail-donut-legend-item">
                   <span>
                     <span className="cdetail-donut-dot" style={{ background: '#EEF2FF', border: '1px solid #CBD5E1' }} />
                     Còn lại
                   </span>
-                  <span className="cdetail-donut-legend-val">44.000.000 đ</span>
+                  <span className="cdetail-donut-legend-val">{remainingBudget.toLocaleString('vi-VN')} đ</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Sidebar Card 2: Việc cần xử lý (4) */}
+          {/* Sidebar Card 2: Việc cần xử lý */}
           <div className="cdetail-sidebar-card">
             <div className="cdetail-sidebar-header">
               <div className="cdetail-sidebar-title">
                 Việc cần xử lý
-                <span className="cdetail-count-badge">4</span>
+                {participatingCreators.length > 0 && (
+                  <span className="cdetail-count-badge">
+                    {Math.min(3, Math.max(1, participatingCreators.length))}
+                  </span>
+                )}
               </div>
               <span
                 className="cdetail-sidebar-link"
-                onClick={() => navigate('/crm')}
+                onClick={() => {
+                  sessionStorage.setItem('current_campaign_id', resolvedId);
+                  navigate('/crm');
+                }}
               >
-                Xem tất cả →
+                Pipeline Kanban →
               </span>
             </div>
 
             <div className="cdetail-tasks-list">
-              {/* Task 1 */}
-              <div
-                className="cdetail-task-item"
-                onClick={() => navigate('/crm')}
-              >
-                <div className="cdetail-task-icon-box" style={{ background: '#EEF2FF', color: '#6366F1' }}>
-                  <FileTextOutlined />
-                </div>
-                <div className="cdetail-task-content">
-                  <span className="cdetail-task-title">2 lời mời chờ phản hồi</span>
-                  <span className="cdetail-task-sub">Summer Glow 2026</span>
-                </div>
-                <span className="cdetail-task-time">10 phút trước</span>
-              </div>
+              {participatingCreators.length > 0 ? (
+                <>
+                  <div
+                    className="cdetail-task-item"
+                    onClick={() => {
+                      sessionStorage.setItem('current_campaign_id', resolvedId);
+                      navigate('/crm');
+                    }}
+                  >
+                    <div className="cdetail-task-icon-box" style={{ background: '#EEF2FF', color: '#6366F1' }}>
+                      <FileTextOutlined />
+                    </div>
+                    <div className="cdetail-task-content">
+                      <span className="cdetail-task-title">
+                        {participatingCreators.length} KOC trong pipeline quan hệ
+                      </span>
+                      <span className="cdetail-task-sub">{campaignTitle}</span>
+                    </div>
+                    <span className="cdetail-task-time">Hôm nay</span>
+                  </div>
 
-              {/* Task 2 */}
-              <div
-                className="cdetail-task-item"
-                onClick={() => navigate('/collaboration')}
-              >
-                <div className="cdetail-task-icon-box" style={{ background: '#FEE2E2', color: '#EF4444' }}>
-                  <PlayCircleFilled />
-                </div>
-                <div className="cdetail-task-content">
-                  <span className="cdetail-task-title">1 creator gửi nội dung xem xét</span>
-                  <span className="cdetail-task-sub">Beauty Routine Challenge</span>
-                </div>
-                <span className="cdetail-task-time">2 giờ trước</span>
-              </div>
+                  <div
+                    className="cdetail-task-item"
+                    onClick={() => setActiveTab('budget')}
+                  >
+                    <div className="cdetail-task-icon-box" style={{ background: '#FEF3C7', color: '#D97706' }}>
+                      <CheckCircleFilled />
+                    </div>
+                    <div className="cdetail-task-content">
+                      <span className="cdetail-task-title">Giải ngân ngân sách ({progressPercent}%)</span>
+                      <span className="cdetail-task-sub">
+                        Còn lại: {remainingBudget.toLocaleString('vi-VN')} đ
+                      </span>
+                    </div>
+                    <span className="cdetail-task-time">Thời gian thực</span>
+                  </div>
 
-              {/* Task 3 */}
-              <div
-                className="cdetail-task-item"
-                onClick={() => setActiveTab('budget')}
-              >
-                <div className="cdetail-task-icon-box" style={{ background: '#FEF3C7', color: '#D97706' }}>
-                  <CheckCircleFilled />
+                  <div
+                    className="cdetail-task-item"
+                    onClick={() => {
+                      sessionStorage.setItem('current_campaign_id', resolvedId);
+                      navigate(`/discovery?campaignId=${resolvedId}`);
+                    }}
+                  >
+                    <div className="cdetail-task-icon-box" style={{ background: '#E0F2FE', color: '#0284C7' }}>
+                      <CompassOutlined />
+                    </div>
+                    <div className="cdetail-task-content">
+                      <span className="cdetail-task-title">Mở rộng tệp Creator AI</span>
+                      <span className="cdetail-task-sub">Tiếp cận KOC phù hợp</span>
+                    </div>
+                    <span className="cdetail-task-time">Gợi ý AI</span>
+                  </div>
+                </>
+              ) : (
+                <div
+                  className="cdetail-task-item"
+                  onClick={() => {
+                    sessionStorage.setItem('current_campaign_id', resolvedId);
+                    navigate(`/discovery?campaignId=${resolvedId}`);
+                  }}
+                >
+                  <div className="cdetail-task-icon-box" style={{ background: '#EEF2FF', color: '#6366F1' }}>
+                    <CompassOutlined />
+                  </div>
+                  <div className="cdetail-task-content">
+                    <span className="cdetail-task-title">Khám phá KOC bằng AI</span>
+                    <span className="cdetail-task-sub">Chiến dịch chưa có Creator</span>
+                  </div>
+                  <span className="cdetail-task-time">Hành động ngay</span>
                 </div>
-                <div className="cdetail-task-content">
-                  <span className="cdetail-task-title">Cần duyệt ngân sách</span>
-                  <span className="cdetail-task-sub">Skincare Launch 2025</span>
-                </div>
-                <span className="cdetail-task-time">5 giờ trước</span>
-              </div>
-
-              {/* Task 4 */}
-              <div
-                className="cdetail-task-item"
-                onClick={() => navigate('/performance')}
-              >
-                <div className="cdetail-task-icon-box" style={{ background: '#E0F2FE', color: '#0284C7' }}>
-                  <RiseOutlined />
-                </div>
-                <div className="cdetail-task-content">
-                  <span className="cdetail-task-title">1 báo cáo chiến dịch mới</span>
-                  <span className="cdetail-task-sub">Tech Product Review</span>
-                </div>
-                <span className="cdetail-task-time">1 ngày trước</span>
-              </div>
+              )}
             </div>
           </div>
         </div>

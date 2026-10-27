@@ -111,16 +111,16 @@
   text-transform: uppercase;
 }
 
-.cdetail-hero-status-tag.paused {
-  background: #F59E0B;
-}
-
 .cdetail-hero-status-tag.completed {
   background: #6366F1;
 }
 
 .cdetail-hero-status-tag.draft {
   background: #64748B;
+}
+
+.cdetail-hero-status-tag.cancelled {
+  background: #EF4444;
 }
 
 .cdetail-hero-date {
@@ -221,6 +221,19 @@
   color: #FFFFFF;
 }
 
+.cdetail-hero-btn.success-outline {
+  background: #FFFFFF;
+  border-color: #A7F3D0;
+  color: #059669;
+  font-weight: 600;
+}
+
+.cdetail-hero-btn.success-outline:hover {
+  background: #ECFDF5;
+  border-color: #34D399;
+  color: #047857;
+}
+
 .cdetail-hero-btn.danger-outline {
   background: #FFFFFF;
   border-color: #FECACA;
@@ -235,8 +248,10 @@
 
 .cdetail-hero-btn.dark-outline {
   background: #FFFFFF;
-  border-color: #CBD5E1;
+  border-color: #D1D5DB;
   color: #1E293B;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .cdetail-hero-btn.dark-outline:hover {
@@ -246,15 +261,18 @@
 }
 
 .cdetail-hero-btn.ai-discovery {
-  background: #EEF2FF;
-  border-color: #C7D2FE;
-  color: #4F46E5;
+  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
+  border: none;
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
 }
 
 .cdetail-hero-btn.ai-discovery:hover {
-  background: #E0E7FF;
-  border-color: #A5B4FC;
-  color: #3730A3;
+  background: linear-gradient(135deg, #4338CA 0%, #4F46E5 100%);
+  color: #FFFFFF;
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.38);
+  transform: translateY(-1px);
 }
 
 /* ==========================================================================
@@ -669,10 +687,22 @@
   border-color: #000000;
 }
 
-.cdetail-platform-badge.youtube {
-  background: #FEF2F2;
-  color: #DC2626;
-  border-color: #FECACA;
+.cdetail-platform-badge.instagram {
+  background: #FDF2F8;
+  color: #DB2777;
+  border-color: #FBCFE8;
+}
+
+.cdetail-empty-creators-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 36px 20px;
+  background: #F8FAFC;
+  border-radius: 14px;
+  border: 1px dashed #CBD5E1;
 }
 
 /* Operations Key-Value Spec List */
