@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Form, Input, Alert, Descriptions, Typography, Tag } from 'antd';
+import { Modal, Form, Input, Alert, Descriptions, Typography } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import type { Transaction } from '../../../../mock/adminData';
 
@@ -48,12 +48,12 @@ export default function RefundModal({ transaction, open, onClose, onConfirmRefun
           type="error"
           showIcon
           message="Hành động không thể hoàn tác"
-          description="Tiền sẽ được xử lý hoàn trả qua cổng thanh toán ban đầu. Tài khoản người dùng sẽ bị hạ cấp về gói Free tương ứng."
+          description="Tiền sẽ được xử lý hoàn trả qua cổng thanh toán ban đầu. Gói dịch vụ của tài khoản người dùng sẽ được cập nhật/hủy tương ứng."
           style={{ marginBottom: 16, borderRadius: 10 }}
         />
 
         <Descriptions bordered size="small" column={1} style={{ marginBottom: 16 }}>
-          <Descriptions.Item label="Khách hàng">{transaction.userName} ({transaction.userEmail})</Descriptions.Item>
+          <Descriptions.Item label="Khách hàng">{transaction.userName} ({transaction.userEmail || '—'})</Descriptions.Item>
           <Descriptions.Item label="Gói dịch vụ">{transaction.plan}</Descriptions.Item>
           <Descriptions.Item label="Số tiền hoàn lại">
             <strong style={{ color: '#DC2626', fontSize: 16 }}>
@@ -70,7 +70,7 @@ export default function RefundModal({ transaction, open, onClose, onConfirmRefun
             rules={[{ required: true, message: 'Vui lòng cung cấp lý do hoàn tiền' }]}
           >
             <Input.TextArea
-              placeholder="VD: Khách hàng không hài lòng trong chính sách 7 ngày dùng thử..."
+              placeholder="VD: Khách hàng yêu cầu hoàn tiền theo chính sách 7 ngày dùng thử..."
               rows={3}
               style={{ resize: 'none' }}
             />
