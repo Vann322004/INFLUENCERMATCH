@@ -196,43 +196,6 @@ export default function LoginPage() {
         <span>Đăng nhập với Google</span>
       </Button>
 
-      {/* Demo Accounts Quick-fill */}
-      <div style={{
-        marginTop: 16,
-        padding: '10px 14px',
-        background: 'rgba(99, 102, 241, 0.05)',
-        border: '1px dashed rgba(99, 102, 241, 0.25)',
-        borderRadius: 8,
-        fontSize: 12,
-      }}>
-        <div style={{ color: '#64748B', fontWeight: 600, marginBottom: 6 }}>
-          ⚡ Tài khoản trải nghiệm nhanh:
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Button
-            size="small"
-            style={{ fontSize: 11, borderColor: '#10B981', color: '#059669', borderRadius: 6, fontWeight: 600 }}
-            onClick={() => form.setFieldsValue({ email: 'creator@influencermatch.vn', password: 'creator123' })}
-          >
-            Điền Creator
-          </Button>
-          <Button
-            size="small"
-            style={{ fontSize: 11, borderColor: '#06B6D4', color: '#0891B2', borderRadius: 6 }}
-            onClick={() => form.setFieldsValue({ email: 'manager@influencermatch.vn', password: 'manager123' })}
-          >
-            Điền Manager
-          </Button>
-          <Button
-            size="small"
-            style={{ fontSize: 11, borderColor: '#6366F1', color: '#4F46E5', borderRadius: 6 }}
-            onClick={() => form.setFieldsValue({ email: 'admin@influencermatch.vn', password: 'admin123' })}
-          >
-            Điền Admin
-          </Button>
-        </div>
-      </div>
-
       {/* Footer Registration Link */}
       <div className="al-footer-register">
         <span className="al-footer-prompt">{LABELS.AUTH.NO_ACCOUNT_PROMPT}</span>
