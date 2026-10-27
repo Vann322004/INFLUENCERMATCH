@@ -1,6 +1,6 @@
 // Auth API Types based on OpenAPI specification
 
-export type UserRole = 'ADMIN' | 'DATA_MANAGER' | 'BRAND' | 'CREATOR';
+export type UserRole = 'ADMIN' | 'MANAGER' | 'DATA_MANAGER' | 'BRAND' | 'CREATOR';
 export type UserStatus = 'ACTIVE' | 'LOCKED' | 'DISABLED';
 
 export interface UserProfile {

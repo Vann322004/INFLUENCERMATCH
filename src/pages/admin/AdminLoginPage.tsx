@@ -209,8 +209,9 @@ export default function AdminLoginPage() {
             textAlign: 'center',
           }}
         >
-          <div style={{ color: '#94A3B8', fontSize: 11, fontWeight: 500 }}>
-            Demo: <span style={{ color: '#A5B4FC', fontWeight: 700 }}>admin@influencermatch.vn</span> / <span style={{ color: '#A5B4FC', fontWeight: 700 }}>admin123</span>
+          <div style={{ color: '#94A3B8', fontSize: 11, fontWeight: 500, lineHeight: 1.6 }}>
+            <div>Admin: <span style={{ color: '#A5B4FC', fontWeight: 700 }}>admin@influencermatch.vn</span> / <span style={{ color: '#A5B4FC', fontWeight: 700 }}>admin123</span></div>
+            <div style={{ marginTop: 2 }}>Manager: <span style={{ color: '#38BDF8', fontWeight: 700 }}>manager@influencermatch.vn</span> / <span style={{ color: '#38BDF8', fontWeight: 700 }}>manager123</span></div>
           </div>
         </div>
 
