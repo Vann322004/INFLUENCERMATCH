@@ -7,7 +7,6 @@ import {
   Tag,
   Button,
   Tabs,
-  Progress,
   Avatar,
   Table,
   Space,
@@ -15,12 +14,12 @@ import {
   Input,
   message,
   Timeline,
-  Divider,
+  Dropdown,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import type { MenuProps } from 'antd';
 import {
   ArrowLeftOutlined,
-  ThunderboltFilled,
   CalendarOutlined,
   CheckCircleFilled,
   PauseCircleOutlined,
@@ -39,6 +38,11 @@ import {
   AimOutlined,
   TagsOutlined,
   InstagramOutlined,
+  EllipsisOutlined,
+  RightOutlined,
+  CheckOutlined,
+  UserOutlined,
+  WalletOutlined,
 } from '@ant-design/icons';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
@@ -121,22 +125,22 @@ export default function CampaignDetailPage() {
       return {
         id: passedItem.id || resolvedId,
         name: passedItem.name,
-        description: (passedItem as any).description || (passedItem as any).subtitle || 'Chiến dịch tiếp thị đa kênh kết nối Creator tiềm năng.',
-        productService: (passedItem as any).productService || passedItem.name,
+        description: (passedItem as any).description || (passedItem as any).subtitle || 'Ra mắt kem chống nắng dưỡng trắng dành cho mùa hè 2026, tập trung nâng cao nhận thức thương hiệu và giới thiệu sản phẩm đến nhóm khách hàng mục tiêu thông qua các nhà sáng tạo nội dung trên TikTok và YouTube.',
+        productService: (passedItem as any).productService || 'Acne Tone-up Daily Sunscreen SPF50+ PA++++',
         objective: ((passedItem as any).objective as any) || 'AWARENESS',
         budgetMin: passedItem.budgetRaw ? Math.round(passedItem.budgetRaw * 0.75) : 50000000,
-        budgetMax: passedItem.budgetRaw || 200000000,
-        platforms: passedItem.platforms || ['TIKTOK', 'INSTAGRAM'],
-        niches: passedItem.niches || ['Làm đẹp & Phong cách sống'],
-        targetAudiences: ['18-24', '25-34'],
+        budgetMax: passedItem.budgetRaw || 80000000,
+        platforms: passedItem.platforms || ['TIKTOK', 'YOUTUBE'],
+        niches: passedItem.niches || ['Beauty', 'Skincare', 'Lifestyle'],
+        targetAudiences: ['Nữ 18–28', 'Dân văn phòng', 'Học sinh sinh viên'],
         locations: ['Thành phố Hồ Chí Minh', 'Hà Nội'],
         followerMin: 50000,
         followerMax: 1000000,
-        startDate: '2026-06-15',
-        endDate: '2026-08-31',
+        startDate: '2026-10-26',
+        endDate: '2026-12-25',
         status: (passedItem.status as any) || 'ACTIVE',
         brandId: '',
-        createdAt: new Date().toISOString(),
+        createdAt: '2026-10-15T08:00:00.000Z',
       };
     }
     return null;
@@ -147,26 +151,67 @@ export default function CampaignDetailPage() {
     if (passedItem) {
       return {
         id: passedItem.id || resolvedId,
-        title: passedItem.name || 'Chiến dịch',
-        tags: passedItem.niches || ['Chiến dịch tiếp thị'],
-        thumbnail: passedItem.thumbnail || 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=100&auto=format&fit=crop&q=80',
+        title: passedItem.name || 'Summer Glow 2026 - Kem Chống Nắng Dưỡng Trắng',
+        tags: passedItem.niches || ['AWARENESS', 'TikTok', 'YouTube', 'Beauty', 'Skincare', 'Lifestyle'],
+        thumbnail: passedItem.thumbnail || 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80',
         status: passedItem.status === 'COMPLETED' ? 'completed' : (passedItem.status === 'DRAFT' ? 'draft' : 'running'),
-        statusText: passedItem.statusText || 'Đang triển khai',
-        creatorsCount: passedItem.creatorsCount || 0,
-        reach: '500K+',
-        reachNumber: 500000,
-        engagement: '5.2%',
-        engagementNumber: 5.2,
-        spent: passedItem.budgetFormatted || `${(passedItem.budgetRaw || 200000000).toLocaleString('vi-VN')} ₫`,
-        spentNumber: passedItem.budgetRaw || 200000000,
-        date: passedItem.dateRange || '15 Jun 2026 – 31 Aug 2026',
+        statusText: passedItem.statusText || 'Đang chạy',
+        creatorsCount: passedItem.creatorsCount || 3,
+        reach: '50K+',
+        reachNumber: 50000,
+        engagement: '4.5% – 8.0%',
+        engagementNumber: 6.2,
+        spent: passedItem.budgetFormatted || '80.000.000 đ',
+        spentNumber: passedItem.budgetRaw || 80000000,
+        date: passedItem.dateRange || '26/10/2026 – 25/12/2026',
       };
     }
     return null;
   });
 
   const [participatingCreators, setParticipatingCreators] = useState<CampaignCreatorRow[]>(() => {
-    return cached?.participatingCreators || [];
+    if (cached) return cached.participatingCreators;
+    return [
+      {
+        id: 'creator_1',
+        name: 'Châu Bùi',
+        username: '@chaubui_',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+        platform: 'tiktok',
+        followers: '1.2M',
+        fee: '20.000.000 đ',
+        stageText: 'Đã xác nhận',
+        stageColor: '#10B981',
+        deliverableStatus: 'Đã ký HĐ',
+        deliverableColor: 'green',
+      },
+      {
+        id: 'creator_2',
+        name: 'Minh Khoa',
+        username: '@minhkhoaa',
+        avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120&auto=format&fit=crop&q=80',
+        platform: 'tiktok',
+        followers: '680K',
+        fee: '10.000.000 đ',
+        stageText: 'Đã mời',
+        stageColor: '#F59E0B',
+        deliverableStatus: 'Chờ phản hồi',
+        deliverableColor: 'gold',
+      },
+      {
+        id: 'creator_3',
+        name: 'Lan Le',
+        username: '@lanle.official',
+        avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80',
+        platform: 'instagram',
+        followers: '950K',
+        fee: '6.000.000 đ',
+        stageText: 'Đang trao đổi',
+        stageColor: '#3B82F6',
+        deliverableStatus: 'Đàm phán phí',
+        deliverableColor: 'blue',
+      },
+    ];
   });
 
   const [currentStatus, setCurrentStatus] = useState<CampaignStatusType>(() => {
@@ -176,57 +221,51 @@ export default function CampaignDetailPage() {
     return 'running';
   });
 
-  const [activeTab, setActiveTab] = useState('overview');
-
-  // Cancel Modal state
+  const [activeTab, setActiveTab] = useState<string>('overview');
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
 
-  // Stale-While-Revalidate: Đồng bộ dữ liệu mới nhất từ Backend ngầm trong background
+  // Fetch dữ liệu từ API chạy nền để giữ view mượt mà
   useEffect(() => {
+    if (!resolvedId) return;
+
     let isMounted = true;
     const loadCampaign = async () => {
-      if (!resolvedId) return;
-
-      const cacheEntry = campaignDetailCache.get(resolvedId);
-      const isFresh = cacheEntry && (Date.now() - cacheEntry.timestamp < 120000); // 2 phút
-      if (isFresh) {
-        return; // Đã có dữ liệu tươi, hiển thị ngay không reload
-      }
-
       try {
-        const [data, rels] = await Promise.all([
-          campaignService.getCampaignById(resolvedId).catch(() => null),
-          campaignService.getRelationships(resolvedId).catch(() => []),
-        ]);
-
-        if (isMounted && data) {
+        const data = await campaignService.getCampaignById(resolvedId);
+        if (data && isMounted) {
           setRawCampaign(data);
           const mappedUi = mapApiCampaignToUi(data);
           setCampaign(mappedUi);
-          const isRunning = data.status === 'ACTIVE' || data.status === 'READY_FOR_DISCOVERY';
-          const newStatus = (isRunning ? 'running' : data.status === 'COMPLETED' ? 'completed' : 'draft') as CampaignStatusType;
+
+          let newStatus: CampaignStatusType = 'running';
+          if (data.status === 'COMPLETED') newStatus = 'completed';
+          else if (data.status === 'DRAFT') newStatus = 'draft';
+          else if (data.status === 'ARCHIVED') newStatus = 'cancelled';
           setCurrentStatus(newStatus);
 
-          let mappedCreators: CampaignCreatorRow[] = [];
-          if (Array.isArray(rels) && rels.length > 0) {
-            mappedCreators = rels.map((r: RelationshipDto) => {
-              const feeNum = r.agreedFee || r.quotedFee || 0;
-              const feeText = feeNum > 0 ? `${feeNum.toLocaleString('vi-VN')} ₫` : 'Thỏa thuận';
-              return {
-                id: r.id,
-                name: r.creatorName || 'Creator',
-                username: r.creatorName ? r.creatorName.toLowerCase().replace(/\s+/g, '_') : 'creator',
-                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-                platform: 'tiktok',
-                followers: '500K',
-                fee: feeText,
-                stageText: r.stage || 'Đang kết nối',
-                stageColor: (r.stage === 'COLLABORATING' || r.stage === 'COMPLETED') ? 'success' : 'processing',
-                deliverableStatus: r.notes || 'Chưa cập nhật',
-                deliverableColor: 'default',
-              };
-            });
+          // Tải danh sách KOC từ Pipeline Relationship
+          let rels: RelationshipDto[] = [];
+          try {
+            rels = await campaignService.getCampaignRelationships(resolvedId);
+          } catch {
+            rels = [];
+          }
+
+          if (isMounted && rels && rels.length > 0) {
+            const mappedCreators: CampaignCreatorRow[] = rels.map((r, idx) => ({
+              id: r.id || `rel_${idx}`,
+              name: r.creatorName || `Creator #${idx + 1}`,
+              username: r.creatorUsername ? `@${r.creatorUsername.replace('@', '')}` : `@creator_${idx + 1}`,
+              avatar: r.creatorAvatar || `https://images.unsplash.com/photo-${1534528741775 + idx * 100}?w=100&auto=format&fit=crop&q=80`,
+              platform: (r.platform?.toLowerCase() as any) || 'tiktok',
+              followers: r.followersCount ? `${(r.followersCount / 1000).toFixed(0)}K` : '50K+',
+              fee: r.agreedFee ? `${r.agreedFee.toLocaleString('vi-VN')} ₫` : 'Thỏa thuận',
+              stageText: r.stage || 'Đang kết nối',
+              stageColor: r.stage === 'CONFIRMED' || r.stage === 'COMPLETED' ? '#10B981' : '#6366F1',
+              deliverableStatus: r.deliverableStatus || 'Đang thực hiện',
+              deliverableColor: r.deliverableStatus === 'APPROVED' ? 'green' : 'blue',
+            }));
             setParticipatingCreators(mappedCreators);
           }
 
@@ -234,7 +273,7 @@ export default function CampaignDetailPage() {
           campaignDetailCache.set(resolvedId, {
             rawCampaign: data,
             campaign: mappedUi,
-            participatingCreators: mappedCreators,
+            participatingCreators,
             currentStatus: newStatus,
             timestamp: Date.now(),
           });
@@ -250,22 +289,8 @@ export default function CampaignDetailPage() {
     };
   }, [resolvedId]);
 
-  const campaignData: Campaign = campaign || {
-    id: resolvedId || passedItem?.id || '',
-    title: rawCampaign?.name || passedItem?.name || 'Chiến dịch',
-    tags: rawCampaign?.niches || passedItem?.niches || ['Nội dung đa dạng'],
-    thumbnail: passedItem?.thumbnail || 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80',
-    status: currentStatus,
-    statusText: currentStatus === 'running' ? 'Đang triển khai' : currentStatus === 'completed' ? 'Đã hoàn thành' : 'Bản nháp',
-    creatorsCount: participatingCreators.length || passedItem?.creatorsCount || 0,
-    reach: '0',
-    reachNumber: 0,
-    engagement: '0%',
-    engagementNumber: 0,
-    spent: rawCampaign?.budgetMax ? `${(rawCampaign.budgetMax / 1_000_000).toFixed(0)}M ₫` : (passedItem?.budgetFormatted || '0 ₫'),
-    spentNumber: rawCampaign?.budgetMax || passedItem?.budgetRaw || 0,
-    date: rawCampaign?.startDate ? `${new Date(rawCampaign.startDate).toLocaleDateString('vi-VN')} – ${rawCampaign.endDate ? new Date(rawCampaign.endDate).toLocaleDateString('vi-VN') : ''}` : (passedItem?.dateRange || 'Thời gian linh hoạt'),
-  };
+  const campaignTitle = rawCampaign?.name || passedItem?.name || 'Summer Glow 2026 - Kem Chống Nắng Dưỡng Trắng';
+  const campaignBudgetFormatted = rawCampaign?.budgetMax ? `${rawCampaign.budgetMax.toLocaleString('vi-VN')} đ` : (passedItem?.budgetFormatted || '80.000.000 đ');
 
   // Handle Lifecycle actions
   const handleActivate = () => {
@@ -321,7 +346,7 @@ export default function CampaignDetailPage() {
       content: 'Đóng chiến dịch và lưu trữ toàn bộ chỉ số KPI, chi phí thực tế vào Lịch sử chiến dịch.',
       okText: 'Hoàn thành chiến dịch',
       cancelText: 'Hủy',
-      okButtonProps: { style: { background: '#6366F1' } },
+      okButtonProps: { style: { background: '#4F46E5', borderColor: '#4F46E5' } },
       onOk: async () => {
         try {
           message.loading({ content: 'Đang đánh dấu hoàn thành chiến dịch...', key: 'comp_camp' });
@@ -356,634 +381,963 @@ export default function CampaignDetailPage() {
     message.error('Chiến dịch đã được hủy và lưu trữ.');
   };
 
-  const getStatusBadge = () => {
-    switch (currentStatus) {
-      case 'running':
-        return (
-          <span className="cdetail-status-pill running">
-            <span className="pulse-dot" />
-            ĐANG TRIỂN KHAI
-          </span>
-        );
-      case 'paused':
-        return (
-          <span className="cdetail-status-pill draft" style={{ color: '#D97706', borderColor: '#FDE68A', background: '#FEF3C7' }}>
-            <PauseCircleOutlined style={{ fontSize: 11 }} />
-            TẠM DỪNG
-          </span>
-        );
-      case 'completed':
-        return (
-          <span className="cdetail-status-pill completed">
-            <CheckCircleFilled style={{ fontSize: 11 }} />
-            ĐÃ HOÀN THÀNH
-          </span>
-        );
-      case 'cancelled':
-        return (
-          <span className="cdetail-status-pill draft" style={{ color: '#EF4444', borderColor: '#FECACA', background: '#FEF2F2' }}>
-            <StopOutlined style={{ fontSize: 11 }} />
-            ĐÃ HỦY
-          </span>
-        );
-      default:
-        return (
-          <span className="cdetail-status-pill draft">
-            <ClockCircleOutlined style={{ fontSize: 11 }} />
-            BẢN NHÁP
-          </span>
-        );
-    }
-  };
+  // Menu More actions
+  const moreMenuItems: MenuProps['items'] = [
+    {
+      key: 'edit',
+      label: 'Chỉnh sửa thông tin chiến dịch',
+      icon: <EditOutlined />,
+      onClick: () => navigate('/campaigns'),
+    },
+    {
+      key: 'duplicate',
+      label: 'Nhân bản chiến dịch',
+      icon: <CopyOutlined />,
+      onClick: () => message.info('Tính năng nhân bản đang được kích hoạt'),
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'archive',
+      label: 'Lưu trữ chiến dịch',
+      danger: true,
+      onClick: () => setIsCancelModalOpen(true),
+    },
+  ];
 
+  // Creator Table Columns for Tab "Creator tham gia"
   const creatorColumns: ColumnsType<CampaignCreatorRow> = [
     {
-      title: 'Creator',
-      key: 'creator',
-      render: (_, r) => (
-        <Space size={10}>
-          <Avatar src={r.avatar} size={36} />
+      title: 'Creator / KOC',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text, record) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Avatar src={record.avatar} size={40} />
           <div>
-            <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A' }}>{r.name}</div>
-            <div style={{ fontSize: 11, color: '#64748B' }}>@{r.username}</div>
+            <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>{text}</div>
+            <div style={{ fontSize: 12, color: '#64748B' }}>{record.username}</div>
           </div>
-        </Space>
+        </div>
       ),
     },
     {
-      title: 'Kênh & Follower',
+      title: 'Nền tảng',
+      dataIndex: 'platform',
       key: 'platform',
-      render: (_, r) => (
-        <span style={{ fontSize: 12.5, fontWeight: 600, color: '#334155' }}>
-          {r.followers}
-        </span>
-      ),
+      render: (platform) => {
+        const isTikTok = platform === 'tiktok';
+        return (
+          <span className={`cdetail-platform-badge ${isTikTok ? 'tiktok' : ''}`}>
+            {isTikTok ? (
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
+              </svg>
+            ) : (
+              <InstagramOutlined style={{ fontSize: 12, color: '#E1306C' }} />
+            )}
+            {platform.toUpperCase()}
+          </span>
+        );
+      },
     },
     {
-      title: 'Thù lao',
+      title: 'Followers',
+      dataIndex: 'followers',
+      key: 'followers',
+      render: (val) => <span style={{ fontWeight: 700, color: '#0F172A' }}>{val}</span>,
+    },
+    {
+      title: 'Chi phí thỏa thuận',
       dataIndex: 'fee',
       key: 'fee',
-      render: (fee) => <span style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>{fee}</span>,
+      render: (val) => <span style={{ fontWeight: 700, color: '#4F46E5' }}>{val}</span>,
     },
     {
-      title: 'Trạng thái Pipeline',
-      key: 'stage',
-      render: (_, r) => (
-        <Tag color={r.stageColor} style={{ borderRadius: 6, fontWeight: 600 }}>
-          {r.stageText}
-        </Tag>
+      title: 'Giai đoạn Pipeline',
+      dataIndex: 'stageText',
+      key: 'stageText',
+      render: (text) => (
+        <span className="cdetail-creator-status confirmed">{text}</span>
       ),
     },
     {
-      title: 'Ghi chú vận hành',
-      key: 'deliverable',
-      render: (_, r) => (
-        <span style={{ fontSize: 12, color: '#64748B' }}>{r.deliverableStatus}</span>
-      ),
+      title: 'Nội dung Deliverables',
+      dataIndex: 'deliverableStatus',
+      key: 'deliverableStatus',
+      render: (text, record) => <Tag color={record.deliverableColor}>{text}</Tag>,
     },
   ];
 
   return (
     <div className="campaign-detail-container">
-      {/* 1. Breadcrumb & Top Bar */}
-      <div className="cdetail-top-bar">
-        <button
-          type="button"
-          className="cdetail-back-btn"
-          onClick={() => navigate('/campaigns')}
-        >
-          <ArrowLeftOutlined style={{ fontSize: 11 }} />
-          <span>Quay lại danh sách chiến dịch</span>
-        </button>
-      </div>
+      {/* ==========================================================================
+          1. Luxury Travertine Hero Banner
+          ========================================================================== */}
+      <div className="cdetail-hero-banner">
+        {/* Banner Top Row: Back button & Slogan */}
+        <div className="cdetail-hero-top-row">
+          <button
+            type="button"
+            className="cdetail-back-pill"
+            onClick={() => navigate('/campaigns')}
+          >
+            <ArrowLeftOutlined style={{ fontSize: 12 }} />
+            Quay lại danh sách
+          </button>
 
-      {/* 2. Header Hero Card */}
-      <div className="cdetail-header-card">
-        <Row justify="space-between" align="middle" gutter={[20, 20]}>
-          <Col xs={24} lg={15}>
-            <div className="cdetail-title-badge-row">
-              {getStatusBadge()}
-              <span style={{ color: '#64748B', fontSize: 12.5, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                <CalendarOutlined style={{ color: '#94A3B8' }} />
-                {campaignData.date}
+          <div className="cdetail-hero-slogan">
+            Glow Confidently Everyday
+          </div>
+        </div>
+
+        {/* Banner Middle Content: Status, Title, Tags */}
+        <div className="cdetail-hero-meta">
+          <div className="cdetail-hero-badge-row">
+            <span className={`cdetail-hero-status-tag ${currentStatus}`}>
+              {currentStatus === 'running'
+                ? 'ĐANG CHẠY'
+                : currentStatus === 'paused'
+                ? 'TẠM DỪNG'
+                : currentStatus === 'completed'
+                ? 'HOÀN THÀNH'
+                : 'BẢN NHÁP'}
+            </span>
+            <span className="cdetail-hero-date">
+              {rawCampaign?.startDate
+                ? new Date(rawCampaign.startDate).toLocaleDateString('vi-VN')
+                : '26/10/2026'}
+            </span>
+          </div>
+
+          <h1 className="cdetail-hero-title">
+            {campaignTitle}
+          </h1>
+
+          <div className="cdetail-hero-tags-row">
+            <span className="cdetail-hero-tag highlight">
+              {rawCampaign?.objective || 'AWARENESS'}
+            </span>
+            <span className="cdetail-hero-tag">TikTok</span>
+            <span className="cdetail-hero-tag">YouTube</span>
+            {(rawCampaign?.niches || ['Beauty', 'Skincare', 'Lifestyle']).map((n) => (
+              <span key={n} className="cdetail-hero-tag">
+                {n}
               </span>
-            </div>
+            ))}
+          </div>
+        </div>
 
-            <Title level={2} className="cdetail-main-title">
-              {campaignData.title}
-            </Title>
+        {/* Banner Bottom Row: Action Toolbar */}
+        <div className="cdetail-hero-actions-row">
+          {/* Dropdown More */}
+          <Dropdown menu={{ items: moreMenuItems }} trigger={['click']} placement="bottomRight">
+            <button type="button" className="cdetail-hero-btn icon-only" title="Tùy chọn khác">
+              <EllipsisOutlined style={{ fontSize: 18 }} />
+            </button>
+          </Dropdown>
 
-            <Space size={8} wrap>
-              {/* Objective Tag */}
-              {rawCampaign?.objective && (
-                <Tag color="purple" style={{ borderRadius: 6, fontWeight: 700, padding: '2px 9px', fontSize: 11.5 }}>
-                  🎯 {rawCampaign.objective}
-                </Tag>
-              )}
-
-              {/* Filtered Niches */}
-              {(rawCampaign?.niches || []).map((n) => (
-                <Tag key={n} style={{ background: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: 6, fontWeight: 600, color: '#475569', fontSize: 11.5 }}>
-                  {n}
-                </Tag>
-              ))}
-
-              {/* Platforms (Filtered - No YouTube) */}
-              {(rawCampaign?.platforms || ['TIKTOK', 'INSTAGRAM'])
-                .filter((p) => p.toUpperCase() !== 'YOUTUBE')
-                .map((p) => {
-                  const isTikTok = p.toUpperCase().includes('TIKTOK');
-                  return (
-                    <span key={p} className={`platform-chip ${isTikTok ? 'tiktok' : 'instagram'}`}>
-                      {isTikTok ? (
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
-                        </svg>
-                      ) : (
-                        <InstagramOutlined style={{ fontSize: 11 }} />
-                      )}
-                      {p}
-                    </span>
-                  );
-                })}
-            </Space>
-          </Col>
-
-          {/* Action Toolbar */}
-          <Col xs={24} lg={9} className="cdetail-action-toolbar">
-            <Button
-              className="cdetail-action-btn"
-              icon={<CompassOutlined style={{ color: '#6366F1' }} />}
-              onClick={() => {
-                sessionStorage.setItem('current_campaign_id', campaignData.id);
-                navigate(`/discovery?campaignId=${campaignData.id}`, { state: { campaignId: campaignData.id } });
-              }}
-              style={{ borderColor: '#C7D2FE', background: '#EEF2FF', color: '#4F46E5' }}
+          {/* Pause / Resume button */}
+          {currentStatus === 'running' && (
+            <button
+              type="button"
+              className="cdetail-hero-btn"
+              onClick={handlePause}
             >
-              Khám phá KOC AI
-            </Button>
+              <PauseCircleOutlined style={{ fontSize: 14 }} />
+              Tạm dừng
+            </button>
+          )}
 
-            <Button
-              className="cdetail-action-btn"
-              type="primary"
-              icon={<ApartmentOutlined />}
-              onClick={() => navigate(`/campaign-management/${campaignData.id}`)}
-              style={{ background: '#4F46E5', borderColor: '#4F46E5', boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)' }}
+          {currentStatus === 'paused' && (
+            <button
+              type="button"
+              className="cdetail-hero-btn"
+              onClick={handleResume}
             >
-              Pipeline Kanban
-            </Button>
+              <PlayCircleFilled style={{ fontSize: 14, color: '#10B981' }} />
+              Tiếp tục
+            </button>
+          )}
 
-            {currentStatus === 'draft' && (
-              <Button
-                className="cdetail-action-btn"
-                type="primary"
-                icon={<PlayCircleFilled />}
-                onClick={handleActivate}
-                style={{ background: '#10B981', borderColor: '#10B981' }}
-              >
-                Kích hoạt
-              </Button>
-            )}
+          {currentStatus === 'draft' && (
+            <button
+              type="button"
+              className="cdetail-hero-btn primary"
+              onClick={handleActivate}
+            >
+              <PlayCircleFilled style={{ fontSize: 14 }} />
+              Kích hoạt
+            </button>
+          )}
 
-            {currentStatus === 'running' && (
-              <>
-                <Button
-                  className="cdetail-action-btn"
-                  icon={<PauseCircleOutlined />}
-                  onClick={handlePause}
-                >
-                  Tạm dừng
-                </Button>
-                <Button
-                  className="cdetail-action-btn"
-                  icon={<CheckCircleFilled />}
-                  onClick={handleComplete}
-                  style={{ background: '#F8FAFC', color: '#059669', borderColor: '#A7F3D0' }}
-                >
-                  Hoàn thành
-                </Button>
-                <Button
-                  className="cdetail-action-btn"
-                  danger
-                  icon={<StopOutlined />}
-                  onClick={() => setIsCancelModalOpen(true)}
-                >
-                  Hủy
-                </Button>
-              </>
-            )}
-          </Col>
-        </Row>
+          {/* Complete button */}
+          {currentStatus !== 'completed' && (
+            <button
+              type="button"
+              className="cdetail-hero-btn primary"
+              onClick={handleComplete}
+            >
+              <CheckOutlined style={{ fontSize: 14 }} />
+              Hoàn thành
+            </button>
+          )}
+
+          {/* Cancel button */}
+          {currentStatus !== 'cancelled' && (
+            <button
+              type="button"
+              className="cdetail-hero-btn danger-outline"
+              onClick={() => setIsCancelModalOpen(true)}
+            >
+              <StopOutlined style={{ fontSize: 13 }} />
+              Hủy chiến dịch
+            </button>
+          )}
+
+          {/* AI Discovery Button */}
+          <button
+            type="button"
+            className="cdetail-hero-btn ai-discovery"
+            onClick={() => {
+              const cId = resolvedId || 'camp_sg2026';
+              sessionStorage.setItem('current_campaign_id', cId);
+              navigate(`/discovery?campaignId=${cId}`, { state: { campaignId: cId } });
+            }}
+          >
+            <CompassOutlined style={{ fontSize: 14 }} />
+            Khám phá KOC AI
+          </button>
+
+          {/* Pipeline Kanban */}
+          <button
+            type="button"
+            className="cdetail-hero-btn dark-outline"
+            onClick={() => navigate(`/campaign-management/${resolvedId || 'default'}`)}
+          >
+            <ApartmentOutlined style={{ fontSize: 14 }} />
+            Pipeline Kanban
+          </button>
+        </div>
       </div>
 
-      {/* 3. 4 High-level Stat Cards */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
-          <div className="cdetail-stat-card">
-            <div className="cdetail-stat-top">
-              <span className="cdetail-stat-label">Ngân sách chiến dịch</span>
-              <div className="cdetail-stat-icon-wrap" style={{ background: '#EEF2FF', color: '#6366F1' }}>
-                <DollarOutlined />
-              </div>
+      {/* ==========================================================================
+          2. 4 Metric KPI Cards Row
+          ========================================================================== */}
+      <div className="cdetail-metrics-grid">
+        {/* Card 1: Ngân sách dự kiến */}
+        <div className="cdetail-metric-card">
+          <div className="cdetail-metric-top">
+            <div className="cdetail-metric-icon-box" style={{ background: '#EEF2FF', color: '#6366F1' }}>
+              <WalletOutlined />
             </div>
-            <div>
-              <div className="cdetail-stat-value">
-                {campaignData.spent}
+            <span className="cdetail-metric-title">Ngân sách dự kiến</span>
+          </div>
+          <div>
+            <div className="cdetail-metric-value">{campaignBudgetFormatted}</div>
+            <div className="cdetail-metric-progress-wrap">
+              <div className="cdetail-metric-progress-bar">
+                <div className="cdetail-metric-progress-fill" style={{ width: '45%' }} />
               </div>
-              <Progress percent={45} showInfo={false} strokeColor="#6366F1" trailColor="#F1F5F9" size="small" style={{ margin: '4px 0 8px 0' }} />
-            </div>
-            <div className="cdetail-stat-footer">
-              <span style={{ color: '#64748B' }}>Ngân sách dự kiến tối đa</span>
-              <span style={{ color: '#6366F1', fontWeight: 600 }}>45%</span>
+              <span className="cdetail-metric-progress-label">45%</span>
             </div>
           </div>
-        </Col>
+          <div className="cdetail-metric-footer">
+            <span>Đã phân bổ: 36.000.000 đ</span>
+          </div>
+        </div>
 
-        <Col xs={24} sm={12} lg={6}>
-          <div className="cdetail-stat-card">
-            <div className="cdetail-stat-top">
-              <span className="cdetail-stat-label">Follower mục tiêu</span>
-              <div className="cdetail-stat-icon-wrap" style={{ background: '#F0F9FF', color: '#0284C7' }}>
-                <RiseOutlined />
-              </div>
+        {/* Card 2: Follower mục tiêu */}
+        <div className="cdetail-metric-card">
+          <div className="cdetail-metric-top">
+            <div className="cdetail-metric-icon-box" style={{ background: '#F3E8FF', color: '#7C3AED' }}>
+              <TeamOutlined />
             </div>
-            <div className="cdetail-stat-value">
+            <span className="cdetail-metric-title">Follower mục tiêu</span>
+          </div>
+          <div className="cdetail-metric-mid-row">
+            <div className="cdetail-metric-value">
               {rawCampaign?.followerMin ? `${(rawCampaign.followerMin / 1000).toFixed(0)}K+` : '50K+'}
             </div>
-            <div className="cdetail-stat-footer">
-              <span style={{ color: '#059669', fontWeight: 600 }}>Tệp khán giả tối thiểu</span>
-              <Tag color="cyan" style={{ border: 'none', borderRadius: 4, margin: 0, fontSize: 11 }}>AI Matched</Tag>
+            <div className="cdetail-sparkline-bars">
+              <div className="cdetail-sparkline-bar" style={{ height: '35%' }} />
+              <div className="cdetail-sparkline-bar" style={{ height: '50%' }} />
+              <div className="cdetail-sparkline-bar" style={{ height: '65%' }} />
+              <div className="cdetail-sparkline-bar" style={{ height: '85%' }} />
+              <div className="cdetail-sparkline-bar" style={{ height: '100%' }} />
             </div>
           </div>
-        </Col>
+          <div className="cdetail-metric-footer">
+            <span>Yêu cầu tệp khán giả chất lượng</span>
+          </div>
+        </div>
 
-        <Col xs={24} sm={12} lg={6}>
-          <div className="cdetail-stat-card">
-            <div className="cdetail-stat-top">
-              <span className="cdetail-stat-label">Mục tiêu tương tác</span>
-              <div className="cdetail-stat-icon-wrap" style={{ background: '#FEF3C7', color: '#D97706' }}>
-                <ThunderboltFilled />
-              </div>
+        {/* Card 3: Mục tiêu tương tác */}
+        <div className="cdetail-metric-card">
+          <div className="cdetail-metric-top">
+            <div className="cdetail-metric-icon-box" style={{ background: '#E0F2FE', color: '#0284C7' }}>
+              <RiseOutlined />
             </div>
-            <div className="cdetail-stat-value">
-              4.5% - 8.0%
+            <span className="cdetail-metric-title">Mục tiêu tương tác</span>
+          </div>
+          <div className="cdetail-metric-mid-row">
+            <div className="cdetail-metric-value">4.5% – 8.0%</div>
+            <svg className="cdetail-wave-sparkline" viewBox="0 0 65 24" fill="none">
+              <path
+                d="M1 18 C12 18, 16 6, 26 12 C36 18, 42 4, 52 10 C58 14, 61 8, 64 6"
+                stroke="#818CF8"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                fill="none"
+              />
+            </svg>
+          </div>
+          <div className="cdetail-metric-footer">
+            <span>Tiêu chuẩn lọc ghép nối AI</span>
+          </div>
+        </div>
+
+        {/* Card 4: Creator tham gia */}
+        <div
+          className="cdetail-metric-card"
+          style={{ cursor: 'pointer' }}
+          onClick={() => setActiveTab('creators')}
+        >
+          <div className="cdetail-metric-top">
+            <div className="cdetail-metric-icon-box" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
+              <UserOutlined />
             </div>
-            <div className="cdetail-stat-footer">
-              <span style={{ color: '#64748B' }}>Chuẩn lọc ghép nối AI</span>
-              <Tag color="gold" style={{ border: 'none', borderRadius: 4, margin: 0, fontSize: 11 }}>Chất lượng cao</Tag>
+            <span className="cdetail-metric-title">Creator tham gia</span>
+          </div>
+          <div className="cdetail-metric-mid-row">
+            <div className="cdetail-metric-value">
+              {participatingCreators.length} / ∞
+            </div>
+            <RightOutlined style={{ fontSize: 14, color: '#94A3B8' }} />
+          </div>
+          <div className="cdetail-metric-footer">
+            <div className="cdetail-avatar-stack">
+              <img
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80"
+                alt="Châu Bùi"
+              />
+              <img
+                src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=80&auto=format&fit=crop&q=80"
+                alt="Minh Khoa"
+              />
+              <img
+                src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&auto=format&fit=crop&q=80"
+                alt="Lan Le"
+              />
+              <div className="avatar-more">+</div>
             </div>
           </div>
-        </Col>
+        </div>
+      </div>
 
-        <Col xs={24} sm={12} lg={6}>
-          <div
-            className="cdetail-stat-card clickable"
-            onClick={() => setActiveTab('creators')}
-            title="Bấm để xem danh sách Creator"
-          >
-            <div className="cdetail-stat-top">
-              <span className="cdetail-stat-label">Creator tham gia</span>
-              <div className="cdetail-stat-icon-wrap" style={{ background: '#ECFDF5', color: '#059669' }}>
-                <TeamOutlined />
-              </div>
-            </div>
-            <div className="cdetail-stat-value">
-              {participatingCreators.length}
-              <span className="cdetail-stat-value-unit">người</span>
-            </div>
-            <div className="cdetail-stat-footer">
-              <span style={{ color: '#4F46E5', fontWeight: 600 }}>
-                {participatingCreators.length > 0 ? `${participatingCreators.length} người trong pipeline` : 'Chưa thêm creator'}
-              </span>
-              <span style={{ color: '#94A3B8', fontSize: 12 }}>Xem danh sách →</span>
-            </div>
+      {/* ==========================================================================
+          3. Main 2-Column Section (70% Left / 30% Right)
+          ========================================================================== */}
+      <div className="cdetail-main-layout">
+        {/* Left Column (70%) */}
+        <div className="cdetail-left-col">
+          {/* Underline Tabs Header */}
+          <div className="cdetail-tabs-bar">
+            <button
+              type="button"
+              className={`cdetail-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+              onClick={() => setActiveTab('overview')}
+            >
+              Tổng quan
+            </button>
+            <button
+              type="button"
+              className={`cdetail-tab-btn ${activeTab === 'creators' ? 'active' : ''}`}
+              onClick={() => setActiveTab('creators')}
+            >
+              Creator tham gia ({participatingCreators.length})
+            </button>
+            <button
+              type="button"
+              className={`cdetail-tab-btn ${activeTab === 'budget' ? 'active' : ''}`}
+              onClick={() => setActiveTab('budget')}
+            >
+              Phân bổ ngân sách
+            </button>
+            <button
+              type="button"
+              className={`cdetail-tab-btn ${activeTab === 'timeline' ? 'active' : ''}`}
+              onClick={() => setActiveTab('timeline')}
+            >
+              Mốc thời gian (Timeline)
+            </button>
+            <button
+              type="button"
+              className={`cdetail-tab-btn ${activeTab === 'guidelines' ? 'active' : ''}`}
+              onClick={() => setActiveTab('guidelines')}
+            >
+              Tệp yêu cầu & Hướng dẫn
+            </button>
           </div>
-        </Col>
-      </Row>
 
-      {/* 4. Tab Navigation Content */}
-      <Card className="cdetail-content-card" bodyStyle={{ padding: '16px 24px 28px 24px' }}>
-        <Tabs
-          activeKey={activeTab}
-          onChange={(k) => setActiveTab(k)}
-          size="middle"
-          items={[
-            {
-              key: 'overview',
-              label: <span style={{ fontWeight: 600, fontSize: 13.5 }}>Tổng quan & Brief sáng tạo</span>,
-              children: (
-                <div style={{ marginTop: 14 }}>
-                  <Row gutter={[20, 20]}>
-                    {/* Left: Tóm tắt Creator Brief */}
-                    <Col xs={24} lg={14}>
-                      <div className="brief-card">
-                        <div className="brief-card-header">
-                          <div className="brief-card-icon" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
-                            <FileTextOutlined />
-                          </div>
-                          <div>
-                            <div className="brief-card-title">Tóm tắt Creator Brief</div>
-                            <div className="brief-card-subtitle">Thông tin định hướng và yêu cầu sáng tạo nội dung cho KOC</div>
-                          </div>
-                        </div>
-
-                        <div className="brief-section-box">
-                          <div className="brief-item-title">Mô tả & Thông điệp chiến dịch</div>
-                          <div className="brief-quote-text">
-                            {rawCampaign?.description || 'Chưa có thông điệp mô tả chi tiết cho chiến dịch này.'}
-                          </div>
-                        </div>
-
-                        <div className="brief-section-box">
-                          <div className="brief-item-title">Sản phẩm / Dịch vụ trọng tâm</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                            <Tag color="blue" style={{ fontSize: 12, padding: '3px 10px', borderRadius: 6, fontWeight: 700 }}>
-                              📦 {rawCampaign?.productService || 'Sản phẩm nhãn hàng'}
-                            </Tag>
-                            {(rawCampaign?.niches || []).map((n) => (
-                              <Tag key={n} color="cyan" style={{ fontSize: 11.5, padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>
-                                {n}
-                              </Tag>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="brief-section-box">
-                          <div className="brief-item-title">Mục tiêu chiến dịch (Objectives)</div>
-                          <div style={{ color: '#0F172A', fontSize: 13, fontWeight: 600 }}>
-                            🎯 {rawCampaign?.objective || 'Mục tiêu truyền thông đa kênh'}
-                          </div>
-                        </div>
-
-                        <div className="brief-section-box" style={{ marginBottom: 0 }}>
-                          <div className="brief-item-title">Nền tảng ưu tiên</div>
-                          <Space size={8} wrap>
-                            {(rawCampaign?.platforms || ['TIKTOK', 'INSTAGRAM'])
-                              .filter((p) => p.toUpperCase() !== 'YOUTUBE')
-                              .map((p) => {
-                                const isTikTok = p.toUpperCase().includes('TIKTOK');
-                                return (
-                                  <span key={p} className={`platform-chip ${isTikTok ? 'tiktok' : 'instagram'}`}>
-                                    {isTikTok ? (
-                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
-                                      </svg>
-                                    ) : (
-                                      <InstagramOutlined style={{ fontSize: 11 }} />
-                                    )}
-                                    {p}
-                                  </span>
-                                );
-                              })}
-                          </Space>
-                        </div>
-                      </div>
-                    </Col>
-
-                    {/* Right: Thông tin vận hành chiến dịch */}
-                    <Col xs={24} lg={10}>
-                      <div className="brief-card">
-                        <div className="brief-card-header">
-                          <div className="brief-card-icon" style={{ background: '#F0F9FF', color: '#0284C7' }}>
-                            <SettingOutlined />
-                          </div>
-                          <div>
-                            <div className="brief-card-title">Thông tin vận hành chiến dịch</div>
-                            <div className="brief-card-subtitle">Chi tiết thông số, đối tượng và thời gian triển khai</div>
-                          </div>
-                        </div>
-
-                        <div className="ops-specs-list">
-                          <div className="ops-spec-row">
-                            <span className="ops-spec-label">
-                              <AimOutlined style={{ color: '#6366F1' }} />
-                              Mục tiêu chính
-                            </span>
-                            <Tag color="purple" style={{ margin: 0, fontWeight: 700, borderRadius: 6 }}>
-                              {rawCampaign?.objective || 'Nhận diện thương hiệu'}
-                            </Tag>
-                          </div>
-
-                          <div className="ops-spec-row">
-                            <span className="ops-spec-label">
-                              <TagsOutlined style={{ color: '#0EA5E9' }} />
-                              Ngành hàng
-                            </span>
-                            <span className="ops-spec-value">
-                              {(rawCampaign?.niches || []).join(', ') || 'Chưa định rõ'}
-                            </span>
-                          </div>
-
-                          <div className="ops-spec-row">
-                            <span className="ops-spec-label">
-                              <TeamOutlined style={{ color: '#10B981' }} />
-                              Đối tượng khán giả
-                            </span>
-                            <span className="ops-spec-value">
-                              {(rawCampaign?.targetAudiences || []).join(', ') || 'Nữ 18-28, Đại chúng'}
-                            </span>
-                          </div>
-
-                          <div className="ops-spec-row">
-                            <span className="ops-spec-label">
-                              <RiseOutlined style={{ color: '#F59E0B' }} />
-                              Khoảng Follower
-                            </span>
-                            <span className="ops-spec-value">
-                              {rawCampaign?.followerMin ? `${(rawCampaign.followerMin / 1000).toFixed(0)}K – ${(rawCampaign.followerMax || 0) / 1000}K` : '50K – 1000K'}
-                            </span>
-                          </div>
-
-                          <div className="ops-spec-row">
-                            <span className="ops-spec-label">
-                              <CalendarOutlined style={{ color: '#8B5CF6' }} />
-                              Thời gian diễn ra
-                            </span>
-                            <span className="ops-spec-value">
-                              {rawCampaign?.startDate ? new Date(rawCampaign.startDate).toLocaleDateString('vi-VN') : '26/10/2026'}
-                              {rawCampaign?.endDate ? ` – ${new Date(rawCampaign.endDate).toLocaleDateString('vi-VN')}` : ' – 25/12/2026'}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div style={{ marginTop: 'auto', paddingTop: 18 }}>
-                          <Button
-                            block
-                            type="dashed"
-                            icon={<EditOutlined />}
-                            onClick={() => navigate('/campaigns')}
-                            style={{
-                              height: 40,
-                              borderRadius: 10,
-                              fontWeight: 600,
-                              color: '#475569',
-                              borderColor: '#CBD5E1',
-                            }}
-                          >
-                            Chỉnh sửa chiến dịch
-                          </Button>
-                        </div>
-                      </div>
-                    </Col>
-                  </Row>
-                </div>
-              ),
-            },
-            {
-              key: 'creators',
-              label: (
-                <span style={{ fontWeight: 600, fontSize: 13.5, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <span>Creator tham gia</span>
-                  <Tag color="purple" style={{ margin: 0, borderRadius: 999, fontWeight: 700, padding: '0 7px', fontSize: 11 }}>
-                    {participatingCreators.length}
-                  </Tag>
-                </span>
-              ),
-              children: (
-                <div style={{ marginTop: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                    <Text type="secondary" style={{ fontSize: 13 }}>
-                      Danh sách các Influencer/KOLs được phân bổ trong chiến dịch này.
-                    </Text>
-                    <Space>
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        style={{ background: '#5B5BF0', borderRadius: 8 }}
-                        onClick={() => {
-                          localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', resolvedId);
-                          navigate('/creators', { state: { campaignId: resolvedId } });
-                        }}
-                      >
-                        Tìm thêm Creator bằng AI
-                      </Button>
-                    </Space>
+          {/* TAB 1: TỔNG QUAN (Exact Match to Mockup Image 1) */}
+          {activeTab === 'overview' && (
+            <>
+              {/* Row 1: Two-Card Grid */}
+              <div className="cdetail-brief-grid">
+                {/* Left Subcard: Tóm tắt chiến dịch */}
+                <div className="cdetail-subcard">
+                  <div className="cdetail-subcard-header">
+                    <span className="cdetail-subcard-title">Tóm tắt chiến dịch</span>
+                    <button
+                      type="button"
+                      className="cdetail-subcard-action-btn"
+                      onClick={() => navigate('/campaigns')}
+                    >
+                      <EditOutlined style={{ fontSize: 12 }} />
+                      Chỉnh sửa
+                    </button>
                   </div>
 
-                  {participatingCreators.length > 0 ? (
-                    <Table
-                      columns={creatorColumns}
-                      dataSource={participatingCreators}
-                      rowKey="id"
-                      pagination={false}
-                    />
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: '40px 20px', background: '#F8FAFC', borderRadius: 12, border: '1px dashed #CBD5E1' }}>
-                      <TeamOutlined style={{ fontSize: 36, color: '#94A3B8', marginBottom: 10 }} />
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#334155', marginBottom: 4 }}>
-                        Chưa có Creator nào tham gia chiến dịch này
+                  <p className="cdetail-brief-desc">
+                    {rawCampaign?.description ||
+                      'Ra mắt kem chống nắng dưỡng trắng dành cho mùa hè 2026, tập trung nâng cao nhận thức thương hiệu và giới thiệu sản phẩm đến nhóm khách hàng mục tiêu thông qua các nhà sáng tạo nội dung trên TikTok và YouTube.'}
+                  </p>
+
+                  {/* Sản phẩm / dịch vụ trọng tâm */}
+                  <div className="cdetail-bullet-group">
+                    <span className="cdetail-bullet-title">Sản phẩm / Dịch vụ trọng tâm</span>
+                    <div className="cdetail-product-box">
+                      <img
+                        src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=100&auto=format&fit=crop&q=80"
+                        alt="Product"
+                        className="cdetail-product-img"
+                      />
+                      <div className="cdetail-product-info">
+                        <span className="cdetail-product-name">
+                          {rawCampaign?.productService || 'Acne Tone-up Daily Sunscreen SPF50+ PA++++'}
+                        </span>
+                        <div className="cdetail-product-tags">
+                          <span className="cdetail-product-tag">BEAUTY</span>
+                          <span className="cdetail-product-tag">LIFESTYLE</span>
+                          <span className="cdetail-product-tag">SKINCARE</span>
+                        </div>
                       </div>
-                      <div style={{ fontSize: 12, color: '#64748B', marginBottom: 14 }}>
-                        Sử dụng công cụ Ghép nối AI để khám phá và thêm các Creator phù hợp vào chiến dịch.
-                      </div>
-                      <Button
-                        type="primary"
-                        onClick={() => {
-                          localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', resolvedId);
-                          navigate('/creators', { state: { campaignId: resolvedId } });
-                        }}
-                        style={{ background: '#5B5BF0', borderRadius: 8 }}
-                      >
-                        Khám phá Creator ngay
-                      </Button>
                     </div>
-                  )}
-                </div>
-              ),
-            },
-            {
-              key: 'budget',
-              label: <span style={{ fontWeight: 600 }}>Phân bổ ngân sách</span>,
-              children: (
-                <div style={{ marginTop: 12 }}>
-                  <Row gutter={[20, 20]}>
-                    <Col xs={24} md={8}>
-                      <div className="brief-box" style={{ textAlign: 'center', padding: '24px 16px' }}>
-                        <div style={{ color: '#64748B', fontSize: 13, fontWeight: 600 }}>Tổng ngân sách tối đa</div>
-                        <div style={{ fontSize: 28, fontWeight: 800, color: '#0F172A', marginTop: 4 }}>
-                          {rawCampaign?.budgetMax ? `${(rawCampaign.budgetMax / 1_000_000).toFixed(0)}M ₫` : 'Thỏa thuận'}
-                        </div>
-                        <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
-                          {rawCampaign?.budgetMax ? `${rawCampaign.budgetMax.toLocaleString('vi-VN')} VND` : 'Chưa định mức ngân sách'}
-                        </div>
-                      </div>
-                    </Col>
+                  </div>
 
-                    <Col xs={24} md={8}>
-                      <div className="brief-box" style={{ textAlign: 'center', padding: '24px 16px' }}>
-                        <div style={{ color: '#64748B', fontSize: 13, fontWeight: 600 }}>Ngân sách tối thiểu</div>
-                        <div style={{ fontSize: 28, fontWeight: 800, color: '#6366F1', marginTop: 4 }}>
-                          {rawCampaign?.budgetMin ? `${(rawCampaign.budgetMin / 1_000_000).toFixed(0)}M ₫` : '0 ₫'}
-                        </div>
-                        <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
-                          Mức phân bổ sàn
-                        </div>
-                      </div>
-                    </Col>
+                  {/* Mục tiêu chiến dịch */}
+                  <div className="cdetail-bullet-group">
+                    <span className="cdetail-bullet-title">Mục tiêu chiến dịch</span>
+                    <div className="cdetail-bullet-item">Tăng nhận diện thương hiệu</div>
+                    <div className="cdetail-bullet-item">Giới thiệu sản phẩm mới</div>
+                    <div className="cdetail-bullet-item">Thúc đẩy tìm hiểu & cân nhắc mua hàng</div>
+                  </div>
 
-                    <Col xs={24} md={8}>
-                      <div className="brief-box" style={{ textAlign: 'center', padding: '24px 16px' }}>
-                        <div style={{ color: '#64748B', fontSize: 13, fontWeight: 600 }}>Trạng thái tài chính</div>
-                        <div style={{ fontSize: 28, fontWeight: 800, color: '#10B981', marginTop: 4 }}>
-                          Sẵn sàng
+                  {/* Nền tảng ưu tiên */}
+                  <div className="cdetail-bullet-group">
+                    <span className="cdetail-bullet-title">Nền tảng ưu tiên</span>
+                    <div className="cdetail-platform-badges">
+                      <span className="cdetail-platform-badge tiktok">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
+                        </svg>
+                        TikTok
+                      </span>
+                      <span className="cdetail-platform-badge youtube">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                        </svg>
+                        YouTube
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Subcard: Thông tin vận hành */}
+                <div className="cdetail-subcard">
+                  <div className="cdetail-subcard-header">
+                    <span className="cdetail-subcard-title">Thông tin vận hành</span>
+                    <Dropdown menu={{ items: moreMenuItems }} trigger={['click']}>
+                      <button type="button" className="cdetail-subcard-action-btn" title="Thao tác">
+                        <EllipsisOutlined />
+                      </button>
+                    </Dropdown>
+                  </div>
+
+                  <div className="cdetail-ops-list">
+                    <div className="cdetail-ops-row">
+                      <span className="cdetail-ops-label">Trạng thái</span>
+                      <span className="cdetail-ops-value">
+                        <span className="cdetail-status-dot" />
+                        Đang triển khai
+                      </span>
+                    </div>
+
+                    <div className="cdetail-ops-row">
+                      <span className="cdetail-ops-label">Ngành hàng</span>
+                      <span className="cdetail-ops-value">
+                        {(rawCampaign?.niches || ['Beauty', 'Lifestyle', 'Skincare']).join(', ')}
+                      </span>
+                    </div>
+
+                    <div className="cdetail-ops-row">
+                      <span className="cdetail-ops-label">Đối tượng khán giả</span>
+                      <span className="cdetail-ops-value">
+                        {(rawCampaign?.targetAudiences || ['Nữ 18–28', 'Dân văn phòng', 'Học sinh sinh viên']).join(', ')}
+                      </span>
+                    </div>
+
+                    <div className="cdetail-ops-row">
+                      <span className="cdetail-ops-label">Khoảng follower</span>
+                      <span className="cdetail-ops-value">
+                        {rawCampaign?.followerMin ? `${(rawCampaign.followerMin / 1000).toFixed(0)}K – ${(rawCampaign.followerMax || 1000000) / 1000}K` : '50K – 1000K'}
+                      </span>
+                    </div>
+
+                    <div className="cdetail-ops-row">
+                      <span className="cdetail-ops-label">Thời gian diễn ra</span>
+                      <span className="cdetail-ops-value">
+                        {rawCampaign?.startDate ? new Date(rawCampaign.startDate).toLocaleDateString('vi-VN') : '26/10/2026'} – {rawCampaign?.endDate ? new Date(rawCampaign.endDate).toLocaleDateString('vi-VN') : '25/12/2026'}
+                      </span>
+                    </div>
+
+                    <div className="cdetail-ops-row">
+                      <span className="cdetail-ops-label">Người phụ trách</span>
+                      <span className="cdetail-ops-value">
+                        <Avatar
+                          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&auto=format&fit=crop&q=80"
+                          size={22}
+                        />
+                        Châu Bùi
+                      </span>
+                    </div>
+
+                    <div className="cdetail-ops-row">
+                      <span className="cdetail-ops-label">Ngày tạo</span>
+                      <span className="cdetail-ops-value">
+                        {rawCampaign?.createdAt ? new Date(rawCampaign.createdAt).toLocaleDateString('vi-VN') : '15/10/2026'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2: Lower Section - Creator tham gia (3) */}
+              <div className="cdetail-creators-section">
+                <div className="cdetail-creators-header">
+                  <span className="cdetail-creators-title">Creator tham gia (3)</span>
+                  <span
+                    className="cdetail-creators-link"
+                    onClick={() => setActiveTab('creators')}
+                  >
+                    Quản lý →
+                  </span>
+                </div>
+
+                <div className="cdetail-creator-cards-grid">
+                  {/* Creator Card 1: Châu Bùi */}
+                  <div className="cdetail-creator-card">
+                    <div className="cdetail-creator-top">
+                      <img
+                        src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"
+                        alt="Châu Bùi"
+                        className="cdetail-creator-avatar"
+                      />
+                      <div className="cdetail-creator-meta">
+                        <div className="cdetail-creator-name-row">
+                          <span className="cdetail-creator-name">Châu Bùi</span>
                         </div>
-                        <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
-                          Đã phân bổ hạn mức
+                        <span className="cdetail-creator-handle">@chaubui_...</span>
+                        <div className="cdetail-creator-platforms">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#000000">
+                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
+                          </svg>
+                          <InstagramOutlined style={{ fontSize: 13, color: '#E1306C' }} />
                         </div>
                       </div>
-                    </Col>
-                  </Row>
+                      <span className="cdetail-creator-status confirmed">Đã xác nhận</span>
+                      <EllipsisOutlined style={{ fontSize: 16, color: '#94A3B8', cursor: 'pointer' }} />
+                    </div>
+
+                    <div className="cdetail-creator-metrics-row">
+                      <div className="cdetail-creator-metric-col">
+                        <span className="cdetail-creator-metric-num">1.2M</span>
+                        <span className="cdetail-creator-metric-lbl">Followers</span>
+                      </div>
+                      <div className="cdetail-creator-metric-col">
+                        <span className="cdetail-creator-metric-num">4.8%</span>
+                        <span className="cdetail-creator-metric-lbl">Engagement</span>
+                      </div>
+                      <div className="cdetail-creator-metric-col">
+                        <span className="cdetail-creator-metric-num">120M</span>
+                        <span className="cdetail-creator-metric-lbl">Lượt xem TB</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Creator Card 2: Minh Khoa */}
+                  <div className="cdetail-creator-card">
+                    <div className="cdetail-creator-top">
+                      <img
+                        src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120&auto=format&fit=crop&q=80"
+                        alt="Minh Khoa"
+                        className="cdetail-creator-avatar"
+                      />
+                      <div className="cdetail-creator-meta">
+                        <div className="cdetail-creator-name-row">
+                          <span className="cdetail-creator-name">Minh Khoa</span>
+                        </div>
+                        <span className="cdetail-creator-handle">@minhkhoaa</span>
+                        <div className="cdetail-creator-platforms">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#000000">
+                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
+                          </svg>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="#DC2626">
+                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <span className="cdetail-creator-status invited">Đã mời</span>
+                      <EllipsisOutlined style={{ fontSize: 16, color: '#94A3B8', cursor: 'pointer' }} />
+                    </div>
+
+                    <div className="cdetail-creator-metrics-row">
+                      <div className="cdetail-creator-metric-col">
+                        <span className="cdetail-creator-metric-num">680K</span>
+                        <span className="cdetail-creator-metric-lbl">Followers</span>
+                      </div>
+                      <div className="cdetail-creator-metric-col">
+                        <span className="cdetail-creator-metric-num">5.1%</span>
+                        <span className="cdetail-creator-metric-lbl">Engagement</span>
+                      </div>
+                      <div className="cdetail-creator-metric-col">
+                        <span className="cdetail-creator-metric-num">45M</span>
+                        <span className="cdetail-creator-metric-lbl">Lượt xem TB</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Creator Card 3: Lan Le */}
+                  <div className="cdetail-creator-card">
+                    <div className="cdetail-creator-top">
+                      <img
+                        src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80"
+                        alt="Lan Le"
+                        className="cdetail-creator-avatar"
+                      />
+                      <div className="cdetail-creator-meta">
+                        <div className="cdetail-creator-name-row">
+                          <span className="cdetail-creator-name">Lan Le</span>
+                        </div>
+                        <span className="cdetail-creator-handle">@lanle.official</span>
+                        <div className="cdetail-creator-platforms">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#000000">
+                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
+                          </svg>
+                          <InstagramOutlined style={{ fontSize: 13, color: '#E1306C' }} />
+                        </div>
+                      </div>
+                      <span className="cdetail-creator-status negotiating">Đang trao đổi</span>
+                      <EllipsisOutlined style={{ fontSize: 16, color: '#94A3B8', cursor: 'pointer' }} />
+                    </div>
+
+                    <div className="cdetail-creator-metrics-row">
+                      <div className="cdetail-creator-metric-col">
+                        <span className="cdetail-creator-metric-num">950K</span>
+                        <span className="cdetail-creator-metric-lbl">Followers</span>
+                      </div>
+                      <div className="cdetail-creator-metric-col">
+                        <span className="cdetail-creator-metric-num">3.9%</span>
+                        <span className="cdetail-creator-metric-lbl">Engagement</span>
+                      </div>
+                      <div className="cdetail-creator-metric-col">
+                        <span className="cdetail-creator-metric-num">60M</span>
+                        <span className="cdetail-creator-metric-lbl">Lượt xem TB</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              ),
-            },
-            {
-              key: 'timeline',
-              label: <span style={{ fontWeight: 600 }}>Mốc thời gian (Timeline)</span>,
-              children: (
-                <div style={{ marginTop: 16, maxWidth: 640 }}>
-                  <Timeline
-                    items={[
-                      {
-                        color: 'green',
-                        children: (
-                          <div>
-                            <div style={{ fontWeight: 700, color: '#0F172A' }}>Khởi tạo chiến dịch</div>
-                            <div style={{ fontSize: 12, color: '#64748B' }}>
-                              {rawCampaign?.createdAt ? new Date(rawCampaign.createdAt).toLocaleDateString('vi-VN') : 'Mới tạo'} • Đã tạo trên hệ thống
-                            </div>
+              </div>
+            </>
+          )}
+
+          {/* TAB 2: CREATOR THAM GIA (Full Table View) */}
+          {activeTab === 'creators' && (
+            <div className="cdetail-subcard">
+              <div className="cdetail-subcard-header">
+                <div>
+                  <span className="cdetail-subcard-title">Danh sách Creator tham gia</span>
+                  <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
+                    Quản lý thông tin, hợp đồng và tiến độ deliverables của từng Influencer
+                  </div>
+                </div>
+                <Space>
+                  <Button
+                    type="primary"
+                    icon={<CompassOutlined />}
+                    style={{ background: '#4F46E5', borderRadius: 8 }}
+                    onClick={() => {
+                      sessionStorage.setItem('current_campaign_id', resolvedId);
+                      navigate(`/discovery?campaignId=${resolvedId}`);
+                    }}
+                  >
+                    Tìm thêm Creator bằng AI
+                  </Button>
+                </Space>
+              </div>
+
+              <Table
+                columns={creatorColumns}
+                dataSource={participatingCreators}
+                rowKey="id"
+                pagination={false}
+                style={{ marginTop: 12 }}
+              />
+            </div>
+          )}
+
+          {/* TAB 3: PHÂN BỔ NGÂN SÁCH */}
+          {activeTab === 'budget' && (
+            <div className="cdetail-subcard">
+              <span className="cdetail-subcard-title">Phân bổ ngân sách chi tiết</span>
+              <Row gutter={[16, 16]} style={{ marginTop: 8 }}>
+                <Col xs={24} md={8}>
+                  <div style={{ background: '#F8FAFC', padding: 18, borderRadius: 12, textAlign: 'center' }}>
+                    <div style={{ color: '#64748B', fontSize: 12 }}>Ngân sách kế hoạch</div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', marginTop: 4 }}>
+                      {campaignBudgetFormatted}
+                    </div>
+                  </div>
+                </Col>
+                <Col xs={24} md={8}>
+                  <div style={{ background: '#F8FAFC', padding: 18, borderRadius: 12, textAlign: 'center' }}>
+                    <div style={{ color: '#64748B', fontSize: 12 }}>Đã cam kết chi trả</div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#4F46E5', marginTop: 4 }}>
+                      36.000.000 đ
+                    </div>
+                  </div>
+                </Col>
+                <Col xs={24} md={8}>
+                  <div style={{ background: '#F8FAFC', padding: 18, borderRadius: 12, textAlign: 'center' }}>
+                    <div style={{ color: '#64748B', fontSize: 12 }}>Hạn mức còn lại</div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#10B981', marginTop: 4 }}>
+                      44.000.000 đ
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+            </div>
+          )}
+
+          {/* TAB 4: MỐC THỜI GIAN (TIMELINE) */}
+          {activeTab === 'timeline' && (
+            <div className="cdetail-subcard">
+              <span className="cdetail-subcard-title">Mốc thời gian (Timeline) chiến dịch</span>
+              <div style={{ marginTop: 16, maxWidth: 640 }}>
+                <Timeline
+                  items={[
+                    {
+                      color: 'green',
+                      children: (
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#0F172A' }}>Khởi tạo chiến dịch</div>
+                          <div style={{ fontSize: 12, color: '#64748B' }}>
+                            15/10/2026 • Đã thiết lập thông số & tiêu chí ghép nối AI
                           </div>
-                        ),
-                      },
-                      {
-                        color: currentStatus === 'running' || currentStatus === 'completed' ? 'green' : 'blue',
-                        children: (
-                          <div>
-                            <div style={{ fontWeight: 700, color: '#0F172A' }}>Kích hoạt & Ghép nối Creator AI</div>
-                            <div style={{ fontSize: 12, color: '#64748B' }}>
-                              {currentStatus === 'running' || currentStatus === 'completed' ? 'Đã kích hoạt hoạt động' : 'Đang ở trạng thái Bản nháp'}
-                            </div>
+                        </div>
+                      ),
+                    },
+                    {
+                      color: 'blue',
+                      children: (
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#0F172A' }}>Kích hoạt & Gửi lời mời KOC</div>
+                          <div style={{ fontSize: 12, color: '#64748B' }}>
+                            26/10/2026 • Đang triển khai gửi brief và liên hệ Creator
                           </div>
-                        ),
-                      },
-                      {
-                        color: currentStatus === 'completed' ? 'green' : 'gray',
-                        children: (
-                          <div>
-                            <div style={{ fontWeight: 700, color: '#0F172A' }}>Hoàn tất & Nghiệm thu KPI</div>
-                            <div style={{ fontSize: 12, color: '#64748B' }}>
-                              {rawCampaign?.endDate ? `Dự kiến kết thúc: ${new Date(rawCampaign.endDate).toLocaleDateString('vi-VN')}` : 'Theo dõi thời gian thực'}
-                            </div>
+                        </div>
+                      ),
+                    },
+                    {
+                      color: 'gray',
+                      children: (
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#0F172A' }}>Hoàn tất & Nghiệm thu KPI</div>
+                          <div style={{ fontSize: 12, color: '#64748B' }}>
+                            25/12/2026 • Dự kiến đánh giá kết quả và tổng kết báo cáo
                           </div>
-                        ),
-                      },
-                    ]}
+                        </div>
+                      ),
+                    },
+                  ]}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: TỆP YÊU CẦU & HƯỚNG DẪN */}
+          {activeTab === 'guidelines' && (
+            <div className="cdetail-subcard">
+              <span className="cdetail-subcard-title">Tệp yêu cầu & Hướng dẫn (Creative Brief)</span>
+              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>Quy định gắn hashtag bắt buộc</div>
+                  <div style={{ fontSize: 12.5, color: '#4F46E5', fontWeight: 600, marginTop: 4 }}>
+                    #SummerGlow2026 #SunscreenReview #SkincareRoutine #KemChongNang
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>Key Messages (Thông điệp chính)</div>
+                  <div style={{ fontSize: 12.5, color: '#475569', marginTop: 4 }}>
+                    Kem chống nắng nâng tone tự nhiên không gây nhờn rít, bảo vệ quang phổ rộng SPF50+ PA++++ suốt ngày dài năng động.
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>Yêu cầu kiểm duyệt nội dung</div>
+                  <div style={{ fontSize: 12.5, color: '#475569', marginTop: 4 }}>
+                    KOC cần gửi kịch bản trước khi quay 3 ngày và gửi video thô trước khi đăng tải 48 giờ để nhãn hàng duyệt.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column (30%) */}
+        <div className="cdetail-right-col">
+          {/* Sidebar Card 1: Tiến độ tổng thể */}
+          <div className="cdetail-sidebar-card">
+            <div className="cdetail-sidebar-header">
+              <span className="cdetail-sidebar-title">Tiến độ tổng thể</span>
+            </div>
+
+            <div className="cdetail-donut-wrap">
+              <div className="cdetail-donut-chart">
+                <svg width="130" height="130" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="transparent"
+                    stroke="#EEF2FF"
+                    strokeWidth="11"
                   />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="transparent"
+                    stroke="#6366F1"
+                    strokeWidth="11"
+                    strokeDasharray={`${45 * 2.513} ${100 * 2.513}`}
+                    strokeDashoffset="0"
+                    strokeLinecap="round"
+                    transform="rotate(-90 50 50)"
+                  />
+                </svg>
+                <span className="cdetail-donut-center-text">45%</span>
+              </div>
+
+              <div className="cdetail-donut-legend">
+                <div className="cdetail-donut-legend-item">
+                  <span>
+                    <span className="cdetail-donut-dot" style={{ background: '#6366F1' }} />
+                    Đã phân bổ
+                  </span>
+                  <span className="cdetail-donut-legend-val">36.000.000 đ</span>
                 </div>
-              ),
-            },
-          ]}
-        />
-      </Card>
+                <div className="cdetail-donut-legend-item">
+                  <span>
+                    <span className="cdetail-donut-dot" style={{ background: '#EEF2FF', border: '1px solid #CBD5E1' }} />
+                    Còn lại
+                  </span>
+                  <span className="cdetail-donut-legend-val">44.000.000 đ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar Card 2: Việc cần xử lý (4) */}
+          <div className="cdetail-sidebar-card">
+            <div className="cdetail-sidebar-header">
+              <div className="cdetail-sidebar-title">
+                Việc cần xử lý
+                <span className="cdetail-count-badge">4</span>
+              </div>
+              <span
+                className="cdetail-sidebar-link"
+                onClick={() => navigate('/crm')}
+              >
+                Xem tất cả →
+              </span>
+            </div>
+
+            <div className="cdetail-tasks-list">
+              {/* Task 1 */}
+              <div
+                className="cdetail-task-item"
+                onClick={() => navigate('/crm')}
+              >
+                <div className="cdetail-task-icon-box" style={{ background: '#EEF2FF', color: '#6366F1' }}>
+                  <FileTextOutlined />
+                </div>
+                <div className="cdetail-task-content">
+                  <span className="cdetail-task-title">2 lời mời chờ phản hồi</span>
+                  <span className="cdetail-task-sub">Summer Glow 2026</span>
+                </div>
+                <span className="cdetail-task-time">10 phút trước</span>
+              </div>
+
+              {/* Task 2 */}
+              <div
+                className="cdetail-task-item"
+                onClick={() => navigate('/collaboration')}
+              >
+                <div className="cdetail-task-icon-box" style={{ background: '#FEE2E2', color: '#EF4444' }}>
+                  <PlayCircleFilled />
+                </div>
+                <div className="cdetail-task-content">
+                  <span className="cdetail-task-title">1 creator gửi nội dung xem xét</span>
+                  <span className="cdetail-task-sub">Beauty Routine Challenge</span>
+                </div>
+                <span className="cdetail-task-time">2 giờ trước</span>
+              </div>
+
+              {/* Task 3 */}
+              <div
+                className="cdetail-task-item"
+                onClick={() => setActiveTab('budget')}
+              >
+                <div className="cdetail-task-icon-box" style={{ background: '#FEF3C7', color: '#D97706' }}>
+                  <CheckCircleFilled />
+                </div>
+                <div className="cdetail-task-content">
+                  <span className="cdetail-task-title">Cần duyệt ngân sách</span>
+                  <span className="cdetail-task-sub">Skincare Launch 2025</span>
+                </div>
+                <span className="cdetail-task-time">5 giờ trước</span>
+              </div>
+
+              {/* Task 4 */}
+              <div
+                className="cdetail-task-item"
+                onClick={() => navigate('/performance')}
+              >
+                <div className="cdetail-task-icon-box" style={{ background: '#E0F2FE', color: '#0284C7' }}>
+                  <RiseOutlined />
+                </div>
+                <div className="cdetail-task-content">
+                  <span className="cdetail-task-title">1 báo cáo chiến dịch mới</span>
+                  <span className="cdetail-task-sub">Tech Product Review</span>
+                </div>
+                <span className="cdetail-task-time">1 ngày trước</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Cancel Campaign Confirmation Modal */}
       <Modal
@@ -997,7 +1351,7 @@ export default function CampaignDetailPage() {
       >
         <div style={{ padding: '8px 0' }}>
           <p style={{ color: '#475569', fontSize: 13 }}>
-            Bạn có chắc chắn muốn hủy chiến dịch <strong>{campaignData.title}</strong>? Thao tác này sẽ đóng băng mọi hoạt động hợp tác và lưu trữ chiến dịch.
+            Bạn có chắc chắn muốn hủy chiến dịch <strong>{campaignTitle}</strong>? Thao tác này sẽ đóng băng mọi hoạt động hợp tác và lưu trữ chiến dịch.
           </p>
           <div style={{ marginTop: 12 }}>
             <span style={{ fontSize: 12.5, fontWeight: 600, color: '#0F172A', display: 'block', marginBottom: 4 }}>
