@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Typography,
   Card,
@@ -429,6 +429,74 @@ const mapApiCampaignToItem = (c: CampaignResponse): BrandCampaignItem => {
   };
 };
 
+// ============================================================================
+// GLOBAL CLIENT-SIDE CACHE FOR INSTANT BACK-NAVIGATION (ZERO LATENCY / NO WAITING)
+// ============================================================================
+interface DiscoveryCache {
+  creators: Creator[];
+  campaigns: BrandCampaignItem[];
+  matchedCampaign: BrandCampaignItem | null;
+  selectedCampaignId: string | null;
+  categoriesList: string[];
+  lastUpdated: number;
+}
+
+let globalDiscoveryCache: DiscoveryCache | null = null;
+let memoryProvincesCache: { value: string; label: string }[] | null = null;
+
+const loadCachedDiscovery = (): DiscoveryCache | null => {
+  if (globalDiscoveryCache && globalDiscoveryCache.creators.length > 0) {
+    return globalDiscoveryCache;
+  }
+  try {
+    const rawCreators = localStorage.getItem('IM_DISCOVERY_CREATORS');
+    const rawCamp = localStorage.getItem('IM_MATCHED_CAMPAIGN');
+    const rawCampId = localStorage.getItem('IM_SELECTED_CAMPAIGN_ID');
+    if (rawCreators) {
+      const parsedCreators = JSON.parse(rawCreators);
+      if (Array.isArray(parsedCreators) && parsedCreators.length > 0) {
+        const parsedCamp = rawCamp ? JSON.parse(rawCamp) : null;
+        globalDiscoveryCache = {
+          creators: parsedCreators,
+          campaigns: BRAND_CAMPAIGNS,
+          matchedCampaign: parsedCamp,
+          selectedCampaignId: rawCampId || parsedCamp?.id || null,
+          categoriesList: ALL_CATEGORIES,
+          lastUpdated: Date.now(),
+        };
+        return globalDiscoveryCache;
+      }
+    }
+  } catch {}
+  return null;
+};
+
+const updateDiscoveryCache = (partial: Partial<DiscoveryCache>) => {
+  if (!globalDiscoveryCache) {
+    globalDiscoveryCache = {
+      creators: [],
+      campaigns: BRAND_CAMPAIGNS,
+      matchedCampaign: null,
+      selectedCampaignId: null,
+      categoriesList: ALL_CATEGORIES,
+      lastUpdated: Date.now(),
+    };
+  }
+  globalDiscoveryCache = { ...globalDiscoveryCache, ...partial, lastUpdated: Date.now() };
+  try {
+    if (partial.creators) {
+      localStorage.setItem('IM_DISCOVERY_CREATORS', JSON.stringify(partial.creators));
+    }
+    if (partial.matchedCampaign !== undefined) {
+      if (partial.matchedCampaign) {
+        localStorage.setItem('IM_MATCHED_CAMPAIGN', JSON.stringify(partial.matchedCampaign));
+      } else {
+        localStorage.removeItem('IM_MATCHED_CAMPAIGN');
+      }
+    }
+  } catch {}
+};
+
 export default function CreatorDiscoveryPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -440,15 +508,28 @@ export default function CreatorDiscoveryPage() {
     localStorage.getItem('IM_SELECTED_CAMPAIGN_ID') ||
     null;
 
-  // Real Brand Campaigns loaded from API
-  const [campaignsList, setCampaignsList] = useState<BrandCampaignItem[]>([]);
-  const [loadingCampaigns, setLoadingCampaigns] = useState<boolean>(true);
+  const cachedData = useMemo(() => loadCachedDiscovery(), []);
+
+  // Real Brand Campaigns loaded from API (instant cache hydration)
+  const [campaignsList, setCampaignsList] = useState<BrandCampaignItem[]>(
+    () => (cachedData?.campaigns && cachedData.campaigns.length > 0 ? cachedData.campaigns : BRAND_CAMPAIGNS)
+  );
+  const [loadingCampaigns, setLoadingCampaigns] = useState<boolean>(
+    () => !cachedData || !cachedData.campaigns || cachedData.campaigns.length === 0
+  );
 
   // Campaign Matching States: Khoan đề xuất khớp cao/thấp cho đến khi Brand chọn dự án và bấm tìm
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(initialCampId);
-  const [matchedCampaign, setMatchedCampaign] = useState<BrandCampaignItem | null>(null);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(
+    () => initialCampId || cachedData?.selectedCampaignId || null
+  );
+  const [matchedCampaign, setMatchedCampaign] = useState<BrandCampaignItem | null>(
+    () => cachedData?.matchedCampaign || null
+  );
   const [isMatching, setIsMatching] = useState(false);
   const [shortlistModalCreator, setShortlistModalCreator] = useState<Creator | null>(null);
+
+  // Auto-match ref to prevent duplicate triggers
+  const hasAutoMatchedRef = useRef(false);
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -540,21 +621,24 @@ export default function CreatorDiscoveryPage() {
           }
 
           setCampaignsList(mapped);
+          updateDiscoveryCache({ campaigns: mapped });
 
           if (matched) {
             setSelectedCampaignId(matched.id);
             setMatchedCampaign(matched);
             setSortBy('match');
             setCurrentPage(1);
-message.success({
+            updateDiscoveryCache({ matchedCampaign: matched, selectedCampaignId: matched.id });
+            message.success({
               content: `🎯 Đã tự động chọn dự án "${matched.name}" để đề xuất Creator!`,
               key: 'auto_selected_campaign',
               duration: 2.5,
             });
-            if (searchParams.get('autoRun') === 'true') {
+            if (searchParams.get('autoRun') === 'true' && !hasAutoMatchedRef.current) {
+              hasAutoMatchedRef.current = true;
               setTimeout(() => {
                 handleTriggerMatch(matched);
-              }, 400);
+              }, 200);
             }
           }
         } else {
@@ -683,6 +767,7 @@ message.success({
               };
             });
           const combined = [...mappedFromBackend, ...remaining];
+          updateDiscoveryCache({ creators: combined, matchedCampaign: camp, selectedCampaignId: camp.id });
           try {
             localStorage.setItem('IM_MATCHED_CAMPAIGN', JSON.stringify(camp));
             localStorage.setItem('IM_DISCOVERY_CREATORS', JSON.stringify(combined));
@@ -700,6 +785,7 @@ message.success({
               matchReason: res.reason,
             };
           });
+          updateDiscoveryCache({ creators: updated, matchedCampaign: camp, selectedCampaignId: camp.id });
           try {
             localStorage.setItem('IM_MATCHED_CAMPAIGN', JSON.stringify(camp));
             localStorage.setItem('IM_DISCOVERY_CREATORS', JSON.stringify(updated));
@@ -721,20 +807,26 @@ message.success({
   const handleClearMatch = () => {
     setSelectedCampaignId(null);
     setMatchedCampaign(null);
-    setCreators((prev) =>
-      prev.map((c) => ({
+    setCreators((prev) => {
+      const reset = prev.map((c) => ({
         ...c,
         matchRate: 0,
-        matchLevel: 'medium',
-      }))
-    );
+        matchLevel: 'medium' as const,
+      }));
+      updateDiscoveryCache({ matchedCampaign: null, selectedCampaignId: null, creators: reset });
+      return reset;
+    });
     message.info('Đã thoát chế độ so khớp dự án. Đang hiển thị danh sách khám phá chung.');
   };
 
-  // Creators list with real API state
-  const [loading, setLoading] = useState(true);
-  const [creators, setCreators] = useState<Creator[]>([]);
-  const [categoriesList, setCategoriesList] = useState<string[]>(ALL_CATEGORIES);
+  // Creators list with real API state & instant cache hydration
+  const [loading, setLoading] = useState<boolean>(
+    () => !cachedData || !cachedData.creators || cachedData.creators.length === 0
+  );
+  const [creators, setCreators] = useState<Creator[]>(() => cachedData?.creators || []);
+  const [categoriesList, setCategoriesList] = useState<string[]>(
+    () => cachedData?.categoriesList || ALL_CATEGORIES
+  );
   const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [discoveryMode, setDiscoveryMode] = useState<'database' | 'external'>('database');
@@ -760,19 +852,21 @@ message.success({
         });
 
         setCreators((prev) => {
-          return prev.map((c) => {
+          const updated = prev.map((c) => {
             const sim = similarityMap.get(c.id) ?? (c.username ? similarityMap.get(c.username) : undefined);
             if (sim !== undefined) {
               const simPercent = Math.min(99, Math.max(50, Math.round(sim * 100)));
               return {
                 ...c,
                 matchRate: simPercent,
-                matchLevel: simPercent >= 80 ? 'high' : simPercent >= 65 ? 'medium' : 'low',
+                matchLevel: (simPercent >= 80 ? 'high' : simPercent >= 65 ? 'medium' : 'low') as 'high' | 'medium' | 'low',
                 matchReason: `Khớp ngữ nghĩa AI vector (${simPercent}%) với "${searchTerm.trim()}"`,
               };
             }
             return c;
           });
+          updateDiscoveryCache({ creators: updated });
+          return updated;
         });
         setSortBy('match');
         setSemanticActive(true);
@@ -792,14 +886,32 @@ message.success({
   useEffect(() => {
     let isMounted = true;
     const fetchCreatorsAndNiches = async () => {
-      try {
+      // 1. Kiểm tra cache: Nếu đã có dữ liệu creators cho chiến dịch này, không block màn hình và không hiện spinner!
+      const hasExistingCreators = (creators && creators.length > 0) || (globalDiscoveryCache && globalDiscoveryCache.creators.length > 0);
+      if (
+        hasExistingCreators &&
+        matchedCampaign &&
+        globalDiscoveryCache?.matchedCampaign?.id === matchedCampaign.id &&
+        globalDiscoveryCache?.creators &&
+        globalDiscoveryCache.creators.length > 0
+      ) {
+        if (loading) setLoading(false);
+        return;
+      }
+
+      if (!hasExistingCreators) {
         setLoading(true);
+      }
+
+      try {
         const [apiNiches] = await Promise.all([
           creatorService.getNiches().catch(() => []),
         ]);
 
         if (isMounted && Array.isArray(apiNiches) && apiNiches.length > 0) {
-          setCategoriesList(Array.from(new Set([...apiNiches, ...ALL_CATEGORIES])));
+          const mergedNiches = Array.from(new Set([...apiNiches, ...ALL_CATEGORIES]));
+          setCategoriesList(mergedNiches);
+          updateDiscoveryCache({ categoriesList: mergedNiches });
         }
 
         let loadedCandidates: any[] = [];
@@ -836,25 +948,25 @@ message.success({
               };
             });
             setCreators(mapped);
+            updateDiscoveryCache({ creators: mapped, matchedCampaign });
           } else {
             const apiCreators = await creatorService.getCreators();
             if (isMounted && Array.isArray(apiCreators)) {
               const rawUi = apiCreators.map(mapApiCreatorToUi);
+              let finalList = rawUi;
               if (matchedCampaign) {
-                setCreators(
-                  rawUi.map((c) => {
-                    const res = computeCreatorMatch(c, matchedCampaign);
-                    return {
-                      ...c,
-                      matchRate: res.matchRate,
-                      matchLevel: res.matchLevel,
-                      matchReason: res.reason,
-                    };
-                  })
-                );
-              } else {
-                setCreators(rawUi);
+                finalList = rawUi.map((c) => {
+                  const res = computeCreatorMatch(c, matchedCampaign);
+                  return {
+                    ...c,
+                    matchRate: res.matchRate,
+                    matchLevel: res.matchLevel,
+                    matchReason: res.reason,
+                  };
+                });
               }
+              setCreators(finalList);
+              updateDiscoveryCache({ creators: finalList, matchedCampaign });
             }
           }
         }
@@ -925,18 +1037,23 @@ message.success({
     }
   };
 
-  // Provinces API State
-  const [provinceOptions, setProvinceOptions] = useState<{ value: string; label: string }[]>([
-    { value: 'all', label: '📍 Tất cả địa điểm' },
-    { value: 'Thành phố Hà Nội', label: '📍 Thành phố Hà Nội' },
-    { value: 'Thành phố Hồ Chí Minh', label: '📍 Thành phố Hồ Chí Minh' },
-    { value: 'Thành phố Đà Nẵng', label: '📍 Thành phố Đà Nẵng' },
-    { value: 'Thành phố Hải Phòng', label: '📍 Thành phố Hải Phòng' },
-    { value: 'Thành phố Cần Thơ', label: '📍 Thành phố Cần Thơ' },
-  ]);
+  // Provinces API State (Instant memory cache)
+  const [provinceOptions, setProvinceOptions] = useState<{ value: string; label: string }[]>(() => {
+    return (
+      memoryProvincesCache || [
+        { value: 'all', label: '📍 Tất cả địa điểm' },
+        { value: 'Thành phố Hà Nội', label: '📍 Thành phố Hà Nội' },
+        { value: 'Thành phố Hồ Chí Minh', label: '📍 Thành phố Hồ Chí Minh' },
+        { value: 'Thành phố Đà Nẵng', label: '📍 Thành phố Đà Nẵng' },
+        { value: 'Thành phố Hải Phòng', label: '📍 Thành phố Hải Phòng' },
+        { value: 'Thành phố Cần Thơ', label: '📍 Thành phố Cần Thơ' },
+      ]
+    );
+  });
   const [loadingProvinces, setLoadingProvinces] = useState(false);
 
   useEffect(() => {
+    if (memoryProvincesCache) return;
     let isMounted = true;
     const fetchProvinces = async () => {
       try {
@@ -952,6 +1069,7 @@ message.success({
                 label: `📍 ${item.name}`,
               })),
             ];
+            memoryProvincesCache = list;
             setProvinceOptions(list);
           }
         }
