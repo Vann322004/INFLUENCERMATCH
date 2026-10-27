@@ -47,6 +47,7 @@ import {
 } from '@ant-design/icons';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
+import { creatorService } from '../../services/api/creatorService';
 import type { RelationshipDto } from '../../services/api/campaignService';
 import type { CampaignResponse } from '../../types/api/campaign.types';
 import { mapApiCampaignToUi } from '../../components/dashboard/CampaignTable';
@@ -58,6 +59,43 @@ import type { CampaignItemUI } from './CampaignPage';
 const { Title, Text } = Typography;
 
 type CampaignStatusType = 'running' | 'draft' | 'completed' | 'cancelled';
+
+// ── Bộ chuyển dịch & chuẩn hóa Tiếng Việt (100% Không để tiếng Anh) ──
+const translateObjective = (obj?: string): string => {
+  if (!obj) return 'NHẬN DIỆN THƯƠNG HIỆU';
+  const upper = obj.toUpperCase();
+  if (upper.includes('AWARE')) return 'NHẬN DIỆN THƯƠNG HIỆU';
+  if (upper.includes('CONVERT') || upper.includes('SALE')) return 'CHUYỂN ĐỔI BÁN HÀNG';
+  if (upper.includes('ENGAGE')) return 'TĂNG TƯƠNG TÁC';
+  if (upper.includes('CONSIDER')) return 'CÂN NHẮC MUA HÀNG';
+  return obj;
+};
+
+const translateNiche = (niche?: string): string => {
+  if (!niche) return '';
+  const lower = niche.toLowerCase();
+  if (lower.includes('beauty') || lower.includes('mỹ phẩm') || lower.includes('làm đẹp')) return 'Làm đẹp';
+  if (lower.includes('skin') || lower.includes('chăm sóc da')) return 'Chăm sóc da';
+  if (lower.includes('lifestyle') || lower.includes('phong cách') || lower.includes('đời sống')) return 'Phong cách sống';
+  if (lower.includes('fashion') || lower.includes('thời trang')) return 'Thời trang';
+  if (lower.includes('food') || lower.includes('ẩm thực') || lower.includes('ăn uống')) return 'Ẩm thực';
+  if (lower.includes('tech') || lower.includes('công nghệ')) return 'Công nghệ';
+  if (lower.includes('travel') || lower.includes('du lịch')) return 'Du lịch';
+  if (lower.includes('fitness') || lower.includes('thể thao')) return 'Thể thao & Fitness';
+  if (lower.includes('family') || lower.includes('mẹ bé')) return 'Mẹ & Bé';
+  return niche;
+};
+
+const getNicheClass = (niche?: string): string => {
+  if (!niche) return '';
+  const lower = niche.toLowerCase();
+  if (lower.includes('beauty') || lower.includes('làm đẹp')) return 'beauty';
+  if (lower.includes('skin') || lower.includes('da')) return 'skincare';
+  if (lower.includes('life') || lower.includes('sống')) return 'lifestyle';
+  if (lower.includes('fashion') || lower.includes('thời trang')) return 'fashion';
+  if (lower.includes('tech') || lower.includes('công nghệ')) return 'tech';
+  return '';
+};
 
 interface CampaignCreatorRow {
   id: string;
@@ -233,7 +271,7 @@ export default function CampaignDetailPage() {
           else if (data.status === 'ARCHIVED') newStatus = 'cancelled';
           setCurrentStatus(newStatus);
 
-          // Tải danh sách KOC từ Pipeline Relationship
+          // Tải danh sách KOC từ Pipeline Relationship và Shortlist từ Backend DB
           let rels: RelationshipDto[] = [];
           try {
             rels = await campaignService.getRelationships(resolvedId);
@@ -241,27 +279,57 @@ export default function CampaignDetailPage() {
             rels = [];
           }
 
+          let shortlists: any[] = [];
+          try {
+            shortlists = await creatorService.getShortlist(resolvedId);
+          } catch {
+            shortlists = [];
+          }
+
           let currentCreators: CampaignCreatorRow[] = [];
-          if (isMounted && rels && rels.length > 0) {
-            currentCreators = rels.map((r: any, idx) => {
-              const stageInfo = getStageInfo(r.stage);
-              return {
-                id: r.id || `rel_${idx}`,
-                name: r.creatorName || `Creator #${idx + 1}`,
-                username: r.creatorUsername ? `@${r.creatorUsername.replace('@', '')}` : `@creator_${idx + 1}`,
-                avatar: r.creatorAvatar || `https://images.unsplash.com/photo-${1534528741775 + idx * 100}?w=100&auto=format&fit=crop&q=80`,
-                platform: (r.platform?.toLowerCase() === 'instagram') ? 'instagram' : 'tiktok',
-                followers: r.followersCount ? `${(r.followersCount / 1000).toFixed(0)}K` : '50K+',
-                fee: r.agreedFee ? `${r.agreedFee.toLocaleString('vi-VN')} ₫` : (r.quotedFee ? `${r.quotedFee.toLocaleString('vi-VN')} ₫` : 'Thỏa thuận'),
-                stageText: stageInfo.text,
-                stageColor: stageInfo.color,
-                deliverableStatus: stageInfo.deliverable,
-                deliverableColor: stageInfo.delColor,
-              };
-            });
+          if (isMounted) {
+            if (rels && rels.length > 0) {
+              currentCreators = rels.map((r: any, idx) => {
+                const stageInfo = getStageInfo(r.stage);
+                return {
+                  id: r.id || `rel_${idx}`,
+                  name: r.creatorName || `Nhà sáng tạo #${idx + 1}`,
+                  username: r.creatorUsername ? `@${r.creatorUsername.replace('@', '')}` : `@creator_${idx + 1}`,
+                  avatar: r.creatorAvatar || `https://images.unsplash.com/photo-${1534528741775 + idx * 100}?w=100&auto=format&fit=crop&q=80`,
+                  platform: (r.platform?.toLowerCase() === 'instagram') ? 'instagram' : 'tiktok',
+                  followers: r.followersCount ? `${(r.followersCount / 1000).toFixed(0)}K` : '50K+',
+                  fee: r.agreedFee ? `${r.agreedFee.toLocaleString('vi-VN')} ₫` : (r.quotedFee ? `${r.quotedFee.toLocaleString('vi-VN')} ₫` : 'Thỏa thuận'),
+                  stageText: stageInfo.text,
+                  stageColor: stageInfo.color,
+                  deliverableStatus: stageInfo.deliverable,
+                  deliverableColor: stageInfo.delColor,
+                };
+              });
+            }
+
+            // Bổ sung các KOC từ bảng Shortlist Database nếu chưa có trong Pipeline
+            if (shortlists && shortlists.length > 0) {
+              shortlists.forEach((s: any, idx) => {
+                const exists = currentCreators.some(c => c.id === s.id || c.name === s.creatorName);
+                if (!exists) {
+                  currentCreators.push({
+                    id: s.id || `sl_${idx}`,
+                    name: s.creatorName || `Nhà sáng tạo #${idx + 1}`,
+                    username: s.creatorUsername ? `@${s.creatorUsername.replace('@', '')}` : `@creator_${idx + 1}`,
+                    avatar: s.avatarUrl || `https://images.unsplash.com/photo-${1524504388940 + idx * 100}?w=100&auto=format&fit=crop&q=80`,
+                    platform: (s.platform?.toLowerCase() === 'instagram') ? 'instagram' : 'tiktok',
+                    followers: s.followers ? `${(s.followers / 1000).toFixed(0)}K` : '80K+',
+                    fee: 'Đang thỏa thuận',
+                    stageText: 'Đã lưu Shortlist',
+                    stageColor: '#6366F1',
+                    deliverableStatus: 'Chờ gửi đề xuất',
+                    deliverableColor: 'blue',
+                  });
+                }
+              });
+            }
+
             setParticipatingCreators(currentCreators);
-          } else if (isMounted) {
-            setParticipatingCreators([]);
           }
 
           // Ghi vào memory cache
@@ -387,12 +455,6 @@ export default function CampaignDetailPage() {
       onClick: () => navigate('/campaigns'),
     },
     {
-      key: 'duplicate',
-      label: 'Nhân bản chiến dịch',
-      icon: <CopyOutlined />,
-      onClick: () => message.info('Tính năng nhân bản đang được thực hiện'),
-    },
-    {
       type: 'divider',
     },
     {
@@ -403,10 +465,10 @@ export default function CampaignDetailPage() {
     },
   ];
 
-  // Creator Table Columns for Tab "Creator tham gia"
+  // Creator Table Columns for Tab "Nhà sáng tạo tham gia"
   const creatorColumns: ColumnsType<CampaignCreatorRow> = [
     {
-      title: 'Creator / KOC',
+      title: 'Nhà sáng tạo / KOC',
       dataIndex: 'name',
       key: 'name',
       render: (text, record) => (
@@ -440,7 +502,7 @@ export default function CampaignDetailPage() {
       },
     },
     {
-      title: 'Followers',
+      title: 'Người theo dõi',
       dataIndex: 'followers',
       key: 'followers',
       render: (val) => <span style={{ fontWeight: 700, color: '#0F172A' }}>{val}</span>,
@@ -452,7 +514,7 @@ export default function CampaignDetailPage() {
       render: (val) => <span style={{ fontWeight: 700, color: '#4F46E5' }}>{val}</span>,
     },
     {
-      title: 'Giai đoạn Pipeline',
+      title: 'Tiến độ hợp tác',
       dataIndex: 'stageText',
       key: 'stageText',
       render: (text) => (
@@ -460,7 +522,7 @@ export default function CampaignDetailPage() {
       ),
     },
     {
-      title: 'Nội dung Deliverables',
+      title: 'Nội dung cam kết',
       dataIndex: 'deliverableStatus',
       key: 'deliverableStatus',
       render: (text, record) => <Tag color={record.deliverableColor}>{text}</Tag>,
@@ -473,19 +535,15 @@ export default function CampaignDetailPage() {
           1. Modern Luxe Hero Welcome Banner (Đồng bộ với Dashboard)
           ========================================================================== */}
       <div className="cdetail-hero-banner">
-        {/* Banner Top Bar: Back button & Date Range */}
+        {/* Banner Top Bar: Breadcrumb & Date Range (Loại bỏ nút quay lại) */}
         <div className="cdetail-hero-top-row">
-          <button
-            type="button"
-            className="cdetail-back-pill"
-            onClick={() => navigate('/campaigns')}
-          >
-            <ArrowLeftOutlined style={{ fontSize: 12 }} />
-            Quay lại danh sách
-          </button>
+          <div className="cdetail-hero-breadcrumb">
+            <span className="cdetail-breadcrumb-tag">CHIẾN DỊCH</span>
+            <span>Chi tiết & Quản lý hoạt động</span>
+          </div>
 
           <div className="cdetail-hero-date-chip">
-            <CalendarOutlined style={{ color: '#6366F1' }} />
+            <CalendarOutlined style={{ color: '#4F46E5' }} />
             <span>
               {rawCampaign?.startDate ? new Date(rawCampaign.startDate).toLocaleDateString('vi-VN') : '26/10/2026'}
               {' – '}
@@ -509,7 +567,7 @@ export default function CampaignDetailPage() {
             </span>
 
             <span className="cdetail-hero-tag highlight">
-              {rawCampaign?.objective || 'AWARENESS'}
+              {translateObjective(rawCampaign?.objective)}
             </span>
 
             {((rawCampaign?.platforms && rawCampaign.platforms.length > 0)
@@ -535,11 +593,15 @@ export default function CampaignDetailPage() {
                 </span>
               ))}
 
-            {(rawCampaign?.niches || ['Beauty', 'Skincare', 'Lifestyle']).map((n) => (
-              <span key={n} className="cdetail-hero-tag">
-                {n}
-              </span>
-            ))}
+            {(rawCampaign?.niches || ['Beauty', 'Skincare', 'Lifestyle']).map((n) => {
+              const translated = translateNiche(n);
+              const nicheCls = getNicheClass(n);
+              return (
+                <span key={n} className={`cdetail-hero-tag ${nicheCls}`}>
+                  {translated}
+                </span>
+              );
+            })}
           </div>
 
           <h1 className="cdetail-hero-title">
@@ -560,13 +622,13 @@ export default function CampaignDetailPage() {
               <span className="chip-val">{campaignBudgetFormatted}</span>
             </div>
             <div className="cdetail-quick-chip">
-              <span className="chip-label">KOC trong Pipeline:</span>
-              <span className="chip-val">{participatingCreators.length} Creator</span>
+              <span className="chip-label">KOC trong quy trình:</span>
+              <span className="chip-val">{participatingCreators.length} Nhà sáng tạo</span>
             </div>
           </div>
 
           <div className="cdetail-hero-actions-group">
-            {/* Nút 1 (Chính - Nổi bật): 🧭 Khám phá KOC AI */}
+            {/* Nút 1 (Chính): 🧭 Khám phá KOC bằng AI */}
             <button
               type="button"
               className="cdetail-hero-btn ai-discovery"
@@ -577,10 +639,10 @@ export default function CampaignDetailPage() {
               }}
             >
               <CompassOutlined style={{ fontSize: 14 }} />
-              Khám phá KOC AI
+              Khám phá KOC bằng AI
             </button>
 
-            {/* Nút 2 (Phụ): 🗂 Pipeline Kanban */}
+            {/* Nút 2 (Phụ): 🗂 Tiến độ hợp tác */}
             <button
               type="button"
               className="cdetail-hero-btn ghost"
@@ -590,10 +652,20 @@ export default function CampaignDetailPage() {
               }}
             >
               <ApartmentOutlined style={{ fontSize: 14 }} />
-              Pipeline Kanban
+              Tiến độ hợp tác
             </button>
 
-            {/* Nút 3: Kích hoạt (nếu DRAFT) */}
+            {/* Nút 3: 💳 Chi phí & Thanh toán */}
+            <button
+              type="button"
+              className="cdetail-hero-btn payment-btn"
+              onClick={() => setActiveTab('budget')}
+            >
+              <WalletOutlined style={{ fontSize: 14 }} />
+              Chi phí & Thanh toán
+            </button>
+
+            {/* Nút 4: Kích hoạt (nếu DRAFT) */}
             {currentStatus === 'draft' && (
               <button
                 type="button"
@@ -605,7 +677,7 @@ export default function CampaignDetailPage() {
               </button>
             )}
 
-            {/* Nút 4: Hoàn thành (nếu đang chạy) */}
+            {/* Nút 5: Hoàn thành (nếu đang chạy) */}
             {currentStatus !== 'completed' && currentStatus !== 'draft' && currentStatus !== 'cancelled' && (
               <button
                 type="button"
@@ -617,7 +689,7 @@ export default function CampaignDetailPage() {
               </button>
             )}
 
-            {/* Nút 5: Tùy chọn khác (...) */}
+            {/* Nút 6: Tùy chọn khác (...) */}
             <Dropdown menu={{ items: moreMenuItems }} trigger={['click']} placement="bottomRight">
               <button type="button" className="cdetail-hero-btn icon-btn" title="Tùy chọn khác">
                 <EllipsisOutlined style={{ fontSize: 18 }} />
@@ -631,7 +703,7 @@ export default function CampaignDetailPage() {
           2. 4 Metric KPI Cards Row (Đồng bộ chuẩn im-kpi-card Dashboard)
           ========================================================================== */}
       <div className="cdetail-metrics-grid">
-        {/* Card 1: Ngân sách dự kiến */}
+        {/* Card 1: Ngân sách kế hoạch */}
         <div className="cdetail-metric-card">
           <div className="cdetail-metric-top">
             <div className="cdetail-metric-icon-box" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
@@ -649,17 +721,17 @@ export default function CampaignDetailPage() {
             </div>
           </div>
           <div className="cdetail-metric-footer">
-            <span>Đã phân bổ: {allocatedBudget > 0 ? `${allocatedBudget.toLocaleString('vi-VN')} đ` : 'Chưa phân bổ'}</span>
+            <span>Đã cam kết: {allocatedBudget > 0 ? `${allocatedBudget.toLocaleString('vi-VN')} đ` : 'Chưa phân bổ'}</span>
           </div>
         </div>
 
-        {/* Card 2: Follower mục tiêu */}
+        {/* Card 2: Người theo dõi mục tiêu */}
         <div className="cdetail-metric-card">
           <div className="cdetail-metric-top">
             <div className="cdetail-metric-icon-box" style={{ background: '#F3E8FF', color: '#7C3AED' }}>
               <TeamOutlined />
             </div>
-            <span className="cdetail-metric-title">Follower mục tiêu</span>
+            <span className="cdetail-metric-title">Người theo dõi mục tiêu</span>
           </div>
           <div className="cdetail-metric-mid-row">
             <div className="cdetail-metric-value">
@@ -678,13 +750,13 @@ export default function CampaignDetailPage() {
           </div>
         </div>
 
-        {/* Card 3: Mục tiêu tương tác */}
+        {/* Card 3: Tỷ lệ tương tác mục tiêu */}
         <div className="cdetail-metric-card">
           <div className="cdetail-metric-top">
             <div className="cdetail-metric-icon-box" style={{ background: '#E0F2FE', color: '#0284C7' }}>
               <RiseOutlined />
             </div>
-            <span className="cdetail-metric-title">Mục tiêu tương tác</span>
+            <span className="cdetail-metric-title">Tỷ lệ tương tác mục tiêu</span>
           </div>
           <div className="cdetail-metric-mid-row">
             <div className="cdetail-metric-value">4.5% – 8.0%</div>
@@ -703,7 +775,7 @@ export default function CampaignDetailPage() {
           </div>
         </div>
 
-        {/* Card 4: Creator tham gia */}
+        {/* Card 4: Nhà sáng tạo trong quy trình */}
         <div
           className="cdetail-metric-card"
           style={{ cursor: 'pointer' }}
@@ -713,7 +785,7 @@ export default function CampaignDetailPage() {
             <div className="cdetail-metric-icon-box" style={{ background: '#ECFDF5', color: '#059669' }}>
               <UserOutlined />
             </div>
-            <span className="cdetail-metric-title">Creator trong Pipeline</span>
+            <span className="cdetail-metric-title">Nhà sáng tạo trong quy trình</span>
           </div>
           <div className="cdetail-metric-mid-row">
             <div className="cdetail-metric-value">
@@ -737,7 +809,7 @@ export default function CampaignDetailPage() {
                 )}
               </div>
             ) : (
-              <span style={{ fontSize: 12, color: '#64748B' }}>Chưa có creator</span>
+              <span style={{ fontSize: 12, color: '#64748B' }}>Chưa có KOC</span>
             )}
           </div>
         </div>
@@ -760,28 +832,28 @@ export default function CampaignDetailPage() {
             className={`cdetail-seg-tab-btn ${activeTab === 'creators' ? 'active' : ''}`}
             onClick={() => setActiveTab('creators')}
           >
-            Creator tham gia ({participatingCreators.length})
+            Nhà sáng tạo tham gia ({participatingCreators.length})
           </button>
           <button
             type="button"
             className={`cdetail-seg-tab-btn ${activeTab === 'budget' ? 'active' : ''}`}
             onClick={() => setActiveTab('budget')}
           >
-            Phân bổ ngân sách
+            Ngân sách & Thanh toán
           </button>
           <button
             type="button"
             className={`cdetail-seg-tab-btn ${activeTab === 'timeline' ? 'active' : ''}`}
             onClick={() => setActiveTab('timeline')}
           >
-            Mốc thời gian (Timeline)
+            Lộ trình chiến dịch
           </button>
           <button
             type="button"
             className={`cdetail-seg-tab-btn ${activeTab === 'guidelines' ? 'active' : ''}`}
             onClick={() => setActiveTab('guidelines')}
           >
-            Tệp yêu cầu & Brief
+            Hồ sơ & Yêu cầu nội dung
           </button>
         </div>
       </div>
@@ -833,9 +905,9 @@ export default function CampaignDetailPage() {
                           {rawCampaign?.productService || 'Acne Tone-up Daily Sunscreen SPF50+ PA++++'}
                         </span>
                         <div className="cdetail-product-tags">
-                          <span className="cdetail-product-tag">BEAUTY</span>
-                          <span className="cdetail-product-tag">LIFESTYLE</span>
-                          <span className="cdetail-product-tag">SKINCARE</span>
+                          <span className="cdetail-product-tag">LÀM ĐẸP</span>
+                          <span className="cdetail-product-tag">PHONG CÁCH SỐNG</span>
+                          <span className="cdetail-product-tag">CHĂM SÓC DA</span>
                         </div>
                       </div>
                     </div>
@@ -854,7 +926,7 @@ export default function CampaignDetailPage() {
                     </div>
                     <div className="cdetail-bullet-item">
                       <span className="cdetail-bullet-icon">✓</span>
-                      Thúc đẩy tìm hiểu và chuyển đổi đơn hàng qua Creator
+                      Thúc đẩy tìm hiểu và chuyển đổi đơn hàng qua KOC
                     </div>
                   </div>
 
@@ -908,7 +980,7 @@ export default function CampaignDetailPage() {
                     <div className="cdetail-ops-row">
                       <span className="cdetail-ops-label">Ngành hàng</span>
                       <span className="cdetail-ops-value">
-                        {(rawCampaign?.niches || ['Beauty', 'Lifestyle', 'Skincare']).join(', ')}
+                        {(rawCampaign?.niches || ['Beauty', 'Lifestyle', 'Skincare']).map(translateNiche).join(', ')}
                       </span>
                     </div>
 
@@ -920,9 +992,9 @@ export default function CampaignDetailPage() {
                     </div>
 
                     <div className="cdetail-ops-row">
-                      <span className="cdetail-ops-label">Khoảng follower</span>
+                      <span className="cdetail-ops-label">Khoảng người theo dõi</span>
                       <span className="cdetail-ops-value">
-                        {rawCampaign?.followerMin ? `${(rawCampaign.followerMin / 1000).toFixed(0)}K – ${(rawCampaign.followerMax || 1000000) / 1000}K` : '50K – 1000K'}
+                        {rawCampaign?.followerMin ? `${(rawCampaign.followerMin / 1000).toFixed(0)}K – ${(rawCampaign.followerMax || 1000000) / 1000}K` : '50K – 1.000K'}
                       </span>
                     </div>
 
@@ -934,18 +1006,18 @@ export default function CampaignDetailPage() {
                     </div>
 
                     <div className="cdetail-ops-row">
-                      <span className="cdetail-ops-label">Người phụ trách</span>
+                      <span className="cdetail-ops-label">Đội ngũ phụ trách</span>
                       <span className="cdetail-ops-value">
                         <Avatar
                           src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&auto=format&fit=crop&q=80"
                           size={22}
                         />
-                        Brand Marketing Team
+                        Phòng Tiếp thị Thương hiệu (Brand Marketing)
                       </span>
                     </div>
 
                     <div className="cdetail-ops-row">
-                      <span className="cdetail-ops-label">Ngày tạo</span>
+                      <span className="cdetail-ops-label">Ngày khởi tạo</span>
                       <span className="cdetail-ops-value">
                         {rawCampaign?.createdAt ? new Date(rawCampaign.createdAt).toLocaleDateString('vi-VN') : '15/10/2026'}
                       </span>
@@ -954,15 +1026,15 @@ export default function CampaignDetailPage() {
                 </div>
               </div>
 
-              {/* Row 2: Lower Section - Creator tham gia */}
+              {/* Row 2: Lower Section - Nhà sáng tạo tham gia */}
               <div className="cdetail-creators-section">
                 <div className="cdetail-creators-header">
-                  <span className="cdetail-creators-title">Creator tham gia ({participatingCreators.length})</span>
+                  <span className="cdetail-creators-title">Nhà sáng tạo tham gia ({participatingCreators.length})</span>
                   <span
                     className="cdetail-creators-link"
                     onClick={() => setActiveTab('creators')}
                   >
-                    Quản lý ({participatingCreators.length}) →
+                    Xem toàn bộ ({participatingCreators.length}) →
                   </span>
                 </div>
 
@@ -1006,7 +1078,7 @@ export default function CampaignDetailPage() {
                         <div className="cdetail-creator-metrics-row">
                           <div className="cdetail-creator-metric-col">
                             <span className="cdetail-creator-metric-num">{creator.followers}</span>
-                            <span className="cdetail-creator-metric-lbl">Followers</span>
+                            <span className="cdetail-creator-metric-lbl">Người theo dõi</span>
                           </div>
                           <div className="cdetail-creator-metric-col">
                             <span className="cdetail-creator-metric-num">{creator.fee}</span>
@@ -1024,7 +1096,7 @@ export default function CampaignDetailPage() {
                   <div className="cdetail-empty-creators-box">
                     <CompassOutlined style={{ fontSize: 32, color: '#6366F1', marginBottom: 8 }} />
                     <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 14 }}>
-                      Chưa có Creator nào trong chiến dịch này
+                      Chưa có Nhà sáng tạo nào trong chiến dịch này
                     </div>
                     <p style={{ color: '#64748B', fontSize: 13, maxWidth: 420, margin: '6px auto 14px auto' }}>
                       Sử dụng công nghệ AI Discovery để tự động tìm kiếm, phân tích và đề xuất các KOC phù hợp nhất với sản phẩm của bạn.
@@ -1038,7 +1110,7 @@ export default function CampaignDetailPage() {
                       }}
                     >
                       <CompassOutlined />
-                      Khám phá KOC AI ngay
+                      Khám phá KOC bằng AI ngay
                     </button>
                   </div>
                 )}
@@ -1046,17 +1118,17 @@ export default function CampaignDetailPage() {
             </>
           )}
 
-          {/* TAB 2: CREATOR THAM GIA (Full Table View) */}
+          {/* TAB 2: NHÀ SÁNG TẠO THAM GIA (Full Table View) */}
           {activeTab === 'creators' && (
             <div className="cdetail-card-modern">
               <div className="cdetail-card-header">
                 <div>
                   <span className="cdetail-card-title">
                     <TeamOutlined style={{ color: '#4F46E5' }} />
-                    Danh sách Creator tham gia ({participatingCreators.length})
+                    Danh sách Nhà sáng tạo tham gia ({participatingCreators.length})
                   </span>
                   <div style={{ fontSize: 12.5, color: '#64748B', marginTop: 3 }}>
-                    Quản lý thông tin, hợp đồng và tiến độ deliverables của từng Influencer
+                    Quản lý thông tin, thỏa thuận chi phí và tiến độ bàn giao của từng KOC
                   </div>
                 </div>
                 <Space>
@@ -1069,7 +1141,7 @@ export default function CampaignDetailPage() {
                       navigate(`/discovery?campaignId=${resolvedId}`);
                     }}
                   >
-                    Tìm thêm Creator bằng AI
+                    Tìm thêm KOC bằng AI
                   </Button>
                 </Space>
               </div>
@@ -1084,51 +1156,156 @@ export default function CampaignDetailPage() {
             </div>
           )}
 
-          {/* TAB 3: PHÂN BỔ NGÂN SÁCH */}
+          {/* TAB 3: NGÂN SÁCH & THANH TOÁN (Quản lý chi trả KOC) */}
           {activeTab === 'budget' && (
             <div className="cdetail-card-modern">
               <div className="cdetail-card-header">
-                <span className="cdetail-card-title">
-                  <DollarOutlined style={{ color: '#4F46E5' }} />
-                  Phân bổ ngân sách chi tiết
-                </span>
+                <div>
+                  <span className="cdetail-card-title">
+                    <DollarOutlined style={{ color: '#4F46E5' }} />
+                    Quản lý Ngân sách & Thanh toán KOC
+                  </span>
+                  <div style={{ fontSize: 12.5, color: '#64748B', marginTop: 3 }}>
+                    Theo dõi hạn mức tài chính, tiến độ giải ngân và các đợt quyết toán cho Nhà sáng tạo
+                  </div>
+                </div>
+                <Button
+                  type="primary"
+                  icon={<WalletOutlined />}
+                  style={{ background: '#059669', borderColor: '#059669', borderRadius: 10, height: 38, fontWeight: 600 }}
+                  onClick={() => message.success('Hệ thống sẵn sàng kích hoạt cổng thanh toán VNPay / Tài khoản doanh nghiệp')}
+                >
+                  Duyệt chi & Quyết toán
+                </Button>
               </div>
-              <Row gutter={[16, 16]} style={{ marginTop: 8 }}>
-                <Col xs={24} md={8}>
-                  <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: 20, borderRadius: 14, textAlign: 'center' }}>
-                    <div style={{ color: '#64748B', fontSize: 12.5, fontWeight: 500 }}>Ngân sách kế hoạch</div>
-                    <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', marginTop: 6, letterSpacing: '-0.3px' }}>
-                      {campaignBudgetFormatted}
-                    </div>
-                  </div>
-                </Col>
-                <Col xs={24} md={8}>
-                  <div style={{ background: '#EEF2FF', border: '1px solid #E0E7FF', padding: 20, borderRadius: 14, textAlign: 'center' }}>
-                    <div style={{ color: '#4338CA', fontSize: 12.5, fontWeight: 500 }}>Đã cam kết chi trả</div>
-                    <div style={{ fontSize: 24, fontWeight: 800, color: '#4F46E5', marginTop: 6, letterSpacing: '-0.3px' }}>
-                      {allocatedBudget > 0 ? `${allocatedBudget.toLocaleString('vi-VN')} đ` : '0 đ'}
-                    </div>
-                  </div>
-                </Col>
-                <Col xs={24} md={8}>
-                  <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', padding: 20, borderRadius: 14, textAlign: 'center' }}>
-                    <div style={{ color: '#047857', fontSize: 12.5, fontWeight: 500 }}>Hạn mức còn lại</div>
-                    <div style={{ fontSize: 24, fontWeight: 800, color: '#059669', marginTop: 6, letterSpacing: '-0.3px' }}>
-                      {remainingBudget.toLocaleString('vi-VN')} đ
-                    </div>
-                  </div>
-                </Col>
-              </Row>
+
+              {/* 4 Financial Tiles */}
+              <div className="cdetail-finance-grid">
+                <div className="cdetail-finance-tile plan">
+                  <span className="cdetail-finance-lbl">Ngân sách kế hoạch</span>
+                  <span className="cdetail-finance-val">{campaignBudgetFormatted}</span>
+                  <span className="cdetail-finance-desc">Hạn mức ngân sách tối đa</span>
+                </div>
+                <div className="cdetail-finance-tile committed">
+                  <span className="cdetail-finance-lbl">Đã thỏa thuận KOC</span>
+                  <span className="cdetail-finance-val">{allocatedBudget > 0 ? `${allocatedBudget.toLocaleString('vi-VN')} đ` : '0 đ'}</span>
+                  <span className="cdetail-finance-desc">Chi phí cam kết theo hợp đồng</span>
+                </div>
+                <div className="cdetail-finance-tile paid">
+                  <span className="cdetail-finance-lbl">Đã thanh toán / Tạm ứng</span>
+                  <span className="cdetail-finance-val">{allocatedBudget > 0 ? `${Math.round(allocatedBudget * 0.5).toLocaleString('vi-VN')} đ` : '0 đ'}</span>
+                  <span className="cdetail-finance-desc">Đã cọc 50% khi chốt hợp tác</span>
+                </div>
+                <div className="cdetail-finance-tile remaining">
+                  <span className="cdetail-finance-lbl">Hạn mức còn lại</span>
+                  <span className="cdetail-finance-val">{remainingBudget.toLocaleString('vi-VN')} đ</span>
+                  <span className="cdetail-finance-desc">Khả dụng để tuyển thêm KOC</span>
+                </div>
+              </div>
+
+              {/* Bảng đợt thanh toán KOC */}
+              <div style={{ marginTop: 24 }}>
+                <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 14, marginBottom: 12 }}>
+                  Danh sách đợt thanh toán theo tiến độ KOC ({participatingCreators.length})
+                </div>
+                <Table
+                  columns={[
+                    {
+                      title: 'Nhà sáng tạo',
+                      dataIndex: 'name',
+                      key: 'name',
+                      render: (text, record: any) => (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <Avatar src={record.avatar} size={36} />
+                          <div>
+                            <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>{text}</div>
+                            <div style={{ fontSize: 11.5, color: '#64748B' }}>{record.username}</div>
+                          </div>
+                        </div>
+                      ),
+                    },
+                    {
+                      title: 'Hạng mục chi trả',
+                      key: 'milestone',
+                      render: (_, record: any) => (
+                        <div>
+                          <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 12.5 }}>
+                            {record.deliverableStatus || 'Video review sản phẩm'}
+                          </div>
+                          <div style={{ fontSize: 11.5, color: '#64748B' }}>
+                            Đợt 1: Cọc 50% • Đợt 2: Quyết toán sau nghiệm thu
+                          </div>
+                        </div>
+                      ),
+                    },
+                    {
+                      title: 'Chi phí thỏa thuận',
+                      dataIndex: 'fee',
+                      key: 'fee',
+                      render: (fee) => <span style={{ fontWeight: 700, color: '#4F46E5' }}>{fee}</span>,
+                    },
+                    {
+                      title: 'Phương thức',
+                      key: 'method',
+                      render: () => <Tag color="blue">VNPay / Số dư ví</Tag>,
+                    },
+                    {
+                      title: 'Trạng thái thanh toán',
+                      key: 'paymentStatus',
+                      render: (_, record: any) => {
+                        const isDone = record.stageText === 'Đã hoàn tất' || record.stageText === 'Đã lên bài';
+                        return (
+                          <Tag color={isDone ? 'success' : 'processing'}>
+                            {isDone ? 'ĐÃ HOÀN TẤT' : 'ĐÃ TẠM ỨNG 50%'}
+                          </Tag>
+                        );
+                      },
+                    },
+                    {
+                      title: 'Thao tác',
+                      key: 'action',
+                      render: (_, record: any) => (
+                        <Button
+                          size="small"
+                          type="link"
+                          style={{ color: '#4F46E5', fontWeight: 600 }}
+                          onClick={() => {
+                            Modal.info({
+                              title: `Ủy nhiệm chi: ${record.name}`,
+                              content: (
+                                <div style={{ fontSize: 13, marginTop: 8 }}>
+                                  <p><strong>Mã giao dịch:</strong> TXN_{String(record.id).slice(0, 8)}</p>
+                                  <p><strong>Số tiền:</strong> {record.fee}</p>
+                                  <p><strong>Người thụ hưởng:</strong> {record.name}</p>
+                                  <p><strong>Nội dung:</strong> Quyết toán chi phí hợp tác chiến dịch {campaignTitle}</p>
+                                  <p><strong>Trạng thái:</strong> <Tag color="green">Giao dịch thành công</Tag></p>
+                                </div>
+                              ),
+                              okText: 'Đóng',
+                            });
+                          }}
+                        >
+                          Xem chứng từ
+                        </Button>
+                      ),
+                    },
+                  ]}
+                  dataSource={participatingCreators}
+                  rowKey="id"
+                  pagination={false}
+                  locale={{ emptyText: 'Chưa có KOC trong danh sách chi trả' }}
+                />
+              </div>
             </div>
           )}
 
-          {/* TAB 4: MỐC THỜI GIAN (TIMELINE) */}
+          {/* TAB 4: MỐC THỜI GIAN (LỘ TRÌNH CHIẾN DỊCH) */}
           {activeTab === 'timeline' && (
             <div className="cdetail-card-modern">
               <div className="cdetail-card-header">
                 <span className="cdetail-card-title">
                   <CalendarOutlined style={{ color: '#4F46E5' }} />
-                  Mốc thời gian (Timeline) chiến dịch
+                  Lộ trình thời gian triển khai chiến dịch
                 </span>
               </div>
               <div style={{ marginTop: 16, maxWidth: 640 }}>
@@ -1151,7 +1328,7 @@ export default function CampaignDetailPage() {
                         <div>
                           <div style={{ fontWeight: 700, color: '#0F172A' }}>Kích hoạt & Gửi lời mời KOC</div>
                           <div style={{ fontSize: 12, color: '#64748B' }}>
-                            26/10/2026 • Đang triển khai gửi brief và liên hệ Creator
+                            26/10/2026 • Đang triển khai gửi yêu cầu brief và liên hệ KOC
                           </div>
                         </div>
                       ),
@@ -1173,13 +1350,13 @@ export default function CampaignDetailPage() {
             </div>
           )}
 
-          {/* TAB 5: TỆP YÊU CẦU & HƯỚNG DẪN */}
+          {/* TAB 5: HỒ SƠ YÊU CẦU & BRIEF */}
           {activeTab === 'guidelines' && (
             <div className="cdetail-card-modern">
               <div className="cdetail-card-header">
                 <span className="cdetail-card-title">
                   <FileTextOutlined style={{ color: '#4F46E5' }} />
-                  Tệp yêu cầu & Hướng dẫn (Creative Brief)
+                  Hồ sơ yêu cầu & Hướng dẫn sáng tạo (Brief)
                 </span>
               </div>
               <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1190,7 +1367,7 @@ export default function CampaignDetailPage() {
                   </div>
                 </div>
                 <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>Key Messages (Thông điệp chính)</div>
+                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>Thông điệp then chốt (Key Messages)</div>
                   <div style={{ fontSize: 13, color: '#475569', marginTop: 4, lineHeight: 1.6 }}>
                     Kem chống nắng nâng tone tự nhiên không gây nhờn rít, bảo vệ quang phổ rộng SPF50+ PA++++ suốt ngày dài năng động.
                   </div>
@@ -1280,7 +1457,7 @@ export default function CampaignDetailPage() {
                   navigate('/crm');
                 }}
               >
-                Pipeline Kanban →
+                Bảng quy trình CRM →
               </span>
             </div>
 
@@ -1299,7 +1476,7 @@ export default function CampaignDetailPage() {
                     </div>
                     <div className="cdetail-task-content">
                       <span className="cdetail-task-title">
-                        {participatingCreators.length} KOC trong pipeline quan hệ
+                        {participatingCreators.length} KOC trong quy trình hợp tác
                       </span>
                       <span className="cdetail-task-sub">{campaignTitle}</span>
                     </div>
@@ -1314,9 +1491,9 @@ export default function CampaignDetailPage() {
                       <CheckCircleFilled />
                     </div>
                     <div className="cdetail-task-content">
-                      <span className="cdetail-task-title">Giải ngân ngân sách ({progressPercent}%)</span>
+                      <span className="cdetail-task-title">Giải ngân chi phí chiến dịch ({progressPercent}%)</span>
                       <span className="cdetail-task-sub">
-                        Còn lại: {remainingBudget.toLocaleString('vi-VN')} đ
+                        Hạn mức còn: {remainingBudget.toLocaleString('vi-VN')} đ
                       </span>
                     </div>
                     <span className="cdetail-task-time">Thời gian thực</span>
@@ -1333,10 +1510,10 @@ export default function CampaignDetailPage() {
                       <CompassOutlined />
                     </div>
                     <div className="cdetail-task-content">
-                      <span className="cdetail-task-title">Mở rộng tệp Creator AI</span>
+                      <span className="cdetail-task-title">Mở rộng tệp Nhà sáng tạo bằng AI</span>
                       <span className="cdetail-task-sub">Tiếp cận KOC phù hợp</span>
                     </div>
-                    <span className="cdetail-task-time">Gợi ý AI</span>
+                    <span className="cdetail-task-time">Đề xuất AI</span>
                   </div>
                 </>
               ) : (
