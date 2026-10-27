@@ -64,6 +64,25 @@ export const authService = {
         return mockData;
       }
 
+      if (email === 'creator@influencermatch.vn' && payload.password === 'creator123') {
+        const mockUser: UserProfile = {
+          id: 'usr_creator_01',
+          email: 'creator@influencermatch.vn',
+          fullName: 'Châu Bùi (KOC / Creator)',
+          role: 'CREATOR',
+          status: 'ACTIVE',
+        };
+        const mockData: LoginResponse = {
+          accessToken: 'mock_creator_token_' + Date.now(),
+          refreshToken: 'mock_creator_refresh_token',
+          tokenType: 'Bearer',
+          expiresIn: 86400,
+          user: mockUser,
+        };
+        setAuthSession(mockData.accessToken, mockData.refreshToken, mockData.user);
+        return mockData;
+      }
+
       throw error;
     }
   },
@@ -150,5 +169,15 @@ export const authService = {
    */
   hasManagementAccess(): boolean {
     return this.isAdmin() || this.isManager();
+  },
+
+  /**
+   * Kiểm tra người dùng có vai trò là Creator / KOC / KOL
+   */
+  isCreator(): boolean {
+    const user = this.getCurrentUser();
+    if (!user) return false;
+    const creatorRoles = ['CREATOR', 'creator', 'INFLUENCER', 'influencer'];
+    return creatorRoles.includes(user.role);
   },
 };
