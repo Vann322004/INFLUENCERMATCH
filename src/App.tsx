@@ -23,6 +23,7 @@ import OutreachCrmPage from './pages/crm/OutreachCrmPage';
 import CollaborationPage from './pages/collaboration/CollaborationPage';
 import PerformancePage from './pages/performance/PerformancePage';
 import CampaignHistoryPage from './pages/history/CampaignHistoryPage';
+import LandingPage from './pages/landing/LandingPage';
 import './styles/custom.css';
 
 // ── Admin Imports ────────────────────────────────────
@@ -425,8 +426,9 @@ export default function App() {
             }
           />
 
-          {/* Root Redirects to Dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Landing Page Route */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/landing" element={<LandingPage />} />
 
           {/* ── Admin Routes (/admin/*) ─────────────────────── */}
           {/* Admin login dùng chung trang /login của Brand */}
@@ -443,22 +445,22 @@ export default function App() {
           >
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboardPage />} />
-            {/* Phase 3 — Account Management */}
-            <Route path="accounts" element={<AccountManagementPage />} />
-            <Route path="accounts/:id" element={<AccountDetailPage />} />
-            {/* Phase 4 — Creator Catalog */}
+            {/* Phase 3 — Account Management (Admin only) */}
+            <Route path="accounts" element={<AdminProtectedRoute requireAdmin><AccountManagementPage /></AdminProtectedRoute>} />
+            <Route path="accounts/:id" element={<AdminProtectedRoute requireAdmin><AccountDetailPage /></AdminProtectedRoute>} />
+            {/* Phase 4 — Creator Catalog (Admin & Manager) */}
             <Route path="creators" element={<CreatorCatalogPage />} />
-            {/* Phase 5 — Data Sources */}
+            {/* Phase 5 — Data Sources (Admin & Manager) */}
             <Route path="data-sources" element={<DataSourcesPage />} />
-            {/* Phase 6 — Collection Jobs & Scoring Config */}
+            {/* Phase 6 — Collection Jobs & Scoring Config (Admin & Manager) */}
             <Route path="jobs" element={<CollectionJobsPage />} />
             <Route path="scoring" element={<ScoringConfigPage />} />
-            {/* Phase 7 — Subscriptions & Payments */}
-            <Route path="subscriptions" element={<SubscriptionPlansPage />} />
-            <Route path="payments" element={<PaymentsPage />} />
-            {/* Phase 8 — Audit Log */}
-            <Route path="audit" element={<AuditLogPage />} />
-            {/* Phase 9 — Creator Claim Review */}
+            {/* Phase 7 — Subscriptions & Payments (Admin only) */}
+            <Route path="subscriptions" element={<AdminProtectedRoute requireAdmin><SubscriptionPlansPage /></AdminProtectedRoute>} />
+            <Route path="payments" element={<AdminProtectedRoute requireAdmin><PaymentsPage /></AdminProtectedRoute>} />
+            {/* Phase 8 — Audit Log (Admin only) */}
+            <Route path="audit" element={<AdminProtectedRoute requireAdmin><AuditLogPage /></AdminProtectedRoute>} />
+            {/* Phase 9 — Creator Claim Review (Admin & Manager) */}
             <Route path="creator-claims" element={<CreatorClaimReviewPage />} />
           </Route>
 

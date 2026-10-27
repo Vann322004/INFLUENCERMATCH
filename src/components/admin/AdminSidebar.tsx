@@ -21,24 +21,36 @@ import {
 } from '@ant-design/icons';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { adminAuthService, ADMIN_USER } from '../../mock/adminData';
+import { authService } from '../../services/api/authService';
 
 const { Sider } = Layout;
 
-const MENU_ITEMS: MenuProps['items'] = [
-  { key: 'dashboard',     icon: <AppstoreOutlined />,      label: 'Dashboard' },
+const ADMIN_MENU_ITEMS: MenuProps['items'] = [
+  { key: 'dashboard',      icon: <AppstoreOutlined />,      label: 'Dashboard' },
   { type: 'divider' },
-  { key: 'accounts',      icon: <TeamOutlined />,          label: 'Tài khoản' },
-  { key: 'creators',      icon: <UserOutlined />,          label: 'Creator Catalog' },
+  { key: 'accounts',       icon: <TeamOutlined />,          label: 'Tài khoản' },
+  { key: 'creators',       icon: <UserOutlined />,          label: 'Creator Catalog' },
   { key: 'creator-claims', icon: <SafetyCertificateOutlined />, label: 'Duyệt Claims' },
   { type: 'divider' },
-  { key: 'data-sources',  icon: <ApiOutlined />,           label: 'Data Sources' },
-  { key: 'jobs',          icon: <ThunderboltOutlined />,   label: 'Collection Jobs' },
-  { key: 'scoring',       icon: <TrophyOutlined />,        label: 'Scoring Config' },
+  { key: 'data-sources',   icon: <ApiOutlined />,           label: 'Data Sources' },
+  { key: 'jobs',           icon: <ThunderboltOutlined />,   label: 'Collection Jobs' },
+  { key: 'scoring',        icon: <TrophyOutlined />,        label: 'Scoring Config' },
   { type: 'divider' },
-  { key: 'subscriptions', icon: <CrownOutlined />,         label: 'Subscription Plans' },
-  { key: 'payments',      icon: <TransactionOutlined />,   label: 'Payments' },
+  { key: 'subscriptions',  icon: <CrownOutlined />,         label: 'Subscription Plans' },
+  { key: 'payments',       icon: <TransactionOutlined />,   label: 'Payments' },
   { type: 'divider' },
-  { key: 'audit',         icon: <AuditOutlined />,         label: 'Audit Log' },
+  { key: 'audit',          icon: <AuditOutlined />,         label: 'Audit Log' },
+];
+
+const MANAGER_MENU_ITEMS: MenuProps['items'] = [
+  { key: 'dashboard',      icon: <AppstoreOutlined />,      label: 'Dashboard Vận Hành' },
+  { type: 'divider' },
+  { key: 'creators',       icon: <UserOutlined />,          label: 'Creator Catalog' },
+  { key: 'creator-claims', icon: <SafetyCertificateOutlined />, label: 'Duyệt Claims' },
+  { type: 'divider' },
+  { key: 'data-sources',   icon: <ApiOutlined />,           label: 'Data Sources' },
+  { key: 'jobs',           icon: <ThunderboltOutlined />,   label: 'Collection Jobs' },
+  { key: 'scoring',        icon: <TrophyOutlined />,        label: 'Scoring Config' },
 ];
 
 const ROUTE_KEY_MAP: Record<string, string> = {
@@ -73,6 +85,9 @@ export default function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(false);
 
   const currentUser: any = adminAuthService.getCurrentUser() || ADMIN_USER;
+  const isManager = authService.isManager() || currentUser?.role === 'DATA_MANAGER' || currentUser?.role === 'manager';
+
+  const menuItems = isManager ? MANAGER_MENU_ITEMS : ADMIN_MENU_ITEMS;
 
   const activeKey = Object.entries(ROUTE_KEY_MAP).find(([path]) =>
     location.pathname.startsWith(path)
@@ -89,7 +104,7 @@ export default function AdminSidebar() {
   };
 
   const userDropdown: MenuProps['items'] = [
-    { key: 'profile',  icon: <UserOutlined />,   label: 'Hồ sơ Admin' },
+    { key: 'profile',  icon: <UserOutlined />,   label: isManager ? 'Hồ sơ Manager' : 'Hồ sơ Admin' },
     { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt' },
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, danger: true, label: 'Đăng xuất', onClick: handleLogout },
@@ -119,11 +134,13 @@ export default function AdminSidebar() {
         <div
           style={{
             width: 36, height: 36,
-            background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%)',
+            background: isManager
+              ? 'linear-gradient(135deg, #0EA5E9 0%, #06B6D4 100%)'
+              : 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%)',
             borderRadius: 10,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#fff', fontWeight: 800, fontSize: 16,
-            boxShadow: '0 4px 12px rgba(124,58,237,0.3)',
+            boxShadow: isManager ? '0 4px 12px rgba(6,182,212,0.3)' : '0 4px 12px rgba(124,58,237,0.3)',
             flexShrink: 0, position: 'relative',
           }}
         >
@@ -132,10 +149,10 @@ export default function AdminSidebar() {
         {!collapsed && (
           <div>
             <div style={{ fontWeight: 800, fontSize: 13, color: '#0F172A', letterSpacing: 0.5, lineHeight: 1.2 }}>
-              ADMIN PANEL
+              {isManager ? 'MANAGER PANEL' : 'ADMIN PANEL'}
             </div>
-            <div style={{ fontSize: 7.5, fontWeight: 700, letterSpacing: 1.2, color: '#8B5CF6' }}>
-              INFLUENCERMATCH
+            <div style={{ fontSize: 7.5, fontWeight: 700, letterSpacing: 1.2, color: isManager ? '#0EA5E9' : '#8B5CF6' }}>
+              {isManager ? 'DATA & OPERATIONS' : 'INFLUENCERMATCH'}
             </div>
           </div>
         )}
@@ -167,7 +184,7 @@ export default function AdminSidebar() {
           mode="inline"
           selectedKeys={[activeKey]}
           onClick={handleMenuClick}
-          items={MENU_ITEMS}
+          items={menuItems}
           className="sidebar-menu"
           inlineCollapsed={collapsed}
           style={{ background: 'transparent', border: 'none', fontSize: 13.5 }}
@@ -189,8 +206,8 @@ export default function AdminSidebar() {
                   <div style={{ color: '#0F172A', fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.2 }}>
                     {currentUser.name}
                   </div>
-                  <div style={{ color: '#8B5CF6', fontSize: 10.5, fontWeight: 600, lineHeight: 1.2 }}>
-                    {currentUser.roleLabel || 'Super Admin'}
+                  <div style={{ color: isManager ? '#0EA5E9' : '#8B5CF6', fontSize: 10.5, fontWeight: 600, lineHeight: 1.2 }}>
+                    {currentUser.roleLabel || (isManager ? 'Manager (Quản lý)' : 'Super Admin')}
                   </div>
                 </div>
                 <RightOutlined style={{ fontSize: 11, color: '#94A3B8', flexShrink: 0 }} />

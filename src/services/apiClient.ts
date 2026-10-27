@@ -69,7 +69,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = getAccessToken();
-    if (token && config.headers) {
+    if (token && !token.startsWith('mock_') && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -83,6 +83,12 @@ apiClient.interceptors.response.use(
   async (error: AxiosError<ApiProblemDetails>) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+    // Không xử lý refresh hoặc tự động logout nếu đang ở chế độ mock demo token
+    const currentToken = getAccessToken();
+    if (currentToken?.startsWith('mock_')) {
+      return Promise.reject(error);
+    }
+
     // Handle 401 Unauthorized (Token expired)
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       // Do not attempt refresh if the failed request was already login/refresh
@@ -94,7 +100,7 @@ apiClient.interceptors.response.use(
       }
 
       const refreshToken = getRefreshToken();
-      if (!refreshToken) {
+      if (!refreshToken || refreshToken.startsWith('mock_')) {
         clearAuthSession();
         return Promise.reject(error);
       }

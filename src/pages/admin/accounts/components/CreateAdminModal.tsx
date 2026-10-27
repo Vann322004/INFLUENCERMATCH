@@ -27,7 +27,7 @@ export default function CreateAdminModal({ open, onClose, onCreate }: CreateAdmi
         role: values.role || 'admin',
       });
       form.resetFields();
-      message.success(`Đã tạo tài khoản admin cho ${values.name}!`);
+      message.success(`Đã tạo tài khoản ${values.role === 'manager' ? 'Manager' : 'Admin'} cho ${values.name}!`);
       onCreate();
     } catch {
       // validation error
@@ -43,7 +43,7 @@ export default function CreateAdminModal({ open, onClose, onCreate }: CreateAdmi
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <SafetyCertificateOutlined style={{ color: '#6366F1', fontSize: 18 }} />
-          <span style={{ fontWeight: 700, fontSize: 15 }}>Tạo tài khoản Admin mới</span>
+          <span style={{ fontWeight: 700, fontSize: 15 }}>Tạo tài khoản Quản trị / Quản lý mới</span>
         </div>
       }
       footer={null}
@@ -84,8 +84,9 @@ export default function CreateAdminModal({ open, onClose, onCreate }: CreateAdmi
           initialValue="admin"
         >
           <Select size="large">
-            <Option value="admin">Admin</Option>
-            <Option value="super_admin">Super Admin</Option>
+            <Option value="admin">Admin (Quản trị hệ thống & Tài khoản)</Option>
+            <Option value="manager">Manager (Quản lý nghiệp vụ & Creator)</Option>
+            <Option value="super_admin">Super Admin (Cấp cao nhất)</Option>
           </Select>
         </Form.Item>
 

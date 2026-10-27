@@ -8,7 +8,7 @@ import {
   SearchOutlined, PlusOutlined, FilterOutlined,
   LockOutlined, UnlockOutlined, EyeOutlined,
   MoreOutlined, TeamOutlined, UserOutlined,
-  SafetyCertificateOutlined, CrownOutlined,
+  SafetyCertificateOutlined, CrownOutlined, ControlOutlined,
   ExportOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +31,7 @@ const STATUS_CONFIG: Record<AdminUserStatus, { label: string; color: string; bg:
 const ROLE_CONFIG: Record<AdminUserRole, { label: string; color: string; icon: React.ReactNode }> = {
   super_admin: { label: 'Super Admin', color: '#8B5CF6', icon: <SafetyCertificateOutlined /> },
   admin:       { label: 'Admin',       color: '#6366F1', icon: <CrownOutlined /> },
+  manager:     { label: 'Manager (Quản lý)', color: '#06B6D4', icon: <ControlOutlined /> },
   brand:       { label: 'Brand',       color: '#0EA5E9', icon: <TeamOutlined /> },
   creator:     { label: 'Creator',     color: '#10B981', icon: <UserOutlined /> },
 };
@@ -217,7 +218,7 @@ export default function AccountManagementPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
           <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>Quản lý Tài khoản</div>
-          <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>Quản lý toàn bộ tài khoản Admin, Brand và Creator</div>
+          <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>Quản lý toàn bộ tài khoản Admin, Manager, Brand và Creator</div>
         </div>
         <Space>
           <Button
@@ -232,7 +233,7 @@ export default function AccountManagementPage() {
             onClick={() => setCreateOpen(true)}
             style={{ background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)', border: 'none', fontWeight: 700 }}
           >
-            Tạo Admin mới
+            Tạo Admin / Manager
           </Button>
         </Space>
       </div>
@@ -292,6 +293,7 @@ export default function AccountManagementPage() {
               <Option value="all">Tất cả vai trò</Option>
               <Option value="super_admin">Super Admin</Option>
               <Option value="admin">Admin</Option>
+              <Option value="manager">Manager (Quản lý)</Option>
               <Option value="brand">Brand</Option>
               <Option value="creator">Creator</Option>
             </Select>

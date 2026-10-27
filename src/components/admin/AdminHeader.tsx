@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import { adminAuthService, ADMIN_NOTIFICATIONS, ADMIN_USER } from '../../mock/adminData';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import { authService } from '../../services/api/authService';
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -31,6 +32,8 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
   const currentUser: any = adminAuthService.getCurrentUser() || ADMIN_USER;
   const unreadCount  = notifications.filter(n => !n.read).length;
 
+  const isManager = authService.isManager() || currentUser?.role === 'DATA_MANAGER' || currentUser?.role === 'manager';
+
   const handleLogout = () => {
     adminAuthService.logout();
     navigate('/login');
@@ -39,7 +42,7 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
   const markAllRead = () => setNotifications(n => n.map(x => ({ ...x, read: true })));
 
   const userDropdown: MenuProps['items'] = [
-    { key: 'profile',  icon: <UserOutlined />,   label: 'Hồ sơ Admin' },
+    { key: 'profile',  icon: <UserOutlined />,   label: isManager ? 'Hồ sơ Manager' : 'Hồ sơ Admin' },
     { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt hệ thống' },
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, danger: true, label: 'Đăng xuất', onClick: handleLogout },
@@ -50,8 +53,15 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
       {/* Reuse brand app-header class */}
       <Header className="app-header">
         {/* Page Title */}
-        <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A', letterSpacing: 0.3 }}>
-          {title || 'Admin Panel'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A', letterSpacing: 0.3 }}>
+            {title || (isManager ? 'Manager Panel — Vận Hành & Dữ Liệu' : 'Admin Panel — Quản Trị Hệ Thống')}
+          </div>
+          {isManager && (
+            <Tag color="cyan" style={{ borderRadius: 12, fontWeight: 700, fontSize: 11, padding: '1px 8px' }}>
+              Manager
+            </Tag>
+          )}
         </div>
 
         {/* Right Actions */}
@@ -80,14 +90,14 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
               <Avatar
                 src={currentUser?.avatar}
                 size={36}
-                style={{ border: '1.5px solid #E2E8F0', flexShrink: 0 }}
+                style={{ border: isManager ? '1.5px solid #06B6D4' : '1.5px solid #E2E8F0', flexShrink: 0 }}
               />
               <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
                 <span style={{ fontWeight: 700, fontSize: 13, color: '#0F172A', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
-                  {currentUser?.name || 'Admin'}
+                  {currentUser?.name || (isManager ? 'Manager' : 'Admin')}
                 </span>
-                <span style={{ fontSize: 11, color: '#8B5CF6', whiteSpace: 'nowrap', lineHeight: 1.2, fontWeight: 600 }}>
-                  {currentUser?.roleLabel || 'Super Admin'}
+                <span style={{ fontSize: 11, color: isManager ? '#0EA5E9' : '#8B5CF6', whiteSpace: 'nowrap', lineHeight: 1.2, fontWeight: 600 }}>
+                  {currentUser?.roleLabel || (isManager ? 'Manager (Quản lý)' : 'Super Admin')}
                 </span>
               </div>
             </div>

@@ -24,56 +24,68 @@ export type {
   CollaborationResponse,
 };
 import { brandService } from './brandService';
+import { authService } from './authService';
 
-let cachedBrandId: string | null = null;
+// Lưu cache brandId theo userId của phiên đăng nhập hiện tại
+const userBrandCache = new Map<string, string>();
+
+export const clearBrandCache = () => {
+  userBrandCache.clear();
+};
 
 export const campaignService = {
   /**
-   * Lấy ID brand của user hiện tại, tự động cache và tạo profile nếu chưa có
+   * Lấy ID brand của user hiện tại, tự động cache theo userId và tạo profile nếu chưa có
    */
-  async resolveCurrentBrandId(): Promise<string> {
-    if (cachedBrandId) return cachedBrandId;
+  async resolveCurrentBrandId(forceRefresh = false): Promise<string> {
+    const user = authService.getCurrentUser();
+    const userId = user?.id;
+
+    if (!forceRefresh && userId && userBrandCache.has(userId)) {
+      return userBrandCache.get(userId)!;
+    }
+
     try {
       const brand = await brandService.getMyBrand();
       if (brand?.id) {
-        cachedBrandId = brand.id;
+        if (userId) userBrandCache.set(userId, brand.id);
         return brand.id;
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.warn('[campaignService] Không thể lấy Brand Profile từ /brands/me:', err);
     }
 
-    // Nếu chưa có brand profile, tạo 1 brand profile cơ bản để kích hoạt workflow
-    try {
-      const created = await brandService.createBrand({
-        businessName: 'Thương hiệu của tôi',
-        industry: 'E-commerce',
-        website: 'https://influencermatch.vn',
-        location: 'Việt Nam',
-        targetMarkets: ['Vietnam'],
-        targetAudiences: ['General Audience'],
-        brandTone: 'Chuyên nghiệp',
-        preferredPlatforms: ['TIKTOK', 'INSTAGRAM'],
-        description: 'Thương hiệu đối tác trên hệ thống InfluencerMatch.',
-      });
-      if (created?.id) {
-        cachedBrandId = created.id;
-        return created.id;
+    // Nếu chưa có brand profile và user đã đăng nhập, tự động tạo brand profile cho user
+    if (authService.isAuthenticated()) {
+      try {
+        const created = await brandService.createBrand({
+          businessName: user?.fullName ? `Thương hiệu của ${user.fullName}` : 'Thương hiệu của tôi',
+          industry: 'E-commerce',
+          website: 'https://influencermatch.vn',
+          location: 'Việt Nam',
+          targetMarkets: ['Vietnam'],
+          targetAudiences: ['General Audience'],
+          brandTone: 'Chuyên nghiệp',
+          preferredPlatforms: ['TIKTOK', 'INSTAGRAM'],
+          description: 'Thương hiệu đối tác trên hệ thống InfluencerMatch.',
+        });
+        if (created?.id) {
+          if (userId) userBrandCache.set(userId, created.id);
+          return created.id;
+        }
+      } catch (err) {
+        console.warn('[campaignService] Không thể tự tạo brand profile cơ bản:', err);
       }
-    } catch {
-      // ignore
     }
 
     throw new Error('Không tìm thấy thông tin thương hiệu (Brand Profile). Vui lòng cập nhật hồ sơ Brand trước.');
   },
 
   /**
-   * Lấy danh sách các chiến dịch của brand hiện tại
+   * Lấy danh sách các chiến dịch của brand hiện tại (tự động loại bỏ các chiến dịch đã xóa/lưu trữ).
+   * ĐẢM BẢO: Chỉ lấy đúng chiến dịch thuộc sở hữu của Brand account hiện tại, không lấy lẫn của các brand khác.
    */
-  /**
-   * Lấy danh sách các chiến dịch của brand hiện tại (tự động loại bỏ các chiến dịch đã xóa/lưu trữ)
-   */
-  async getCampaigns(page = 0, size = 20, brandId?: string, includeArchived = false): Promise<CampaignResponse[]> {
+  async getCampaigns(page = 0, size = 50, brandId?: string, includeArchived = false): Promise<CampaignResponse[]> {
     let deletedIds: string[] = [];
     try {
       deletedIds = JSON.parse(localStorage.getItem('IM_DELETED_CAMPAIGN_IDS') || '[]');
@@ -94,27 +106,58 @@ export const campaignService = {
       return list.filter((c) => c.status !== 'ARCHIVED' && !deletedIds.includes(c.id));
     };
 
-    try {
-      const targetBrandId = brandId || await this.resolveCurrentBrandId();
-      const response = await apiClient.get(
-        `/brands/${targetBrandId}/campaigns`,
-        { params: { page, size } }
-      );
-      const list = extract(response.data);
-      if (list.length > 0) return list;
-      console.warn('[campaignService] /brands/:id/campaigns trả về rỗng', targetBrandId, response.data);
-    } catch (err) {
-      console.error('[campaignService] Lỗi tải chiến dịch theo brand:', err);
+    const isAdmin = authService.isAdmin();
+
+    // Xác định targetBrandId
+    let targetBrandId = brandId;
+    if (!targetBrandId && !isAdmin) {
+      try {
+        targetBrandId = await this.resolveCurrentBrandId();
+      } catch (err) {
+        console.warn('[campaignService] Không xác định được brandId của user hiện tại:', err);
+      }
     }
 
-    // Fallback
-    try {
-      const response = await apiClient.get('/campaigns', { params: { page, size } });
-      return extract(response.data);
-    } catch (err) {
-      console.error('[campaignService] Lỗi tải /campaigns:', err);
-      return [];
+    // 1. NẾU LÀ TÀI KHOẢN BRAND (hoặc có chỉ định brandId cụ thể):
+    // BẮT BUỘC chỉ lấy chiến dịch thuộc Brand Profile này
+    if (targetBrandId) {
+      try {
+        const response = await apiClient.get(
+          `/brands/${targetBrandId}/campaigns`,
+          { params: { page, size } }
+        );
+        // Trả về đúng danh sách của brand (kể cả khi rỗng [] nếu brand chưa tạo chiến dịch)
+        const brandList = extract(response.data);
+        return brandList;
+      } catch (err) {
+        console.error('[campaignService] Lỗi khi gọi API /brands/:id/campaigns:', targetBrandId, err);
+        // Nếu API theo brand bị lỗi và phải fallback /campaigns,
+        // PHẢI LỌC NGHIÊM NGẶT chỉ trả về campaign có brandId trùng khớp!
+        try {
+          const response = await apiClient.get('/campaigns', { params: { page, size } });
+          const allList = extract(response.data);
+          return allList.filter((c) => c.brandId === targetBrandId);
+        } catch {
+          return [];
+        }
+      }
     }
+
+    // 2. NẾU LÀ ADMIN (và không chỉ định brandId):
+    // Cho phép lấy toàn bộ chiến dịch trên hệ thống để phục vụ quản trị
+    if (isAdmin) {
+      try {
+        const response = await apiClient.get('/campaigns', { params: { page, size } });
+        return extract(response.data);
+      } catch (err) {
+        console.error('[campaignService] Lỗi admin tải toàn bộ /campaigns:', err);
+        return [];
+      }
+    }
+
+    // 3. Nếu chưa đăng nhập hoặc không xác định được Brand Profile (và không phải Admin):
+    // Tuyệt đối không trả về chiến dịch của người khác!
+    return [];
   },
 
   /**
