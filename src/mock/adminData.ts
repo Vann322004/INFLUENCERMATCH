@@ -3,6 +3,7 @@
 // =============================================
 
 import { authService } from '../services/api/authService';
+import { setAuthSession } from '../services/apiClient';
 
 // ── Auth ──────────────────────────────────────
 export const ADMIN_USER = {
@@ -15,18 +16,51 @@ export const ADMIN_USER = {
   avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
 };
 
+export const MANAGER_USER = {
+  id: 'manager_001',
+  name: 'Nguyễn Hoàng Long',
+  email: 'manager@influencermatch.vn',
+  password: 'manager123',
+  role: 'DATA_MANAGER' as const,
+  roleLabel: 'Manager (Quản lý)',
+  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+};
+
 export const adminAuthService = {
   login: async (email: string, password: string) => {
     try {
       const loginData = await authService.login({ email, password });
       return { success: true, user: loginData.user };
     } catch {
+      // Local demo fallback if backend DB doesn't have seed accounts yet
+      if (email === ADMIN_USER.email && password === ADMIN_USER.password) {
+        const mockUser = {
+          id: ADMIN_USER.id,
+          email: ADMIN_USER.email,
+          fullName: ADMIN_USER.name,
+          role: ADMIN_USER.role,
+          status: 'ACTIVE' as const,
+        };
+        setAuthSession('mock_admin_token', undefined, mockUser);
+        return { success: true, user: mockUser };
+      }
+      if (email === MANAGER_USER.email && password === MANAGER_USER.password) {
+        const mockUser = {
+          id: MANAGER_USER.id,
+          email: MANAGER_USER.email,
+          fullName: MANAGER_USER.name,
+          role: MANAGER_USER.role,
+          status: 'ACTIVE' as const,
+        };
+        setAuthSession('mock_manager_token', undefined, mockUser);
+        return { success: true, user: mockUser };
+      }
       return { success: false, message: 'Sai thông tin đăng nhập hoặc không có quyền truy cập.' };
     }
   },
   logout: () => authService.logout(),
   isAuthenticated: () => {
-    return authService.isAdmin();
+    return authService.hasManagementAccess();
   },
   getCurrentUser: () => {
     return authService.getCurrentUser();
@@ -38,6 +72,7 @@ import type { AdminUser, AuditLogItem } from '../types/api/admin.types';
 
 export const DEFAULT_ADMIN_ACCOUNTS: AdminUser[] = [
   { id: 'usr_001', name: 'Trần Minh Khoa', email: 'admin@influencermatch.vn', role: 'super_admin', roleLabel: 'Super Admin', status: 'active', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 08:30', joinedAt: '2024-01-15', ip: '113.161.77.10' },
+  { id: 'usr_008', name: 'Nguyễn Hoàng Long', email: 'manager@influencermatch.vn', role: 'manager', roleLabel: 'Manager (Quản lý)', status: 'active', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 09:10', joinedAt: '2024-03-01', ip: '113.161.88.25' },
   { id: 'usr_002', name: 'Nguyễn Thị Mai', email: 'mai.nguyen@brand.vn', role: 'brand', roleLabel: 'Brand', status: 'active', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 07:15', joinedAt: '2024-02-20', ip: '118.69.182.44' },
   { id: 'usr_003', name: 'Phạm Quốc Hùng', email: 'hungpq@gmail.com', role: 'creator', roleLabel: 'Creator', status: 'active', avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&auto=format&fit=crop', lastLogin: '2026-10-21 22:00', joinedAt: '2024-03-10', ip: '171.244.33.12' },
   { id: 'usr_004', name: 'Lê Văn Dũng', email: 'dungadmin@influencermatch.vn', role: 'admin', roleLabel: 'Admin', status: 'active', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 06:45', joinedAt: '2024-01-20', ip: '14.161.22.8' },

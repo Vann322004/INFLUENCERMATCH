@@ -42,7 +42,8 @@ const normalizeRole = (role?: string): AdminUserRole => {
   if (!role) return 'brand';
   const r = role.toLowerCase();
   if (r.includes('super')) return 'super_admin';
-  if (r === 'admin' || r === 'data_manager') return 'admin';
+  if (r === 'manager' || r === 'data_manager') return 'manager';
+  if (r === 'admin') return 'admin';
   if (r === 'creator') return 'creator';
   return 'brand';
 };
@@ -65,6 +66,7 @@ const toBackendStatus = (status: AdminUserStatus | string): 'ACTIVE' | 'LOCKED' 
 
 const toBackendRole = (role: AdminUserRole | string): 'ADMIN' | 'DATA_MANAGER' | 'BRAND' | 'CREATOR' => {
   const r = String(role).toLowerCase();
+  if (r === 'manager' || r === 'data_manager') return 'DATA_MANAGER';
   if (r === 'admin' || r === 'super_admin') return 'ADMIN';
   if (r === 'creator') return 'CREATOR';
   return 'BRAND';
@@ -76,6 +78,7 @@ const normalizeUser = (raw: any): AdminUser => {
   const roleLabel =
     role === 'super_admin' ? 'Super Admin' :
     role === 'admin' ? 'Admin' :
+    role === 'manager' ? 'Manager (Quản lý)' :
     role === 'brand' ? 'Brand' : 'Creator';
 
   return {
@@ -300,7 +303,7 @@ const createAdmin = async (payload: { name: string; email: string; password?: st
     name: payload.name,
     email: payload.email,
     role,
-    roleLabel: role === 'super_admin' ? 'Super Admin' : 'Admin',
+    roleLabel: role === 'super_admin' ? 'Super Admin' : role === 'manager' ? 'Manager (Quản lý)' : 'Admin',
     status: 'active',
     avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(payload.email)}`,
     joinedAt: new Date().toISOString().split('T')[0],
@@ -314,7 +317,7 @@ const createAdmin = async (payload: { name: string; email: string; password?: st
       email: payload.email,
       fullName: payload.name,
       password: payload.password || 'Admin@123456',
-      role: 'ADMIN',
+      role: role === 'manager' ? 'DATA_MANAGER' : 'ADMIN',
     });
   } catch (err) {
     console.warn('[adminService.createAdmin] API registration attempt error (cached locally):', err);

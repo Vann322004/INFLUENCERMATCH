@@ -145,7 +145,7 @@
   background: #FFFFFF;
   border-radius: 16px;
   border: 1px solid #E2E8F0;
-  padding: 28px 24px;
+  padding: 24px 18px;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -182,21 +182,51 @@
 }
 
 /* Price Display */
+.price-wrapper {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin: 12px 0 16px 0;
+  min-height: 38px;
+}
+
+.price-amount {
+  font-size: clamp(20px, 1.7vw, 26px);
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1;
+  white-space: nowrap;
+  letter-spacing: -0.5px;
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.price-currency {
+  font-size: 0.65em;
+  font-weight: 700;
+  margin-left: 2px;
+  vertical-align: baseline;
+}
+
+.price-cycle {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748B;
+  white-space: nowrap;
+}
+
 .price-tag {
-  font-size: 32px;
+  font-size: clamp(20px, 1.7vw, 26px);
   font-weight: 800;
   color: #0F172A;
   line-height: 1.1;
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  margin: 16px 0 6px 0;
-}
-
-.price-cycle {
-  font-size: 13px;
-  font-weight: 500;
-  color: #64748B;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin: 12px 0 16px 0;
+  white-space: nowrap;
 }
 
 /* Feature Item */

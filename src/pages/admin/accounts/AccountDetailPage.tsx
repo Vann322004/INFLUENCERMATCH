@@ -25,6 +25,7 @@ const STATUS_CONFIG: Record<AdminUserStatus, { label: string; color: string }> =
 const ROLE_COLOR: Record<AdminUserRole, string> = {
   super_admin: '#8B5CF6',
   admin:       '#6366F1',
+  manager:     '#06B6D4',
   brand:       '#0EA5E9',
   creator:     '#10B981',
 };

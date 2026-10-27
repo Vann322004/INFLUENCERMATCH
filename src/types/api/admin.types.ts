@@ -7,7 +7,7 @@
 
 // -- User / Account -------------------------
 export type AdminUserStatus = 'active' | 'locked' | 'inactive' | 'pending';
-export type AdminUserRole = 'super_admin' | 'admin' | 'brand' | 'creator';
+export type AdminUserRole = 'super_admin' | 'admin' | 'manager' | 'brand' | 'creator';
 
 export interface AdminUser {
   id: string;
@@ -41,7 +41,7 @@ export interface UpdateStatusPayload {
 }
 
 export interface UpdateRolePayload {
-  role: AdminUserRole | 'ADMIN' | 'DATA_MANAGER' | 'BRAND' | 'CREATOR';
+  role: AdminUserRole | 'ADMIN' | 'MANAGER' | 'DATA_MANAGER' | 'BRAND' | 'CREATOR';
   reason?: string;
 }
 

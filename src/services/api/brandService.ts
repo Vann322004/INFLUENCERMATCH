@@ -3,13 +3,25 @@ import type { ApiResponse, PageResponse } from '../../types/api/common.types';
 import type { BrandRequest, BrandResponse } from '../../types/api/brand.types';
 import type { CampaignResponse } from '../../types/api/campaign.types';
 
-let cachedBrand: { data: BrandResponse | null; timestamp: number } | null = null;
+const BRAND_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+const STORAGE_KEY_BRAND = 'im_cached_brand_profile';
+
+let cachedBrand: { data: BrandResponse | null; timestamp: number } | null = (() => {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY_BRAND);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && Date.now() - parsed.timestamp < BRAND_CACHE_TTL) {
+      return parsed;
+    }
+  } catch {}
+  return null;
+})();
 let inFlightBrandPromise: Promise<BrandResponse | null> | null = null;
-const BRAND_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 
 export const brandService = {
   /**
-   * Get the current authenticated user's brand profile with deduplication and 2-min cache.
+   * Get the current authenticated user's brand profile with deduplication and 3-min cache.
    * Returns null if brand profile does not exist (404).
    */
   async getMyBrand(forceRefresh = false): Promise<BrandResponse | null> {
@@ -26,6 +38,9 @@ export const brandService = {
         const response = await apiClient.get<ApiResponse<BrandResponse>>('/brands/me');
         const data = response.data?.data || null;
         cachedBrand = { data, timestamp: Date.now() };
+        try {
+          sessionStorage.setItem(STORAGE_KEY_BRAND, JSON.stringify(cachedBrand));
+        } catch {}
         if (data?.id) {
           try {
             localStorage.setItem('influencermatch_brand_id', data.id);
@@ -35,6 +50,9 @@ export const brandService = {
       } catch (err: any) {
         if (err.response?.status === 404) {
           cachedBrand = { data: null, timestamp: Date.now() };
+          try {
+            sessionStorage.setItem(STORAGE_KEY_BRAND, JSON.stringify(cachedBrand));
+          } catch {}
           return null;
         }
         throw err;
@@ -47,10 +65,13 @@ export const brandService = {
   },
 
   /**
-   * Clear in-memory brand cache
+   * Clear in-memory and session brand cache
    */
   clearBrandCache() {
     cachedBrand = null;
+    try {
+      sessionStorage.removeItem(STORAGE_KEY_BRAND);
+    } catch {}
   },
 
   /**
