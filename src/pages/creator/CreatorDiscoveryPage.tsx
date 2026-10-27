@@ -127,6 +127,13 @@ export const mapApiCreatorToUi = (item: CreatorItem): Creator => {
     ? item.niche
     : 'Lối sống & Sáng tạo';
 
+  // Tách ngành hàng nếu có dấu phẩy hoặc chấm phẩy thành các tag riêng biệt
+  const parsedCategories = cleanNiche
+    .split(/[,;]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const categoriesList = parsedCategories.length > 0 ? parsedCategories : [cleanNiche];
+
   return {
     id: item.creatorId || item.id,
     name: cleanName,
@@ -137,8 +144,8 @@ export const mapApiCreatorToUi = (item: CreatorItem): Creator => {
     matchLevel: 'medium',
     matchReason: '',
     platforms: [platformLower],
-    categories: [cleanNiche],
-    bio: item.contentSummary || `Creator trên ${item.platform} chuyên về ${cleanNiche}.`,
+    categories: categoriesList.slice(0, 3),
+    bio: item.contentSummary || `Creator trên ${item.platform} chuyên về ${categoriesList.join(', ')}.`,
     followers: followersText,
     followersCount: followersNum,
     engagementRate: `${engVal}%`,
@@ -2112,30 +2119,45 @@ export default function CreatorDiscoveryPage() {
                         {/* AI Explanation Snippet */}
                         {matchedCampaign && (
                           <div className="cdiscovery-ai-insight-box">
-                            <strong>AI Match ({matchedCampaign.name}):</strong>{' '}
-                            {creator.matchReason || computeCreatorMatch(creator, matchedCampaign).reason}
+                            <div className="cdiscovery-ai-insight-header">
+                              <ThunderboltFilled style={{ color: '#6366F1', fontSize: 13 }} />
+                              <span>Đề xuất tương thích AI</span>
+                            </div>
+                            <div className="cdiscovery-ai-insight-body">
+                              {(() => {
+                                const rawReason = creator.matchReason || computeCreatorMatch(creator, matchedCampaign).reason;
+                                return rawReason
+                                  .replace(new RegExp(`\\s*(cho|với)\\s*["']?${matchedCampaign.name}["']?`, 'gi'), '')
+                                  .trim();
+                              })()}
+                            </div>
                           </div>
                         )}
 
                         {/* Categories Tags */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-                          {creator.categories.map((cat) => (
-                            <Tag
-                              key={cat}
-                              style={{
-                                borderRadius: 8,
-                                fontSize: 11,
-                                color: '#475569',
-                                background: '#F8FAFC',
-                                borderColor: '#E2E8F0',
-                                margin: 0,
-                                padding: '2px 8px',
-                                fontWeight: 500,
-                              }}
-                            >
-                              {cat}
-                            </Tag>
-                          ))}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                          {(creator.categories || [])
+                            .flatMap((c) => (typeof c === 'string' ? c.split(/[,;]/) : [c]))
+                            .map((s) => s.trim())
+                            .filter(Boolean)
+                            .slice(0, 3)
+                            .map((cat) => (
+                              <Tag
+                                key={cat}
+                                style={{
+                                  borderRadius: 6,
+                                  fontSize: 11.5,
+                                  color: '#4338CA',
+                                  background: '#EEF2FF',
+                                  borderColor: '#C7D2FE',
+                                  margin: 0,
+                                  padding: '2px 8px',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {cat}
+                              </Tag>
+                            ))}
                         </div>
 
                         {/* Bio snippet */}
