@@ -63,7 +63,7 @@ export interface CampaignItemUI {
 }
 
 // Default 6 campaigns matching user's design mockup (without YouTube)
-const DEFAULT_CAMPAIGNS: CampaignItemUI[] = [
+export const DEFAULT_CAMPAIGNS: CampaignItemUI[] = [
   {
     id: 'camp-summer-glow-2026',
     name: 'Summer Glow 2026',
@@ -381,7 +381,10 @@ export default function CampaignPage() {
   // Actions
   const handleOpenDetail = (item: CampaignItemUI) => {
     sessionStorage.setItem('current_campaign_id', item.id);
-    navigate('/campaigns/detail', { state: { id: item.id } });
+    try {
+      sessionStorage.setItem('current_campaign_data', JSON.stringify(item));
+    } catch {}
+    navigate('/campaigns/detail', { state: { id: item.id, item } });
   };
 
   const handleOpenEdit = (item: CampaignItemUI) => {
@@ -1320,10 +1323,13 @@ export default function CampaignPage() {
             </div>
 
             {/* Cover Banner */}
-            <div style={{ position: 'relative', width: '100%', height: 110, borderRadius: 10, overflow: 'hidden' }}>
+            <div
+              style={{ position: 'relative', width: '100%', height: 110, borderRadius: 10, overflow: 'hidden', cursor: 'pointer' }}
+              onClick={() => handleOpenDetail(campaigns[0] || DEFAULT_CAMPAIGNS[0])}
+            >
               <img
-                src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&auto=format&fit=crop&q=80"
-                alt="Summer Glow 2026"
+                src={campaigns[0]?.thumbnail || DEFAULT_CAMPAIGNS[0].thumbnail}
+                alt={campaigns[0]?.name || DEFAULT_CAMPAIGNS[0].name}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
 
@@ -1339,7 +1345,7 @@ export default function CampaignPage() {
                   borderRadius: 999,
                   fontSize: 10,
                   fontWeight: 700,
-                  color: '#059669',
+                  color: campaigns[0]?.statusType === 'draft' ? '#D97706' : '#059669',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 4,
@@ -1351,20 +1357,23 @@ export default function CampaignPage() {
                     width: 5,
                     height: 5,
                     borderRadius: '50%',
-                    background: '#10B981',
+                    background: campaigns[0]?.statusType === 'draft' ? '#F59E0B' : '#10B981',
                   }}
                 />
-                Đang triển khai
+                {campaigns[0]?.statusText || DEFAULT_CAMPAIGNS[0].statusText}
               </div>
             </div>
 
             {/* Info & Progress */}
             <div style={{ marginTop: 8 }}>
-              <div style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A' }}>
-                Summer Glow 2026
+              <div
+                style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A', cursor: 'pointer' }}
+                onClick={() => handleOpenDetail(campaigns[0] || DEFAULT_CAMPAIGNS[0])}
+              >
+                {campaigns[0]?.name || DEFAULT_CAMPAIGNS[0].name}
               </div>
               <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1, marginBottom: 8 }}>
-                15 Jun 2026 – 31 Aug 2026
+                {campaigns[0]?.dateRange || DEFAULT_CAMPAIGNS[0].dateRange}
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
@@ -1380,7 +1389,7 @@ export default function CampaignPage() {
                   >
                     <div
                       style={{
-                        width: '45%',
+                        width: `${campaigns[0]?.progressPercent || 45}%`,
                         height: '100%',
                         background: '#4F46E5',
                         borderRadius: 999,
@@ -1388,7 +1397,7 @@ export default function CampaignPage() {
                     />
                   </div>
                   <span style={{ fontSize: 10.5, fontWeight: 700, color: '#64748B' }}>
-                    45%
+                    {campaigns[0]?.progressPercent || 45}%
                   </span>
                 </div>
 
@@ -1399,7 +1408,7 @@ export default function CampaignPage() {
                         key: 'view',
                         icon: <EyeOutlined />,
                         label: 'Xem chi tiết',
-                        onClick: () => navigate('/campaigns/detail', { state: { id: 'camp-summer-glow-2026' } }),
+                        onClick: () => handleOpenDetail(campaigns[0] || DEFAULT_CAMPAIGNS[0]),
                       },
                       {
                         key: 'koc',

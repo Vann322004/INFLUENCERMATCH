@@ -320,7 +320,21 @@ export default function CampaignTable() {
 
   const handleOpenDetail = (record: Campaign) => {
     sessionStorage.setItem('current_campaign_id', record.id);
-    navigate('/campaigns/detail', { state: { id: record.id } });
+    try {
+      sessionStorage.setItem('current_campaign_data', JSON.stringify({
+        id: record.id,
+        name: record.title,
+        budgetFormatted: record.spent,
+        budgetRaw: record.spentNumber,
+        niches: record.tags,
+        dateRange: record.date,
+        thumbnail: record.thumbnail,
+        status: record.status === 'completed' ? 'COMPLETED' : (record.status === 'draft' ? 'DRAFT' : 'ACTIVE'),
+        statusText: record.statusText,
+        creatorsCount: record.creatorsCount,
+      }));
+    } catch {}
+    navigate('/campaigns/detail', { state: { id: record.id, item: record } });
   };
 
   const handleActionMenu = (key: string, record: Campaign) => {
