@@ -1,64 +1,66 @@
 /* ==========================================================================
-   CreateCampaignPage.css - Executive Compact & Responsive UI
-   Fit on single viewport without excessive scrolling
+   CreateCampaignPage.css - Harmonious, Spacious & Fully Responsive Design
+   Cân đối, thoáng đãng, dễ chịu mắt nhìn, không gượng ép
    ========================================================================== */
 
 .ccreate-container {
-  max-width: 1240px;
+  max-width: 1080px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-bottom: 10px;
+  gap: 18px;
+  padding-bottom: 24px;
   box-sizing: border-box;
+  width: 100%;
 }
 
-/* 1. Header Section - Ultra Compact */
+/* 1. Header Section */
 .ccreate-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
-  padding: 2px 0;
+  padding: 4px 0;
 }
 
 .ccreate-title-wrap h1 {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   color: #0F172A;
   margin: 0;
   letter-spacing: -0.02em;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .ccreate-title-wrap p {
-  font-size: 12px;
+  font-size: 13px;
   color: #64748B;
-  margin: 2px 0 0 0;
-  line-height: 1.4;
+  margin: 4px 0 0 0;
+  line-height: 1.5;
 }
 
 /* Executive Readiness Pill in Header */
 .ccreate-readiness-pill {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   background: #FFFFFF;
   border: 1.5px solid #E0E7FF;
   border-radius: 999px;
-  padding: 4px 14px 4px 10px;
-  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.08);
+  padding: 6px 16px 6px 12px;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
 }
 
 .ccreate-readiness-pill:hover {
   border-color: #6366F1;
-  box-shadow: 0 3px 12px rgba(99, 102, 241, 0.16);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.16);
   transform: translateY(-1px);
 }
 
@@ -68,39 +70,39 @@
 }
 
 .ccreate-readiness-label {
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 700;
   color: #0F172A;
-  line-height: 1.2;
+  line-height: 1.3;
 }
 
 .ccreate-readiness-sub {
-  font-size: 10.5px;
+  font-size: 11px;
   color: #6366F1;
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
-/* 2. Stepper Card - Slim Line */
+/* 2. Interactive Stepper Card */
 .ccreate-stepper-card {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
-  border-radius: 14px;
-  padding: 8px 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  border-radius: 16px;
+  padding: 12px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .ccreate-stepper-grid {
   display: grid;
   grid-template-columns: 1fr auto 1fr auto 1fr;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
 @media (max-width: 768px) {
   .ccreate-stepper-grid {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 10px;
   }
   .ccreate-stepper-connector {
     display: none !important;
@@ -110,11 +112,11 @@
 .ccreate-step-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 10px;
-  transition: all 0.18s ease;
+  padding: 6px 10px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
 }
 
 .ccreate-step-item:hover {
@@ -122,8 +124,8 @@
 }
 
 .ccreate-step-num {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: #F1F5F9;
   color: #94A3B8;
@@ -131,15 +133,15 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: 13.5px;
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 }
 
 .ccreate-step-item.active .ccreate-step-num {
   background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
   color: #FFFFFF;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.32);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 .ccreate-step-item.completed .ccreate-step-num {
@@ -153,10 +155,10 @@
 }
 
 .ccreate-step-title {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 700;
   color: #64748B;
-  line-height: 1.25;
+  line-height: 1.3;
   transition: color 0.2s;
 }
 
@@ -166,9 +168,9 @@
 }
 
 .ccreate-step-desc {
-  font-size: 11px;
+  font-size: 11.5px;
   color: #94A3B8;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .ccreate-stepper-connector {
@@ -176,7 +178,7 @@
   background: #E2E8F0;
   border-radius: 2px;
   flex: 1;
-  min-width: 16px;
+  min-width: 20px;
   transition: background 0.25s;
 }
 
@@ -184,373 +186,509 @@
   background: #818CF8;
 }
 
-/* 3. Inline AI Quick Assistant Bar - Ultra Slim (38px height) */
-.ccreate-ai-inline-bar {
+/* 3. AI Assistant Hero Card - Elegant & Pastel */
+.ccreate-ai-hero-card {
   background: linear-gradient(135deg, #FAF5FF 0%, #F5F3FF 50%, #EEF2FF 100%);
-  border: 1px solid #DDD6FE;
-  border-radius: 12px;
-  padding: 6px 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.04);
-}
-
-.ccreate-ai-inline-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: #7C3AED;
-  font-weight: 800;
-  font-size: 12px;
-  flex-shrink: 0;
-  background: #EDE9FE;
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-
-.ccreate-ai-inline-input {
-  flex: 1;
-  border-radius: 8px !important;
-  border: 1px solid #DDD6FE !important;
-  height: 32px !important;
-  font-size: 12px !important;
-  background: #FFFFFF !important;
-}
-
-.ccreate-ai-inline-btn {
-  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%) !important;
-  border: none !important;
-  border-radius: 8px !important;
-  height: 32px !important;
-  padding: 0 14px !important;
-  font-weight: 700 !important;
-  font-size: 12px !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2) !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  flex-shrink: 0 !important;
-}
-
-.ccreate-ai-sample-pills {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.ccreate-ai-mini-pill {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 6px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.ccreate-ai-mini-pill:hover {
-  border-color: #A78BFA;
-  color: #7C3AED;
-  background: #FDF4FF;
-}
-
-@media (max-width: 900px) {
-  .ccreate-ai-sample-pills {
-    display: none;
-  }
-}
-
-/* 4. Compact Executive Card */
-.ccreate-compact-card {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 14px;
-  padding: 14px 18px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  border: 1px solid #E0E7FF;
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.04);
   display: flex;
   flex-direction: column;
   gap: 12px;
-  height: 100%;
-  box-sizing: border-box;
 }
 
-.ccreate-card-head {
+.ccreate-ai-hero-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  border-bottom: 1px solid #F1F5F9;
-  padding-bottom: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.ccreate-card-head-left {
+.ccreate-ai-hero-title-group {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.ccreate-card-badge {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #EEF2FF;
-  color: #4F46E5;
-  font-size: 11.5px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.ccreate-card-title {
-  font-size: 14px;
-  font-weight: 800;
-  color: #0F172A;
-}
-
-.ccreate-card-sub {
-  font-size: 11px;
-  color: #94A3B8;
-  font-weight: 500;
-}
-
-/* Field Labels */
-.ccreate-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #1E293B;
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.ccreate-label .req {
-  color: #EF4444;
-  margin-left: 2px;
-}
-
-/* 5. Objective Compact Grid (2x2) */
-.ccreate-obj-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.ccreate-obj-item {
-  border: 1.5px solid #E2E8F0;
-  border-radius: 10px;
-  padding: 8px 10px;
-  background: #FFFFFF;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.18s ease;
-  user-select: none;
-}
-
-.ccreate-obj-item:hover {
-  border-color: #818CF8;
-  background: #F8FAFC;
-}
-
-.ccreate-obj-item.selected {
-  border-color: #4F46E5;
-  background: #EEF2FF;
-  box-shadow: 0 1px 4px rgba(79, 70, 229, 0.12);
-}
-
-.ccreate-obj-icon {
+.ccreate-ai-hero-icon {
   width: 26px;
   height: 26px;
   border-radius: 7px;
-  background: #F1F5F9;
-  color: #64748B;
+  background: linear-gradient(135deg, #7C3AED 0%, #6366F1 100%);
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
   flex-shrink: 0;
-  transition: all 0.18s ease;
 }
 
-.ccreate-obj-item.selected .ccreate-obj-icon {
-  background: #4F46E5;
-  color: #FFFFFF;
+.ccreate-ai-hero-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0F172A;
 }
 
-.ccreate-obj-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.ccreate-obj-title {
+.ccreate-ai-hero-sub {
   font-size: 12px;
-  font-weight: 700;
-  color: #1E293B;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ccreate-obj-sub {
-  font-size: 10px;
   color: #64748B;
-  line-height: 1.1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* 6. Content Formats Pill Strip */
-.ccreate-format-strip {
+.ccreate-ai-input-wrap {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.ccreate-format-pill {
-  border: 1.5px solid #E2E8F0;
-  background: #FFFFFF;
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #334155;
-  cursor: pointer;
-  display: inline-flex;
+@media (max-width: 640px) {
+  .ccreate-ai-input-wrap {
+    flex-direction: column;
+  }
+}
+
+.ccreate-ai-input-field {
+  border-radius: 10px !important;
+  border: 1.5px solid #DDD6FE !important;
+  height: 40px !important;
+  font-size: 13px !important;
+  background: #FFFFFF !important;
+}
+
+.ccreate-ai-input-field:focus {
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+}
+
+.ccreate-ai-action-btn {
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  height: 40px !important;
+  padding: 0 18px !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.25) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
+  transition: all 0.2s ease !important;
+}
+
+.ccreate-ai-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(79, 70, 229, 0.35) !important;
+}
+
+.ccreate-ai-samples-strip {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  transition: all 0.18s ease;
-}
-
-.ccreate-format-pill:hover {
-  border-color: #818CF8;
-  background: #F8FAFC;
-}
-
-.ccreate-format-pill.selected {
-  border-color: #4F46E5;
-  background: #EEF2FF;
-  color: #4F46E5;
-  font-weight: 700;
-}
-
-/* 7. Platform Pills */
-.ccreate-platform-strip {
-  display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.ccreate-platform-btn {
-  border: 1.5px solid #E2E8F0;
+.ccreate-ai-samples-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.ccreate-ai-sample-chip {
   background: #FFFFFF;
-  border-radius: 8px;
-  padding: 5px 12px;
-  font-size: 12px;
+  border: 1px solid #E2E8F0;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #475569;
   cursor: pointer;
   transition: all 0.18s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  outline: none;
 }
 
-.ccreate-platform-btn:hover {
+.ccreate-ai-sample-chip:hover {
+  border-color: #818CF8;
+  color: #4F46E5;
+  background: #FAF5FF;
+}
+
+/* 4. Main Section Cards - Spacious & Elegant */
+.ccreate-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 22px 26px;
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-sizing: border-box;
+}
+
+.ccreate-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-bottom: 1px solid #F1F5F9;
+  padding-bottom: 14px;
+}
+
+.ccreate-card-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #EEF2FF;
+  color: #4F46E5;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ccreate-card-title {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #0F172A;
+  margin-bottom: 2px;
+}
+
+.ccreate-card-subtitle {
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.4;
+}
+
+/* Field Labels */
+.ccreate-field-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1E293B;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ccreate-field-label .req {
+  color: #EF4444;
+  margin-left: 3px;
+}
+
+/* Sub-sections within Cards */
+.ccreate-sub-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ccreate-sub-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 5. Objective Cards (Grid 4 cột thoáng) */
+.ccreate-obj-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 992px) {
+  .ccreate-obj-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .ccreate-obj-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ccreate-obj-card {
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #FFFFFF;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 96px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.ccreate-obj-card:hover {
+  border-color: #818CF8;
+  background: #F8FAFC;
+}
+
+.ccreate-obj-card.selected {
+  border-color: #4F46E5;
+  background: #EEF2FF;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.12);
+}
+
+.ccreate-obj-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ccreate-obj-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #F1F5F9;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+.ccreate-obj-card.selected .ccreate-obj-icon {
+  background: #4F46E5;
+  color: #FFFFFF;
+}
+
+.ccreate-obj-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.3;
+}
+
+.ccreate-obj-desc {
+  font-size: 11px;
+  color: #64748B;
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+/* 6. Content Formats Grid (5 thẻ phong cách) */
+.ccreate-formats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 992px) {
+  .ccreate-formats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .ccreate-formats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.ccreate-format-card {
+  border: 1.5px solid #E2E8F0;
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 84px;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.ccreate-format-card:hover {
+  border-color: #818CF8;
+  background: #F8FAFC;
+}
+
+.ccreate-format-card.selected {
+  border-color: #4F46E5;
+  background: #EEF2FF;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1);
+}
+
+.ccreate-format-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ccreate-format-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.ccreate-format-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.25;
+}
+
+.ccreate-format-sub {
+  font-size: 10.5px;
+  color: #64748B;
+  line-height: 1.2;
+}
+
+/* 7. Platform Cards & Chips */
+.ccreate-platform-strip {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ccreate-platform-card {
+  border: 1.5px solid #E2E8F0;
+  background: #FFFFFF;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.ccreate-platform-card:hover {
   border-color: #94A3B8;
   background: #F8FAFC;
 }
 
-.ccreate-platform-btn.selected {
+.ccreate-platform-card.selected {
   border-color: #2563EB;
   background: #EFF6FF;
   color: #1D4ED8;
   font-weight: 700;
 }
 
-/* 8. Age & Gender Pills */
-.ccreate-chip-row {
+/* 8. Audience Age & Gender Chips */
+.ccreate-chips-group {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
-.ccreate-chip {
+.ccreate-chip-btn {
   border: 1px solid #E2E8F0;
   background: #FFFFFF;
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 11.5px;
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-size: 12px;
   font-weight: 600;
   color: #475569;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s ease;
+  outline: none;
 }
 
-.ccreate-chip:hover {
+.ccreate-chip-btn:hover {
   border-color: #818CF8;
+  color: #4F46E5;
 }
 
-.ccreate-chip.selected {
+.ccreate-chip-btn.selected {
   border-color: #4F46E5;
   background: #4F46E5;
   color: #FFFFFF;
   font-weight: 700;
 }
 
-/* 9. Executive Summary Card (Step 3) */
-.ccreate-summary-box {
-  background: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 100%);
-  border: 1px solid #E0E7FF;
+/* 9. Step 3 - KPI Cards & Overview */
+.ccreate-kpi-card {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
-.ccreate-summary-row {
+.ccreate-kpi-label {
+  font-size: 11.5px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+/* Summary Box */
+.ccreate-overview-card {
+  background: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 100%);
+  border: 1px solid #E0E7FF;
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .ccreate-overview-card {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .ccreate-overview-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ccreate-overview-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
+  flex-direction: column;
+  gap: 3px;
 }
 
-.ccreate-summary-label {
+.ccreate-overview-item-label {
+  font-size: 11px;
   color: #64748B;
   font-weight: 500;
 }
 
-.ccreate-summary-val {
+.ccreate-overview-item-val {
+  font-size: 13px;
   color: #0F172A;
   font-weight: 700;
+  line-height: 1.35;
 }
 
-/* 10. Sticky Bottom Action Bar - Compact & Floating */
+/* 10. Sticky Bottom Actions Bar - Floating Luxury */
 .ccreate-bottom-actions {
   position: sticky;
   bottom: 0;
   z-index: 90;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid #E2E8F0;
-  border-radius: 12px 12px 0 0;
-  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.04);
-  padding: 8px 18px;
-  margin-top: 6px;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.05);
+  padding: 12px 24px;
+  margin-top: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -559,8 +697,8 @@
 .ccreate-btn-cancel {
   color: #64748B !important;
   font-weight: 600 !important;
-  font-size: 12.5px !important;
-  padding: 0 10px !important;
+  font-size: 13px !important;
+  padding: 0 12px !important;
 }
 
 .ccreate-btn-cancel:hover {
@@ -572,20 +710,25 @@
   border: 1px solid #CBD5E1 !important;
   color: #334155 !important;
   font-weight: 600 !important;
-  font-size: 12.5px !important;
-  border-radius: 8px !important;
-  height: 34px !important;
-  padding: 0 14px !important;
+  font-size: 13px !important;
+  border-radius: 10px !important;
+  height: 38px !important;
+  padding: 0 16px !important;
+}
+
+.ccreate-btn-draft:hover {
+  border-color: #94A3B8 !important;
+  background: #F8FAFC !important;
 }
 
 .ccreate-btn-back {
   border: 1px solid #CBD5E1 !important;
   color: #334155 !important;
   font-weight: 600 !important;
-  font-size: 12.5px !important;
-  border-radius: 8px !important;
-  height: 34px !important;
-  padding: 0 14px !important;
+  font-size: 13px !important;
+  border-radius: 10px !important;
+  height: 38px !important;
+  padding: 0 16px !important;
 }
 
 .ccreate-btn-next {
@@ -593,11 +736,11 @@
   border: none !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
-  font-size: 12.5px !important;
-  border-radius: 8px !important;
-  height: 34px !important;
-  padding: 0 18px !important;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25) !important;
+  font-size: 13px !important;
+  border-radius: 10px !important;
+  height: 38px !important;
+  padding: 0 20px !important;
+  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.25) !important;
   display: inline-flex !important;
   align-items: center !important;
   gap: 6px !important;
@@ -606,7 +749,7 @@
 
 .ccreate-btn-next:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35) !important;
+  box-shadow: 0 5px 16px rgba(79, 70, 229, 0.35) !important;
 }
 
 /* 11. AI Assessment Drawer / Slide-Over Modal */

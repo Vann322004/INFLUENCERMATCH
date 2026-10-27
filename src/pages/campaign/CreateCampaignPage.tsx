@@ -910,33 +910,50 @@ export default function CreateCampaignPage() {
               />
             )}
 
-            {/* 3.1. Inline AI Quick Assistant Bar (Ultra Compact 38px) */}
-            <div className="ccreate-ai-inline-bar">
-              <span className="ccreate-ai-inline-badge">
-                <ThunderboltFilled /> AI Tự động
-              </span>
-              <Input
-                value={aiPrompt}
-                onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder="Nhập mô tả hoặc mục tiêu (ví dụ: Kem chống nắng phục hồi cho giới trẻ trên TikTok & Instagram...)"
-                className="ccreate-ai-inline-input"
-                onPressEnter={() => handleAiSuggest()}
-              />
-              <Button
-                type="primary"
-                icon={<ThunderboltFilled />}
-                loading={isAiLoading}
-                onClick={() => handleAiSuggest()}
-                className="ccreate-ai-inline-btn"
-              >
-                Phân tích
-              </Button>
-              <div className="ccreate-ai-sample-pills">
-                {AI_SAMPLE_PROMPTS.slice(0, 2).map((item, idx) => (
+            {/* 3. AI Assistant Hero Card - Elegant & Pastel */}
+            <div className="ccreate-ai-hero-card">
+              <div className="ccreate-ai-hero-header">
+                <div className="ccreate-ai-hero-title-group">
+                  <div className="ccreate-ai-hero-icon">
+                    <ThunderboltFilled />
+                  </div>
+                  <div>
+                    <span className="ccreate-ai-hero-title">Trợ lý AI Chiến dịch</span>
+                    <span className="ccreate-ai-hero-sub" style={{ marginLeft: 8 }}>
+                      Tự động phân tích brief, trích xuất mục tiêu & đề xuất cấu hình phù hợp
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Input Row */}
+              <div className="ccreate-ai-input-wrap">
+                <Input
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder="Ví dụ: Quảng bá dòng kem dưỡng phục hồi da dành cho giới trẻ 18-24 tuổi tại Hà Nội và TP.HCM, ngân sách tầm 25 triệu trên TikTok và Instagram..."
+                  className="ccreate-ai-input-field"
+                  onPressEnter={() => handleAiSuggest()}
+                />
+                <Button
+                  type="primary"
+                  icon={<ThunderboltFilled />}
+                  loading={isAiLoading}
+                  onClick={() => handleAiSuggest()}
+                  className="ccreate-ai-action-btn"
+                >
+                  Phân tích bằng AI
+                </Button>
+              </div>
+
+              {/* Sample Prompt Chips */}
+              <div className="ccreate-ai-samples-strip">
+                <span className="ccreate-ai-samples-label">Gợi ý mẫu:</span>
+                {AI_SAMPLE_PROMPTS.map((item, idx) => (
                   <button
                     type="button"
                     key={idx}
-                    className="ccreate-ai-mini-pill"
+                    className="ccreate-ai-sample-chip"
                     onClick={() => {
                       setAiPrompt(item.prompt);
                       handleAiSuggest(item.prompt);
@@ -946,554 +963,571 @@ export default function CreateCampaignPage() {
                   </button>
                 ))}
               </div>
-            </div>
 
-            {/* AI Explanation Alert nếu có */}
-            {aiExplanation && !isAiLoading && (
-              <Alert
-                style={{
-                  borderRadius: 10,
-                  border: '1px solid #DDD6FE',
-                  background: '#FDF4FF',
-                  padding: '6px 12px',
-                }}
-                message={
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
-                    <span style={{ fontWeight: 700, color: '#6D28D9' }}>
-                      ✨ AI đã phân tích và tự động điền các thông số:
-                    </span>
-                    <Button type="link" size="small" style={{ padding: 0, height: 'auto', fontSize: 11 }} onClick={() => setAiExplanation(null)}>
-                      Đóng
-                    </Button>
-                  </div>
-                }
-                description={
-                  <span style={{ fontSize: 11.5, color: '#4C1D95' }}>
-                    {aiExplanation}
+              {/* AI Processing Spin Indicator */}
+              {isAiLoading && (
+                <div
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    background: 'rgba(237, 233, 254, 0.7)',
+                    border: '1px dashed #A78BFA',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}
+                >
+                  <Spin size="small" />
+                  <span style={{ fontSize: 12.5, color: '#6D28D9', fontWeight: 600 }}>
+                    Trợ lý AI đang phân tích yêu cầu và tự động điền các thông số vào từng bước...
                   </span>
-                }
-                type="info"
-                showIcon={false}
-              />
-            )}
+                </div>
+              )}
+
+              {/* AI Explanation Alert nếu có */}
+              {aiExplanation && !isAiLoading && (
+                <Alert
+                  style={{
+                    borderRadius: 12,
+                    border: '1px solid #C4B5FD',
+                    background: 'linear-gradient(135deg, #FDF4FF 0%, #F5F3FF 50%, #EDE9FE 100%)',
+                    padding: '10px 16px',
+                  }}
+                  message={
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontWeight: 700, color: '#5B21B6', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+                        <RobotOutlined style={{ fontSize: 15, color: '#7C3AED' }} /> Chiến lược phân tích từ AI
+                      </span>
+                      <Button
+                        type="text"
+                        size="small"
+                        onClick={() => setAiExplanation(null)}
+                        style={{ color: '#7C3AED', fontWeight: 600, fontSize: 11.5 }}
+                      >
+                        Đóng
+                      </Button>
+                    </div>
+                  }
+                  description={
+                    <div>
+                      <p style={{ margin: '2px 0 8px 0', fontSize: 12.5, color: '#4C1D95', lineHeight: 1.5 }}>
+                        {aiExplanation}
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        <Tag style={{ background: '#FFFFFF', borderColor: '#DDD6FE', color: '#6D28D9', fontSize: 11, borderRadius: 6, fontWeight: 600 }}>
+                          ✓ Bước 1: Tên, Sản phẩm & Mục tiêu
+                        </Tag>
+                        <Tag style={{ background: '#FFFFFF', borderColor: '#DDD6FE', color: '#6D28D9', fontSize: 11, borderRadius: 6, fontWeight: 600 }}>
+                          ✓ Bước 2: Nền tảng, Niche & Độ tuổi
+                        </Tag>
+                        <Tag style={{ background: '#FFFFFF', borderColor: '#DDD6FE', color: '#6D28D9', fontSize: 11, borderRadius: 6, fontWeight: 600 }}>
+                          ✓ Bước 3: Ngân sách & Định dạng
+                        </Tag>
+                      </div>
+                    </div>
+                  }
+                  type="info"
+                  showIcon={false}
+                />
+              )}
+            </div>
 
             {/* ========================================================================= */}
             {/* ============================ BƯỚC 1 CONTENT ============================= */}
             {/* ========================================================================= */}
             {currentStep === 1 && (
-              <Row gutter={[14, 14]}>
-                {/* Cột 1: Thông tin chiến dịch & Sản phẩm */}
-                <Col xs={24} lg={12}>
-                  <div className="ccreate-compact-card">
-                    <div className="ccreate-card-head">
-                      <div className="ccreate-card-head-left">
-                        <div className="ccreate-card-badge">1</div>
-                        <div>
-                          <div className="ccreate-card-title">Thông tin chiến dịch & Sản phẩm</div>
-                          <div className="ccreate-card-sub">Tên chiến dịch, sản phẩm quảng bá và ghi chú</div>
-                        </div>
-                      </div>
+              <div className="ccreate-card">
+                <div className="ccreate-card-header">
+                  <div className="ccreate-card-badge">1</div>
+                  <div>
+                    <div className="ccreate-card-title">Thông tin chiến dịch & Mục tiêu tiếp thị</div>
+                    <div className="ccreate-card-subtitle">
+                      Cung cấp các thông tin cơ bản về sản phẩm và định hướng mục tiêu để hệ thống tối ưu hóa đề xuất.
                     </div>
+                  </div>
+                </div>
 
-                    {/* Tên chiến dịch */}
-                    <div>
-                      <div className="ccreate-label">
-                        <span>Tên chiến dịch <span className="req">*</span></span>
-                        <span style={{ color: '#94A3B8', fontSize: 11 }}>{campaignName.length}/100</span>
-                      </div>
-                      <Input
-                        value={campaignName}
-                        onChange={(e) => setCampaignName(e.target.value)}
-                        maxLength={100}
-                        placeholder="Ví dụ: Summer Glow Skincare Launch 2026"
-                        style={{ borderRadius: 8, height: 36, fontSize: 12.5 }}
-                      />
+                {/* Phần 1: Tên chiến dịch & Sản phẩm */}
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={12}>
+                    <div className="ccreate-field-label">
+                      <span>Tên chiến dịch <span className="req">*</span></span>
+                      <span style={{ color: '#94A3B8', fontSize: 11, fontWeight: 500 }}>{campaignName.length}/100</span>
                     </div>
+                    <Input
+                      value={campaignName}
+                      onChange={(e) => setCampaignName(e.target.value)}
+                      maxLength={100}
+                      placeholder="Ví dụ: Summer Glow Skincare Launch 2026"
+                      style={{ borderRadius: 10, height: 40, fontSize: 13 }}
+                    />
+                  </Col>
 
-                    {/* Sản phẩm / Dịch vụ */}
-                    <div>
-                      <div className="ccreate-label">
-                        <span>Sản phẩm / Dịch vụ quảng bá <span className="req">*</span></span>
-                        {isProductLocked && (
-                          <Tooltip title="Chiến dịch đã khởi chạy hoặc chốt KOC. Tên sản phẩm được khóa để bảo vệ tính nhất quán của hợp đồng.">
-                            <Tag color="orange" icon={<LockOutlined />} style={{ borderRadius: 6, fontSize: 10.5, cursor: 'help', margin: 0 }}>
-                              Đã khóa
-                            </Tag>
-                          </Tooltip>
-                        )}
-                      </div>
-                      <Input
-                        value={product}
-                        onChange={(e) => setProduct(e.target.value)}
-                        placeholder="Ví dụ: Serum dưỡng sáng da Acne Tone-up SPF50+"
-                        style={{
-                          borderRadius: 8,
-                          height: 36,
-                          fontSize: 12.5,
-                          backgroundColor: isProductLocked ? '#F8FAFC' : undefined,
-                          borderColor: isProductLocked ? '#E2E8F0' : undefined,
-                        }}
-                        disabled={isProductLocked}
-                        suffix={isProductLocked ? <LockOutlined style={{ color: '#94A3B8' }} /> : undefined}
-                        allowClear={!isProductLocked}
-                      />
+                  <Col xs={24} md={12}>
+                    <div className="ccreate-field-label">
+                      <span>Sản phẩm / Dịch vụ được quảng bá <span className="req">*</span></span>
                       {isProductLocked && (
-                        <div style={{ fontSize: 10.5, color: '#64748B', marginTop: 2 }}>
-                          🔒 Tên sản phẩm cố định theo chiến dịch đã ký kết với creator.
-                        </div>
+                        <Tooltip title="Chiến dịch đã khởi chạy hoặc chốt KOC. Tên sản phẩm được khóa để bảo vệ tính nhất quán của hợp đồng.">
+                          <Tag color="orange" icon={<LockOutlined />} style={{ borderRadius: 6, fontSize: 11, cursor: 'help', margin: 0 }}>
+                            Đã khóa
+                          </Tag>
+                        </Tooltip>
                       )}
                     </div>
-
-                    {/* Ngành hàng & Ghi chú */}
-                    <div>
-                      <div className="ccreate-label">
-                        <span>Ngành hàng & Ghi chú sản phẩm</span>
+                    <Input
+                      value={product}
+                      onChange={(e) => setProduct(e.target.value)}
+                      placeholder="Nhập tên sản phẩm hoặc dịch vụ (ví dụ: Serum dưỡng sáng da, Kem chống nắng...)"
+                      style={{
+                        borderRadius: 10,
+                        height: 40,
+                        fontSize: 13,
+                        backgroundColor: isProductLocked ? '#F8FAFC' : undefined,
+                        borderColor: isProductLocked ? '#E2E8F0' : undefined,
+                      }}
+                      disabled={isProductLocked}
+                      suffix={isProductLocked ? <LockOutlined style={{ color: '#94A3B8' }} /> : undefined}
+                      allowClear={!isProductLocked}
+                    />
+                    {isProductLocked && (
+                      <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                        🔒 Tên sản phẩm cố định theo chiến dịch đã ký kết với creator.
                       </div>
-                      <Input
-                        value={interests}
-                        onChange={(e) => setInterests(e.target.value)}
-                        placeholder="Ví dụ: Chăm sóc da, Mỹ phẩm làm đẹp, Kem chống nắng"
-                        style={{ borderRadius: 8, height: 36, fontSize: 12.5 }}
-                      />
-                    </div>
-                  </div>
-                </Col>
+                    )}
+                  </Col>
 
-                {/* Cột 2: Mục tiêu & Định dạng nội dung */}
-                <Col xs={24} lg={12}>
-                  <div className="ccreate-compact-card">
-                    <div className="ccreate-card-head">
-                      <div className="ccreate-card-head-left">
-                        <div className="ccreate-card-badge">2</div>
-                        <div>
-                          <div className="ccreate-card-title">Mục tiêu & Định dạng nội dung</div>
-                          <div className="ccreate-card-sub">Chọn mục tiêu tiếp thị và loại nội dung thực hiện</div>
+                  <Col xs={24}>
+                    <div className="ccreate-field-label">
+                      <span>Ngành hàng & Sở thích liên quan</span>
+                    </div>
+                    <Input
+                      value={interests}
+                      onChange={(e) => setInterests(e.target.value)}
+                      placeholder="Ví dụ: Làm đẹp, Chăm sóc da, Skincare Routine, Thời trang công sở..."
+                      style={{ borderRadius: 10, height: 40, fontSize: 13 }}
+                    />
+                  </Col>
+                </Row>
+
+                {/* Phần 2: Mục tiêu chiến dịch */}
+                <div className="ccreate-sub-section">
+                  <div className="ccreate-sub-title">
+                    <span>Mục tiêu chiến dịch <span style={{ color: '#EF4444' }}>*</span></span>
+                    <span style={{ fontSize: 12, color: '#4F46E5', fontWeight: 600 }}>
+                      Đã chọn {selectedObjectives.length} mục tiêu
+                    </span>
+                  </div>
+
+                  <div className="ccreate-obj-grid">
+                    {objectives.map((obj) => {
+                      const isSelected = selectedObjectives.includes(obj.id);
+                      return (
+                        <div
+                          key={obj.id}
+                          className={`ccreate-obj-card ${isSelected ? 'selected' : ''}`}
+                          onClick={() => toggleObjective(obj.id)}
+                        >
+                          <div className="ccreate-obj-top">
+                            <div className="ccreate-obj-icon">
+                              {obj.icon}
+                            </div>
+                            <Checkbox checked={isSelected} style={{ pointerEvents: 'none' }} />
+                          </div>
+
+                          <div>
+                            <div className="ccreate-obj-name">{obj.title}</div>
+                            <div className="ccreate-obj-desc">{obj.subtitle}</div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-
-                    {/* Mục tiêu chiến dịch (Grid 2x2 siêu gọn) */}
-                    <div>
-                      <div className="ccreate-label">
-                        <span>Mục tiêu chiến dịch <span className="req">*</span></span>
-                        <span style={{ fontSize: 11, color: '#64748B' }}>Có thể chọn nhiều</span>
-                      </div>
-                      <div className="ccreate-obj-grid">
-                        {objectives.map((obj) => {
-                          const isSelected = selectedObjectives.includes(obj.id);
-                          return (
-                            <div
-                              key={obj.id}
-                              className={`ccreate-obj-item ${isSelected ? 'selected' : ''}`}
-                              onClick={() => toggleObjective(obj.id)}
-                            >
-                              <div className="ccreate-obj-icon">
-                                {obj.icon}
-                              </div>
-                              <div className="ccreate-obj-text">
-                                <span className="ccreate-obj-title">{obj.title}</span>
-                                <span className="ccreate-obj-sub">{obj.subtitle}</span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Định dạng nội dung (Strip pills 5 nút gọn) */}
-                    <div>
-                      <div className="ccreate-label">
-                        <span>Định dạng nội dung mong muốn</span>
-                      </div>
-                      <div className="ccreate-format-strip">
-                        {contentFormats.map((item) => {
-                          const isChecked = selectedFormats.includes(item.id);
-                          return (
-                            <div
-                              key={item.id}
-                              className={`ccreate-format-pill ${isChecked ? 'selected' : ''}`}
-                              onClick={() => toggleFormat(item.id)}
-                            >
-                              <span>{item.title}</span>
-                              {isChecked && <CheckOutlined style={{ fontSize: 10 }} />}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
-                </Col>
-              </Row>
+                </div>
+
+                {/* Phần 3: Định dạng nội dung */}
+                <div className="ccreate-sub-section">
+                  <div className="ccreate-sub-title">
+                    <span>Định dạng nội dung mong muốn</span>
+                    <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>
+                      Chọn các loại nội dung Creator sẽ sản xuất
+                    </span>
+                  </div>
+
+                  <div className="ccreate-formats-grid">
+                    {contentFormats.map((item) => {
+                      const isChecked = selectedFormats.includes(item.id);
+                      return (
+                        <div
+                          key={item.id}
+                          className={`ccreate-format-card ${isChecked ? 'selected' : ''}`}
+                          onClick={() => toggleFormat(item.id)}
+                        >
+                          <div className="ccreate-format-top">
+                            <div className="ccreate-format-icon" style={{ backgroundColor: item.iconBg }}>
+                              {item.icon}
+                            </div>
+                            <Checkbox checked={isChecked} style={{ pointerEvents: 'none' }} />
+                          </div>
+
+                          <div>
+                            <div className="ccreate-format-title">{item.title}</div>
+                            <div className="ccreate-format-sub">{item.subtitle}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* ========================================================================= */}
             {/* ============================ BƯỚC 2 CONTENT ============================= */}
             {/* ========================================================================= */}
             {currentStep === 2 && (
-              <Row gutter={[14, 14]}>
-                {/* Cột 1: Tiêu chí & Nền tảng Creator */}
-                <Col xs={24} lg={12}>
-                  <div className="ccreate-compact-card">
-                    <div className="ccreate-card-head">
-                      <div className="ccreate-card-head-left">
-                        <div className="ccreate-card-badge">1</div>
-                        <div>
-                          <div className="ccreate-card-title">Tiêu chí & Nền tảng Creator</div>
-                          <div className="ccreate-card-sub">Nền tảng, số lượng và phân khúc creator</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Nền tảng */}
-                    <div>
-                      <div className="ccreate-label">
-                        <span>Nền tảng ưu tiên <span className="req">*</span></span>
-                      </div>
-                      <div className="ccreate-platform-strip">
-                        {[
-                          { key: 'tiktok', label: '🎵 TikTok' },
-                          { key: 'instagram', label: '📷 Instagram' },
-                          { key: 'facebook', label: '👤 Facebook' },
-                        ].map((p) => {
-                          const isSelected = selectedPlatforms.includes(p.key);
-                          return (
-                            <button
-                              key={p.key}
-                              type="button"
-                              className={`ccreate-platform-btn ${isSelected ? 'selected' : ''}`}
-                              onClick={() => togglePlatform(p.key)}
-                            >
-                              {p.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Hàng 2: Số lượng & Phân khúc */}
-                    <Row gutter={[10, 10]}>
-                      <Col span={12}>
-                        <div className="ccreate-label">
-                          <span>Số lượng Creator <span className="req">*</span></span>
-                        </div>
-                        <InputNumber
-                          min={1}
-                          max={500}
-                          value={creatorQuantity}
-                          onChange={(val) => setCreatorQuantity(val || 1)}
-                          style={{ width: '100%', borderRadius: 8, height: 36, lineHeight: '34px' }}
-                          suffix={<span style={{ color: '#94A3B8', fontSize: 11 }}>KOC</span>}
-                        />
-                      </Col>
-                      <Col span={12}>
-                        <div className="ccreate-label">
-                          <span>Phân khúc ưu tiên</span>
-                        </div>
-                        <Select
-                          value={creatorTier}
-                          onChange={setCreatorTier}
-                          style={{ width: '100%', height: 36 }}
-                          options={[
-                            { value: 'nano', label: '🌱 Nano (5K - 50K)' },
-                            { value: 'micro', label: '⭐ Micro (50K - 200K)' },
-                            { value: 'macro', label: '🔥 Macro (200K - 1M)' },
-                            { value: 'mega', label: '👑 Mega (1M+)' },
-                          ]}
-                        />
-                      </Col>
-                    </Row>
-
-                    {/* Hàng 3: Tỷ lệ tương tác & Follower tối thiểu */}
-                    <Row gutter={[10, 10]}>
-                      <Col span={12}>
-                        <div className="ccreate-label">
-                          <span>Tương tác tối thiểu</span>
-                        </div>
-                        <Select
-                          value={minEngagement}
-                          onChange={setMinEngagement}
-                          style={{ width: '100%', height: 36 }}
-                          options={[
-                            { value: '3%', label: 'Từ 3% (Cơ bản)' },
-                            { value: '5%', label: 'Từ 5% (Chuẩn)' },
-                            { value: '8%', label: 'Từ 8% (Cao)' },
-                          ]}
-                        />
-                      </Col>
-                      <Col span={12}>
-                        <div className="ccreate-label">
-                          <span>Follower tối thiểu</span>
-                        </div>
-                        <Select
-                          value={minFollowers}
-                          onChange={setMinFollowers}
-                          style={{ width: '100%', height: 36 }}
-                          options={[
-                            { value: '10k', label: 'Từ 10K followers' },
-                            { value: '50k', label: 'Từ 50K followers' },
-                            { value: '100k', label: 'Từ 100K followers' },
-                            { value: '500k', label: 'Từ 500K followers' },
-                          ]}
-                        />
-                      </Col>
-                    </Row>
-                  </div>
-                </Col>
-
-                {/* Cột 2: Đối tượng khán giả & Brief */}
-                <Col xs={24} lg={12}>
-                  <div className="ccreate-compact-card">
-                    <div className="ccreate-card-head">
-                      <div className="ccreate-card-head-left">
-                        <div className="ccreate-card-badge">2</div>
-                        <div>
-                          <div className="ccreate-card-title">Khán giả mục tiêu & Brief yêu cầu</div>
-                          <div className="ccreate-card-sub">Độ tuổi, giới tính, khu vực và nội dung brief</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Độ tuổi & Giới tính */}
-                    <Row gutter={[10, 10]}>
-                      <Col span={14}>
-                        <div className="ccreate-label">
-                          <span>Độ tuổi khán giả</span>
-                        </div>
-                        <div className="ccreate-chip-row">
-                          {ageGroups.map((age) => {
-                            const isSelected = selectedAges.includes(age);
-                            return (
-                              <button
-                                key={age}
-                                type="button"
-                                className={`ccreate-chip ${isSelected ? 'selected' : ''}`}
-                                onClick={() => toggleAge(age)}
-                              >
-                                {age}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </Col>
-                      <Col span={10}>
-                        <div className="ccreate-label">
-                          <span>Giới tính</span>
-                        </div>
-                        <div className="ccreate-chip-row">
-                          {genders.map((g) => {
-                            const isSelected = selectedGender === g.key;
-                            return (
-                              <button
-                                key={g.key}
-                                type="button"
-                                className={`ccreate-chip ${isSelected ? 'selected' : ''}`}
-                                onClick={() => setSelectedGender(g.key)}
-                              >
-                                {g.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </Col>
-                    </Row>
-
-                    {/* Khu vực tỉnh thành */}
-                    <div>
-                      <div className="ccreate-label">
-                        <span>Khu vực / Tỉnh thành ưu tiên</span>
-                      </div>
-                      <Select
-                        showSearch
-                        loading={loadingProvinces}
-                        value={locationState}
-                        onChange={setLocationState}
-                        style={{ width: '100%', height: 36 }}
-                        filterOption={(input, option) =>
-                          (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
-                        }
-                        options={provinceOptions}
-                      />
-                    </div>
-
-                    {/* Tóm tắt brief */}
-                    <div>
-                      <div className="ccreate-label">
-                        <span>Tóm tắt yêu cầu sáng tạo (Creator Brief)</span>
-                      </div>
-                      <TextArea
-                        rows={2}
-                        value={creatorBrief}
-                        onChange={(e) => setCreatorBrief(e.target.value)}
-                        placeholder="Mô tả thông điệp sản phẩm, key visual, hashtag bắt buộc, thời lượng video..."
-                        style={{ borderRadius: 8, fontSize: 12 }}
-                      />
+              <div className="ccreate-card">
+                <div className="ccreate-card-header">
+                  <div className="ccreate-card-badge">2</div>
+                  <div>
+                    <div className="ccreate-card-title">Yêu cầu Creator & Chân dung khán giả</div>
+                    <div className="ccreate-card-subtitle">
+                      Thiết lập các tiêu chí tuyển chọn KOC/KOL và đặc điểm nhân khẩu học tệp người theo dõi.
                     </div>
                   </div>
-                </Col>
-              </Row>
+                </div>
+
+                {/* Phần 1: Nền tảng hoạt động */}
+                <div className="ccreate-sub-section">
+                  <div className="ccreate-field-label">
+                    <span>Nền tảng ưu tiên quảng bá <span className="req">*</span></span>
+                  </div>
+                  <div className="ccreate-platform-strip">
+                    {[
+                      { key: 'tiktok', label: '🎵 TikTok Video & Live' },
+                      { key: 'instagram', label: '📷 Instagram Reels & Story' },
+                      { key: 'facebook', label: '👤 Facebook Post & Watch' },
+                    ].map((p) => {
+                      const isSelected = selectedPlatforms.includes(p.key);
+                      return (
+                        <button
+                          key={p.key}
+                          type="button"
+                          className={`ccreate-platform-card ${isSelected ? 'selected' : ''}`}
+                          onClick={() => togglePlatform(p.key)}
+                        >
+                          {p.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Phần 2: Tiêu chí số lượng & phân khúc */}
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} sm={8}>
+                    <div className="ccreate-field-label">
+                      <span>Số lượng Creator cần tuyển <span className="req">*</span></span>
+                    </div>
+                    <InputNumber
+                      min={1}
+                      max={500}
+                      value={creatorQuantity}
+                      onChange={(val) => setCreatorQuantity(val || 1)}
+                      style={{ width: '100%', borderRadius: 10, height: 40, lineHeight: '38px' }}
+                      suffix={<span style={{ color: '#94A3B8', fontSize: 12 }}>Creator</span>}
+                    />
+                  </Col>
+
+                  <Col xs={24} sm={8}>
+                    <div className="ccreate-field-label">
+                      <span>Phân khúc Creator ưu tiên</span>
+                    </div>
+                    <Select
+                      value={creatorTier}
+                      onChange={setCreatorTier}
+                      style={{ width: '100%', height: 40 }}
+                      options={[
+                        { value: 'nano', label: '🌱 Nano Creator (5K - 50K)' },
+                        { value: 'micro', label: '⭐ Micro Creator (50K - 200K)' },
+                        { value: 'macro', label: '🔥 Macro Creator (200K - 1M)' },
+                        { value: 'mega', label: '👑 Mega / Celeb (1M+)' },
+                      ]}
+                    />
+                  </Col>
+
+                  <Col xs={24} sm={8}>
+                    <div className="ccreate-field-label">
+                      <span>Tỷ lệ tương tác tối thiểu (ER)</span>
+                    </div>
+                    <Select
+                      value={minEngagement}
+                      onChange={setMinEngagement}
+                      style={{ width: '100%', height: 40 }}
+                      options={[
+                        { value: '3%', label: 'Từ 3% trở lên (Trung bình)' },
+                        { value: '5%', label: 'Từ 5% trở lên (Khuyên dùng)' },
+                        { value: '8%', label: 'Từ 8% trở lên (Tương tác cao)' },
+                      ]}
+                    />
+                  </Col>
+
+                  <Col xs={24} sm={12}>
+                    <div className="ccreate-field-label">
+                      <span>Lượng Follower tối thiểu</span>
+                    </div>
+                    <Select
+                      value={minFollowers}
+                      onChange={setMinFollowers}
+                      style={{ width: '100%', height: 40 }}
+                      options={[
+                        { value: '10k', label: 'Từ 10.000 followers' },
+                        { value: '50k', label: 'Từ 50.000 followers' },
+                        { value: '100k', label: 'Từ 100.000 followers' },
+                        { value: '500k', label: 'Từ 500.000 followers' },
+                      ]}
+                    />
+                  </Col>
+
+                  <Col xs={24} sm={12}>
+                    <div className="ccreate-field-label">
+                      <span>Khu vực / Tỉnh thành ưu tiên</span>
+                    </div>
+                    <Select
+                      showSearch
+                      loading={loadingProvinces}
+                      value={locationState}
+                      onChange={setLocationState}
+                      style={{ width: '100%', height: 40 }}
+                      filterOption={(input, option) =>
+                        (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                      }
+                      options={provinceOptions}
+                    />
+                  </Col>
+                </Row>
+
+                {/* Phần 3: Chân dung tệp khán giả */}
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={14}>
+                    <div className="ccreate-field-label">
+                      <span>Độ tuổi người theo dõi mục tiêu</span>
+                    </div>
+                    <div className="ccreate-chips-group">
+                      {ageGroups.map((age) => {
+                        const isSelected = selectedAges.includes(age);
+                        return (
+                          <button
+                            key={age}
+                            type="button"
+                            className={`ccreate-chip-btn ${isSelected ? 'selected' : ''}`}
+                            onClick={() => toggleAge(age)}
+                          >
+                            {age}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </Col>
+
+                  <Col xs={24} md={10}>
+                    <div className="ccreate-field-label">
+                      <span>Giới tính khán giả</span>
+                    </div>
+                    <div className="ccreate-chips-group">
+                      {genders.map((g) => {
+                        const isSelected = selectedGender === g.key;
+                        return (
+                          <button
+                            key={g.key}
+                            type="button"
+                            className={`ccreate-chip-btn ${isSelected ? 'selected' : ''}`}
+                            onClick={() => setSelectedGender(g.key)}
+                          >
+                            {g.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </Col>
+                </Row>
+
+                {/* Phần 4: Creator Brief */}
+                <div>
+                  <div className="ccreate-field-label">
+                    <span>Tóm tắt yêu cầu sáng tạo (Creator Brief)</span>
+                    <span style={{ fontSize: 11.5, color: '#94A3B8', fontWeight: 500 }}>
+                      Kịch bản, thông điệp chính & quy định
+                    </span>
+                  </div>
+                  <TextArea
+                    rows={3}
+                    value={creatorBrief}
+                    onChange={(e) => setCreatorBrief(e.target.value)}
+                    placeholder="Mô tả thông điệp sản phẩm, key visual, hashtag bắt buộc, thời lượng video và quyền lợi dành cho Creator..."
+                    style={{ borderRadius: 10, fontSize: 13, lineHeight: 1.5 }}
+                  />
+                </div>
+              </div>
             )}
 
             {/* ========================================================================= */}
             {/* ============================ BƯỚC 3 CONTENT ============================= */}
             {/* ========================================================================= */}
             {currentStep === 3 && (
-              <Row gutter={[14, 14]}>
-                {/* Cột 1: Ngân sách & Thời gian */}
-                <Col xs={24} lg={12}>
-                  <div className="ccreate-compact-card">
-                    <div className="ccreate-card-head">
-                      <div className="ccreate-card-head-left">
-                        <div className="ccreate-card-badge">1</div>
-                        <div>
-                          <div className="ccreate-card-title">Ngân sách & Thời gian triển khai</div>
-                          <div className="ccreate-card-sub">Tổng ngân sách và khung thời gian chạy</div>
-                        </div>
-                      </div>
+              <div className="ccreate-card">
+                <div className="ccreate-card-header">
+                  <div className="ccreate-card-badge">3</div>
+                  <div>
+                    <div className="ccreate-card-title">Ngân sách, KPI & Thời gian thực thi</div>
+                    <div className="ccreate-card-subtitle">
+                      Xác định hạn mức tài chính, kỳ vọng chuyển đổi và lịch trình triển khai của chiến dịch.
                     </div>
+                  </div>
+                </div>
 
-                    {/* Tổng ngân sách */}
-                    <div>
-                      <div className="ccreate-label">
-                        <span>Tổng ngân sách dự kiến (VND) <span className="req">*</span></span>
-                        <Tag color="blue" style={{ borderRadius: 4, fontSize: 11, margin: 0 }}>
-                          {(budgetTotal / 1000000).toFixed(1)} Triệu VNĐ
-                        </Tag>
-                      </div>
-                      <InputNumber
-                        value={budgetTotal}
-                        onChange={(val) => setBudgetTotal(val || 0)}
-                        formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        parser={(value) => value?.replace(/\$\s?|(,*)/g, '') as any}
-                        style={{ width: '100%', borderRadius: 8, height: 38, lineHeight: '36px', fontSize: 13, fontWeight: 700 }}
-                        suffix={<span style={{ color: '#4F46E5', fontWeight: 600 }}>VNĐ</span>}
-                      />
+                {/* Phần 1: Ngân sách & Hình thức chi trả */}
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={12}>
+                    <div className="ccreate-field-label">
+                      <span>Tổng ngân sách dự kiến (VND) <span className="req">*</span></span>
+                      <Tag color="blue" style={{ borderRadius: 6, fontSize: 11.5, fontWeight: 700, margin: 0 }}>
+                        {(budgetTotal / 1000000).toFixed(1)} Triệu VNĐ
+                      </Tag>
                     </div>
+                    <InputNumber
+                      value={budgetTotal}
+                      onChange={(val) => setBudgetTotal(val || 0)}
+                      formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={(value) => value?.replace(/\$\s?|(,*)/g, '') as any}
+                      style={{ width: '100%', borderRadius: 10, height: 42, lineHeight: '40px', fontSize: 14, fontWeight: 700 }}
+                      suffix={<span style={{ color: '#4F46E5', fontWeight: 700 }}>VNĐ</span>}
+                    />
+                  </Col>
 
-                    {/* Hình thức thù lao */}
-                    <div>
-                      <div className="ccreate-label">
-                        <span>Hình thức thù lao cho Creator</span>
-                      </div>
-                      <Select
-                        value={paymentModel}
-                        onChange={setPaymentModel}
-                        style={{ width: '100%', height: 36 }}
-                        options={[
-                          { value: 'cash', label: '💵 Trả phí cố định (Fixed Fee / Video)' },
-                          { value: 'product', label: '🎁 Đổi sản phẩm dùng thử (Gifting / Barter)' },
-                          { value: 'hybrid', label: '💎 Kết hợp: Phí cố định + Tặng sản phẩm + Affiliate' },
-                        ]}
-                      />
+                  <Col xs={24} md={12}>
+                    <div className="ccreate-field-label">
+                      <span>Hình thức thù lao cho Creator</span>
                     </div>
+                    <Select
+                      value={paymentModel}
+                      onChange={setPaymentModel}
+                      style={{ width: '100%', height: 42 }}
+                      options={[
+                        { value: 'cash', label: '💵 Trả phí cố định (Fixed Fee / Video)' },
+                        { value: 'product', label: '🎁 Đổi sản phẩm dùng thử (Gifting / Barter)' },
+                        { value: 'hybrid', label: '💎 Kết hợp: Phí cố định + Tặng quà + Affiliate' },
+                      ]}
+                    />
+                  </Col>
 
-                    {/* Hàng: Thời lượng & Hạn chót duyệt */}
-                    <Row gutter={[10, 10]}>
-                      <Col span={12}>
-                        <div className="ccreate-label">
-                          <span>Thời lượng chiến dịch</span>
-                        </div>
-                        <Select
-                          value={campaignDuration}
-                          onChange={setCampaignDuration}
-                          style={{ width: '100%', height: 36 }}
-                          options={[
-                            { value: '2_weeks', label: '⏱️ 2 tuần (Flash)' },
-                            { value: '4_weeks', label: '⏱️ 4 tuần (Chuẩn)' },
-                            { value: '8_weeks', label: '⏱️ 8 tuần (Dài hạn)' },
-                          ]}
-                        />
-                      </Col>
-                      <Col span={12}>
-                        <div className="ccreate-label">
-                          <span>Hạn chót duyệt kịch bản</span>
-                        </div>
+                  <Col xs={24} md={12}>
+                    <div className="ccreate-field-label">
+                      <span>Thời lượng chiến dịch</span>
+                    </div>
+                    <Select
+                      value={campaignDuration}
+                      onChange={setCampaignDuration}
+                      style={{ width: '100%', height: 40 }}
+                      options={[
+                        { value: '2_weeks', label: '⏱️ 2 tuần (Chiến dịch thần tốc / Flash campaign)' },
+                        { value: '4_weeks', label: '⏱️ 4 tuần (Khuyên dùng cho ra mắt sản phẩm)' },
+                        { value: '8_weeks', label: '⏱️ 8 tuần (Chiến dịch duy trì nhận diện dài hạn)' },
+                      ]}
+                    />
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <div className="ccreate-field-label">
+                      <span>Hạn chót duyệt kịch bản (Draft Deadline)</span>
+                    </div>
+                    <Input
+                      defaultValue="7 ngày sau khi Creator nhận sản phẩm"
+                      style={{ borderRadius: 10, height: 40, fontSize: 13 }}
+                    />
+                  </Col>
+                </Row>
+
+                {/* Phần 2: KPI Kỳ vọng */}
+                <div className="ccreate-sub-section">
+                  <div className="ccreate-sub-title">
+                    <span>Chỉ số KPI cam kết kỳ vọng</span>
+                    <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>
+                      Mục tiêu định lượng để đo lường hiệu quả
+                    </span>
+                  </div>
+
+                  <Row gutter={[14, 14]}>
+                    <Col xs={24} sm={8}>
+                      <div className="ccreate-kpi-card">
+                        <span className="ccreate-kpi-label">🎯 Lượt tiếp cận mục tiêu</span>
                         <Input
-                          defaultValue="7 ngày sau khi nhận SP"
-                          style={{ borderRadius: 8, height: 36, fontSize: 12 }}
+                          value={targetReach}
+                          onChange={(e) => setTargetReach(e.target.value)}
+                          style={{ borderRadius: 8, height: 38, fontWeight: 700, fontSize: 13 }}
                         />
-                      </Col>
-                    </Row>
+                      </div>
+                    </Col>
+
+                    <Col xs={24} sm={8}>
+                      <div className="ccreate-kpi-card">
+                        <span className="ccreate-kpi-label">📈 Tỷ lệ tương tác kỳ vọng</span>
+                        <Input
+                          value={targetEngagementRate}
+                          onChange={(e) => setTargetEngagementRate(e.target.value)}
+                          style={{ borderRadius: 8, height: 38, fontWeight: 700, fontSize: 13 }}
+                        />
+                      </div>
+                    </Col>
+
+                    <Col xs={24} sm={8}>
+                      <div className="ccreate-kpi-card">
+                        <span className="ccreate-kpi-label">🛒 Chuyển đổi đơn hàng ước tính</span>
+                        <InputNumber
+                          value={targetConversions}
+                          onChange={(val) => setTargetConversions(val || 0)}
+                          style={{ width: '100%', borderRadius: 8, height: 38, lineHeight: '36px', fontWeight: 700, fontSize: 13 }}
+                          suffix="đơn"
+                        />
+                      </div>
+                    </Col>
+                  </Row>
+                </div>
+
+                {/* Phần 3: Executive Overview Card */}
+                <div className="ccreate-sub-section">
+                  <div className="ccreate-sub-title">
+                    <span>Tóm tắt tổng quan chiến dịch</span>
+                    <span style={{ fontSize: 12, color: '#10B981', fontWeight: 600 }}>
+                      ✓ Sẵn sàng khởi chạy
+                    </span>
                   </div>
-                </Col>
 
-                {/* Cột 2: KPI & Tóm tắt tổng thể chiến dịch */}
-                <Col xs={24} lg={12}>
-                  <div className="ccreate-compact-card">
-                    <div className="ccreate-card-head">
-                      <div className="ccreate-card-head-left">
-                        <div className="ccreate-card-badge">2</div>
-                        <div>
-                          <div className="ccreate-card-title">KPI Mục tiêu & Xem trước</div>
-                          <div className="ccreate-card-sub">Chỉ số định lượng và tổng quan trước khi khởi chạy</div>
-                        </div>
-                      </div>
+                  <div className="ccreate-overview-card">
+                    <div className="ccreate-overview-item">
+                      <span className="ccreate-overview-item-label">Tên & Sản phẩm</span>
+                      <span className="ccreate-overview-item-val">{campaignName} — {product}</span>
                     </div>
-
-                    {/* KPI 3 ô ngang */}
-                    <Row gutter={[8, 8]}>
-                      <Col span={8}>
-                        <div style={{ background: '#F8FAFC', padding: '8px 10px', borderRadius: 8, border: '1px solid #E2E8F0' }}>
-                          <div style={{ fontSize: 10.5, color: '#64748B', marginBottom: 2 }}>Lượt tiếp cận</div>
-                          <Input
-                            value={targetReach}
-                            onChange={(e) => setTargetReach(e.target.value)}
-                            style={{ borderRadius: 6, height: 30, fontWeight: 700, fontSize: 12 }}
-                          />
-                        </div>
-                      </Col>
-                      <Col span={8}>
-                        <div style={{ background: '#F8FAFC', padding: '8px 10px', borderRadius: 8, border: '1px solid #E2E8F0' }}>
-                          <div style={{ fontSize: 10.5, color: '#64748B', marginBottom: 2 }}>📈 Tương tác</div>
-                          <Input
-                            value={targetEngagementRate}
-                            onChange={(e) => setTargetEngagementRate(e.target.value)}
-                            style={{ borderRadius: 6, height: 30, fontWeight: 700, fontSize: 12 }}
-                          />
-                        </div>
-                      </Col>
-                      <Col span={8}>
-                        <div style={{ background: '#F8FAFC', padding: '8px 10px', borderRadius: 8, border: '1px solid #E2E8F0' }}>
-                          <div style={{ fontSize: 10.5, color: '#64748B', marginBottom: 2 }}>🛒 Chuyển đổi</div>
-                          <InputNumber
-                            value={targetConversions}
-                            onChange={(val) => setTargetConversions(val || 0)}
-                            style={{ width: '100%', borderRadius: 6, height: 30, lineHeight: '28px', fontWeight: 700, fontSize: 12 }}
-                            suffix="đơn"
-                          />
-                        </div>
-                      </Col>
-                    </Row>
-
-                    {/* Executive Summary Box */}
-                    <div className="ccreate-summary-box">
-                      <div className="ccreate-summary-row">
-                        <span className="ccreate-summary-label">Chiến dịch & Sản phẩm:</span>
-                        <span className="ccreate-summary-val" style={{ maxWidth: '65%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {campaignName} — {product}
-                        </span>
-                      </div>
-                      <div className="ccreate-summary-row">
-                        <span className="ccreate-summary-label">Ngân sách & Thời lượng:</span>
-                        <span className="ccreate-summary-val" style={{ color: '#4F46E5' }}>
-                          {(budgetTotal / 1000000).toFixed(1)} Triệu VNĐ • {campaignDuration === '2_weeks' ? '2 tuần' : campaignDuration === '4_weeks' ? '4 tuần' : '8 tuần'}
-                        </span>
-                      </div>
-                      <div className="ccreate-summary-row">
-                        <span className="ccreate-summary-label">Nền tảng & KOC:</span>
-                        <span className="ccreate-summary-val">
-                          {selectedPlatforms.map(p => p.toUpperCase()).join(', ')} • {creatorQuantity} KOC ({creatorTier.toUpperCase()})
-                        </span>
-                      </div>
-                      <div className="ccreate-summary-row">
-                        <span className="ccreate-summary-label">Tệp khán giả:</span>
-                        <span className="ccreate-summary-val">
-                          {selectedAges.join(', ')} • {selectedGender === 'all' ? 'Tất cả' : selectedGender === 'female' ? 'Nữ' : 'Nam'} • {locationState}
-                        </span>
-                      </div>
+                    <div className="ccreate-overview-item">
+                      <span className="ccreate-overview-item-label">Ngân sách & Thời lượng</span>
+                      <span className="ccreate-overview-item-val" style={{ color: '#4F46E5' }}>
+                        {(budgetTotal / 1000000).toFixed(1)} Triệu VNĐ • {campaignDuration === '2_weeks' ? '2 tuần' : campaignDuration === '4_weeks' ? '4 tuần' : '8 tuần'}
+                      </span>
+                    </div>
+                    <div className="ccreate-overview-item">
+                      <span className="ccreate-overview-item-label">Nền tảng & Creator</span>
+                      <span className="ccreate-overview-item-val">
+                        {selectedPlatforms.map(p => p.toUpperCase()).join(', ')} • {creatorQuantity} {creatorTier.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="ccreate-overview-item">
+                      <span className="ccreate-overview-item-label">Khán giả & Khu vực</span>
+                      <span className="ccreate-overview-item-val">
+                        {selectedAges.join(', ')} • {selectedGender === 'all' ? 'Tất cả' : selectedGender === 'female' ? 'Nữ' : 'Nam'} • {locationState}
+                      </span>
                     </div>
                   </div>
-                </Col>
-              </Row>
+                </div>
+              </div>
             )}
           </div>
         </Col>
