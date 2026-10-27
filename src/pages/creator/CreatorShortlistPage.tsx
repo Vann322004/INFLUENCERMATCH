@@ -209,14 +209,7 @@ export default function CreatorShortlistPage() {
       let rawShortlistItems: { item: ShortlistItem; campaignName: string }[] = [];
 
       if (campId === 'all') {
-        // 1. Lấy từ tất cả local shortlist
-        const allLocal = creatorService.getLocalShortlist('all');
-        const localMapped = allLocal.map((it) => ({
-          item: it,
-          campaignName: currentCampaigns.find((c) => c.id === it.campaignId)?.name || 'Chiến dịch',
-        }));
-
-        // 2. Lấy từ backend theo từng chiến dịch
+        // Lấy danh sách shortlist thực tế từ Backend Database theo từng chiến dịch của Brand
         let fromBackend: { item: ShortlistItem; campaignName: string }[] = [];
         if (currentCampaigns.length > 0) {
           const results = await Promise.all(
@@ -235,7 +228,7 @@ export default function CreatorShortlistPage() {
         // Hợp nhất và loại trừ trùng lặp
         const seen = new Set<string>();
         const merged: { item: ShortlistItem; campaignName: string }[] = [];
-        [...fromBackend, ...localMapped].forEach((entry) => {
+        fromBackend.forEach((entry) => {
           const key = entry.item.creatorId || entry.item.id;
           if (key && !seen.has(key)) {
             seen.add(key);

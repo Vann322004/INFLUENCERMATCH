@@ -1093,14 +1093,8 @@ export default function CreatorDiscoveryPage() {
 
   // Dynamic Real Metrics tailored for Brand: Shortlisted Creators & Campaign Matching
   const shortlistedCount = useMemo(() => {
-    try {
-      const local = creatorService.getLocalShortlist(selectedCampaignId || 'all');
-      const inStateSaved = creators.filter((c) => c.saved).length;
-      return Math.max(local.length, inStateSaved);
-    } catch {
-      return creators.filter((c) => c.saved).length;
-    }
-  }, [creators, selectedCampaignId]);
+    return creators.filter((c) => c.saved).length;
+  }, [creators]);
 
   const matchingCreatorsCount = useMemo(() => {
     if (matchedCampaign) {

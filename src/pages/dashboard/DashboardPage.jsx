@@ -137,23 +137,21 @@ export default function DashboardPage() {
       dashboardCache.rawCreators = validCrList;
       dashboardCache.lastLoaded = Date.now();
 
-      // Compute Brand-specific shortlist items & count (Dành riêng cho Brand)
+      // Compute Brand-specific shortlist items & count trực tiếp từ Database
       try {
-        const localList = creatorService.getLocalShortlist ? creatorService.getLocalShortlist('all') : [];
-        let mergedShortlist = [...localList];
-
+        let backendShortlist = [];
         if (validCList.length > 0) {
           const backendLists = await Promise.all(
-            validCList.slice(0, 5).map((camp) => creatorService.getShortlist(camp.id).catch(() => []))
+            validCList.map((camp) => creatorService.getShortlist(camp.id).catch(() => []))
           );
           backendLists.forEach((list) => {
-            if (Array.isArray(list)) mergedShortlist.push(...list);
+            if (Array.isArray(list)) backendShortlist.push(...list);
           });
         }
 
         // Deduplicate shortlist by creatorId
         const uniqueShortlistMap = new Map();
-        mergedShortlist.forEach((item) => {
+        backendShortlist.forEach((item) => {
           const key = item.creatorId || item.id;
           if (key && !uniqueShortlistMap.has(key)) {
             uniqueShortlistMap.set(key, item);
@@ -166,7 +164,7 @@ export default function DashboardPage() {
         dashboardCache.shortlistItems = finalShortlist;
         dashboardCache.shortlistCount = finalShortlist.length;
       } catch {
-        // ignore storage error
+        // ignore error
       }
     } catch (err) {
       console.warn('Dashboard background refresh notice:', err);

@@ -117,161 +117,137 @@ export const creatorService = {
   },
 
   /**
-   * Helper: Lấy shortlist lưu trữ cục bộ cho chiến dịch
+   * Dọn dẹp cache cục bộ cũ để đảm bảo Database là nguồn dữ liệu duy nhất
    */
-  getLocalShortlist(campaignId: string): ShortlistItem[] {
+  clearLegacyLocalShortlist(): void {
     try {
-      if (campaignId === 'all') {
-        const all: ShortlistItem[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('IM_LOCAL_SHORTLIST_')) {
-            try {
-              const items: ShortlistItem[] = JSON.parse(localStorage.getItem(key) || '[]');
-              all.push(...items);
-            } catch {}
-          }
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('IM_LOCAL_SHORTLIST_') || key.startsWith('IM_SHORTLIST_'))) {
+          keysToRemove.push(key);
         }
-        return all;
       }
-      const raw = localStorage.getItem(`IM_LOCAL_SHORTLIST_${campaignId}`);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch {}
+  },
+
+  /**
+   * Helper tương thích cũ (Vô hiệu hóa cache cục bộ để 100% dữ liệu Shortlist được lấy trực tiếp từ Database)
+   */
+  getLocalShortlist(_campaignId: string): ShortlistItem[] {
+    return [];
+  },
+
+  /**
+   * Helper tương thích cũ (Không lưu vào localStorage để tránh lệch dữ liệu giữa các máy và Database)
+   */
+  saveLocalShortlist(_campaignId: string, _items: ShortlistItem[]): void {
+    // Không ghi vào localStorage
+  },
+
+  /**
+   * Lấy danh sách shortlist creator của một chiến dịch từ Backend Database
+   * Swagger: GET /campaigns/{campaignId}/shortlist
+   */
+  async getShortlist(campaignId: string): Promise<ShortlistItem[]> {
+    if (!campaignId || campaignId === 'all') {
+      return [];
+    }
+
+    try {
+      const response = await apiClient.get<ApiResponse<any>>(
+        `/campaigns/${campaignId}/shortlist`
+      );
+      const raw = response.data;
+      const d = (raw as any)?.data ?? raw;
+      const list = Array.isArray(d) ? d : (d?.content || d?.items || []);
+
+      return (list || []).map((it: any) => ({
+        id: it.id || it.shortlistItemId || it.creatorId,
+        campaignId: it.campaignId || campaignId,
+        creatorId: it.creatorId || it.id,
+        creatorName: it.creatorName || it.displayName || it.name || 'Creator',
+        avatarUrl: it.avatarUrl || it.avatar,
+        platform: it.platform || 'tiktok',
+        followers: it.followers || 0,
+        engagementRate: it.engagementRate || 0,
+        niche: it.niche,
+        priority: it.priority || 'HIGH',
+        note: it.note || '',
+        addedAt: it.addedAt || new Date().toISOString(),
+        status: it.status || 'SAVED',
+      }));
+    } catch (err) {
+      console.warn(`[creatorService] getShortlist từ backend cho campaign ${campaignId} lỗi:`, err);
       return [];
     }
   },
 
   /**
-   * Helper: Lưu shortlist cục bộ cho chiến dịch
-   */
-  saveLocalShortlist(campaignId: string, items: ShortlistItem[]): void {
-    try {
-      localStorage.setItem(`IM_LOCAL_SHORTLIST_${campaignId}`, JSON.stringify(items));
-    } catch {}
-  },
-
-  /**
-   * Lấy danh sách shortlist creator của một chiến dịch (kết hợp đồng bộ API backend và cache cục bộ)
-   */
-  async getShortlist(campaignId: string): Promise<ShortlistItem[]> {
-    let serverList: ShortlistItem[] = [];
-    if (campaignId && campaignId !== 'all') {
-      try {
-        const response = await apiClient.get<ApiResponse<any>>(
-          `/campaigns/${campaignId}/shortlist`
-        );
-        const raw = response.data;
-        const d = (raw as any)?.data ?? raw;
-        const list = Array.isArray(d) ? d : (d?.content || d?.items || []);
-        serverList = (list || []).map((it: any) => ({
-          id: it.id || it.shortlistItemId || `sl-${it.creatorId}`,
-          campaignId: it.campaignId || campaignId,
-          creatorId: it.creatorId || it.id,
-          creatorName: it.creatorName || it.displayName || it.name || 'Creator',
-          avatarUrl: it.avatarUrl || it.avatar,
-          platform: it.platform || 'tiktok',
-          followers: it.followers || 0,
-          engagementRate: it.engagementRate || 0,
-          niche: it.niche,
-          priority: it.priority || 'HIGH',
-          note: it.note || '',
-          addedAt: it.addedAt || new Date().toISOString(),
-          status: it.status || 'SAVED',
-        }));
-      } catch (err) {
-        console.warn(`[creatorService] getShortlist từ backend không thành công, sử dụng dữ liệu cục bộ:`, err);
-      }
-    }
-
-    // Kết hợp với danh sách đã lưu trữ cục bộ
-    const localList = this.getLocalShortlist(campaignId);
-    const mergedMap = new Map<string, ShortlistItem>();
-
-    // Ưu tiên đưa localList vào trước
-    localList.forEach((it) => {
-      const key = it.creatorId || it.id;
-      if (key) mergedMap.set(key, it);
-    });
-
-    // Cập nhật đè serverList lên để có thông tin mới nhất từ backend
-    serverList.forEach((it) => {
-      const key = it.creatorId || it.id;
-      if (key) mergedMap.set(key, it);
-    });
-
-    const finalResult = Array.from(mergedMap.values());
-    if (campaignId && campaignId !== 'all' && serverList.length > 0) {
-      this.saveLocalShortlist(campaignId, finalResult);
-    }
-    return finalResult;
-  },
-
-  /**
-   * Thêm creator vào danh sách shortlist của chiến dịch
+   * Thêm creator vào danh sách shortlist của chiến dịch và lưu trực tiếp xuống Database
+   * Swagger: POST /campaigns/{campaignId}/shortlist (hoặc /campaigns/{campaignId}/shortlist/items)
    */
   async addToShortlist(campaignId: string, payload: AddShortlistItemPayload): Promise<ShortlistItem> {
-    const localItem: ShortlistItem = {
-      id: `local-sl-${Date.now()}`,
-      campaignId,
+    const requestBody = {
       creatorId: payload.creatorId,
-      creatorName: payload.creatorName || 'Creator',
-      avatarUrl: payload.avatarUrl,
-      platform: payload.platform || 'tiktok',
-      followers: payload.followers || 0,
-      engagementRate: payload.engagementRate || 0,
-      niche: payload.niche,
       priority: payload.priority || 'HIGH',
       note: payload.note || '',
-      addedAt: new Date().toISOString(),
-      status: 'SAVED',
+      source: 'MANUAL_DISCOVERY',
     };
 
-    // Lưu vào local cache ngay lập tức để UI cập nhật không bị mất
-    const localList = this.getLocalShortlist(campaignId);
-    const existingIndex = localList.findIndex(
-      (it) => it.creatorId === payload.creatorId
-    );
-    if (existingIndex >= 0) {
-      localList[existingIndex] = { ...localList[existingIndex], ...localItem };
-    } else {
-      localList.unshift(localItem);
-    }
-    this.saveLocalShortlist(campaignId, localList);
-
-    // Gửi request lên Backend
+    let serverData: any = null;
     try {
       const response = await apiClient.post<ApiResponse<any>>(
         `/campaigns/${campaignId}/shortlist`,
-        {
-          creatorId: payload.creatorId,
-          priority: payload.priority,
-          note: payload.note,
-        }
+        requestBody
       );
-      const serverData = response.data?.data || response.data;
-      if (serverData?.id) {
-        localItem.id = serverData.id;
-        this.saveLocalShortlist(campaignId, localList);
+      serverData = response.data?.data || response.data;
+    } catch (err: any) {
+      // Fallback thử endpoint phụ /items nếu backend cấu hình theo REST resource
+      try {
+        const response2 = await apiClient.post<ApiResponse<any>>(
+          `/campaigns/${campaignId}/shortlist/items`,
+          requestBody
+        );
+        serverData = response2.data?.data || response2.data;
+      } catch (innerErr: any) {
+        console.error(`[creatorService] Backend addToShortlist thất bại khi lưu vào DB:`, innerErr || err);
+        throw innerErr || err;
       }
-      return serverData?.id ? serverData : localItem;
-    } catch (err) {
-      console.warn(`[creatorService] Backend addToShortlist lỗi/chưa có campaign trong DB, dùng local fallback:`, err);
-      return localItem;
     }
+
+    return {
+      id: serverData?.id || payload.creatorId,
+      campaignId: serverData?.campaignId || campaignId,
+      creatorId: serverData?.creatorId || payload.creatorId,
+      creatorName: serverData?.creatorName || payload.creatorName || 'Creator',
+      avatarUrl: serverData?.avatarUrl || payload.avatarUrl,
+      platform: serverData?.platform || payload.platform || 'tiktok',
+      followers: serverData?.followers ?? payload.followers ?? 0,
+      engagementRate: serverData?.engagementRate ?? payload.engagementRate ?? 0,
+      niche: serverData?.niche || payload.niche,
+      priority: serverData?.priority || payload.priority || 'HIGH',
+      note: serverData?.note || payload.note || '',
+      addedAt: serverData?.addedAt || new Date().toISOString(),
+      status: serverData?.status || 'SAVED',
+    };
   },
 
   /**
-   * Xóa creator khỏi shortlist của chiến dịch
+   * Xóa creator khỏi shortlist của chiến dịch trong Database
+   * Swagger: DELETE /campaigns/{campaignId}/shortlist/{shortlistItemId}
    */
   async removeFromShortlist(campaignId: string, shortlistItemId: string): Promise<void> {
-    const localList = this.getLocalShortlist(campaignId);
-    const filtered = localList.filter((it) => it.id !== shortlistItemId && it.creatorId !== shortlistItemId);
-    this.saveLocalShortlist(campaignId, filtered);
-
     try {
       await apiClient.delete(`/campaigns/${campaignId}/shortlist/${shortlistItemId}`);
-    } catch (err) {
-      console.warn('[creatorService] Backend removeFromShortlist lỗi:', err);
+    } catch (err: any) {
+      try {
+        await apiClient.delete(`/campaigns/${campaignId}/shortlist/items/${shortlistItemId}`);
+      } catch (innerErr: any) {
+        console.error('[creatorService] Backend removeFromShortlist lỗi khi xóa khỏi DB:', innerErr || err);
+        throw innerErr || err;
+      }
     }
   },
 
@@ -297,3 +273,9 @@ export const creatorService = {
     return response.data?.data || (response.data as unknown as InvitationResponse);
   },
 };
+
+// Tự động dọn dẹp các key cache cục bộ cũ để đảm bảo 100% dữ liệu đồng bộ từ Database
+try {
+  creatorService.clearLegacyLocalShortlist();
+} catch {}
+
