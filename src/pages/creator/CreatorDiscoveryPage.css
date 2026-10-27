@@ -645,9 +645,20 @@
 }
 
 /* ── Responsive Rules ── */
+@media (max-width: 1200px) {
+  .im-workflow-bottom-dock {
+    max-width: calc(100vw - 260px) !important;
+  }
+}
+
 @media (max-width: 992px) {
   .cdiscovery-dropdown-filters-row {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .im-workflow-bottom-dock {
+    left: 50% !important;
+    max-width: calc(100vw - 32px) !important;
+    bottom: 12px !important;
   }
 }
 
@@ -657,5 +668,9 @@
   }
   .cdiscovery-grid {
     grid-template-columns: 1fr;
+  }
+  .im-workflow-bottom-dock {
+    overflow-x: auto;
+    padding: 6px 10px !important;
   }
 }

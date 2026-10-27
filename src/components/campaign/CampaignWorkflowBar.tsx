@@ -1,5 +1,5 @@
-import React from 'react';
-import { Select, Button, Badge, Tag, Tooltip } from 'antd';
+import React, { useState } from 'react';
+import { Select, Button, Badge, Tooltip } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
   CheckCircleFilled,
@@ -8,7 +8,8 @@ import {
   AimOutlined,
   TeamOutlined,
   RightOutlined,
-  ArrowRightOutlined,
+  DownOutlined,
+  UpOutlined,
 } from '@ant-design/icons';
 
 export type WorkflowStep = 'create' | 'discovery' | 'shortlist' | 'recommendation' | 'crm';
@@ -31,45 +32,41 @@ export default function CampaignWorkflowBar({
   onSelectCampaign,
 }: CampaignWorkflowBarProps) {
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
 
   const activeId = campaignId || availableCampaigns[0]?.id || 'current';
   const displayName = campaignName || availableCampaigns.find((c) => c.id === activeId)?.name || 'Chiến dịch hiện tại';
 
-  // Steps definition - Chuẩn hóa Tiếng Việt và bỏ bớt các icon AI rườm rà
-  const steps: { key: WorkflowStep; stepNum: number; title: string; icon: React.ReactNode; path: string }[] = [
+  // 5 bước quy trình ngắn gọn, rõ ràng
+  const steps: { key: WorkflowStep; title: string; icon: React.ReactNode; path: string }[] = [
     {
       key: 'create',
-      stepNum: 1,
       title: 'Tạo Brief',
-      icon: <CheckCircleFilled style={{ color: currentStep === 'create' ? '#FFFFFF' : '#10B981' }} />,
+      icon: <CheckCircleFilled style={{ color: currentStep === 'create' ? '#FFFFFF' : '#10B981', fontSize: 13 }} />,
       path: '/campaigns/create',
     },
     {
       key: 'discovery',
-      stepNum: 2,
       title: 'Khám phá KOC',
-      icon: <CompassOutlined />,
+      icon: <CompassOutlined style={{ fontSize: 13 }} />,
       path: `/creators${activeId !== 'current' ? `?campaignId=${activeId}` : ''}`,
     },
     {
       key: 'shortlist',
-      stepNum: 3,
       title: 'Danh sách chọn',
-      icon: <UnorderedListOutlined />,
+      icon: <UnorderedListOutlined style={{ fontSize: 13 }} />,
       path: `/creators/shortlist${activeId !== 'current' ? `?campaignId=${activeId}` : ''}`,
     },
     {
       key: 'recommendation',
-      stepNum: 4,
       title: 'Đề xuất AI',
-      icon: <AimOutlined />,
+      icon: <AimOutlined style={{ fontSize: 13 }} />,
       path: activeId !== 'current' ? `/campaign-management/${activeId}?tab=recommendation` : '/recommendations?tab=recommendation',
     },
     {
       key: 'crm',
-      stepNum: 5,
       title: 'Tiếp cận CRM',
-      icon: <TeamOutlined />,
+      icon: <TeamOutlined style={{ fontSize: 13 }} />,
       path: activeId !== 'current' ? `/campaign-management/${activeId}` : '/crm',
     },
   ];
@@ -78,6 +75,46 @@ export default function CampaignWorkflowBar({
     navigate(step.path);
   };
 
+  // Trạng thái thu nhỏ (Mini Floating Pill)
+  if (collapsed) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 20,
+          left: 'calc(50% + 120px)',
+          transform: 'translateX(-50%)',
+          zIndex: 1000,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setCollapsed(false)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 16px',
+            background: 'rgba(15, 23, 42, 0.92)',
+            backdropFilter: 'blur(12px)',
+            color: '#FFFFFF',
+            border: 'none',
+            borderRadius: 999,
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+            cursor: 'pointer',
+            fontSize: 12.5,
+            fontWeight: 600,
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <span>🎯 Quy trình chiến dịch</span>
+          <UpOutlined style={{ fontSize: 11 }} />
+        </button>
+      </div>
+    );
+  }
+
+  // Trạng thái chuẩn: 1 hàng duy nhất cực kỳ thanh mảnh, hợp lý và êm mắt
   return (
     <div
       className="im-workflow-bottom-dock"
@@ -86,45 +123,27 @@ export default function CampaignWorkflowBar({
         bottom: 20,
         left: 'calc(50% + 120px)',
         transform: 'translateX(-50%)',
-        width: 'calc(100% - 300px)',
-        maxWidth: 1140,
-        minWidth: 320,
-        zIndex: 999,
-        background: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        width: 'fit-content',
+        maxWidth: 'calc(100vw - 280px)',
+        zIndex: 1000,
+        background: 'rgba(255, 255, 255, 0.96)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         border: '1px solid #E2E8F0',
-        borderRadius: 20,
-        boxShadow: '0 12px 36px -4px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(0, 0, 0, 0.04)',
-        padding: '10px 20px',
+        borderRadius: 999,
+        boxShadow: '0 8px 30px -4px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04)',
+        padding: '5px 8px 5px 14px',
         boxSizing: 'border-box',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-        flexWrap: 'wrap',
+        gap: 10,
+        flexWrap: 'nowrap',
+        whiteSpace: 'nowrap',
         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
-      {/* 1. Left: Active Campaign Selector */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 230, flexShrink: 0 }}>
-        <Tag
-          style={{
-            fontWeight: 800,
-            fontSize: 10.5,
-            borderRadius: 6,
-            padding: '2px 8px',
-            background: '#EEF2FF',
-            color: '#4F46E5',
-            borderColor: '#C7D2FE',
-            margin: 0,
-            letterSpacing: 0.5,
-            textTransform: 'uppercase',
-          }}
-        >
-          Quy trình
-        </Tag>
-
+      {/* 1. Chiến dịch đang chọn */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
         {availableCampaigns.length > 0 ? (
           <Select
             value={activeId}
@@ -139,11 +158,13 @@ export default function CampaignWorkflowBar({
               }
             }}
             popupMatchSelectWidth={false}
-            style={{ minWidth: 180, maxWidth: 260 }}
+            bordered={false}
+            size="small"
+            style={{ width: 170 }}
             options={availableCampaigns.map((c) => ({
               value: c.id,
               label: (
-                <span style={{ fontWeight: 600, color: '#0F172A', fontSize: 13 }}>
+                <span style={{ fontWeight: 700, color: '#0F172A', fontSize: 12.5 }}>
                   🎯 {c.name}
                 </span>
               ),
@@ -153,12 +174,13 @@ export default function CampaignWorkflowBar({
           <span
             style={{
               fontWeight: 700,
-              fontSize: 13.5,
+              fontSize: 12.5,
               color: '#0F172A',
-              maxWidth: 220,
+              maxWidth: 160,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
+              display: 'inline-block',
             }}
             title={displayName}
           >
@@ -167,20 +189,16 @@ export default function CampaignWorkflowBar({
         )}
       </div>
 
-      {/* 2. Center: Stepper (5 bước chuẩn mực) */}
+      {/* Vạch ngăn cách */}
+      <div style={{ height: 18, width: 1, background: '#E2E8F0', flexShrink: 0 }} />
+
+      {/* 2. Stepper 5 bước trên 1 hàng */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 6,
-          background: '#F8FAFC',
-          padding: '4px 10px',
-          borderRadius: 12,
-          border: '1px solid #E2E8F0',
-          flex: '1 1 auto',
-          justifyContent: 'center',
-          minWidth: 320,
-          flexWrap: 'wrap',
+          gap: 3,
+          flexShrink: 0,
         }}
       >
         {steps.map((st, idx) => {
@@ -193,23 +211,21 @@ export default function CampaignWorkflowBar({
                 type="button"
                 onClick={() => handleStepClick(st)}
                 style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 14px',
-                  borderRadius: 10,
+                  gap: 5,
+                  padding: isActive ? '5px 12px' : '5px 8px',
+                  borderRadius: 999,
                   border: 'none',
                   cursor: 'pointer',
                   background: isActive
                     ? 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)'
-                    : isCompleted
-                    ? '#EEF2FF'
                     : 'transparent',
-                  color: isActive ? '#FFFFFF' : isCompleted ? '#4338CA' : '#64748B',
+                  color: isActive ? '#FFFFFF' : isCompleted ? '#4F46E5' : '#64748B',
                   fontWeight: isActive ? 700 : isCompleted ? 600 : 500,
-                  fontSize: 12.5,
-                  boxShadow: isActive ? '0 3px 10px rgba(79, 70, 229, 0.25)' : 'none',
-                  transition: 'all 0.2s ease',
+                  fontSize: 12,
+                  boxShadow: isActive ? '0 2px 8px rgba(79, 70, 229, 0.25)' : 'none',
+                  transition: 'all 0.15s ease',
                 }}
               >
                 <span>{st.icon}</span>
@@ -223,9 +239,9 @@ export default function CampaignWorkflowBar({
                       fontWeight: 800,
                       boxShadow: 'none',
                       fontSize: 10,
-                      height: 18,
-                      lineHeight: '18px',
-                      minWidth: 18,
+                      height: 16,
+                      lineHeight: '16px',
+                      minWidth: 16,
                     }}
                   />
                 )}
@@ -234,7 +250,7 @@ export default function CampaignWorkflowBar({
               {idx < steps.length - 1 && (
                 <RightOutlined
                   style={{
-                    fontSize: 9,
+                    fontSize: 8,
                     color: isCompleted ? '#818CF8' : '#CBD5E1',
                     margin: '0 1px',
                   }}
@@ -245,23 +261,25 @@ export default function CampaignWorkflowBar({
         })}
       </div>
 
-      {/* 3. Right: Quick Action chuyển bước tiếp theo */}
-      <div style={{ flexShrink: 0 }}>
+      {/* Vạch ngăn cách */}
+      <div style={{ height: 18, width: 1, background: '#E2E8F0', flexShrink: 0 }} />
+
+      {/* 3. Nút chuyển tiếp nhanh (Next Action) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
         {currentStep === 'discovery' && (
           <Button
             type="primary"
-            size="middle"
-            icon={<ArrowRightOutlined />}
+            size="small"
             onClick={() => navigate(`/creators/shortlist${activeId !== 'current' ? `?campaignId=${activeId}` : ''}`)}
             style={{
-              height: 38,
-              borderRadius: 10,
+              height: 32,
+              borderRadius: 999,
               fontWeight: 700,
-              fontSize: 13,
+              fontSize: 12,
               background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
               border: 'none',
-              boxShadow: '0 3px 10px rgba(79, 70, 229, 0.25)',
-              padding: '0 18px',
+              boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
+              padding: '0 14px',
             }}
           >
             Sang Danh sách chọn {typeof shortlistCount === 'number' && shortlistCount > 0 ? `(${shortlistCount})` : ''} ➔
@@ -271,21 +289,20 @@ export default function CampaignWorkflowBar({
         {currentStep === 'shortlist' && (
           <Button
             type="primary"
-            size="middle"
-            icon={<AimOutlined />}
+            size="small"
             onClick={() => {
               const target = activeId !== 'current' ? activeId : '';
               navigate(target ? `/campaign-management/${target}?tab=recommendation` : '/recommendations?tab=recommendation');
             }}
             style={{
-              height: 38,
-              borderRadius: 10,
+              height: 32,
+              borderRadius: 999,
               fontWeight: 700,
-              fontSize: 13,
+              fontSize: 12,
               background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
               border: 'none',
-              boxShadow: '0 3px 10px rgba(124, 58, 237, 0.25)',
-              padding: '0 18px',
+              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
+              padding: '0 14px',
             }}
           >
             Sang Đề xuất AI ➔
@@ -295,26 +312,47 @@ export default function CampaignWorkflowBar({
         {currentStep === 'recommendation' && (
           <Button
             type="primary"
-            size="middle"
-            icon={<TeamOutlined />}
+            size="small"
             onClick={() => {
               const target = activeId !== 'current' ? activeId : '';
               navigate(target ? `/campaign-management/${target}` : '/crm');
             }}
             style={{
-              height: 38,
-              borderRadius: 10,
+              height: 32,
+              borderRadius: 999,
               fontWeight: 700,
-              fontSize: 13,
+              fontSize: 12,
               background: '#059669',
               border: 'none',
-              boxShadow: '0 3px 10px rgba(5, 150, 105, 0.25)',
-              padding: '0 18px',
+              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)',
+              padding: '0 14px',
             }}
           >
             Sang Tiếp cận CRM ➔
           </Button>
         )}
+
+        {/* Nút thu nhỏ */}
+        <Tooltip title="Thu nhỏ thanh điều hướng">
+          <button
+            type="button"
+            onClick={() => setCollapsed(true)}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              color: '#94A3B8',
+              cursor: 'pointer',
+              padding: '4px 6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              transition: 'color 0.2s',
+            }}
+          >
+            <DownOutlined style={{ fontSize: 11 }} />
+          </button>
+        </Tooltip>
       </div>
     </div>
   );
