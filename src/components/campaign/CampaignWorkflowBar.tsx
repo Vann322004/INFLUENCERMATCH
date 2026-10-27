@@ -33,7 +33,7 @@ export default function CampaignWorkflowBar({
   const activeId = campaignId || availableCampaigns[0]?.id || 'current';
   const displayName = campaignName || availableCampaigns.find((c) => c.id === activeId)?.name || 'Chiến dịch hiện tại';
 
-  // 5 bước quy trình dạng tiến trình số chuẩn mực
+  // 5 bước quy trình ngắn gọn, rõ ràng
   const steps: { key: WorkflowStep; stepNum: number; title: string; path: string }[] = [
     {
       key: 'create',
@@ -73,15 +73,17 @@ export default function CampaignWorkflowBar({
     navigate(step.path);
   };
 
-  // Trạng thái thu gọn (Mini Pill)
+  // Trạng thái thu gọn (Mini Pill Dock căn giữa 100%)
   if (collapsed) {
     return (
       <div
         style={{
           position: 'fixed',
-          bottom: 16,
-          left: 'calc(50% + 120px)',
-          transform: 'translateX(-50%)',
+          bottom: 20,
+          left: 0,
+          right: 0,
+          margin: '0 auto',
+          width: 'fit-content',
           zIndex: 1000,
         }}
       >
@@ -94,7 +96,7 @@ export default function CampaignWorkflowBar({
             gap: 6,
             height: 32,
             padding: '0 14px',
-            background: 'rgba(15, 23, 42, 0.9)',
+            background: 'rgba(15, 23, 42, 0.92)',
             backdropFilter: 'blur(12px)',
             color: '#FFFFFF',
             border: 'none',
@@ -103,6 +105,7 @@ export default function CampaignWorkflowBar({
             cursor: 'pointer',
             fontSize: 12,
             fontWeight: 600,
+            transition: 'all 0.2s ease',
           }}
         >
           <span>🎯 Tiến trình: {currentIdx + 1}/5</span>
@@ -112,37 +115,38 @@ export default function CampaignWorkflowBar({
     );
   }
 
-  // Dạng Thanh Tiến Trình Siêu Gọn (Slimline Progress Bar - Height 36px)
+  // Dạng Thanh Tiến Trình Căn Giữa 100% Cân Đối (Zero Horizontal Offset)
   return (
     <div
       className="im-workflow-bottom-dock"
       style={{
         position: 'fixed',
-        bottom: 16,
-        left: 'calc(50% + 120px)',
-        transform: 'translateX(-50%)',
+        bottom: 20,
+        left: 0,
+        right: 0,
+        margin: '0 auto',
         width: 'fit-content',
-        maxWidth: 'calc(100vw - 280px)',
-        height: 38,
+        maxWidth: 'calc(100vw - 40px)',
+        height: 42,
         zIndex: 1000,
-        background: 'rgba(255, 255, 255, 0.94)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        background: 'rgba(255, 255, 255, 0.96)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         border: '1px solid #E2E8F0',
         borderRadius: 999,
-        boxShadow: '0 6px 20px -2px rgba(15, 23, 42, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04)',
-        padding: '0 6px 0 12px',
+        boxShadow: '0 10px 30px -4px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04)',
+        padding: '0 8px 0 14px',
         boxSizing: 'border-box',
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
+        gap: 10,
         flexWrap: 'nowrap',
         whiteSpace: 'nowrap',
         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
-      {/* 1. Tên chiến dịch nhỏ gọn */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+      {/* 1. Chiến dịch đang chọn */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
         {availableCampaigns.length > 0 ? (
           <Select
             value={activeId}
@@ -159,11 +163,11 @@ export default function CampaignWorkflowBar({
             popupMatchSelectWidth={false}
             bordered={false}
             size="small"
-            style={{ width: 145 }}
+            style={{ width: 155 }}
             options={availableCampaigns.map((c) => ({
               value: c.id,
               label: (
-                <span style={{ fontWeight: 700, color: '#0F172A', fontSize: 12 }}>
+                <span style={{ fontWeight: 700, color: '#0F172A', fontSize: 12.5 }}>
                   🎯 {c.name}
                 </span>
               ),
@@ -173,12 +177,13 @@ export default function CampaignWorkflowBar({
           <span
             style={{
               fontWeight: 700,
-              fontSize: 12,
+              fontSize: 12.5,
               color: '#0F172A',
-              maxWidth: 140,
+              maxWidth: 150,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
+              display: 'inline-block',
             }}
             title={displayName}
           >
@@ -188,14 +193,14 @@ export default function CampaignWorkflowBar({
       </div>
 
       {/* Vạch ngăn cách */}
-      <div style={{ height: 14, width: 1, background: '#E2E8F0', flexShrink: 0 }} />
+      <div style={{ height: 16, width: 1, background: '#E2E8F0', flexShrink: 0 }} />
 
-      {/* 2. Thanh tiến trình 5 nấc siêu gọn */}
+      {/* 2. Stepper 5 bước trên 1 hàng */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 2,
+          gap: 3,
           flexShrink: 0,
         }}
       >
@@ -211,20 +216,23 @@ export default function CampaignWorkflowBar({
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 4,
-                  height: 26,
-                  padding: isActive ? '0 10px' : '0 6px',
+                  gap: 5,
+                  height: 28,
+                  padding: isActive ? '0 12px' : '0 8px',
                   borderRadius: 999,
                   border: 'none',
                   cursor: 'pointer',
-                  background: isActive ? '#4F46E5' : 'transparent',
+                  background: isActive
+                    ? 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)'
+                    : 'transparent',
                   color: isActive ? '#FFFFFF' : isCompleted ? '#4F46E5' : '#64748B',
                   fontWeight: isActive ? 700 : isCompleted ? 600 : 500,
-                  fontSize: 11.5,
+                  fontSize: 12,
+                  boxShadow: isActive ? '0 2px 8px rgba(79, 70, 229, 0.28)' : 'none',
                   transition: 'all 0.15s ease',
                 }}
               >
-                {/* Số thứ tự hoặc Icon đã hoàn thành */}
+                {/* Số thứ tự hoặc Icon check xanh */}
                 <span
                   style={{
                     width: 16,
@@ -233,17 +241,17 @@ export default function CampaignWorkflowBar({
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: 9.5,
+                    fontSize: 10,
                     fontWeight: 800,
                     background: isActive
                       ? '#FFFFFF'
                       : isCompleted
-                      ? '#EEF2FF'
+                      ? '#DCFCE7'
                       : '#F1F5F9',
                     color: isActive
                       ? '#4F46E5'
                       : isCompleted
-                      ? '#4F46E5'
+                      ? '#16A34A'
                       : '#94A3B8',
                   }}
                 >
@@ -262,9 +270,9 @@ export default function CampaignWorkflowBar({
                       fontWeight: 800,
                       boxShadow: 'none',
                       fontSize: 9.5,
-                      height: 15,
-                      lineHeight: '15px',
-                      minWidth: 15,
+                      height: 16,
+                      lineHeight: '16px',
+                      minWidth: 16,
                       padding: '0 4px',
                     }}
                   />
@@ -274,7 +282,7 @@ export default function CampaignWorkflowBar({
               {idx < steps.length - 1 && (
                 <RightOutlined
                   style={{
-                    fontSize: 7.5,
+                    fontSize: 8,
                     color: isCompleted ? '#818CF8' : '#CBD5E1',
                     margin: '0 1px',
                   }}
@@ -286,23 +294,24 @@ export default function CampaignWorkflowBar({
       </div>
 
       {/* Vạch ngăn cách */}
-      <div style={{ height: 14, width: 1, background: '#E2E8F0', flexShrink: 0 }} />
+      <div style={{ height: 16, width: 1, background: '#E2E8F0', flexShrink: 0 }} />
 
-      {/* 3. Nút chuyển tiếp nấc kế tiếp */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+      {/* 3. Nút chuyển tiếp nhanh (Next Action) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
         {currentStep === 'discovery' && (
           <Button
             type="primary"
             size="small"
             onClick={() => navigate(`/creators/shortlist${activeId !== 'current' ? `?campaignId=${activeId}` : ''}`)}
             style={{
-              height: 26,
+              height: 30,
               borderRadius: 999,
               fontWeight: 700,
-              fontSize: 11.5,
-              background: '#4F46E5',
+              fontSize: 12,
+              background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
               border: 'none',
-              padding: '0 12px',
+              boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
+              padding: '0 14px',
             }}
           >
             Sang Danh sách {typeof shortlistCount === 'number' && shortlistCount > 0 ? `(${shortlistCount})` : ''} ➔
@@ -318,13 +327,14 @@ export default function CampaignWorkflowBar({
               navigate(target ? `/campaign-management/${target}?tab=recommendation` : '/recommendations?tab=recommendation');
             }}
             style={{
-              height: 26,
+              height: 30,
               borderRadius: 999,
               fontWeight: 700,
-              fontSize: 11.5,
-              background: '#4F46E5',
+              fontSize: 12,
+              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
               border: 'none',
-              padding: '0 12px',
+              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
+              padding: '0 14px',
             }}
           >
             Sang Đề xuất AI ➔
@@ -340,13 +350,14 @@ export default function CampaignWorkflowBar({
               navigate(target ? `/campaign-management/${target}` : '/crm');
             }}
             style={{
-              height: 26,
+              height: 30,
               borderRadius: 999,
               fontWeight: 700,
-              fontSize: 11.5,
+              fontSize: 12,
               background: '#059669',
               border: 'none',
-              padding: '0 12px',
+              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)',
+              padding: '0 14px',
             }}
           >
             Sang Tiếp cận CRM ➔
@@ -368,9 +379,10 @@ export default function CampaignWorkflowBar({
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: '50%',
+              transition: 'color 0.2s',
             }}
           >
-            <DownOutlined style={{ fontSize: 9.5 }} />
+            <DownOutlined style={{ fontSize: 10 }} />
           </button>
         </Tooltip>
       </div>
