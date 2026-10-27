@@ -857,7 +857,7 @@ export default function CreatorShortlistPage() {
 
           <Button
             type="primary"
-            icon={<ThunderboltFilled />}
+            icon={<AimOutlined />}
             onClick={() => {
               const targetId =
                 selectedCampaign && selectedCampaign !== 'all'
@@ -868,14 +868,15 @@ export default function CreatorShortlistPage() {
               });
             }}
             style={{
-              background: 'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)',
-              borderColor: 'transparent',
+              background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+              border: 'none',
               fontWeight: 700,
-              borderRadius: 8,
-              boxShadow: '0 4px 14px rgba(168, 85, 247, 0.35)',
+              borderRadius: 10,
+              boxShadow: '0 4px 14px rgba(79, 70, 229, 0.25)',
+              height: 38,
             }}
           >
-            ⚡ Đề xuất AI Four-Memory ➔
+            Sang Đề xuất AI ➔
           </Button>
 
           <Button
@@ -896,7 +897,7 @@ export default function CreatorShortlistPage() {
             onClick={() => setViewMode('board')}
           >
             <UnorderedListOutlined />
-            <span>Bảng Shortlist</span>
+            <span>Danh sách KOC đã chọn</span>
             <span className="mode-count-badge">{filteredCreators.length}</span>
           </button>
 
@@ -904,13 +905,13 @@ export default function CreatorShortlistPage() {
             className={`mode-tab-btn ${viewMode === 'compare' ? 'active' : ''}`}
             onClick={() => {
               if (selectedCreators.length < 2) {
-                message.info('Mẹo: Hãy tick chọn ít nhất 2 Creator trên bảng Shortlist để so sánh trực quan nhất!');
+                message.info('Mẹo: Hãy tick chọn ít nhất 2 Creator trên danh sách để so sánh trực quan nhất!');
               }
               setViewMode('compare');
             }}
           >
             <BarChartOutlined />
-            <span>So sánh chi tiết</span>
+            <span>So sánh Creator</span>
             <span className="mode-count-badge highlight">
               {selectedCreators.length}/5 đã chọn
             </span>

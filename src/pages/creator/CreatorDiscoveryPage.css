@@ -12,6 +12,7 @@
   flex-direction: column;
   gap: 20px;
   box-sizing: border-box;
+  padding-bottom: 96px;
 }
 
 /* ── 1. Page Header Hero ── */

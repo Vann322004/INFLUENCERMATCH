@@ -46,11 +46,8 @@ import {
   EnvironmentOutlined,
   SaveOutlined,
   MessageOutlined,
-  RobotOutlined,
   CloseOutlined,
 } from '@ant-design/icons';
-import AiBriefAssistant from '../../components/ai/AiBriefAssistant';
-import type { StructuredBrief } from '../../components/ai/AiBriefAssistant';
 import ExternalDiscovery from '../../components/discovery/ExternalDiscovery';
 import AddToShortlistModal from '../../components/discovery/AddToShortlistModal';
 import { campaignService } from '../../services/api/campaignService';
@@ -873,18 +870,7 @@ message.success({
     };
   }, [matchedCampaign]);
 
-  // Apply AI Structured Brief to filters
-  const handleApplyBrief = (brief: StructuredBrief) => {
-    setSelectedCategory(brief.category);
-    if (brief.location !== 'all') {
-      setSelectedLocation(brief.location);
-    }
-    setEngagementTier(brief.engagement);
-    if (brief.price !== 'all') {
-      setPriceTier(brief.price);
-    }
-    setCurrentPage(1);
-  };
+
 
   // Request Refresh Creator stats: Đồng bộ dữ liệu thật từ Backend API (Không tăng ảo)
   const handleRequestRefresh = async () => {
@@ -1549,7 +1535,7 @@ message.success({
                 <div className="cdiscovery-search-box">
                   <div className="cdiscovery-search-mode-bar">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#475569' }}>Phương thức:</span>
+                      <span style={{ fontSize: 12.5, fontWeight: 600, color: '#475569' }}>Phương thức:</span>
                       <Radio.Group
                         value={searchMode}
                         onChange={(e) => setSearchMode(e.target.value)}
@@ -1557,18 +1543,13 @@ message.success({
                         size="small"
                       >
                         <Radio.Button value="standard" style={{ borderRadius: '6px 0 0 6px', fontWeight: 600, fontSize: 12 }}>
-                          🔍 Tìm kiếm thường
+                          Tìm kiếm cơ bản
                         </Radio.Button>
                         <Radio.Button value="semantic" style={{ borderRadius: '0 6px 6px 0', fontWeight: 600, fontSize: 12 }}>
-                          ⚡ Tìm AI ngữ nghĩa (Semantic)
+                          Tìm theo ngữ nghĩa
                         </Radio.Button>
                       </Radio.Group>
                     </div>
-                    {searchMode === 'semantic' && (
-                      <Tag color="purple" style={{ borderRadius: 999, fontSize: 11, fontWeight: 600, margin: 0 }}>
-                        Model BKAI 768-dim pgvector
-                      </Tag>
-                    )}
                   </div>
 
                   <div className="cdiscovery-search-input-group">
@@ -1586,23 +1567,17 @@ message.success({
                       }}
                       placeholder={
                         searchMode === 'semantic'
-                          ? 'Nhập mô tả phong cách KOC (Ví dụ: reviewer mỹ phẩm da nhạy cảm Gen Z, unbox phụ kiện công nghệ...)'
+                          ? 'Mô tả phong cách KOC mong muốn (ví dụ: reviewer mỹ phẩm Gen Z, unbox phụ kiện công nghệ...)'
                           : 'Tìm kiếm creator theo tên, username, phong cách hoặc từ khóa chuyên môn...'
                       }
-                      prefix={
-                        searchMode === 'semantic' ? (
-                          <RobotOutlined style={{ color: '#8B5CF6', fontSize: 16, marginRight: 8 }} />
-                        ) : (
-                          <SearchOutlined style={{ color: '#94A3B8', fontSize: 16, marginRight: 8 }} />
-                        )
-                      }
+                      prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 16, marginRight: 8 }} />}
                       allowClear
                       className="cdiscovery-search-input"
                     />
                     <Button
                       type="primary"
                       loading={isSemanticSearching}
-                      icon={searchMode === 'semantic' ? <ThunderboltFilled /> : <SearchOutlined />}
+                      icon={<SearchOutlined />}
                       onClick={() => {
                         if (searchMode === 'semantic') {
                           handleSemanticSearch();
@@ -1613,15 +1588,11 @@ message.success({
                       }}
                       className="cdiscovery-btn-search"
                       style={{
-                        background: searchMode === 'semantic'
-                          ? 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)'
-                          : '#2563EB',
-                        boxShadow: searchMode === 'semantic'
-                          ? '0 2px 10px rgba(99, 102, 241, 0.3)'
-                          : '0 2px 10px rgba(37, 99, 235, 0.3)',
+                        background: '#2563EB',
+                        boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
                       }}
                     >
-                      {searchMode === 'semantic' ? 'Tìm AI Vector' : 'Tìm kiếm'}
+                      Tìm kiếm
                     </Button>
                   </div>
                 </div>
@@ -2430,8 +2401,6 @@ message.success({
         }}
       />
 
-      {/* Floating AI Brief Assistant Chatbot Widget */}
-      <AiBriefAssistant onApplyBrief={handleApplyBrief} onReset={handleResetFilters} />
     </div>
   );
 }
