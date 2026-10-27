@@ -39,42 +39,44 @@ export default function AppHeader() {
 
   return (
     <Header className="app-header">
-      {/* Left: Breadcrumbs */}
-      <div className="header-breadcrumbs">
-        <span className="header-bc-root" onClick={() => navigate('/dashboard')}>
-          <HomeOutlined style={{ marginRight: 4, fontSize: 12 }} />
-          {pageInfo.root}
-        </span>
-        <RightOutlined style={{ fontSize: 9, color: '#94A3B8' }} />
-        {pageInfo.sub ? (
-          <>
-            <span
-              className="header-bc-root"
-              onClick={() => pageInfo.subLink && navigate(pageInfo.subLink)}
-            >
-              {pageInfo.sub}
-            </span>
-            <RightOutlined style={{ fontSize: 9, color: '#94A3B8' }} />
+      <div className="app-header-inner">
+        {/* Left: Breadcrumbs */}
+        <div className="header-breadcrumbs">
+          <span className="header-bc-root" onClick={() => navigate('/dashboard')}>
+            <HomeOutlined style={{ marginRight: 4, fontSize: 12 }} />
+            {pageInfo.root}
+          </span>
+          <RightOutlined style={{ fontSize: 9, color: '#94A3B8' }} />
+          {pageInfo.sub ? (
+            <>
+              <span
+                className="header-bc-root"
+                onClick={() => pageInfo.subLink && navigate(pageInfo.subLink)}
+              >
+                {pageInfo.sub}
+              </span>
+              <RightOutlined style={{ fontSize: 9, color: '#94A3B8' }} />
+              <span className="header-bc-current">{pageInfo.current}</span>
+            </>
+          ) : (
             <span className="header-bc-current">{pageInfo.current}</span>
-          </>
-        ) : (
-          <span className="header-bc-current">{pageInfo.current}</span>
-        )}
-      </div>
+          )}
+        </div>
 
-      {/* Right: Chuông thông báo duy nhất */}
-      <Tooltip title="Thông báo hệ thống">
-        <Badge dot color="#EF4444" offset={[-2, 2]} style={{ boxShadow: '0 0 0 2px #FFFFFF' }}>
-          <button
-            type="button"
-            className="standalone-action-btn"
-            onClick={() => setNotifOpen(true)}
-            aria-label="Thông báo hệ thống"
-          >
-            <BellOutlined style={{ fontSize: 16 }} />
-          </button>
-        </Badge>
-      </Tooltip>
+        {/* Right: Chuông thông báo duy nhất */}
+        <Tooltip title="Thông báo hệ thống">
+          <Badge dot color="#EF4444" offset={[-2, 2]} style={{ boxShadow: '0 0 0 2px #FFFFFF' }}>
+            <button
+              type="button"
+              className="standalone-action-btn"
+              onClick={() => setNotifOpen(true)}
+              aria-label="Thông báo hệ thống"
+            >
+              <BellOutlined style={{ fontSize: 16 }} />
+            </button>
+          </Badge>
+        </Tooltip>
+      </div>
 
       {/* Notification Drawer Component */}
       <NotificationDrawer open={notifOpen} onClose={() => setNotifOpen(false)} />

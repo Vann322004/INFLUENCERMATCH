@@ -82,14 +82,16 @@ function MainLayout({ children }: { children: React.ReactNode }) {
         <Content
           style={{
             background: '#F5F6FA',
-            padding: '8px 24px 24px 24px',
+            padding: '12px 24px 32px 24px',
             overflow: 'visible',
             boxSizing: 'border-box',
             minWidth: 0,
             width: '100%',
           }}
         >
-          {children}
+          <div className="app-page-wrapper">
+            {children}
+          </div>
         </Content>
       </Layout>
     </Layout>
