@@ -2186,39 +2186,43 @@ export default function CreatorDiscoveryPage() {
 
                         <Button
                           onClick={(e) => handleOpenShortlist(creator, e)}
-                          icon={creator.saved ? <HeartFilled style={{ color: '#EF4444' }} /> : <HeartOutlined />}
+                          icon={creator.saved ? <HeartFilled style={{ color: '#EF4444' }} /> : <HeartOutlined style={{ color: '#4F46E5' }} />}
                           className="cdiscovery-card-btn-secondary"
                           style={{
-                            color: creator.saved ? '#EF4444' : '#334155',
-                            borderColor: creator.saved ? '#FECDD3' : '#E2E8F0',
+                            color: creator.saved ? '#EF4444' : '#4F46E5',
+                            borderColor: creator.saved ? '#FECDD3' : '#E0E7FF',
                             background: creator.saved ? '#FFF1F2' : '#FFFFFF',
                           }}
                         >
                           {creator.saved ? 'Đã lưu' : 'Shortlist'}
                         </Button>
 
-                        <Button
-                          onClick={() => {
-                            setSelectedCreator(creator);
-                            setDrawerVisible(true);
-                          }}
-                          className="cdiscovery-card-btn-secondary"
-                          style={{ padding: '0 12px' }}
-                        >
-                          Xem nhanh
-                        </Button>
+                        <Tooltip title="Xem nhanh tóm tắt & kênh">
+                          <Button
+                            icon={<EyeOutlined />}
+                            onClick={() => {
+                              setSelectedCreator(creator);
+                              setDrawerVisible(true);
+                            }}
+                            className="cdiscovery-card-btn-icon"
+                          />
+                        </Tooltip>
 
                         <Dropdown
                           menu={{
                             items: [
+                              { key: 'preview', label: 'Xem nhanh tóm tắt', icon: <EyeOutlined /> },
                               { key: 'shortlist', label: 'Thêm vào Shortlist', icon: <SaveOutlined /> },
-                              { key: 'message', label: 'Gửi tin nhắn', icon: <MessageOutlined /> },
                               { key: 'invite', label: 'Mời vào chiến dịch', icon: <ThunderboltOutlined /> },
+                              { key: 'message', label: 'Gửi tin nhắn', icon: <MessageOutlined /> },
                               { key: 'share', label: 'Chia sẻ hồ sơ', icon: <GlobalOutlined /> },
                             ],
                             onClick: ({ key, domEvent }) => {
                               domEvent.stopPropagation();
-                              if (key === 'shortlist' || key === 'invite') {
+                              if (key === 'preview') {
+                                setSelectedCreator(creator);
+                                setDrawerVisible(true);
+                              } else if (key === 'shortlist' || key === 'invite') {
                                 handleOpenShortlist(creator);
                               } else if (key === 'share') {
                                 navigator.clipboard?.writeText(window.location.origin + '/creators/' + creator.id);
@@ -2230,11 +2234,12 @@ export default function CreatorDiscoveryPage() {
                           }}
                           trigger={['click']}
                         >
-                          <Button
-                            icon={<MoreOutlined />}
-                            className="cdiscovery-card-btn-secondary"
-                            style={{ width: 38, padding: 0, color: '#64748B' }}
-                          />
+                          <Tooltip title="Tùy chọn khác (Nhắn tin, Mời, Chia sẻ)">
+                            <Button
+                              icon={<MoreOutlined />}
+                              className="cdiscovery-card-btn-icon"
+                            />
+                          </Tooltip>
                         </Dropdown>
                       </div>
                     </Card>

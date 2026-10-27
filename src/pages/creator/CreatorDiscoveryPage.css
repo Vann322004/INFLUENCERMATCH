@@ -580,6 +580,7 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  width: 100%;
 }
 
 .cdiscovery-card-btn-primary {
@@ -588,12 +589,21 @@
   border-radius: 10px !important;
   font-weight: 700 !important;
   font-size: 13px !important;
-  background: #4F46E5 !important;
+  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%) !important;
   border: none !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .cdiscovery-card-btn-primary:hover {
-  background: #4338CA !important;
+  background: linear-gradient(135deg, #4338CA 0%, #4F46E5 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
 }
 
 .cdiscovery-card-btn-secondary {
@@ -601,14 +611,45 @@
   border-radius: 10px !important;
   font-weight: 600 !important;
   font-size: 12.5px !important;
-  border-color: #E2E8F0 !important;
+  border: 1px solid #E2E8F0 !important;
   color: #334155 !important;
+  background: #FFFFFF !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px !important;
 }
 
 .cdiscovery-card-btn-secondary:hover {
-  border-color: #CBD5E1 !important;
-  color: #0F172A !important;
-  background: #F8FAFC !important;
+  border-color: #C7D2FE !important;
+  color: #4F46E5 !important;
+  background: #EEF2FF !important;
+}
+
+/* Icon action buttons (Xem nhanh & Thêm tùy chọn) */
+.cdiscovery-card-btn-icon {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  border: 1px solid #E2E8F0 !important;
+  background: #FFFFFF !important;
+  color: #64748B !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer;
+}
+
+.cdiscovery-card-btn-icon:hover {
+  border-color: #C7D2FE !important;
+  color: #4F46E5 !important;
+  background: #EEF2FF !important;
+  transform: translateY(-1px);
 }
 
 /* ── 6. Creator Cards (List View) ── */
