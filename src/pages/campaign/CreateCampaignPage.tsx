@@ -24,6 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
 import { getErrorMessage } from '../../services/apiClient';
 import type { CampaignObjective, CampaignPlatform } from '../../types/api/campaign.types';
+import './CreateCampaignPage.css';
 import {
   RightOutlined,
   LeftOutlined,
@@ -534,251 +535,126 @@ export default function CreateCampaignPage() {
   const readinessPercent = currentStep === 1 ? 65 : currentStep === 2 ? 85 : 100;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 80 }}>
+    <div className="ccreate-container">
       {/* 1. Header Section */}
-      <div>
-        <Title
-          level={2}
-          style={{
-            fontWeight: 800,
-            fontSize: 26,
-            color: '#0F172A',
-            margin: '0 0 4px 0',
-            letterSpacing: -0.5,
-          }}
+      <div className="ccreate-header">
+        <div className="ccreate-title-wrap">
+          <h1>Tạo chiến dịch mới</h1>
+          <p>
+            Thiết lập thông tin chiến dịch để AI gợi ý chiến lược, đối tượng và tối ưu hóa hiệu quả thực thi.
+          </p>
+        </div>
+
+        {/* Executive Readiness Pill */}
+        <div
+          className="ccreate-readiness-pill"
+          onClick={() => setIsAiSummaryOpen(!isAiSummaryOpen)}
+          title="Xem đánh giá & Gợi ý từ AI"
         >
-          Tạo chiến dịch mới
-        </Title>
-        <Text style={{ color: '#64748B', fontSize: 13 }}>
-          Thiết lập thông tin chiến dịch để AI giúp bạn tìm đúng creator, tối ưu hiệu quả và đạt mục tiêu thương hiệu.
-        </Text>
+          <Progress
+            type="circle"
+            percent={readinessPercent}
+            size={34}
+            strokeWidth={8}
+            strokeColor="#4F46E5"
+            format={(pct) => (
+              <span style={{ fontSize: 10, fontWeight: 800, color: '#4F46E5' }}>{pct}%</span>
+            )}
+          />
+          <div className="ccreate-readiness-text">
+            <span className="ccreate-readiness-label">Độ sẵn sàng: {readinessPercent}%</span>
+            <span className="ccreate-readiness-sub">
+              {isAiSummaryOpen ? 'Đóng gợi ý AI ▴' : 'Gợi ý từ AI ▸'}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* 2. Top Interactive Wizard Steps Bar */}
-      <Card
-        bordered
-        style={{
-          borderRadius: 14,
-          borderColor: '#EEF0F6',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
-        }}
-        bodyStyle={{ padding: '14px 24px' }}
-      >
-        <Row align="middle" justify="space-between">
+      <div className="ccreate-stepper-card">
+        <div className="ccreate-stepper-grid">
           {/* Step 1 */}
-          <Col
-            xs={24}
-            md={7}
+          <div
+            className={`ccreate-step-item ${currentStep === 1 ? 'active' : currentStep > 1 ? 'completed' : ''}`}
             onClick={() => {
               setCurrentStep(1);
               scrollToTop();
             }}
-            style={{ cursor: 'pointer' }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  background: currentStep >= 1 ? '#2563EB' : '#F1F5F9',
-                  color: currentStep >= 1 ? '#FFFFFF' : '#94A3B8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: 14,
-                  flexShrink: 0,
-                  boxShadow: currentStep === 1 ? '0 2px 8px rgba(37, 99, 235, 0.35)' : 'none',
-                }}
-              >
-                {currentStep > 1 ? <CheckOutlined /> : '1'}
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontWeight: 700,
-                    fontSize: 13,
-                    color: currentStep === 1 ? '#2563EB' : '#0F172A',
-                  }}
-                >
-                  Thông tin chiến dịch
-                </div>
-                <div style={{ fontSize: 11, color: '#64748B' }}>Tên, sản phẩm, mục tiêu</div>
-              </div>
+            <div className="ccreate-step-num">
+              {currentStep > 1 ? <CheckOutlined /> : '1'}
             </div>
-          </Col>
+            <div className="ccreate-step-info">
+              <span className="ccreate-step-title">Thông tin chiến dịch</span>
+              <span className="ccreate-step-desc">Tên, sản phẩm, mục tiêu</span>
+            </div>
+          </div>
 
-          <Col xs={0} md={1} style={{ textAlign: 'center' }}>
-            <RightOutlined style={{ color: currentStep >= 2 ? '#2563EB' : '#CBD5E1', fontSize: 12 }} />
-          </Col>
+          <div className={`ccreate-stepper-connector ${currentStep >= 2 ? 'active' : ''}`} />
 
           {/* Step 2 */}
-          <Col
-            xs={24}
-            md={7}
+          <div
+            className={`ccreate-step-item ${currentStep === 2 ? 'active' : currentStep > 2 ? 'completed' : ''}`}
             onClick={() => {
               setCurrentStep(2);
               scrollToTop();
             }}
-            style={{ cursor: 'pointer' }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  background: currentStep >= 2 ? '#2563EB' : '#F1F5F9',
-                  color: currentStep >= 2 ? '#FFFFFF' : '#94A3B8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: 14,
-                  flexShrink: 0,
-                  boxShadow: currentStep === 2 ? '0 2px 8px rgba(37, 99, 235, 0.35)' : 'none',
-                }}
-              >
-                {currentStep > 2 ? <CheckOutlined /> : '2'}
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontWeight: currentStep >= 2 ? 700 : 600,
-                    fontSize: 13,
-                    color: currentStep === 2 ? '#2563EB' : currentStep > 2 ? '#0F172A' : '#64748B',
-                  }}
-                >
-                  Yêu cầu creator
-                </div>
-                <div style={{ fontSize: 11, color: '#94A3B8' }}>Đối tượng, nội dung, tiêu chí</div>
-              </div>
+            <div className="ccreate-step-num">
+              {currentStep > 2 ? <CheckOutlined /> : '2'}
             </div>
-          </Col>
+            <div className="ccreate-step-info">
+              <span className="ccreate-step-title">Yêu cầu Creator</span>
+              <span className="ccreate-step-desc">Đối tượng, nội dung, tiêu chí</span>
+            </div>
+          </div>
 
-          <Col xs={0} md={1} style={{ textAlign: 'center' }}>
-            <RightOutlined style={{ color: currentStep >= 3 ? '#2563EB' : '#CBD5E1', fontSize: 12 }} />
-          </Col>
+          <div className={`ccreate-stepper-connector ${currentStep >= 3 ? 'active' : ''}`} />
 
           {/* Step 3 */}
-          <Col
-            xs={24}
-            md={7}
+          <div
+            className={`ccreate-step-item ${currentStep === 3 ? 'active' : ''}`}
             onClick={() => {
               setCurrentStep(3);
               scrollToTop();
             }}
-            style={{ cursor: 'pointer' }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  background: currentStep === 3 ? '#2563EB' : '#F1F5F9',
-                  color: currentStep === 3 ? '#FFFFFF' : '#94A3B8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: 14,
-                  flexShrink: 0,
-                  boxShadow: currentStep === 3 ? '0 2px 8px rgba(37, 99, 235, 0.35)' : 'none',
-                }}
-              >
-                3
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontWeight: currentStep === 3 ? 700 : 600,
-                    fontSize: 13,
-                    color: currentStep === 3 ? '#2563EB' : '#64748B',
-                  }}
-                >
-                  Chỉ số & ngân sách
-                </div>
-                <div style={{ fontSize: 11, color: '#94A3B8' }}>KPI, ngân sách, thời gian</div>
-              </div>
+            <div className="ccreate-step-num">3</div>
+            <div className="ccreate-step-info">
+              <span className="ccreate-step-title">Chỉ số & Ngân sách</span>
+              <span className="ccreate-step-desc">KPI, ngân sách, thời gian</span>
             </div>
-          </Col>
-        </Row>
-      </Card>
+          </div>
+        </div>
+      </div>
 
       {/* 3. Main Content: Dynamic Form Blocks */}
       <Row gutter={[20, 20]}>
-        {/* ===================== FULL WIDTH FORM COLUMN ===================== */}
         <Col xs={24}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            {/* AI Assistant Banner Box */}
-            <Card
-              bordered
-              style={{
-                borderRadius: 16,
-                background: 'linear-gradient(135deg, #F3E8FF 0%, #EEF2FF 100%)',
-                borderColor: '#DDD6FE',
-                boxShadow: '0 4px 16px rgba(139, 92, 246, 0.08)',
-              }}
-              bodyStyle={{ padding: '18px 22px' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      background: '#7C3AED',
-                      color: '#FFFFFF',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 13,
-                      fontWeight: 800,
-                    }}
-                  >
-                    <RobotOutlined style={{ fontSize: 14 }} />
+            {/* AI Assistant Studio Card */}
+            <div className="ccreate-ai-card">
+              <div className="ccreate-ai-header">
+                <div className="ccreate-ai-title-group">
+                  <div className="ccreate-ai-icon-circle">
+                    <ThunderboltFilled />
                   </div>
-                  <span style={{ fontWeight: 800, fontSize: 14.5, color: '#0F172A' }}>
-                    Trợ lý AI Chiến dịch
-                  </span>
-                  <Tag
-                    color="purple"
-                    style={{
-                      borderRadius: 999,
-                      fontWeight: 600,
-                      fontSize: 11,
-                      padding: '1px 8px',
-                      background: '#EDE9FE',
-                      borderColor: '#DDD6FE',
-                      color: '#6D28D9',
-                      margin: 0,
-                    }}
-                  >
-                    Trợ lý AI
-                  </Tag>
+                  <span className="ccreate-ai-title">Trợ lý AI Chiến dịch</span>
+                  <span className="ccreate-ai-tag">AI Tối ưu</span>
                 </div>
               </div>
 
-              <Text style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 14 }}>
-                Hãy mô tả ngắn gọn về mục tiêu của bạn, AI sẽ gợi ý chiến lược, đối tượng và creator phù hợp nhất.
-              </Text>
+              <p className="ccreate-ai-sub">
+                Mô tả ý tưởng hoặc chọn mẫu nhanh bên dưới để AI tự động trích xuất các tiêu chí và đề xuất chiến lược phù hợp nhất.
+              </p>
 
               {/* AI Input Row */}
-              <div style={{ display: 'flex', gap: 10 }}>
+              <div className="ccreate-ai-input-row">
                 <Input
                   value={aiPrompt}
                   onChange={(e) => setAiPrompt(e.target.value)}
                   placeholder="Ví dụ: Quảng bá dòng kem dưỡng phục hồi da dành cho giới trẻ 18-24 tuổi tại Hà Nội và TP.HCM, ngân sách tầm 25 triệu trên TikTok và Instagram..."
-                  style={{
-                    borderRadius: 10,
-                    background: '#FFFFFF',
-                    borderColor: '#DDD6FE',
-                    height: 42,
-                    fontSize: 13,
-                  }}
+                  className="ccreate-ai-input"
                   onPressEnter={() => handleAiSuggest()}
                 />
                 <Button
@@ -786,46 +662,27 @@ export default function CreateCampaignPage() {
                   icon={<ThunderboltFilled />}
                   loading={isAiLoading}
                   onClick={() => handleAiSuggest()}
-                  style={{
-                    background: '#5B5BF0',
-                    fontWeight: 700,
-                    borderRadius: 10,
-                    height: 42,
-                    padding: '0 20px',
-                    boxShadow: '0 4px 12px rgba(91, 91, 240, 0.3)',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
+                  className="ccreate-ai-btn"
                 >
                   Phân tích bằng AI
                 </Button>
               </div>
 
               {/* Sample Prompt Chips */}
-              <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 11.5, color: '#64748B', fontWeight: 600 }}>Gợi ý nhanh:</span>
+              <div className="ccreate-ai-pills-row">
+                <span className="ccreate-ai-pills-label">Gợi ý nhanh:</span>
                 {AI_SAMPLE_PROMPTS.map((item, idx) => (
-                  <Tag
+                  <button
+                    type="button"
                     key={idx}
+                    className="ccreate-ai-pill-btn"
                     onClick={() => {
                       setAiPrompt(item.prompt);
                       handleAiSuggest(item.prompt);
                     }}
-                    style={{
-                      cursor: 'pointer',
-                      fontSize: 11.5,
-                      padding: '2px 10px',
-                      borderRadius: 999,
-                      background: '#FFFFFF',
-                      borderColor: '#DDD6FE',
-                      color: '#6D28D9',
-                      transition: 'all 0.2s ease',
-                    }}
                   >
                     {item.label}
-                  </Tag>
+                  </button>
                 ))}
               </div>
 
@@ -891,7 +748,7 @@ export default function CreateCampaignPage() {
                   showIcon={false}
                 />
               )}
-            </Card>
+            </div>
 
             {/* ========================================================================= */}
             {/* ============================ BƯỚC 1 CONTENT ============================= */}
@@ -901,21 +758,21 @@ export default function CreateCampaignPage() {
                 {/* Block 1: Thông tin chiến dịch & mục tiêu */}
                 <Card
                   bordered
-                  style={{ borderRadius: 16, borderColor: '#EEF0F6' }}
-                  bodyStyle={{ padding: '22px' }}
+                  style={{ borderRadius: 16, borderColor: '#E2E8F0', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)' }}
+                  bodyStyle={{ padding: '24px' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 18 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20 }}>
                     <div
                       style={{
-                        width: 24,
-                        height: 24,
+                        width: 28,
+                        height: 28,
                         borderRadius: '50%',
-                        background: '#2563EB',
-                        color: '#FFFFFF',
+                        background: '#EEF2FF',
+                        color: '#4F46E5',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: 12,
+                        fontSize: 13,
                         fontWeight: 800,
                         marginTop: 2,
                         flexShrink: 0,
@@ -924,11 +781,11 @@ export default function CreateCampaignPage() {
                       1
                     </div>
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A' }}>
+                      <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A' }}>
                         Thông tin chiến dịch & mục tiêu
                       </div>
-                      <div style={{ fontSize: 12, color: '#64748B' }}>
-                        Cung cấp thông tin cơ bản để chúng tôi hiểu rõ về chiến dịch của bạn.
+                      <div style={{ fontSize: 12.5, color: '#64748B' }}>
+                        Cung cấp thông tin cơ bản để hệ thống hiểu rõ về chiến dịch của bạn.
                       </div>
                     </div>
                   </div>
@@ -1162,33 +1019,33 @@ export default function CreateCampaignPage() {
                 {/* Block 1: Chân dung & Tiêu chí Creator */}
                 <Card
                   bordered
-                  style={{ borderRadius: 16, borderColor: '#EEF0F6' }}
-                  bodyStyle={{ padding: '22px' }}
+                  style={{ borderRadius: 16, borderColor: '#E2E8F0', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)' }}
+                  bodyStyle={{ padding: '24px' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 18 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20 }}>
                     <div
                       style={{
-                        width: 24,
-                        height: 24,
+                        width: 28,
+                        height: 28,
                         borderRadius: '50%',
-                        background: '#2563EB',
-                        color: '#FFFFFF',
+                        background: '#EEF2FF',
+                        color: '#4F46E5',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: 12,
+                        fontSize: 13,
                         fontWeight: 800,
                         marginTop: 2,
                         flexShrink: 0,
                       }}
                     >
-                      1
+                      2
                     </div>
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A' }}>
+                      <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A' }}>
                         Tiêu chí lựa chọn Creator
                       </div>
-                      <div style={{ fontSize: 12, color: '#64748B' }}>
+                      <div style={{ fontSize: 12.5, color: '#64748B' }}>
                         Xác định số lượng, quy mô và chất lượng creator bạn muốn hợp tác.
                       </div>
                     </div>
@@ -1471,33 +1328,33 @@ export default function CreateCampaignPage() {
                 {/* Block 1: Ngân sách chiến dịch */}
                 <Card
                   bordered
-                  style={{ borderRadius: 16, borderColor: '#EEF0F6' }}
-                  bodyStyle={{ padding: '22px' }}
+                  style={{ borderRadius: 16, borderColor: '#E2E8F0', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)' }}
+                  bodyStyle={{ padding: '24px' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 18 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 20 }}>
                     <div
                       style={{
-                        width: 24,
-                        height: 24,
+                        width: 28,
+                        height: 28,
                         borderRadius: '50%',
-                        background: '#2563EB',
-                        color: '#FFFFFF',
+                        background: '#EEF2FF',
+                        color: '#4F46E5',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: 12,
+                        fontSize: 13,
                         fontWeight: 800,
                         marginTop: 2,
                         flexShrink: 0,
                       }}
                     >
-                      1
+                      3
                     </div>
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A' }}>
+                      <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A' }}>
                         Ngân sách & Hình thức chi trả
                       </div>
-                      <div style={{ fontSize: 12, color: '#64748B' }}>
+                      <div style={{ fontSize: 12.5, color: '#64748B' }}>
                         Thiết lập tổng ngân sách phân bổ cho các creator trong chiến dịch.
                       </div>
                     </div>
@@ -1680,163 +1537,66 @@ export default function CreateCampaignPage() {
         </Col>
       </Row>
 
-      {/* 4. Floating AI Assessment & Readiness FAB Widget */}
-      <Tooltip title={isAiSummaryOpen ? 'Đóng đánh giá AI' : 'Xem đánh giá & gợi ý AI cho chiến dịch'} placement="left">
-        <button
-          type="button"
-          onClick={() => setIsAiSummaryOpen(!isAiSummaryOpen)}
-          aria-label="Đánh giá chiến dịch bằng AI"
-          style={{
-            position: 'fixed',
-            bottom: 84,
-            right: 28,
-            width: 64,
-            height: 64,
-            borderRadius: '50%',
-            background: isAiSummaryOpen
-              ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)'
-              : 'linear-gradient(135deg, #7C3AED 0%, #6366F1 100%)',
-            boxShadow: isAiSummaryOpen
-              ? '0 8px 24px rgba(239, 68, 68, 0.45)'
-              : '0 8px 28px rgba(124, 58, 237, 0.45), 0 2px 8px rgba(0, 0, 0, 0.12)',
-            border: '2.5px solid #FFFFFF',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            zIndex: 1050,
-            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-            transform: isAiSummaryOpen ? 'scale(0.95)' : 'scale(1)',
-            outline: 'none',
-            padding: 0,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = isAiSummaryOpen ? 'scale(1)' : 'scale(1.08)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = isAiSummaryOpen ? 'scale(0.95)' : 'scale(1)';
-          }}
-        >
-          {isAiSummaryOpen ? (
-            <CloseOutlined style={{ fontSize: 22, color: '#FFFFFF' }} />
-          ) : (
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Progress
-                type="circle"
-                percent={readinessPercent}
-                size={50}
-                strokeColor="#FFFFFF"
-                trailColor="rgba(255, 255, 255, 0.28)"
-                strokeWidth={8}
-                format={(percent) => (
-                  <span style={{ fontWeight: 800, fontSize: 11, color: '#FFFFFF' }}>
-                    {percent}%
-                  </span>
-                )}
-              />
-              <span
-                style={{
-                  position: 'absolute',
-                  top: -5,
-                  right: -5,
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  background: '#10B981',
-                  border: '2px solid #FFFFFF',
-                  boxShadow: '0 2px 6px rgba(16, 185, 129, 0.6)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#FFFFFF',
-                  fontSize: 10,
-                }}
-              >
-                <RobotOutlined />
-              </span>
-            </div>
-          )}
-        </button>
-      </Tooltip>
-
-      {/* Floating AI Assessment Popup Panel */}
+      {/* 4. Slide-over AI Assessment Drawer */}
       {isAiSummaryOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 156,
-            right: 28,
-            width: 410,
-            maxWidth: 'calc(100vw - 36px)',
-            maxHeight: 'calc(100vh - 190px)',
-            background: '#FFFFFF',
-            borderRadius: 20,
-            border: '1.5px solid #DDD6FE',
-            boxShadow: '0 20px 48px rgba(30, 27, 75, 0.22), 0 4px 18px rgba(124, 58, 237, 0.15)',
-            zIndex: 1050,
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          {/* Header */}
-          <div
-            style={{
-              padding: '16px 20px',
-              background: 'linear-gradient(135deg, #7C3AED 0%, #6366F1 100%)',
-              color: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexShrink: 0,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backdropFilter: 'blur(4px)',
-                }}
-              >
-                <RobotOutlined style={{ fontSize: 18, color: '#FFFFFF' }} />
-              </div>
-              <div>
-                <div style={{ fontWeight: 800, fontSize: 14, color: '#FFFFFF' }}>
-                  Đánh giá & Gợi ý từ AI
-                </div>
-                <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.85)' }}>
-                  Độ sẵn sàng: {readinessPercent}% • Cập nhật theo từng bước
-                </div>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsAiSummaryOpen(false)}
+        <div className="ccreate-ai-drawer-overlay" onClick={() => setIsAiSummaryOpen(false)}>
+          <div className="ccreate-ai-drawer" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div
               style={{
-                border: 'none',
-                background: 'rgba(255, 255, 255, 0.15)',
+                padding: '18px 22px',
+                background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
                 color: '#FFFFFF',
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
+                justifyContent: 'space-between',
+                flexShrink: 0,
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)')}
             >
-              <CloseOutlined style={{ fontSize: 14 }} />
-            </button>
-          </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backdropFilter: 'blur(4px)',
+                  }}
+                >
+                  <RobotOutlined style={{ fontSize: 18, color: '#FFFFFF' }} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 14.5, color: '#FFFFFF' }}>
+                    Đánh giá & Gợi ý từ AI
+                  </div>
+                  <div style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.85)' }}>
+                    Độ sẵn sàng: {readinessPercent}% • Cập nhật theo từng bước
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAiSummaryOpen(false)}
+                style={{
+                  border: 'none',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  color: '#FFFFFF',
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <CloseOutlined style={{ fontSize: 14 }} />
+              </button>
+            </div>
 
           {/* Scrollable Content Container */}
           <div
@@ -2119,29 +1879,15 @@ export default function CreateCampaignPage() {
             </Card>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
-      {/* 4. Bottom Sticky Actions Bar */}
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          right: 0,
-          left: 240, // offset from sidebar
-          background: '#FFFFFF',
-          borderTop: '1px solid #EEF0F6',
-          padding: '12px 36px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          zIndex: 100,
-          boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.04)',
-        }}
-      >
+      {/* 5. Sticky Bottom Actions Bar */}
+      <div className="ccreate-bottom-actions">
         <Button
           type="text"
           onClick={() => navigate('/campaigns')}
-          style={{ color: '#64748B', fontWeight: 600, fontSize: 13 }}
+          className="ccreate-btn-cancel"
         >
           ✕ Hủy
         </Button>
@@ -2152,13 +1898,7 @@ export default function CreateCampaignPage() {
             icon={<SaveOutlined />}
             onClick={handleSaveDraft}
             loading={isSavingDraft}
-            style={{
-              fontWeight: 600,
-              borderRadius: 8,
-              height: 38,
-              borderColor: '#CBD5E1',
-              color: '#334155',
-            }}
+            className="ccreate-btn-draft"
           >
             Lưu bản nháp
           </Button>
@@ -2167,7 +1907,7 @@ export default function CreateCampaignPage() {
             <Button
               icon={<LeftOutlined />}
               onClick={handlePrevStep}
-              style={{ fontWeight: 600, borderRadius: 8, height: 38 }}
+              className="ccreate-btn-back"
             >
               Quay lại
             </Button>
@@ -2177,18 +1917,7 @@ export default function CreateCampaignPage() {
             type="primary"
             onClick={handleNextStep}
             loading={isSubmitting}
-            style={{
-              background: '#2563EB',
-              fontWeight: 700,
-              borderRadius: 8,
-              height: 38,
-              padding: '0 22px',
-              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
-              border: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
+            className="ccreate-btn-next"
           >
             {currentStep === 1
               ? 'Tiếp theo (Bước 2)'
