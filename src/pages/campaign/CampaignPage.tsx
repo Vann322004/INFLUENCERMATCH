@@ -20,7 +20,6 @@ import {
 import type { MenuProps } from 'antd';
 import {
   PlusOutlined,
-  ReloadOutlined,
   SearchOutlined,
   FilterOutlined,
   RightOutlined,
@@ -34,7 +33,6 @@ import {
   ExclamationCircleOutlined,
   FileTextOutlined,
   SendOutlined,
-  CheckCircleOutlined,
   WalletOutlined,
   ThunderboltOutlined,
   CompassOutlined,
@@ -44,7 +42,7 @@ import { campaignService } from '../../services/api/campaignService';
 import type { CampaignResponse, CampaignStatus, CampaignObjective, CampaignPlatform } from '../../types/api/campaign.types';
 import './CampaignPage.css';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Paragraph } = Typography;
 
 // Type definition for Campaign List item matching the mockup UI
 export interface CampaignItemUI {
@@ -67,7 +65,7 @@ export interface CampaignItemUI {
   thumbnail: string;
 }
 
-// Default 6 campaigns matching user's design mockup
+// Default 6 campaigns matching user's design mockup (without YouTube)
 const DEFAULT_CAMPAIGNS: CampaignItemUI[] = [
   {
     id: 'camp-summer-glow-2026',
@@ -266,6 +264,11 @@ export default function CampaignPage() {
             const startDateStr = c.startDate ? new Date(c.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '15 Jun 2026';
             const endDateStr = c.endDate ? new Date(c.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '31 Aug 2026';
 
+            // Filter out YOUTUBE if present in database
+            const validPlatforms = ((c.platforms && c.platforms.length > 0) ? c.platforms : fallback.platforms).filter(
+              (p) => (p as string) !== 'YOUTUBE'
+            );
+
             return {
               id: c.id,
               name: c.name || fallback.name,
@@ -274,7 +277,7 @@ export default function CampaignPage() {
               status: c.status || 'ACTIVE',
               statusText,
               statusType,
-              platforms: (c.platforms && c.platforms.length > 0) ? c.platforms : fallback.platforms,
+              platforms: validPlatforms.length > 0 ? validPlatforms : ['TIKTOK', 'INSTAGRAM'],
               extraPlatformsCount: fallback.extraPlatformsCount,
               creatorsCount: fallback.creatorsCount,
               creatorAvatars: fallback.creatorAvatars,
@@ -287,7 +290,6 @@ export default function CampaignPage() {
             };
           });
 
-          // Check if any default campaigns should also be present if user has only 1 or 2
           const existingIds = new Set(mapped.map((m) => m.id));
           const remainingDefaults = DEFAULT_CAMPAIGNS.filter((d) => !existingIds.has(d.id));
           setCampaigns([...mapped, ...remainingDefaults]);
@@ -295,8 +297,7 @@ export default function CampaignPage() {
         }
       }
       setCampaigns(DEFAULT_CAMPAIGNS);
-    } catch (err) {
-      console.warn('Sử dụng dữ liệu chiến dịch chuẩn thiết kế:', err);
+    } catch {
       setCampaigns(DEFAULT_CAMPAIGNS);
     } finally {
       setLoading(false);
@@ -331,7 +332,7 @@ export default function CampaignPage() {
     }).sort((a, b) => {
       if (sortBy === 'budget') return b.budgetRaw - a.budgetRaw;
       if (sortBy === 'creators') return b.creatorsCount - a.creatorsCount;
-      return 0; // 'latest' maintains default order
+      return 0;
     });
   }, [campaigns, activeTab, searchQuery, sortBy]);
 
@@ -360,7 +361,7 @@ export default function CampaignPage() {
       budget: item.budgetRaw,
       status: item.status,
       objective: 'AWARENESS',
-      platforms: item.platforms,
+      platforms: item.platforms.filter((p) => (p as string) !== 'YOUTUBE'),
     });
     setEditModalVisible(true);
   };
@@ -376,7 +377,6 @@ export default function CampaignPage() {
       setSavingEdit(true);
       message.loading({ content: 'Đang lưu cập nhật...', key: 'camp_save' });
 
-      // Call API
       await campaignService.updateCampaign(editingItem.id, {
         name: editForm.name.trim(),
         budgetMax: editForm.budget,
@@ -449,14 +449,14 @@ export default function CampaignPage() {
     });
   };
 
-  // Render Platform Badges
+  // Render Platform Badges (Không có YouTube)
   const renderPlatformIcon = (platform: CampaignPlatform) => {
     switch (platform) {
       case 'TIKTOK':
         return (
           <Tooltip title="TikTok" key="tiktok">
             <span className="platform-mini-icon tiktok">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
               </svg>
             </span>
@@ -466,7 +466,7 @@ export default function CampaignPage() {
         return (
           <Tooltip title="Instagram" key="insta">
             <span className="platform-mini-icon instagram">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
@@ -478,7 +478,7 @@ export default function CampaignPage() {
         return (
           <Tooltip title="Facebook" key="fb">
             <span className="platform-mini-icon facebook">
-              <span style={{ fontWeight: 800, fontSize: 11, lineHeight: 1 }}>f</span>
+              <span style={{ fontWeight: 800, fontSize: 10, lineHeight: 1 }}>f</span>
             </span>
           </Tooltip>
         );
@@ -489,130 +489,112 @@ export default function CampaignPage() {
 
   return (
     <div className="campaign-page-wrapper">
-      {/* 1. Breadcrumbs */}
-      <div>
-        <div className="campaign-breadcrumb">
-          <span className="crumb-link" onClick={() => navigate('/dashboard')}>
-            Trang chủ
-          </span>
-          <span>›</span>
-          <span className="crumb-current">Chiến dịch</span>
+      {/* 1. Header Section: Title & Subtitle on Left, "+ Tạo chiến dịch mới" on Right */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 14,
+          marginBottom: 4,
+        }}
+      >
+        <div>
+          <Title
+            level={2}
+            style={{
+              fontWeight: 800,
+              fontSize: 26,
+              color: '#0F172A',
+              margin: 0,
+              letterSpacing: -0.4,
+            }}
+          >
+            Chiến dịch
+          </Title>
+          <Paragraph
+            style={{
+              color: '#64748B',
+              fontSize: 13,
+              lineHeight: 1.4,
+              margin: '3px 0 0 0',
+            }}
+          >
+            Quản lý và theo dõi các chiến dịch influencer của bạn.
+          </Paragraph>
         </div>
 
-        {/* Header Title + Action Buttons */}
-        <div
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => navigate('/campaigns/create')}
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            flexWrap: 'wrap',
-            gap: 16,
-            marginTop: 4,
+            background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+            border: 'none',
+            borderRadius: 11,
+            height: 40,
+            fontWeight: 700,
+            fontSize: 13.5,
+            padding: '0 20px',
+            color: '#FFFFFF',
+            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
           }}
         >
-          <div>
-            <Title
-              level={2}
-              style={{
-                fontWeight: 800,
-                fontSize: 28,
-                color: '#0F172A',
-                margin: 0,
-                letterSpacing: -0.5,
-              }}
-            >
-              Chiến dịch
-            </Title>
-            <Paragraph
-              style={{
-                color: '#64748B',
-                fontSize: 13.5,
-                lineHeight: 1.5,
-                margin: '4px 0 0 0',
-              }}
-            >
-              Quản lý và theo dõi các chiến dịch influencer của bạn.
-            </Paragraph>
-          </div>
-
-          <Space size={12} wrap>
-            <Button
-              icon={<ReloadOutlined spin={loading} />}
-              onClick={() => {
-                fetchCampaigns();
-                message.success('Đã làm mới danh sách chiến dịch');
-              }}
-              style={{
-                borderRadius: 10,
-                height: 40,
-                fontWeight: 600,
-                color: '#334155',
-                borderColor: '#E2E8F0',
-              }}
-            >
-              Làm mới dữ liệu
-            </Button>
-
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => navigate('/campaigns/create')}
-              style={{
-                background: '#4F46E5',
-                borderRadius: 10,
-                height: 40,
-                fontWeight: 700,
-                padding: '0 20px',
-                boxShadow: '0 4px 14px rgba(79, 70, 229, 0.3)',
-              }}
-            >
-              Tạo chiến dịch mới
-            </Button>
-          </Space>
-        </div>
+          Tạo chiến dịch mới
+        </Button>
       </div>
 
-      {/* 2. Main Two-Column Layout */}
-      <Row gutter={[24, 24]}>
-        {/* LEFT COLUMN: 3 Stat Cards + Filter Tabs & Search + Campaign Card List */}
-        <Col xs={24} xl={16} xxl={17}>
+      {/* 2. Main Two-Column Layout with Synchronized Equal Heights */}
+      <Row gutter={[20, 20]} align="stretch" style={{ display: 'flex', alignItems: 'stretch' }}>
+        {/* LEFT COLUMN: 3 Stat Cards + Single-row Filter Toolbar + Campaign Card List */}
+        <Col
+          xs={24}
+          xl={16}
+          xxl={16.5}
+          style={{ display: 'flex', flexDirection: 'column' }}
+        >
           {/* 3 Metric Cards */}
-          <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+          <Row gutter={[14, 14]} style={{ marginBottom: 16 }}>
             {/* Card 1: Tổng chiến dịch */}
             <Col xs={24} sm={8}>
               <div className="campaign-stat-card">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div
                     style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 12,
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
                       background: '#EEF2FF',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#6366F1',
-                      fontSize: 20,
+                      color: '#4F46E5',
+                      fontSize: 18,
+                      flexShrink: 0,
                     }}
                   >
                     <FolderOutlined />
                   </div>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: '#64748B', marginBottom: 2 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 1 }}>
                       Tổng chiến dịch
                     </div>
-                    <div style={{ fontSize: 26, fontWeight: 800, color: '#0F172A', lineHeight: 1.1 }}>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', lineHeight: 1.1 }}>
                       {countAll < 10 ? `0${countAll}` : countAll}
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#10B981', marginTop: 4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#10B981', marginTop: 3 }}>
                       ↑ 2 so với tháng trước
                     </div>
                   </div>
                 </div>
 
                 {/* Purple Sparkline SVG */}
-                <div style={{ width: 75, height: 34 }}>
-                  <svg width="75" height="34" viewBox="0 0 75 34" fill="none">
+                <div style={{ width: 68, height: 30 }}>
+                  <svg width="68" height="30" viewBox="0 0 68 30" fill="none">
                     <defs>
                       <linearGradient id="purpleAreaGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#818CF8" stopOpacity="0.4" />
@@ -620,14 +602,14 @@ export default function CampaignPage() {
                       </linearGradient>
                     </defs>
                     <path
-                      d="M0 26 C 15 26, 25 22, 40 20 C 52 18, 62 10, 75 8"
+                      d="M0 24 C 14 24, 22 20, 36 18 C 48 16, 56 8, 68 6"
                       fill="none"
-                      stroke="#6366F1"
+                      stroke="#4F46E5"
                       strokeWidth="2.2"
                       strokeLinecap="round"
                     />
                     <path
-                      d="M0 26 C 15 26, 25 22, 40 20 C 52 18, 62 10, 75 8 L 75 34 L 0 34 Z"
+                      d="M0 24 C 14 24, 22 20, 36 18 C 48 16, 56 8, 68 6 L 68 30 L 0 30 Z"
                       fill="url(#purpleAreaGrad)"
                     />
                   </svg>
@@ -638,38 +620,39 @@ export default function CampaignPage() {
             {/* Card 2: Đang triển khai */}
             <Col xs={24} sm={8}>
               <div className="campaign-stat-card">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div
                     style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 12,
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
                       background: '#ECFDF5',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#10B981',
-                      fontSize: 18,
+                      color: '#059669',
+                      fontSize: 16,
+                      flexShrink: 0,
                     }}
                   >
                     <CaretRightOutlined />
                   </div>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: '#64748B', marginBottom: 2 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 1 }}>
                       Đang triển khai
                     </div>
-                    <div style={{ fontSize: 26, fontWeight: 800, color: '#0F172A', lineHeight: 1.1 }}>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', lineHeight: 1.1 }}>
                       {countRunning < 10 ? `0${countRunning}` : countRunning}
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#10B981', marginTop: 4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#10B981', marginTop: 3 }}>
                       ↑ 1 so với tháng trước
                     </div>
                   </div>
                 </div>
 
                 {/* Green Sparkline SVG */}
-                <div style={{ width: 75, height: 34 }}>
-                  <svg width="75" height="34" viewBox="0 0 75 34" fill="none">
+                <div style={{ width: 68, height: 30 }}>
+                  <svg width="68" height="30" viewBox="0 0 68 30" fill="none">
                     <defs>
                       <linearGradient id="greenAreaGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#34D399" stopOpacity="0.4" />
@@ -677,14 +660,14 @@ export default function CampaignPage() {
                       </linearGradient>
                     </defs>
                     <path
-                      d="M0 28 C 18 26, 28 22, 42 16 C 56 10, 65 6, 75 4"
+                      d="M0 26 C 16 24, 25 20, 38 14 C 50 8, 58 4, 68 2"
                       fill="none"
                       stroke="#10B981"
                       strokeWidth="2.2"
                       strokeLinecap="round"
                     />
                     <path
-                      d="M0 28 C 18 26, 28 22, 42 16 C 56 10, 65 6, 75 4 L 75 34 L 0 34 Z"
+                      d="M0 26 C 16 24, 25 20, 38 14 C 50 8, 58 4, 68 2 L 68 30 L 0 30 Z"
                       fill="url(#greenAreaGrad)"
                     />
                   </svg>
@@ -695,38 +678,39 @@ export default function CampaignPage() {
             {/* Card 3: Lời mời chờ phản hồi */}
             <Col xs={24} sm={8}>
               <div className="campaign-stat-card">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div
                     style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 12,
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
                       background: '#FFF7ED',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: '#F97316',
-                      fontSize: 19,
+                      fontSize: 17,
+                      flexShrink: 0,
                     }}
                   >
                     <TeamOutlined />
                   </div>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: '#64748B', marginBottom: 2 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 1 }}>
                       Lời mời chờ phản hồi
                     </div>
-                    <div style={{ fontSize: 26, fontWeight: 800, color: '#0F172A', lineHeight: 1.1 }}>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', lineHeight: 1.1 }}>
                       04
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#EF4444', marginTop: 4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#EF4444', marginTop: 3 }}>
                       ↓ 2 so với tháng trước
                     </div>
                   </div>
                 </div>
 
-                {/* Orange/Red Sparkline SVG */}
-                <div style={{ width: 75, height: 34 }}>
-                  <svg width="75" height="34" viewBox="0 0 75 34" fill="none">
+                {/* Orange Sparkline SVG */}
+                <div style={{ width: 68, height: 30 }}>
+                  <svg width="68" height="30" viewBox="0 0 68 30" fill="none">
                     <defs>
                       <linearGradient id="orangeAreaGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#FB923C" stopOpacity="0.4" />
@@ -734,14 +718,14 @@ export default function CampaignPage() {
                       </linearGradient>
                     </defs>
                     <path
-                      d="M0 8 C 18 12, 32 16, 46 24 C 58 30, 68 26, 75 28"
+                      d="M0 6 C 16 10, 28 14, 40 20 C 50 26, 60 22, 68 24"
                       fill="none"
                       stroke="#F97316"
                       strokeWidth="2.2"
                       strokeLinecap="round"
                     />
                     <path
-                      d="M0 8 C 18 12, 32 16, 46 24 C 58 30, 68 26, 75 28 L 75 34 L 0 34 Z"
+                      d="M0 6 C 16 10, 28 14, 40 20 C 50 26, 60 22, 68 24 L 68 30 L 0 30 Z"
                       fill="url(#orangeAreaGrad)"
                     />
                   </svg>
@@ -750,19 +734,10 @@ export default function CampaignPage() {
             </Col>
           </Row>
 
-          {/* Filter Toolbar: Tabs on Left, Search + Sort + Filter on Right */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 12,
-              marginBottom: 16,
-            }}
-          >
-            {/* Tabs */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {/* SINGLE-ROW Filter Toolbar: Tabs on Left, Search + Sort + Filter on Right */}
+          <div className="campaign-filter-toolbar">
+            {/* Tabs Group */}
+            <div className="campaign-tabs-group">
               <div
                 className={`campaign-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
                 onClick={() => {
@@ -808,22 +783,22 @@ export default function CampaignPage() {
               </div>
             </div>
 
-            {/* Search & Sort Controls */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            {/* Tools Group (Search, Sort, Filter) on the same line */}
+            <div className="campaign-tools-group">
               <Input
                 placeholder="Tìm kiếm chiến dịch..."
-                prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
+                prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 12 }} />}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
                 style={{
-                  width: 200,
-                  height: 38,
-                  borderRadius: 10,
+                  width: 155,
+                  height: 34,
+                  borderRadius: 9,
                   borderColor: '#E2E8F0',
-                  fontSize: 13,
+                  fontSize: 12,
                 }}
                 allowClear
               />
@@ -831,22 +806,26 @@ export default function CampaignPage() {
               <Select
                 value={sortBy}
                 onChange={setSortBy}
-                style={{ width: 120, height: 38 }}
+                size="small"
+                style={{ width: 100, height: 34 }}
                 options={[
                   { value: 'latest', label: 'Mới nhất' },
-                  { value: 'budget', label: 'Ngân sách cao' },
-                  { value: 'creators', label: 'Nhiều KOC' },
+                  { value: 'budget', label: 'Ngân sách' },
+                  { value: 'creators', label: 'KOC' },
                 ]}
               />
 
               <Button
-                icon={<FilterOutlined />}
+                size="small"
+                icon={<FilterOutlined style={{ fontSize: 11 }} />}
                 style={{
-                  height: 38,
-                  borderRadius: 10,
+                  height: 34,
+                  borderRadius: 9,
                   borderColor: '#E2E8F0',
                   color: '#475569',
-                  fontWeight: 500,
+                  fontWeight: 600,
+                  fontSize: 12,
+                  padding: '0 10px',
                 }}
               >
                 Bộ lọc
@@ -855,7 +834,7 @@ export default function CampaignPage() {
           </div>
 
           {/* Campaign List Cards */}
-          <div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             {paginatedList.map((item) => {
               const actionMenuItems: MenuProps['items'] = [
                 {
@@ -896,16 +875,17 @@ export default function CampaignPage() {
                   onClick={() => handleOpenDetail(item)}
                 >
                   {/* Left: Thumbnail & Info */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 260, flex: 2 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 240, flex: 2 }}>
                     <img
                       src={item.thumbnail}
                       alt={item.name}
                       style={{
-                        width: 68,
-                        height: 68,
-                        borderRadius: 12,
+                        width: 58,
+                        height: 58,
+                        borderRadius: 10,
                         objectFit: 'cover',
                         flexShrink: 0,
+                        border: '1px solid #F1F5F9',
                       }}
                     />
 
@@ -913,20 +893,20 @@ export default function CampaignPage() {
                       <div
                         style={{
                           fontWeight: 700,
-                          fontSize: 15,
+                          fontSize: 14.5,
                           color: '#0F172A',
                           lineHeight: 1.3,
-                          marginBottom: 3,
+                          marginBottom: 2,
                         }}
                       >
                         {item.name}
                       </div>
 
-                      <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6 }}>
+                      <div style={{ fontSize: 11.5, color: '#94A3B8', marginBottom: 5 }}>
                         {item.dateRange}
                       </div>
 
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                         {item.niches.map((niche) => (
                           <span
                             key={niche}
@@ -934,9 +914,9 @@ export default function CampaignPage() {
                               background: '#F8FAFC',
                               border: '1px solid #F1F5F9',
                               color: '#64748B',
-                              fontSize: 11,
-                              borderRadius: 6,
-                              padding: '2px 8px',
+                              fontSize: 10.5,
+                              borderRadius: 5,
+                              padding: '1px 6px',
                               fontWeight: 500,
                             }}
                           >
@@ -948,7 +928,7 @@ export default function CampaignPage() {
                   </div>
 
                   {/* Column 2: Status & Platforms */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 120 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 115 }}>
                     <span className={`status-pill ${item.statusType}`}>
                       <span className="status-pill-dot" />
                       {item.statusText}
@@ -965,42 +945,42 @@ export default function CampaignPage() {
                   </div>
 
                   {/* Column 3: Influencers Avatars */}
-                  <div style={{ display: 'flex', alignItems: 'center', minWidth: 80 }}>
-                    <div style={{ display: 'flex', marginRight: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', minWidth: 75 }}>
+                    <div style={{ display: 'flex', marginRight: 5 }}>
                       {item.creatorAvatars.slice(0, 3).map((av, idx) => (
                         <img
                           key={idx}
                           src={av}
                           alt="creator"
                           style={{
-                            width: 26,
-                            height: 26,
+                            width: 24,
+                            height: 24,
                             borderRadius: '50%',
                             objectFit: 'cover',
                             border: '2px solid #FFFFFF',
-                            marginLeft: idx === 0 ? 0 : -8,
+                            marginLeft: idx === 0 ? 0 : -7,
                           }}
                         />
                       ))}
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>
+                    <span style={{ fontSize: 11.5, fontWeight: 700, color: '#64748B' }}>
                       {item.creatorsCount}
                     </span>
                   </div>
 
                   {/* Column 4: Budget & Progress */}
-                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 140, flex: 1.2 }}>
-                    <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 2 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 130, flex: 1.1 }}>
+                    <div style={{ fontSize: 10.5, color: '#94A3B8', marginBottom: 1 }}>
                       Ngân sách dự kiến
                     </div>
-                    <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0F172A', marginBottom: 4 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 3 }}>
                       {item.budgetFormatted}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <div
                         style={{
                           flex: 1,
-                          height: 5,
+                          height: 4.5,
                           background: '#E2E8F0',
                           borderRadius: 999,
                           overflow: 'hidden',
@@ -1015,28 +995,28 @@ export default function CampaignPage() {
                           }}
                         />
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#64748B' }}>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, color: '#64748B' }}>
                         {item.progressPercent}%
                       </span>
                     </div>
                   </div>
 
                   {/* Column 5: Last Updated */}
-                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 110 }}>
-                    <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 2 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 105 }}>
+                    <div style={{ fontSize: 10.5, color: '#94A3B8', marginBottom: 1 }}>
                       Cập nhật
                     </div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 600, color: '#334155' }}>
                       {item.updatedTime}
                     </div>
-                    <div style={{ fontSize: 11, color: '#94A3B8' }}>
+                    <div style={{ fontSize: 10.5, color: '#94A3B8' }}>
                       {item.updatedBy}
                     </div>
                   </div>
 
                   {/* Column 6: Actions */}
                   <div
-                    style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                    style={{ display: 'flex', alignItems: 'center' }}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Dropdown
@@ -1047,7 +1027,7 @@ export default function CampaignPage() {
                       <Button
                         type="text"
                         size="small"
-                        icon={<RightOutlined style={{ fontSize: 13, color: '#94A3B8' }} />}
+                        icon={<RightOutlined style={{ fontSize: 12, color: '#94A3B8' }} />}
                         style={{ borderRadius: 6 }}
                       />
                     </Dropdown>
@@ -1065,11 +1045,11 @@ export default function CampaignPage() {
               alignItems: 'center',
               flexWrap: 'wrap',
               gap: 12,
-              paddingTop: 16,
-              marginTop: 8,
+              paddingTop: 12,
+              marginTop: 'auto',
             }}
           >
-            <span style={{ fontSize: 13, color: '#64748B' }}>
+            <span style={{ fontSize: 12.5, color: '#64748B' }}>
               {filteredCampaigns.length > 0
                 ? `Hiển thị ${(currentPage - 1) * pageSize + 1} – ${Math.min(currentPage * pageSize, filteredCampaigns.length)} trong ${filteredCampaigns.length} chiến dịch`
                 : 'Chưa có chiến dịch nào'}
@@ -1088,344 +1068,335 @@ export default function CampaignPage() {
           </div>
         </Col>
 
-        {/* RIGHT COLUMN: Việc cần xử lý (4) + Chiến dịch gần đây (Spotlight) */}
-        <Col xs={24} xl={8} xxl={7}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* Card 1: Việc cần xử lý */}
-            <Card
-              bordered
+        {/* RIGHT COLUMN: Việc cần xử lý (4) + Chiến dịch gần đây (Spotlight) with Balanced Equal Heights */}
+        <Col
+          xs={24}
+          xl={8}
+          xxl={7.5}
+          style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+        >
+          {/* Card 1: Việc cần xử lý */}
+          <div className="im-campaign-side-card" style={{ flex: 1 }}>
+            {/* Card Header */}
+            <div
               style={{
-                borderRadius: 16,
-                borderColor: '#EEF0F6',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 12,
               }}
-              bodyStyle={{ padding: '20px' }}
             >
-              {/* Card Header */}
-              <div
+              <span style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>
+                Việc cần xử lý
+              </span>
+              <span
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  marginBottom: 16,
+                  background: '#EEF2FF',
+                  color: '#4F46E5',
+                  fontSize: 11.5,
+                  fontWeight: 800,
+                  padding: '1px 8px',
+                  borderRadius: 999,
                 }}
               >
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#0F172A' }}>
-                  Việc cần xử lý
-                </span>
-                <span
-                  style={{
-                    background: '#EEF2FF',
-                    color: '#4F46E5',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    padding: '2px 8px',
-                    borderRadius: 999,
-                  }}
-                >
-                  4
-                </span>
-              </div>
+                4
+              </span>
+            </div>
 
-              {/* Tasks List */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {/* Task 1 */}
-                <div
-                  className="task-item-row"
-                  onClick={() => navigate('/campaigns')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div
-                      style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 10,
-                        background: '#F3E8FF',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#9333EA',
-                        fontSize: 16,
-                      }}
-                    >
-                      <SendOutlined />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', lineHeight: 1.2 }}>
-                        2 lời mời chờ phản hồi
-                      </div>
-                      <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 2 }}>
-                        Summer Glow 2026
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>
-                      10 phút trước
-                    </span>
-                    <RightOutlined style={{ fontSize: 11, color: '#CBD5E1' }} />
-                  </div>
-                </div>
-
-                {/* Task 2 */}
-                <div
-                  className="task-item-row"
-                  onClick={() => navigate('/campaigns')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div
-                      style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 10,
-                        background: '#FCE7F3',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#DB2777',
-                        fontSize: 16,
-                      }}
-                    >
-                      <FileTextOutlined />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', lineHeight: 1.2 }}>
-                        1 KOC gửi nội dung xem xét
-                      </div>
-                      <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 2 }}>
-                        Beauty Routine Challenge
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>
-                      2 giờ trước
-                    </span>
-                    <RightOutlined style={{ fontSize: 11, color: '#CBD5E1' }} />
-                  </div>
-                </div>
-
-                {/* Task 3 */}
-                <div
-                  className="task-item-row"
-                  onClick={() => navigate('/campaigns')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div
-                      style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 10,
-                        background: '#FFEDD5',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#EA580C',
-                        fontSize: 16,
-                      }}
-                    >
-                      <WalletOutlined />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', lineHeight: 1.2 }}>
-                        Cần duyệt ngân sách
-                      </div>
-                      <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 2 }}>
-                        Skincare Launch 2025
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>
-                      5 giờ trước
-                    </span>
-                    <RightOutlined style={{ fontSize: 11, color: '#CBD5E1' }} />
-                  </div>
-                </div>
-
-                {/* Task 4 */}
-                <div
-                  className="task-item-row"
-                  onClick={() => navigate('/campaigns')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div
-                      style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 10,
-                        background: '#E0F2FE',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#0284C7',
-                        fontSize: 16,
-                      }}
-                    >
-                      <ThunderboltOutlined />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', lineHeight: 1.2 }}>
-                        1 báo cáo chiến dịch mới
-                      </div>
-                      <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 2 }}>
-                        Tech Product Review
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>
-                      1 ngày trước
-                    </span>
-                    <RightOutlined style={{ fontSize: 11, color: '#CBD5E1' }} />
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Card 2: Chiến dịch gần đây */}
-            <Card
-              bordered
-              style={{
-                borderRadius: 16,
-                borderColor: '#EEF0F6',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-              }}
-              bodyStyle={{ padding: '20px' }}
-            >
+            {/* Tasks List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, justifyContent: 'space-around' }}>
+              {/* Task 1 */}
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: 14,
-                }}
+                className="task-item-row"
+                onClick={() => navigate('/campaigns')}
               >
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#0F172A' }}>
-                  Chiến dịch gần đây
-                </span>
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: '#4F46E5',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    setActiveTab('all');
-                    setSearchQuery('');
-                  }}
-                >
-                  Xem tất cả →
-                </span>
-              </div>
-
-              {/* Cover Banner */}
-              <div style={{ position: 'relative', width: '100%', height: 140, borderRadius: 12, overflow: 'hidden' }}>
-                <img
-                  src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&auto=format&fit=crop&q=80"
-                  alt="Summer Glow 2026"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-
-                {/* Overlaid Status Pill */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: 10,
-                    left: 10,
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    backdropFilter: 'blur(4px)',
-                    padding: '3px 10px',
-                    borderRadius: 999,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: '#059669',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  }}
-                >
-                  <span
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div
                     style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      background: '#10B981',
+                      width: 36,
+                      height: 36,
+                      borderRadius: 9,
+                      background: '#F3E8FF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#9333EA',
+                      fontSize: 15,
+                      flexShrink: 0,
                     }}
-                  />
-                  Đang triển khai
+                  >
+                    <SendOutlined />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', lineHeight: 1.2 }}>
+                      2 lời mời chờ phản hồi
+                    </div>
+                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+                      Summer Glow 2026
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 10.5, color: '#94A3B8', whiteSpace: 'nowrap' }}>
+                    10 phút trước
+                  </span>
+                  <RightOutlined style={{ fontSize: 10, color: '#CBD5E1' }} />
                 </div>
               </div>
 
-              {/* Info & Progress */}
-              <div style={{ marginTop: 14 }}>
-                <div style={{ fontWeight: 700, fontSize: 15, color: '#0F172A' }}>
-                  Summer Glow 2026
-                </div>
-                <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2, marginBottom: 12 }}>
-                  15 Jun 2026 – 31 Aug 2026
+              {/* Task 2 */}
+              <div
+                className="task-item-row"
+                onClick={() => navigate('/campaigns')}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 9,
+                      background: '#FCE7F3',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#DB2777',
+                      fontSize: 15,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <FileTextOutlined />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', lineHeight: 1.2 }}>
+                      1 KOC gửi nội dung xem xét
+                    </div>
+                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+                      Beauty Routine Challenge
+                    </div>
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 10.5, color: '#94A3B8', whiteSpace: 'nowrap' }}>
+                    2 giờ trước
+                  </span>
+                  <RightOutlined style={{ fontSize: 10, color: '#CBD5E1' }} />
+                </div>
+              </div>
+
+              {/* Task 3 */}
+              <div
+                className="task-item-row"
+                onClick={() => navigate('/campaigns')}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 9,
+                      background: '#FFEDD5',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#EA580C',
+                      fontSize: 15,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <WalletOutlined />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', lineHeight: 1.2 }}>
+                      Cần duyệt ngân sách
+                    </div>
+                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+                      Skincare Launch 2025
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 10.5, color: '#94A3B8', whiteSpace: 'nowrap' }}>
+                    5 giờ trước
+                  </span>
+                  <RightOutlined style={{ fontSize: 10, color: '#CBD5E1' }} />
+                </div>
+              </div>
+
+              {/* Task 4 */}
+              <div
+                className="task-item-row"
+                onClick={() => navigate('/campaigns')}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 9,
+                      background: '#E0F2FE',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#0284C7',
+                      fontSize: 15,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <ThunderboltOutlined />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', lineHeight: 1.2 }}>
+                      1 báo cáo chiến dịch mới
+                    </div>
+                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+                      Tech Product Review
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 10.5, color: '#94A3B8', whiteSpace: 'nowrap' }}>
+                    1 ngày trước
+                  </span>
+                  <RightOutlined style={{ fontSize: 10, color: '#CBD5E1' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Chiến dịch gần đây */}
+          <div className="im-campaign-side-card" style={{ flex: 1 }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 10,
+              }}
+            >
+              <span style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>
+                Chiến dịch gần đây
+              </span>
+              <span
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  color: '#4F46E5',
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  setActiveTab('all');
+                  setSearchQuery('');
+                }}
+              >
+                Xem tất cả →
+              </span>
+            </div>
+
+            {/* Cover Banner */}
+            <div style={{ position: 'relative', width: '100%', height: 125, borderRadius: 11, overflow: 'hidden' }}>
+              <img
+                src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&auto=format&fit=crop&q=80"
+                alt="Summer Glow 2026"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+
+              {/* Overlaid Status Pill */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 8,
+                  left: 8,
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  backdropFilter: 'blur(4px)',
+                  padding: '2px 9px',
+                  borderRadius: 999,
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  color: '#059669',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                }}
+              >
+                <span
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: '50%',
+                    background: '#10B981',
+                  }}
+                />
+                Đang triển khai
+              </div>
+            </div>
+
+            {/* Info & Progress */}
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
+                Summer Glow 2026
+              </div>
+              <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 1, marginBottom: 10 }}>
+                15 Jun 2026 – 31 Aug 2026
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+                  <div
+                    style={{
+                      flex: 1,
+                      height: 4.5,
+                      background: '#E2E8F0',
+                      borderRadius: 999,
+                      overflow: 'hidden',
+                    }}
+                  >
                     <div
                       style={{
-                        flex: 1,
-                        height: 5,
-                        background: '#E2E8F0',
+                        width: '45%',
+                        height: '100%',
+                        background: '#4F46E5',
                         borderRadius: 999,
-                        overflow: 'hidden',
                       }}
-                    >
-                      <div
-                        style={{
-                          width: '45%',
-                          height: '100%',
-                          background: '#4F46E5',
-                          borderRadius: 999,
-                        }}
-                      />
-                    </div>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: '#64748B' }}>
-                      45%
-                    </span>
-                  </div>
-
-                  <Dropdown
-                    menu={{
-                      items: [
-                        {
-                          key: 'view',
-                          icon: <EyeOutlined />,
-                          label: 'Xem chi tiết',
-                          onClick: () => navigate('/campaigns/detail', { state: { id: 'camp-summer-glow-2026' } }),
-                        },
-                        {
-                          key: 'koc',
-                          icon: <CompassOutlined />,
-                          label: 'Tìm KOC AI',
-                          onClick: () => navigate('/discovery'),
-                        },
-                      ],
-                    }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                  >
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<EllipsisOutlined style={{ fontSize: 16, color: '#94A3B8' }} />}
                     />
-                  </Dropdown>
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#64748B' }}>
+                    45%
+                  </span>
                 </div>
+
+                <Dropdown
+                  menu={{
+                    items: [
+                      {
+                        key: 'view',
+                        icon: <EyeOutlined />,
+                        label: 'Xem chi tiết',
+                        onClick: () => navigate('/campaigns/detail', { state: { id: 'camp-summer-glow-2026' } }),
+                      },
+                      {
+                        key: 'koc',
+                        icon: <CompassOutlined />,
+                        label: 'Tìm KOC AI',
+                        onClick: () => navigate('/discovery'),
+                      },
+                    ],
+                  }}
+                  trigger={['click']}
+                  placement="bottomRight"
+                >
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<EllipsisOutlined style={{ fontSize: 16, color: '#94A3B8' }} />}
+                  />
+                </Dropdown>
               </div>
-            </Card>
+            </div>
           </div>
         </Col>
       </Row>
@@ -1433,7 +1404,7 @@ export default function CampaignPage() {
       {/* 3. Edit Campaign Modal */}
       <Modal
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 700 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 800 }}>
             <EditOutlined style={{ color: '#4F46E5' }} />
             <span>Chỉnh sửa thông tin chiến dịch</span>
           </div>
@@ -1450,9 +1421,9 @@ export default function CampaignPage() {
         width={560}
         destroyOnClose
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 10 }}>
           <div>
-            <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
+            <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 5, color: '#334155' }}>
               Tên chiến dịch <span style={{ color: '#EF4444' }}>*</span>
             </label>
             <Input
@@ -1466,7 +1437,7 @@ export default function CampaignPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 5, color: '#334155' }}>
                 Trạng thái
               </label>
               <Select
@@ -1484,7 +1455,7 @@ export default function CampaignPage() {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 5, color: '#334155' }}>
                 Mục tiêu chính
               </label>
               <Select
@@ -1504,7 +1475,7 @@ export default function CampaignPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 5, color: '#334155' }}>
                 Ngân sách dự kiến (VND)
               </label>
               <InputNumber
@@ -1520,7 +1491,7 @@ export default function CampaignPage() {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 5, color: '#334155' }}>
                 Nền tảng ưu tiên
               </label>
               <Select
