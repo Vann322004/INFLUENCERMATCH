@@ -161,12 +161,33 @@ export default function DashboardPage() {
 
       // Compute Brand-specific shortlist items & count trực tiếp từ Database
       try {
+        const campIdsToQuery = new Set(validCList.map((c) => c.id).filter(Boolean));
+        const storedCampId = sessionStorage.getItem('current_campaign_id') || localStorage.getItem('IM_SELECTED_CAMPAIGN_ID');
+        if (storedCampId) campIdsToQuery.add(storedCampId);
+
         let backendShortlist = [];
-        if (validCList.length > 0) {
-          const backendLists = await Promise.all(
-            validCList.map((camp) => creatorService.getShortlist(camp.id).catch(() => []))
-          );
-          backendLists.forEach((list) => {
+        if (campIdsToQuery.size > 0) {
+          const promises = Array.from(campIdsToQuery).map(async (cid) => {
+            const [sList, rels] = await Promise.all([
+              creatorService.getShortlist(cid).catch(() => []),
+              campaignService.getRelationships(cid).catch(() => []),
+            ]);
+            const combined = [...(Array.isArray(sList) ? sList : [])];
+            if (Array.isArray(rels)) {
+              rels.forEach((r) => {
+                combined.push({
+                  id: r.id,
+                  creatorId: r.creatorId || r.id,
+                  creatorName: r.creatorName || 'Creator',
+                  platform: 'tiktok',
+                  priority: 'HIGH',
+                });
+              });
+            }
+            return combined;
+          });
+          const results = await Promise.all(promises);
+          results.forEach((list) => {
             if (Array.isArray(list)) backendShortlist.push(...list);
           });
         }
@@ -208,11 +229,8 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    // Stale-While-Revalidate: Only fetch if cache is absent or older than 90s
-    const isStale = !dashboardCache.rawCampaigns || (Date.now() - dashboardCache.lastLoaded > 90000);
-    if (isStale) {
-      loadDashboardData();
-    }
+    // Stale-While-Revalidate: Luôn đồng bộ ngầm dữ liệu mới nhất từ DB khi vào trang
+    loadDashboardData();
   }, [loadDashboardData]);
 
   // Dynamic statistics from brand campaigns

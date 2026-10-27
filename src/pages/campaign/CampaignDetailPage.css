@@ -1,62 +1,402 @@
-/* Campaign Detail Page Styles */
-.cdetail-container {
+/* ==========================================================================
+   Campaign Detail Page - Modern SaaS Aesthetic (Stripe / Linear / Apple)
+   ========================================================================== */
+
+.campaign-detail-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  max-width: 1280px;
+  gap: 18px;
+  max-width: 1360px;
   margin: 0 auto;
   width: 100%;
+  padding-bottom: 32px;
 }
 
+/* 1. Top Bar Navigation */
+.cdetail-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: -4px;
+}
+
+.cdetail-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.cdetail-back-btn:hover {
+  color: #0F172A;
+  border-color: #CBD5E1;
+  background: #F8FAFC;
+  transform: translateX(-2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* 2. Hero Header Card */
 .cdetail-header-card {
   background: #FFFFFF;
-  border: 1px solid #EEF0F6;
+  border: 1px solid #E2E8F0;
+  border-top: 3.5px solid #6366F1;
   border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  padding: 22px 26px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+  position: relative;
+  overflow: hidden;
 }
 
+.cdetail-header-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 100%;
+  background: radial-gradient(circle at 100% 0%, rgba(99, 102, 241, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.cdetail-title-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.cdetail-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.cdetail-status-pill.running {
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid #A7F3D0;
+}
+
+.cdetail-status-pill.draft {
+  background: #F1F5F9;
+  color: #64748B;
+  border: 1px solid #CBD5E1;
+}
+
+.cdetail-status-pill.completed {
+  background: #EEF2FF;
+  color: #4F46E5;
+  border: 1px solid #C7D2FE;
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulseGreen 2s infinite;
+}
+
+@keyframes pulseGreen {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.cdetail-main-title {
+  margin: 0 0 10px 0 !important;
+  font-size: 25px !important;
+  font-weight: 800 !important;
+  color: #0F172A !important;
+  letter-spacing: -0.4px;
+  line-height: 1.3 !important;
+}
+
+/* Action Toolbar */
+.cdetail-action-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cdetail-action-btn {
+  height: 38px !important;
+  border-radius: 9px !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.16s ease !important;
+}
+
+/* 3. 4 High-level Stat Cards */
 .cdetail-stat-card {
   background: #FFFFFF;
-  border: 1px solid #EEF0F6;
+  border: 1px solid #E2E8F0;
   border-radius: 14px;
   padding: 18px 20px;
-  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   height: 100%;
+  min-height: 120px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .cdetail-stat-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   border-color: #CBD5E1;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.07);
 }
 
+.cdetail-stat-card.clickable {
+  cursor: pointer;
+}
+
+.cdetail-stat-card.clickable:hover {
+  border-color: #6366F1;
+}
+
+.cdetail-stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cdetail-stat-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.cdetail-stat-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.cdetail-stat-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.6px;
+  line-height: 1.15;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.cdetail-stat-value-unit {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94A3B8;
+}
+
+.cdetail-stat-footer {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 4. Tab Navigation Content */
 .cdetail-content-card {
   background: #FFFFFF;
-  border: 1px solid #EEF0F6;
+  border: 1px solid #E2E8F0;
   border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
 }
 
-.brief-box {
+.brief-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 22px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01);
+}
+
+.brief-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.brief-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.brief-card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.25;
+}
+
+.brief-card-subtitle {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.brief-section-box {
   background: #F8FAFC;
   border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  padding: 16px 20px;
+  border-radius: 10px;
+  padding: 13px 15px;
+  margin-bottom: 12px;
 }
 
 .brief-item-title {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: #64748B;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   margin-bottom: 6px;
 }
 
+.brief-quote-text {
+  font-size: 13.5px;
+  color: #1E293B;
+  line-height: 1.55;
+  border-left: 3px solid #6366F1;
+  padding-left: 10px;
+}
+
+/* Operational Specs Table Rows */
+.ops-specs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ops-spec-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 12px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.ops-spec-row:nth-child(even) {
+  background: #F8FAFC;
+}
+
+.ops-spec-row:hover {
+  background: #F1F5F9;
+}
+
+.ops-spec-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.ops-spec-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
+  text-align: right;
+}
+
+/* Platform Chips (No YouTube) */
+.platform-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3.5px 10px;
+  border-radius: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.platform-chip.tiktok {
+  background: #000000;
+  color: #FFFFFF;
+}
+
+.platform-chip.instagram {
+  background: linear-gradient(45deg, #F58529, #DD2A7B, #8134AF);
+  color: #FFFFFF;
+}
+
+.platform-chip.facebook {
+  background: #1877F2;
+  color: #FFFFFF;
+}
+
+/* Timeline Polish */
 .timeline-dot-done {
   color: #10B981;
 }
 
 .timeline-dot-active {
-  color: #5B5BF0;
+  color: #6366F1;
+}
+
+@media (max-width: 768px) {
+  .cdetail-header-card {
+    padding: 16px;
+  }
+  .cdetail-action-toolbar {
+    justify-content: flex-start;
+    margin-top: 10px;
+  }
 }

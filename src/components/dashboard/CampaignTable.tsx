@@ -58,7 +58,7 @@ export const mapApiCampaignToUi = (c: CampaignResponse): Campaign => {
     title: c.name,
     tags: [
       c.objective || 'Mục tiêu chung',
-      ...(c.platforms || []).map((p) => p.toLowerCase()),
+      ...(c.platforms || []).filter((p) => p.toUpperCase() !== 'YOUTUBE').map((p) => p.toLowerCase()),
     ],
     thumbnail: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=100&auto=format&fit=crop&q=80',
     status: statusMap[c.status] || 'draft',
