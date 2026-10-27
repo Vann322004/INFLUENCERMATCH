@@ -66,9 +66,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: nowrap;
-  gap: 8px;
-  margin-bottom: 11px;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
   width: 100%;
 }
 
@@ -76,13 +76,13 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .campaign-tools-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
 }
 

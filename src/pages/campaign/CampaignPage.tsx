@@ -779,22 +779,22 @@ export default function CampaignPage() {
               </div>
             </div>
 
-            {/* Tools Group (Search, Sort, Filter) on the same line without overflowing */}
+            {/* Tools Group (Search, Sort, Filter) */}
             <div className="campaign-tools-group">
               <Input
                 placeholder="Tìm kiếm chiến dịch..."
-                prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 11 }} />}
+                prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 12 }} />}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
                 style={{
-                  width: 135,
-                  height: 32,
+                  width: 210,
+                  height: 34,
                   borderRadius: 8,
                   borderColor: '#E2E8F0',
-                  fontSize: 11.5,
+                  fontSize: 12,
                 }}
                 allowClear
               />
@@ -803,25 +803,27 @@ export default function CampaignPage() {
                 value={sortBy}
                 onChange={setSortBy}
                 size="small"
-                style={{ width: 88, height: 32 }}
+                popupMatchSelectWidth={false}
+                dropdownStyle={{ minWidth: 140 }}
+                style={{ width: 125, height: 34 }}
                 options={[
                   { value: 'latest', label: 'Mới nhất' },
                   { value: 'budget', label: 'Ngân sách' },
-                  { value: 'creators', label: 'KOC' },
+                  { value: 'creators', label: 'Số lượng KOC' },
                 ]}
               />
 
               <Button
                 size="small"
-                icon={<FilterOutlined style={{ fontSize: 10 }} />}
+                icon={<FilterOutlined style={{ fontSize: 11 }} />}
                 style={{
-                  height: 32,
+                  height: 34,
                   borderRadius: 8,
                   borderColor: '#E2E8F0',
                   color: '#475569',
                   fontWeight: 600,
-                  fontSize: 11.5,
-                  padding: '0 8px',
+                  fontSize: 12,
+                  padding: '0 12px',
                 }}
               >
                 Bộ lọc

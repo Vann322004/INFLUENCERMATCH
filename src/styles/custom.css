@@ -546,18 +546,21 @@ body {
 /* Header - Standalone Floating Action Buttons for Dashboard */
 /* Header - Modern SaaS Breadcrumbs, Search & Live Indicator */
 .app-header {
-  background: transparent !important;
+  background: rgba(245, 246, 250, 0.96) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
   height: 44px !important;
   min-height: 44px !important;
   line-height: normal !important;
   padding: 6px 24px 0 24px !important;
-  border-bottom: none !important;
-  position: relative;
-  z-index: 40;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7) !important;
+  position: sticky !important;
+  top: 0;
+  z-index: 100;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  box-shadow: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
   gap: 16px;
 }
 

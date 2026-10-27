@@ -58,21 +58,29 @@ function MainLayout({ children }: { children: React.ReactNode }) {
       {/* Light Linear Gradient Sidebar */}
       <AppSider />
 
-      {/* Main Content Area */}
-      <Layout style={{ background: '#F5F6FA', height: '100vh', overflow: 'hidden', minWidth: 0, flex: 1 }}>
+      {/* Main Content Area - Scrollbar runs from top of screen */}
+      <Layout
+        style={{
+          background: '#F5F6FA',
+          height: '100vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          minWidth: 0,
+          flex: 1,
+          scrollBehavior: 'smooth',
+          boxSizing: 'border-box',
+        }}
+      >
         <AppHeader />
 
         <Content
           style={{
             background: '#F5F6FA',
             padding: '8px 24px 24px 24px',
-            overflowY: 'auto',
-            overflowX: 'hidden',
+            overflow: 'visible',
             boxSizing: 'border-box',
             minWidth: 0,
             width: '100%',
-            scrollBehavior: 'smooth',
-            scrollSnapType: 'y proximity',
           }}
         >
           {children}
