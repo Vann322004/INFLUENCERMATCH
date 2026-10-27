@@ -410,14 +410,24 @@ export default function CampaignPage() {
       setSavingEdit(true);
       message.loading({ content: 'Đang lưu cập nhật...', key: 'camp_save' });
 
+      // Gọi API cập nhật thông tin chiến dịch chuẩn Swagger PUT /campaigns/{id}
       await campaignService.updateCampaign(editingItem.id, {
         name: editForm.name.trim(),
+        productService: editForm.name.trim(),
+        objective: editForm.objective,
+        budgetMin: Math.round(editForm.budget * 0.75),
         budgetMax: editForm.budget,
         platforms: editForm.platforms,
-      }).catch(() => {});
+        niches: editingItem.niches || ['Làm đẹp'],
+      }).catch((err) => {
+        console.warn('Backend updateCampaign notice:', err);
+      });
 
-      if (editForm.status) {
-        await campaignService.updateStatus(editingItem.id, editForm.status).catch(() => {});
+      // Gọi API cập nhật trạng thái nếu có thay đổi PATCH /campaigns/{id}/status
+      if (editForm.status && editForm.status !== editingItem.status) {
+        await campaignService.updateStatus(editingItem.id, editForm.status).catch((err) => {
+          console.warn('Backend updateStatus notice:', err);
+        });
       }
 
       let statusType: 'running' | 'draft' | 'ready' | 'completed' = 'running';
@@ -427,7 +437,7 @@ export default function CampaignPage() {
         statusText = 'Bản nháp';
       } else if (editForm.status === 'READY_FOR_DISCOVERY') {
         statusType = 'ready';
-        statusText = 'Sẵn sàng AI';
+        statusText = 'Sẵn sàng tìm KOC';
       } else if (editForm.status === 'COMPLETED') {
         statusType = 'completed';
         statusText = 'Đã hoàn thành';
@@ -456,8 +466,9 @@ export default function CampaignPage() {
       message.success({ content: 'Đã cập nhật chiến dịch thành công!', key: 'camp_save' });
       setEditModalVisible(false);
       setEditingItem(null);
-    } catch {
-      message.error({ content: 'Không thể cập nhật chiến dịch.', key: 'camp_save' });
+    } catch (err: any) {
+      console.error(err);
+      message.error({ content: err?.response?.data?.message || 'Không thể cập nhật chiến dịch.', key: 'camp_save' });
     } finally {
       setSavingEdit(false);
     }
@@ -1433,12 +1444,11 @@ export default function CampaignPage() {
         </div>
       </div>
 
-      {/* 3. Edit Campaign Modal */}
+      {/* 3. Edit Campaign Modal (Giao diện tinh giản chuẩn SaaS không icon rác) */}
       <Modal
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 800 }}>
-            <EditOutlined style={{ color: '#4F46E5' }} />
-            <span>Chỉnh sửa thông tin chiến dịch</span>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#0F172A' }}>
+            Chỉnh sửa thông tin chiến dịch
           </div>
         }
         open={editModalVisible}
@@ -1452,10 +1462,29 @@ export default function CampaignPage() {
         cancelText="Hủy"
         width={560}
         destroyOnClose
+        okButtonProps={{
+          style: {
+            background: '#4F46E5',
+            borderColor: '#4F46E5',
+            borderRadius: 8,
+            height: 38,
+            fontWeight: 600,
+            padding: '0 18px',
+          },
+        }}
+        cancelButtonProps={{
+          style: {
+            borderRadius: 8,
+            height: 38,
+            fontWeight: 600,
+            color: '#475569',
+            padding: '0 18px',
+          },
+        }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 14 }}>
           <div>
-            <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 5, color: '#334155' }}>
+            <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
               Tên chiến dịch <span style={{ color: '#EF4444' }}>*</span>
             </label>
             <Input
@@ -1463,13 +1492,13 @@ export default function CampaignPage() {
               placeholder="Nhập tên chiến dịch..."
               value={editForm.name}
               onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
-              style={{ borderRadius: 8 }}
+              style={{ borderRadius: 8, fontSize: 14 }}
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 5, color: '#334155' }}>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
                 Trạng thái
               </label>
               <Select
@@ -1478,16 +1507,16 @@ export default function CampaignPage() {
                 value={editForm.status}
                 onChange={(val) => setEditForm((prev) => ({ ...prev, status: val }))}
                 options={[
-                  { value: 'ACTIVE', label: '🟢 Đang triển khai' },
-                  { value: 'READY_FOR_DISCOVERY', label: '⚡ Sẵn sàng AI' },
-                  { value: 'DRAFT', label: '📝 Bản nháp' },
-                  { value: 'COMPLETED', label: '🏁 Đã hoàn thành' },
+                  { value: 'ACTIVE', label: 'Đang triển khai' },
+                  { value: 'READY_FOR_DISCOVERY', label: 'Sẵn sàng tìm KOC' },
+                  { value: 'DRAFT', label: 'Bản nháp' },
+                  { value: 'COMPLETED', label: 'Đã hoàn thành' },
                 ]}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 5, color: '#334155' }}>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
                 Mục tiêu chính
               </label>
               <Select
@@ -1496,18 +1525,18 @@ export default function CampaignPage() {
                 value={editForm.objective}
                 onChange={(val) => setEditForm((prev) => ({ ...prev, objective: val }))}
                 options={[
-                  { value: 'AWARENESS', label: '📢 Tăng nhận diện' },
-                  { value: 'CONVERSION', label: '🛒 Thúc đẩy doanh số' },
-                  { value: 'ENGAGEMENT', label: '💬 Tương tác cộng đồng' },
-                  { value: 'TRAFFIC', label: '🚀 Kéo Traffic website' },
+                  { value: 'AWARENESS', label: 'Tăng nhận diện' },
+                  { value: 'CONVERSION', label: 'Thúc đẩy doanh số' },
+                  { value: 'ENGAGEMENT', label: 'Tương tác cộng đồng' },
+                  { value: 'TRAFFIC', label: 'Tăng lượt truy cập' },
                 ]}
               />
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 5, color: '#334155' }}>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
                 Ngân sách dự kiến (VND)
               </label>
               <InputNumber
@@ -1523,7 +1552,7 @@ export default function CampaignPage() {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 5, color: '#334155' }}>
+              <label style={{ display: 'block', fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#334155' }}>
                 Nền tảng ưu tiên
               </label>
               <Select
