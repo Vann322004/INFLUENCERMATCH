@@ -182,7 +182,7 @@ export default function CampaignTable() {
     const parsedPlatforms = record.tags
       .slice(1)
       .map((t) => t.toUpperCase())
-      .filter((p) => ['TIKTOK', 'INSTAGRAM', 'YOUTUBE', 'FACEBOOK'].includes(p)) as CampaignPlatform[];
+      .filter((p) => ['TIKTOK', 'INSTAGRAM', 'FACEBOOK'].includes(p)) as CampaignPlatform[];
 
     setEditForm({
       name: record.title,
@@ -318,9 +318,28 @@ export default function CampaignTable() {
     });
   };
 
+  const handleOpenDetail = (record: Campaign) => {
+    sessionStorage.setItem('current_campaign_id', record.id);
+    try {
+      sessionStorage.setItem('current_campaign_data', JSON.stringify({
+        id: record.id,
+        name: record.title,
+        budgetFormatted: record.spent,
+        budgetRaw: record.spentNumber,
+        niches: record.tags,
+        dateRange: record.date,
+        thumbnail: record.thumbnail,
+        status: record.status === 'completed' ? 'COMPLETED' : (record.status === 'draft' ? 'DRAFT' : 'ACTIVE'),
+        statusText: record.statusText,
+        creatorsCount: record.creatorsCount,
+      }));
+    } catch {}
+    navigate('/campaigns/detail', { state: { id: record.id, item: record } });
+  };
+
   const handleActionMenu = (key: string, record: Campaign) => {
     if (key === 'view') {
-      navigate(`/campaigns/${record.id}`);
+      handleOpenDetail(record);
     } else if (key === 'edit') {
       handleOpenEdit(record);
     } else if (key === 'delete') {
@@ -338,7 +357,7 @@ export default function CampaignTable() {
           size={12}
           align="center"
           style={{ cursor: 'pointer' }}
-          onClick={() => navigate(`/campaigns/${record.id}`)}
+          onClick={() => handleOpenDetail(record)}
         >
           <Avatar
             shape="square"
@@ -744,7 +763,6 @@ export default function CampaignTable() {
                 options={[
                   { value: 'TIKTOK', label: 'TikTok' },
                   { value: 'INSTAGRAM', label: 'Instagram' },
-                  { value: 'YOUTUBE', label: 'YouTube' },
                   { value: 'FACEBOOK', label: 'Facebook' },
                 ]}
               />

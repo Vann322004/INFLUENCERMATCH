@@ -1,5 +1,12 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import https from 'https'
+
+const keepAliveAgent = new https.Agent({
+  keepAlive: true,
+  maxSockets: 50,
+  keepAliveMsecs: 60000,
+})
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -7,9 +14,10 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://221.121.3.226:8080',
+        target: 'https://api.influencermatch.site',
         changeOrigin: true,
         secure: false,
+        agent: keepAliveAgent,
       },
     },
   },

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, Tabs, Row, Col, Button, Modal, Form, Input, InputNumber, Select, message } from 'antd';
 import {
   ApiOutlined,
-  ThunderboltOutlined,
+  ControlOutlined,
   SortAscendingOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
@@ -10,6 +10,7 @@ import { MOCK_CONNECTORS, type DataConnector } from '../../../mock/adminData';
 import ConnectorStatusCard from './components/ConnectorStatusCard';
 import SyncRateLimitPanel from './components/SyncRateLimitPanel';
 import SourcePriorityPanel from './components/SourcePriorityPanel';
+import DataPipelineWorkflowBar from '../../../components/admin/DataPipelineWorkflowBar';
 
 export default function DataSourcesPage() {
   const [connectors, setConnectors] = useState<DataConnector[]>(MOCK_CONNECTORS);
@@ -47,6 +48,14 @@ export default function DataSourcesPage() {
 
   return (
     <div>
+      {/* 0. Unified Data Pipeline Stepper */}
+      <DataPipelineWorkflowBar
+        currentStep="sources"
+        activeConnectorsCount={activeCount}
+        runningJobsCount={2}
+        pendingQualityCount={5}
+      />
+
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
@@ -109,7 +118,7 @@ export default function DataSourcesPage() {
               key: 'rate-limit',
               label: (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
-                  <ThunderboltOutlined /> Quản lý Tốc độ & Giới hạn
+                  <ControlOutlined /> Quản lý Tốc độ & Giới hạn
                 </span>
               ),
               children: (

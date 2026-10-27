@@ -11,27 +11,23 @@ import {
   Button,
   Tag,
   Avatar,
-  Slider,
   message,
   Space,
-  Divider,
   Tooltip,
   Spin,
+  Checkbox,
 } from 'antd';
 import {
   ShopOutlined,
   CheckCircleFilled,
   GlobalOutlined,
-  MailOutlined,
-  PhoneOutlined,
   EnvironmentOutlined,
   SaveOutlined,
-  TeamOutlined,
   AimOutlined,
-  FileTextOutlined,
-  ShareAltOutlined,
+  AppstoreOutlined,
   CameraOutlined,
   PlusOutlined,
+  ShareAltOutlined,
 } from '@ant-design/icons';
 import { brandService } from '../../services/api/brandService';
 import type { BrandRequest, BrandResponse } from '../../types/api/brand.types';
@@ -43,62 +39,32 @@ const { TextArea } = Input;
 
 export interface BrandProfileState {
   brandName: string;
-  tagline: string;
+  description: string;
   logo: string;
   coverImage: string;
-  legalName: string;
-  taxCode: string;
   website: string;
-  contactEmail: string;
-  phone: string;
-  headquarters: string;
-  companySize: string;
+  location: string;
   industry: string;
   subCategories: string[];
-  priceSegment: string;
-  targetGender: { female: number; male: number };
-  targetAgeRange: string[];
   targetLocations: string[];
-  customerInterests: string[];
-  toneOfVoice: string[];
-  usps: string[];
-  guidelinesSummary: string;
-  socialLinks: {
-    facebook?: string;
-    instagram?: string;
-    tiktok?: string;
-    shopee?: string;
-  };
+  targetAgeRange: string[];
+  brandTone: string;
+  preferredPlatforms: string[];
 }
 
 const EMPTY_BRAND_PROFILE: BrandProfileState = {
   brandName: '',
-  tagline: '',
+  description: '',
   logo: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=150&auto=format&fit=crop&q=80',
   coverImage: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop&q=80',
-  legalName: '',
-  taxCode: '',
   website: '',
-  contactEmail: '',
-  phone: '',
-  headquarters: '',
-  companySize: '10 - 50 nhân viên',
-  industry: 'Mỹ phẩm & Chăm sóc cá nhân',
-  subCategories: ['Chăm sóc da (Skincare)'],
-  priceSegment: 'Tầm trung - Cận cao cấp (300.000 ₫ - 800.000 ₫)',
-  targetGender: { female: 70, male: 30 },
-  targetAgeRange: ['18 - 24 tuổi', '25 - 34 tuổi'],
-  targetLocations: ['TP. Hồ Chí Minh', 'Hà Nội'],
-  customerInterests: ['Phong cách sống', 'Làm đẹp'],
-  toneOfVoice: ['Thân thiện', 'Chuyên nghiệp'],
-  usps: ['Chất lượng cao', 'Giao hàng nhanh'],
-  guidelinesSummary: '',
-  socialLinks: {
-    facebook: '',
-    instagram: '',
-    tiktok: '',
-    shopee: '',
-  },
+  location: '',
+  industry: '',
+  subCategories: [],
+  targetLocations: [],
+  targetAgeRange: [],
+  brandTone: '',
+  preferredPlatforms: [],
 };
 
 export default function BrandProfilePage() {
@@ -106,7 +72,7 @@ export default function BrandProfilePage() {
   const [brandId, setBrandId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState('business');
+  const [activeTab, setActiveTab] = useState('general');
 
   // New tag inputs
   const [inputSubCat, setInputSubCat] = useState('');
@@ -123,21 +89,15 @@ export default function BrandProfilePage() {
           setProfile((prev) => ({
             ...prev,
             brandName: brand.businessName || '',
-            tagline: brand.description || '',
-            industry: brand.industry || prev.industry,
-            subCategories: brand.productCategories && brand.productCategories.length > 0
-              ? brand.productCategories
-              : prev.subCategories,
+            description: brand.description || '',
+            industry: brand.industry || '',
+            subCategories: brand.productCategories || [],
             website: brand.website || '',
-            headquarters: brand.location || '',
-            targetLocations: brand.targetMarkets && brand.targetMarkets.length > 0
-              ? brand.targetMarkets
-              : prev.targetLocations,
-            targetAgeRange: brand.targetAudiences && brand.targetAudiences.length > 0
-              ? brand.targetAudiences
-              : prev.targetAgeRange,
-            toneOfVoice: brand.brandTone ? [brand.brandTone] : prev.toneOfVoice,
-            guidelinesSummary: brand.description || '',
+            location: brand.location || '',
+            targetLocations: brand.targetMarkets || [],
+            targetAgeRange: brand.targetAudiences || [],
+            brandTone: brand.brandTone || '',
+            preferredPlatforms: brand.preferredPlatforms || [],
           }));
         }
       } catch (err) {
@@ -155,7 +115,7 @@ export default function BrandProfilePage() {
 
   const handleSaveProfile = async () => {
     if (!profile.brandName.trim()) {
-      message.error('Vui lòng nhập tên thương hiệu hiển thị!');
+      message.error('Vui lòng nhập tên thương hiệu!');
       return;
     }
 
@@ -167,17 +127,17 @@ export default function BrandProfilePage() {
       industry: profile.industry,
       productCategories: profile.subCategories,
       website: profile.website.trim(),
-      location: profile.headquarters.trim(),
+      location: profile.location.trim(),
       targetMarkets: profile.targetLocations,
       targetAudiences: profile.targetAgeRange,
-      brandTone: profile.toneOfVoice.join(', '),
-      description: profile.guidelinesSummary.trim() || profile.tagline.trim(),
-      preferredPlatforms: ['TIKTOK', 'INSTAGRAM', 'YOUTUBE'],
+      brandTone: profile.brandTone,
+      description: profile.description.trim(),
+      preferredPlatforms: profile.preferredPlatforms,
     };
 
     try {
       if (brandId) {
-        const updated = await brandService.updateBrand(brandId, payload);
+        await brandService.updateBrand(brandId, payload);
         message.success({ content: 'Đã cập nhật hồ sơ thương hiệu thành công!', key: 'save_profile' });
       } else {
         const created = await brandService.createBrand(payload);
@@ -213,10 +173,18 @@ export default function BrandProfilePage() {
     <div className="brand-profile-container">
       {/* 1. Header Section */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
           <div>
             <Title level={2} style={{ margin: 0, fontWeight: 800, color: '#0F172A', letterSpacing: -0.5 }}>
-              Hồ sơ thương hiệu (Brand Profile)
+              Hồ sơ thương hiệu
             </Title>
             <Paragraph style={{ color: '#64748B', fontSize: 13, margin: '4px 0 0 0' }}>
               Cung cấp thông tin chuẩn xác về thương hiệu, ngành hàng và khách hàng mục tiêu để AI gợi ý Creator chính xác nhất.
@@ -244,12 +212,8 @@ export default function BrandProfilePage() {
         </div>
       </div>
 
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <Spin size="large" description="Đang tải dữ liệu hồ sơ thương hiệu từ máy chủ..." />
-        </div>
-      ) : (
-        <>
+      <Spin spinning={loading} tip="Đang đồng bộ dữ liệu hồ sơ thương hiệu...">
+        <div style={{ marginTop: 8 }}>
           {/* 2. Cover Banner & Header Card */}
           <div className="brand-cover-wrapper">
             <img src={profile.coverImage} alt="Cover" className="brand-cover-img" />
@@ -265,7 +229,7 @@ export default function BrandProfilePage() {
                 border: 'none',
                 borderRadius: 8,
               }}
-              onClick={() => message.info('Chọn ảnh bìa thương hiệu mới')}
+              onClick={() => message.info('Tính năng đổi ảnh bìa sẽ sớm ra mắt')}
             >
               Đổi ảnh bìa
             </Button>
@@ -292,7 +256,7 @@ export default function BrandProfilePage() {
                         right: -4,
                         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                       }}
-                      onClick={() => message.info('Tải logo vuông mới lên')}
+                      onClick={() => message.info('Tính năng cập nhật logo sẽ sớm ra mắt')}
                     />
                   </Tooltip>
                 </div>
@@ -308,7 +272,7 @@ export default function BrandProfilePage() {
                     icon={<CheckCircleFilled />}
                     style={{ borderRadius: 999, fontWeight: 700 }}
                   >
-                    Đã xác minh doanh nghiệp
+                    Thương hiệu SME
                   </Tag>
                   <Tag color="purple" style={{ borderRadius: 999, fontWeight: 600 }}>
                     {profile.industry}
@@ -316,19 +280,34 @@ export default function BrandProfilePage() {
                 </div>
 
                 <div style={{ color: '#64748B', fontSize: 13, marginTop: 4 }}>
-                  {profile.tagline || 'Chưa có mô tả ngắn về thương hiệu'}
+                  {profile.description || 'Chưa có mô tả ngắn về thương hiệu'}
                 </div>
 
-                <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap', fontSize: 12, color: '#475569' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                    <GlobalOutlined style={{ color: '#5B5BF0' }} /> {profile.website || 'Chưa cập nhật website'}
-                  </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                    <EnvironmentOutlined style={{ color: '#10B981' }} /> {profile.headquarters || 'Việt Nam'}
-                  </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                    <TeamOutlined style={{ color: '#F59E0B' }} /> {profile.companySize}
-                  </span>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 16,
+                    marginTop: 8,
+                    flexWrap: 'wrap',
+                    fontSize: 12,
+                    color: '#475569',
+                  }}
+                >
+                  {profile.website && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                      <GlobalOutlined style={{ color: '#5B5BF0' }} /> {profile.website}
+                    </span>
+                  )}
+                  {profile.location && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                      <EnvironmentOutlined style={{ color: '#10B981' }} /> {profile.location}
+                    </span>
+                  )}
+                  {profile.preferredPlatforms.length > 0 && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                      <ShareAltOutlined style={{ color: '#EC4899' }} /> Nền tảng: {profile.preferredPlatforms.join(', ')}
+                    </span>
+                  )}
                 </div>
               </Col>
             </Row>
@@ -342,10 +321,10 @@ export default function BrandProfilePage() {
               size="large"
               items={[
                 {
-                  key: 'business',
+                  key: 'general',
                   label: (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 600 }}>
-                      <ShopOutlined /> Thông tin doanh nghiệp
+                      <ShopOutlined /> Thông tin thương hiệu
                     </span>
                   ),
                   children: (
@@ -353,53 +332,25 @@ export default function BrandProfilePage() {
                       <Form layout="vertical">
                         <Row gutter={[20, 16]}>
                           <Col xs={24} md={12}>
-                            <Form.Item label={<strong>Tên thương hiệu hiển thị (Brand Name)</strong>} required>
+                            <Form.Item
+                              label={<strong>Tên thương hiệu hiển thị</strong>}
+                              required
+                              tooltip="Tên cửa hàng / nhãn hàng của bạn sẽ xuất hiện trên chiến dịch và khi gửi lời mời tới Creator"
+                            >
                               <Input
                                 value={profile.brandName}
                                 onChange={(e) => setProfile({ ...profile, brandName: e.target.value })}
                                 size="large"
-                                placeholder="Nhập tên thương hiệu..."
+                                placeholder="Nhập tên thương hiệu hoặc tên shop..."
                               />
                             </Form.Item>
                           </Col>
-                          <Col xs={24} md={12}>
-                            <Form.Item label={<strong>Khẩu hiệu / Slogan ngắn</strong>}>
-                              <Input
-                                value={profile.tagline}
-                                onChange={(e) => setProfile({ ...profile, tagline: e.target.value })}
-                                size="large"
-                                placeholder="Ví dụ: Mỹ phẩm thuần chay lành tính..."
-                              />
-                            </Form.Item>
-                          </Col>
-                        </Row>
 
-                        <Row gutter={[20, 16]}>
                           <Col xs={24} md={12}>
-                            <Form.Item label={<strong>Tên pháp lý công ty (Theo ĐKKD)</strong>}>
-                              <Input
-                                value={profile.legalName}
-                                onChange={(e) => setProfile({ ...profile, legalName: e.target.value })}
-                                size="large"
-                                placeholder="Công ty TNHH / Cổ phần..."
-                              />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} md={12}>
-                            <Form.Item label={<strong>Mã số thuế doanh nghiệp (MST)</strong>}>
-                              <Input
-                                value={profile.taxCode}
-                                onChange={(e) => setProfile({ ...profile, taxCode: e.target.value })}
-                                size="large"
-                                placeholder="Mã số thuế..."
-                              />
-                            </Form.Item>
-                          </Col>
-                        </Row>
-
-                        <Row gutter={[20, 16]}>
-                          <Col xs={24} md={8}>
-                            <Form.Item label={<strong>Website chính thức</strong>}>
+                            <Form.Item
+                              label={<strong>Website hoặc Gian hàng online</strong>}
+                              tooltip="Đường link website, TikTok Shop, Shopee hoặc Fanpage chính thức của bạn"
+                            >
                               <Input
                                 prefix={<GlobalOutlined style={{ color: '#94A3B8' }} />}
                                 value={profile.website}
@@ -409,172 +360,98 @@ export default function BrandProfilePage() {
                               />
                             </Form.Item>
                           </Col>
-                          <Col xs={24} md={8}>
-                            <Form.Item label={<strong>Email liên hệ chiến dịch</strong>}>
-                              <Input
-                                prefix={<MailOutlined style={{ color: '#94A3B8' }} />}
-                                value={profile.contactEmail}
-                                onChange={(e) => setProfile({ ...profile, contactEmail: e.target.value })}
-                                size="large"
-                                placeholder="brand@example.com"
-                              />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} md={8}>
-                            <Form.Item label={<strong>Hotline / Số điện thoại</strong>}>
-                              <Input
-                                prefix={<PhoneOutlined style={{ color: '#94A3B8' }} />}
-                                value={profile.phone}
-                                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                                size="large"
-                                placeholder="090..."
-                              />
-                            </Form.Item>
-                          </Col>
                         </Row>
 
                         <Row gutter={[20, 16]}>
-                          <Col xs={24} md={16}>
-                            <Form.Item label={<strong>Địa chỉ trụ sở chính</strong>}>
+                          <Col xs={24} md={12}>
+                            <Form.Item
+                              label={<strong>Địa chỉ / Khu vực hoạt động chính</strong>}
+                              tooltip="Thành phố hoặc địa chỉ cửa hàng/kho của bạn"
+                            >
                               <Input
                                 prefix={<EnvironmentOutlined style={{ color: '#94A3B8' }} />}
-                                value={profile.headquarters}
-                                onChange={(e) => setProfile({ ...profile, headquarters: e.target.value })}
+                                value={profile.location}
+                                onChange={(e) => setProfile({ ...profile, location: e.target.value })}
                                 size="large"
-                                placeholder="Địa chỉ trụ sở..."
+                                placeholder="Ví dụ: TP. Hồ Chí Minh, Hà Nội, Đà Nẵng..."
                               />
                             </Form.Item>
                           </Col>
-                          <Col xs={24} md={8}>
-                            <Form.Item label={<strong>Quy mô nhân sự</strong>}>
+
+                          <Col xs={24} md={12}>
+                            <Form.Item
+                              label={<strong>Giọng điệu thương hiệu (Brand Tone)</strong>}
+                              tooltip="Phong cách giao tiếp và truyền thông mong muốn khi Creator sáng tạo nội dung"
+                            >
                               <Select
-                                value={profile.companySize}
-                                onChange={(val) => setProfile({ ...profile, companySize: val })}
+                                value={profile.brandTone}
+                                onChange={(val) => setProfile({ ...profile, brandTone: val })}
                                 size="large"
                                 options={[
-                                  { value: 'Dưới 10 nhân viên', label: 'Dưới 10 nhân viên (Startup)' },
-                                  { value: '10 - 50 nhân viên', label: '10 - 50 nhân viên' },
-                                  { value: '50 - 200 nhân viên', label: '50 - 200 nhân viên' },
-                                  { value: 'Trên 200 nhân viên', label: 'Trên 200 nhân viên (Tập đoàn)' },
+                                  { value: 'Thân thiện', label: 'Thân thiện, gần gũi' },
+                                  { value: 'Trẻ trung', label: 'Trẻ trung, năng động' },
+                                  { value: 'Chuyên nghiệp', label: 'Chuyên nghiệp, đáng tin cậy' },
+                                  { value: 'Hài hước', label: 'Hài hước, bắt trend' },
+                                  { value: 'Sang trọng', label: 'Sang trọng, tinh tế' },
+                                  { value: 'Chân thật', label: 'Chân thật, mộc mạc' },
                                 ]}
                               />
                             </Form.Item>
                           </Col>
                         </Row>
 
-                        <Divider style={{ margin: '14px 0 20px 0' }} />
-
-                        <div style={{ fontWeight: 700, color: '#0F172A', marginBottom: 12 }}>
-                          Kênh truyền thông & Gian hàng trực tuyến:
-                        </div>
-                        <Row gutter={[20, 16]}>
-                          <Col xs={24} sm={12} md={6}>
-                            <Form.Item label="Facebook Fanpage">
-                              <Input
-                                value={profile.socialLinks.facebook}
-                                onChange={(e) =>
-                                  setProfile({
-                                    ...profile,
-                                    socialLinks: { ...profile.socialLinks, facebook: e.target.value },
-                                  })
-                                }
-                                placeholder="facebook.com/..."
-                              />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} sm={12} md={6}>
-                            <Form.Item label="Instagram">
-                              <Input
-                                value={profile.socialLinks.instagram}
-                                onChange={(e) =>
-                                  setProfile({
-                                    ...profile,
-                                    socialLinks: { ...profile.socialLinks, instagram: e.target.value },
-                                  })
-                                }
-                                placeholder="instagram.com/..."
-                              />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} sm={12} md={6}>
-                            <Form.Item label="Kênh TikTok">
-                              <Input
-                                value={profile.socialLinks.tiktok}
-                                onChange={(e) =>
-                                  setProfile({
-                                    ...profile,
-                                    socialLinks: { ...profile.socialLinks, tiktok: e.target.value },
-                                  })
-                                }
-                                placeholder="tiktok.com/@..."
-                              />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} sm={12} md={6}>
-                            <Form.Item label="Shopee Mall / Lazada">
-                              <Input
-                                value={profile.socialLinks.shopee}
-                                onChange={(e) =>
-                                  setProfile({
-                                    ...profile,
-                                    socialLinks: { ...profile.socialLinks, shopee: e.target.value },
-                                  })
-                                }
-                                placeholder="shopee.vn/..."
-                              />
-                            </Form.Item>
-                          </Col>
-                        </Row>
+                        <Form.Item
+                          label={<strong>Mô tả thương hiệu & định hướng</strong>}
+                          tooltip="Giới thiệu câu chuyện thương hiệu, sản phẩm chính và thông điệp bạn muốn Creator hiểu rõ"
+                        >
+                          <TextArea
+                            rows={4}
+                            value={profile.description}
+                            onChange={(e) => setProfile({ ...profile, description: e.target.value })}
+                            style={{ borderRadius: 10 }}
+                            placeholder="Mô tả ngắn gọn về thương hiệu, điểm mạnh của sản phẩm hoặc định hướng hợp tác cùng Creator..."
+                          />
+                        </Form.Item>
                       </Form>
                     </div>
                   ),
                 },
                 {
-                  key: 'industry',
+                  key: 'products',
                   label: (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 600 }}>
-                      <ShareAltOutlined /> Ngành hàng & Phân khúc
+                      <AppstoreOutlined /> Ngành hàng & Sản phẩm
                     </span>
                   ),
                   children: (
                     <div style={{ marginTop: 16 }}>
                       <Form layout="vertical">
-                        <Row gutter={[20, 16]}>
-                          <Col xs={24} md={12}>
-                            <Form.Item label={<strong>Ngành hàng kinh doanh chính</strong>} required>
-                              <Select
-                                value={profile.industry}
-                                onChange={(val) => setProfile({ ...profile, industry: val })}
-                                size="large"
-                                options={[
-                                  { value: 'Mỹ phẩm & Chăm sóc cá nhân', label: 'Mỹ phẩm & Chăm sóc cá nhân (Beauty & Care)' },
-                                  { value: 'Thời trang & Phụ kiện', label: 'Thời trang & Phụ kiện (Fashion)' },
-                                  { value: 'Ẩm thực & Đồ uống', label: 'Ẩm thực & Đồ uống (F&B)' },
-                                  { value: 'Công nghệ & Điện tử', label: 'Công nghệ & Điện tử (Tech)' },
-                                  { value: 'Mẹ và Bé', label: 'Mẹ và Bé (Mom & Baby)' },
-                                  { value: 'Sức khỏe & Thể hình', label: 'Sức khỏe & Thể hình (Fitness & Health)' },
-                                ]}
-                              />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} md={12}>
-                            <Form.Item label={<strong>Phân khúc giá sản phẩm</strong>}>
-                              <Select
-                                value={profile.priceSegment}
-                                onChange={(val) => setProfile({ ...profile, priceSegment: val })}
-                                size="large"
-                                options={[
-                                  { value: 'Bình dân / Học sinh sinh viên (Dưới 300.000 ₫)', label: 'Bình dân (Dưới 300.000 ₫)' },
-                                  { value: 'Tầm trung - Cận cao cấp (300.000 ₫ - 800.000 ₫)', label: 'Tầm trung - Cận cao cấp (300.000 ₫ - 800.000 ₫)' },
-                                  { value: 'Cao cấp (800.000 ₫ - 2.500.000 ₫)', label: 'Cao cấp (800.000 ₫ - 2.500.000 ₫)' },
-                                  { value: 'Xa xỉ / Luxury (Trên 2.500.000 ₫)', label: 'Xa xỉ / Luxury (Trên 2.500.000 ₫)' },
-                                ]}
-                              />
-                            </Form.Item>
-                          </Col>
-                        </Row>
+                        <Form.Item
+                          label={<strong>Ngành hàng kinh doanh chính</strong>}
+                          required
+                          tooltip="Lĩnh vực cốt lõi để AI lọc ra các Creator chuyên nghiệp trong ngành"
+                        >
+                          <Select
+                            value={profile.industry}
+                            onChange={(val) => setProfile({ ...profile, industry: val })}
+                            size="large"
+                            options={[
+                              { value: 'Mỹ phẩm & Chăm sóc cá nhân', label: 'Mỹ phẩm & Chăm sóc cá nhân' },
+                              { value: 'Thời trang & Phụ kiện', label: 'Thời trang & Phụ kiện' },
+                              { value: 'Ẩm thực & Đồ uống', label: 'Ẩm thực & Đồ uống' },
+                              { value: 'Công nghệ & Điện tử', label: 'Công nghệ & Điện tử' },
+                              { value: 'Mẹ và Bé', label: 'Mẹ và Bé' },
+                              { value: 'Sức khỏe & Thể hình', label: 'Sức khỏe & Thể hình' },
+                              { value: 'Gia dụng & Đời sống', label: 'Gia dụng & Đời sống' },
+                              { value: 'Du lịch & Trải nghiệm', label: 'Du lịch & Trải nghiệm' },
+                            ]}
+                          />
+                        </Form.Item>
 
-                        <Form.Item label={<strong>Thẻ ngành phụ & Danh mục sản phẩm (Sub-categories)</strong>}>
+                        <Form.Item
+                          label={<strong>Danh mục sản phẩm / Dòng sản phẩm thế mạnh</strong>}
+                          tooltip="Các sản phẩm cụ thể bạn thường xuyên triển khai chiến dịch với Creator"
+                        >
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
                             {profile.subCategories.map((cat) => (
                               <Tag
@@ -602,7 +479,7 @@ export default function BrandProfilePage() {
                                   value={inputSubCat}
                                   onChange={(e) => setInputSubCat(e.target.value)}
                                   onPressEnter={handleAddSubCategory}
-                                  placeholder="Nhập tên ngành..."
+                                  placeholder="Nhập tên sản phẩm..."
                                   autoFocus
                                 />
                                 <Button size="small" type="primary" onClick={handleAddSubCategory}>
@@ -616,12 +493,12 @@ export default function BrandProfilePage() {
                                 icon={<PlusOutlined />}
                                 onClick={() => setIsAddingSubCat(true)}
                               >
-                                Thêm danh mục
+                                Thêm sản phẩm
                               </Button>
                             )}
                           </div>
                           <div style={{ fontSize: 12, color: '#64748B', marginTop: 8 }}>
-                            AI sẽ dựa trên các danh mục này để quét các Creator có nội dung chuyên sâu tương thích.
+                            Hệ thống AI sẽ dựa trên danh mục sản phẩm này để gợi ý các Creator có nội dung chuyên môn tương đồng.
                           </div>
                         </Form.Item>
                       </Form>
@@ -632,169 +509,103 @@ export default function BrandProfilePage() {
                   key: 'target',
                   label: (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 600 }}>
-                      <AimOutlined /> Khách hàng mục tiêu (Target Persona)
-                    </span>
-                  ),
-                  children: (
-                    <div style={{ marginTop: 16 }}>
-                      <Row gutter={[24, 20]}>
-                        <Col xs={24} md={12}>
-                          <div className="persona-metric-box">
-                            <div style={{ fontWeight: 700, color: '#0F172A', marginBottom: 12 }}>
-                              Tỷ lệ giới tính khách hàng mục tiêu:
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13, fontWeight: 600 }}>
-                              <span style={{ color: '#EC4899' }}>Nữ: {profile.targetGender.female}%</span>
-                              <span style={{ color: '#2563EB' }}>Nam: {profile.targetGender.male}%</span>
-                            </div>
-                            <Slider
-                              value={profile.targetGender.female}
-                              onChange={(val) =>
-                                setProfile({
-                                  ...profile,
-                                  targetGender: { female: val, male: 100 - val },
-                                })
-                              }
-                              trackStyle={{ backgroundColor: '#EC4899' }}
-                              handleStyle={{ borderColor: '#EC4899' }}
-                            />
-                            <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 6 }}>
-                              Kéo thanh để điều chỉnh tỷ lệ chân dung người mua.
-                            </div>
-                          </div>
-                        </Col>
-
-                        <Col xs={24} md={12}>
-                          <div className="persona-metric-box">
-                            <div style={{ fontWeight: 700, color: '#0F172A', marginBottom: 10 }}>
-                              Nhóm tuổi khách hàng trọng tâm:
-                            </div>
-                            <Select
-                              mode="multiple"
-                              style={{ width: '100%' }}
-                              value={profile.targetAgeRange}
-                              onChange={(vals) => setProfile({ ...profile, targetAgeRange: vals })}
-                              size="large"
-                              options={[
-                                { value: 'Dưới 18 tuổi', label: 'Dưới 18 tuổi (Gen Z nhỏ)' },
-                                { value: '18 - 24 tuổi', label: '18 - 24 tuổi (Sinh viên & Mới đi làm)' },
-                                { value: '25 - 34 tuổi', label: '25 - 34 tuổi (Dân văn phòng, Thu nhập ổn định)' },
-                                { value: '35 - 44 tuổi', label: '35 - 44 tuổi (Gia đình, Trung niên)' },
-                                { value: 'Trên 45 tuổi', label: 'Trên 45 tuổi' },
-                              ]}
-                            />
-                            <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 8 }}>
-                              AI sẽ ưu tiên Creator có tệp người theo dõi thuộc các độ tuổi đã chọn.
-                            </div>
-                          </div>
-                        </Col>
-
-                        <Col xs={24} md={12}>
-                          <div className="persona-metric-box">
-                            <div style={{ fontWeight: 700, color: '#0F172A', marginBottom: 10 }}>
-                              Khu vực địa lý tập trung:
-                            </div>
-                            <Select
-                              mode="multiple"
-                              style={{ width: '100%' }}
-                              value={profile.targetLocations}
-                              onChange={(vals) => setProfile({ ...profile, targetLocations: vals })}
-                              size="large"
-                              options={[
-                                { value: 'TP. Hồ Chí Minh', label: 'TP. Hồ Chí Minh' },
-                                { value: 'Hà Nội', label: 'Hà Nội' },
-                                { value: 'Đà Nẵng', label: 'Đà Nẵng' },
-                                { value: 'Cần Thơ', label: 'Cần Thơ' },
-                                { value: 'Hải Phòng', label: 'Hải Phòng' },
-                                { value: 'Toàn quốc', label: 'Toàn quốc' },
-                              ]}
-                            />
-                          </div>
-                        </Col>
-
-                        <Col xs={24} md={12}>
-                          <div className="persona-metric-box">
-                            <div style={{ fontWeight: 700, color: '#0F172A', marginBottom: 10 }}>
-                              Mối quan tâm chính của khách hàng (Interests):
-                            </div>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                              {profile.customerInterests.map((interest) => (
-                                <Tag color="cyan" key={interest} style={{ borderRadius: 6, fontWeight: 500 }}>
-                                  {interest}
-                                </Tag>
-                              ))}
-                            </div>
-                          </div>
-                        </Col>
-                      </Row>
-                    </div>
-                  ),
-                },
-                {
-                  key: 'assets',
-                  label: (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 600 }}>
-                      <FileTextOutlined /> Hướng dẫn & Tài sản thương hiệu
+                      <AimOutlined /> Khách hàng & Nền tảng
                     </span>
                   ),
                   children: (
                     <div style={{ marginTop: 16 }}>
                       <Form layout="vertical">
-                        <Form.Item label={<strong>Tone of Voice (Giọng điệu thương hiệu khi Creator sáng tạo)</strong>}>
-                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            {profile.toneOfVoice.map((tone) => (
-                              <Tag color="geekblue" key={tone} style={{ padding: '4px 10px', fontSize: 13, borderRadius: 6 }}>
-                                {tone}
-                              </Tag>
-                            ))}
-                          </div>
-                        </Form.Item>
-
-                        <Form.Item label={<strong>Điểm bán hàng độc nhất (USPs - Unique Selling Points)</strong>}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            {profile.usps.map((usp, idx) => (
-                              <div
-                                key={idx}
-                                style={{
-                                  background: '#F8FAFC',
-                                  padding: '10px 14px',
-                                  borderRadius: 8,
-                                  border: '1px solid #E2E8F0',
-                                  fontSize: 13,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 10,
-                                }}
-                              >
-                                <CheckCircleFilled style={{ color: '#10B981' }} />
-                                <span>{usp}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </Form.Item>
-
-                        <Form.Item label={<strong>Tóm tắt Brand Guidelines (Sẽ tự động đính kèm vào brief Creator)</strong>}>
-                          <TextArea
-                            rows={4}
-                            value={profile.guidelinesSummary}
-                            onChange={(e) => setProfile({ ...profile, guidelinesSummary: e.target.value })}
-                            style={{ borderRadius: 10 }}
-                            placeholder="Mô tả định hướng hình ảnh, ngôn từ, yêu cầu đối với creator..."
-                          />
-                        </Form.Item>
-
-                        <div style={{ marginTop: 16 }}>
-                          <Button
-                            type="primary"
-                            icon={<SaveOutlined />}
-                            onClick={handleSaveProfile}
-                            loading={saving}
-                            size="large"
-                            style={{ background: '#5B5BF0', borderRadius: 10, fontWeight: 700 }}
+                        <Form.Item
+                          label={<strong>Nền tảng mạng xã hội muốn ưu tiên hợp tác</strong>}
+                          tooltip="Chọn các nền tảng bạn muốn Creator đăng tải video / bài viết quảng bá"
+                        >
+                          <Checkbox.Group
+                            value={profile.preferredPlatforms}
+                            onChange={(vals) =>
+                              setProfile({ ...profile, preferredPlatforms: vals as string[] })
+                            }
+                            style={{ width: '100%' }}
                           >
-                            Lưu toàn bộ hồ sơ
-                          </Button>
-                        </div>
+                            <Row gutter={[16, 12]}>
+                              {[
+                                { value: 'TIKTOK', label: 'TikTok (Video ngắn / Livestream)' },
+                                { value: 'INSTAGRAM', label: 'Instagram (Reels / Story / Post)' },
+                                { value: 'FACEBOOK', label: 'Facebook (Reels / Post)' },
+                                { value: 'YOUTUBE', label: 'YouTube (Shorts / Video dài)' },
+                              ].map((item) => (
+                                <Col xs={24} sm={12} key={item.value}>
+                                  <div
+                                    style={{
+                                      padding: '12px 16px',
+                                      borderRadius: 10,
+                                      border: profile.preferredPlatforms.includes(item.value)
+                                        ? '1.5px solid #5B5BF0'
+                                        : '1px solid #E2E8F0',
+                                      background: profile.preferredPlatforms.includes(item.value)
+                                        ? '#EEF2FF'
+                                        : '#FFFFFF',
+                                      transition: 'all 0.2s',
+                                    }}
+                                  >
+                                    <Checkbox value={item.value} style={{ width: '100%', fontWeight: 600 }}>
+                                      {item.label}
+                                    </Checkbox>
+                                  </div>
+                                </Col>
+                              ))}
+                            </Row>
+                          </Checkbox.Group>
+                        </Form.Item>
+
+                        <Row gutter={[20, 16]}>
+                          <Col xs={24} md={12}>
+                            <Form.Item
+                              label={<strong>Thị trường mục tiêu (Khu vực)</strong>}
+                              tooltip="Các tỉnh thành hoặc khu vực khách hàng tiềm năng của bạn"
+                            >
+                              <Select
+                                mode="multiple"
+                                style={{ width: '100%' }}
+                                value={profile.targetLocations}
+                                onChange={(vals) => setProfile({ ...profile, targetLocations: vals })}
+                                size="large"
+                                options={[
+                                  { value: 'Toàn quốc', label: 'Toàn quốc' },
+                                  { value: 'TP. Hồ Chí Minh', label: 'TP. Hồ Chí Minh' },
+                                  { value: 'Hà Nội', label: 'Hà Nội' },
+                                  { value: 'Đà Nẵng', label: 'Đà Nẵng' },
+                                  { value: 'Cần Thơ', label: 'Cần Thơ' },
+                                  { value: 'Hải Phòng', label: 'Hải Phòng' },
+                                  { value: 'Miền Nam', label: 'Miền Nam' },
+                                  { value: 'Miền Bắc', label: 'Miền Bắc' },
+                                  { value: 'Miền Trung', label: 'Miền Trung' },
+                                ]}
+                              />
+                            </Form.Item>
+                          </Col>
+
+                          <Col xs={24} md={12}>
+                            <Form.Item
+                              label={<strong>Độ tuổi khách hàng mục tiêu</strong>}
+                              tooltip="AI sẽ ưu tiên Creator có tệp khán giả người theo dõi trong các độ tuổi này"
+                            >
+                              <Select
+                                mode="multiple"
+                                style={{ width: '100%' }}
+                                value={profile.targetAgeRange}
+                                onChange={(vals) => setProfile({ ...profile, targetAgeRange: vals })}
+                                size="large"
+                                options={[
+                                  { value: 'Dưới 18 tuổi', label: 'Dưới 18 tuổi (Học sinh)' },
+                                  { value: '18 - 24 tuổi', label: '18 - 24 tuổi (Sinh viên & Trẻ tuổi)' },
+                                  { value: '25 - 34 tuổi', label: '25 - 34 tuổi (Người đi làm)' },
+                                  { value: '35 - 44 tuổi', label: '35 - 44 tuổi (Gia đình)' },
+                                  { value: 'Trên 45 tuổi', label: 'Trên 45 tuổi' },
+                                ]}
+                              />
+                            </Form.Item>
+                          </Col>
+                        </Row>
                       </Form>
                     </div>
                   ),
@@ -802,8 +613,8 @@ export default function BrandProfilePage() {
               ]}
             />
           </Card>
-        </>
-      )}
+        </div>
+      </Spin>
     </div>
   );
 }

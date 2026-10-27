@@ -39,26 +39,40 @@ import SubscriptionPlansPage from './pages/admin/subscriptions/SubscriptionPlans
 import PaymentsPage from './pages/admin/payments/PaymentsPage';
 import AuditLogPage from './pages/admin/audit/AuditLogPage';
 import CreatorClaimReviewPage from './pages/admin/claims/CreatorClaimReviewPage';
+import DataQualityPage from './pages/admin/quality/DataQualityPage';
+
+import { useMultiTabSessionSync } from './hooks/useMultiTabSessionSync';
 
 const { Content } = Layout;
+
+// Đồng bộ trạng thái đăng nhập giữa các tab
+function SessionSyncHandler() {
+  useMultiTabSessionSync();
+  return null;
+}
 
 // Main App Layout Wrapper with Light Linear Sidebar & Top Header
 function MainLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Layout style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden' }}>
+    <Layout hasSider style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden', width: '100vw' }}>
       {/* Light Linear Gradient Sidebar */}
       <AppSider />
 
       {/* Main Content Area */}
-      <Layout style={{ background: '#F5F6FA', height: '100vh', overflow: 'hidden' }}>
+      <Layout style={{ background: '#F5F6FA', height: '100vh', overflow: 'hidden', minWidth: 0, flex: 1 }}>
         <AppHeader />
 
         <Content
           style={{
             background: '#F5F6FA',
-            padding: '20px 28px 20px 28px',
+            padding: '8px 24px 24px 24px',
             overflowY: 'auto',
+            overflowX: 'hidden',
             boxSizing: 'border-box',
+            minWidth: 0,
+            width: '100%',
+            scrollBehavior: 'smooth',
+            scrollSnapType: 'y proximity',
           }}
         >
           {children}
@@ -72,6 +86,7 @@ export default function App() {
   return (
     <ConfigProvider theme={themeConfig}>
       <AntdApp>
+        <SessionSyncHandler />
         <BrowserRouter>
         <Routes>
           {/* Auth Routes */}
@@ -128,7 +143,31 @@ export default function App() {
             }
           />
 
-          {/* Campaign Detail Route */}
+          {/* Campaign Detail Route (Hỗ trợ URL sạch không lộ ID) */}
+          <Route
+            path="/campaigns/detail"
+            element={
+              <MainLayout>
+                <CampaignDetailPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/campaign-detail"
+            element={
+              <MainLayout>
+                <CampaignDetailPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/campaign-management/detail"
+            element={
+              <MainLayout>
+                <CampaignDetailPage />
+              </MainLayout>
+            }
+          />
           <Route
             path="/campaigns/:id"
             element={
@@ -337,6 +376,24 @@ export default function App() {
             }
           />
 
+          {/* AI Recommendation Routes */}
+          <Route
+            path="/recommendations"
+            element={
+              <MainLayout>
+                <CampaignManagementPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/ai-recommendations"
+            element={
+              <MainLayout>
+                <CampaignManagementPage />
+              </MainLayout>
+            }
+          />
+
           {/* Performance & Analytics Routes */}
           <Route
             path="/performance"
@@ -450,8 +507,9 @@ export default function App() {
             <Route path="creators" element={<CreatorCatalogPage />} />
             {/* Phase 5 — Data Sources */}
             <Route path="data-sources" element={<DataSourcesPage />} />
-            {/* Phase 6 — Collection Jobs & Scoring Config */}
+            {/* Phase 6 — Collection Jobs, Data Quality & Scoring Config */}
             <Route path="jobs" element={<CollectionJobsPage />} />
+            <Route path="data-quality" element={<DataQualityPage />} />
             <Route path="scoring" element={<ScoringConfigPage />} />
             {/* Phase 7 — Subscriptions & Payments */}
             <Route path="subscriptions" element={<SubscriptionPlansPage />} />
