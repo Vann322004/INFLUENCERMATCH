@@ -28,15 +28,19 @@ export default function AppHeader() {
 
   return (
     <Header className="app-header">
-      {/* Left: Breadcrumbs (Chỉ hiển thị Trang chủ > Tổng quan) */}
-      <div className="header-breadcrumbs">
-        <span className="header-bc-root" onClick={() => navigate('/dashboard')}>
-          <HomeOutlined style={{ marginRight: 4, fontSize: 12 }} />
-          {pageInfo.root}
-        </span>
-        <RightOutlined style={{ fontSize: 9, color: '#94A3B8' }} />
-        <span className="header-bc-current">{pageInfo.sub}</span>
-      </div>
+      {/* Left: Breadcrumbs (Ẩn khi ở trang Chiến dịch để tránh dư thừa vì đã có tiêu đề trang) */}
+      {!location.pathname.includes('/campaigns') ? (
+        <div className="header-breadcrumbs">
+          <span className="header-bc-root" onClick={() => navigate('/dashboard')}>
+            <HomeOutlined style={{ marginRight: 4, fontSize: 12 }} />
+            {pageInfo.root}
+          </span>
+          <RightOutlined style={{ fontSize: 9, color: '#94A3B8' }} />
+          <span className="header-bc-current">{pageInfo.sub}</span>
+        </div>
+      ) : (
+        <div />
+      )}
 
       {/* Right: Chuông thông báo duy nhất */}
       <Tooltip title="Thông báo hệ thống">

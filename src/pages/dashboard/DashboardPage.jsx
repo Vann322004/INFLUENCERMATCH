@@ -137,23 +137,21 @@ export default function DashboardPage() {
       dashboardCache.rawCreators = validCrList;
       dashboardCache.lastLoaded = Date.now();
 
-      // Compute Brand-specific shortlist items & count (Dành riêng cho Brand)
+      // Compute Brand-specific shortlist items & count trực tiếp từ Database
       try {
-        const localList = creatorService.getLocalShortlist ? creatorService.getLocalShortlist('all') : [];
-        let mergedShortlist = [...localList];
-
+        let backendShortlist = [];
         if (validCList.length > 0) {
           const backendLists = await Promise.all(
-            validCList.slice(0, 5).map((camp) => creatorService.getShortlist(camp.id).catch(() => []))
+            validCList.map((camp) => creatorService.getShortlist(camp.id).catch(() => []))
           );
           backendLists.forEach((list) => {
-            if (Array.isArray(list)) mergedShortlist.push(...list);
+            if (Array.isArray(list)) backendShortlist.push(...list);
           });
         }
 
         // Deduplicate shortlist by creatorId
         const uniqueShortlistMap = new Map();
-        mergedShortlist.forEach((item) => {
+        backendShortlist.forEach((item) => {
           const key = item.creatorId || item.id;
           if (key && !uniqueShortlistMap.has(key)) {
             uniqueShortlistMap.set(key, item);
@@ -166,7 +164,7 @@ export default function DashboardPage() {
         dashboardCache.shortlistItems = finalShortlist;
         dashboardCache.shortlistCount = finalShortlist.length;
       } catch {
-        // ignore storage error
+        // ignore error
       }
     } catch (err) {
       console.warn('Dashboard background refresh notice:', err);
@@ -383,9 +381,9 @@ export default function DashboardPage() {
     ];
   }, [rawCreators]);
 
-  // Platform Breakdown for Donut Chart
+  // Platform Breakdown for Donut Chart (Chỉ bao gồm TikTok, Instagram, Facebook - Không có YouTube)
   const platformStats = useMemo(() => {
-    const counts = { TIKTOK: 0, INSTAGRAM: 0, FACEBOOK: 0, YOUTUBE: 0 };
+    const counts = { TIKTOK: 0, INSTAGRAM: 0, FACEBOOK: 0 };
     let total = 0;
     rawCampaigns.forEach((c) => {
       if (Array.isArray(c.platforms) && c.platforms.length > 0) {
@@ -401,10 +399,9 @@ export default function DashboardPage() {
 
     if (total === 0) {
       return [
-        { label: 'TikTok', percent: 45, color: '#2563EB' },
+        { label: 'TikTok', percent: 55, color: '#2563EB' },
         { label: 'Instagram', percent: 30, color: '#06B6D4' },
         { label: 'Facebook', percent: 15, color: '#10B981' },
-        { label: 'YouTube', percent: 10, color: '#F59E0B' },
       ];
     }
 
@@ -412,7 +409,6 @@ export default function DashboardPage() {
       { label: 'TikTok', percent: Math.round(((counts.TIKTOK || 0) / total) * 100), color: '#2563EB' },
       { label: 'Instagram', percent: Math.round(((counts.INSTAGRAM || 0) / total) * 100), color: '#06B6D4' },
       { label: 'Facebook', percent: Math.round(((counts.FACEBOOK || 0) / total) * 100), color: '#10B981' },
-      { label: 'YouTube', percent: Math.round(((counts.YOUTUBE || 0) / total) * 100), color: '#F59E0B' },
     ];
   }, [rawCampaigns]);
 
@@ -951,10 +947,9 @@ export default function DashboardPage() {
                 >
                   <div style={{ position: 'relative', width: 95, height: 95, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg viewBox="0 0 140 140" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-                      <circle cx="70" cy="70" r="45" fill="transparent" stroke="#2563EB" strokeWidth="14" strokeDasharray="118.75 164" strokeDashoffset="0" strokeLinecap="round" />
-                      <circle cx="70" cy="70" r="45" fill="transparent" stroke="#06B6D4" strokeWidth="14" strokeDasharray="79.16 203.58" strokeDashoffset="-123" strokeLinecap="round" />
-                      <circle cx="70" cy="70" r="45" fill="transparent" stroke="#10B981" strokeWidth="14" strokeDasharray="50.9 231.84" strokeDashoffset="-207" strokeLinecap="round" />
-                      <circle cx="70" cy="70" r="45" fill="transparent" stroke="#F59E0B" strokeWidth="14" strokeDasharray="33.9 248.84" strokeDashoffset="-262" strokeLinecap="round" />
+                      <circle cx="70" cy="70" r="45" fill="transparent" stroke="#2563EB" strokeWidth="14" strokeDasharray="155.5 127.24" strokeDashoffset="0" strokeLinecap="round" />
+                      <circle cx="70" cy="70" r="45" fill="transparent" stroke="#06B6D4" strokeWidth="14" strokeDasharray="84.82 197.92" strokeDashoffset="-159" strokeLinecap="round" />
+                      <circle cx="70" cy="70" r="45" fill="transparent" stroke="#10B981" strokeWidth="14" strokeDasharray="42.41 240.33" strokeDashoffset="-247" strokeLinecap="round" />
                     </svg>
                     <div style={{ position: 'absolute', textAlign: 'center' }}>
                       <div style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', lineHeight: 1.1 }}>{fmtNum(totalReach)}</div>
