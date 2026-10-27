@@ -198,10 +198,26 @@ const DEFAULT_CAMPAIGNS: CampaignItemUI[] = [
   },
 ];
 
+// Global in-memory cache across route transitions (loại bỏ hoàn toàn reload flash khi chuyển trang)
+const campaignPageCache: {
+  items: CampaignItemUI[] | null;
+  lastLoaded: number;
+} = {
+  items: null,
+  lastLoaded: 0,
+};
+const CACHE_TTL = 3 * 60 * 1000; // 3 phút
+
 export default function CampaignPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [campaigns, setCampaigns] = useState<CampaignItemUI[]>(DEFAULT_CAMPAIGNS);
+  // Khởi tạo tức thì từ cache nếu có dữ liệu sẵn
+  const [campaigns, setCampaigns] = useState<CampaignItemUI[]>(() => {
+    if (campaignPageCache.items && campaignPageCache.items.length > 0) {
+      return campaignPageCache.items;
+    }
+    return DEFAULT_CAMPAIGNS;
+  });
   const [activeTab, setActiveTab] = useState<'all' | 'running' | 'draft' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('latest');
@@ -226,10 +242,17 @@ export default function CampaignPage() {
     platforms: ['TIKTOK', 'INSTAGRAM'],
   });
 
-  // Fetch campaigns from backend API
-  const fetchCampaigns = async () => {
+  // Fetch campaigns from backend API with smart caching
+  const fetchCampaigns = async (force = false) => {
+    const isCacheValid = campaignPageCache.items && (Date.now() - campaignPageCache.lastLoaded < CACHE_TTL);
+    if (!force && isCacheValid) {
+      return;
+    }
+
     try {
-      setLoading(true);
+      if (!campaignPageCache.items) {
+        setLoading(true);
+      }
       const apiData = await campaignService.getCampaigns(0, 50);
       if (Array.isArray(apiData) && apiData.length > 0) {
         let deletedIds: string[] = [];
@@ -289,20 +312,32 @@ export default function CampaignPage() {
 
           const existingIds = new Set(mapped.map((m) => m.id));
           const remainingDefaults = DEFAULT_CAMPAIGNS.filter((d) => !existingIds.has(d.id));
-          setCampaigns([...mapped, ...remainingDefaults]);
+          const combined = [...mapped, ...remainingDefaults];
+          campaignPageCache.items = combined;
+          campaignPageCache.lastLoaded = Date.now();
+          setCampaigns(combined);
           return;
         }
       }
+      campaignPageCache.items = DEFAULT_CAMPAIGNS;
+      campaignPageCache.lastLoaded = Date.now();
       setCampaigns(DEFAULT_CAMPAIGNS);
     } catch {
-      setCampaigns(DEFAULT_CAMPAIGNS);
+      if (!campaignPageCache.items) {
+        campaignPageCache.items = DEFAULT_CAMPAIGNS;
+        setCampaigns(DEFAULT_CAMPAIGNS);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCampaigns();
+    // Chỉ nạp nếu cache chưa có hoặc đã quá hạn TTL, không làm giật lag khi chuyển qua lại giữa các trang
+    const isCacheValid = campaignPageCache.items && (Date.now() - campaignPageCache.lastLoaded < CACHE_TTL);
+    if (!isCacheValid) {
+      fetchCampaigns();
+    }
   }, []);
 
   // Filter & Search Logic
@@ -395,8 +430,8 @@ export default function CampaignPage() {
         statusText = 'Đã hoàn thành';
       }
 
-      setCampaigns((prev) =>
-        prev.map((c) => {
+      setCampaigns((prev) => {
+        const next = prev.map((c) => {
           if (c.id === editingItem.id) {
             return {
               ...c,
@@ -410,8 +445,10 @@ export default function CampaignPage() {
             };
           }
           return c;
-        })
-      );
+        });
+        campaignPageCache.items = next;
+        return next;
+      });
 
       message.success({ content: 'Đã cập nhật chiến dịch thành công!', key: 'camp_save' });
       setEditModalVisible(false);
@@ -435,7 +472,11 @@ export default function CampaignPage() {
         try {
           message.loading({ content: 'Đang xóa chiến dịch...', key: 'del_camp' });
           await campaignService.deleteCampaign(item.id).catch(() => {});
-          setCampaigns((prev) => prev.filter((c) => c.id !== item.id));
+          setCampaigns((prev) => {
+            const next = prev.filter((c) => c.id !== item.id);
+            campaignPageCache.items = next;
+            return next;
+          });
           message.success({ content: 'Đã xóa chiến dịch!', key: 'del_camp' });
         } catch {
           message.error({ content: 'Không thể xóa chiến dịch.', key: 'del_camp' });
