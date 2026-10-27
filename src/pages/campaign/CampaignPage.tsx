@@ -860,7 +860,8 @@ export default function CampaignPage() {
                     label: 'Khám phá KOC AI',
                     onClick: () => {
                       sessionStorage.setItem('current_campaign_id', item.id);
-                      navigate('/discovery');
+                      localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', item.id);
+                      navigate(`/discovery?campaignId=${item.id}`, { state: { campaignId: item.id } });
                     },
                   },
                   { type: 'divider' },

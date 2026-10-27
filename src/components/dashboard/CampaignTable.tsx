@@ -23,6 +23,7 @@ import {
   EllipsisOutlined,
   EyeOutlined,
   EditOutlined,
+  CompassOutlined,
   DeleteOutlined,
   ExclamationCircleOutlined,
   SaveOutlined,
@@ -342,6 +343,10 @@ export default function CampaignTable() {
       handleOpenDetail(record);
     } else if (key === 'edit') {
       handleOpenEdit(record);
+    } else if (key === 'discovery') {
+      sessionStorage.setItem('current_campaign_id', record.id);
+      localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', record.id);
+      navigate(`/discovery?campaignId=${record.id}`, { state: { campaignId: record.id } });
     } else if (key === 'delete') {
       handleDeleteCampaign(record);
     }
@@ -517,6 +522,7 @@ export default function CampaignTable() {
         const actionMenuItems: MenuProps['items'] = [
           { key: 'view', icon: <EyeOutlined />, label: 'Xem chi tiết' },
           { key: 'edit', icon: <EditOutlined />, label: 'Chỉnh sửa' },
+          { key: 'discovery', icon: <CompassOutlined />, label: 'Khám phá KOC AI' },
           { type: 'divider' },
           { key: 'delete', icon: <DeleteOutlined />, danger: true, label: 'Xóa chiến dịch' },
         ];

@@ -435,7 +435,12 @@ export default function CreatorDiscoveryPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const initialCampId = searchParams.get('campaignId') || (location.state as any)?.campaignId || localStorage.getItem('IM_SELECTED_CAMPAIGN_ID') || null;
+  const initialCampId =
+    searchParams.get('campaignId') ||
+    (location.state as any)?.campaignId ||
+    sessionStorage.getItem('current_campaign_id') ||
+    localStorage.getItem('IM_SELECTED_CAMPAIGN_ID') ||
+    null;
 
   // Real Brand Campaigns loaded from API
   const [campaignsList, setCampaignsList] = useState<BrandCampaignItem[]>([]);

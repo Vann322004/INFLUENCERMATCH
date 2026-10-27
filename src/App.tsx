@@ -228,6 +228,14 @@ export default function App() {
               </MainLayout>
             }
           />
+          <Route
+            path="/discovery"
+            element={
+              <MainLayout>
+                <CreatorDiscoveryPage />
+              </MainLayout>
+            }
+          />
 
           {/* Creator Detail Routes */}
           <Route
