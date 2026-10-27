@@ -75,12 +75,24 @@ export interface ShortlistItem {
   priority: ShortlistPriority;
   note?: string;
   addedAt: string;
+  avatarUrl?: string;
+  platform?: string;
+  followers?: number;
+  engagementRate?: number;
+  niche?: string;
+  status?: string;
 }
 
 export interface AddShortlistItemPayload {
   creatorId: string;
   priority: ShortlistPriority;
   note?: string;
+  creatorName?: string;
+  avatarUrl?: string;
+  platform?: string;
+  followers?: number;
+  niche?: string;
+  engagementRate?: number;
 }
 
 export interface ShortlistCompareRequest {
@@ -100,4 +112,47 @@ export interface InvitationResponse {
   campaignId?: string;
   status?: string;
   createdAt?: string;
+}
+
+export interface DiscoverCreatorsParams {
+  keyword?: string;
+  niche?: string;
+  minFollowers?: number;
+  maxFollowers?: number;
+  page?: number;
+  size?: number;
+}
+
+export interface CreatorDiscoveryCandidate {
+  creatorId?: string;
+  id?: string;
+  platform?: string;
+  userName?: string;
+  displayName?: string;
+  profileUrl?: string;
+  avatarUrl?: string;
+  followers?: number;
+  engagementRate?: number;
+  niche?: string;
+  location?: string;
+  contentSummary?: string;
+  creatorType?: string;
+  recentPosts?: any[];
+  matchScore?: number;
+  finalScore?: number;
+  score?: number;
+  reason?: string;
+  summary?: string;
+  [key: string]: any;
+}
+
+export interface CreatorDiscoveryPageResponse {
+  content?: CreatorDiscoveryCandidate[];
+  items?: CreatorDiscoveryCandidate[];
+  totalElements?: number;
+  totalPages?: number;
+  number?: number;
+  size?: number;
+  page?: number;
+  [key: string]: any;
 }

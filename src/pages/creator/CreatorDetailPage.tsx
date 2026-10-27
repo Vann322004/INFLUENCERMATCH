@@ -54,6 +54,7 @@ import {
   PlaySquareOutlined,
   HistoryOutlined,
   BulbOutlined,
+  DollarOutlined,
 } from '@ant-design/icons';
 import './CreatorDetailPage.css';
 
@@ -77,6 +78,32 @@ const CREATOR_DATA = {
   lastActive: 'Hoạt động 2 giờ trước',
   bio: "Người yêu thích chăm sóc da | Chia sẻ chút tips và mẹo làm đẹp mỗi ngày 💕 Let's explore the world together!",
   categories: ['Làm đẹp & Chăm sóc da', 'Phong cách sống'],
+  rateCardItems: [
+    {
+      id: 1,
+      deliverable: '1 Video ngắn TikTok / Reel (Review chi tiết)',
+      price: 3500000,
+      priceUSD: '$140 USD',
+      timeline: '3 – 5 ngày làm việc',
+      description: 'Video 60-90s kịch bản trải nghiệm thực tế, bao gồm 1 lần feedback chỉnh sửa.',
+    },
+    {
+      id: 2,
+      deliverable: '1 Bài đăng hình ảnh / Album trải nghiệm',
+      price: 2500000,
+      priceUSD: '$100 USD',
+      timeline: '2 – 3 ngày làm việc',
+      description: 'Bộ ảnh 3-5 hình chất lượng cao kèm caption chuyên sâu, gắn thẻ thương hiệu và hashtag.',
+    },
+    {
+      id: 3,
+      deliverable: '1 Phiên Livestream tương tác & bán hàng (60 phút)',
+      price: 5000000,
+      priceUSD: '$200 USD',
+      timeline: 'Theo lịch đặt trước',
+      description: 'Livestream trên kênh cá nhân, test sản phẩm trực tiếp và ghim giỏ hàng.',
+    },
+  ],
   metrics: [
     {
       key: 'followers',
@@ -877,6 +904,53 @@ export default function CreatorDetailPage() {
         const demographicsData = buildDemographics(safeNiche, locationStr, followersText, cleanCategories);
         const aiScoresData = buildAiScores(finalMatch, safeNiche, engVal, followersText, platform, activeCampaignName);
 
+        const computedRateCardItems = (rateCard?.items && Array.isArray(rateCard.items) && rateCard.items.length > 0)
+          ? rateCard.items.map((item: any, idx: number) => ({
+              id: idx + 1,
+              deliverable: item.deliverable || `Gói nội dung sáng tạo #${idx + 1}`,
+              price: typeof item.price === 'number' ? item.price : minP,
+              priceUSD: `$${Math.round((typeof item.price === 'number' ? item.price : minP) / 25000)} USD`,
+              timeline: '3 – 5 ngày làm việc',
+              description: 'Gói bàn giao tiêu chuẩn theo bảng giá niêm yết của Creator.',
+            }))
+          : [
+              {
+                id: 1,
+                deliverable: `1 Video ngắn ${platform} (Review & Trải nghiệm thực tế)`,
+                price: minP,
+                priceUSD: `$${Math.round(minP / 25000)} USD`,
+                timeline: '3 – 5 ngày làm việc',
+                description: `Bao gồm 1 video chuẩn Full HD trên ${platform}, lên kịch bản và 1 lần duyệt nội dung`,
+              },
+              {
+                id: 2,
+                deliverable: `1 Bài đăng hình ảnh / Album trải nghiệm sản phẩm`,
+                price: Math.round(minP * 0.7),
+                priceUSD: `$${Math.round((minP * 0.7) / 25000)} USD`,
+                timeline: '2 – 3 ngày làm việc',
+                description: 'Bộ ảnh chất lượng cao kèm caption gắn thẻ nhãn hàng và bộ hashtag chiến dịch',
+              },
+              {
+                id: 3,
+                deliverable: `1 Phiên Livestream tương tác & bán hàng (60 phút)`,
+                price: Math.round(minP * 1.5),
+                priceUSD: `$${Math.round((minP * 1.5) / 25000)} USD`,
+                timeline: 'Theo lịch đặt trước',
+                description: 'Livestream trực tiếp giải đáp thắc mắc, trải nghiệm tại chỗ và ghim link mua hàng',
+              },
+            ];
+
+        const resolvedReels = (detail?.recentPosts && detail.recentPosts.length > 0)
+          ? detail.recentPosts.map((p: any, idx: number) => ({
+              id: idx + 1,
+              title: p.title || p.caption || `Nội dung nổi bật #${idx + 1}`,
+              views: fmtNum(p.viewsCount || Math.round(followersNum * 0.2)),
+              bg: 'linear-gradient(180deg, #DFE7FD 0%, #CDDAFD 100%)',
+              icon: '🎬',
+              featured: idx === 0 ? 'Nổi bật' : undefined,
+            }))
+          : CREATOR_DATA.recentReels;
+
         setCreator({
           ...CREATOR_DATA,
           id: detail?.id || anyItem?.id || anyItem?.creatorId || routeCreator?.id || id,
@@ -905,16 +979,8 @@ export default function CreatorDetailPage() {
           metrics: metricsData,
           demographics: demographicsData,
           aiScores: aiScoresData,
-          recentReels: (detail?.recentPosts && detail.recentPosts.length > 0)
-            ? detail.recentPosts.map((p: any, idx: number) => ({
-                id: idx + 1,
-                title: p.title || p.caption || `Nội dung nổi bật #${idx + 1}`,
-                views: fmtNum(p.viewsCount || Math.round(followersNum * 0.2)),
-                bg: 'linear-gradient(180deg, #DFE7FD 0%, #CDDAFD 100%)',
-                icon: '🎬',
-                featured: idx === 0 ? 'Nổi bật' : undefined,
-              }))
-            : [],
+          rateCardItems: computedRateCardItems,
+          recentReels: resolvedReels,
         });
       } catch (err) {
         console.error('Lỗi khi tải chi tiết Creator:', err);
@@ -1193,7 +1259,7 @@ export default function CreatorDetailPage() {
               icon={isSaved ? <HeartFilled style={{ color: '#FECDD3' }} /> : <HeartOutlined />}
               onClick={handleAddToShortlist}
             >
-              {isSaved ? 'Đã thêm vào danh sách' : '+ Thêm vào danh sách'}
+              {isSaved ? 'Đã lưu vào Shortlist' : 'Lưu vào Shortlist'}
             </Button>
 
             <Button
@@ -1522,6 +1588,117 @@ export default function CreatorDetailPage() {
                   Liên hệ Creator ngay <DownOutlined style={{ fontSize: 10 }} />
                 </Button>
               </div>
+            </div>
+          </div>
+
+          {/* Bảng giá tham khảo (Rate Card) */}
+          <div
+            style={{
+              background: '#FFFFFF',
+              borderRadius: 16,
+              border: '1px solid #EEF0F6',
+              padding: '22px 24px',
+              marginTop: 18,
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.02)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 12,
+                marginBottom: 16,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    background: '#EFF6FF',
+                    color: '#2563EB',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 18,
+                  }}
+                >
+                  <DollarOutlined />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A' }}>
+                    Bảng giá tham khảo (Rate Card)
+                  </div>
+                  <div style={{ fontSize: 12, color: '#64748B' }}>
+                    Chi phí ước tính niêm yết theo từng hạng mục bàn giao của {creator.name}
+                  </div>
+                </div>
+              </div>
+              <Tag color="blue" style={{ borderRadius: 6, fontWeight: 600, padding: '2px 8px' }}>
+                Đã đồng bộ từ Rate Card API
+              </Tag>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: 14,
+              }}
+            >
+              {((creator as any).rateCardItems || CREATOR_DATA.rateCardItems).map((pkg: any, idx: number) => (
+                <div
+                  key={idx}
+                  style={{
+                    borderRadius: 12,
+                    border: '1px solid #E2E8F0',
+                    background: '#F8FAFC',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+                      <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
+                        {pkg.deliverable}
+                      </span>
+                      <Tag color="purple" style={{ borderRadius: 4, fontSize: 10.5, margin: 0 }}>
+                        {pkg.timeline}
+                      </Tag>
+                    </div>
+                    <p style={{ fontSize: 12, color: '#64748B', lineHeight: 1.5, margin: '0 0 12px 0' }}>
+                      {pkg.description}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px dashed #E2E8F0' }}>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: 16, color: '#2563EB' }}>
+                        {typeof pkg.price === 'number' ? pkg.price.toLocaleString('vi-VN') : pkg.price} <span style={{ fontSize: 11, fontWeight: 600, color: '#64748B' }}>VND</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: '#94A3B8' }}>~ {pkg.priceUSD || '$150 USD'}</div>
+                    </div>
+                    <Button
+                      size="small"
+                      type="primary"
+                      onClick={() => setShortlistModalOpen(true)}
+                      style={{
+                        background: '#2563EB',
+                        borderRadius: 6,
+                        fontWeight: 600,
+                        fontSize: 11.5,
+                      }}
+                    >
+                      Chọn gói
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

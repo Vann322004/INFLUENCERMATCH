@@ -13,7 +13,7 @@ import {
   Alert,
 } from 'antd';
 import type { MenuProps } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
   SaveOutlined,
   PlusOutlined,
@@ -25,6 +25,7 @@ import {
   UserOutlined,
   EyeOutlined,
   ThunderboltOutlined,
+  ThunderboltFilled,
   HeartFilled,
   MessageOutlined,
   ShareAltOutlined,
@@ -96,6 +97,8 @@ import { creatorService } from '../../services/api/creatorService';
 import { campaignService } from '../../services/api/campaignService';
 import type { CreatorItem, ShortlistItem } from '../../types/api/creator.types';
 import type { CampaignResponse } from '../../types/api/campaign.types';
+import CampaignWorkflowBar from '../../components/campaign/CampaignWorkflowBar';
+import { useShortlistRealtime } from '../../hooks/useShortlistRealtime';
 
 export const normalizeNiche = (niche?: string): string => {
   if (!niche || niche.toUpperCase() === 'UNKNOWN' || niche.trim() === '') {
@@ -168,11 +171,16 @@ export const mapCreatorToShortlistItem = (
 
 export default function CreatorShortlistPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
+  const urlCampaignId = searchParams.get('campaignId') || (location.state as any)?.campaignId || sessionStorage.getItem('current_campaign_id') || undefined;
+
   const [loading, setLoading] = useState(true);
   const [creators, setCreators] = useState<CreatorCompareItem[]>([]);
   const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
   const [creatorsMap, setCreatorsMap] = useState<Map<string, CreatorItem>>(new Map());
-  const [selectedCampaign, setSelectedCampaign] = useState<string>('all');
+  const [selectedCampaign, setSelectedCampaign] = useState<string>(urlCampaignId || 'all');
 
   // Candidate Search & Adding state in Add Modal
   const [candidateSearch, setCandidateSearch] = useState('');
@@ -201,6 +209,8 @@ export default function CreatorShortlistPage() {
       let rawShortlistItems: { item: ShortlistItem; campaignName: string }[] = [];
 
       if (campId === 'all') {
+        // Lấy danh sách shortlist thực tế từ Backend Database theo từng chiến dịch của Brand
+        let fromBackend: { item: ShortlistItem; campaignName: string }[] = [];
         if (currentCampaigns.length > 0) {
           const results = await Promise.all(
             currentCampaigns.map(async (camp) => {
@@ -212,8 +222,20 @@ export default function CreatorShortlistPage() {
               }
             })
           );
-          rawShortlistItems = results.flat();
+          fromBackend = results.flat();
         }
+
+        // Hợp nhất và loại trừ trùng lặp
+        const seen = new Set<string>();
+        const merged: { item: ShortlistItem; campaignName: string }[] = [];
+        fromBackend.forEach((entry) => {
+          const key = entry.item.creatorId || entry.item.id;
+          if (key && !seen.has(key)) {
+            seen.add(key);
+            merged.push(entry);
+          }
+        });
+        rawShortlistItems = merged;
       } else {
         const targetCamp = currentCampaigns.find((c) => c.id === campId);
         const list = await creatorService.getShortlist(campId);
@@ -225,7 +247,7 @@ export default function CreatorShortlistPage() {
 
       const mapped: CreatorCompareItem[] = rawShortlistItems.map(({ item, campaignName }) => {
         const profile = cMap.get(item.creatorId);
-        const followersNum = profile?.followers || 0;
+        const followersNum = item.followers || profile?.followers || 0;
         const followersText = followersNum >= 1_000_000
           ? `${(followersNum / 1_000_000).toFixed(1)}M`
           : followersNum >= 1_000
@@ -233,28 +255,29 @@ export default function CreatorShortlistPage() {
           : followersNum > 0
           ? `${followersNum}`
           : '—';
-        const rawEng = profile?.engagementRate;
+        const rawEng = item.engagementRate || profile?.engagementRate;
         let eng = 3.5;
         if (typeof rawEng === 'number' && !isNaN(rawEng)) {
           eng = rawEng > 0 && rawEng <= 1 ? Number((rawEng * 100).toFixed(2)) : Number(rawEng.toFixed(2));
         }
-        const safeNiche = normalizeNiche(profile?.niche);
+        const safeNiche = normalizeNiche(item.niche || profile?.niche);
         const uiPriority = item.priority === 'HIGH' ? 'high' : item.priority === 'LOW' ? 'low' : 'med';
+        const displayName = item.creatorName || profile?.displayName || profile?.userName || 'Creator';
+        const displayAvatar = item.avatarUrl || profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=4F46E5&color=fff&size=150&bold=true`;
+        const platform = (item.platform || profile?.platform || 'tiktok').toLowerCase();
 
         return {
           id: item.creatorId,
           shortlistItemId: item.id,
           campaignId: item.campaignId,
           campaignName,
-          name: item.creatorName || profile?.displayName || profile?.userName || 'Creator',
-          username: (profile?.userName || '').replace(/^@+/, ''),
-          avatar:
-            profile?.avatarUrl ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(item.creatorName || 'C')}&background=4F46E5&color=fff&size=150&bold=true`,
+          name: displayName,
+          username: (profile?.userName || displayName).replace(/^@+/, ''),
+          avatar: displayAvatar,
           isVerified: !!profile?.verifiedByInfluencerMatch,
           matchLevel: 'high',
           matchText: 'Khớp cao (92%)',
-          platforms: [profile?.platform?.toLowerCase() || 'tiktok'],
+          platforms: [platform],
           categories: [safeNiche],
           followers: followersText,
           followersPercent: Math.min(100, Math.round((followersNum / 1000000) * 100)) || 80,
@@ -302,8 +325,44 @@ export default function CreatorShortlistPage() {
 
         if (!isMounted) return;
 
-        const camps = Array.isArray(campsRes) ? campsRes : [];
+        let camps = Array.isArray(campsRes) ? campsRes : [];
+
+        // Check if there's a campaignId in URL or state
+        const targetCampId = searchParams.get('campaignId') || (location.state as any)?.campaignId || sessionStorage.getItem('current_campaign_id');
+        let initialCampId = 'all';
+
+        if (targetCampId) {
+          const found = camps.find((c) => c.id === targetCampId);
+          if (found) {
+            initialCampId = targetCampId;
+          } else {
+            // Thử nạp thông tin campaign cụ thể
+            try {
+              const single = await campaignService.getCampaignById(targetCampId);
+              if (single?.id) {
+                camps = [single, ...camps];
+                initialCampId = single.id;
+              }
+            } catch {
+              // Thêm fallback campaign để hiển thị dropdown đúng tên
+              const fallbackCamp = {
+                id: targetCampId,
+                name: 'Chiến dịch mục tiêu',
+                status: 'ACTIVE',
+                brandId: '',
+                objective: 'TRAFFIC',
+                budgetMin: 10000000,
+                budgetMax: 25000000,
+                createdAt: new Date().toISOString(),
+              } as CampaignResponse;
+              camps = [fallbackCamp, ...camps];
+              initialCampId = targetCampId;
+            }
+          }
+        }
+
         setCampaigns(camps);
+        setSelectedCampaign(initialCampId);
 
         const cMap = new Map<string, CreatorItem>();
         if (Array.isArray(apiCreators)) {
@@ -318,8 +377,8 @@ export default function CreatorShortlistPage() {
           setAddCampaignId(camps[0].id);
         }
 
-        // Tải toàn bộ shortlist
-        await loadShortlist('all', camps, cMap);
+        // Tải danh sách shortlist cho campaign mục tiêu hoặc all
+        await loadShortlist(initialCampId, camps, cMap);
       } catch (err) {
         console.error('Lỗi khi khởi tạo dữ liệu shortlist:', err);
       } finally {
@@ -331,14 +390,30 @@ export default function CreatorShortlistPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [searchParams]);
 
   const handleSelectCampaign = async (val: string) => {
     setSelectedCampaign(val);
+    if (val && val !== 'all') {
+      setSearchParams({ campaignId: val }, { replace: true });
+      sessionStorage.setItem('current_campaign_id', val);
+      localStorage.setItem('last_active_campaign_id', val);
+    } else {
+      setSearchParams({}, { replace: true });
+      sessionStorage.removeItem('current_campaign_id');
+    }
     const targetLabel = campaignOptions.find((o) => o.value === val)?.label || val;
     message.info(`Đang xem danh sách: ${targetLabel}`);
     await loadShortlist(val, campaigns, creatorsMap);
   };
+
+  // Lắng nghe realtime SSE endpoint cập nhật số liệu crawl tự động
+  useShortlistRealtime(
+    selectedCampaign && selectedCampaign !== 'all' ? selectedCampaign : undefined,
+    () => {
+      loadShortlist(selectedCampaign, campaigns, creatorsMap);
+    }
+  );
   const [viewMode, setViewMode] = useState<'board' | 'compare'>('board');
   const [boardLayout, setBoardLayout] = useState<'grid' | 'table'>('grid');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -736,6 +811,16 @@ export default function CreatorShortlistPage() {
 
   return (
     <div className="shortlist-page-container">
+      {/* 0. Unified Campaign Funnel Stepper */}
+      <CampaignWorkflowBar
+        currentStep="shortlist"
+        campaignId={selectedCampaign !== 'all' ? selectedCampaign : undefined}
+        campaignName={campaignOptions.find((c) => c.value === selectedCampaign)?.label}
+        shortlistCount={creators.length}
+        availableCampaigns={campaigns.map((c) => ({ id: c.id, name: c.name }))}
+        onSelectCampaign={handleSelectCampaign}
+      />
+
       {/* 1. Header & Title Bar with Campaign Selector */}
       <div className="shortlist-header-row">
         <div>
@@ -768,6 +853,29 @@ export default function CreatorShortlistPage() {
             onClick={() => message.success('Đã lưu toàn bộ trạng thái shortlist thành công!')}
           >
             Lưu danh sách
+          </Button>
+
+          <Button
+            type="primary"
+            icon={<ThunderboltFilled />}
+            onClick={() => {
+              const targetId =
+                selectedCampaign && selectedCampaign !== 'all'
+                  ? selectedCampaign
+                  : campaigns[0]?.id || searchParams.get('campaignId') || 'all';
+              navigate(`/campaign-management/${targetId}?tab=recommendation`, {
+                state: { campaignId: targetId, fromShortlist: true },
+              });
+            }}
+            style={{
+              background: 'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)',
+              borderColor: 'transparent',
+              fontWeight: 700,
+              borderRadius: 8,
+              boxShadow: '0 4px 14px rgba(168, 85, 247, 0.35)',
+            }}
+          >
+            ⚡ Đề xuất AI Four-Memory ➔
           </Button>
 
           <Button
@@ -922,8 +1030,29 @@ export default function CreatorShortlistPage() {
                       <>
                         <Button
                           type="primary"
+                          icon={<ThunderboltFilled />}
+                          style={{
+                            borderRadius: 8,
+                            height: 40,
+                            fontWeight: 700,
+                            background: 'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)',
+                            borderColor: 'transparent',
+                            boxShadow: '0 4px 12px rgba(168, 85, 247, 0.3)',
+                          }}
+                          onClick={() => {
+                            const targetId =
+                              selectedCampaign && selectedCampaign !== 'all'
+                                ? selectedCampaign
+                                : campaigns[0]?.id || searchParams.get('campaignId') || 'all';
+                            navigate(`/campaign-management/${targetId}?tab=recommendation`);
+                          }}
+                        >
+                          ⚡ Đề xuất AI Four-Memory
+                        </Button>
+                        <Button
+                          type="default"
                           icon={<SearchOutlined />}
-                          style={{ borderRadius: 8, height: 40, fontWeight: 700, background: '#4F46E5' }}
+                          style={{ borderRadius: 8, height: 40, fontWeight: 700, color: '#4F46E5', borderColor: '#C7D2FE' }}
                           onClick={() => navigate('/creators')}
                         >
                           Khám phá Creator trên sàn

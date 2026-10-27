@@ -10,6 +10,7 @@ export const ADMIN_ROUTES = {
   CREATOR_CLAIMS: '/admin/creator-claims',
   DATA_SOURCES: '/admin/data-sources',
   JOBS: '/admin/jobs',
+  DATA_QUALITY: '/admin/data-quality',
   SCORING: '/admin/scoring',
   SUBSCRIPTIONS: '/admin/subscriptions',
   PAYMENTS: '/admin/payments',

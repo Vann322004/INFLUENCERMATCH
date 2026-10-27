@@ -7,17 +7,19 @@ import {
   TeamOutlined,
   UserOutlined,
   ApiOutlined,
-  ThunderboltOutlined,
-  TrophyOutlined,
+  SyncOutlined,
+  CheckCircleOutlined,
+  ControlOutlined,
   CrownOutlined,
   TransactionOutlined,
-  AuditOutlined,
+  FileTextOutlined,
   LogoutOutlined,
   SettingOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   RightOutlined,
   SafetyCertificateOutlined,
+  DatabaseOutlined,
 } from '@ant-design/icons';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { adminAuthService, ADMIN_USER } from '../../mock/adminData';
@@ -25,58 +27,117 @@ import { authService } from '../../services/api/authService';
 
 const { Sider } = Layout;
 
-const ADMIN_MENU_ITEMS: MenuProps['items'] = [
-  { key: 'dashboard',      icon: <AppstoreOutlined />,      label: 'Dashboard' },
+const getMenuItems = (collapsed: boolean, isManager = false): MenuProps['items'] => [
+  { key: 'dashboard', icon: <AppstoreOutlined />, label: isManager ? 'Dashboard Vận Hành' : 'Dashboard Tổng quan' },
   { type: 'divider' },
-  { key: 'accounts',       icon: <TeamOutlined />,          label: 'Tài khoản' },
-  { key: 'creators',       icon: <UserOutlined />,          label: 'Creator Catalog' },
-  { key: 'creator-claims', icon: <SafetyCertificateOutlined />, label: 'Duyệt Claims' },
+  ...(collapsed
+    ? []
+    : [
+        {
+          type: 'group' as const,
+          label: (
+            <span style={{ fontSize: 10, fontWeight: 800, color: '#94A3B8', letterSpacing: 0.8 }}>
+              DATA INGESTION PIPELINE
+            </span>
+          ),
+          children: [
+            { key: 'data-sources', icon: <ApiOutlined />, label: 'Data Sources & API' },
+            { key: 'jobs', icon: <SyncOutlined />, label: 'Tiến trình cào (Jobs)' },
+            { key: 'data-quality', icon: <CheckCircleOutlined />, label: 'Kiểm định chất lượng' },
+            { key: 'scoring', icon: <ControlOutlined />, label: 'Cấu hình Scoring' },
+          ],
+        },
+      ]),
+  ...(collapsed
+    ? [
+        { key: 'data-sources', icon: <ApiOutlined />, label: 'Data Sources & API' },
+        { key: 'jobs', icon: <SyncOutlined />, label: 'Tiến trình cào' },
+        { key: 'data-quality', icon: <CheckCircleOutlined />, label: 'Kiểm định dữ liệu' },
+        { key: 'scoring', icon: <ControlOutlined />, label: 'Cấu hình Scoring' },
+      ]
+    : []),
   { type: 'divider' },
-  { key: 'data-sources',   icon: <ApiOutlined />,           label: 'Data Sources' },
-  { key: 'jobs',           icon: <ThunderboltOutlined />,   label: 'Collection Jobs' },
-  { key: 'scoring',        icon: <TrophyOutlined />,        label: 'Scoring Config' },
-  { type: 'divider' },
-  { key: 'subscriptions',  icon: <CrownOutlined />,         label: 'Subscription Plans' },
-  { key: 'payments',       icon: <TransactionOutlined />,   label: 'Payments' },
-  { type: 'divider' },
-  { key: 'audit',          icon: <AuditOutlined />,         label: 'Audit Log' },
-];
-
-const MANAGER_MENU_ITEMS: MenuProps['items'] = [
-  { key: 'dashboard',      icon: <AppstoreOutlined />,      label: 'Dashboard Vận Hành' },
-  { type: 'divider' },
-  { key: 'creators',       icon: <UserOutlined />,          label: 'Creator Catalog' },
-  { key: 'creator-claims', icon: <SafetyCertificateOutlined />, label: 'Duyệt Claims' },
-  { type: 'divider' },
-  { key: 'data-sources',   icon: <ApiOutlined />,           label: 'Data Sources' },
-  { key: 'jobs',           icon: <ThunderboltOutlined />,   label: 'Collection Jobs' },
-  { key: 'scoring',        icon: <TrophyOutlined />,        label: 'Scoring Config' },
+  ...(collapsed
+    ? []
+    : [
+        {
+          type: 'group' as const,
+          label: (
+            <span style={{ fontSize: 10, fontWeight: 800, color: '#94A3B8', letterSpacing: 0.8 }}>
+              CATALOG & XÁC MINH
+            </span>
+          ),
+          children: [
+            { key: 'creators', icon: <UserOutlined />, label: 'Creator Catalog' },
+            { key: 'creator-claims', icon: <SafetyCertificateOutlined />, label: 'Duyệt hồ sơ Claims' },
+          ],
+        },
+      ]),
+  ...(collapsed
+    ? [
+        { key: 'creators', icon: <UserOutlined />, label: 'Creator Catalog' },
+        { key: 'creator-claims', icon: <SafetyCertificateOutlined />, label: 'Duyệt Claims' },
+      ]
+    : []),
+  ...(!isManager
+    ? [
+        { type: 'divider' as const },
+        ...(collapsed
+          ? []
+          : [
+              {
+                type: 'group' as const,
+                label: (
+                  <span style={{ fontSize: 10, fontWeight: 800, color: '#94A3B8', letterSpacing: 0.8 }}>
+                    QUẢN TRỊ HỆ THỐNG
+                  </span>
+                ),
+                children: [
+                  { key: 'accounts', icon: <TeamOutlined />, label: 'Tài khoản người dùng' },
+                  { key: 'subscriptions', icon: <CrownOutlined />, label: 'Gói Subscription' },
+                  { key: 'payments', icon: <TransactionOutlined />, label: 'Giao dịch & Thanh toán' },
+                  { key: 'audit', icon: <FileTextOutlined />, label: 'Nhật ký Audit Log' },
+                ],
+              },
+            ]),
+        ...(collapsed
+          ? [
+              { key: 'accounts', icon: <TeamOutlined />, label: 'Tài khoản' },
+              { key: 'subscriptions', icon: <CrownOutlined />, label: 'Subscriptions' },
+              { key: 'payments', icon: <TransactionOutlined />, label: 'Payments' },
+              { key: 'audit', icon: <FileTextOutlined />, label: 'Audit Log' },
+            ]
+          : []),
+      ]
+    : []),
 ];
 
 const ROUTE_KEY_MAP: Record<string, string> = {
   '/admin/dashboard':      'dashboard',
-  '/admin/accounts':       'accounts',
-  '/admin/creators':       'creators',
-  '/admin/creator-claims': 'creator-claims',
   '/admin/data-sources':   'data-sources',
   '/admin/jobs':           'jobs',
+  '/admin/data-quality':   'data-quality',
   '/admin/scoring':        'scoring',
+  '/admin/creators':       'creators',
+  '/admin/creator-claims': 'creator-claims',
+  '/admin/accounts':       'accounts',
   '/admin/subscriptions':  'subscriptions',
   '/admin/payments':       'payments',
   '/admin/audit':          'audit',
 };
 
 const KEY_ROUTE_MAP: Record<string, string> = {
-  dashboard:       ADMIN_ROUTES.DASHBOARD,
-  accounts:        ADMIN_ROUTES.ACCOUNTS.LIST,
-  creators:        ADMIN_ROUTES.CREATORS,
+  dashboard:        ADMIN_ROUTES.DASHBOARD,
+  'data-sources':   ADMIN_ROUTES.DATA_SOURCES,
+  jobs:             ADMIN_ROUTES.JOBS,
+  'data-quality':   ADMIN_ROUTES.DATA_QUALITY,
+  scoring:          ADMIN_ROUTES.SCORING,
+  creators:         ADMIN_ROUTES.CREATORS,
   'creator-claims': ADMIN_ROUTES.CREATOR_CLAIMS,
-  'data-sources':  ADMIN_ROUTES.DATA_SOURCES,
-  jobs:            ADMIN_ROUTES.JOBS,
-  scoring:         ADMIN_ROUTES.SCORING,
-  subscriptions:   ADMIN_ROUTES.SUBSCRIPTIONS,
-  payments:        ADMIN_ROUTES.PAYMENTS,
-  audit:           ADMIN_ROUTES.AUDIT,
+  accounts:         ADMIN_ROUTES.ACCOUNTS.LIST,
+  subscriptions:    ADMIN_ROUTES.SUBSCRIPTIONS,
+  payments:         ADMIN_ROUTES.PAYMENTS,
+  audit:            ADMIN_ROUTES.AUDIT,
 };
 
 export default function AdminSidebar() {
@@ -86,8 +147,6 @@ export default function AdminSidebar() {
 
   const currentUser: any = adminAuthService.getCurrentUser() || ADMIN_USER;
   const isManager = authService.isManager() || currentUser?.role === 'DATA_MANAGER' || currentUser?.role === 'manager';
-
-  const menuItems = isManager ? MANAGER_MENU_ITEMS : ADMIN_MENU_ITEMS;
 
   const activeKey = Object.entries(ROUTE_KEY_MAP).find(([path]) =>
     location.pathname.startsWith(path)
@@ -133,26 +192,29 @@ export default function AdminSidebar() {
       >
         <div
           style={{
-            width: 36, height: 36,
+            width: 32,
+            height: 32,
             background: isManager
               ? 'linear-gradient(135deg, #0EA5E9 0%, #06B6D4 100%)'
-              : 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%)',
-            borderRadius: 10,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 800, fontSize: 16,
-            boxShadow: isManager ? '0 4px 12px rgba(6,182,212,0.3)' : '0 4px 12px rgba(124,58,237,0.3)',
-            flexShrink: 0, position: 'relative',
+              : '#0F172A',
+            borderRadius: 8,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#FFFFFF',
+            fontSize: 16,
+            flexShrink: 0,
           }}
         >
-          <SafetyCertificateOutlined style={{ fontSize: 18 }} />
+          <SafetyCertificateOutlined style={{ fontSize: 16 }} />
         </div>
         {!collapsed && (
           <div>
-            <div style={{ fontWeight: 800, fontSize: 13, color: '#0F172A', letterSpacing: 0.5, lineHeight: 1.2 }}>
-              {isManager ? 'MANAGER PANEL' : 'ADMIN PANEL'}
+            <div style={{ fontWeight: 800, fontSize: 13, color: '#0F172A', letterSpacing: -0.2, lineHeight: 1.2 }}>
+              {isManager ? 'MANAGER PANEL' : 'Admin Panel'}
             </div>
-            <div style={{ fontSize: 7.5, fontWeight: 700, letterSpacing: 1.2, color: isManager ? '#0EA5E9' : '#8B5CF6' }}>
-              {isManager ? 'DATA & OPERATIONS' : 'INFLUENCERMATCH'}
+            <div style={{ fontSize: 10, fontWeight: 500, color: isManager ? '#0EA5E9' : '#64748B' }}>
+              {isManager ? 'DATA & OPERATIONS' : 'InfluencerMatch'}
             </div>
           </div>
         )}
@@ -184,7 +246,7 @@ export default function AdminSidebar() {
           mode="inline"
           selectedKeys={[activeKey]}
           onClick={handleMenuClick}
-          items={menuItems}
+          items={getMenuItems(collapsed, isManager)}
           className="sidebar-menu"
           inlineCollapsed={collapsed}
           style={{ background: 'transparent', border: 'none', fontSize: 13.5 }}

@@ -17,6 +17,8 @@ import {
   Divider,
   message,
   Tooltip,
+  Alert,
+  Spin,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
@@ -51,10 +53,27 @@ import {
   SafetyCertificateOutlined,
   WalletOutlined,
   CheckCircleFilled,
+  SaveOutlined,
+  ThunderboltFilled,
 } from '@ant-design/icons';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
+
+const AI_SAMPLE_PROMPTS = [
+  {
+    label: '🧴 Kem dưỡng phục hồi da Gen-Z',
+    prompt: 'Quảng bá dòng kem dưỡng phục hồi da dành cho giới trẻ 18-24 tuổi tại Hà Nội và TP.HCM, ngân sách tầm 25 triệu trên TikTok và Instagram',
+  },
+  {
+    label: '⚡ Phụ kiện sạc nhanh công nghệ',
+    prompt: 'Tìm kiếm creator công nghệ review phụ kiện sạc nhanh cho người trẻ 18-35 tuổi, ngân sách 30 triệu trên TikTok và Facebook',
+  },
+  {
+    label: '👗 Thời trang dạo phố OOTD',
+    prompt: 'Quảng bá BST thời trang dạo phố năng động cho nữ giới 18-24 tuổi tại TP.HCM, ngân sách 20 triệu trên Instagram và TikTok',
+  },
+];
 
 export default function CreateCampaignPage() {
   const navigate = useNavigate();
@@ -62,6 +81,8 @@ export default function CreateCampaignPage() {
   // Wizard Step State (1: Thông tin chiến dịch, 2: Yêu cầu creator, 3: Chỉ số & ngân sách)
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isAiSummaryOpen, setIsAiSummaryOpen] = useState<boolean>(false);
+  const [isSavingDraft, setIsSavingDraft] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // ================= Step 1 State =================
   const [campaignName, setCampaignName] = useState('Summer Glow Skincare Launch 2025');
@@ -175,7 +196,7 @@ export default function CreateCampaignPage() {
     { key: 'other', label: 'Khác' },
   ];
 
-  // Content Formats
+  // Content Formats (Đồng bộ với các nền tảng: TikTok, Instagram, Facebook)
   const contentFormats = [
     {
       id: 'short_video',
@@ -187,28 +208,28 @@ export default function CreateCampaignPage() {
     {
       id: 'image_post',
       title: 'Bài đăng hình ảnh',
-      subtitle: 'Instagram, Facebook',
+      subtitle: 'Facebook Post, Instagram Carousel',
       icon: <PictureOutlined style={{ color: '#fff', fontSize: 14 }} />,
       iconBg: '#3B82F6',
     },
     {
       id: 'long_video',
       title: 'Video dài',
-      subtitle: 'YouTube, Facebook',
+      subtitle: 'Facebook Video, Watch',
       icon: <PlaySquareOutlined style={{ color: '#fff', fontSize: 14 }} />,
-      iconBg: '#EF4444',
+      iconBg: '#1877F2',
     },
     {
       id: 'livestream',
       title: 'Livestream',
-      subtitle: 'TikTok, Facebook, YouTube',
+      subtitle: 'TikTok Live, Facebook Live',
       icon: <CustomerServiceOutlined style={{ color: '#fff', fontSize: 14 }} />,
       iconBg: '#8B5CF6',
     },
     {
-      id: 'blog',
-      title: 'Blog / Bài viết',
-      subtitle: 'Website, Blog',
+      id: 'review_unboxing',
+      title: 'Review / Unboxing',
+      subtitle: 'Trải nghiệm TikTok, Facebook',
       icon: <FileTextOutlined style={{ color: '#fff', fontSize: 14 }} />,
       iconBg: '#10B981',
     },
@@ -239,15 +260,16 @@ export default function CreateCampaignPage() {
     );
   };
 
-  const handleAiSuggest = async () => {
-    if (!aiPrompt || aiPrompt.trim().length < 5) {
+  const handleAiSuggest = async (overridePrompt?: string) => {
+    const promptToUse = (typeof overridePrompt === 'string' ? overridePrompt : aiPrompt).trim();
+    if (!promptToUse || promptToUse.length < 5) {
       message.warning('Vui lòng nhập mô tả mục tiêu chi tiết hơn (tối thiểu 5 ký tự) để AI gợi ý!');
       return;
     }
     setIsAiLoading(true);
     try {
       message.loading({ content: 'AI đang phân tích và tối ưu hóa thông tin chiến dịch...', key: 'ai_suggest' });
-      const result = await campaignService.autofillCampaign(aiPrompt.trim());
+      const result = await campaignService.autofillCampaign(promptToUse);
       if (result) {
         if (result.name) setCampaignName(result.name);
         if (result.productService) setProduct(result.productService);
@@ -259,7 +281,10 @@ export default function CreateCampaignPage() {
           else setSelectedObjectives(['awareness']);
         }
         if (result.platforms && Array.isArray(result.platforms) && result.platforms.length > 0) {
-          setSelectedPlatforms(result.platforms.map((p) => p.toLowerCase()));
+          const cleanP = result.platforms
+            .map((p) => p.toLowerCase())
+            .filter((p) => ['tiktok', 'instagram', 'facebook'].includes(p));
+          if (cleanP.length > 0) setSelectedPlatforms(cleanP);
         }
         if (result.targetAudiences && Array.isArray(result.targetAudiences) && result.targetAudiences.length > 0) {
           setSelectedAges(result.targetAudiences);
@@ -275,10 +300,22 @@ export default function CreateCampaignPage() {
         } else if (result.budgetMin) {
           setBudgetTotal(result.budgetMin);
         }
+        if (result.contentType) {
+          const ct = result.contentType.toLowerCase();
+          const fList: string[] = [];
+          if (ct.includes('video') || ct.includes('short')) fList.push('short_video');
+          if (ct.includes('image') || ct.includes('post') || ct.includes('ảnh')) fList.push('image_post');
+          if (ct.includes('review') || ct.includes('unbox')) fList.push('review_unboxing');
+          if (ct.includes('live')) fList.push('livestream');
+          if (fList.length > 0) setSelectedFormats(fList);
+        }
+        if (promptToUse) {
+          setCreatorBrief(`Yêu cầu sáng tạo: Video review trải nghiệm thực tế ${result.productService || product}, nêu bật công dụng nổi bật và hướng dẫn sử dụng sản phẩm.`);
+        }
         if (result.aiExplanation) {
           setAiExplanation(result.aiExplanation);
         }
-        message.success({ content: 'AI đã điền tự động các thông số chiến dịch thành công!', key: 'ai_suggest' });
+        message.success({ content: '🎉 AI đã điền tự động các thông số chiến dịch thành công!', key: 'ai_suggest', duration: 3 });
       }
     } catch (error) {
       console.error('Error autofilling campaign with AI:', error);
@@ -297,7 +334,105 @@ export default function CreateCampaignPage() {
     }
   };
 
-  // Next step handler with validation
+  // Build unified CampaignRequest payload
+  const buildCampaignPayload = (): any => {
+    const objectiveMap: Record<string, CampaignObjective> = {
+      sales: 'CONVERSION',
+      awareness: 'AWARENESS',
+      engagement: 'ENGAGEMENT',
+      traffic: 'TRAFFIC',
+    };
+    const platformMap: Record<string, CampaignPlatform> = {
+      tiktok: 'TIKTOK',
+      instagram: 'INSTAGRAM',
+      facebook: 'FACEBOOK',
+      youtube: 'YOUTUBE',
+    };
+    const mappedPlatforms = selectedPlatforms
+      .map((p) => platformMap[p.toLowerCase()])
+      .filter(Boolean) as CampaignPlatform[];
+
+    // Map phân khúc creator sang followerMin / followerMax cho backend
+    const tierFollowersMap: Record<string, { min: number; max: number }> = {
+      nano: { min: 5000, max: 50000 },
+      micro: { min: 50000, max: 200000 },
+      macro: { min: 200000, max: 1000000 },
+      mega: { min: 1000000, max: 10000000 },
+    };
+    const tierRange = tierFollowersMap[creatorTier] || { min: 50000, max: 200000 };
+
+    const primaryObj = selectedObjectives[0] || 'awareness';
+    const niches = interests
+      ? interests.split(',').map((s) => s.trim()).filter(Boolean)
+      : ['Làm đẹp & Mỹ phẩm', 'Chăm sóc da'];
+    const locations = location && location !== 'nationwide' ? [location] : ['Toàn quốc'];
+    
+    // Tích hợp độ tuổi và giới tính vào targetAudiences
+    const audiences = [...selectedAges];
+    if (selectedGender === 'female') audiences.push('Khán giả: Nữ');
+    else if (selectedGender === 'male') audiences.push('Khán giả: Nam');
+
+    const contentType = selectedFormats.length > 0 ? selectedFormats.join(', ') : 'Short video';
+
+    return {
+      name: campaignName.trim(),
+      productService: product.trim() || 'Sản phẩm mới',
+      description: creatorBrief.trim() || undefined,
+      objective: objectiveMap[primaryObj] || 'AWARENESS',
+      platforms: mappedPlatforms.length > 0 ? mappedPlatforms : ['TIKTOK', 'INSTAGRAM'],
+      budgetMin: budgetTotal ? Math.round(budgetTotal * 0.8) : 10000000,
+      budgetMax: budgetTotal || 25000000,
+      followerMin: tierRange.min,
+      followerMax: tierRange.max,
+      niches,
+      locations,
+      targetAudiences: audiences.length > 0 ? audiences : ['18-24', '25-34'],
+      contentType,
+    };
+  };
+
+  // Handler: Lưu bản nháp (Save Draft)
+  const handleSaveDraft = async () => {
+    if (!campaignName.trim()) {
+      message.warning('Vui lòng nhập tên chiến dịch trước khi lưu bản nháp!');
+      return;
+    }
+
+    setIsSavingDraft(true);
+    try {
+      message.loading({ content: 'Đang lưu chiến dịch vào danh sách bản nháp...', key: 'save_draft' });
+      const payload = buildCampaignPayload();
+
+      let createdCampaign: any = null;
+      try {
+        createdCampaign = await campaignService.createCampaign(payload);
+      } catch (apiErr) {
+        console.warn('API createCampaign error, falling back locally:', apiErr);
+        createdCampaign = {
+          id: `camp-draft-${Date.now()}`,
+          ...payload,
+          status: 'DRAFT',
+          createdAt: new Date().toISOString(),
+        };
+      }
+
+      const targetCampaignId = createdCampaign?.id || `camp-draft-${Date.now()}`;
+      try {
+        localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', targetCampaignId);
+      } catch {}
+
+      message.success({ content: ' Chiến dịch đã được lưu bản nháp thành công!', key: 'save_draft', duration: 2 });
+      // Điều hướng trực tiếp về tab Bản nháp trên trang Quản lý Chiến dịch
+      navigate('/campaign-management?tab=draft');
+    } catch (err) {
+      console.error('Lỗi khi lưu bản nháp:', err);
+      message.error({ content: getErrorMessage(err, 'Không thể lưu bản nháp lúc này.'), key: 'save_draft' });
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  // Next step handler with validation and automatic READY_FOR_DISCOVERY transition
   const handleNextStep = async () => {
     if (currentStep === 1) {
       if (!campaignName.trim()) {
@@ -308,76 +443,52 @@ export default function CreateCampaignPage() {
         message.warning('Vui lòng nhập sản phẩm / dịch vụ quảng bá!');
         return;
       }
+      if (selectedObjectives.length === 0) {
+        message.warning('Vui lòng chọn ít nhất 1 mục tiêu chiến dịch!');
+        return;
+      }
       setCurrentStep(2);
       scrollToTop();
       message.success('Đã chuyển sang Bước 2: Yêu cầu creator!');
     } else if (currentStep === 2) {
+      if (selectedPlatforms.length === 0) {
+        message.warning('Vui lòng chọn ít nhất 1 nền tảng quảng bá (TikTok, Instagram hoặc Facebook)!');
+        return;
+      }
       setCurrentStep(3);
       scrollToTop();
       message.success('Đã chuyển sang Bước 3: Chỉ số & ngân sách!');
     } else if (currentStep === 3) {
-      try {
-        message.loading({ content: 'Đang khởi tạo chiến dịch trên hệ thống...', key: 'create_camp' });
-        const objectiveMap: Record<string, CampaignObjective> = {
-          sales: 'CONVERSION',
-          awareness: 'AWARENESS',
-          engagement: 'ENGAGEMENT',
-          traffic: 'TRAFFIC',
-        };
-        const platformMap: Record<string, CampaignPlatform> = {
-          tiktok: 'TIKTOK',
-          instagram: 'INSTAGRAM',
-          youtube: 'YOUTUBE',
-        };
-        const mappedPlatforms = selectedPlatforms
-          .map((p) => platformMap[p.toLowerCase()])
-          .filter(Boolean) as CampaignPlatform[];
+      if (!budgetTotal || budgetTotal <= 0) {
+        message.warning('Vui lòng nhập tổng ngân sách hợp lệ cho chiến dịch!');
+        return;
+      }
 
-        const primaryObj = selectedObjectives[0] || 'awareness';
-        const niches = interests
-          ? interests.split(',').map((s) => s.trim()).filter(Boolean)
-          : ['Làm đẹp', 'Phong cách sống'];
-        const locations = location && location !== 'nationwide' ? [location] : ['Toàn quốc'];
-        const targetAudiences = selectedAges.length > 0 ? selectedAges : ['18-24', '25-34'];
-        const contentType = selectedFormats.length > 0 ? selectedFormats.join(', ') : 'Short video';
+      setIsSubmitting(true);
+      try {
+        message.loading({ content: 'Đang khởi tạo chiến dịch & chuẩn bị đề xuất...', key: 'create_camp' });
+        const payload = buildCampaignPayload();
 
         let createdCampaign: any = null;
         try {
-          createdCampaign = await campaignService.createCampaign({
-            name: campaignName.trim(),
-            productService: product.trim(),
-            objective: objectiveMap[primaryObj] || 'AWARENESS',
-            platforms: mappedPlatforms.length > 0 ? mappedPlatforms : ['TIKTOK'],
-            budgetMin: budgetTotal ? budgetTotal * 0.8 : 10000000,
-            budgetMax: budgetTotal || 25000000,
-            followerMin: 10000,
-            followerMax: 500000,
-            niches,
-            locations,
-            targetAudiences,
-            contentType,
-          });
+          createdCampaign = await campaignService.createCampaign(payload);
         } catch (apiErr) {
           console.warn('API createCampaign error, continuing with fallback object:', apiErr);
           createdCampaign = {
             id: `camp-${Date.now()}`,
-            name: campaignName.trim(),
-            productService: product.trim(),
-            objective: objectiveMap[primaryObj] || 'AWARENESS',
-            platforms: mappedPlatforms.length > 0 ? mappedPlatforms : ['TIKTOK'],
-            budgetMin: budgetTotal ? budgetTotal * 0.8 : 10000000,
-            budgetMax: budgetTotal || 25000000,
-            followerMin: 10000,
-            followerMax: 500000,
-            niches,
-            locations,
-            targetAudiences,
-            contentType,
-            status: 'ACTIVE',
+            ...payload,
+            status: 'READY_FOR_DISCOVERY',
           };
         }
 
         const targetCampaignId = createdCampaign?.id || `camp-${Date.now()}`;
+
+        // Chuyển tiếp trạng thái chiến dịch sang READY_FOR_DISCOVERY theo quy chuẩn backend
+        try {
+          await campaignService.updateStatus(targetCampaignId, 'READY_FOR_DISCOVERY');
+        } catch (statusErr) {
+          console.warn('Backend updateStatus READY_FOR_DISCOVERY notice:', statusErr);
+        }
 
         // Cache campaign details to localStorage so discovery page immediately selects and matches creators
         try {
@@ -386,18 +497,18 @@ export default function CreateCampaignPage() {
             id: targetCampaignId,
             name: createdCampaign?.name || campaignName.trim(),
             budget: budgetTotal ? `${(budgetTotal / 1_000_000).toFixed(0)} Triệu VND` : '25.0M VND',
-            targetAudience: targetAudiences.join(', '),
-            category: niches[0] || 'Làm đẹp',
-            channels: mappedPlatforms.length > 0 ? mappedPlatforms.map((p) => p.toLowerCase()) : ['tiktok'],
-            status: 'ACTIVE',
+            targetAudience: payload.targetAudiences?.join(', '),
+            category: payload.niches?.[0] || 'Làm đẹp & Mỹ phẩm',
+            channels: payload.platforms?.map((p: string) => p.toLowerCase()) || ['tiktok'],
+            status: 'READY_FOR_DISCOVERY',
             requirements: creatorBrief || product,
           }));
         } catch (storageErr) {
           console.warn('Cannot write to localStorage:', storageErr);
         }
 
-        message.success({ content: '🎉 Chiến dịch đã được khởi tạo thành công! Đang chuyển tới Khám phá Creator...', key: 'create_camp', duration: 2 });
-        navigate(`/creators?campaignId=${encodeURIComponent(targetCampaignId)}`, {
+        message.success({ content: '🎉 Chiến dịch đã khởi tạo thành công! Đang kích hoạt Trợ lý Đề xuất Creator...', key: 'create_camp', duration: 2 });
+        navigate('/creators?autoRun=true', {
           state: {
             campaignId: targetCampaignId,
             createdCampaign,
@@ -405,6 +516,8 @@ export default function CreateCampaignPage() {
         });
       } catch (err) {
         message.error({ content: getErrorMessage(err, 'Không thể tạo chiến dịch.'), key: 'create_camp' });
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -658,52 +771,125 @@ export default function CreateCampaignPage() {
                 <Input
                   value={aiPrompt}
                   onChange={(e) => setAiPrompt(e.target.value)}
-                  placeholder="Ví dụ: Quảng bá sản phẩm chăm sóc da cho nữ 18-35 tuổi, ưu tiên creator làm đẹp..."
+                  placeholder="Ví dụ: Quảng bá dòng kem dưỡng phục hồi da dành cho giới trẻ 18-24 tuổi tại Hà Nội và TP.HCM, ngân sách tầm 25 triệu trên TikTok và Instagram..."
                   style={{
                     borderRadius: 10,
                     background: '#FFFFFF',
                     borderColor: '#DDD6FE',
-                    height: 40,
-                    fontSize: 12.5,
+                    height: 42,
+                    fontSize: 13,
                   }}
-                  onPressEnter={handleAiSuggest}
+                  onPressEnter={() => handleAiSuggest()}
                 />
                 <Button
                   type="primary"
+                  icon={<ThunderboltFilled />}
                   loading={isAiLoading}
-                  onClick={handleAiSuggest}
+                  onClick={() => handleAiSuggest()}
                   style={{
                     background: '#5B5BF0',
                     fontWeight: 700,
                     borderRadius: 10,
-                    height: 40,
-                    padding: '0 18px',
+                    height: 42,
+                    padding: '0 20px',
                     boxShadow: '0 4px 12px rgba(91, 91, 240, 0.3)',
                     flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
                   }}
                 >
-                  Gợi ý ngay
+                  Phân tích bằng AI
                 </Button>
               </div>
 
-              {aiExplanation && (
+              {/* Sample Prompt Chips */}
+              <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11.5, color: '#64748B', fontWeight: 600 }}>Gợi ý nhanh:</span>
+                {AI_SAMPLE_PROMPTS.map((item, idx) => (
+                  <Tag
+                    key={idx}
+                    onClick={() => {
+                      setAiPrompt(item.prompt);
+                      handleAiSuggest(item.prompt);
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      fontSize: 11.5,
+                      padding: '2px 10px',
+                      borderRadius: 999,
+                      background: '#FFFFFF',
+                      borderColor: '#DDD6FE',
+                      color: '#6D28D9',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {item.label}
+                  </Tag>
+                ))}
+              </div>
+
+              {/* AI Processing Spin Indicator */}
+              {isAiLoading && (
                 <div
                   style={{
-                    marginTop: 12,
-                    padding: '10px 14px',
-                    borderRadius: 10,
-                    background: 'rgba(255, 255, 255, 0.85)',
-                    border: '1px solid #DDD6FE',
-                    fontSize: 12.5,
-                    color: '#4C1D95',
-                    lineHeight: 1.5,
+                    marginTop: 14,
+                    padding: '12px 16px',
+                    borderRadius: 12,
+                    background: 'rgba(237, 233, 254, 0.65)',
+                    border: '1px dashed #A78BFA',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
                   }}
                 >
-                  <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                    <RobotOutlined /> Giải thích từ AI:
-                  </strong>{' '}
-                  {aiExplanation}
+                  <Spin size="small" />
+                  <span style={{ fontSize: 12.5, color: '#6D28D9', fontWeight: 600 }}>
+                    Trợ lý AI đang phân tích yêu cầu, tự động trích xuất các thông số và điền vào từng bước...
+                  </span>
                 </div>
+              )}
+
+              {/* AI Explanation Callout / Alert */}
+              {aiExplanation && !isAiLoading && (
+                <Alert
+                  style={{
+                    marginTop: 14,
+                    borderRadius: 12,
+                    border: '1px solid #C4B5FD',
+                    background: 'linear-gradient(135deg, #FDF4FF 0%, #F5F3FF 50%, #EDE9FE 100%)',
+                  }}
+                  message={
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontWeight: 700, color: '#5B21B6', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13.5 }}>
+                        <RobotOutlined style={{ fontSize: 16, color: '#7C3AED' }} /> Chiến lược phân tích từ AI
+                      </span>
+                      <Tag color="purple" style={{ borderRadius: 999, fontSize: 11, fontWeight: 700, margin: 0 }}>
+                        ✓ Đã tự động điền các bước bên dưới
+                      </Tag>
+                    </div>
+                  }
+                  description={
+                    <div>
+                      <p style={{ margin: '4px 0 10px 0', fontSize: 12.5, color: '#4C1D95', lineHeight: 1.6 }}>
+                        {aiExplanation}
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        <Tag style={{ background: '#FFFFFF', borderColor: '#DDD6FE', color: '#6D28D9', fontSize: 11, borderRadius: 6, fontWeight: 600 }}>
+                          ✓ Bước 1: Tên, Sản phẩm & Mục tiêu
+                        </Tag>
+                        <Tag style={{ background: '#FFFFFF', borderColor: '#DDD6FE', color: '#6D28D9', fontSize: 11, borderRadius: 6, fontWeight: 600 }}>
+                          ✓ Bước 2: Nền tảng, Niche & Độ tuổi
+                        </Tag>
+                        <Tag style={{ background: '#FFFFFF', borderColor: '#DDD6FE', color: '#6D28D9', fontSize: 11, borderRadius: 6, fontWeight: 600 }}>
+                          ✓ Bước 3: Ngân sách & Định dạng
+                        </Tag>
+                      </div>
+                    </div>
+                  }
+                  type="info"
+                  showIcon={false}
+                />
               )}
             </Card>
 
@@ -1053,7 +1239,6 @@ export default function CreateCampaignPage() {
                         {[
                           { key: 'tiktok', label: '🎵 TikTok' },
                           { key: 'instagram', label: '📷 Instagram' },
-                          { key: 'youtube', label: '▶️ YouTube' },
                           { key: 'facebook', label: '👤 Facebook' },
                         ].map((p) => {
                           const isSelected = selectedPlatforms.includes(p.key);
@@ -1962,6 +2147,22 @@ export default function CreateCampaignPage() {
         </Button>
 
         <Space size={12}>
+          {/* Nút Lưu bản nháp (Save Draft) */}
+          <Button
+            icon={<SaveOutlined />}
+            onClick={handleSaveDraft}
+            loading={isSavingDraft}
+            style={{
+              fontWeight: 600,
+              borderRadius: 8,
+              height: 38,
+              borderColor: '#CBD5E1',
+              color: '#334155',
+            }}
+          >
+            Lưu bản nháp
+          </Button>
+
           {currentStep > 1 && (
             <Button
               icon={<LeftOutlined />}
@@ -1975,13 +2176,14 @@ export default function CreateCampaignPage() {
           <Button
             type="primary"
             onClick={handleNextStep}
+            loading={isSubmitting}
             style={{
-              background: currentStep === 3 ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : '#2563EB',
+              background: '#2563EB',
               fontWeight: 700,
               borderRadius: 8,
               height: 38,
               padding: '0 22px',
-              boxShadow: currentStep === 3 ? '0 4px 12px rgba(16, 185, 129, 0.3)' : '0 4px 12px rgba(37, 99, 235, 0.3)',
+              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
               border: 'none',
               display: 'inline-flex',
               alignItems: 'center',
@@ -1992,7 +2194,7 @@ export default function CreateCampaignPage() {
               ? 'Tiếp theo (Bước 2)'
               : currentStep === 2
               ? 'Tiếp theo (Bước 3)'
-              : 'Tới khám phá creator'}
+              : 'Tiếp tục chạy đề xuất'}
             {currentStep === 3 ? <CompassOutlined /> : <RightOutlined />}
           </Button>
         </Space>

@@ -55,6 +55,7 @@ import ExternalDiscovery from '../../components/discovery/ExternalDiscovery';
 import AddToShortlistModal from '../../components/discovery/AddToShortlistModal';
 import { campaignService } from '../../services/api/campaignService';
 import type { CampaignResponse } from '../../types/api/campaign.types';
+import CampaignWorkflowBar from '../../components/campaign/CampaignWorkflowBar';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -446,6 +447,35 @@ export default function CreatorDiscoveryPage() {
   const [isMatching, setIsMatching] = useState(false);
   const [shortlistModalCreator, setShortlistModalCreator] = useState<Creator | null>(null);
 
+  // Filter States
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [followerTier, setFollowerTier] = useState<string>('all');
+  const [engagementTier, setEngagementTier] = useState<string>('all');
+  const [priceTier, setPriceTier] = useState<string>('all');
+  const [selectedLocation, setSelectedLocation] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('match');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
+
+  // Tự động làm sạch URL bar: ẩn campaignId khỏi thanh tìm kiếm trình duyệt
+  useEffect(() => {
+    if (searchParams.has('campaignId')) {
+      const cid = searchParams.get('campaignId');
+      if (cid) {
+        localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', cid);
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('campaignId');
+        navigate(
+          { pathname: location.pathname, search: newParams.toString() ? `?${newParams.toString()}` : '' },
+          { replace: true, state: { campaignId: cid } }
+        );
+      }
+    }
+  }, [searchParams, navigate, location.pathname]);
+
   // Fetch real campaigns from backend API
   useEffect(() => {
     let isMounted = true;
@@ -572,52 +602,112 @@ export default function CreatorDiscoveryPage() {
     };
   }, [initialCampId, location.state]);
 
-  const handleTriggerMatch = () => {
-    if (!selectedCampaignId) {
+  const handleTriggerMatch = async (targetCamp?: BrandCampaignItem) => {
+    const camp = targetCamp || campaignsList.find((c) => c.id === selectedCampaignId) || BRAND_CAMPAIGNS.find((c) => c.id === selectedCampaignId);
+    if (!camp) {
       message.warning('Vui lòng chọn một Dự án / Chiến dịch trước khi tìm kiếm Creator!');
       return;
     }
 
-    const camp = campaignsList.find((c) => c.id === selectedCampaignId) || BRAND_CAMPAIGNS.find((c) => c.id === selectedCampaignId);
-    if (!camp) return;
-
     setIsMatching(true);
     message.loading({
-      content: `AI đang phân tích và đối soát độ tương thích cho dự án "${camp.name}"...`,
+      content: `AI đang kích hoạt 4-Stage Discovery Pipeline cho dự án "${camp.name}"...`,
       key: 'campaign_match',
-      duration: 1,
     });
 
-    setTimeout(() => {
-      setIsMatching(false);
+    try {
+      let minF: number | undefined;
+      let maxF: number | undefined;
+      if (followerTier === 'nano') { minF = 1000; maxF = 20000; }
+      else if (followerTier === 'micro') { minF = 20000; maxF = 100000; }
+      else if (followerTier === 'macro') { minF = 100000; maxF = 500000; }
+      else if (followerTier === 'mega') { minF = 500000; }
+
+      let backendCandidates: any[] = [];
+      try {
+        const res = await creatorService.discoverCreators(camp.id, {
+          keyword: searchTerm.trim() || undefined,
+          niche: selectedCategory !== 'all' ? selectedCategory : undefined,
+          minFollowers: minF,
+          maxFollowers: maxF,
+          page: 0,
+          size: 20,
+        });
+        if (Array.isArray(res)) backendCandidates = res;
+        else if (Array.isArray(res?.content)) backendCandidates = res.content;
+        else if (Array.isArray(res?.items)) backendCandidates = res.items;
+        else if (Array.isArray((res as any)?.candidates)) backendCandidates = (res as any).candidates;
+      } catch (apiErr) {
+        console.warn('Backend discovery pipeline notice, using local hybrid matching:', apiErr);
+      }
+
       setMatchedCampaign(camp);
+      setSelectedCampaignId(camp.id);
       setSortBy('match');
       setCurrentPage(1);
 
-      // Cập nhật điểm khớp cho creators dựa trên dự án thực tế
-      setCreators((prev) => {
-        const updated = prev.map((c) => {
-          const res = computeCreatorMatch(c, camp);
+      if (backendCandidates.length > 0) {
+        const mappedFromBackend: Creator[] = backendCandidates.map((item) => {
+          const baseUi = mapApiCreatorToUi(item);
+          const rawScore = item.matchScore ?? item.finalScore ?? item.score;
+          const scorePercent = typeof rawScore === 'number'
+            ? (rawScore <= 1 && rawScore > 0 ? Math.round(rawScore * 100) : Math.round(rawScore))
+            : (baseUi.matchRate || 85);
           return {
-            ...c,
-            matchRate: res.matchRate,
-            matchLevel: res.matchLevel,
-            matchReason: res.reason,
+            ...baseUi,
+            matchRate: scorePercent,
+            matchLevel: (scorePercent >= 80 ? 'high' : scorePercent >= 65 ? 'medium' : 'low') as 'high' | 'medium' | 'low',
+            matchReason: item.reason || item.summary || item.matchReason || `Được xếp hạng bởi 4-Stage Discovery Pipeline cho "${camp.name}"`,
           };
         });
-        try {
-          localStorage.setItem('IM_MATCHED_CAMPAIGN', JSON.stringify(camp));
-          localStorage.setItem('IM_DISCOVERY_CREATORS', JSON.stringify(updated));
-        } catch {}
-        return updated;
-      });
+
+        const returnedIds = new Set(mappedFromBackend.map((c) => c.id));
+        setCreators((prev) => {
+          const remaining = prev
+            .filter((c) => !returnedIds.has(c.id))
+            .map((c) => {
+              const res = computeCreatorMatch(c, camp);
+              return {
+                ...c,
+                matchRate: res.matchRate,
+                matchLevel: res.matchLevel,
+                matchReason: res.reason,
+              };
+            });
+          const combined = [...mappedFromBackend, ...remaining];
+          try {
+            localStorage.setItem('IM_MATCHED_CAMPAIGN', JSON.stringify(camp));
+            localStorage.setItem('IM_DISCOVERY_CREATORS', JSON.stringify(combined));
+          } catch {}
+          return combined;
+        });
+      } else {
+        setCreators((prev) => {
+          const updated = prev.map((c) => {
+            const res = computeCreatorMatch(c, camp);
+            return {
+              ...c,
+              matchRate: res.matchRate,
+              matchLevel: res.matchLevel,
+              matchReason: res.reason,
+            };
+          });
+          try {
+            localStorage.setItem('IM_MATCHED_CAMPAIGN', JSON.stringify(camp));
+            localStorage.setItem('IM_DISCOVERY_CREATORS', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+      }
 
       message.success({
-        content: `Đã tính toán độ tương thích cho dự án "${camp.name}"! Sắp xếp theo thứ tự khớp cao nhất.`,
+        content: `Đã hoàn tất tính toán tương thích 4-Stage Pipeline cho dự án "${camp.name}"!`,
         key: 'campaign_match',
         duration: 3,
       });
-    }, 600);
+    } finally {
+      setIsMatching(false);
+    }
   };
 
   const handleClearMatch = () => {
@@ -633,19 +723,6 @@ export default function CreatorDiscoveryPage() {
     message.info('Đã thoát chế độ so khớp dự án. Đang hiển thị danh sách khám phá chung.');
   };
 
-  // Filter States
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [followerTier, setFollowerTier] = useState<string>('all');
-  const [engagementTier, setEngagementTier] = useState<string>('all');
-  const [priceTier, setPriceTier] = useState<string>('all');
-  const [selectedLocation, setSelectedLocation] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('match');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6;
-
   // Creators list with real API state
   const [loading, setLoading] = useState(true);
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -654,6 +731,7 @@ export default function CreatorDiscoveryPage() {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [discoveryMode, setDiscoveryMode] = useState<'database' | 'external'>('database');
   const [isRefreshingCreator, setIsRefreshingCreator] = useState(false);
+  const [searchMode, setSearchMode] = useState<'standard' | 'semantic'>('standard');
   const [isSemanticSearching, setIsSemanticSearching] = useState(false);
   const [semanticActive, setSemanticActive] = useState(false);
 
@@ -665,7 +743,7 @@ export default function CreatorDiscoveryPage() {
     setIsSemanticSearching(true);
     message.loading({ content: 'AI đang phân tích ngữ nghĩa và tìm kiếm Creator tương thích...', key: 'semantic_search' });
     try {
-      const results = await creatorService.searchSemantic(searchTerm.trim(), 15);
+      const results = await creatorService.searchSemantic(searchTerm.trim(), 20);
       if (Array.isArray(results) && results.length > 0) {
         const similarityMap = new Map<string, number>();
         results.forEach((r) => {
@@ -708,31 +786,68 @@ export default function CreatorDiscoveryPage() {
     const fetchCreatorsAndNiches = async () => {
       try {
         setLoading(true);
-        const [apiCreators, apiNiches] = await Promise.all([
-          creatorService.getCreators(),
+        const [apiNiches] = await Promise.all([
           creatorService.getNiches().catch(() => []),
         ]);
-        if (isMounted) {
-          if (Array.isArray(apiCreators)) {
-            const rawUi = apiCreators.map(mapApiCreatorToUi);
-            if (matchedCampaign) {
-              setCreators(
-                rawUi.map((c) => {
-                  const res = computeCreatorMatch(c, matchedCampaign);
-                  return {
-                    ...c,
-                    matchRate: res.matchRate,
-                    matchLevel: res.matchLevel,
-                    matchReason: res.reason,
-                  };
-                })
-              );
-            } else {
-              setCreators(rawUi);
-            }
+
+        if (isMounted && Array.isArray(apiNiches) && apiNiches.length > 0) {
+          setCategoriesList(Array.from(new Set([...apiNiches, ...ALL_CATEGORIES])));
+        }
+
+        let loadedCandidates: any[] = [];
+        if (matchedCampaign?.id) {
+          try {
+            const discoveryRes = await creatorService.discoverCreators(matchedCampaign.id, {
+              keyword: searchTerm.trim() || undefined,
+              niche: selectedCategory !== 'all' ? selectedCategory : undefined,
+              page: 0,
+              size: 20,
+            });
+            if (Array.isArray(discoveryRes)) loadedCandidates = discoveryRes;
+            else if (Array.isArray((discoveryRes as any)?.content)) loadedCandidates = (discoveryRes as any).content;
+            else if (Array.isArray((discoveryRes as any)?.items)) loadedCandidates = (discoveryRes as any).items;
+            else if (Array.isArray((discoveryRes as any)?.candidates)) loadedCandidates = (discoveryRes as any).candidates;
+          } catch (discErr) {
+            console.warn('[CreatorDiscoveryPage] Backend 4-stage discovery notice:', discErr);
           }
-          if (Array.isArray(apiNiches) && apiNiches.length > 0) {
-            setCategoriesList(Array.from(new Set([...apiNiches, ...ALL_CATEGORIES])));
+        }
+
+        if (isMounted) {
+          if (loadedCandidates.length > 0) {
+            const mapped = loadedCandidates.map((cand) => {
+              const ui = mapApiCreatorToUi(cand);
+              const rawScore = cand.matchScore ?? cand.finalScore ?? cand.score;
+              const scorePercent = typeof rawScore === 'number'
+                ? (rawScore <= 1 && rawScore > 0 ? Math.round(rawScore * 100) : Math.round(rawScore))
+                : 85;
+              return {
+                ...ui,
+                matchRate: scorePercent,
+                matchLevel: (scorePercent >= 80 ? 'high' : scorePercent >= 65 ? 'medium' : 'low') as 'high' | 'medium' | 'low',
+                matchReason: cand.reason || cand.summary || cand.matchReason || `Được xếp hạng bởi 4-Stage Discovery Pipeline cho "${matchedCampaign!.name}"`,
+              };
+            });
+            setCreators(mapped);
+          } else {
+            const apiCreators = await creatorService.getCreators();
+            if (isMounted && Array.isArray(apiCreators)) {
+              const rawUi = apiCreators.map(mapApiCreatorToUi);
+              if (matchedCampaign) {
+                setCreators(
+                  rawUi.map((c) => {
+                    const res = computeCreatorMatch(c, matchedCampaign);
+                    return {
+                      ...c,
+                      matchRate: res.matchRate,
+                      matchLevel: res.matchLevel,
+                      matchReason: res.reason,
+                    };
+                  })
+                );
+              } else {
+                setCreators(rawUi);
+              }
+            }
           }
         }
       } catch (err) {
@@ -976,8 +1091,10 @@ export default function CreatorDiscoveryPage() {
     return count;
   }, [selectedPlatform, selectedCategory, followerTier, engagementTier, priceTier, selectedLocation]);
 
-  // Dynamic Real Metrics based on actual creators in system & active filter/campaign state
-  const totalCreatorsCount = creators.length;
+  // Dynamic Real Metrics tailored for Brand: Shortlisted Creators & Campaign Matching
+  const shortlistedCount = useMemo(() => {
+    return creators.filter((c) => c.saved).length;
+  }, [creators]);
 
   const matchingCreatorsCount = useMemo(() => {
     if (matchedCampaign) {
@@ -1195,6 +1312,24 @@ export default function CreatorDiscoveryPage() {
         <ExternalDiscovery />
       ) : (
         <>
+          {/* 1. Unified Campaign Funnel Stepper */}
+          <CampaignWorkflowBar
+            currentStep="discovery"
+            campaignId={selectedCampaignId}
+            campaignName={matchedCampaign?.name || campaignsList.find((c) => c.id === selectedCampaignId)?.name}
+            availableCampaigns={campaignsList.map((c) => ({ id: c.id, name: c.name }))}
+            onSelectCampaign={(val) => {
+              setSelectedCampaignId(val);
+              const camp = campaignsList.find((c) => c.id === val) || BRAND_CAMPAIGNS.find((c) => c.id === val);
+              if (camp) {
+                setMatchedCampaign(camp);
+                setSortBy('match');
+                setCurrentPage(1);
+                handleTriggerMatch(camp);
+              }
+            }}
+          />
+
           {/* 1.5. CAMPAIGN MATCHING BAR (REDESIGNED) */}
           <Card
             bordered
@@ -1319,6 +1454,7 @@ export default function CreatorDiscoveryPage() {
                       setMatchedCampaign(camp);
                       setSortBy('match');
                       setCurrentPage(1);
+                      handleTriggerMatch(camp);
                     }
                   }}
                   style={{
@@ -1372,6 +1508,27 @@ export default function CreatorDiscoveryPage() {
                   Tìm creator phù hợp
                 </Button>
 
+                {selectedCampaignId && (
+                  <Button
+                    size="large"
+                    icon={<UnorderedListOutlined />}
+                    onClick={() => navigate(`/creators/shortlist?campaignId=${selectedCampaignId}`)}
+                    style={{
+                      borderRadius: 10,
+                      fontWeight: 700,
+                      height: 40,
+                      padding: '0 16px',
+                      color: '#4F46E5',
+                      background: '#EEF2FF',
+                      border: '1px solid #C7D2FE',
+                      boxShadow: '0 2px 8px rgba(79, 70, 229, 0.12)',
+                      flexShrink: 0,
+                    }}
+                  >
+                    Xem Shortlist ➔
+                  </Button>
+                )}
+
                 {matchedCampaign && (
                   <Button
                     size="large"
@@ -1410,8 +1567,8 @@ export default function CreatorDiscoveryPage() {
                   width: 38,
                   height: 38,
                   borderRadius: 10,
-                  background: '#EFF6FF',
-                  color: '#2563EB',
+                  background: '#FEF3C7',
+                  color: '#D97706',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1419,13 +1576,13 @@ export default function CreatorDiscoveryPage() {
                   flexShrink: 0,
                 }}
               >
-                <EyeOutlined />
+                <StarFilled />
               </div>
               <div>
                 <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', lineHeight: 1.2 }}>
-                  {loading ? <Spin size="small" /> : totalCreatorsCount.toLocaleString('vi-VN')}
+                  {loading ? <Spin size="small" /> : shortlistedCount.toLocaleString('vi-VN')}
                 </div>
-                <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>Tổng số Creator</div>
+                <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>Creator trong Shortlist</div>
               </div>
             </div>
           </Card>
@@ -1563,42 +1720,94 @@ export default function CreatorDiscoveryPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Row 1: Search, Sort & View Switcher */}
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 280, display: 'flex', gap: 8 }}>
-              <Input
-                size="large"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                onPressEnter={handleSemanticSearch}
-                placeholder="Tìm kiếm creator theo tên, lĩnh vực, từ khóa hoặc phong cách nội dung..."
-                prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 16, marginRight: 6 }} />}
-                allowClear
-                style={{
-                  borderRadius: 10,
-                  fontSize: 13,
-                  borderColor: '#E2E8F0',
-                  height: 40,
-                  flex: 1,
-                }}
-              />
-              <Button
-                type="primary"
-                loading={isSemanticSearching}
-                icon={<RobotOutlined />}
-                onClick={handleSemanticSearch}
-                style={{
-                  height: 40,
-                  borderRadius: 10,
-                  background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-                  border: 'none',
-                  fontWeight: 600,
-                  boxShadow: '0 2px 8px rgba(99, 102, 241, 0.25)',
-                }}
-              >
-                Tìm AI
-              </Button>
+            {/* Search Input & Mode Switch */}
+            <div style={{ flex: 1, minWidth: 320, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: '#475569' }}>Chế độ:</span>
+                  <Radio.Group
+                    value={searchMode}
+                    onChange={(e) => setSearchMode(e.target.value)}
+                    buttonStyle="solid"
+                    size="small"
+                  >
+                    <Radio.Button value="standard" style={{ borderRadius: '6px 0 0 6px', fontWeight: 600, fontSize: 11.5 }}>
+                      🔍 Tìm kiếm thường
+                    </Radio.Button>
+                    <Radio.Button value="semantic" style={{ borderRadius: '0 6px 6px 0', fontWeight: 600, fontSize: 11.5 }}>
+                      ⚡ Tìm kiếm AI ngữ nghĩa (Semantic)
+                    </Radio.Button>
+                  </Radio.Group>
+                </div>
+                {searchMode === 'semantic' && (
+                  <Tag color="purple" style={{ borderRadius: 999, fontSize: 10.5, fontWeight: 600, margin: 0 }}>
+                    Model BKAI 768-dim pgvector
+                  </Tag>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Input
+                  size="large"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  onPressEnter={() => {
+                    if (searchMode === 'semantic') {
+                      handleSemanticSearch();
+                    }
+                  }}
+                  placeholder={
+                    searchMode === 'semantic'
+                      ? 'Nhập mô tả ngữ nghĩa (Ví dụ: reviewer mỹ phẩm da nhạy cảm Gen Z, unbox phụ kiện sạc...)'
+                      : 'Tìm kiếm creator theo tên, username, từ khóa hoặc phong cách nội dung...'
+                  }
+                  prefix={
+                    searchMode === 'semantic' ? (
+                      <RobotOutlined style={{ color: '#8B5CF6', fontSize: 16, marginRight: 6 }} />
+                    ) : (
+                      <SearchOutlined style={{ color: '#94A3B8', fontSize: 16, marginRight: 6 }} />
+                    )
+                  }
+                  allowClear
+                  style={{
+                    borderRadius: 10,
+                    fontSize: 13,
+                    borderColor: searchMode === 'semantic' ? '#C4B5FD' : '#E2E8F0',
+                    height: 40,
+                    flex: 1,
+                  }}
+                />
+                <Button
+                  type="primary"
+                  loading={isSemanticSearching}
+                  icon={searchMode === 'semantic' ? <ThunderboltFilled /> : <SearchOutlined />}
+                  onClick={() => {
+                    if (searchMode === 'semantic') {
+                      handleSemanticSearch();
+                    } else {
+                      setCurrentPage(1);
+                      message.info({ content: `Đang lọc danh sách với từ khóa "${searchTerm}"`, duration: 1.5 });
+                    }
+                  }}
+                  style={{
+                    height: 40,
+                    borderRadius: 10,
+                    background: searchMode === 'semantic'
+                      ? 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)'
+                      : '#2563EB',
+                    border: 'none',
+                    fontWeight: 600,
+                    boxShadow: searchMode === 'semantic'
+                      ? '0 2px 8px rgba(99, 102, 241, 0.25)'
+                      : '0 2px 8px rgba(37, 99, 235, 0.25)',
+                  }}
+                >
+                  {searchMode === 'semantic' ? 'Tìm AI Vector' : 'Tìm kiếm'}
+                </Button>
+              </div>
             </div>
 
             {/* Sort Dropdown */}
@@ -1977,10 +2186,7 @@ export default function CreatorDiscoveryPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                       <div
                         style={{ display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer' }}
-                        onClick={() => {
-                          setSelectedCreator(creator);
-                          setDrawerVisible(true);
-                        }}
+                        onClick={() => handleOpenCreator(creator)}
                       >
                         <CreatorAvatar src={creator.avatar} name={creator.name} size={48} />
                         <div>
@@ -2243,7 +2449,10 @@ export default function CreatorDiscoveryPage() {
                 >
                   <Row align="middle" gutter={[16, 16]}>
                     <Col xs={24} sm={10} md={8}>
-                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <div
+                        style={{ display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer' }}
+                        onClick={() => handleOpenCreator(creator)}
+                      >
                         <CreatorAvatar src={creator.avatar} name={creator.name} size={52} />
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

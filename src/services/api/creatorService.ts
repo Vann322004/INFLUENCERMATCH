@@ -9,6 +9,8 @@ import {
   AddShortlistItemPayload,
   SendInvitationRequest,
   InvitationResponse,
+  DiscoverCreatorsParams,
+  CreatorDiscoveryPageResponse,
 } from '../../types/api/creator.types';
 
 // ── Structured Fallback Creators (Ảnh chuẩn xác theo đúng giới tính & ngành nghề) ──
@@ -177,6 +179,25 @@ export const DEFAULT_CREATORS: CreatorItem[] = [
 
 export const creatorService = {
   /**
+   * Khám phá Creator cho chiến dịch qua 4-Stage Hybrid Discovery Pipeline
+   * Swagger Tag: "Creator Discovery"
+   * GET /campaigns/{campaignId}/discovery
+   * OperationId: discoverCreators
+   * Summary: Discover creators for campaign
+   * Description: Executes the 4-Stage Hybrid Discovery Pipeline (Hard Filters + Semantic & FTS Search + Rank Fusion + Fallback) to find creators.
+   * Query params: keyword, niche, minFollowers, maxFollowers, page, size
+   */
+  async discoverCreators(
+    campaignId: string,
+    params?: DiscoverCreatorsParams
+  ): Promise<CreatorDiscoveryPageResponse> {
+    const response = await apiClient.get<ApiResponse<CreatorDiscoveryPageResponse>>(
+      `/campaigns/${campaignId}/discovery`,
+      { params }
+    );
+    return response.data?.data || (response.data as unknown as CreatorDiscoveryPageResponse);
+  },
+  /**
    * Lấy danh sách toàn bộ creator công khai
    */
   async getCreators(): Promise<CreatorItem[]> {
@@ -201,12 +222,13 @@ export const creatorService = {
   },
 
   /**
-   * Lấy thông tin chi tiết của creator theo ID
+   * Lấy thông tin chi tiết của creator theo ID (GET /creators/{id})
    */
   async getCreatorById(id: string): Promise<CreatorDetail> {
     try {
       const response = await apiClient.get<ApiResponse<CreatorDetail>>(`/creators/${id}`);
       if (response.data?.data) return response.data.data;
+      if (response.data) return response.data as unknown as CreatorDetail;
     } catch {
       // fallback
     }
@@ -236,79 +258,43 @@ export const creatorService = {
 
   /**
    * Tìm kiếm creator bằng ngữ nghĩa / AI vector search
+   * GET /creators/search/semantic?q={keyword}&limit=20 (Model BKAI 768-dim pgvector)
    */
-  async searchSemantic(query: string, limit = 10): Promise<CreatorVectorSearchItem[]> {
-    try {
-      const response = await apiClient.get<ApiResponse<CreatorVectorSearchItem[]>>(
-        `/creators/search/semantic`,
-        {
-          params: { q: query, limit },
-        }
-      );
-      if (response.data?.data && response.data.data.length > 0) {
-        return response.data.data;
+  async searchSemantic(query: string, limit = 20): Promise<CreatorVectorSearchItem[]> {
+    const response = await apiClient.get<ApiResponse<CreatorVectorSearchItem[]>>(
+      `/creators/search/semantic`,
+      {
+        params: { q: query, limit },
       }
-    } catch {
-      // fallback
-    }
-    const q = query.toLowerCase();
-    return DEFAULT_CREATORS
-      .filter((c) => c.displayName.toLowerCase().includes(q) || (c.niche && c.niche.toLowerCase().includes(q)) || (c.contentSummary && c.contentSummary.toLowerCase().includes(q)))
-      .slice(0, limit)
-      .map((c, i) => ({
-        id: c.id,
-        displayName: c.displayName,
-        userName: c.userName,
-        platform: c.platform,
-        avatarUrl: c.avatarUrl,
-        profileUrl: c.profileUrl,
-        similarity: 0.95 - i * 0.05,
-      }));
+    );
+    const data = response.data?.data ?? response.data;
+    return Array.isArray(data) ? data : [];
   },
 
   /**
-   * Lấy bảng giá (rate card) của creator
+   * Lấy bảng giá (rate card) của creator (GET /creators/{id}/rate-card)
    */
   async getRateCard(creatorId: string): Promise<RateCardResponse> {
-    try {
-      const response = await apiClient.get<ApiResponse<RateCardResponse>>(
-        `/creators/${creatorId}/rate-card`
-      );
-      if (response.data?.data) return response.data.data;
-    } catch {
-      // fallback
-    }
-    return {
-      creatorId,
-      currency: 'VND',
-      packages: [
-        { name: '1 Video ngắn (Short/Reel/TikTok)', price: 8000000, turnaroundDays: 3 },
-        { name: '1 Bài đăng ảnh kèm Caption & Tag', price: 5000000, turnaroundDays: 2 },
-        { name: 'Combo Độc quyền 1 tháng', price: 20000000, turnaroundDays: 7 },
-      ],
-    } as unknown as RateCardResponse;
+    const response = await apiClient.get<ApiResponse<RateCardResponse>>(
+      `/creators/${creatorId}/rate-card`
+    );
+    return response.data?.data || (response.data as unknown as RateCardResponse);
   },
 
   /**
-   * Lấy danh mục các niches/ngành hàng
+   * Lấy danh mục các niches/ngành hàng chuẩn (GET /taxonomies/niches)
    */
   async getNiches(): Promise<string[]> {
     try {
-      const response = await apiClient.get<string[]>('/taxonomies/niches');
-      if (Array.isArray(response.data) && response.data.length > 0) return response.data;
-    } catch {
-      // fallback
+      const response = await apiClient.get<any>('/taxonomies/niches');
+      const raw = response.data;
+      if (Array.isArray(raw)) return raw;
+      if (Array.isArray(raw?.data)) return raw.data;
+      return [];
+    } catch (err) {
+      console.warn('[creatorService] Lỗi khi tải /taxonomies/niches:', err);
+      return [];
     }
-    return [
-      'Du lịch & Khám phá',
-      'Thể thao & Fitness',
-      'Gia đình & Mẹ bé',
-      'Làm đẹp & Lifestyle',
-      'Giải trí & Hài hước',
-      'Ẩm thực & Đồ ăn',
-      'Tech & Gaming',
-      'Thời trang & OOTD',
-    ];
   },
 
   /**
@@ -327,32 +313,138 @@ export const creatorService = {
   },
 
   /**
-   * Lấy danh sách shortlist creator của một chiến dịch
+   * Dọn dẹp cache cục bộ cũ để đảm bảo Database là nguồn dữ liệu duy nhất
+   */
+  clearLegacyLocalShortlist(): void {
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('IM_LOCAL_SHORTLIST_') || key.startsWith('IM_SHORTLIST_'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch {}
+  },
+
+  /**
+   * Helper tương thích cũ (Vô hiệu hóa cache cục bộ để 100% dữ liệu Shortlist được lấy trực tiếp từ Database)
+   */
+  getLocalShortlist(_campaignId: string): ShortlistItem[] {
+    return [];
+  },
+
+  /**
+   * Helper tương thích cũ (Không lưu vào localStorage để tránh lệch dữ liệu giữa các máy và Database)
+   */
+  saveLocalShortlist(_campaignId: string, _items: ShortlistItem[]): void {
+    // Không ghi vào localStorage
+  },
+
+  /**
+   * Lấy danh sách shortlist creator của một chiến dịch từ Backend Database
+   * Swagger: GET /campaigns/{campaignId}/shortlist
    */
   async getShortlist(campaignId: string): Promise<ShortlistItem[]> {
-    const response = await apiClient.get<ApiResponse<{ content?: ShortlistItem[]; items?: ShortlistItem[] }>>(
-      `/campaigns/${campaignId}/shortlist`
-    );
-    const data = response.data.data;
-    return (data?.content || data?.items || (Array.isArray(data) ? data : [])) as ShortlistItem[];
+    if (!campaignId || campaignId === 'all') {
+      return [];
+    }
+
+    try {
+      const response = await apiClient.get<ApiResponse<any>>(
+        `/campaigns/${campaignId}/shortlist`
+      );
+      const raw = response.data;
+      const d = (raw as any)?.data ?? raw;
+      const list = Array.isArray(d) ? d : (d?.content || d?.items || []);
+
+      return (list || []).map((it: any) => ({
+        id: it.id || it.shortlistItemId || it.creatorId,
+        campaignId: it.campaignId || campaignId,
+        creatorId: it.creatorId || it.id,
+        creatorName: it.creatorName || it.displayName || it.name || 'Creator',
+        avatarUrl: it.avatarUrl || it.avatar,
+        platform: it.platform || 'tiktok',
+        followers: it.followers || 0,
+        engagementRate: it.engagementRate || 0,
+        niche: it.niche,
+        priority: it.priority || 'HIGH',
+        note: it.note || '',
+        addedAt: it.addedAt || new Date().toISOString(),
+        status: it.status || 'SAVED',
+      }));
+    } catch (err) {
+      console.warn(`[creatorService] getShortlist từ backend cho campaign ${campaignId} lỗi:`, err);
+      return [];
+    }
   },
 
   /**
-   * Thêm creator vào danh sách shortlist của chiến dịch
+   * Thêm creator vào danh sách shortlist của chiến dịch và lưu trực tiếp xuống Database
+   * Swagger: POST /campaigns/{campaignId}/shortlist (hoặc /campaigns/{campaignId}/shortlist/items)
    */
   async addToShortlist(campaignId: string, payload: AddShortlistItemPayload): Promise<ShortlistItem> {
-    const response = await apiClient.post<ApiResponse<ShortlistItem>>(
-      `/campaigns/${campaignId}/shortlist`,
-      payload
-    );
-    return response.data.data;
+    const requestBody = {
+      creatorId: payload.creatorId,
+      priority: payload.priority || 'HIGH',
+      note: payload.note || '',
+      source: 'MANUAL_DISCOVERY',
+    };
+
+    let serverData: any = null;
+    try {
+      const response = await apiClient.post<ApiResponse<any>>(
+        `/campaigns/${campaignId}/shortlist`,
+        requestBody
+      );
+      serverData = response.data?.data || response.data;
+    } catch (err: any) {
+      // Fallback thử endpoint phụ /items nếu backend cấu hình theo REST resource
+      try {
+        const response2 = await apiClient.post<ApiResponse<any>>(
+          `/campaigns/${campaignId}/shortlist/items`,
+          requestBody
+        );
+        serverData = response2.data?.data || response2.data;
+      } catch (innerErr: any) {
+        console.error(`[creatorService] Backend addToShortlist thất bại khi lưu vào DB:`, innerErr || err);
+        throw innerErr || err;
+      }
+    }
+
+    return {
+      id: serverData?.id || payload.creatorId,
+      campaignId: serverData?.campaignId || campaignId,
+      creatorId: serverData?.creatorId || payload.creatorId,
+      creatorName: serverData?.creatorName || payload.creatorName || 'Creator',
+      avatarUrl: serverData?.avatarUrl || payload.avatarUrl,
+      platform: serverData?.platform || payload.platform || 'tiktok',
+      followers: serverData?.followers ?? payload.followers ?? 0,
+      engagementRate: serverData?.engagementRate ?? payload.engagementRate ?? 0,
+      niche: serverData?.niche || payload.niche,
+      priority: serverData?.priority || payload.priority || 'HIGH',
+      note: serverData?.note || payload.note || '',
+      addedAt: serverData?.addedAt || new Date().toISOString(),
+      status: serverData?.status || 'SAVED',
+    };
   },
 
   /**
-   * Xóa creator khỏi shortlist của chiến dịch
+   * Xóa creator khỏi shortlist của chiến dịch trong Database
+   * Swagger: DELETE /campaigns/{campaignId}/shortlist/{shortlistItemId}
    */
   async removeFromShortlist(campaignId: string, shortlistItemId: string): Promise<void> {
-    await apiClient.delete(`/campaigns/${campaignId}/shortlist/${shortlistItemId}`);
+    try {
+      await apiClient.delete(`/campaigns/${campaignId}/shortlist/${shortlistItemId}`);
+    } catch (err: any) {
+      try {
+        await apiClient.delete(`/campaigns/${campaignId}/shortlist/items/${shortlistItemId}`);
+      } catch (innerErr: any) {
+        console.error('[creatorService] Backend removeFromShortlist lỗi khi xóa khỏi DB:', innerErr || err);
+        throw innerErr || err;
+      }
+    }
   },
 
   /**
@@ -377,3 +469,9 @@ export const creatorService = {
     return response.data?.data || (response.data as unknown as InvitationResponse);
   },
 };
+
+// Tự động dọn dẹp các key cache cục bộ cũ để đảm bảo 100% dữ liệu đồng bộ từ Database
+try {
+  creatorService.clearLegacyLocalShortlist();
+} catch {}
+

@@ -19,7 +19,7 @@ import {
   CheckCircleOutlined,
   EditOutlined,
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
 import type { CampaignResponse } from '../../types/api/campaign.types';
 import './CampaignListPage.css';
@@ -29,7 +29,7 @@ interface DisplayCampaign {
   title: string;
   tags: string[];
   thumbnail: string;
-  status: 'running' | 'draft' | 'completed';
+  status: 'running' | 'draft' | 'completed' | 'ready_for_discovery';
   statusText: string;
   creatorsCount: number;
   reach: string;
@@ -45,8 +45,10 @@ function getStatusConfig(status: DisplayCampaign['status']) {
   switch (status) {
     case 'running':
       return { color: '#059669', bg: '#ECFDF5', dot: '#10B981', icon: <FireOutlined />, label: 'Đang chạy' };
+    case 'ready_for_discovery':
+      return { color: '#0284C7', bg: '#F0F9FF', dot: '#0284C7', icon: <ThunderboltOutlined />, label: 'Sẵn sàng đề xuất' };
     case 'draft':
-      return { color: '#4F46E5', bg: '#EEF2FF', dot: '#6366F1', icon: <EditOutlined />, label: 'Bản nháp' };
+      return { color: '#6366F1', bg: '#EEF2FF', dot: '#6366F1', icon: <EditOutlined />, label: 'Bản nháp' };
     case 'completed':
       return { color: '#64748B', bg: '#F1F5F9', dot: '#94A3B8', icon: <CheckCircleOutlined />, label: 'Hoàn thành' };
     default:
@@ -69,11 +71,25 @@ const DEFAULT_THUMBNAILS = [
 
 export default function CampaignListPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlTab = searchParams.get('tab') || 'all';
   const [campaigns, setCampaigns] = useState<DisplayCampaign[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState(urlTab);
   const [searchText, setSearchText] = useState('');
   const [sortBy, setSortBy] = useState('latest');
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
+    setSearchParams(key === 'all' ? {} : { tab: key });
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -84,12 +100,15 @@ export default function CampaignListPage() {
         if (isMounted) {
           const mapped: DisplayCampaign[] = data.map((c: CampaignResponse, idx: number) => {
             const rawStatus = (c.status || 'DRAFT').toUpperCase();
-            let uiStatus: 'running' | 'draft' | 'completed' = 'draft';
+            let uiStatus: DisplayCampaign['status'] = 'draft';
             let statusText = 'Bản nháp';
 
             if (rawStatus === 'ACTIVE' || rawStatus === 'RUNNING') {
               uiStatus = 'running';
               statusText = 'Đang chạy';
+            } else if (rawStatus === 'READY_FOR_DISCOVERY') {
+              uiStatus = 'ready_for_discovery';
+              statusText = 'Sẵn sàng đề xuất';
             } else if (rawStatus === 'COMPLETED' || rawStatus === 'ARCHIVED') {
               uiStatus = 'completed';
               statusText = 'Hoàn thành';
@@ -141,6 +160,7 @@ export default function CampaignListPage() {
     let list = [...campaigns];
 
     if (activeTab === 'running') list = list.filter((c) => c.status === 'running');
+    else if (activeTab === 'ready_for_discovery') list = list.filter((c) => c.status === 'ready_for_discovery');
     else if (activeTab === 'draft') list = list.filter((c) => c.status === 'draft');
     else if (activeTab === 'completed') list = list.filter((c) => c.status === 'completed');
 
@@ -159,6 +179,7 @@ export default function CampaignListPage() {
   const tabItems = [
     { key: 'all', label: `Tất cả (${campaigns.length})` },
     { key: 'running', label: `Đang chạy (${campaigns.filter((c) => c.status === 'running').length})` },
+    { key: 'ready_for_discovery', label: `Sẵn sàng đề xuất (${campaigns.filter((c) => c.status === 'ready_for_discovery').length})` },
     { key: 'draft', label: `Bản nháp (${campaigns.filter((c) => c.status === 'draft').length})` },
     { key: 'completed', label: `Hoàn thành (${campaigns.filter((c) => c.status === 'completed').length})` },
   ];
@@ -167,6 +188,11 @@ export default function CampaignListPage() {
   const totalCreators = campaigns.reduce((s, c) => s + c.creatorsCount, 0);
   const totalSpent = campaigns.reduce((s, c) => s + c.spentNumber, 0);
   const runningCount = campaigns.filter((c) => c.status === 'running').length;
+
+  const handleOpenDetail = (campId: string) => {
+    sessionStorage.setItem('current_campaign_id', campId);
+    navigate('/campaigns/detail', { state: { id: campId } });
+  };
 
   return (
     <div className="clist-page">
@@ -242,7 +268,7 @@ export default function CampaignListPage() {
       <div className="clist-filter-bar">
         <Tabs
           activeKey={activeTab}
-          onChange={setActiveTab}
+          onChange={handleTabChange}
           items={tabItems}
           className="clist-tabs"
         />
@@ -291,14 +317,14 @@ export default function CampaignListPage() {
                       alt={campaign.title}
                       className="clist-card-thumb"
                       style={{ cursor: 'pointer' }}
-                      onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                      onClick={() => handleOpenDetail(campaign.id)}
                     />
                     <div className="clist-card-meta">
                       <div className="clist-card-title-row">
                         <h3
                           className="clist-card-name"
                           style={{ cursor: 'pointer' }}
-                          onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                          onClick={() => handleOpenDetail(campaign.id)}
                         >
                           {campaign.title}
                         </h3>
@@ -372,18 +398,39 @@ export default function CampaignListPage() {
                     <div style={{ display: 'flex', gap: 6 }}>
                       <Button
                         size="small"
-                        onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                        onClick={() => handleOpenDetail(campaign.id)}
                         style={{ borderRadius: 6, fontSize: 12, fontWeight: 600 }}
                       >
                         Chi tiết
                       </Button>
-                      <Button
-                        className="clist-btn-pipeline"
-                        icon={<ArrowRightOutlined />}
-                        onClick={() => navigate(`/campaign-management/${campaign.id}`)}
-                      >
-                        Pipeline
-                      </Button>
+                      {campaign.status === 'ready_for_discovery' || campaign.status === 'draft' ? (
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<ThunderboltOutlined />}
+                          onClick={() => {
+                            localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', campaign.id);
+                            navigate('/creators?autoRun=true', { state: { campaignId: campaign.id } });
+                          }}
+                          style={{
+                            background: '#2563EB',
+                            borderRadius: 6,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            border: 'none',
+                          }}
+                        >
+                          Đề xuất AI
+                        </Button>
+                      ) : (
+                        <Button
+                          className="clist-btn-pipeline"
+                          icon={<ArrowRightOutlined />}
+                          onClick={() => handleOpenDetail(campaign.id)}
+                        >
+                          Pipeline
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -26,6 +26,10 @@ export const clearAuthSession = () => {
   localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
   localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
   localStorage.removeItem(STORAGE_KEYS.USER);
+  localStorage.removeItem('influencermatch_brand_id');
+  try {
+    sessionStorage.clear();
+  } catch {}
 };
 
 export const getStoredUser = () => {

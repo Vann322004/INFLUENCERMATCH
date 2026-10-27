@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { Card, Input, Button, Tag, Space, Typography, Tooltip, message } from 'antd';
+import { Input, Button, Tag, Space, Typography, Tooltip, message } from 'antd';
 import {
   ThunderboltFilled,
   SendOutlined,
   CheckCircleFilled,
   ReloadOutlined,
   CloseOutlined,
-  RobotOutlined,
 } from '@ant-design/icons';
+import { campaignService } from '../../services/api/campaignService';
 
-const { Text } = Typography;
 const { TextArea } = Input;
 
 export interface StructuredBrief {
@@ -87,7 +86,7 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [parsedResult, setParsedResult] = useState<StructuredBrief | null>(null);
 
-  const handleAnalyze = (customBrief?: StructuredBrief) => {
+  const handleAnalyze = async (customBrief?: StructuredBrief) => {
     if (!promptText.trim() && !customBrief) {
       message.warning('Vui lòng nhập yêu cầu chiến dịch hoặc bấm vào gợi ý mẫu!');
       return;
@@ -96,47 +95,56 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
     setIsAnalyzing(true);
     message.loading({ content: 'AI đang phân tích yêu cầu & trích xuất tiêu chí...', key: 'ai_brief' });
 
-    setTimeout(() => {
+    try {
       let targetBrief = customBrief;
       if (!targetBrief) {
-        const lower = promptText.toLowerCase();
-        let cat = 'Làm đẹp & Chăm sóc da';
-        if (lower.includes('công nghệ') || lower.includes('sạc') || lower.includes('điện tử') || lower.includes('tech')) {
-          cat = 'Công nghệ & Game';
-        } else if (lower.includes('thời trang') || lower.includes('quần áo') || lower.includes('giày')) {
-          cat = 'Thời trang';
-        } else if (lower.includes('ẩm thực') || lower.includes('ăn') || lower.includes('quán')) {
-          cat = 'Ẩm thực & Đồ uống';
-        } else if (lower.includes('thể thao') || lower.includes('gym') || lower.includes('sức khỏe')) {
-          cat = 'Thể hình & Sức khỏe';
+        // Gọi API backend thực tế: POST /ai/campaign-autofill
+        const res = await campaignService.autofillCampaign(promptText.trim());
+
+        const primaryNiche = res.niches?.[0] || 'Làm đẹp & Chăm sóc da';
+        const primaryLocation = res.locations?.[0] || 'all';
+        const isHn = primaryLocation.toLowerCase().includes('hà nội');
+        const isHcm = primaryLocation.toLowerCase().includes('hồ chí minh') || primaryLocation.toLowerCase().includes('hcm');
+
+        let priceRange = 'mid';
+        let priceText = 'Mức giá $500 – $1,000';
+        if (res.budgetMax && res.budgetMax > 30000000) {
+          priceRange = 'high';
+          priceText = 'Mức giá > $1,000';
+        } else if (res.budgetMax && res.budgetMax < 15000000) {
+          priceRange = 'low';
+          priceText = 'Mức giá < $500';
         }
 
-        const isHn = lower.includes('hà nội');
-        const isHcm = lower.includes('hồ chí minh') || lower.includes('hcm') || lower.includes('sài gòn');
+        const queryKeywords = [res.productService, primaryNiche].filter(Boolean).join(' ');
 
         targetBrief = {
-          category: cat,
-          categoryLabel: cat,
-          location: isHn ? 'Thành phố Hà Nội' : isHcm ? 'Thành phố Hồ Chí Minh' : 'all',
-          locationLabel: isHn ? '📍 Hà Nội' : isHcm ? '📍 TP. Hồ Chí Minh' : 'Toàn quốc',
+          category: primaryNiche,
+          categoryLabel: primaryNiche,
+          location: isHn ? 'Thành phố Hà Nội' : isHcm ? 'Thành phố Hồ Chí Minh' : primaryLocation,
+          locationLabel: isHn ? '📍 Hà Nội' : isHcm ? '📍 TP. Hồ Chí Minh' : primaryLocation !== 'all' ? `📍 ${primaryLocation}` : 'Toàn quốc',
           engagement: 'high',
           engagementLabel: 'Tương tác cao (> 5%)',
-          price: 'mid',
-          priceLabel: 'Mức giá $500 – $1,000',
-          query: promptText.split(' ').slice(0, 3).join(' '),
-          reason: `AI đã phân tích ngữ nghĩa và trích xuất tiêu chí ngành ${cat} thành công.`,
+          price: priceRange,
+          priceLabel: priceText,
+          query: queryKeywords || promptText.split(' ').slice(0, 3).join(' '),
+          reason: res.aiExplanation || `AI đã phân tích ngữ nghĩa và trích xuất tiêu chí ngành ${primaryNiche} thành công.`,
         };
       }
 
       setParsedResult(targetBrief);
-      setIsAnalyzing(false);
       onApplyBrief(targetBrief);
       message.success({
         content: 'AI đã trích xuất tiêu chí và tự động áp dụng bộ lọc!',
         key: 'ai_brief',
         duration: 3,
       });
-    }, 700);
+    } catch (err) {
+      console.error('Error analyzing brief with AI:', err);
+      message.error({ content: 'Không thể phân tích brief lúc này. Vui lòng thử lại!', key: 'ai_brief' });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleSelectSample = (sample: (typeof SAMPLE_PROMPTS)[0]) => {

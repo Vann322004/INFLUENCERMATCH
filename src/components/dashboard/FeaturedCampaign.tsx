@@ -232,7 +232,28 @@ export default function FeaturedCampaign({ campaign }: FeaturedCampaignProps) {
       <Button
         type="primary"
         block
-        onClick={() => navigate(detailLink)}
+        onClick={() => {
+          if (campaign?.id) {
+            sessionStorage.setItem('current_campaign_id', campaign.id);
+            try {
+              sessionStorage.setItem('current_campaign_data', JSON.stringify({
+                id: campaign.id,
+                name: campaign.title,
+                budgetFormatted: campaign.spent,
+                budgetRaw: campaign.spentNumber,
+                niches: campaign.tags,
+                dateRange: campaign.date,
+                thumbnail: campaign.thumbnail,
+                status: campaign.status === 'completed' ? 'COMPLETED' : (campaign.status === 'draft' ? 'DRAFT' : 'ACTIVE'),
+                statusText: campaign.statusText,
+                creatorsCount: campaign.creatorsCount,
+              }));
+            } catch {}
+            navigate('/campaigns/detail', { state: { id: campaign.id, item: campaign } });
+          } else {
+            navigate('/campaigns');
+          }
+        }}
         style={{
           background: '#5B5BF0',
           fontWeight: 700,
