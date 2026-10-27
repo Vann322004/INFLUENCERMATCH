@@ -1118,14 +1118,14 @@ export default function CampaignPage() {
         {/* RIGHT SIDEBAR COLUMN: Việc cần xử lý + Chiến dịch gần đây (Spotlight) */}
         <div className="campaign-sidebar-col">
           {/* Card 1: Việc cần xử lý */}
-          <div className="im-campaign-side-card" style={{ flex: 1 }}>
+          <div className="im-campaign-side-card">
             {/* Card Header */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 7,
-                marginBottom: 10,
+                marginBottom: 6,
               }}
             >
               <span style={{ fontSize: 14.5, fontWeight: 800, color: '#0F172A' }}>
@@ -1147,7 +1147,7 @@ export default function CampaignPage() {
 
             {/* Tasks List */}
             {pendingTasks.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {pendingTasks.map((task) => (
                   <div
                     key={task.id}
@@ -1191,23 +1191,23 @@ export default function CampaignPage() {
                 ))}
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '24px 12px', gap: 6 }}>
-                <CheckCircleOutlined style={{ fontSize: 22, color: '#10B981' }} />
-                <span style={{ fontSize: 12.5, color: '#64748B', textAlign: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 12px', gap: 6, background: '#F8FAFC', borderRadius: 10 }}>
+                <CheckCircleOutlined style={{ fontSize: 20, color: '#10B981' }} />
+                <span style={{ fontSize: 12, color: '#64748B', textAlign: 'center' }}>
                   Hiện không có việc nào cần xử lý.
                 </span>
               </div>
             )}
           </div>
 
-          {/* Card 2: Chiến dịch gần đây */}
-          <div className="im-campaign-side-card" style={{ flex: 1.1 }}>
+          {/* Card 2: Chiến dịch gần đây (Spotlight) */}
+          <div className="im-campaign-side-card">
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: 8,
+                marginBottom: 2,
               }}
             >
               <span style={{ fontSize: 14.5, fontWeight: 800, color: '#0F172A' }}>
@@ -1230,10 +1230,18 @@ export default function CampaignPage() {
             </div>
 
             {campaigns.length > 0 ? (
-              <div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {/* Cover Banner */}
                 <div
-                  style={{ position: 'relative', width: '100%', height: 110, borderRadius: 10, overflow: 'hidden', cursor: 'pointer' }}
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: 125,
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  }}
                   onClick={() => handleOpenDetail(campaigns[0])}
                 >
                   <img
@@ -1246,99 +1254,132 @@ export default function CampaignPage() {
                   <div
                     style={{
                       position: 'absolute',
-                      bottom: 7,
-                      left: 7,
+                      top: 8,
+                      left: 8,
                       background: 'rgba(255, 255, 255, 0.95)',
-                      backdropFilter: 'blur(4px)',
-                      padding: '2px 8px',
+                      backdropFilter: 'blur(6px)',
+                      padding: '3px 9px',
                       borderRadius: 999,
-                      fontSize: 10,
+                      fontSize: 10.5,
                       fontWeight: 700,
                       color: campaigns[0].statusType === 'draft' ? '#D97706' : '#059669',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 4,
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                      gap: 5,
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
                     }}
                   >
                     <span
                       style={{
-                        width: 5,
-                        height: 5,
+                        width: 6,
+                        height: 6,
                         borderRadius: '50%',
                         background: campaigns[0].statusType === 'draft' ? '#F59E0B' : '#10B981',
                       }}
                     />
                     {campaigns[0].statusText}
                   </div>
+
+                  {/* Overlaid Budget Pill */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 8,
+                      right: 8,
+                      background: 'rgba(15, 23, 42, 0.85)',
+                      backdropFilter: 'blur(4px)',
+                      padding: '2.5px 8px',
+                      borderRadius: 6,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: '#FFFFFF',
+                    }}
+                  >
+                    {campaigns[0].budgetFormatted}
+                  </div>
                 </div>
 
                 {/* Info & Progress */}
-                <div style={{ marginTop: 8 }}>
+                <div>
                   <div
-                    style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A', cursor: 'pointer' }}
+                    style={{
+                      fontWeight: 800,
+                      fontSize: 14,
+                      color: '#0F172A',
+                      cursor: 'pointer',
+                      lineHeight: 1.35,
+                      marginBottom: 4,
+                    }}
                     onClick={() => handleOpenDetail(campaigns[0])}
+                    title={campaigns[0].name}
                   >
                     {campaigns[0].name}
                   </div>
-                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1, marginBottom: 8 }}>
-                    {campaigns[0].dateRange}
+
+                  <div style={{ fontSize: 11.5, color: '#94A3B8', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 10 }}>
+                    <CalendarOutlined style={{ fontSize: 11 }} />
+                    <span>{campaigns[0].dateRange}</span>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
-                      <div
-                        style={{
-                          flex: 1,
-                          height: 4,
-                          background: '#E2E8F0',
-                          borderRadius: 999,
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: `${campaigns[0].progressPercent}%`,
-                            height: '100%',
-                            background: '#4F46E5',
-                            borderRadius: 999,
-                          }}
-                        />
-                      </div>
-                      <span style={{ fontSize: 10.5, fontWeight: 700, color: '#64748B' }}>
-                        {campaigns[0].progressPercent}%
-                      </span>
+                  {/* Progress Box */}
+                  <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 9, padding: '8px 12px', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5, fontSize: 11.5 }}>
+                      <span style={{ color: '#64748B', fontWeight: 500 }}>Tiến độ hoàn thành</span>
+                      <span style={{ fontWeight: 700, color: '#4F46E5' }}>{campaigns[0].progressPercent}%</span>
                     </div>
+                    <Progress
+                      percent={campaigns[0].progressPercent}
+                      showInfo={false}
+                      strokeColor="#4F46E5"
+                      trailColor="#E2E8F0"
+                      size="small"
+                      style={{ margin: 0 }}
+                    />
+                  </div>
 
-                    <Dropdown
-                      menu={{
-                        items: [
-                          {
-                            key: 'view',
-                            icon: <EyeOutlined />,
-                            label: 'Xem chi tiết',
-                            onClick: () => handleOpenDetail(campaigns[0]),
-                          },
-                          {
-                            key: 'koc',
-                            icon: <CompassOutlined />,
-                            label: 'Tìm KOC AI',
-                            onClick: () => {
-                              sessionStorage.setItem('current_campaign_id', campaigns[0].id);
-                              navigate('/discovery');
-                            },
-                          },
-                        ],
+                  {/* Action Buttons: 🧭 Khám phá KOC AI (Nút chính) + Chi tiết */}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Button
+                      type="primary"
+                      icon={<CompassOutlined />}
+                      onClick={() => {
+                        sessionStorage.setItem('current_campaign_id', campaigns[0].id);
+                        localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', campaigns[0].id);
+                        navigate(`/discovery?campaignId=${campaigns[0].id}`, { state: { campaignId: campaigns[0].id } });
                       }}
-                      trigger={['click']}
-                      placement="bottomRight"
+                      style={{
+                        flex: 1,
+                        height: 36,
+                        borderRadius: 9,
+                        fontWeight: 700,
+                        fontSize: 12.5,
+                        background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+                        borderColor: '#4F46E5',
+                        boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 5,
+                      }}
                     >
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<EllipsisOutlined style={{ fontSize: 15, color: '#94A3B8' }} />}
-                      />
-                    </Dropdown>
+                      Khám phá KOC AI
+                    </Button>
+
+                    <Button
+                      icon={<EyeOutlined />}
+                      onClick={() => handleOpenDetail(campaigns[0])}
+                      style={{
+                        height: 36,
+                        borderRadius: 9,
+                        fontWeight: 600,
+                        fontSize: 12.5,
+                        color: '#475569',
+                        borderColor: '#CBD5E1',
+                        padding: '0 12px',
+                      }}
+                    >
+                      Chi tiết
+                    </Button>
                   </div>
                 </div>
               </div>
