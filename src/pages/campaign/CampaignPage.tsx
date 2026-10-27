@@ -730,104 +730,96 @@ export default function CampaignPage() {
             </div>
           </div>
 
-          {/* SINGLE-ROW Filter Toolbar: Tabs on Left, Search + Sort + Filter on Right */}
-          <div className="campaign-filter-toolbar">
-            {/* Tabs Group */}
-            <div className="campaign-tabs-group">
-              <div
-                className={`campaign-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('all');
-                  setCurrentPage(1);
-                }}
-              >
-                <span>Tất cả</span>
-                <span className="campaign-tab-badge">{countAll}</span>
-              </div>
-
-              <div
-                className={`campaign-tab-btn ${activeTab === 'running' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('running');
-                  setCurrentPage(1);
-                }}
-              >
-                <span>Đang triển khai</span>
-                <span className="campaign-tab-badge">{countRunning}</span>
-              </div>
-
-              <div
-                className={`campaign-tab-btn ${activeTab === 'draft' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('draft');
-                  setCurrentPage(1);
-                }}
-              >
-                <span>Bản nháp</span>
-                <span className="campaign-tab-badge">{countDraft}</span>
-              </div>
-
-              <div
-                className={`campaign-tab-btn ${activeTab === 'completed' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('completed');
-                  setCurrentPage(1);
-                }}
-              >
-                <span>Đã hoàn thành</span>
-                <span className="campaign-tab-badge">{countCompleted}</span>
-              </div>
-            </div>
-
-            {/* Tools Group (Search, Sort, Filter) */}
-            <div className="campaign-tools-group">
+          {/* Two-Row Filter & Search Toolbar: Search bar on top (full width), buttons below */}
+          <div className="campaign-filter-wrapper">
+            {/* Row 1: Full-width Search Bar (Stretches across equal to campaign card below) */}
+            <div className="campaign-search-bar-row">
               <Input
-                placeholder="Tìm kiếm chiến dịch..."
-                prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 12 }} />}
+                placeholder="Tìm kiếm chiến dịch theo tên, sản phẩm, ngành hàng..."
+                prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 14, marginRight: 6 }} />}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
-                style={{
-                  width: 210,
-                  height: 34,
-                  borderRadius: 8,
-                  borderColor: '#E2E8F0',
-                  fontSize: 12,
-                }}
+                className="campaign-full-search-input"
                 allowClear
               />
+            </div>
 
-              <Select
-                value={sortBy}
-                onChange={setSortBy}
-                size="small"
-                popupMatchSelectWidth={false}
-                dropdownStyle={{ minWidth: 140 }}
-                style={{ width: 125, height: 34 }}
-                options={[
-                  { value: 'latest', label: 'Mới nhất' },
-                  { value: 'budget', label: 'Ngân sách' },
-                  { value: 'creators', label: 'Số lượng KOC' },
-                ]}
-              />
+            {/* Row 2: Action & Filter Buttons below Search Bar */}
+            <div className="campaign-filter-actions-row">
+              {/* Left: Status Filter Tabs */}
+              <div className="campaign-tabs-group">
+                <div
+                  className={`campaign-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('all');
+                    setCurrentPage(1);
+                  }}
+                >
+                  <span>Tất cả</span>
+                  <span className="campaign-tab-badge">{countAll}</span>
+                </div>
 
-              <Button
-                size="small"
-                icon={<FilterOutlined style={{ fontSize: 11 }} />}
-                style={{
-                  height: 34,
-                  borderRadius: 8,
-                  borderColor: '#E2E8F0',
-                  color: '#475569',
-                  fontWeight: 600,
-                  fontSize: 12,
-                  padding: '0 12px',
-                }}
-              >
-                Bộ lọc
-              </Button>
+                <div
+                  className={`campaign-tab-btn ${activeTab === 'running' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('running');
+                    setCurrentPage(1);
+                  }}
+                >
+                  <span>Đang triển khai</span>
+                  <span className="campaign-tab-badge">{countRunning}</span>
+                </div>
+
+                <div
+                  className={`campaign-tab-btn ${activeTab === 'draft' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('draft');
+                    setCurrentPage(1);
+                  }}
+                >
+                  <span>Bản nháp</span>
+                  <span className="campaign-tab-badge">{countDraft}</span>
+                </div>
+
+                <div
+                  className={`campaign-tab-btn ${activeTab === 'completed' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('completed');
+                    setCurrentPage(1);
+                  }}
+                >
+                  <span>Đã hoàn thành</span>
+                  <span className="campaign-tab-badge">{countCompleted}</span>
+                </div>
+              </div>
+
+              {/* Right: Sort & Filter Tools */}
+              <div className="campaign-tools-group">
+                <Select
+                  value={sortBy}
+                  onChange={setSortBy}
+                  size="small"
+                  popupMatchSelectWidth={false}
+                  dropdownStyle={{ minWidth: 140 }}
+                  className="campaign-sort-select"
+                  options={[
+                    { value: 'latest', label: 'Mới nhất' },
+                    { value: 'budget', label: 'Ngân sách' },
+                    { value: 'creators', label: 'Số lượng KOC' },
+                  ]}
+                />
+
+                <Button
+                  size="small"
+                  icon={<FilterOutlined style={{ fontSize: 11 }} />}
+                  className="campaign-filter-btn"
+                >
+                  Bộ lọc
+                </Button>
+              </div>
             </div>
           </div>
 
