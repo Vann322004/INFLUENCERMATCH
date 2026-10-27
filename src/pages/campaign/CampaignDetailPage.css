@@ -881,16 +881,19 @@
 .cdetail-ops-list {
   display: flex;
   flex-direction: column;
-  gap: 11px;
+  gap: 0;
+  width: 100%;
 }
 
 .cdetail-ops-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 44px;
+  padding: 10px 0;
   font-size: 13px;
-  padding-bottom: 9px;
-  border-bottom: 1px dashed #E2E8F0;
+  border-bottom: 1px solid #F1F5F9;
+  gap: 16px;
 }
 
 .cdetail-ops-row:last-child {
@@ -901,15 +904,27 @@
 .cdetail-ops-label {
   color: #64748B;
   font-weight: 500;
+  font-size: 13px;
+  flex: 0 0 145px;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
 }
 
 .cdetail-ops-value {
   color: #0F172A;
   font-weight: 600;
+  font-size: 13px;
   text-align: right;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 1;
+  white-space: nowrap;
+}
+
+.cdetail-ops-value .ant-avatar {
+  flex-shrink: 0;
 }
 
 .cdetail-status-dot {

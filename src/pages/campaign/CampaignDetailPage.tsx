@@ -98,6 +98,14 @@ const getNicheClass = (niche?: string): string => {
   return '';
 };
 
+const VERIFIED_CREATOR_AVATARS = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=120&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
+];
+
 interface CampaignCreatorRow {
   id: string;
   name: string;
@@ -296,7 +304,9 @@ export default function CampaignDetailPage() {
                   id: r.id || `rel_${idx}`,
                   name: r.creatorName || `Nhà sáng tạo #${idx + 1}`,
                   username: r.creatorUsername ? `@${r.creatorUsername.replace('@', '')}` : `@creator_${idx + 1}`,
-                  avatar: r.creatorAvatar || `https://images.unsplash.com/photo-${1534528741775 + idx * 100}?w=100&auto=format&fit=crop&q=80`,
+                  avatar: (r.creatorAvatar && r.creatorAvatar.startsWith('http') && !r.creatorAvatar.includes('NaN'))
+                    ? r.creatorAvatar
+                    : VERIFIED_CREATOR_AVATARS[idx % VERIFIED_CREATOR_AVATARS.length],
                   platform: (r.platform?.toLowerCase() === 'instagram') ? 'instagram' : 'tiktok',
                   followers: r.followersCount ? `${(r.followersCount / 1000).toFixed(0)}K` : '50K+',
                   fee: r.agreedFee ? `${r.agreedFee.toLocaleString('vi-VN')} ₫` : (r.quotedFee ? `${r.quotedFee.toLocaleString('vi-VN')} ₫` : 'Thỏa thuận'),
@@ -317,7 +327,9 @@ export default function CampaignDetailPage() {
                     id: s.id || `sl_${idx}`,
                     name: s.creatorName || `Nhà sáng tạo #${idx + 1}`,
                     username: s.creatorUsername ? `@${s.creatorUsername.replace('@', '')}` : `@creator_${idx + 1}`,
-                    avatar: s.avatarUrl || `https://images.unsplash.com/photo-${1524504388940 + idx * 100}?w=100&auto=format&fit=crop&q=80`,
+                    avatar: (s.avatarUrl && s.avatarUrl.startsWith('http') && !s.avatarUrl.includes('NaN'))
+                      ? s.avatarUrl
+                      : VERIFIED_CREATOR_AVATARS[(idx + 2) % VERIFIED_CREATOR_AVATARS.length],
                     platform: (s.platform?.toLowerCase() === 'instagram') ? 'instagram' : 'tiktok',
                     followers: s.followers ? `${(s.followers / 1000).toFixed(0)}K` : '80K+',
                     fee: 'Đang thỏa thuận',
@@ -796,19 +808,26 @@ export default function CampaignDetailPage() {
             <div className="cdetail-metric-value">
               {participatingCreators.length} KOC
             </div>
-            <RightOutlined style={{ fontSize: 14, color: '#94A3B8' }} />
           </div>
           <div className="cdetail-metric-footer">
             {participatingCreators.length > 0 ? (
               <div className="cdetail-avatar-stack">
-                {participatingCreators.slice(0, 3).map((c, i) => (
-                  <img
-                    key={c.id || i}
-                    src={c.avatar}
-                    alt={c.name}
-                    title={c.name}
-                  />
-                ))}
+                {participatingCreators.slice(0, 3).map((c, i) => {
+                  const safeAvatar = (c.avatar && c.avatar.startsWith('http') && !c.avatar.includes('NaN'))
+                    ? c.avatar
+                    : VERIFIED_CREATOR_AVATARS[i % VERIFIED_CREATOR_AVATARS.length];
+                  return (
+                    <img
+                      key={c.id || i}
+                      src={safeAvatar}
+                      alt={c.name}
+                      title={c.name}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  );
+                })}
                 {participatingCreators.length > 3 && (
                   <div className="avatar-more">+{participatingCreators.length - 3}</div>
                 )}
@@ -895,6 +914,9 @@ export default function CampaignDetailPage() {
                       src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=100&auto=format&fit=crop&q=80"
                       alt="Sản phẩm"
                       className="cdetail-product-img"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = 'none';
+                      }}
                     />
                     <div className="cdetail-product-info">
                       <span className="cdetail-product-name">
@@ -968,7 +990,7 @@ export default function CampaignDetailPage() {
                       <span className="cdetail-ops-value">
                         <Avatar
                           src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&auto=format&fit=crop&q=80"
-                          size={22}
+                          size={20}
                         />
                         Brand Marketing Team
                       </span>
