@@ -345,6 +345,27 @@ export default function SubscriptionPage() {
     };
   }, []);
 
+  // Lắng nghe kết quả redirect từ cổng thanh toán VNPAY
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get('payment');
+    if (payment === 'success') {
+      message.success({
+        content: 'Chúc mừng! Thanh toán nâng cấp gói dịch vụ qua VNPAY thành công. Hạn mức đã được kích hoạt!',
+        duration: 6,
+        key: 'vnpay_payment_toast',
+      });
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (payment === 'failed') {
+      message.error({
+        content: 'Giao dịch thanh toán VNPAY không thành công hoặc đã bị hủy.',
+        duration: 5,
+        key: 'vnpay_payment_toast',
+      });
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   // Handle plan upgrade click
   const handleOpenUpgrade = (plan: SubscriptionPlan) => {
     setSelectedPlanForUpgrade(plan);
