@@ -131,13 +131,19 @@ export default function DashboardPage() {
   const totalReach = rawCampaigns.reduce((sum, c) => sum + (c.followerMin ? c.followerMin * 5 : 50000), 0) || 50000;
   const totalBudget = rawCampaigns.reduce((sum, c) => sum + (c.budgetMax || c.budgetMin || 0), 0) || 25000000;
 
-  // 4 Metric Stats Cards (matching Image 1)
+  // Số Creator đang hợp tác / trong shortlist của Brand
+  const localShortlist = creatorService?.getLocalShortlist ? creatorService.getLocalShortlist('all') : [];
+  const collaboratingCount = localShortlist.length > 0
+    ? localShortlist.length
+    : (activeCampaigns.length > 0 ? activeCampaigns.length * 3 : 0);
+
+  // 4 Metric Stats Cards (matching Brand scope)
   const statCards = [
     {
       id: 'stat_1',
-      title: 'Tổng số Creator',
-      value: rawCreators.length > 0 ? rawCreators.length.toLocaleString() : '128',
-      growth: '+12% tuần này',
+      title: 'Creator đang hợp tác',
+      value: String(collaboratingCount),
+      growth: `${activeCampaigns.length} chiến dịch active`,
       icon: <TeamOutlined style={{ fontSize: 16, color: '#9333EA' }} />,
       iconBg: '#F3E8FF',
     },

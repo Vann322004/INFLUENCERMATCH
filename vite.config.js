@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://221.121.3.226:8080',
+        target: 'https://api.influencermatch.site',
         changeOrigin: true,
         secure: false,
       },

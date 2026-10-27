@@ -75,6 +75,17 @@ export const subscriptionService = {
   },
 
   /**
+   * Subscribe brand to a free/trial plan (or administrative direct subscription)
+   */
+  async subscribeFreePlan(brandId: string, planId: string): Promise<SubscriptionResponse> {
+    const response = await apiClient.post<ApiResponse<SubscriptionResponse>>('/subscriptions', {
+      brandId,
+      planId,
+    });
+    return response.data.data;
+  },
+
+  /**
    * Initiate VNPay subscription checkout for a plan.
    * Returns VNPay payment URL for direct redirect.
    */
