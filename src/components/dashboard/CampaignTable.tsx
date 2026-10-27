@@ -182,7 +182,7 @@ export default function CampaignTable() {
     const parsedPlatforms = record.tags
       .slice(1)
       .map((t) => t.toUpperCase())
-      .filter((p) => ['TIKTOK', 'INSTAGRAM', 'YOUTUBE', 'FACEBOOK'].includes(p)) as CampaignPlatform[];
+      .filter((p) => ['TIKTOK', 'INSTAGRAM', 'FACEBOOK'].includes(p)) as CampaignPlatform[];
 
     setEditForm({
       name: record.title,
@@ -749,7 +749,6 @@ export default function CampaignTable() {
                 options={[
                   { value: 'TIKTOK', label: 'TikTok' },
                   { value: 'INSTAGRAM', label: 'Instagram' },
-                  { value: 'YOUTUBE', label: 'YouTube' },
                   { value: 'FACEBOOK', label: 'Facebook' },
                 ]}
               />

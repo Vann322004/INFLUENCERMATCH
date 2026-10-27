@@ -100,7 +100,7 @@ const DEFAULT_CAMPAIGNS: CampaignItemUI[] = [
     status: 'DRAFT',
     statusText: 'Bản nháp',
     statusType: 'draft',
-    platforms: ['TIKTOK', 'YOUTUBE'],
+    platforms: ['TIKTOK', 'FACEBOOK'],
     creatorsCount: 0,
     creatorAvatars: [
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80',
@@ -143,7 +143,7 @@ const DEFAULT_CAMPAIGNS: CampaignItemUI[] = [
     status: 'READY_FOR_DISCOVERY',
     statusText: 'Sẵn sàng AI',
     statusType: 'ready',
-    platforms: ['TIKTOK', 'YOUTUBE', 'INSTAGRAM'],
+    platforms: ['TIKTOK', 'FACEBOOK', 'INSTAGRAM'],
     creatorsCount: 6,
     creatorAvatars: [
       'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop&q=80',
@@ -165,7 +165,7 @@ const DEFAULT_CAMPAIGNS: CampaignItemUI[] = [
     status: 'ACTIVE',
     statusText: 'Đang triển khai',
     statusType: 'running',
-    platforms: ['INSTAGRAM', 'YOUTUBE'],
+    platforms: ['INSTAGRAM', 'FACEBOOK'],
     creatorsCount: 3,
     creatorAvatars: [
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80',
@@ -186,7 +186,7 @@ const DEFAULT_CAMPAIGNS: CampaignItemUI[] = [
     status: 'COMPLETED',
     statusText: 'Đã hoàn thành',
     statusType: 'completed',
-    platforms: ['YOUTUBE'],
+    platforms: ['TIKTOK', 'FACEBOOK'],
     extraPlatformsCount: 1,
     creatorsCount: 5,
     creatorAvatars: [
@@ -470,16 +470,6 @@ export default function CampaignPage() {
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-              </svg>
-            </span>
-          </Tooltip>
-        );
-      case 'YOUTUBE':
-        return (
-          <Tooltip title="YouTube" key="yt">
-            <span className="platform-mini-icon youtube">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
               </svg>
             </span>
           </Tooltip>
@@ -1542,7 +1532,6 @@ export default function CampaignPage() {
                 options={[
                   { value: 'TIKTOK', label: 'TikTok' },
                   { value: 'INSTAGRAM', label: 'Instagram' },
-                  { value: 'YOUTUBE', label: 'YouTube' },
                   { value: 'FACEBOOK', label: 'Facebook' },
                 ]}
               />
