@@ -176,6 +176,17 @@ export default function CreatorShortlistPage() {
 
   const urlCampaignId = searchParams.get('campaignId') || (location.state as any)?.campaignId || sessionStorage.getItem('current_campaign_id') || undefined;
 
+  // Clean URL: Tự động ẩn campaignId khỏi thanh địa chỉ URL bar sau khi đã lưu vào sessionStorage/state
+  useEffect(() => {
+    const rawCampParam = searchParams.get('campaignId');
+    if (rawCampParam) {
+      sessionStorage.setItem('current_campaign_id', rawCampParam);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('campaignId');
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   const [loading, setLoading] = useState(true);
   const [creators, setCreators] = useState<CreatorCompareItem[]>([]);
   const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
@@ -802,7 +813,7 @@ export default function CreatorShortlistPage() {
     },
     {
       key: 'remove',
-      label: 'Xóa khỏi Shortlist',
+      label: 'Xóa khỏi danh sách chọn',
       danger: true,
       icon: <DeleteOutlined />,
       onClick: () => handleRemoveFromShortlist(creator.id, creator.name),
@@ -811,28 +822,75 @@ export default function CreatorShortlistPage() {
 
   return (
     <div className="shortlist-page-container">
-      {/* 0. Unified Campaign Funnel Stepper */}
-      <CampaignWorkflowBar
-        currentStep="shortlist"
-        campaignId={selectedCampaign !== 'all' ? selectedCampaign : undefined}
-        campaignName={campaignOptions.find((c) => c.value === selectedCampaign)?.label}
-        shortlistCount={creators.length}
-        availableCampaigns={campaigns.map((c) => ({ id: c.id, name: c.name }))}
-        onSelectCampaign={handleSelectCampaign}
-      />
+      {/* 1. Breadcrumb chuẩn theo thiết kế */}
+      <div className="cdiscovery-breadcrumb">
+        <span className="cdiscovery-breadcrumb-link" onClick={() => navigate('/dashboard')}>
+          Trang chủ
+        </span>
+        <span className="cdiscovery-breadcrumb-sep">›</span>
+        <span className="cdiscovery-breadcrumb-link" onClick={() => navigate('/campaigns')}>
+          Chiến dịch
+        </span>
+        <span className="cdiscovery-breadcrumb-sep">›</span>
+        <span className="cdiscovery-breadcrumb-camp">
+          {campaignOptions.find((c) => c.value === selectedCampaign)?.label?.replace(/^🎯\s*/, '') || 'Tất cả chiến dịch'}
+        </span>
+        <span className="cdiscovery-breadcrumb-sep">›</span>
+        <span className="cdiscovery-breadcrumb-current">Danh sách chọn KOC</span>
+      </div>
 
-      {/* 1. Header & Title Bar with Campaign Selector */}
+      {/* 2. Top Stepper 5 bước đồng bộ giao diện với Khám phá KOC */}
+      <div className="cdiscovery-top-stepper">
+        <div
+          className="cdiscovery-step-item"
+          onClick={() => navigate(`/campaigns/create${selectedCampaign !== 'all' ? `?id=${selectedCampaign}` : ''}`)}
+        >
+          <div className="cdiscovery-step-badge done">
+            <CheckOutlined />
+          </div>
+          <span className="cdiscovery-step-title">Tạo brief</span>
+        </div>
+        <div className="cdiscovery-step-line done" />
+
+        <div
+          className="cdiscovery-step-item"
+          onClick={() => navigate(`/creators${selectedCampaign !== 'all' ? `?campaignId=${selectedCampaign}` : ''}`)}
+        >
+          <div className="cdiscovery-step-badge done">
+            <CheckOutlined />
+          </div>
+          <span className="cdiscovery-step-title">Khám phá KOC</span>
+        </div>
+        <div className="cdiscovery-step-line done" />
+
+        <div className="cdiscovery-step-item">
+          <div className="cdiscovery-step-badge active">3</div>
+          <span className="cdiscovery-step-title active">Danh sách chọn</span>
+        </div>
+        <div className="cdiscovery-step-line" />
+
+        <div
+          className="cdiscovery-step-item"
+          onClick={() => navigate(`/creators/recommendations${selectedCampaign !== 'all' ? `?campaignId=${selectedCampaign}` : ''}`)}
+        >
+          <div className="cdiscovery-step-badge upcoming">4</div>
+          <span className="cdiscovery-step-title">Gợi ý AI</span>
+        </div>
+        <div className="cdiscovery-step-line" />
+
+        <div className="cdiscovery-step-item" onClick={() => navigate('/crm')}>
+          <div className="cdiscovery-step-badge upcoming">5</div>
+          <span className="cdiscovery-step-title">Hợp tác</span>
+        </div>
+      </div>
+
+      {/* 3. Header Bar với Tiêu đề & Chọn Chiến dịch */}
       <div className="shortlist-header-row">
         <div>
-          <div className="shortlist-title-wrap">
-            <h1 className="shortlist-main-title">Danh sách chọn & So sánh Creator</h1>
-            <span className="shortlist-tagline-cursive">
-              Phù hợp hơn • Quản lý tập trung • So sánh trực quan
-            </span>
-          </div>
-          <div className="shortlist-description">
-            Quản lý shortlist theo từng chiến dịch, đánh dấu ưu tiên, ghi chú nội bộ và so sánh đa chiều từ 2-5 Creator.
-          </div>
+          <h1 className="shortlist-main-title">Danh sách chọn KOC</h1>
+          <p className="shortlist-description">
+            Quản lý KOC theo từng chiến dịch, đánh giá độ phù hợp, ghi chú nội bộ và so sánh trực quan.
+          </p>
         </div>
 
         <div className="shortlist-header-actions">
@@ -842,30 +900,20 @@ export default function CreatorShortlistPage() {
             <Select
               value={selectedCampaign}
               onChange={handleSelectCampaign}
-              style={{ width: 250 }}
+              style={{ width: 240 }}
               options={campaignOptions}
             />
           </div>
 
           <Button
-            className="btn-save-shortlist"
-            icon={<SaveOutlined />}
-            onClick={() => message.success('Đã lưu toàn bộ trạng thái shortlist thành công!')}
-          >
-            Lưu danh sách
-          </Button>
-
-          <Button
             type="primary"
-            icon={<AimOutlined />}
+            icon={<ThunderboltFilled />}
             onClick={() => {
               const targetId =
                 selectedCampaign && selectedCampaign !== 'all'
                   ? selectedCampaign
-                  : campaigns[0]?.id || searchParams.get('campaignId') || 'all';
-              navigate(`/campaign-management/${targetId}?tab=recommendation`, {
-                state: { campaignId: targetId, fromShortlist: true },
-              });
+                  : campaigns[0]?.id || 'all';
+              navigate(`/creators/recommendations${targetId !== 'all' ? `?campaignId=${targetId}` : ''}`);
             }}
             style={{
               background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
@@ -876,7 +924,7 @@ export default function CreatorShortlistPage() {
               height: 38,
             }}
           >
-            Sang Đề xuất AI ➔
+            Sang Gợi ý AI ➔
           </Button>
 
           <Button
@@ -884,12 +932,12 @@ export default function CreatorShortlistPage() {
             icon={<PlusOutlined />}
             onClick={() => setAddModalOpen(true)}
           >
-            Thêm Creator
+            + Thêm KOC
           </Button>
         </div>
       </div>
 
-      {/* 3. Main Navigation Mode Switcher: Board View vs Compare View */}
+      {/* 4. Chuyển đổi chế độ xem: Danh sách KOC vs So sánh KOC */}
       <div className="shortlist-mode-switcher-bar">
         <div className="mode-switcher-tabs">
           <button
@@ -905,13 +953,13 @@ export default function CreatorShortlistPage() {
             className={`mode-tab-btn ${viewMode === 'compare' ? 'active' : ''}`}
             onClick={() => {
               if (selectedCreators.length < 2) {
-                message.info('Mẹo: Hãy tick chọn ít nhất 2 Creator trên danh sách để so sánh trực quan nhất!');
+                message.info('Mẹo: Hãy tick chọn ít nhất 2 KOC trên danh sách để so sánh trực quan nhất!');
               }
               setViewMode('compare');
             }}
           >
             <BarChartOutlined />
-            <span>So sánh Creator</span>
+            <span>So sánh KOC</span>
             <span className="mode-count-badge highlight">
               {selectedCreators.length}/5 đã chọn
             </span>
@@ -952,7 +1000,7 @@ export default function CreatorShortlistPage() {
               <div className="search-input-wrap">
                 <Input
                   prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
-                  placeholder="Tìm kiếm creator theo tên, username, ghi chú hoặc lĩnh vực..."
+                  placeholder="Tìm kiếm KOC theo tên, username, ghi chú hoặc lĩnh vực..."
                   allowClear
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -1010,7 +1058,7 @@ export default function CreatorShortlistPage() {
                 <div className="shortlist-empty-box" style={{ padding: '60px 20px', gridColumn: '1 / -1' }}>
                   <Spin size="large" />
                   <div style={{ color: '#64748B', fontWeight: 600, marginTop: 16 }}>
-                    Đang tải danh sách Creator từ máy chủ...
+                    Đang tải danh sách KOC từ hệ thống...
                   </div>
                 </div>
               ) : filteredCreators.length === 0 ? (
@@ -1018,12 +1066,12 @@ export default function CreatorShortlistPage() {
                   <div style={{ fontSize: 44, marginBottom: 12 }}>🎯</div>
                   <div style={{ fontWeight: 800, fontSize: 18, color: '#0F172A', marginBottom: 6 }}>
                     {creators.length === 0
-                      ? 'Chưa có Creator nào trong Shortlist'
-                      : 'Không tìm thấy Creator nào phù hợp bộ lọc'}
+                      ? 'Chưa có KOC nào trong Danh sách chọn'
+                      : 'Không tìm thấy KOC nào phù hợp bộ lọc'}
                   </div>
                   <div style={{ color: '#64748B', fontSize: 14, maxWidth: 520, margin: '0 auto 20px', lineHeight: 1.6 }}>
                     {creators.length === 0
-                      ? `Chiến dịch "${campaignOptions.find((o) => o.value === selectedCampaign)?.label || 'được chọn'}" hiện chưa có Creator nào trong danh sách. Hãy duyệt qua kho Creator tại trang Khám phá và bấm "+ Shortlist" để đưa họ vào đây so sánh.`
+                      ? `Chiến dịch "${campaignOptions.find((o) => o.value === selectedCampaign)?.label?.replace(/^🎯\s*/, '') || 'được chọn'}" hiện chưa có KOC nào trong danh sách. Hãy duyệt qua kho KOC tại trang Khám phá và bấm "+ Lưu vào danh sách" để đưa họ vào đây so sánh.`
                       : 'Thử tìm kiếm với từ khóa khác hoặc bấm đặt lại bộ lọc để xem toàn bộ danh sách.'}
                   </div>
                   <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
@@ -1036,34 +1084,34 @@ export default function CreatorShortlistPage() {
                             borderRadius: 8,
                             height: 40,
                             fontWeight: 700,
-                            background: 'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)',
+                            background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
                             borderColor: 'transparent',
-                            boxShadow: '0 4px 12px rgba(168, 85, 247, 0.3)',
+                            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)',
                           }}
                           onClick={() => {
                             const targetId =
                               selectedCampaign && selectedCampaign !== 'all'
                                 ? selectedCampaign
-                                : campaigns[0]?.id || searchParams.get('campaignId') || 'all';
-                            navigate(`/campaign-management/${targetId}?tab=recommendation`);
+                                : campaigns[0]?.id || 'all';
+                            navigate(`/creators/recommendations${targetId !== 'all' ? `?campaignId=${targetId}` : ''}`);
                           }}
                         >
-                          ⚡ Đề xuất AI Four-Memory
+                          Sang Gợi ý AI ➔
                         </Button>
                         <Button
                           type="default"
                           icon={<SearchOutlined />}
                           style={{ borderRadius: 8, height: 40, fontWeight: 700, color: '#4F46E5', borderColor: '#C7D2FE' }}
-                          onClick={() => navigate('/creators')}
+                          onClick={() => navigate(`/creators${selectedCampaign !== 'all' ? `?campaignId=${selectedCampaign}` : ''}`)}
                         >
-                          Khám phá Creator trên sàn
+                          Khám phá KOC ngay ➔
                         </Button>
                         <Button
                           icon={<PlusOutlined />}
                           style={{ borderRadius: 8, height: 40, fontWeight: 600 }}
                           onClick={() => setAddModalOpen(true)}
                         >
-                          Thêm nhanh Creator
+                          + Thêm KOC
                         </Button>
                       </>
                     ) : (
@@ -1166,7 +1214,7 @@ export default function CreatorShortlistPage() {
                       <div className="board-stats-grid">
                         <div className="board-stat-item">
                           <span className="stat-val">{c.followers}</span>
-                          <span className="stat-lbl">Followers</span>
+                          <span className="stat-lbl">Người theo dõi</span>
                         </div>
                         <div className="board-stat-item">
                           <span className="stat-val" style={{ color: '#059669' }}>
@@ -1176,7 +1224,7 @@ export default function CreatorShortlistPage() {
                         </div>
                         <div className="board-stat-item">
                           <span className="stat-val">{c.price}</span>
-                          <span className="stat-lbl">Giá dự kiến</span>
+                          <span className="stat-lbl">Báo giá tham khảo</span>
                         </div>
                       </div>
 
@@ -1272,12 +1320,12 @@ export default function CreatorShortlistPage() {
                   <tr>
                     <th style={{ width: 40 }}></th>
                     <th style={{ width: 40 }}>⭐</th>
-                    <th>Creator</th>
+                    <th>KOC</th>
                     <th>Chiến dịch</th>
                     <th>Ưu tiên</th>
-                    <th>Followers</th>
+                    <th>Người theo dõi</th>
                     <th>Tương tác</th>
-                    <th>Giá dự kiến</th>
+                    <th>Báo giá tham khảo</th>
                     <th>Ghi chú cá nhân</th>
                     <th style={{ textAlign: 'right' }}>Hành động</th>
                   </tr>
@@ -1288,17 +1336,17 @@ export default function CreatorShortlistPage() {
                       <td colSpan={10} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748B' }}>
                         <div style={{ fontSize: 32, marginBottom: 8 }}>🎯</div>
                         <div style={{ fontWeight: 700, fontSize: 15, color: '#0F172A', marginBottom: 4 }}>
-                          Chưa có Creator nào trong danh sách
+                          Chưa có KOC nào trong Danh sách chọn
                         </div>
                         <div style={{ fontSize: 13, marginBottom: 16 }}>
-                          Hãy khám phá và thêm Creator vào shortlist của chiến dịch.
+                          Hãy khám phá và lưu KOC vào danh sách chọn của chiến dịch.
                         </div>
                         <Button
                           type="primary"
                           style={{ background: '#4F46E5', borderRadius: 8 }}
-                          onClick={() => navigate('/creators')}
+                          onClick={() => navigate(`/creators${selectedCampaign !== 'all' ? `?campaignId=${selectedCampaign}` : ''}`)}
                         >
-                          Khám phá Creator ngay
+                          Khám phá KOC ngay ➔
                         </Button>
                       </td>
                     </tr>
@@ -1880,7 +1928,7 @@ export default function CreatorShortlistPage() {
           MODAL: THÊM CREATOR VÀO SHORTLIST
           ========================================================================= */}
       <Modal
-        title="Thêm Creator vào Danh sách chọn (Shortlist)"
+        title="Thêm KOC vào Danh sách chọn"
         open={addModalOpen}
         onCancel={() => setAddModalOpen(false)}
         footer={null}
@@ -1906,7 +1954,7 @@ export default function CreatorShortlistPage() {
               type="warning"
               showIcon
               message="Chưa có chiến dịch nào"
-              description="Bạn cần tạo chiến dịch trước khi có thể lưu trữ Creator vào danh sách chọn."
+              description="Bạn cần tạo chiến dịch trước khi có thể lưu trữ KOC vào danh sách chọn."
               action={
                 <Button
                   size="small"
@@ -1924,7 +1972,7 @@ export default function CreatorShortlistPage() {
           ) : (
             <>
               <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
-                Chọn Creator từ kho ứng viên:
+                Chọn KOC từ kho ứng viên:
               </label>
               <Input
                 prefix={<SearchOutlined />}
@@ -2002,13 +2050,19 @@ export default function CreatorShortlistPage() {
                             try {
                               await creatorService.addToShortlist(addCampaignId, {
                                 creatorId: candId,
+                                creatorName: cand.displayName || cand.userName,
+                                avatarUrl: cand.avatarUrl,
+                                followers: cand.followers,
+                                engagementRate: cand.engagementRate,
+                                platform: cand.platform,
+                                niche: cand.niche,
                                 priority: 'HIGH',
                                 note: 'Đã thêm từ kho ứng viên',
                               });
-                              message.success(`Đã thêm ${cand.displayName || cand.userName} vào Shortlist!`);
+                              message.success(`Đã thêm ${cand.displayName || cand.userName} vào Danh sách chọn!`);
                               await loadShortlist(selectedCampaign, campaigns, creatorsMap);
                             } catch (err: any) {
-                              message.error(err?.response?.data?.message || 'Không thể thêm vào shortlist');
+                              message.error(err?.response?.data?.message || 'Không thể thêm vào danh sách');
                             } finally {
                               setAddingCandidateId(null);
                             }

@@ -88,15 +88,19 @@ export default function AddToShortlistModal({
         note: values.note || undefined,
       });
 
+      sessionStorage.setItem('current_campaign_id', values.campaignId);
       message.success({
         content: (
           <span>
-            Đã thêm <b>{creator.name}</b> vào Shortlist!{' '}
+            Đã thêm <b>{creator.name}</b> vào Danh sách chọn!{' '}
             <a
               style={{ fontWeight: 700, marginLeft: 8, color: '#4F46E5', textDecoration: 'underline' }}
-              onClick={() => navigate(`/creators/shortlist?campaignId=${values.campaignId}`)}
+              onClick={() => {
+                sessionStorage.setItem('current_campaign_id', values.campaignId);
+                navigate('/creators/shortlist', { state: { campaignId: values.campaignId } });
+              }}
             >
-              Xem Shortlist ➔
+              Xem danh sách chọn ➔
             </a>
           </span>
         ),

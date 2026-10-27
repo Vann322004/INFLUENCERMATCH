@@ -1274,14 +1274,34 @@ export default function CreatorDiscoveryPage() {
             creatorId: id,
             creatorName: c?.name || 'KOC',
             avatarUrl: c?.avatar,
+            followers: c?.followersCount,
+            engagementRate: c?.engagementValue,
+            platform: (c?.platforms?.[0] as any) || 'tiktok',
             niche: c?.categories?.[0],
             priority: 'HIGH',
           })
           .catch(() => null);
       });
       await Promise.all(promises);
+      sessionStorage.setItem('current_campaign_id', targetCampId);
       hide();
-      message.success(`Đã lưu thành công ${selectedCreatorIds.size} KOC vào danh sách!`);
+      message.success({
+        content: (
+          <span>
+            Đã lưu thành công <b>{selectedCreatorIds.size} KOC</b> vào danh sách!{' '}
+            <a
+              style={{ fontWeight: 700, marginLeft: 8, color: '#4F46E5', textDecoration: 'underline' }}
+              onClick={() => {
+                sessionStorage.setItem('current_campaign_id', targetCampId);
+                navigate('/creators/shortlist', { state: { campaignId: targetCampId } });
+              }}
+            >
+              Xem danh sách chọn ➔
+            </a>
+          </span>
+        ),
+        duration: 4,
+      });
       setCreators((prev) =>
         prev.map((c) => (selectedCreatorIds.has(c.id) ? { ...c, saved: true } : c))
       );
@@ -1781,7 +1801,7 @@ export default function CreatorDiscoveryPage() {
               <div className="cdiscovery-results-toolbar">
                 <div className="cdiscovery-results-left">
                   <span className="cdiscovery-results-heading">
-                    {filteredCreators.length} KOC phù hợp
+                    {filteredCreators.length > 0 ? 'KOC phù hợp' : 'Không có KOC phù hợp'}
                   </span>
                   <label className="cdiscovery-select-all-label">
                     <input
