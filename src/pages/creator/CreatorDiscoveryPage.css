@@ -1,373 +1,390 @@
 /* ============================================================
    INFLUENCERMATCH - CREATOR DISCOVERY PAGE STYLESHEET
-   Modern Luxe Style, Spacious, Responsive & Harmonious Layout
+   Layout 2 Cột Chuẩn Mẫu (Main Content + Sticky Sidebar Tóm Tắt)
+   Modern Luxe, Indigo / Slate Colorway, Pixel-Perfect Matching
    ============================================================ */
 
 /* ── Container chính ── */
 .cdiscovery-container {
-  max-width: 1440px;
+  max-width: 1480px;
   width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  box-sizing: border-box;
-  padding-bottom: 96px;
-}
-
-/* ── 1. Page Header Hero ── */
-.cdiscovery-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  flex-wrap: wrap;
   gap: 16px;
-  padding: 4px 2px 0 2px;
+  box-sizing: border-box;
+  padding: 8px 16px 60px 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-.cdiscovery-title-group {
+/* ── 1. Breadcrumb ── */
+.cdiscovery-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748B;
+}
+
+.cdiscovery-breadcrumb-link {
+  color: #64748B;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.cdiscovery-breadcrumb-link:hover {
+  color: #4F46E5;
+}
+
+.cdiscovery-breadcrumb-sep {
+  color: #CBD5E1;
+  font-size: 12px;
+}
+
+.cdiscovery-breadcrumb-camp {
+  color: #334155;
+  font-weight: 500;
+}
+
+.cdiscovery-breadcrumb-current {
+  color: #0F172A;
+  font-weight: 700;
+}
+
+/* ── Page Title & Subtitle ── */
+.cdiscovery-header-section {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.cdiscovery-title {
-  font-size: 26px !important;
-  font-weight: 800 !important;
-  color: #0F172A !important;
-  margin: 0 !important;
-  letter-spacing: -0.5px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.cdiscovery-header-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.4px;
 }
 
-.cdiscovery-subtitle {
+.cdiscovery-header-sub {
   font-size: 13.5px;
   color: #64748B;
-  font-weight: 500;
+  margin: 0;
 }
 
-/* ── Mode Navigation Tabs ── */
-.cdiscovery-mode-tabs {
-  display: flex;
-  gap: 12px;
+/* ── 2. Top Stepper 5 bước (Top Stepper Bar) ── */
+.cdiscovery-top-stepper {
   background: #FFFFFF;
-  padding: 6px;
-  border-radius: 14px;
   border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-.cdiscovery-tab-btn {
-  border: none;
-  background: transparent;
-  padding: 8px 18px;
+.cdiscovery-step-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.15s ease;
+}
+
+.cdiscovery-step-item:hover {
+  opacity: 0.85;
+}
+
+.cdiscovery-step-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.cdiscovery-step-badge.done {
+  background: #6366F1;
+  color: #FFFFFF;
+}
+
+.cdiscovery-step-badge.active {
+  background: #4F46E5;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+}
+
+.cdiscovery-step-badge.upcoming {
+  background: #F1F5F9;
+  color: #94A3B8;
+  border: 1px solid #E2E8F0;
+}
+
+.cdiscovery-step-title {
   font-size: 13.5px;
   font-weight: 600;
   color: #64748B;
-  border-radius: 10px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.cdiscovery-tab-btn:hover {
-  color: #4F46E5;
-  background: #F8FAFC;
-}
-
-.cdiscovery-tab-btn.active {
-  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
-  color: #FFFFFF;
-  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.25);
-}
-
-/* ── 2. Campaign Matching Hero Banner ── */
-.cdiscovery-match-card {
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 18px !important;
-  box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.04) !important;
-  transition: all 0.25s ease !important;
-  overflow: hidden;
-}
-
-.cdiscovery-match-card.is-matched {
-  border-color: #E0E7FF !important;
-  background: #FFFFFF !important;
-  box-shadow: 0 4px 16px -2px rgba(79, 70, 229, 0.08) !important;
-}
-
-.cdiscovery-match-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.cdiscovery-match-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex: 1 1 340px;
-  min-width: 260px;
-}
-
-.cdiscovery-match-iconbox {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-  background: #EEF2FF;
-  color: #4F46E5;
-  transition: all 0.3s ease;
-}
-
-.cdiscovery-match-card.is-matched .cdiscovery-match-iconbox {
-  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
-  color: #FFFFFF;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
-}
-
-.cdiscovery-match-info {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.cdiscovery-match-title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.cdiscovery-match-title {
-  font-weight: 800;
-  font-size: 15px;
-  color: #0F172A;
-}
-
-.cdiscovery-match-desc {
-  font-size: 13px;
-  color: #64748B;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.cdiscovery-match-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1 1 420px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-}
-
-.cdiscovery-campaign-select {
-  min-width: 240px;
-  max-width: 380px;
-  flex: 1;
-}
-
-.cdiscovery-campaign-select .ant-select-selector {
-  height: 42px !important;
-  border-radius: 12px !important;
-  border-color: #E2E8F0 !important;
-  display: flex;
-  align-items: center;
-  font-weight: 600 !important;
-}
-
-.cdiscovery-btn-match {
-  height: 42px !important;
-  border-radius: 12px !important;
-  padding: 0 20px !important;
-  font-weight: 700 !important;
-  font-size: 13.5px !important;
-  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%) !important;
-  border: none !important;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25) !important;
-  color: #FFFFFF !important;
-  flex-shrink: 0;
-  display: inline-flex !important;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease !important;
-}
-
-.cdiscovery-btn-match:hover {
-  background: linear-gradient(135deg, #4338CA 0%, #4F46E5 100%) !important;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35) !important;
-}
-
-.cdiscovery-btn-shortlist-link {
-  height: 42px !important;
-  border-radius: 12px !important;
-  padding: 0 16px !important;
-  font-weight: 700 !important;
-  font-size: 13px !important;
-  background: #EEF2FF !important;
-  border: 1px solid #C7D2FE !important;
-  color: #4F46E5 !important;
-  flex-shrink: 0;
-  display: inline-flex !important;
-  align-items: center;
-  gap: 6px;
-}
-
-.cdiscovery-btn-shortlist-link:hover {
-  background: #E0E7FF !important;
-  border-color: #A5B4FC !important;
-}
-
-.cdiscovery-btn-clear-match {
-  height: 42px !important;
-  border-radius: 12px !important;
-  padding: 0 14px !important;
-  color: #EF4444 !important;
-  background: #FEF2F2 !important;
-  border: 1px solid #FEE2E2 !important;
-  font-weight: 600 !important;
-  flex-shrink: 0;
-}
-
-/* ── 3. Metrics Overview Cards ── */
-.cdiscovery-kpi-card {
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  height: 100%;
-}
-
-.cdiscovery-kpi-card:hover {
-  border-color: #CBD5E1 !important;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.06) !important;
-}
-
-.cdiscovery-kpi-body {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.cdiscovery-kpi-iconbox {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.cdiscovery-kpi-value {
-  font-size: 22px;
-  font-weight: 800;
+.cdiscovery-step-title.active {
   color: #0F172A;
-  line-height: 1.15;
-  letter-spacing: -0.3px;
+  font-weight: 700;
 }
 
-.cdiscovery-kpi-label {
-  font-size: 12.5px;
-  color: #64748B;
-  font-weight: 500;
-  margin-top: 3px;
+.cdiscovery-step-line {
+  flex: 1;
+  height: 2px;
+  background: #E2E8F0;
+  margin: 0 16px;
+  min-width: 24px;
+  border-radius: 1px;
 }
 
-/* ── 4. Control Hub (Search & Filters) ── */
-.cdiscovery-filter-card {
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 18px !important;
-  box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.03) !important;
+.cdiscovery-step-line.done {
+  background: #818CF8;
 }
 
-.cdiscovery-search-row {
+/* ── 3. Layout 2 Cột (Main + Sidebar) ── */
+.cdiscovery-layout-wrap {
   display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+  width: 100%;
 }
 
-.cdiscovery-search-box {
-  flex: 1 1 360px;
-  min-width: 280px;
+.cdiscovery-main-col {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
 }
 
-.cdiscovery-search-mode-bar {
+.cdiscovery-sidebar-col {
+  width: 330px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 16px;
+}
+
+/* ── 4. Card Chiến Dịch Đang Áp Dụng ── */
+.cdiscovery-active-campaign-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 14px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.cdiscovery-camp-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+.cdiscovery-camp-thumb {
+  width: 58px;
+  height: 58px;
+  border-radius: 12px;
+  background: #F5F3FF;
+  border: 1px solid #EDE9FE;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.cdiscovery-camp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cdiscovery-camp-name-row {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cdiscovery-camp-name {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cdiscovery-camp-status-badge {
+  background: #EEF2FF;
+  color: #4F46E5;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.cdiscovery-camp-subline {
+  font-size: 12.5px;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cdiscovery-camp-catline {
+  font-size: 12px;
+  color: #475569;
+}
+
+.cdiscovery-camp-catline strong {
+  color: #0F172A;
+}
+
+.cdiscovery-btn-view-camp {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #4F46E5 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  height: 38px !important;
+  padding: 0 16px !important;
+  border-radius: 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  transition: all 0.2s ease !important;
+}
+
+.cdiscovery-btn-view-camp:hover {
+  background: #EEF2FF !important;
+  border-color: #C7D2FE !important;
+}
+
+/* ── 5. Panel Tìm Kiếm & Bộ Lọc ── */
+.cdiscovery-search-filter-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.cdiscovery-filter-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cdiscovery-filter-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cdiscovery-filter-toggle-icon {
+  font-size: 14px;
+  color: #64748B;
+}
+
+.cdiscovery-filter-row-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .cdiscovery-search-input-group {
+  flex: 1 1 300px;
   display: flex;
-  gap: 10px;
   align-items: center;
+  gap: 8px;
 }
 
 .cdiscovery-search-input {
-  height: 42px !important;
-  border-radius: 12px !important;
+  height: 40px !important;
+  border-radius: 10px !important;
   border-color: #E2E8F0 !important;
-  font-size: 13.5px !important;
-  flex: 1;
-  transition: all 0.2s ease;
+  font-size: 13px !important;
 }
 
 .cdiscovery-search-input:focus,
 .cdiscovery-search-input-focused {
   border-color: #6366F1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15) !important;
 }
 
 .cdiscovery-btn-search {
-  height: 42px !important;
-  border-radius: 12px !important;
-  padding: 0 20px !important;
+  height: 40px !important;
+  border-radius: 10px !important;
+  background: #4F46E5 !important;
+  border: none !important;
   font-weight: 700 !important;
   font-size: 13px !important;
-  border: none !important;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  padding: 0 18px !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25) !important;
 }
 
-.cdiscovery-sort-view-group {
+.cdiscovery-btn-search:hover {
+  background: #4338CA !important;
+}
+
+.cdiscovery-sort-group {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.cdiscovery-view-switcher {
+.cdiscovery-sort-label {
+  font-size: 13px;
+  color: #64748B;
+  white-space: nowrap;
+}
+
+.cdiscovery-sort-select {
+  width: 165px;
+}
+
+.cdiscovery-sort-select .ant-select-selector {
+  height: 40px !important;
+  border-radius: 10px !important;
+  border-color: #E2E8F0 !important;
+  display: flex !important;
+  align-items: center !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.cdiscovery-view-switch-btns {
   display: flex;
   background: #F1F5F9;
   padding: 3px;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid #E2E8F0;
 }
 
@@ -375,367 +392,593 @@
   border: none;
   background: transparent;
   color: #64748B;
-  font-weight: 600;
-  font-size: 12.5px;
-  padding: 6px 14px;
-  border-radius: 8px;
+  font-size: 15px;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
+  justify-content: center;
+  transition: all 0.15s ease;
 }
 
 .cdiscovery-view-btn.active {
   background: #FFFFFF;
-  color: #0F172A;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  color: #4F46E5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.cdiscovery-dropdown-filters-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  padding-top: 14px;
-  border-top: 1px solid #F1F5F9;
-}
-
-.cdiscovery-filter-select .ant-select-selector {
-  height: 40px !important;
-  border-radius: 10px !important;
-  border-color: #E2E8F0 !important;
-  display: flex;
-  align-items: center;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-}
-
-.cdiscovery-active-chips-row {
+/* 8 Filter Dropdown Pills */
+.cdiscovery-filter-pills-row {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  padding-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid #F1F5F9;
 }
 
-/* ── 5. Creator Cards (Grid View) ── */
-.cdiscovery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-  gap: 18px;
-}
-
-.cdiscovery-creator-card {
+.cdiscovery-pill-select .ant-select-selector {
+  border-radius: 9999px !important;
+  height: 34px !important;
+  border-color: #E2E8F0 !important;
   background: #FFFFFF !important;
-  border: 1.5px solid #F1F5F9 !important;
-  border-radius: 18px !important;
-  box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02) !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  padding: 0 12px !important;
   display: flex !important;
-  flex-direction: column !important;
-  justify-content: space-between !important;
-  height: 100% !important;
-  box-sizing: border-box;
+  align-items: center !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  color: #334155 !important;
+  transition: all 0.2s ease !important;
 }
 
-.cdiscovery-creator-card:hover {
+.cdiscovery-pill-select:hover .ant-select-selector {
+  border-color: #CBD5E1 !important;
+  background: #F8FAFC !important;
+}
+
+.cdiscovery-pill-select.has-value .ant-select-selector {
   border-color: #C7D2FE !important;
-  transform: translateY(-4px);
-  box-shadow: 0 16px 32px -4px rgba(79, 70, 229, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.03) !important;
+  background: #EEF2FF !important;
+  color: #4F46E5 !important;
+  font-weight: 600 !important;
 }
 
-.cdiscovery-card-header {
+/* ── 6. Results Toolbar ── */
+.cdiscovery-results-toolbar {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 12px;
+  padding: 4px 2px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.cdiscovery-card-profile {
+.cdiscovery-results-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cdiscovery-results-heading {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cdiscovery-select-all-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cdiscovery-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #4F46E5;
+  cursor: pointer;
+}
+
+.cdiscovery-results-right {
   display: flex;
   align-items: center;
   gap: 12px;
-  cursor: pointer;
-  min-width: 0;
-  flex: 1;
 }
 
-.cdiscovery-card-name-col {
-  min-width: 0;
-  flex: 1;
-}
-
-.cdiscovery-card-name {
-  font-weight: 800;
-  font-size: 15.5px;
-  color: #0F172A;
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cdiscovery-card-username {
-  font-size: 12px;
-  color: #94A3B8;
+.cdiscovery-selected-badge {
+  font-size: 13px;
+  color: #64748B;
   font-weight: 500;
-  line-height: 1.25;
-  margin-top: 1px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.cdiscovery-card-platforms {
+.cdiscovery-btn-bulk-shortlist {
+  background: #4F46E5 !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  height: 38px !important;
+  padding: 0 18px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.cdiscovery-btn-bulk-shortlist:disabled {
+  background: #E2E8F0 !important;
+  color: #94A3B8 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+/* ── 7. Lưới Creator (Grid 3 Cột) ── */
+.cdiscovery-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.cdiscovery-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 16px 18px;
   display: flex;
-  gap: 5px;
-  margin-top: 4px;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
 }
 
-/* Match Rate Pill Badge */
-.cdiscovery-match-badge {
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 11.5px;
-  display: inline-flex;
+.cdiscovery-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.06);
+  transform: translateY(-2px);
+}
+
+.cdiscovery-card-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cdiscovery-card-left-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.cdiscovery-card-avatar-wrap {
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cdiscovery-card-author-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.cdiscovery-card-name-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
   align-items: center;
   gap: 4px;
   white-space: nowrap;
-  flex-shrink: 0;
-  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.cdiscovery-match-badge.high {
-  background: #ECFDF5;
-  color: #059669;
-  border: 1px solid #A7F3D0;
-  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.08);
+.cdiscovery-card-username-text {
+  font-size: 12px;
+  color: #64748B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.cdiscovery-match-badge.medium {
-  background: #FFFBEB;
-  color: #D97706;
-  border: 1px solid #FDE68A;
-}
-
-.cdiscovery-match-badge.pending {
-  background: #F8FAFC;
-  color: #94A3B8;
-  border: 1px solid #E2E8F0;
-}
-
-/* AI Insight Box */
-.cdiscovery-ai-insight-box {
-  background: linear-gradient(135deg, #F8FAFC 0%, #F5F3FF 100%);
-  border: 1px solid #E0E7FF;
-  border-radius: 12px;
-  padding: 8px 12px;
-  margin-bottom: 12px;
-  box-shadow: 0 1px 2px rgba(99, 102, 241, 0.03);
-}
-
-.cdiscovery-ai-insight-header {
+.cdiscovery-card-right-group {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cdiscovery-match-tag-pill {
+  background: #DCFCE7;
+  color: #16A34A;
+  font-size: 11px;
   font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.cdiscovery-card-dots-btn {
+  border: none;
+  background: transparent;
+  color: #94A3B8;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.cdiscovery-card-dots-btn:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+/* Niche Tags */
+.cdiscovery-card-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cdiscovery-niche-pill {
+  background: #EEF2FF;
   color: #4F46E5;
-  margin-bottom: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
 }
 
-.cdiscovery-ai-insight-body {
-  font-size: 11.5px;
-  color: #475569;
-  line-height: 1.45;
-  font-weight: 500;
+/* 3 Metrics Box */
+.cdiscovery-card-metrics-box {
+  display: flex;
+  background: #F8FAFC;
+  border: 1px solid #F1F5F9;
+  border-radius: 10px;
+  padding: 8px 0;
+  text-align: center;
 }
 
-/* Bio */
-.cdiscovery-card-bio {
+.cdiscovery-metric-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+}
+
+.cdiscovery-metric-col:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 15%;
+  height: 70%;
+  width: 1px;
+  background: #E2E8F0;
+}
+
+.cdiscovery-metric-number {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.1;
+}
+
+.cdiscovery-metric-caption {
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+/* Bio Text */
+.cdiscovery-card-bio-text {
   font-size: 12px;
   color: #475569;
-  line-height: 1.5;
-  min-height: 36px;
-  margin-bottom: 12px;
+  line-height: 1.45;
+  min-height: 34px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* Metrics Row inside Card */
-.cdiscovery-card-metrics-box {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  padding: 10px 4px;
-  margin-bottom: 14px;
-  text-align: center;
-  align-items: center;
-}
-
-.cdiscovery-card-metric-val {
-  font-weight: 800;
-  font-size: 14.5px;
-  color: #0F172A;
-  letter-spacing: -0.01em;
-}
-
-.cdiscovery-card-metric-lbl {
-  font-size: 10.5px;
-  color: #64748B;
-  font-weight: 500;
-  margin-top: 2px;
-}
-
-.cdiscovery-card-metric-divider {
-  border-left: 1px solid #E2E8F0;
-  border-right: 1px solid #E2E8F0;
-}
-
 /* Action Buttons inside Card */
-.cdiscovery-card-actions {
+.cdiscovery-card-actions-row {
   display: flex;
-  gap: 8px;
   align-items: center;
-  width: 100%;
+  gap: 8px;
+  padding-top: 2px;
 }
 
-.cdiscovery-card-btn-primary {
-  flex: 1 !important;
-  height: 38px !important;
-  border-radius: 10px !important;
-  font-weight: 700 !important;
-  font-size: 13px !important;
-  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%) !important;
+.cdiscovery-btn-profile-card {
+  flex: 1;
+  height: 36px !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #334155 !important;
+  font-weight: 600 !important;
+  font-size: 12.5px !important;
+  border-radius: 8px !important;
+  transition: all 0.15s ease !important;
+}
+
+.cdiscovery-btn-profile-card:hover {
+  border-color: #CBD5E1 !important;
+  background: #F8FAFC !important;
+}
+
+.cdiscovery-btn-shortlist-card {
+  flex: 1.25;
+  height: 36px !important;
+  background: #4F46E5 !important;
   border: none !important;
   color: #FFFFFF !important;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2) !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  display: inline-flex !important;
+  font-weight: 700 !important;
+  font-size: 12.5px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25) !important;
+  transition: all 0.15s ease !important;
+}
+
+.cdiscovery-btn-shortlist-card:hover {
+  background: #4338CA !important;
+}
+
+.cdiscovery-btn-shortlist-card.saved {
+  background: #ECFDF5 !important;
+  color: #059669 !important;
+  border: 1px solid #A7F3D0 !important;
+  box-shadow: none !important;
+}
+
+/* ── 8. Sidebar Tóm Tắt Chiến Dịch ── */
+.cdiscovery-summary-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.cdiscovery-summary-head-bar {
+  display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cdiscovery-summary-main-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
   gap: 6px;
 }
 
-.cdiscovery-card-btn-primary:hover {
-  background: linear-gradient(135deg, #4338CA 0%, #4F46E5 100%) !important;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
-}
-
-.cdiscovery-card-btn-secondary {
-  height: 38px !important;
-  border-radius: 10px !important;
-  font-weight: 600 !important;
-  font-size: 12.5px !important;
-  border: 1px solid #E2E8F0 !important;
-  color: #334155 !important;
-  background: #FFFFFF !important;
-  transition: all 0.2s ease !important;
-  display: inline-flex !important;
+.cdiscovery-summary-camp-banner {
+  display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 0 12px !important;
+  gap: 10px;
+  padding: 10px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  border: 1px solid #F1F5F9;
 }
 
-.cdiscovery-card-btn-secondary:hover {
-  border-color: #C7D2FE !important;
-  color: #4F46E5 !important;
-  background: #EEF2FF !important;
+.cdiscovery-summary-camp-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #EEF2FF;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
-/* Icon action buttons (Xem nhanh & Thêm tùy chọn) */
-.cdiscovery-card-btn-icon {
-  width: 38px !important;
-  height: 38px !important;
-  min-width: 38px !important;
-  padding: 0 !important;
-  border-radius: 10px !important;
-  border: 1px solid #E2E8F0 !important;
-  background: #FFFFFF !important;
-  color: #64748B !important;
-  display: inline-flex !important;
+.cdiscovery-summary-camp-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.25;
+  margin-bottom: 2px;
+}
+
+/* Summary Items List */
+.cdiscovery-summary-attributes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cdiscovery-summary-attr-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.cdiscovery-summary-icon {
+  font-size: 14px;
+  color: #64748B;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.cdiscovery-summary-attr-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 12px;
+}
+
+.cdiscovery-summary-attr-label {
+  color: #64748B;
+}
+
+.cdiscovery-summary-attr-value {
+  color: #0F172A;
+  font-weight: 600;
+}
+
+.cdiscovery-summary-divider {
+  height: 1px;
+  background: #F1F5F9;
+  margin: 2px 0;
+}
+
+/* Criteria List */
+.cdiscovery-criteria-head {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 15px !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  justify-content: space-between;
+}
+
+.cdiscovery-criteria-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.cdiscovery-criteria-edit-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4F46E5;
   cursor: pointer;
 }
 
-.cdiscovery-card-btn-icon:hover {
-  border-color: #C7D2FE !important;
-  color: #4F46E5 !important;
-  background: #EEF2FF !important;
-  transform: translateY(-1px);
+.cdiscovery-criteria-edit-link:hover {
+  text-decoration: underline;
 }
 
-/* ── 6. Creator Cards (List View) ── */
-.cdiscovery-list-card {
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
-  transition: all 0.2s ease !important;
-}
-
-.cdiscovery-list-card:hover {
-  border-color: #CBD5E1 !important;
-  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.06) !important;
-}
-
-/* ── 7. Pagination Bar ── */
-.cdiscovery-pagination-bar {
-  margin-top: auto;
-  padding-top: 18px;
-  padding-bottom: 10px;
-  border-top: 1px solid #E2E8F0;
+.cdiscovery-criteria-grid {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
+  flex-direction: column;
+  gap: 9px;
 }
 
-.cdiscovery-pagination-info {
+.cdiscovery-crit-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.cdiscovery-crit-label-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748B;
+}
+
+.cdiscovery-crit-val-col {
+  font-weight: 600;
+  color: #0F172A;
+  text-align: right;
+}
+
+/* AI Tip Card at bottom of sidebar */
+.cdiscovery-summary-ai-tip {
+  background: #F5F3FF;
+  border: 1px solid #EDE9FE;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 11.5px;
+  color: #5B21B6;
+  line-height: 1.45;
+}
+
+.cdiscovery-ai-tip-icon {
+  font-size: 16px;
+  color: #6366F1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── 9. Pagination Chân Trang ── */
+.cdiscovery-pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 4px 6px 4px;
+  border-top: 1px solid #F1F5F9;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cdiscovery-pagination-count {
   font-size: 13px;
   color: #64748B;
   font-weight: 500;
 }
 
-/* ── Responsive Rules ── */
-.im-workflow-bottom-dock {
-  left: 0 !important;
-  right: 0 !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  width: fit-content !important;
+.cdiscovery-page-size-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748B;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1200px) {
+  .cdiscovery-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 992px) {
-  .cdiscovery-dropdown-filters-row {
-    grid-template-columns: repeat(2, 1fr);
+  .cdiscovery-layout-wrap {
+    flex-direction: column;
   }
-  .im-workflow-bottom-dock {
-    max-width: calc(100vw - 24px) !important;
-    bottom: 12px !important;
+  .cdiscovery-sidebar-col {
+    width: 100%;
+    position: static;
   }
 }
 
-@media (max-width: 576px) {
-  .cdiscovery-dropdown-filters-row {
+@media (max-width: 640px) {
+  .cdiscovery-cards-grid {
     grid-template-columns: 1fr;
   }
-  .cdiscovery-grid {
-    grid-template-columns: 1fr;
-  }
-  .im-workflow-bottom-dock {
+  .cdiscovery-top-stepper {
     overflow-x: auto;
-    padding: 0 8px !important;
+    padding: 10px 14px;
+  }
+  .cdiscovery-active-campaign-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cdiscovery-btn-view-camp {
+    width: 100%;
+    justify-content: center;
   }
 }
