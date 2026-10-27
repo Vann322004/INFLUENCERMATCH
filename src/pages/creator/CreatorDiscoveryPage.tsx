@@ -2496,6 +2496,7 @@ export default function CreatorDiscoveryPage() {
       <AddToShortlistModal
         open={!!shortlistModalCreator}
         onClose={() => setShortlistModalCreator(null)}
+        defaultCampaignId={selectedCampaignId || matchedCampaign?.id || undefined}
         creator={
           shortlistModalCreator
             ? {

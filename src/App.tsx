@@ -426,6 +426,14 @@ export default function App() {
             }
           />
           <Route
+            path="/creators/recommendations"
+            element={
+              <MainLayout>
+                <CampaignManagementPage />
+              </MainLayout>
+            }
+          />
+          <Route
             path="/ai-recommendations"
             element={
               <MainLayout>
