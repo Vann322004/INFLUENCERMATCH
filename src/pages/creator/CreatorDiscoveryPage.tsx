@@ -576,7 +576,6 @@ export default function CreatorDiscoveryPage() {
   // Bulk Selection & Collapsible States
   const [selectedCreatorIds, setSelectedCreatorIds] = useState<Set<string>>(new Set());
   const [isFilterExpanded, setIsFilterExpanded] = useState(true);
-  const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
 
 
   // Tự động làm sạch URL bar: ẩn campaignId khỏi thanh tìm kiếm trình duyệt
@@ -1266,14 +1265,14 @@ export default function CreatorDiscoveryPage() {
       return;
     }
 
-    const hide = message.loading(`Đang thêm ${selectedCreatorIds.size} Creator vào shortlist...`, 0);
+    const hide = message.loading(`Đang lưu ${selectedCreatorIds.size} KOC vào danh sách...`, 0);
     try {
       const promises = Array.from(selectedCreatorIds).map((id) => {
         const c = creators.find((cr) => cr.id === id);
         return creatorService
           .addToShortlist(targetCampId, {
             creatorId: id,
-            creatorName: c?.name || 'Creator',
+            creatorName: c?.name || 'KOC',
             avatarUrl: c?.avatar,
             niche: c?.categories?.[0],
             priority: 'HIGH',
@@ -1282,7 +1281,7 @@ export default function CreatorDiscoveryPage() {
       });
       await Promise.all(promises);
       hide();
-      message.success(`Đã thêm thành công ${selectedCreatorIds.size} Creator vào shortlist!`);
+      message.success(`Đã lưu thành công ${selectedCreatorIds.size} KOC vào danh sách!`);
       setCreators((prev) =>
         prev.map((c) => (selectedCreatorIds.has(c.id) ? { ...c, saved: true } : c))
       );
@@ -1471,15 +1470,15 @@ export default function CreatorDiscoveryPage() {
           {matchedCampaign?.name || 'Summer Glow Skincare Launch 2025'}
         </span>
         <span className="cdiscovery-breadcrumb-sep">›</span>
-        <span className="cdiscovery-breadcrumb-current">Khám phá Creator</span>
+        <span className="cdiscovery-breadcrumb-current">Khám phá KOC</span>
       </div>
 
       {/* 2. Tiêu đề trang & Tab điều hướng nguồn */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div className="cdiscovery-header-section">
-          <h1 className="cdiscovery-header-title">Khám phá Creator</h1>
+          <h1 className="cdiscovery-header-title">Khám phá KOC</h1>
           <p className="cdiscovery-header-sub">
-            Tìm kiếm KOC/Creator phù hợp theo tên, ngành hàng, tương tác và phong cách nội dung.
+            Tìm kiếm KOC phù hợp theo tên, ngành hàng, tương tác và phong cách nội dung.
           </p>
         </div>
 
@@ -1519,13 +1518,13 @@ export default function CreatorDiscoveryPage() {
               <div className="cdiscovery-step-badge done">
                 <CheckOutlined />
               </div>
-              <span className="cdiscovery-step-title">Tạo Brief</span>
+              <span className="cdiscovery-step-title">Tạo brief</span>
             </div>
             <div className="cdiscovery-step-line done" />
 
             <div className="cdiscovery-step-item">
               <div className="cdiscovery-step-badge active">2</div>
-              <span className="cdiscovery-step-title active">Khám phá Creator</span>
+              <span className="cdiscovery-step-title active">Khám phá KOC</span>
             </div>
             <div className="cdiscovery-step-line" />
 
@@ -1534,7 +1533,7 @@ export default function CreatorDiscoveryPage() {
               onClick={() => navigate(`/creators/shortlist${selectedCampaignId ? `?campaignId=${selectedCampaignId}` : ''}`)}
             >
               <div className="cdiscovery-step-badge upcoming">3</div>
-              <span className="cdiscovery-step-title">Shortlist</span>
+              <span className="cdiscovery-step-title">Danh sách chọn</span>
             </div>
             <div className="cdiscovery-step-line" />
 
@@ -1543,102 +1542,62 @@ export default function CreatorDiscoveryPage() {
               onClick={() => navigate(`/creators/recommendations${selectedCampaignId ? `?campaignId=${selectedCampaignId}` : ''}`)}
             >
               <div className="cdiscovery-step-badge upcoming">4</div>
-              <span className="cdiscovery-step-title">Đề xuất AI</span>
+              <span className="cdiscovery-step-title">Gợi ý AI</span>
             </div>
             <div className="cdiscovery-step-line" />
 
             <div className="cdiscovery-step-item" onClick={() => navigate('/crm')}>
               <div className="cdiscovery-step-badge upcoming">5</div>
-              <span className="cdiscovery-step-title">Liên hệ</span>
+              <span className="cdiscovery-step-title">Hợp tác</span>
             </div>
           </div>
 
-          {/* 4. Layout 2 Cột (Main Content + Sticky Sidebar) */}
-          <div className="cdiscovery-layout-wrap">
-            {/* CỘT TRÁI: Main Content */}
-            <div className="cdiscovery-main-col">
-              {/* Card Chiến dịch đang áp dụng */}
-              <div className="cdiscovery-active-campaign-card">
-                <div className="cdiscovery-camp-left">
-                  <img
-                    src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=160&auto=format&fit=crop&q=80"
-                    alt="Campaign product"
-                    className="cdiscovery-camp-thumb"
-                  />
-                  <div className="cdiscovery-camp-info">
-                    <div className="cdiscovery-camp-name-row">
-                      <span className="cdiscovery-camp-name">
-                        {matchedCampaign?.name || 'Summer Glow Skincare Launch 2025'}
-                      </span>
-                      <span className="cdiscovery-camp-status-badge">Đang xây dựng</span>
-                    </div>
-                    <div className="cdiscovery-camp-subline">
-                      <span>Mục tiêu: {matchedCampaign?.target || 'Tăng nhận diện thương hiệu'}</span>
-                      <span style={{ color: '#94A3B8' }}>•</span>
-                      <span>Serum dưỡng sáng da</span>
-                    </div>
-                    <div className="cdiscovery-camp-catline">
-                      Ngành hàng: <strong>{matchedCampaign?.tag || 'Làm đẹp, Skincare, Lifestyle'}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  className="cdiscovery-btn-view-camp"
-                  onClick={() => {
-                    if (matchedCampaign?.id) navigate(`/campaigns/${matchedCampaign.id}`);
-                    else if (selectedCampaignId) navigate(`/campaigns/${selectedCampaignId}`);
-                    else navigate('/campaigns');
-                  }}
-                >
-                  Xem chi tiết chiến dịch <RightOutlined style={{ fontSize: 11 }} />
-                </Button>
+          {/* 4. Nội dung chính toàn màn hình (Full Width 1240px, tinh gọn không tóm tắt chiến dịch) */}
+          <div className="cdiscovery-content-flow">
+            {/* Panel Tìm kiếm & Bộ lọc tinh gọn, chuẩn mực */}
+            <div className="cdiscovery-search-filter-card">
+              <div
+                className="cdiscovery-filter-card-header"
+                onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+              >
+                <span className="cdiscovery-filter-card-title">
+                  Tìm kiếm & Bộ lọc {isFilterExpanded ? <DownOutlined style={{ fontSize: 12, marginLeft: 4 }} /> : <UpOutlined style={{ fontSize: 12, marginLeft: 4 }} />}
+                </span>
+                <span className="cdiscovery-filter-toggle-icon">
+                  {isFilterExpanded ? 'Thu gọn' : 'Mở rộng'}
+                </span>
               </div>
 
-              {/* Panel Tìm kiếm & Bộ lọc (Collapsible) */}
-              <div className="cdiscovery-search-filter-card">
-                <div
-                  className="cdiscovery-filter-card-header"
-                  onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-                >
-                  <span className="cdiscovery-filter-card-title">
-                    Tìm kiếm & Bộ lọc {isFilterExpanded ? <DownOutlined style={{ fontSize: 12, marginLeft: 4 }} /> : <UpOutlined style={{ fontSize: 12, marginLeft: 4 }} />}
-                  </span>
-                  <span className="cdiscovery-filter-toggle-icon">
-                    {isFilterExpanded ? 'Thu gọn' : 'Mở rộng'}
-                  </span>
-                </div>
+              {isFilterExpanded && (
+                <>
+                  {/* Dòng 1: Tìm kiếm + Sắp xếp + View switch */}
+                  <div className="cdiscovery-filter-row-top">
+                    <div className="cdiscovery-search-input-group">
+                      <Input
+                        placeholder="Tìm kiếm KOC theo tên, kênh, chủ đề, từ khóa..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                          setSearchTerm(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                        prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 15 }} />}
+                        allowClear
+                        className="cdiscovery-search-input"
+                      />
+                      <Button
+                        type="primary"
+                        icon={<SearchOutlined />}
+                        onClick={() => {
+                          setCurrentPage(1);
+                          if (searchMode === 'semantic') handleSemanticSearch();
+                        }}
+                        className="cdiscovery-btn-search"
+                      >
+                        Tìm kiếm
+                      </Button>
+                    </div>
 
-                {isFilterExpanded && (
-                  <>
-                    {/* Dòng 1: Tìm kiếm + Sắp xếp + View switch */}
-                    <div className="cdiscovery-filter-row-top">
-                      <div className="cdiscovery-search-input-group">
-                        <Input
-                          placeholder="Tìm kiếm theo tên, username, niche, từ khóa..."
-                          value={searchTerm}
-                          onChange={(e) => {
-                            setSearchTerm(e.target.value);
-                            setCurrentPage(1);
-                          }}
-                          prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 15 }} />}
-                          allowClear
-                          className="cdiscovery-search-input"
-                        />
-                        <Button
-                          type="primary"
-                          icon={<SearchOutlined />}
-                          onClick={() => {
-                            setCurrentPage(1);
-                            if (searchMode === 'semantic') handleSemanticSearch();
-                          }}
-                          className="cdiscovery-btn-search"
-                        >
-                          Tìm kiếm
-                        </Button>
-                      </div>
-
-                      <div className="cdiscovery-sort-group">
+                    <div className="cdiscovery-sort-group">
                         <span className="cdiscovery-sort-label">Sắp xếp:</span>
                         <Select
                           value={sortBy}
@@ -1818,11 +1777,11 @@ export default function CreatorDiscoveryPage() {
                 )}
               </div>
 
-              {/* Toolbar Kết quả (Count + Chọn tất cả + Đã chọn X + Nút Thêm vào shortlist) */}
+              {/* Toolbar Kết quả (Count + Chọn tất cả + Đã chọn X + Nút Thêm vào danh sách) */}
               <div className="cdiscovery-results-toolbar">
                 <div className="cdiscovery-results-left">
                   <span className="cdiscovery-results-heading">
-                    {filteredCreators.length} Creator phù hợp
+                    {filteredCreators.length} KOC phù hợp
                   </span>
                   <label className="cdiscovery-select-all-label">
                     <input
@@ -1840,7 +1799,7 @@ export default function CreatorDiscoveryPage() {
 
                 <div className="cdiscovery-results-right">
                   <span className="cdiscovery-selected-badge">
-                    Đã chọn {selectedCreatorIds.size}
+                    Đã chọn: {selectedCreatorIds.size} KOC
                   </span>
                   <Button
                     type="primary"
@@ -1848,12 +1807,12 @@ export default function CreatorDiscoveryPage() {
                     onClick={handleBulkAddToShortlist}
                     className="cdiscovery-btn-bulk-shortlist"
                   >
-                    + Thêm vào shortlist
+                    + Lưu vào danh sách
                   </Button>
                 </div>
               </div>
 
-              {/* Nội dung danh sách / lưới Creator */}
+              {/* Nội dung danh sách / lưới KOC */}
               {loading ? (
                 <Card
                   bordered={false}
@@ -1867,7 +1826,7 @@ export default function CreatorDiscoveryPage() {
                 >
                   <Spin size="large" />
                   <div style={{ marginTop: 16, color: '#64748B', fontWeight: 600, fontSize: 14 }}>
-                    Đang tải danh sách Creator từ máy chủ...
+                    Đang tải danh sách KOC từ hệ thống...
                   </div>
                 </Card>
               ) : filteredCreators.length === 0 ? (
@@ -1883,7 +1842,7 @@ export default function CreatorDiscoveryPage() {
                 >
                   <div style={{ fontSize: 44, marginBottom: 12 }}>🔍</div>
                   <Title level={4} style={{ color: '#0F172A', marginBottom: 6 }}>
-                    Không tìm thấy creator phù hợp
+                    Không tìm thấy KOC phù hợp
                   </Title>
                   <Paragraph style={{ color: '#64748B', maxWidth: 440, margin: '0 auto 16px auto', fontSize: 13.5 }}>
                     Hãy thử điều chỉnh lại từ khóa tìm kiếm hoặc bỏ bớt các tiêu chí lọc để xem thêm kết quả phù hợp.
@@ -1950,7 +1909,7 @@ export default function CreatorDiscoveryPage() {
                               menu={{
                                 items: [
                                   { key: 'preview', label: 'Xem nhanh tóm tắt', icon: <EyeOutlined /> },
-                                  { key: 'shortlist', label: 'Thêm vào Shortlist', icon: <SaveOutlined /> },
+                                  { key: 'shortlist', label: 'Lưu vào danh sách', icon: <SaveOutlined /> },
                                   { key: 'message', label: 'Gửi tin nhắn', icon: <MessageOutlined /> },
                                   { key: 'share', label: 'Chia sẻ hồ sơ', icon: <GlobalOutlined /> },
                                 ],
@@ -1963,7 +1922,7 @@ export default function CreatorDiscoveryPage() {
                                     handleOpenShortlist(creator);
                                   } else if (key === 'share') {
                                     navigator.clipboard?.writeText(window.location.origin + '/creators/' + creator.id);
-                                    message.success('Đã sao chép liên kết creator!');
+                                    message.success('Đã sao chép liên kết KOC!');
                                   } else if (key === 'message') {
                                     navigate('/messages');
                                   }
@@ -2024,7 +1983,7 @@ export default function CreatorDiscoveryPage() {
                             className={`cdiscovery-btn-shortlist-card ${creator.saved ? 'saved' : ''}`}
                             onClick={(e) => handleOpenShortlist(creator, e)}
                           >
-                            {creator.saved ? '✓ Đã trong shortlist' : '+ Thêm vào shortlist'}
+                            {creator.saved ? '✓ Đã lưu danh sách' : '+ Lưu vào danh sách'}
                           </Button>
                         </div>
                       </div>
@@ -2116,7 +2075,7 @@ export default function CreatorDiscoveryPage() {
                                 className="cdiscovery-btn-shortlist-card"
                                 onClick={(e) => handleOpenShortlist(creator, e)}
                               >
-                                {creator.saved ? '✓ Đã lưu' : '+ Thêm vào shortlist'}
+                                {creator.saved ? '✓ Đã lưu danh sách' : '+ Lưu vào danh sách'}
                               </Button>
                             </Space>
                           </Col>
@@ -2160,148 +2119,6 @@ export default function CreatorDiscoveryPage() {
                 </div>
               </div>
             </div>
-
-            {/* CỘT PHẢI: Sticky Sidebar "Tóm tắt chiến dịch" */}
-            <div className="cdiscovery-sidebar-col">
-              <div className="cdiscovery-summary-card">
-                <div
-                  className="cdiscovery-summary-head-bar"
-                  onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
-                >
-                  <span className="cdiscovery-summary-main-title">
-                    <span>📋</span> Tóm tắt chiến dịch
-                  </span>
-                  <span style={{ fontSize: 13, color: '#64748B' }}>
-                    {isSummaryExpanded ? <UpOutlined style={{ fontSize: 11 }} /> : <DownOutlined style={{ fontSize: 11 }} />}
-                  </span>
-                </div>
-
-                {isSummaryExpanded && (
-                  <>
-                    {/* Box mini sản phẩm */}
-                    <div className="cdiscovery-summary-camp-banner">
-                      <img
-                        src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=120&auto=format&fit=crop&q=80"
-                        alt="Product thumb"
-                        className="cdiscovery-summary-camp-thumb"
-                      />
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div className="cdiscovery-summary-camp-name">
-                          {matchedCampaign?.name || 'Summer Glow Skincare Launch 2025'}
-                        </div>
-                        <span className="cdiscovery-camp-status-badge">Đang xây dựng</span>
-                      </div>
-                    </div>
-
-                    {/* Danh sách 5 thuộc tính */}
-                    <div className="cdiscovery-summary-attributes">
-                      <div className="cdiscovery-summary-attr-item">
-                        <span className="cdiscovery-summary-icon">📦</span>
-                        <div className="cdiscovery-summary-attr-content">
-                          <span className="cdiscovery-summary-attr-label">Sản phẩm / Dịch vụ</span>
-                          <span className="cdiscovery-summary-attr-value">Serum dưỡng sáng da</span>
-                        </div>
-                      </div>
-
-                      <div className="cdiscovery-summary-attr-item">
-                        <span className="cdiscovery-summary-icon">🏷️</span>
-                        <div className="cdiscovery-summary-attr-content">
-                          <span className="cdiscovery-summary-attr-label">Ngành hàng</span>
-                          <span className="cdiscovery-summary-attr-value">
-                            {matchedCampaign?.tag || 'Làm đẹp, Skincare'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="cdiscovery-summary-attr-item">
-                        <span className="cdiscovery-summary-icon">🎯</span>
-                        <div className="cdiscovery-summary-attr-content">
-                          <span className="cdiscovery-summary-attr-label">Mục tiêu chính</span>
-                          <span className="cdiscovery-summary-attr-value">
-                            {matchedCampaign?.target || 'Tăng nhận diện thương hiệu'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="cdiscovery-summary-attr-item">
-                        <span className="cdiscovery-summary-icon">📱</span>
-                        <div className="cdiscovery-summary-attr-content">
-                          <span className="cdiscovery-summary-attr-label">Nền tảng</span>
-                          <span className="cdiscovery-summary-attr-value">TikTok (ưu tiên)</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="cdiscovery-summary-divider" />
-
-                    {/* Tiêu chí đang áp dụng */}
-                    <div className="cdiscovery-criteria-head">
-                      <span className="cdiscovery-criteria-title">Tiêu chí đang áp dụng</span>
-                      <span
-                        className="cdiscovery-criteria-edit-link"
-                        onClick={() => {
-                          if (matchedCampaign?.id) navigate(`/campaigns/create?id=${matchedCampaign.id}`);
-                          else navigate('/campaigns/create');
-                        }}
-                      >
-                        Chỉnh sửa
-                      </span>
-                    </div>
-
-                    <div className="cdiscovery-criteria-grid">
-                      <div className="cdiscovery-crit-item">
-                        <div className="cdiscovery-crit-label-col">
-                          <span>👥</span>
-                          <span>Số lượng đề xuất</span>
-                        </div>
-                        <span className="cdiscovery-crit-val-col">20 creator</span>
-                      </div>
-
-                      <div className="cdiscovery-crit-item">
-                        <div className="cdiscovery-crit-label-col">
-                          <span>📊</span>
-                          <span>Phân khúc</span>
-                        </div>
-                        <span className="cdiscovery-crit-val-col">Micro (10K – 50K)</span>
-                      </div>
-
-                      <div className="cdiscovery-crit-item">
-                        <div className="cdiscovery-crit-label-col">
-                          <span>📈</span>
-                          <span>Tỷ lệ tương tác</span>
-                        </div>
-                        <span className="cdiscovery-crit-val-col">≥ 5%</span>
-                      </div>
-
-                      <div className="cdiscovery-crit-item">
-                        <div className="cdiscovery-crit-label-col">
-                          <span>👤</span>
-                          <span>Độ tuổi</span>
-                        </div>
-                        <span className="cdiscovery-crit-val-col">18 – 24</span>
-                      </div>
-
-                      <div className="cdiscovery-crit-item">
-                        <div className="cdiscovery-crit-label-col">
-                          <span>🚻</span>
-                          <span>Giới tính</span>
-                        </div>
-                        <span className="cdiscovery-crit-val-col">Tất cả</span>
-                      </div>
-                    </div>
-
-                    {/* Gợi ý AI Tip tím nhạt */}
-                    <div className="cdiscovery-summary-ai-tip">
-                      <span className="cdiscovery-ai-tip-icon">💡</span>
-                      <span>
-                        Bạn có thể tinh chỉnh bộ lọc để tìm Creator phù hợp hơn hoặc để AI gợi ý thêm các lựa chọn tiềm năng.
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
         </>
       )}
 
@@ -2341,7 +2158,7 @@ export default function CreatorDiscoveryPage() {
               </Button>
             </div>
           ) : (
-            'Chi tiết Creator'
+            'Chi tiết KOC'
           )
         }
         placement="right"
@@ -2362,7 +2179,7 @@ export default function CreatorDiscoveryPage() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <span style={{ fontWeight: 700, fontSize: 13, color: '#1E40AF' }}>
-                  AI Match Score
+                  Độ tương thích AI
                 </span>
                 {matchedCampaign ? (
                   <Tag color="green" style={{ fontWeight: 800, borderRadius: 6 }}>
@@ -2377,7 +2194,7 @@ export default function CreatorDiscoveryPage() {
               <p style={{ fontSize: 12, color: '#475569', margin: 0 }}>
                 {matchedCampaign
                   ? (selectedCreator.matchReason || computeCreatorMatch(selectedCreator, matchedCampaign).reason)
-                  : 'Vui lòng chọn một Dự án / Chiến dịch ở đầu trang và bấm "Tìm Creator phù hợp" để AI tính toán tỷ lệ tương thích chi tiết.'}
+                  : 'Vui lòng chọn một Dự án / Chiến dịch ở đầu trang và bấm "Tìm KOC phù hợp" để AI tính toán tỷ lệ tương thích chi tiết.'}
               </p>
             </div>
 
@@ -2392,7 +2209,7 @@ export default function CreatorDiscoveryPage() {
                     <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A' }}>
                       {selectedCreator.followers}
                     </div>
-                    <div style={{ fontSize: 11, color: '#64748B' }}>Followers</div>
+                    <div style={{ fontSize: 11, color: '#64748B' }}>Người theo dõi</div>
                   </div>
                 </Col>
                 <Col span={8}>
@@ -2459,7 +2276,7 @@ export default function CreatorDiscoveryPage() {
                   borderRadius: 10,
                 }}
               >
-                Mời vào chiến dịch
+                Mời hợp tác
               </Button>
               <Button
                 onClick={() => handleOpenShortlist(selectedCreator)}
@@ -2471,7 +2288,7 @@ export default function CreatorDiscoveryPage() {
                   color: selectedCreator.saved ? '#EF4444' : '#334155',
                 }}
               >
-                {selectedCreator.saved ? 'Đã lưu trong Shortlist' : 'Thêm vào Shortlist'}
+                {selectedCreator.saved ? 'Đã lưu danh sách' : 'Lưu vào danh sách'}
               </Button>
             </div>
           </div>

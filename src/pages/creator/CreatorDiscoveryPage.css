@@ -191,130 +191,12 @@
   background: #818CF8;
 }
 
-/* ── 3. Layout 2 Cột (Main + Sidebar) ── */
-.cdiscovery-layout-wrap {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
+/* ── 3. Luồng nội dung chính toàn màn hình (Single Column Layout) ── */
+.cdiscovery-content-flow {
   width: 100%;
-}
-
-.cdiscovery-main-col {
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.cdiscovery-sidebar-col {
-  width: 330px;
-  flex-shrink: 0;
-  position: sticky;
-  top: 16px;
-}
-
-/* ── 4. Card Chiến Dịch Đang Áp Dụng ── */
-.cdiscovery-active-campaign-card {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 16px;
-  padding: 14px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-}
-
-.cdiscovery-camp-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
-  flex: 1;
-}
-
-.cdiscovery-camp-thumb {
-  width: 58px;
-  height: 58px;
-  border-radius: 12px;
-  background: #F5F3FF;
-  border: 1px solid #EDE9FE;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.cdiscovery-camp-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.cdiscovery-camp-name-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.cdiscovery-camp-name {
-  font-size: 15.5px;
-  font-weight: 800;
-  color: #0F172A;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cdiscovery-camp-status-badge {
-  background: #EEF2FF;
-  color: #4F46E5;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 6px;
-  white-space: nowrap;
-}
-
-.cdiscovery-camp-subline {
-  font-size: 12.5px;
-  color: #64748B;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.cdiscovery-camp-catline {
-  font-size: 12px;
-  color: #475569;
-}
-
-.cdiscovery-camp-catline strong {
-  color: #0F172A;
-}
-
-.cdiscovery-btn-view-camp {
-  background: #F8FAFC !important;
-  border: 1px solid #E2E8F0 !important;
-  color: #4F46E5 !important;
-  font-weight: 600 !important;
-  font-size: 13px !important;
-  height: 38px !important;
-  padding: 0 16px !important;
-  border-radius: 10px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  white-space: nowrap !important;
-  transition: all 0.2s ease !important;
-}
-
-.cdiscovery-btn-view-camp:hover {
-  background: #EEF2FF !important;
-  border-color: #C7D2FE !important;
 }
 
 /* ── 5. Panel Tìm Kiếm & Bộ Lọc ── */
@@ -448,14 +330,25 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-/* ── Filter Dropdown Pills (Tinh gọn & Luxe) ── */
+/* ── Filter Dropdown Pills (Tinh gọn trên 1 hàng duy nhất) ── */
 .cdiscovery-filter-pills-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
-  padding-top: 12px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-top: 10px;
+  padding-bottom: 2px;
   border-top: 1px solid #F1F5F9;
+}
+
+.cdiscovery-filter-pills-row::-webkit-scrollbar {
+  display: none;
+}
+
+.cdiscovery-pill-select {
+  flex-shrink: 0;
 }
 
 .cdiscovery-pill-select .ant-select-selector {
@@ -498,6 +391,8 @@
   border-radius: 9999px !important;
   background: #FEF2F2 !important;
   border: 1px solid #FEE2E2 !important;
+  flex-shrink: 0;
+  white-space: nowrap;
   transition: all 0.15s ease !important;
 }
 
@@ -583,11 +478,11 @@
   cursor: not-allowed !important;
 }
 
-/* ── 7. Lưới Creator (Grid 3 Cột) ── */
+/* ── 7. Lưới KOC (Grid 3 Cột) ── */
 .cdiscovery-cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 18px;
 }
 
 .cdiscovery-card {
@@ -602,6 +497,8 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .cdiscovery-card:hover {
@@ -614,7 +511,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
+  width: 100%;
 }
 
 .cdiscovery-card-left-group {
@@ -623,6 +521,7 @@
   gap: 10px;
   min-width: 0;
   flex: 1;
+  overflow: hidden;
 }
 
 .cdiscovery-card-avatar-wrap {
@@ -635,6 +534,8 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1;
+  overflow: hidden;
   cursor: pointer;
 }
 
@@ -648,6 +549,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.cdiscovery-card-name-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cdiscovery-card-username-text {
@@ -816,176 +723,7 @@
   box-shadow: none !important;
 }
 
-/* ── 8. Sidebar Tóm Tắt Chiến Dịch ── */
-.cdiscovery-summary-card {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 16px;
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-}
-
-.cdiscovery-summary-head-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  user-select: none;
-}
-
-.cdiscovery-summary-main-title {
-  font-size: 14.5px;
-  font-weight: 800;
-  color: #0F172A;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.cdiscovery-summary-camp-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  background: #F8FAFC;
-  border-radius: 12px;
-  border: 1px solid #F1F5F9;
-}
-
-.cdiscovery-summary-camp-thumb {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: #EEF2FF;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.cdiscovery-summary-camp-name {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #0F172A;
-  line-height: 1.25;
-  margin-bottom: 2px;
-}
-
-/* Summary Items List */
-.cdiscovery-summary-attributes {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.cdiscovery-summary-attr-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.cdiscovery-summary-icon {
-  font-size: 14px;
-  color: #64748B;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.cdiscovery-summary-attr-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  font-size: 12px;
-}
-
-.cdiscovery-summary-attr-label {
-  color: #64748B;
-}
-
-.cdiscovery-summary-attr-value {
-  color: #0F172A;
-  font-weight: 600;
-}
-
-.cdiscovery-summary-divider {
-  height: 1px;
-  background: #F1F5F9;
-  margin: 2px 0;
-}
-
-/* Criteria List */
-.cdiscovery-criteria-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.cdiscovery-criteria-title {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #0F172A;
-}
-
-.cdiscovery-criteria-edit-link {
-  font-size: 12px;
-  font-weight: 600;
-  color: #4F46E5;
-  cursor: pointer;
-}
-
-.cdiscovery-criteria-edit-link:hover {
-  text-decoration: underline;
-}
-
-.cdiscovery-criteria-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-
-.cdiscovery-crit-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-}
-
-.cdiscovery-crit-label-col {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #64748B;
-}
-
-.cdiscovery-crit-val-col {
-  font-weight: 600;
-  color: #0F172A;
-  text-align: right;
-}
-
-/* AI Tip Card at bottom of sidebar */
-.cdiscovery-summary-ai-tip {
-  background: #F5F3FF;
-  border: 1px solid #EDE9FE;
-  border-radius: 12px;
-  padding: 12px 14px;
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  font-size: 11.5px;
-  color: #5B21B6;
-  line-height: 1.45;
-}
-
-.cdiscovery-ai-tip-icon {
-  font-size: 16px;
-  color: #6366F1;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-/* ── 9. Pagination Chân Trang ── */
+/* ── 8. Pagination Chân Trang ── */
 .cdiscovery-pagination-row {
   display: flex;
   align-items: center;
@@ -1011,31 +749,10 @@
 }
 
 /* ── Responsive Hoàn Chỉnh (Mobile, Tablet, Desktop) ── */
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   .cdiscovery-cards-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 992px) {
-  .cdiscovery-layout-wrap {
-    flex-direction: column;
-    gap: 20px;
-  }
-  .cdiscovery-sidebar-col {
-    width: 100%;
-    position: static;
-  }
-  /* Hàng pills cuộn ngang cảm ứng êm ái trên tablet/mobile */
-  .cdiscovery-filter-pills-row {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 8px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .cdiscovery-filter-pills-row::-webkit-scrollbar {
-    display: none;
+    gap: 16px;
   }
 }
 
@@ -1062,6 +779,7 @@
   }
   .cdiscovery-cards-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
   .cdiscovery-top-stepper {
     overflow-x: auto;
@@ -1074,14 +792,6 @@
   }
   .cdiscovery-step-item {
     flex-shrink: 0;
-  }
-  .cdiscovery-active-campaign-card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .cdiscovery-btn-view-camp {
-    width: 100%;
-    justify-content: center;
   }
   .cdiscovery-filter-row-top {
     flex-direction: column;
