@@ -148,6 +148,10 @@ export default function App() {
         <SessionSyncHandler />
         <BrowserRouter>
         <Routes>
+          {/* Public Landing Page / Homepage */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/landing" element={<LandingPage />} />
+
           {/* Auth Routes */}
           <Route
             path="/login"

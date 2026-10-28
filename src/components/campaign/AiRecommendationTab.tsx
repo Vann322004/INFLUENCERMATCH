@@ -253,10 +253,18 @@ export default function AiRecommendationTab({
     setIsDeepAnalysisOpen(true);
   };
 
-  // Danh sách Creator trong Shortlist đã được lượng hóa đánh giá Four-Memory (dành riêng cho tab Đã chọn từ Shortlist)
+  // Danh sách Creator đánh giá Four-Memory:
+  // Ưu tiên kết quả trả về từ API AI Four-Memory (`recommendations`),
+  // nếu API chưa chạy xong hoặc rỗng thì fallback hiển thị từ `shortlistItems`.
   const evaluatedShortlistList = useMemo(() => {
+    if (recommendations && recommendations.length > 0) {
+      return recommendations.map((r) => ({
+        ...r,
+        inShortlist: true,
+      }));
+    }
     return shortlistItems.map(evaluateShortlistItem);
-  }, [shortlistItems, evaluateShortlistItem]);
+  }, [recommendations, shortlistItems, evaluateShortlistItem]);
 
   const filteredShortlistCandidates = useMemo(() => {
     return evaluatedShortlistList.filter((item) => {

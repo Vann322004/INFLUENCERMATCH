@@ -404,36 +404,7 @@ export interface BrandCampaignItem {
   requirements?: string;
 }
 
-export const BRAND_CAMPAIGNS: BrandCampaignItem[] = [
-  {
-    id: 'camp-1',
-    name: 'Ra mắt Skincare Summer Glow 2025',
-    tag: 'Làm đẹp & Chăm sóc da',
-    target: 'Nữ 18-24, TikTok & Instagram, Tương tác > 6%',
-    suggestedCategory: 'Làm đẹp & Chăm sóc da',
-  },
-  {
-    id: 'camp-2',
-    name: 'Đẩy mạnh Viral Serum Cấp Ẩm',
-    tag: 'Chăm sóc da & Làm đẹp',
-    target: 'Nữ 20-32, Ngân sách $800 - $2,500',
-    suggestedCategory: 'Làm đẹp & Chăm sóc da',
-  },
-  {
-    id: 'camp-3',
-    name: 'BST Giày Sneaker Thu Đông',
-    tag: 'Thời trang & Thể thao',
-    target: 'Nam & Nữ 18-28, Streetwear & Sneakerheads',
-    suggestedCategory: 'Thời trang',
-  },
-  {
-    id: 'camp-4',
-    name: 'Laptop & Phụ kiện cho Gen Z',
-    tag: 'Công nghệ & Media',
-    target: 'Sinh viên & Giới trẻ, Review chi tiết YouTube/TikTok',
-    suggestedCategory: 'Công nghệ & Game',
-  },
-];
+export const BRAND_CAMPAIGNS: BrandCampaignItem[] = [];
 
 const mapApiCampaignToItem = (c: CampaignResponse): BrandCampaignItem => {
   const tag = (c.niches && c.niches.length > 0)
@@ -471,29 +442,7 @@ let globalDiscoveryCache: DiscoveryCache | null = null;
 let memoryProvincesCache: { value: string; label: string }[] | null = null;
 
 const loadCachedDiscovery = (): DiscoveryCache | null => {
-  if (globalDiscoveryCache && globalDiscoveryCache.creators.length > 0) {
-    return globalDiscoveryCache;
-  }
-  try {
-    const rawCreators = localStorage.getItem('IM_DISCOVERY_CREATORS');
-    const rawCamp = localStorage.getItem('IM_MATCHED_CAMPAIGN');
-    const rawCampId = localStorage.getItem('IM_SELECTED_CAMPAIGN_ID');
-    if (rawCreators) {
-      const parsedCreators = JSON.parse(rawCreators);
-      if (Array.isArray(parsedCreators) && parsedCreators.length > 0) {
-        const parsedCamp = rawCamp ? JSON.parse(rawCamp) : null;
-        globalDiscoveryCache = {
-          creators: parsedCreators,
-          campaigns: BRAND_CAMPAIGNS,
-          matchedCampaign: parsedCamp,
-          selectedCampaignId: rawCampId || parsedCamp?.id || null,
-          categoriesList: ALL_CATEGORIES,
-          lastUpdated: Date.now(),
-        };
-        return globalDiscoveryCache;
-      }
-    }
-  } catch {}
+  // Không load mock/stale cache để tránh chớp dữ liệu giả khi API đang tải
   return null;
 };
 
@@ -501,7 +450,7 @@ const updateDiscoveryCache = (partial: Partial<DiscoveryCache>) => {
   if (!globalDiscoveryCache) {
     globalDiscoveryCache = {
       creators: [],
-      campaigns: BRAND_CAMPAIGNS,
+      campaigns: [],
       matchedCampaign: null,
       selectedCampaignId: null,
       categoriesList: ALL_CATEGORIES,
@@ -537,20 +486,18 @@ export default function CreatorDiscoveryPage() {
   const cachedData = useMemo(() => loadCachedDiscovery(), []);
 
   // Real Brand Campaigns loaded from API (instant cache hydration)
-  const [campaignsList, setCampaignsList] = useState<BrandCampaignItem[]>(
-    () => (cachedData?.campaigns && cachedData.campaigns.length > 0 ? cachedData.campaigns : BRAND_CAMPAIGNS)
-  );
-  const [loadingCampaigns, setLoadingCampaigns] = useState<boolean>(
-    () => !cachedData || !cachedData.campaigns || cachedData.campaigns.length === 0
-  );
+  const [campaignsList, setCampaignsList] = useState<BrandCampaignItem[]>([]);
+  const [loadingCampaigns, setLoadingCampaigns] = useState<boolean>(true);
 
   // Campaign Matching States: Khoan đề xuất khớp cao/thấp cho đến khi Brand chọn dự án và bấm tìm
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(
-    () => initialCampId || cachedData?.selectedCampaignId || null
+    () => initialCampId || null
   );
-  const [matchedCampaign, setMatchedCampaign] = useState<BrandCampaignItem | null>(
-    () => cachedData?.matchedCampaign || null
-  );
+  const [matchedCampaign, setMatchedCampaign] = useState<BrandCampaignItem | null>(() => {
+    const passed = (location.state as any)?.createdCampaign;
+    if (passed) return mapApiCampaignToItem(passed);
+    return null;
+  });
   const [isMatching, setIsMatching] = useState(false);
   const [shortlistModalCreator, setShortlistModalCreator] = useState<Creator | null>(null);
 
@@ -606,8 +553,6 @@ export default function CreatorDiscoveryPage() {
         let mapped: BrandCampaignItem[] = [];
         if (Array.isArray(apiCampaigns) && apiCampaigns.length > 0) {
           mapped = apiCampaigns.map(mapApiCampaignToItem);
-        } else {
-          mapped = [...BRAND_CAMPAIGNS];
         }
 
         const targetId = initialCampId;
@@ -681,7 +626,7 @@ export default function CreatorDiscoveryPage() {
       } catch (err) {
         console.warn('Lỗi khi tải chiến dịch thực tế từ API, dùng danh sách mẫu:', err);
         if (isMounted) {
-          let mapped = [...BRAND_CAMPAIGNS];
+          let mapped: BrandCampaignItem[] = [];
           const targetId = initialCampId;
           if (targetId) {
             const passedCampaign = (location.state as any)?.createdCampaign;
@@ -729,13 +674,14 @@ export default function CreatorDiscoveryPage() {
   }, [initialCampId, location.state]);
 
   const handleTriggerMatch = async (targetCamp?: BrandCampaignItem) => {
-    const camp = targetCamp || campaignsList.find((c) => c.id === selectedCampaignId) || BRAND_CAMPAIGNS.find((c) => c.id === selectedCampaignId);
+    const camp = targetCamp || campaignsList.find((c) => c.id === selectedCampaignId);
     if (!camp) {
       message.warning('Vui lòng chọn một Dự án / Chiến dịch trước khi tìm kiếm Creator!');
       return;
     }
 
     setIsMatching(true);
+    setLoading(true);
     message.loading({
       content: `Đang tìm kiếm KOC phù hợp cho chiến dịch "${camp.name}"...`,
       key: 'campaign_match',
@@ -831,6 +777,7 @@ export default function CreatorDiscoveryPage() {
       message.destroy('campaign_match');
     } finally {
       setIsMatching(false);
+      setLoading(false);
     }
   };
 
@@ -849,11 +796,9 @@ export default function CreatorDiscoveryPage() {
     message.info('Đã thoát chế độ so khớp dự án. Đang hiển thị danh sách khám phá chung.');
   };
 
-  // Creators list with real API state & instant cache hydration
-  const [loading, setLoading] = useState<boolean>(
-    () => !cachedData || !cachedData.creators || cachedData.creators.length === 0
-  );
-  const [creators, setCreators] = useState<Creator[]>(() => cachedData?.creators || []);
+  // Creators list: Luôn khởi tạo loading = true và creators = [] cho đến khi có dữ liệu thật từ API/DB
+  const [loading, setLoading] = useState<boolean>(true);
+  const [creators, setCreators] = useState<Creator[]>([]);
   const [categoriesList, setCategoriesList] = useState<string[]>(
     () => cachedData?.categoriesList || ALL_CATEGORIES
   );
@@ -916,22 +861,8 @@ export default function CreatorDiscoveryPage() {
   useEffect(() => {
     let isMounted = true;
     const fetchCreatorsAndNiches = async () => {
-      // 1. Kiểm tra cache: Nếu đã có dữ liệu creators cho chiến dịch này, không block màn hình và không hiện spinner!
-      const hasExistingCreators = (creators && creators.length > 0) || (globalDiscoveryCache && globalDiscoveryCache.creators.length > 0);
-      if (
-        hasExistingCreators &&
-        matchedCampaign &&
-        globalDiscoveryCache?.matchedCampaign?.id === matchedCampaign.id &&
-        globalDiscoveryCache?.creators &&
-        globalDiscoveryCache.creators.length > 0
-      ) {
-        if (loading) setLoading(false);
-        return;
-      }
-
-      if (!hasExistingCreators) {
-        setLoading(true);
-      }
+      if (isMatching) return;
+      setLoading(true);
 
       try {
         const [apiNiches] = await Promise.all([
@@ -1489,7 +1420,7 @@ export default function CreatorDiscoveryPage() {
         </span>
         <span className="cdiscovery-breadcrumb-sep">›</span>
         <span className="cdiscovery-breadcrumb-camp">
-          {matchedCampaign?.name || 'Summer Glow Skincare Launch 2025'}
+          {matchedCampaign?.name || 'Chiến dịch'}
         </span>
         <span className="cdiscovery-breadcrumb-sep">›</span>
         <span className="cdiscovery-breadcrumb-current">Khám phá KOC</span>
@@ -1815,7 +1746,7 @@ export default function CreatorDiscoveryPage() {
               <div className="cdiscovery-results-toolbar">
                 <div className="cdiscovery-results-left">
                   <span className="cdiscovery-results-heading">
-                    {filteredCreators.length > 0 ? 'KOC phù hợp' : 'Không có KOC phù hợp'}
+                    {loading || isMatching ? 'Đang tải danh sách KOC...' : filteredCreators.length > 0 ? 'KOC phù hợp' : 'Không có KOC phù hợp'}
                   </span>
                   <label className="cdiscovery-select-all-label">
                     <input
@@ -1847,7 +1778,7 @@ export default function CreatorDiscoveryPage() {
               </div>
 
               {/* Nội dung danh sách / lưới KOC */}
-              {loading ? (
+              {loading || isMatching ? (
                 <Card
                   bordered={false}
                   style={{

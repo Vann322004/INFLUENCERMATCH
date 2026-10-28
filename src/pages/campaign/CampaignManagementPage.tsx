@@ -457,28 +457,6 @@ export default function CampaignManagementPage() {
             5. Hợp tác (CRM)
           </span>
         </div>
-        <div className="cdiscovery-step-line done" />
-
-        <div
-          className="cdiscovery-step-item"
-          onClick={() => setIsFinishModalOpen(true)}
-          title="Bấm để hoàn tất quy trình 5 bước và quay về Trang chủ"
-          style={{ cursor: 'pointer' }}
-        >
-          <div
-            className="cdiscovery-step-badge"
-            style={{
-              background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
-              color: '#FFFFFF',
-              boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)',
-            }}
-          >
-            <HomeOutlined />
-          </div>
-          <span className="cdiscovery-step-title" style={{ color: '#059669', fontWeight: 800 }}>
-            Hoàn thành & Về Trang chủ ➔
-          </span>
-        </div>
       </div>
 
       {activeViewTab === 'recommendation' ? (
@@ -697,7 +675,7 @@ export default function CampaignManagementPage() {
             </div>
           </div>
 
-          {/* Banner Hoàn tất & Quay về Trang chủ khi xong bước 5 */}
+          {/* Bottom navigation actions */}
           <div className="crm-completion-banner">
             <div className="crm-completion-left">
               <div className="crm-completion-icon-box">
@@ -705,10 +683,10 @@ export default function CampaignManagementPage() {
               </div>
               <div className="crm-completion-text">
                 <div className="crm-completion-title">
-                  🎉 Đã hoàn tất Bước 5: Tiếp cận & Đàm phán Hợp tác KOC!
+                  🎉 Bước 5: Tiếp cận & Đàm phán Hợp tác KOC
                 </div>
                 <div className="crm-completion-desc">
-                  Quy trình 5 bước thiết lập chiến dịch đã xong{confirmedCount > 0 ? ` (${confirmedCount} KOC đã chốt xác nhận)` : ''}. Bạn có thể bấm <strong>"Hoàn thành & Về Trang chủ"</strong> để lưu lại tiến trình và theo dõi tổng quan chiến dịch tại Dashboard.
+                  {confirmedCount > 0 ? `${confirmedCount} KOC đã chốt xác nhận. ` : ''}Chuyển sang trang CRM để theo dõi chi tiết hoặc quay lại danh sách chiến dịch.
                 </div>
               </div>
             </div>
@@ -716,16 +694,20 @@ export default function CampaignManagementPage() {
               <Button
                 type="primary"
                 className="btn-collab-cta"
-                icon={<HomeOutlined />}
-                onClick={() => setIsFinishModalOpen(true)}
+                icon={<RocketOutlined />}
+                onClick={() => {
+                  navigate('/campaign-management?tab=crm');
+                  setActiveViewTab('kanban');
+                }}
               >
-                Hoàn thành & Về Trang chủ ➔
+                Chuyển sang trang CRM ➔
               </Button>
               <Button
                 className="btn-performance-cta"
+                icon={<BarChartOutlined />}
                 onClick={() => navigate('/campaigns')}
               >
-                Danh sách Chiến dịch
+                Quay về Chiến dịch
               </Button>
             </div>
           </div>
