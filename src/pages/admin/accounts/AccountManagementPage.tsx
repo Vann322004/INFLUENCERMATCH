@@ -29,11 +29,11 @@ const STATUS_CONFIG: Record<AdminUserStatus, { label: string; color: string; bg:
 };
 
 const ROLE_CONFIG: Record<AdminUserRole, { label: string; color: string; icon: React.ReactNode }> = {
-  super_admin: { label: 'Super Admin', color: '#8B5CF6', icon: <SafetyCertificateOutlined /> },
-  admin:       { label: 'Admin',       color: '#6366F1', icon: <CrownOutlined /> },
-  manager:     { label: 'Manager (Quản lý)', color: '#06B6D4', icon: <ControlOutlined /> },
-  brand:       { label: 'Brand',       color: '#0EA5E9', icon: <TeamOutlined /> },
-  creator:     { label: 'Creator',     color: '#10B981', icon: <UserOutlined /> },
+  super_admin: { label: 'Quản trị viên cấp cao', color: '#8B5CF6', icon: <SafetyCertificateOutlined /> },
+  admin:       { label: 'Quản trị viên',         color: '#6366F1', icon: <CrownOutlined /> },
+  manager:     { label: 'Quản lý',               color: '#06B6D4', icon: <ControlOutlined /> },
+  brand:       { label: 'Doanh nghiệp',           color: '#0EA5E9', icon: <TeamOutlined /> },
+  creator:     { label: 'Nhà sáng tạo',           color: '#10B981', icon: <UserOutlined /> },
 };
 
 export default function AccountManagementPage() {
@@ -131,7 +131,8 @@ export default function AccountManagementPage() {
       key: 'role',
       width: 140,
       render: (role: AdminUserRole) => {
-        const cfg = ROLE_CONFIG[role];
+        const normalized = (role ? String(role).toLowerCase() : 'brand') as AdminUserRole;
+        const cfg = ROLE_CONFIG[normalized] || ROLE_CONFIG.brand;
         return (
           <Tag
             icon={cfg.icon}
@@ -218,14 +219,14 @@ export default function AccountManagementPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
           <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>Quản lý Tài khoản</div>
-          <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>Quản lý toàn bộ tài khoản Admin, Manager, Brand và Creator</div>
+          <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>Quản lý toàn bộ tài khoản Quản trị, Quản lý, Doanh nghiệp và Nhà sáng tạo</div>
         </div>
         <Space>
           <Button
             icon={<ExportOutlined />}
             style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#94A3B8' }}
           >
-            Export CSV
+            Xuất file CSV
           </Button>
           <Button
             type="primary"
@@ -233,7 +234,7 @@ export default function AccountManagementPage() {
             onClick={() => setCreateOpen(true)}
             style={{ background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)', border: 'none', fontWeight: 700 }}
           >
-            Tạo Admin / Manager
+            Tạo Quản trị / Quản lý
           </Button>
         </Space>
       </div>
@@ -291,11 +292,11 @@ export default function AccountManagementPage() {
               suffixIcon={<FilterOutlined style={{ color: '#64748B' }} />}
             >
               <Option value="all">Tất cả vai trò</Option>
-              <Option value="super_admin">Super Admin</Option>
-              <Option value="admin">Admin</Option>
-              <Option value="manager">Manager (Quản lý)</Option>
-              <Option value="brand">Brand</Option>
-              <Option value="creator">Creator</Option>
+              <Option value="super_admin">Quản trị viên cấp cao</Option>
+              <Option value="admin">Quản trị viên</Option>
+              <Option value="manager">Quản lý</Option>
+              <Option value="brand">Doanh nghiệp</Option>
+              <Option value="creator">Nhà sáng tạo</Option>
             </Select>
           </Col>
           <Col xs={12} sm={7} md={5}>

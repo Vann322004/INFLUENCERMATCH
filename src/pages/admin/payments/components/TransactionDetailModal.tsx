@@ -6,7 +6,7 @@ import {
   CloseCircleOutlined,
   RollbackOutlined,
 } from '@ant-design/icons';
-import type { Transaction, TxnStatus } from '../../../../mock/adminData';
+import type { Transaction, TxnStatus } from '../../../../types/api/admin.types';
 
 interface Props {
   transaction: Transaction | null;

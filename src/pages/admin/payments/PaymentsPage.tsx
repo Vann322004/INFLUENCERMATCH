@@ -11,7 +11,7 @@ import {
   DownloadOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-import type { Transaction, TxnStatus } from '../../../mock/adminData';
+import type { Transaction, TxnStatus } from '../../../types/api/admin.types';
 import { adminService, type PaymentStats } from '../../../services/api/adminService';
 import TransactionDetailModal from './components/TransactionDetailModal';
 import RefundModal from './components/RefundModal';

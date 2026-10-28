@@ -9,7 +9,7 @@ import {
   EyeTwoTone,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { adminAuthService } from '../../mock/adminData';
+import { adminAuthService } from '../../services/api/adminAuthService';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 
 export default function AdminLoginPage() {
@@ -210,8 +210,7 @@ export default function AdminLoginPage() {
           }}
         >
           <div style={{ color: '#94A3B8', fontSize: 11, fontWeight: 500, lineHeight: 1.6 }}>
-            <div>Admin: <span style={{ color: '#A5B4FC', fontWeight: 700 }}>admin@influencermatch.vn</span> / <span style={{ color: '#A5B4FC', fontWeight: 700 }}>admin123</span></div>
-            <div style={{ marginTop: 2 }}>Manager: <span style={{ color: '#38BDF8', fontWeight: 700 }}>manager@influencermatch.vn</span> / <span style={{ color: '#38BDF8', fontWeight: 700 }}>manager123</span></div>
+            <div>Cổng quản trị dành riêng cho tài khoản vai trò <span style={{ color: '#A5B4FC', fontWeight: 700 }}>ADMIN</span> và <span style={{ color: '#38BDF8', fontWeight: 700 }}>DATA_MANAGER</span></div>
           </div>
         </div>
 

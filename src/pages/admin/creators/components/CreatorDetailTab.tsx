@@ -5,7 +5,7 @@ import {
 } from 'antd';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { creatorService } from '../../../../services/api/creatorService';
-import type { AdminCreator } from '../../../../mock/adminData';
+import type { AdminCreator } from '../../../../types/api/admin.types';
 
 const { Text, Title } = Typography;
 

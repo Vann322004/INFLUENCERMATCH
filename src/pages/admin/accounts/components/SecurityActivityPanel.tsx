@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Timeline, Tag, Typography, Spin } from 'antd';
 import {
-  LoginOutlined, WarningOutlined, KeyOutlined, MobileOutlined,
+  LoginOutlined, WarningOutlined, KeyOutlined,
 } from '@ant-design/icons';
 import { adminService } from '../../../../services/api/adminService';
 import type { AuditLogItem } from '../../../../types/api/admin.types';
@@ -14,6 +14,23 @@ const ACTION_ICON: Record<string, { icon: React.ReactNode; color: string }> = {
   UPDATE: { icon: <KeyOutlined />,   color: '#F59E0B' },
   CREATE: { icon: <KeyOutlined />,   color: '#6366F1' },
   DELETE: { icon: <WarningOutlined />, color: '#EF4444' },
+};
+
+const ACTION_MAP: Record<string, string> = {
+  LOGIN:  'Đăng nhập',
+  LOGOUT: 'Đăng xuất',
+  UPDATE: 'Cập nhật',
+  CREATE: 'Tạo mới',
+  DELETE: 'Xóa',
+};
+
+const RESOURCE_MAP: Record<string, string> = {
+  Auth: 'Hệ thống xác thực',
+  Account: 'Tài khoản',
+  ScoringConfig: 'Cấu hình tính điểm',
+  SubscriptionPlan: 'Gói dịch vụ',
+  Creator: 'Nhà sáng tạo',
+  DataConnector: 'Nguồn kết nối dữ liệu',
 };
 
 interface SecurityActivityPanelProps {
@@ -38,23 +55,25 @@ export default function SecurityActivityPanel({ userId }: SecurityActivityPanelP
   return (
     <div>
       <div style={{ fontWeight: 700, fontSize: 14, color: '#0F172A', marginBottom: 14 }}>
-        Lich su hoat dong bao mat
+        Lịch sử hoạt động bảo mật
       </div>
       {loading ? (
         <Spin size="small" />
       ) : activities.length === 0 ? (
-        <Text type="secondary" style={{ fontSize: 13 }}>Khong co du lieu.</Text>
+        <Text type="secondary" style={{ fontSize: 13 }}>Không có dữ liệu hoạt động.</Text>
       ) : (
         <Timeline
           items={activities.map(act => {
             const cfg = ACTION_ICON[act.action] ?? { icon: <LoginOutlined />, color: '#94A3B8' };
+            const actionText = ACTION_MAP[act.action] || act.action;
+            const resourceText = RESOURCE_MAP[act.resource] || act.resource;
             return {
               color: cfg.color,
               dot: <span style={{ color: cfg.color, fontSize: 14 }}>{cfg.icon}</span>,
               children: (
                 <div style={{ paddingBottom: 8 }}>
                   <div style={{ fontWeight: 600, fontSize: 13, color: '#0F172A' }}>
-                    {act.action} - {act.resource}
+                    {actionText} • {resourceText}
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
                     <Tag color="default" style={{ fontSize: 11, borderRadius: 6 }}>

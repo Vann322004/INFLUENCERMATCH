@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Form, Input, Alert, Descriptions } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import type { Transaction } from '../../../../mock/adminData';
+import type { Transaction } from '../../../../types/api/admin.types';
 
 interface Props {
   transaction: Transaction | null;

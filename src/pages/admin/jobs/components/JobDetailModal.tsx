@@ -8,7 +8,7 @@ import {
   StopOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
-import type { CollectionJob, JobStatus } from '../../../../mock/adminData';
+import type { CollectionJob, JobStatus } from '../../../../types/api/admin.types';
 
 const { Text, Paragraph } = Typography;
 

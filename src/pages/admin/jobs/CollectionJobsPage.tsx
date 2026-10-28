@@ -11,7 +11,7 @@ import {
   StopOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
-import { MOCK_JOBS, type CollectionJob, type JobStatus } from '../../../mock/adminData';
+import type { CollectionJob, JobStatus } from '../../../types/api/admin.types';
 import JobDetailModal from './components/JobDetailModal';
 import RetryCancelActions from './components/RetryCancelActions';
 import DataPipelineWorkflowBar from '../../../components/admin/DataPipelineWorkflowBar';
@@ -27,7 +27,7 @@ const STATUS_MAP: Record<JobStatus, { color: string; label: string; icon: React.
 };
 
 export default function CollectionJobsPage() {
-  const [jobs, setJobs] = useState<CollectionJob[]>(MOCK_JOBS);
+  const [jobs, setJobs] = useState<CollectionJob[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');

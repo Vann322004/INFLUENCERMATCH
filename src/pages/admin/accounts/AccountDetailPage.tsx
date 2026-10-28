@@ -30,6 +30,14 @@ const ROLE_COLOR: Record<AdminUserRole, string> = {
   creator:     '#10B981',
 };
 
+const ROLE_LABEL_MAP: Record<AdminUserRole, string> = {
+  super_admin: 'Quản trị viên cấp cao',
+  admin:       'Quản trị viên',
+  manager:     'Quản lý',
+  brand:       'Doanh nghiệp',
+  creator:     'Nhà sáng tạo',
+};
+
 export default function AccountDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -120,7 +128,7 @@ export default function AccountDetailPage() {
                   fontSize: 11,
                 }}
               >
-                {account.roleLabel || account.role}
+                {account.roleLabel || ROLE_LABEL_MAP[account.role] || account.role}
               </Tag>
               <Badge status={statusCfg.color as any} text={
                 <span style={{ color: '#94A3B8', fontSize: 12 }}>{statusCfg.label}</span>

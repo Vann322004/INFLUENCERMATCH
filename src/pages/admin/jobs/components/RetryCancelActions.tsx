@@ -1,7 +1,7 @@
 import React from 'react';
 import { Space, Button, Popconfirm, Tooltip } from 'antd';
 import { RedoOutlined, StopOutlined, EyeOutlined } from '@ant-design/icons';
-import type { CollectionJob } from '../../../../mock/adminData';
+import type { CollectionJob } from '../../../../types/api/admin.types';
 
 interface Props {
   job: CollectionJob;
