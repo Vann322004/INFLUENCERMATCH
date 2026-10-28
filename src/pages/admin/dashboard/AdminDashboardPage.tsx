@@ -365,7 +365,7 @@ export default function AdminDashboardPage() {
   return (
     <div>
       {/* Page Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'gap', gap: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <Title level={3} style={{ color: '#0F172A', margin: 0, fontWeight: 800 }}>
             Bảng điều khiển Quản trị

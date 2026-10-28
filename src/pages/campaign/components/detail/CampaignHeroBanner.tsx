@@ -5,7 +5,8 @@ import { ArrowLeftOutlined, EllipsisOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { CampaignResponse } from '../../../../types/api/campaign.types';
 
-export type { CampaignStatusType } from './campaignDetailTypes';
+import type { CampaignStatusType, CampaignDetailTabKey } from './campaignDetailTypes';
+export type { CampaignStatusType, CampaignDetailTabKey };
 
 interface CampaignHeroBannerProps {
   campaignTitle: string;
@@ -15,7 +16,7 @@ interface CampaignHeroBannerProps {
   handleActivate: () => void;
   handleComplete: () => void;
   moreMenuItems: MenuProps['items'];
-  setActiveTab: (tab: string) => void;
+  setActiveTab: (tab: CampaignDetailTabKey) => void;
   translateObjective: (obj?: string) => string;
   translateNiche: (niche?: string) => string;
 }

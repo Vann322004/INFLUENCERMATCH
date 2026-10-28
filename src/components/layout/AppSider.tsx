@@ -167,8 +167,9 @@ export default function AppSider({ collapsed: initialCollapsed = false }: AppSid
   const userName = currentUser?.fullName || 'Acme Brand Manager';
 
   // Determine active key from current URL path
-  const getActiveKey = () => {
+  const getActiveKey = (): 'subscription' | 'collaboration' | 'crm' | 'performance' | 'campaigns' | 'dashboard' | 'profile' => {
     const path = location.pathname;
+    if (path.includes('profile')) return 'profile';
     if (path.includes('subscription') || path.includes('billing') || path.includes('plans')) return 'subscription';
     if (path.includes('collaboration') || path.includes('collab') || path.includes('operations')) return 'collaboration';
     if (path.includes('crm') || path.includes('outreach') || path.includes('relationship')) return 'crm';

@@ -1,7 +1,8 @@
 import React from 'react';
 import type { CampaignResponse } from '../../../../types/api/campaign.types';
 
-export type { CampaignCreatorRow } from './campaignDetailTypes';
+import type { CampaignCreatorRow, CampaignDetailTabKey } from './campaignDetailTypes';
+export type { CampaignCreatorRow, CampaignDetailTabKey };
 
 const VERIFIED_CREATOR_AVATARS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
@@ -17,7 +18,7 @@ interface CampaignMetricCardsProps {
   progressPercent: number;
   rawCampaign: CampaignResponse | null;
   participatingCreators: CampaignCreatorRow[];
-  setActiveTab: (tab: string) => void;
+  setActiveTab: (tab: CampaignDetailTabKey) => void;
 }
 
 export const CampaignMetricCards: React.FC<CampaignMetricCardsProps> = ({

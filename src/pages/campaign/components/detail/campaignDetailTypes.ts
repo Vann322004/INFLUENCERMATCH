@@ -2,6 +2,7 @@ import type { CampaignResponse } from '../../../../types/api/campaign.types';
 import type { Campaign } from '../../../../data/mockData';
 
 export type CampaignStatusType = 'running' | 'draft' | 'completed' | 'cancelled';
+export type CampaignDetailTabKey = 'overview' | 'creators' | 'budget' | 'timeline' | 'guidelines';
 
 export interface CampaignCreatorRow {
   id: string;
