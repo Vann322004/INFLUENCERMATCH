@@ -26,12 +26,12 @@ export default function AppHeader() {
       return { root: 'Trang chủ', sub: 'Chiến dịch', subLink: '/campaigns', current: 'Tạo chiến dịch mới' };
     }
     if (p.includes('/creators/shortlist')) {
-      return { root: 'Trang chủ', sub: 'Khám phá KOC', subLink: '/creators', current: 'Danh sách chọn KOC' };
+      return { root: 'Trang chủ', sub: 'Khám phá Nhà sáng tạo', subLink: '/creators', current: 'Danh sách chọn' };
     }
     if (p.includes('/creators/recommendations')) {
-      return { root: 'Trang chủ', sub: 'Khám phá KOC', subLink: '/creators', current: 'Gợi ý AI' };
+      return { root: 'Trang chủ', sub: 'Khám phá Nhà sáng tạo', subLink: '/creators', current: 'Gợi ý AI' };
     }
-    if (p.includes('/creators')) return { root: 'Trang chủ', current: 'Khám phá KOC' };
+    if (p.includes('/creators')) return { root: 'Trang chủ', current: 'Khám phá Nhà sáng tạo' };
     if (p.includes('/crm')) return { root: 'Trang chủ', current: 'Tiếp cận & Kết nối' };
     if (p.includes('/collaboration')) return { root: 'Trang chủ', current: 'Hợp tác & Vận hành' };
     if (p.includes('/performance')) return { root: 'Trang chủ', current: 'Báo cáo & Hiệu suất' };

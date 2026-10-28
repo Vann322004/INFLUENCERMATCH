@@ -969,10 +969,10 @@ export default function CreatorShortlistPage() {
           {campaignOptions.find((c) => c.value === selectedCampaign)?.label?.replace(/^🎯\s*/, '') || 'Tất cả chiến dịch'}
         </span>
         <span className="cdiscovery-breadcrumb-sep">›</span>
-        <span className="cdiscovery-breadcrumb-current">Danh sách chọn KOC</span>
+        <span className="cdiscovery-breadcrumb-current">Danh sách chọn Nhà sáng tạo</span>
       </div>
 
-      {/* 2. Top Stepper 5 bước đồng bộ giao diện với Khám phá KOC */}
+      {/* 2. Top Stepper 5 bước đồng bộ nghiệp vụ */}
       <div className="cdiscovery-top-stepper">
         <div
           className="cdiscovery-step-item"
@@ -992,7 +992,7 @@ export default function CreatorShortlistPage() {
           <div className="cdiscovery-step-badge done">
             <CheckOutlined />
           </div>
-          <span className="cdiscovery-step-title">Khám phá KOC</span>
+          <span className="cdiscovery-step-title">Khám phá</span>
         </div>
         <div className="cdiscovery-step-line done" />
 
@@ -1004,7 +1004,14 @@ export default function CreatorShortlistPage() {
 
         <div
           className="cdiscovery-step-item"
-          onClick={() => navigate(`/creators/recommendations${selectedCampaign !== 'all' ? `?campaignId=${selectedCampaign}` : ''}`)}
+          onClick={() => {
+            if (creators.length === 0) {
+              message.warning('Vui lòng chọn ít nhất 1 Nhà sáng tạo vào danh sách trước khi xem Gợi ý AI chuyên sâu!');
+              return;
+            }
+            const targetId = selectedCampaign && selectedCampaign !== 'all' ? selectedCampaign : campaigns[0]?.id || 'all';
+            navigate(`/creators/recommendations${targetId !== 'all' ? `?campaignId=${targetId}` : ''}`);
+          }}
         >
           <div className="cdiscovery-step-badge upcoming">4</div>
           <span className="cdiscovery-step-title">Gợi ý AI</span>
@@ -1017,12 +1024,12 @@ export default function CreatorShortlistPage() {
         </div>
       </div>
 
-      {/* 3. Header Bar với Tiêu đề & Chọn Chiến dịch */}
+      {/* 3. Header Bar với Tiêu đề & Chọn Chiến dịch (Đã tinh gọn, không trùng lặp nút) */}
       <div className="shortlist-header-row">
         <div>
-          <h1 className="shortlist-main-title">Danh sách chọn KOC</h1>
+          <h1 className="shortlist-main-title">Danh sách chọn Nhà sáng tạo</h1>
           <p className="shortlist-description">
-            Quản lý KOC theo từng chiến dịch, đánh giá độ phù hợp, ghi chú nội bộ và so sánh trực quan.
+            Quản lý danh sách KOL / KOC theo từng chiến dịch, đánh giá độ phù hợp, ghi chú nội bộ và so sánh trực quan.
           </p>
         </div>
 
@@ -1033,44 +1040,27 @@ export default function CreatorShortlistPage() {
             <Select
               value={selectedCampaign}
               onChange={handleSelectCampaign}
-              style={{ width: 240 }}
+              style={{ width: 260 }}
               options={campaignOptions}
             />
           </div>
 
           <Button
-            type="primary"
-            icon={<ThunderboltFilled />}
-            onClick={() => {
-              const targetId =
-                selectedCampaign && selectedCampaign !== 'all'
-                  ? selectedCampaign
-                  : campaigns[0]?.id || 'all';
-              navigate(`/creators/recommendations${targetId !== 'all' ? `?campaignId=${targetId}` : ''}`);
-            }}
-            style={{
-              background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
-              border: 'none',
-              fontWeight: 700,
-              borderRadius: 10,
-              boxShadow: '0 4px 14px rgba(79, 70, 229, 0.25)',
-              height: 38,
-            }}
-          >
-            Sang Gợi ý AI ➔
-          </Button>
-
-          <Button
             className="btn-add-creator-primary"
             icon={<PlusOutlined />}
             onClick={() => setAddModalOpen(true)}
+            style={{
+              height: 38,
+              borderRadius: 8,
+              fontWeight: 600,
+            }}
           >
-            + Thêm KOC
+            + Thêm Nhà sáng tạo
           </Button>
         </div>
       </div>
 
-      {/* 4. Chuyển đổi chế độ xem: Danh sách KOC vs So sánh KOC */}
+      {/* 4. Chuyển đổi chế độ xem: Danh sách vs So sánh */}
       <div className="shortlist-mode-switcher-bar">
         <div className="mode-switcher-tabs">
           <button
@@ -1078,7 +1068,7 @@ export default function CreatorShortlistPage() {
             onClick={() => setViewMode('board')}
           >
             <UnorderedListOutlined />
-            <span>Danh sách KOC đã chọn</span>
+            <span>Danh sách Nhà sáng tạo</span>
             <span className="mode-count-badge">{filteredCreators.length}</span>
           </button>
 
@@ -1086,13 +1076,13 @@ export default function CreatorShortlistPage() {
             className={`mode-tab-btn ${viewMode === 'compare' ? 'active' : ''}`}
             onClick={() => {
               if (selectedCreators.length < 2) {
-                message.info('Mẹo: Hãy tick chọn ít nhất 2 KOC trên danh sách để so sánh trực quan nhất!');
+                message.info('Mẹo: Hãy tick chọn ít nhất 2 Nhà sáng tạo trên danh sách để so sánh trực quan!');
               }
               setViewMode('compare');
             }}
           >
             <BarChartOutlined />
-            <span>So sánh KOC</span>
+            <span>So sánh Nhà sáng tạo</span>
             <span className="mode-count-badge highlight">
               {selectedCreators.length}/5 đã chọn
             </span>
@@ -1133,7 +1123,7 @@ export default function CreatorShortlistPage() {
               <div className="search-input-wrap">
                 <Input
                   prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
-                  placeholder="Tìm kiếm KOC theo tên, username, ghi chú hoặc lĩnh vực..."
+                  placeholder="Tìm kiếm theo tên, username, ghi chú hoặc lĩnh vực..."
                   allowClear
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -1191,7 +1181,7 @@ export default function CreatorShortlistPage() {
                 <div className="shortlist-empty-box" style={{ padding: '60px 20px', gridColumn: '1 / -1' }}>
                   <Spin size="large" />
                   <div style={{ color: '#64748B', fontWeight: 600, marginTop: 16 }}>
-                    Đang tải danh sách KOC từ hệ thống...
+                    Đang tải danh sách Nhà sáng tạo từ hệ thống...
                   </div>
                 </div>
               ) : filteredCreators.length === 0 ? (
@@ -1199,52 +1189,44 @@ export default function CreatorShortlistPage() {
                   <div style={{ fontSize: 44, marginBottom: 12 }}>🎯</div>
                   <div style={{ fontWeight: 800, fontSize: 18, color: '#0F172A', marginBottom: 6 }}>
                     {creators.length === 0
-                      ? 'Chưa có KOC nào trong Danh sách chọn'
-                      : 'Không tìm thấy KOC nào phù hợp bộ lọc'}
+                      ? 'Chưa có Nhà sáng tạo nào trong Danh sách chọn'
+                      : 'Không tìm thấy Nhà sáng tạo nào phù hợp bộ lọc'}
                   </div>
                   <div style={{ color: '#64748B', fontSize: 14, maxWidth: 520, margin: '0 auto 20px', lineHeight: 1.6 }}>
                     {creators.length === 0
-                      ? `Chiến dịch "${campaignOptions.find((o) => o.value === selectedCampaign)?.label?.replace(/^🎯\s*/, '') || 'được chọn'}" hiện chưa có KOC nào trong danh sách. Hãy duyệt qua kho KOC tại trang Khám phá và bấm "+ Lưu vào danh sách" để đưa họ vào đây so sánh.`
+                      ? `Chiến dịch "${campaignOptions.find((o) => o.value === selectedCampaign)?.label?.replace(/^🎯\s*/, '') || 'được chọn'}" hiện chưa có KOL / KOC nào trong danh sách. Hãy khám phá kho hồ sơ đã được hệ thống đề xuất và bấm "+ Lưu vào danh sách" để đưa họ vào đây so sánh.`
                       : 'Thử tìm kiếm với từ khóa khác hoặc bấm đặt lại bộ lọc để xem toàn bộ danh sách.'}
                   </div>
-                  <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center' }}>
                     {creators.length === 0 ? (
                       <>
                         <Button
                           type="primary"
-                          icon={<ThunderboltFilled />}
+                          icon={<SearchOutlined />}
                           style={{
                             borderRadius: 8,
-                            height: 40,
+                            height: 42,
+                            padding: '0 24px',
                             fontWeight: 700,
                             background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
                             borderColor: 'transparent',
-                            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)',
+                            boxShadow: '0 4px 14px rgba(79, 70, 229, 0.25)',
                           }}
-                          onClick={() => {
-                            const targetId =
-                              selectedCampaign && selectedCampaign !== 'all'
-                                ? selectedCampaign
-                                : campaigns[0]?.id || 'all';
-                            navigate(`/creators/recommendations${targetId !== 'all' ? `?campaignId=${targetId}` : ''}`);
-                          }}
+                          onClick={() =>
+                            navigate(
+                              `/creators${selectedCampaign !== 'all' ? `?campaignId=${selectedCampaign}` : ''}`
+                            )
+                          }
                         >
-                          Sang Gợi ý AI ➔
+                          Khám phá Nhà sáng tạo ngay ➔
                         </Button>
                         <Button
                           type="default"
-                          icon={<SearchOutlined />}
-                          style={{ borderRadius: 8, height: 40, fontWeight: 700, color: '#4F46E5', borderColor: '#C7D2FE' }}
-                          onClick={() => navigate(`/creators${selectedCampaign !== 'all' ? `?campaignId=${selectedCampaign}` : ''}`)}
-                        >
-                          Khám phá KOC ngay ➔
-                        </Button>
-                        <Button
                           icon={<PlusOutlined />}
-                          style={{ borderRadius: 8, height: 40, fontWeight: 600 }}
+                          style={{ borderRadius: 8, height: 42, fontWeight: 600, color: '#4F46E5', borderColor: '#CBD5E1' }}
                           onClick={() => setAddModalOpen(true)}
                         >
-                          + Thêm KOC
+                          + Thêm từ đề xuất
                         </Button>
                       </>
                     ) : (
@@ -1453,7 +1435,7 @@ export default function CreatorShortlistPage() {
                   <tr>
                     <th style={{ width: 40 }}></th>
                     <th style={{ width: 40 }}>⭐</th>
-                    <th>KOC</th>
+                    <th>Nhà sáng tạo</th>
                     <th>Chiến dịch</th>
                     <th>Ưu tiên</th>
                     <th>Người theo dõi</th>
@@ -1469,17 +1451,17 @@ export default function CreatorShortlistPage() {
                       <td colSpan={10} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748B' }}>
                         <div style={{ fontSize: 32, marginBottom: 8 }}>🎯</div>
                         <div style={{ fontWeight: 700, fontSize: 15, color: '#0F172A', marginBottom: 4 }}>
-                          Chưa có KOC nào trong Danh sách chọn
+                          Chưa có Nhà sáng tạo nào trong Danh sách chọn
                         </div>
                         <div style={{ fontSize: 13, marginBottom: 16 }}>
-                          Hãy khám phá và lưu KOC vào danh sách chọn của chiến dịch.
+                          Hãy khám phá và lưu hồ sơ phù hợp vào danh sách chọn của chiến dịch.
                         </div>
                         <Button
                           type="primary"
-                          style={{ background: '#4F46E5', borderRadius: 8 }}
+                          style={{ background: '#4F46E5', borderRadius: 8, height: 38 }}
                           onClick={() => navigate(`/creators${selectedCampaign !== 'all' ? `?campaignId=${selectedCampaign}` : ''}`)}
                         >
-                          Khám phá KOC ngay ➔
+                          Khám phá Nhà sáng tạo ngay ➔
                         </Button>
                       </td>
                     </tr>
@@ -2060,18 +2042,21 @@ export default function CreatorShortlistPage() {
       {/* =========================================================================
           MODAL: THÊM CREATOR VÀO SHORTLIST
           ========================================================================= */}
+      {/* =========================================================================
+          MODAL: THÊM NHÀ SÁNG TẠO VÀO SHORTLIST (TỪ ĐỀ XUẤT DISCOVERY)
+          ========================================================================= */}
       <Modal
-        title="Thêm KOC vào Danh sách chọn"
+        title="Thêm Nhà sáng tạo vào Danh sách chọn"
         open={addModalOpen}
         onCancel={() => setAddModalOpen(false)}
         footer={null}
-        width={560}
+        width={580}
       >
         <div style={{ marginTop: 14 }}>
           {/* Target Campaign */}
           <div style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
-              Thêm vào chiến dịch:
+              Chiến dịch áp dụng:
             </label>
             <Select
               value={addCampaignId}
@@ -2087,7 +2072,7 @@ export default function CreatorShortlistPage() {
               type="warning"
               showIcon
               message="Chưa có chiến dịch nào"
-              description="Bạn cần tạo chiến dịch trước khi có thể lưu trữ KOC vào danh sách chọn."
+              description="Bạn cần tạo chiến dịch trước khi có thể lưu trữ Nhà sáng tạo vào danh sách chọn."
               action={
                 <Button
                   size="small"
@@ -2104,21 +2089,63 @@ export default function CreatorShortlistPage() {
             />
           ) : (
             <>
-              <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
-                Chọn KOC từ kho ứng viên:
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <label style={{ fontSize: 13, fontWeight: 700, margin: 0 }}>
+                  Nhà sáng tạo được AI đề xuất cho chiến dịch:
+                </label>
+                <Tag color="purple" style={{ borderRadius: 6, fontWeight: 600, margin: 0 }}>
+                  Từ trang Khám phá
+                </Tag>
+              </div>
               <Input
-                prefix={<SearchOutlined />}
-                placeholder="Tìm theo tên hoặc username..."
+                prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
+                placeholder="Tìm nhanh theo tên, username hoặc lĩnh vực..."
                 value={candidateSearch}
                 onChange={(e) => setCandidateSearch(e.target.value)}
                 style={{ marginBottom: 14, borderRadius: 8 }}
                 allowClear
               />
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 280, overflowY: 'auto' }}>
-                {Array.from(creatorsMap.values())
-                  .filter((c) => {
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 300, overflowY: 'auto' }}>
+                {(() => {
+                  // Đọc danh sách KOL/KOC đã được pipeline Discovery đề xuất cho chiến dịch
+                  let candidatesList: any[] = [];
+                  try {
+                    const rawDiscovery = localStorage.getItem('IM_DISCOVERY_CREATORS');
+                    if (rawDiscovery) {
+                      const parsed = JSON.parse(rawDiscovery);
+                      if (Array.isArray(parsed) && parsed.length > 0) {
+                        candidatesList = parsed.map((d: any) => ({
+                          id: d.id,
+                          displayName: d.name || d.displayName || d.username,
+                          userName: d.username || d.userName,
+                          avatarUrl: d.avatar || d.avatarUrl,
+                          followers: d.followersCount || d.followers || 0,
+                          engagementRate: d.engagementValue || d.engagementRate || 3.5,
+                          platform: (d.platforms?.[0] || d.platform || 'tiktok').toLowerCase(),
+                          niche: d.categories?.[0] || d.niche || 'Lối sống',
+                          matchRate: d.matchRate || 92,
+                        }));
+                      }
+                    }
+                  } catch {}
+
+                  // Fallback nếu Discovery cache trống: lấy từ danh sách creators hệ thống
+                  if (candidatesList.length === 0) {
+                    candidatesList = Array.from(creatorsMap.values()).map((c) => ({
+                      id: c.creatorId || c.id,
+                      displayName: c.displayName || c.userName,
+                      userName: c.userName,
+                      avatarUrl: c.avatarUrl,
+                      followers: c.followers || 0,
+                      engagementRate: c.engagementRate || 3.5,
+                      platform: (c.platform || 'tiktok').toLowerCase(),
+                      niche: c.niche || 'Lối sống',
+                      matchRate: 90,
+                    }));
+                  }
+
+                  const filtered = candidatesList.filter((c) => {
                     if (!candidateSearch.trim()) return true;
                     const q = candidateSearch.toLowerCase();
                     return (
@@ -2126,10 +2153,31 @@ export default function CreatorShortlistPage() {
                       c.userName?.toLowerCase().includes(q) ||
                       c.niche?.toLowerCase().includes(q)
                     );
-                  })
-                  .slice(0, 15)
-                  .map((cand) => {
-                    const candId = cand.creatorId || cand.id;
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div style={{ textAlign: 'center', padding: '24px 12px', color: '#64748B' }}>
+                        <div style={{ fontSize: 24, marginBottom: 6 }}>🔍</div>
+                        <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>
+                          Không tìm thấy hồ sơ nào phù hợp từ khóa
+                        </div>
+                        <Button
+                          size="small"
+                          type="primary"
+                          onClick={() => {
+                            setAddModalOpen(false);
+                            navigate(`/creators${addCampaignId ? `?campaignId=${addCampaignId}` : ''}`);
+                          }}
+                        >
+                          Sang Khám phá để AI tìm kiếm thêm ➔
+                        </Button>
+                      </div>
+                    );
+                  }
+
+                  return filtered.map((cand) => {
+                    const candId = cand.id;
                     const isAlreadyIn = creators.some(
                       (item) => item.id === candId && (addCampaignId === 'all' || item.campaignId === addCampaignId)
                     );
@@ -2152,14 +2200,21 @@ export default function CreatorShortlistPage() {
                           <img
                             src={cand.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(cand.displayName || cand.userName)}`}
                             alt={cand.displayName}
-                            style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+                            style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover' }}
                           />
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A' }}>
-                              {cand.displayName || cand.userName}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
+                                {cand.displayName}
+                              </span>
+                              {cand.matchRate && (
+                                <Tag color="green" style={{ fontSize: 10.5, lineHeight: '18px', padding: '0 6px', margin: 0, borderRadius: 4, fontWeight: 700 }}>
+                                  {cand.matchRate}% phù hợp
+                                </Tag>
+                              )}
                             </div>
-                            <div style={{ fontSize: 11.5, color: '#64748B' }}>
-                              @{cand.userName?.replace(/^@+/, '')} • {cand.followers ? `${Math.round(cand.followers / 1000)}K` : '—'} • {normalizeNiche(cand.niche)}
+                            <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>
+                              @{cand.userName?.replace(/^@+/, '')} • {cand.followers ? `${Math.round(cand.followers / 1000)}K followers` : '—'} • {normalizeNiche(cand.niche)}
                             </div>
                           </div>
                         </div>
@@ -2171,6 +2226,7 @@ export default function CreatorShortlistPage() {
                           loading={isSubmitting}
                           style={{
                             borderRadius: 6,
+                            fontWeight: 600,
                             background: isAlreadyIn ? '#F1F5F9' : '#4F46E5',
                             borderColor: isAlreadyIn ? '#CBD5E1' : '#4F46E5',
                           }}
@@ -2190,7 +2246,7 @@ export default function CreatorShortlistPage() {
                                 platform: cand.platform,
                                 niche: cand.niche,
                                 priority: 'HIGH',
-                                note: 'Đã thêm từ kho ứng viên',
+                                note: `Đã thêm từ danh sách đề xuất (${cand.matchRate || 92}% phù hợp)`,
                               });
                               message.success(`Đã thêm ${cand.displayName || cand.userName} vào Danh sách chọn!`);
                               await loadShortlist(selectedCampaign, campaigns, creatorsMap);
@@ -2201,24 +2257,25 @@ export default function CreatorShortlistPage() {
                             }
                           }}
                         >
-                          {isAlreadyIn ? 'Đã trong list' : '+ Thêm vào'}
+                          {isAlreadyIn ? 'Đã trong danh sách' : '+ Thêm vào'}
                         </Button>
                       </div>
                     );
-                  })}
+                  });
+                })()}
               </div>
 
               <div style={{ marginTop: 14, textAlign: 'center', paddingTop: 10, borderTop: '1px dashed #E2E8F0' }}>
-                <span style={{ fontSize: 12.5, color: '#64748B' }}>Tìm thêm gương mặt mới? </span>
+                <span style={{ fontSize: 12.5, color: '#64748B' }}>Muốn xem thêm các hồ sơ AI phân tích chuyên sâu? </span>
                 <Button
                   type="link"
-                  style={{ padding: 0, fontWeight: 600, fontSize: 13, color: '#4F46E5' }}
+                  style={{ padding: 0, fontWeight: 700, fontSize: 13, color: '#4F46E5' }}
                   onClick={() => {
                     setAddModalOpen(false);
-                    navigate('/creators');
+                    navigate(`/creators${addCampaignId && addCampaignId !== 'all' ? `?campaignId=${addCampaignId}` : ''}`);
                   }}
                 >
-                  Khám phá thêm trên Sàn Creator →
+                  Sang trang Khám phá ➔
                 </Button>
               </div>
             </>
