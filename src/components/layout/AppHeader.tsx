@@ -31,6 +31,13 @@ export default function AppHeader() {
     if (p.includes('/creators/recommendations')) {
       return { root: 'Trang chủ', sub: 'Khám phá Nhà sáng tạo', subLink: '/creators', current: 'Gợi ý AI' };
     }
+    if (
+      p.includes('/creator-detail') ||
+      p.includes('/creators/detail') ||
+      (p.startsWith('/creators/') && p !== '/creators/shortlist' && p !== '/creators/recommendations' && p !== '/creators/discover')
+    ) {
+      return { root: 'Trang chủ', sub: 'Khám phá Nhà sáng tạo', subLink: '/creators', current: 'Chi tiết nhà sáng tạo' };
+    }
     if (p.includes('/creators')) return { root: 'Trang chủ', current: 'Khám phá Nhà sáng tạo' };
     if (p.includes('/crm')) return { root: 'Trang chủ', current: 'Tiếp cận & Kết nối' };
     if (p.includes('/collaboration')) return { root: 'Trang chủ', current: 'Hợp tác & Vận hành' };
