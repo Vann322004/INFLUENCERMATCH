@@ -452,6 +452,14 @@ export default function CreateCampaignPage() {
       .filter(Boolean) as CampaignPlatform[];
 
     // Map phân khúc creator sang followerMin / followerMax cho backend
+    const minFollowersMap: Record<string, number> = {
+      '10k': 10000,
+      '50k': 50000,
+      '100k': 100000,
+      '500k': 500000,
+    };
+    const parsedMinFollowers = minFollowers ? minFollowersMap[minFollowers.toLowerCase()] : undefined;
+
     const tierFollowersMap: Record<string, { min: number; max: number }> = {
       nano: { min: 5000, max: 50000 },
       micro: { min: 50000, max: 200000 },
@@ -459,6 +467,12 @@ export default function CreateCampaignPage() {
       mega: { min: 1000000, max: 10000000 },
     };
     const tierRange = tierFollowersMap[creatorTier] || { min: 50000, max: 200000 };
+
+    // Ưu tiên chọn ngưỡng follower lớn hơn giữa phân khúc creatorTier và minFollowers người dùng chọn
+    const finalFollowerMin = parsedMinFollowers !== undefined
+      ? Math.max(parsedMinFollowers, tierRange.min)
+      : tierRange.min;
+    const finalFollowerMax = Math.max(tierRange.max, finalFollowerMin * 2);
 
     const primaryObj = selectedObjectives[0] || 'awareness';
     const niches = interests
@@ -479,8 +493,8 @@ export default function CreateCampaignPage() {
       platforms: mappedPlatforms.length > 0 ? mappedPlatforms : ['TIKTOK', 'INSTAGRAM'],
       budgetMin: budgetTotal ? Math.round(budgetTotal * 0.8) : 10000000,
       budgetMax: budgetTotal || 25000000,
-      followerMin: tierRange.min,
-      followerMax: tierRange.max,
+      followerMin: finalFollowerMin,
+      followerMax: finalFollowerMax,
       niches,
       locations,
       targetAudiences: audiences.length > 0 ? audiences : ['18-24', '25-34'],
@@ -788,6 +802,8 @@ export default function CreateCampaignPage() {
             channels: payload.platforms?.map((p: string) => p.toLowerCase()) || ['tiktok'],
             status: 'READY_FOR_DISCOVERY',
             requirements: creatorBrief || product,
+            followerMin: payload.followerMin,
+            followerMax: payload.followerMax,
           }));
         } catch (storageErr) {
           console.warn('Cannot write to localStorage:', storageErr);
@@ -797,7 +813,11 @@ export default function CreateCampaignPage() {
         navigate('/creators?autoRun=true', {
           state: {
             campaignId: targetCampaignId,
-            createdCampaign,
+            createdCampaign: {
+              ...(createdCampaign || {}),
+              followerMin: payload.followerMin,
+              followerMax: payload.followerMax,
+            },
           },
         });
       } catch (err) {

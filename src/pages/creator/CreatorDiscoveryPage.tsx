@@ -315,8 +315,22 @@ export const computeCreatorMatch = (
   else if (eng >= 4.0) engagementScore = 17;
   else if (eng >= 2.0) engagementScore = 13;
 
-  // 5. Điểm quy mô người theo dõi
+  // 5. Điểm quy mô người theo dõi & Kiểm tra tiêu chuẩn Follower của chiến dịch
   const followers = creator.followersCount || 0;
+  if (camp.followerMin && followers < camp.followerMin) {
+    return {
+      matchRate: 35,
+      matchLevel: 'low',
+      reason: `Lượng follower (${creator.followers}) thấp hơn mức tối thiểu yêu cầu của chiến dịch (${camp.followerMin.toLocaleString('vi-VN')} followers).`,
+    };
+  }
+  if (camp.followerMax && followers > camp.followerMax) {
+    return {
+      matchRate: 40,
+      matchLevel: 'low',
+      reason: `Lượng follower (${creator.followers}) vượt quá mức tối đa yêu cầu của chiến dịch (${camp.followerMax.toLocaleString('vi-VN')} followers).`,
+    };
+  }
   let followerScore = 10;
   if (followers >= 50000 && followers <= 300000) followerScore = 16;
   else if (followers > 300000 && followers <= 1000000) followerScore = 14;
@@ -431,11 +445,13 @@ export interface BrandCampaignItem {
   channels?: string[];
   status?: string;
   requirements?: string;
+  followerMin?: number;
+  followerMax?: number;
 }
 
 export const BRAND_CAMPAIGNS: BrandCampaignItem[] = [];
 
-const mapApiCampaignToItem = (c: CampaignResponse): BrandCampaignItem => {
+const mapApiCampaignToItem = (c: CampaignResponse | any): BrandCampaignItem => {
   const tag = (c.niches && c.niches.length > 0)
     ? c.niches.join(', ')
     : (c.productService || 'Chiến dịch');
@@ -452,6 +468,9 @@ const mapApiCampaignToItem = (c: CampaignResponse): BrandCampaignItem => {
     tag,
     target,
     suggestedCategory,
+    budget: c.budgetMax ? `${(c.budgetMax / 1000000).toFixed(1)}M VND` : undefined,
+    followerMin: c.followerMin !== undefined && c.followerMin !== null ? Number(c.followerMin) : undefined,
+    followerMax: c.followerMax !== undefined && c.followerMax !== null ? Number(c.followerMax) : undefined,
   };
 };
 
@@ -616,6 +635,8 @@ export default function CreatorDiscoveryPage() {
                         channels: parsed.channels || ['tiktok'],
                         status: 'ACTIVE',
                         requirements: parsed.requirements || '',
+                        followerMin: parsed.followerMin ? Number(parsed.followerMin) : undefined,
+                        followerMax: parsed.followerMax ? Number(parsed.followerMax) : undefined,
                       };
                     }
                   }
@@ -678,6 +699,8 @@ export default function CreatorDiscoveryPage() {
                     channels: parsed.channels || ['tiktok'],
                     status: 'ACTIVE',
                     requirements: parsed.requirements || '',
+                    followerMin: parsed.followerMin ? Number(parsed.followerMin) : undefined,
+                    followerMax: parsed.followerMax ? Number(parsed.followerMax) : undefined,
                   };
                 }
               } catch {}
@@ -717,12 +740,24 @@ export default function CreatorDiscoveryPage() {
     });
 
     try {
-      let minF: number | undefined;
-      let maxF: number | undefined;
-      if (followerTier === 'nano') { minF = 1000; maxF = 20000; }
-      else if (followerTier === 'micro') { minF = 20000; maxF = 100000; }
-      else if (followerTier === 'macro') { minF = 100000; maxF = 500000; }
-      else if (followerTier === 'mega') { minF = 500000; }
+      let minF: number | undefined = camp.followerMin;
+      let maxF: number | undefined = camp.followerMax;
+      if (followerTier === 'nano') { minF = 1000; maxF = 50000; }
+      else if (followerTier === 'micro') { minF = 50000; maxF = 200000; }
+      else if (followerTier === 'macro') { minF = 200000; maxF = 1000000; }
+      else if (followerTier === 'mega') { minF = 1000000; maxF = undefined; }
+      else if (camp.followerMin) {
+        minF = camp.followerMin;
+        maxF = camp.followerMax;
+      }
+
+      // Đồng bộ bộ lọc hiển thị Follower theo chiến dịch nếu chưa chọn lọc tay
+      if (followerTier === 'all' && camp.followerMin) {
+        if (camp.followerMin >= 1000000) setFollowerTier('mega');
+        else if (camp.followerMin >= 200000) setFollowerTier('macro');
+        else if (camp.followerMin >= 50000) setFollowerTier('micro');
+        else if (camp.followerMin < 50000) setFollowerTier('nano');
+      }
 
       let backendCandidates: any[] = [];
       try {
@@ -916,6 +951,8 @@ export default function CreatorDiscoveryPage() {
             const discoveryRes = await creatorService.discoverCreators(matchedCampaign.id, {
               keyword: searchTerm.trim() || undefined,
               niche: selectedCategory !== 'all' ? selectedCategory : undefined,
+              minFollowers: matchedCampaign.followerMin,
+              maxFollowers: matchedCampaign.followerMax,
               page: 0,
               size: 20,
             });
@@ -1156,8 +1193,17 @@ export default function CreatorDiscoveryPage() {
           if (c.location !== selectedLocation) return false;
         }
 
-        // Khi đang tìm KOC cho Chiến dịch: chỉ giữ lại những ai thực sự phù hợp (matchRate >= 65 và không bị low)
+        // Khi đang tìm KOC cho Chiến dịch:
         if (matchedCampaign) {
+          // Bắt buộc: Lọc chặt chẽ theo ngưỡng followerMin / followerMax của chiến dịch
+          if (matchedCampaign.followerMin && c.followersCount < matchedCampaign.followerMin) {
+            return false;
+          }
+          if (matchedCampaign.followerMax && c.followersCount > matchedCampaign.followerMax) {
+            return false;
+          }
+
+          // Chỉ giữ lại những ai thực sự phù hợp (matchRate >= 65 và không bị low)
           if (c.matchRate < 65 || c.matchLevel === 'low') return false;
         }
 
