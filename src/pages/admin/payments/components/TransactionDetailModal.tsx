@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Descriptions, Tag, Timeline, Button, Divider, Typography } from 'antd';
+import { Modal, Descriptions, Tag, Timeline, Button, Divider } from 'antd';
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -7,8 +7,6 @@ import {
   RollbackOutlined,
 } from '@ant-design/icons';
 import type { Transaction, TxnStatus } from '../../../../mock/adminData';
-
-const { Text } = Typography;
 
 interface Props {
   transaction: Transaction | null;

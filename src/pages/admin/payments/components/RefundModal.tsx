@@ -1,9 +1,7 @@
 import React from 'react';
-import { Modal, Form, Input, Alert, Descriptions, Typography } from 'antd';
+import { Modal, Form, Input, Alert, Descriptions } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import type { Transaction } from '../../../../mock/adminData';
-
-const { Text } = Typography;
 
 interface Props {
   transaction: Transaction | null;

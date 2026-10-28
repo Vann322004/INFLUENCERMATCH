@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Table, Tag, Input, Select, Button, Row, Col, Space, Typography, Tooltip, message } from 'antd';
+import { Card, Table, Tag, Input, Select, Button, Row, Col, Space, Tooltip, message, Alert } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   SearchOutlined,
@@ -16,8 +16,6 @@ import { adminService, type PaymentStats } from '../../../services/api/adminServ
 import TransactionDetailModal from './components/TransactionDetailModal';
 import RefundModal from './components/RefundModal';
 
-const { Text } = Typography;
-
 const STATUS_CFG: Record<TxnStatus, { label: string; color: string; icon: React.ReactNode }> = {
   paid:     { label: 'Thành công',   color: 'success',    icon: <CheckCircleOutlined /> },
   pending:  { label: 'Đang xử lý',   color: 'processing', icon: <ClockCircleOutlined /> },
@@ -28,6 +26,7 @@ const STATUS_CFG: Record<TxnStatus, { label: string; color: string; icon: React.
 export default function PaymentsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [stats, setStats] = useState<PaymentStats>({
     totalRevenue: 0,
     totalRefunded: 0,
@@ -50,9 +49,10 @@ export default function PaymentsPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
 
-  // Fetch transactions and stats from backend
+  // Fetch transactions and stats from backend API
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setAuthError(null);
     try {
       const [txnRes, statsRes] = await Promise.all([
         adminService.getTransactions({
@@ -65,11 +65,19 @@ export default function PaymentsPage() {
         adminService.getTransactionStats(),
       ]);
 
-      setTransactions(txnRes.items);
-      setTotalElements(txnRes.totalElements);
+      setTransactions(txnRes.items || []);
+      setTotalElements(txnRes.totalElements || 0);
       setStats(statsRes);
-    } catch (err) {
+    } catch (err: any) {
       console.error('[PaymentsPage] Error fetching data:', err);
+      if (err?.response?.status === 401) {
+        setAuthError('Yêu cầu xác thực (401 Unauthorized): Cần có token Admin hợp lệ để xem và đối soát dữ liệu giao dịch. Vui lòng đăng nhập lại tài khoản Admin.');
+        message.error('Lỗi 401: Phiên đăng nhập chưa được xác thực hoặc token đã hết hạn!');
+      } else {
+        message.error(err?.response?.data?.message || err?.message || 'Không thể tải danh sách giao dịch từ máy chủ.');
+      }
+      setTransactions([]);
+      setTotalElements(0);
     } finally {
       setLoading(false);
     }
@@ -267,13 +275,29 @@ export default function PaymentsPage() {
         </Space>
       </div>
 
+      {/* Thông báo xác thực nếu gặp 401 */}
+      {authError && (
+        <Alert
+          type="error"
+          showIcon
+          message="Yêu cầu đăng nhập xác thực (401 Unauthorized)"
+          description={authError}
+          style={{ marginBottom: 20, borderRadius: 10 }}
+          action={
+            <Button size="small" type="primary" danger onClick={() => { window.location.href = '/login'; }}>
+              Đăng nhập tài khoản Admin
+            </Button>
+          }
+        />
+      )}
+
       {/* Financial KPI Cards */}
       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
         <Col xs={24} sm={12} lg={6}>
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>DOANH THU THỰC NHẬN</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#10B981', marginTop: 4 }}>
-              {(stats.totalRevenue / 1e6).toFixed(2)} tr
+              {stats.totalRevenue >= 1e6 ? `${(stats.totalRevenue / 1e6).toFixed(2)} tr` : `${stats.totalRevenue.toLocaleString('vi-VN')} đ`}
             </div>
             <div style={{ fontSize: 11, color: '#10B981', marginTop: 2 }}>{stats.paidCount} giao dịch thành công</div>
           </Card>
@@ -283,7 +307,7 @@ export default function PaymentsPage() {
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>ĐANG CHỜ THANH TOÁN</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#3B82F6', marginTop: 4 }}>
-              {(stats.totalPending / 1e6).toFixed(2)} tr
+              {stats.totalPending >= 1e6 ? `${(stats.totalPending / 1e6).toFixed(2)} tr` : `${stats.totalPending.toLocaleString('vi-VN')} đ`}
             </div>
             <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{stats.pendingCount} đơn chờ xác nhận từ gateway</div>
           </Card>
@@ -293,7 +317,7 @@ export default function PaymentsPage() {
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>TIỀN ĐÃ HOÀN TRẢ</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#EF4444', marginTop: 4 }}>
-              {(stats.totalRefunded / 1e6).toFixed(2)} tr
+              {stats.totalRefunded >= 1e6 ? `${(stats.totalRefunded / 1e6).toFixed(2)} tr` : `${stats.totalRefunded.toLocaleString('vi-VN')} đ`}
             </div>
             <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{stats.refundedCount} giao dịch hoàn trả</div>
           </Card>
@@ -314,7 +338,7 @@ export default function PaymentsPage() {
       <Card
         bordered={false}
         style={{ borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', overflow: 'hidden' }}
-        bodyStyle={{ padding: '16px 20px' }}
+        styles={{ body: { padding: '16px 20px' } }}
       >
         {/* Filters */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>

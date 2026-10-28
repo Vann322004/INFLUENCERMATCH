@@ -227,7 +227,7 @@ export default function LoginPage() {
           <Button
             size="small"
             style={{ fontSize: 11, borderColor: '#6366F1', color: '#4F46E5', borderRadius: 6 }}
-            onClick={() => form.setFieldsValue({ email: 'admin@influencermatch.vn', password: 'admin123' })}
+            onClick={() => form.setFieldsValue({ email: 'admin@influencermatch.com', password: 'Password123!' })}
           >
             Điền Admin
           </Button>

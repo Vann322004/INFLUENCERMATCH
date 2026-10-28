@@ -30,7 +30,6 @@ import type {
 import {
   DEFAULT_ADMIN_ACCOUNTS,
   DEFAULT_AUDIT_LOGS,
-  MOCK_TRANSACTIONS,
   type Transaction,
   type TxnStatus,
 } from '../../mock/adminData';
@@ -38,7 +37,6 @@ import {
 // ── In-Memory State for Local Persistence across Actions ──
 let memoryUsers: AdminUser[] = [...DEFAULT_ADMIN_ACCOUNTS];
 let memoryAuditLogs: AuditLogItem[] = [...DEFAULT_AUDIT_LOGS];
-let memoryTransactions: Transaction[] = [...MOCK_TRANSACTIONS];
 
 export interface PaymentStats {
   totalRevenue: number;
@@ -548,22 +546,21 @@ const formatTxnDate = (isoString?: string): string => {
 
 /** GET /admin/payments — List transactions with backend API */
 const getTransactions = async (params?: GetTransactionsParams): Promise<TransactionsResponse> => {
-  try {
-    const apiParams: Record<string, any> = {
-      page: params?.page ?? 0,
-      size: params?.size ?? 20,
-    };
-    if (params?.search?.trim()) apiParams.search = params.search.trim();
-    if (params?.status && params.status !== 'all') apiParams.status = params.status.toUpperCase();
-    if (params?.gateway && params.gateway !== 'all') apiParams.gateway = params.gateway;
+  const apiParams: Record<string, any> = {
+    page: params?.page ?? 0,
+    size: params?.size ?? 10,
+  };
+  if (params?.search?.trim()) apiParams.search = params.search.trim();
+  if (params?.status && params.status !== 'all') apiParams.status = params.status.toUpperCase();
+  if (params?.gateway && params.gateway !== 'all') apiParams.gateway = params.gateway;
 
-    const response = await apiClient.get<any>('/admin/payments', { params: apiParams });
-    const payload = response.data;
-    const pageData = payload?.data ?? payload;
-    const rawItems = pageData?.items ?? pageData?.content ?? [];
+  const response = await apiClient.get<any>('/admin/payments', { params: apiParams });
+  const payload = response.data;
+  const pageData = payload?.data ?? payload;
+  const rawItems = pageData?.items ?? pageData?.content ?? [];
 
-    if (Array.isArray(rawItems)) {
-      const items: Transaction[] = rawItems.map((r: any) => ({
+  const items: Transaction[] = Array.isArray(rawItems)
+    ? rawItems.map((r: any) => ({
         id: r.id,
         ref: r.ref || r.transactionCode || r.id,
         userId: r.userId || '',
@@ -575,117 +572,52 @@ const getTransactions = async (params?: GetTransactionsParams): Promise<Transact
         status: normalizeTxnStatus(r.status),
         createdAt: formatTxnDate(r.createdAt),
         paidAt: r.paidAt ? formatTxnDate(r.paidAt) : '—',
-      }));
-
-      return {
-        items,
-        totalElements: pageData?.totalElements ?? items.length,
-        totalPages: pageData?.totalPages ?? 1,
-        page: pageData?.page ?? 0,
-        size: pageData?.size ?? items.length,
-      };
-    }
-  } catch (err) {
-    console.warn('[adminService.getTransactions] Backend unreachable, using fallback memory data:', err);
-  }
-
-  // Fallback to local memory filter
-  let filtered = [...memoryTransactions];
-  if (params?.search?.trim()) {
-    const q = params.search.trim().toLowerCase();
-    filtered = filtered.filter(
-      (t) =>
-        t.ref.toLowerCase().includes(q) ||
-        t.userName.toLowerCase().includes(q) ||
-        t.userEmail.toLowerCase().includes(q) ||
-        t.plan.toLowerCase().includes(q)
-    );
-  }
-  if (params?.status && params.status !== 'all') {
-    filtered = filtered.filter((t) => t.status === params.status);
-  }
-  if (params?.gateway && params.gateway !== 'all') {
-    const gw = params.gateway.toLowerCase();
-    filtered = filtered.filter((t) => t.gateway.toLowerCase() === gw);
-  }
+      }))
+    : [];
 
   return {
-    items: filtered,
-    totalElements: filtered.length,
-    totalPages: 1,
-    page: 0,
-    size: filtered.length,
+    items,
+    totalElements: pageData?.totalElements ?? items.length,
+    totalPages: pageData?.totalPages ?? 1,
+    page: pageData?.page ?? 0,
+    size: pageData?.size ?? items.length,
   };
 };
 
 /** GET /admin/payments/stats — Financial metrics */
 const getTransactionStats = async (): Promise<PaymentStats> => {
-  try {
-    const response = await apiClient.get<any>('/admin/payments/stats');
-    const d = response.data?.data ?? response.data;
-    if (d && (d.totalRevenue !== undefined || d.paidCount !== undefined)) {
-      return {
-        totalRevenue: Number(d.totalRevenue) || 0,
-        totalRefunded: Number(d.totalRefunded) || 0,
-        totalPending: Number(d.totalPending) || 0,
-        paidCount: Number(d.paidCount) || 0,
-        pendingCount: Number(d.pendingCount) || 0,
-        refundedCount: Number(d.refundedCount) || 0,
-        failedCount: Number(d.failedCount) || 0,
-        totalCount: Number(d.totalCount) || 0,
-      };
-    }
-  } catch (err) {
-    console.warn('[adminService.getTransactionStats] Using fallback statistics:', err);
-  }
-
-  // Fallback calculation from memoryTransactions
-  const totalRevenue = memoryTransactions.filter((t) => t.status === 'paid').reduce((sum, t) => sum + t.amount, 0);
-  const totalRefunded = memoryTransactions.filter((t) => t.status === 'refunded').reduce((sum, t) => sum + t.amount, 0);
-  const totalPending = memoryTransactions.filter((t) => t.status === 'pending').reduce((sum, t) => sum + t.amount, 0);
-
+  const response = await apiClient.get<any>('/admin/payments/stats');
+  const d = response.data?.data ?? response.data;
   return {
-    totalRevenue,
-    totalRefunded,
-    totalPending,
-    paidCount: memoryTransactions.filter((t) => t.status === 'paid').length,
-    pendingCount: memoryTransactions.filter((t) => t.status === 'pending').length,
-    refundedCount: memoryTransactions.filter((t) => t.status === 'refunded').length,
-    failedCount: memoryTransactions.filter((t) => t.status === 'failed').length,
-    totalCount: memoryTransactions.length,
+    totalRevenue: Number(d?.totalRevenue) || 0,
+    totalRefunded: Number(d?.totalRefunded) || 0,
+    totalPending: Number(d?.totalPending) || 0,
+    paidCount: Number(d?.paidCount) || 0,
+    pendingCount: Number(d?.pendingCount) || 0,
+    refundedCount: Number(d?.refundedCount) || 0,
+    failedCount: Number(d?.failedCount) || 0,
+    totalCount: Number(d?.totalCount) || 0,
   };
 };
 
 /** POST /admin/payments/{id}/refund — Refund transaction */
 const refundTransaction = async (id: string, reason?: string): Promise<Transaction | null> => {
-  try {
-    const response = await apiClient.post<any>(`/admin/payments/${id}/refund`, { reason });
-    const r = response.data?.data ?? response.data;
-    if (r) {
-      const updated: Transaction = {
-        id: r.id,
-        ref: r.ref || r.transactionCode || r.id,
-        userId: r.userId || '',
-        userName: r.userName || r.brandName || 'Khách hàng',
-        userEmail: r.userEmail || '',
-        plan: r.plan || 'Gói dịch vụ',
-        amount: Number(r.amount) || 0,
-        gateway: r.gateway || 'VNPAY',
-        status: 'refunded',
-        createdAt: formatTxnDate(r.createdAt),
-        paidAt: r.paidAt ? formatTxnDate(r.paidAt) : '—',
-      };
-      // update memory
-      memoryTransactions = memoryTransactions.map((t) => (t.id === id ? updated : t));
-      return updated;
-    }
-  } catch (err) {
-    console.warn('[adminService.refundTransaction] API call failed, falling back to local update:', err);
-  }
-
-  // Fallback local update
-  memoryTransactions = memoryTransactions.map((t) => (t.id === id ? { ...t, status: 'refunded' } : t));
-  return memoryTransactions.find((t) => t.id === id) || null;
+  const response = await apiClient.post<any>(`/admin/payments/${id}/refund`, { reason });
+  const r = response.data?.data ?? response.data;
+  if (!r) return null;
+  return {
+    id: r.id,
+    ref: r.ref || r.transactionCode || r.id,
+    userId: r.userId || '',
+    userName: r.userName || r.brandName || 'Khách hàng',
+    userEmail: r.userEmail || '',
+    plan: r.plan || 'Gói dịch vụ',
+    amount: Number(r.amount) || 0,
+    gateway: r.gateway || 'VNPAY',
+    status: 'refunded',
+    createdAt: formatTxnDate(r.createdAt),
+    paidAt: r.paidAt ? formatTxnDate(r.paidAt) : '—',
+  };
 };
 
 export const adminService = {
