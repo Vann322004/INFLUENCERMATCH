@@ -226,3 +226,5 @@
 .hv-logo:hover > span, .hv-logo:focus-within > span { max-width: 240px; opacity: 1; transform: translateX(0); margin-left: 10px; }
 .hv-logo-img { transition: transform .5s cubic-bezier(0.22,1,0.36,1); }
 .hv-logo:hover .hv-logo-img { transform: rotate(-8deg) scale(1.05); }
+
+.hv-title-accent { color: #FFD6F0; }
