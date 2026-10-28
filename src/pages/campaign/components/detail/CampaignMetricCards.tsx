@@ -1,19 +1,7 @@
 import React from 'react';
 import type { CampaignResponse } from '../../../../types/api/campaign.types';
 
-export interface CampaignCreatorRow {
-  id: string;
-  name: string;
-  username: string;
-  avatar: string;
-  platform: 'instagram' | 'tiktok';
-  followers: string;
-  fee: string;
-  stageText: string;
-  stageColor: string;
-  deliverableStatus: string;
-  deliverableColor: string;
-}
+export type { CampaignCreatorRow } from './campaignDetailTypes';
 
 const VERIFIED_CREATOR_AVATARS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',

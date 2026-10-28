@@ -5,7 +5,7 @@ import { ArrowLeftOutlined, EllipsisOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { CampaignResponse } from '../../../../types/api/campaign.types';
 
-export type CampaignStatusType = 'running' | 'draft' | 'completed' | 'cancelled';
+export type { CampaignStatusType } from './campaignDetailTypes';
 
 interface CampaignHeroBannerProps {
   campaignTitle: string;
