@@ -1,50 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Typography,
-  Card,
-  Row,
-  Col,
   Tag,
-  Button,
-  Tabs,
   Avatar,
-  Table,
-  Space,
   Modal,
   Input,
   message,
-  Timeline,
-  Dropdown,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 import {
-  ArrowLeftOutlined,
-  CalendarOutlined,
-  CheckCircleFilled,
-  PauseCircleOutlined,
-  StopOutlined,
-  PlayCircleFilled,
   EditOutlined,
-  PlusOutlined,
-  TeamOutlined,
-  DollarOutlined,
-  RiseOutlined,
-  ClockCircleOutlined,
-  ApartmentOutlined,
-  CompassOutlined,
-  FileTextOutlined,
-  SettingOutlined,
-  AimOutlined,
-  TagsOutlined,
   InstagramOutlined,
-  EllipsisOutlined,
-  RightOutlined,
-  CheckOutlined,
-  UserOutlined,
-  WalletOutlined,
-  CopyOutlined,
-  SearchOutlined,
 } from '@ant-design/icons';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
@@ -54,10 +20,14 @@ import type { CampaignResponse } from '../../types/api/campaign.types';
 import { mapApiCampaignToUi } from '../../components/dashboard/CampaignTable';
 import type { Campaign } from '../../data/mockData';
 import './CampaignDetailPage.css';
-
 import type { CampaignItemUI } from './CampaignPage';
-
-const { Title, Text } = Typography;
+import { CampaignHeroBanner } from './components/detail/CampaignHeroBanner';
+import { CampaignMetricCards } from './components/detail/CampaignMetricCards';
+import { CampaignOverviewTab } from './components/detail/CampaignOverviewTab';
+import { CampaignCreatorsTab } from './components/detail/CampaignCreatorsTab';
+import { CampaignBudgetTab } from './components/detail/CampaignBudgetTab';
+import { CampaignTimelineTab } from './components/detail/CampaignTimelineTab';
+import { CampaignGuidelinesTab } from './components/detail/CampaignGuidelinesTab';
 
 type CampaignStatusType = 'running' | 'draft' | 'completed' | 'cancelled';
 
@@ -559,304 +529,31 @@ export default function CampaignDetailPage() {
 
   return (
     <div className="campaign-detail-container">
-      {/* ==========================================================================
-          1. Modern Luxe Hero Welcome Banner (Đồng bộ với Dashboard)
-          ========================================================================== */}
-      <div className="cdetail-hero-banner">
-        {/* Banner Top Bar: Breadcrumb & Date Range (Loại bỏ nút quay lại) */}
-        <div className="cdetail-hero-top-row">
-          <div className="cdetail-hero-breadcrumb">
-            <span className="cdetail-breadcrumb-tag">CHIẾN DỊCH</span>
-            <span>Chi tiết & Quản lý hoạt động</span>
-          </div>
+      {/* 1. Header Banner */}
+      <CampaignHeroBanner
+        campaignTitle={campaignTitle}
+        rawCampaign={rawCampaign}
+        currentStatus={currentStatus}
+        resolvedId={resolvedId}
+        handleActivate={handleActivate}
+        handleComplete={handleComplete}
+        moreMenuItems={moreMenuItems}
+        setActiveTab={setActiveTab}
+        translateObjective={translateObjective}
+        translateNiche={translateNiche}
+      />
 
-          <div className="cdetail-hero-date-chip">
-            <CalendarOutlined style={{ color: '#4F46E5' }} />
-            <span>
-              {rawCampaign?.startDate ? new Date(rawCampaign.startDate).toLocaleDateString('vi-VN') : '26/10/2026'}
-              {' – '}
-              {rawCampaign?.endDate ? new Date(rawCampaign.endDate).toLocaleDateString('vi-VN') : '25/12/2026'}
-            </span>
-          </div>
-        </div>
+      {/* 2. Metric KPI Cards */}
+      <CampaignMetricCards
+        campaignBudgetFormatted={campaignBudgetFormatted}
+        allocatedBudget={allocatedBudget}
+        progressPercent={progressPercent}
+        rawCampaign={rawCampaign}
+        participatingCreators={participatingCreators}
+        setActiveTab={setActiveTab}
+      />
 
-        {/* Banner Middle Content: Badges, Title, Description */}
-        <div className="cdetail-hero-meta">
-          <div className="cdetail-hero-badge-row">
-            <span className={`cdetail-hero-status-tag ${currentStatus}`}>
-              <span className="cdetail-status-dot-pulse" />
-              {currentStatus === 'running'
-                ? 'ĐANG TRIỂN KHAI'
-                : currentStatus === 'completed'
-                ? 'HOÀN THÀNH'
-                : currentStatus === 'cancelled'
-                ? 'ĐÃ LƯU TRỮ'
-                : 'BẢN NHÁP'}
-            </span>
-
-            <span className="cdetail-hero-tag highlight">
-              {translateObjective(rawCampaign?.objective)}
-            </span>
-
-            {((rawCampaign?.platforms && rawCampaign.platforms.length > 0)
-              ? rawCampaign.platforms
-              : (['TIKTOK', 'INSTAGRAM'] as any[])
-            )
-              .filter((p: any) => String(p).toUpperCase() !== 'YOUTUBE')
-              .map((p: any) => (
-                <span key={p} className={`cdetail-hero-tag platform ${String(p).toLowerCase()}`}>
-                  {String(p).toUpperCase() === 'TIKTOK' ? (
-                    <>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
-                      </svg>
-                      TikTok
-                    </>
-                  ) : (
-                    <>
-                      <InstagramOutlined style={{ fontSize: 13, color: '#E1306C' }} />
-                      Instagram
-                    </>
-                  )}
-                </span>
-              ))}
-
-            {(rawCampaign?.niches || ['Beauty', 'Skincare', 'Lifestyle']).map((n) => {
-              const translated = translateNiche(n);
-              const nicheCls = getNicheClass(n);
-              return (
-                <span key={n} className={`cdetail-hero-tag ${nicheCls}`}>
-                  {translated}
-                </span>
-              );
-            })}
-          </div>
-
-          <h1 className="cdetail-hero-title">
-            {campaignTitle}
-          </h1>
-
-          <p className="cdetail-hero-desc">
-            {rawCampaign?.description ||
-              'Chiến dịch ra mắt kem chống nắng dưỡng trắng hè 2026, tiếp cận tệp khách hàng trẻ qua TikTok & Instagram.'}
-          </p>
-        </div>
-
-        {/* Banner Bottom Row: Action Toolbar (Cân đối 2 bên) */}
-        <div className="cdetail-hero-toolbar">
-          <div className="cdetail-hero-workflow">
-            <span className="cdetail-workflow-label">Quy trình:</span>
-            <span className="cdetail-workflow-pill active">
-              <SearchOutlined /> 1. Tìm kiếm KOC
-            </span>
-            <span className="cdetail-workflow-sep">➔</span>
-            <span className="cdetail-workflow-pill active">
-              <ApartmentOutlined /> 2. Đàm phán CRM
-            </span>
-            <span className="cdetail-workflow-sep">➔</span>
-            <span className="cdetail-workflow-pill">
-              <WalletOutlined /> 3. Quyết toán chi phí
-            </span>
-          </div>
-
-          <div className="cdetail-hero-actions-group">
-            {/* Nút 1: Tìm kiếm KOC */}
-            <button
-              type="button"
-              className="cdetail-hero-btn ai-discovery"
-              onClick={() => {
-                const cId = resolvedId || 'camp_sg2026';
-                sessionStorage.setItem('current_campaign_id', cId);
-                navigate(`/discovery?campaignId=${cId}`, { state: { campaignId: cId } });
-              }}
-            >
-              <SearchOutlined style={{ fontSize: 14 }} />
-              Tìm kiếm KOC
-            </button>
-
-            {/* Nút 2 (Phụ): 🗂 Tiến độ hợp tác */}
-            <button
-              type="button"
-              className="cdetail-hero-btn ghost"
-              onClick={() => {
-                sessionStorage.setItem('current_campaign_id', resolvedId);
-                navigate('/crm');
-              }}
-            >
-              <ApartmentOutlined style={{ fontSize: 14 }} />
-              Tiến độ hợp tác
-            </button>
-
-            {/* Nút 3: 💳 Chi phí & Thanh toán */}
-            <button
-              type="button"
-              className="cdetail-hero-btn payment-btn"
-              onClick={() => setActiveTab('budget')}
-            >
-              <WalletOutlined style={{ fontSize: 14 }} />
-              Chi phí & Thanh toán
-            </button>
-
-            {/* Nút 4: Kích hoạt (nếu DRAFT) */}
-            {currentStatus === 'draft' && (
-              <button
-                type="button"
-                className="cdetail-hero-btn success"
-                onClick={handleActivate}
-              >
-                <PlayCircleFilled style={{ fontSize: 14 }} />
-                Kích hoạt
-              </button>
-            )}
-
-            {/* Nút 5: Hoàn thành (nếu đang chạy) */}
-            {currentStatus !== 'completed' && currentStatus !== 'draft' && currentStatus !== 'cancelled' && (
-              <button
-                type="button"
-                className="cdetail-hero-btn outline-success"
-                onClick={handleComplete}
-              >
-                <CheckOutlined style={{ fontSize: 13 }} />
-                Hoàn thành
-              </button>
-            )}
-
-            {/* Nút 6: Tùy chọn khác (...) */}
-            <Dropdown menu={{ items: moreMenuItems }} trigger={['click']} placement="bottomRight">
-              <button type="button" className="cdetail-hero-btn icon-btn" title="Tùy chọn khác">
-                <EllipsisOutlined style={{ fontSize: 18 }} />
-              </button>
-            </Dropdown>
-          </div>
-        </div>
-      </div>
-
-      {/* ==========================================================================
-          2. 4 Metric KPI Cards Row (Đồng bộ chuẩn im-kpi-card Dashboard)
-          ========================================================================== */}
-      <div className="cdetail-metrics-grid">
-        {/* Card 1: Ngân sách kế hoạch */}
-        <div className="cdetail-metric-card">
-          <div className="cdetail-metric-top">
-            <div className="cdetail-metric-icon-box" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
-              <WalletOutlined />
-            </div>
-            <span className="cdetail-metric-title">Ngân sách kế hoạch</span>
-          </div>
-          <div>
-            <div className="cdetail-metric-value">{campaignBudgetFormatted}</div>
-            <div className="cdetail-metric-progress-wrap">
-              <div className="cdetail-metric-progress-bar">
-                <div className="cdetail-metric-progress-fill" style={{ width: `${progressPercent}%` }} />
-              </div>
-              <span className="cdetail-metric-progress-label">{progressPercent}%</span>
-            </div>
-          </div>
-          <div className="cdetail-metric-footer">
-            <span>Đã cam kết: {allocatedBudget > 0 ? `${allocatedBudget.toLocaleString('vi-VN')} đ` : 'Chưa phân bổ'}</span>
-          </div>
-        </div>
-
-        {/* Card 2: Người theo dõi mục tiêu */}
-        <div className="cdetail-metric-card">
-          <div className="cdetail-metric-top">
-            <div className="cdetail-metric-icon-box" style={{ background: '#F3E8FF', color: '#7C3AED' }}>
-              <TeamOutlined />
-            </div>
-            <span className="cdetail-metric-title">Người theo dõi mục tiêu</span>
-          </div>
-          <div className="cdetail-metric-mid-row">
-            <div className="cdetail-metric-value">
-              {rawCampaign?.followerMin ? `${(rawCampaign.followerMin / 1000).toFixed(0)}K+` : '50K+'}
-            </div>
-            <div className="cdetail-sparkline-bars">
-              <div className="cdetail-sparkline-bar" style={{ height: '35%' }} />
-              <div className="cdetail-sparkline-bar" style={{ height: '50%' }} />
-              <div className="cdetail-sparkline-bar" style={{ height: '65%' }} />
-              <div className="cdetail-sparkline-bar" style={{ height: '85%' }} />
-              <div className="cdetail-sparkline-bar" style={{ height: '100%' }} />
-            </div>
-          </div>
-          <div className="cdetail-metric-footer">
-            <span>Yêu cầu tệp khán giả chất lượng</span>
-          </div>
-        </div>
-
-        {/* Card 3: Tỷ lệ tương tác mục tiêu */}
-        <div className="cdetail-metric-card">
-          <div className="cdetail-metric-top">
-            <div className="cdetail-metric-icon-box" style={{ background: '#E0F2FE', color: '#0284C7' }}>
-              <RiseOutlined />
-            </div>
-            <span className="cdetail-metric-title">Tỷ lệ tương tác mục tiêu</span>
-          </div>
-          <div className="cdetail-metric-mid-row">
-            <div className="cdetail-metric-value">4.5% – 8.0%</div>
-            <svg className="cdetail-wave-sparkline" viewBox="0 0 65 24" fill="none">
-              <path
-                d="M1 18 C12 18, 16 6, 26 12 C36 18, 42 4, 52 10 C58 14, 61 8, 64 6"
-                stroke="#818CF8"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                fill="none"
-              />
-            </svg>
-          </div>
-          <div className="cdetail-metric-footer">
-            <span>Tiêu chuẩn tương tác ngành</span>
-          </div>
-        </div>
-
-        {/* Card 4: Nhà sáng tạo trong quy trình */}
-        <div
-          className="cdetail-metric-card"
-          style={{ cursor: 'pointer' }}
-          onClick={() => setActiveTab('creators')}
-        >
-          <div className="cdetail-metric-top">
-            <div className="cdetail-metric-icon-box" style={{ background: '#ECFDF5', color: '#059669' }}>
-              <UserOutlined />
-            </div>
-            <span className="cdetail-metric-title">Nhà sáng tạo trong quy trình</span>
-          </div>
-          <div className="cdetail-metric-mid-row">
-            <div className="cdetail-metric-value">
-              {participatingCreators.length} KOC
-            </div>
-          </div>
-          <div className="cdetail-metric-footer">
-            {participatingCreators.length > 0 ? (
-              <div className="cdetail-avatar-stack">
-                {participatingCreators.slice(0, 3).map((c, i) => {
-                  const safeAvatar = (c.avatar && c.avatar.startsWith('http') && !c.avatar.includes('NaN'))
-                    ? c.avatar
-                    : VERIFIED_CREATOR_AVATARS[i % VERIFIED_CREATOR_AVATARS.length];
-                  return (
-                    <img
-                      key={c.id || i}
-                      src={safeAvatar}
-                      alt={c.name}
-                      title={c.name}
-                      onError={(e) => {
-                        (e.currentTarget as HTMLElement).style.display = 'none';
-                      }}
-                    />
-                  );
-                })}
-                {participatingCreators.length > 3 && (
-                  <div className="avatar-more">+{participatingCreators.length - 3}</div>
-                )}
-              </div>
-            ) : (
-              <span style={{ fontSize: 12, color: '#64748B' }}>Chưa có KOC</span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ==========================================================================
-          3. Modern Pill-Segmented Tabs Navigation (Đồng bộ chuẩn Dashboard)
-          ========================================================================== */}
+      {/* 3. Navigation Tabs */}
       <div className="cdetail-nav-tabs-wrap">
         <div className="cdetail-segmented-tabs">
           <button
@@ -897,519 +594,43 @@ export default function CampaignDetailPage() {
         </div>
       </div>
 
-      {/* ==========================================================================
-          4. Tab Content Area (Full-Width Responsive Architecture)
-          ========================================================================== */}
+      {/* 4. Tab Content Area */}
       <div className="cdetail-tab-content-wrap">
-        {/* TAB 1: TỔNG QUAN CHIẾN DỊCH */}
-          {activeTab === 'overview' && (
-            <div className="cdetail-overview-rows">
-              {/* HÀNG 1: Khung đều nhau trên & dưới (Sản phẩm & Thông tin vận hành) */}
-              <div className="cdetail-overview-row">
-                {/* Card 1: Sản phẩm & Thông điệp */}
-                <div className="cdetail-card-modern">
-                  <div className="cdetail-card-header">
-                    <span className="cdetail-card-title">
-                      <FileTextOutlined style={{ color: '#4F46E5' }} />
-                      Sản phẩm trọng tâm & Định vị
-                    </span>
-                    <button
-                      type="button"
-                      className="cdetail-card-action-btn"
-                      onClick={handleNavigateToEdit}
-                    >
-                      <EditOutlined style={{ fontSize: 12 }} />
-                      Chỉnh sửa
-                    </button>
-                  </div>
+        {activeTab === 'overview' && (
+          <CampaignOverviewTab
+            rawCampaign={rawCampaign}
+            currentStatus={currentStatus}
+            participatingCreators={participatingCreators}
+            handleNavigateToEdit={handleNavigateToEdit}
+            moreMenuItems={moreMenuItems}
+          />
+        )}
 
-                  {/* Box sản phẩm */}
-                  <div className="cdetail-product-box">
-                    <img
-                      src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=100&auto=format&fit=crop&q=80"
-                      alt="Sản phẩm"
-                      className="cdetail-product-img"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLElement).style.display = 'none';
-                      }}
-                    />
-                    <div className="cdetail-product-info">
-                      <span className="cdetail-product-name">
-                        {rawCampaign?.productService || 'Acne Tone-up Daily Sunscreen SPF50+ PA++++'}
-                      </span>
-                      <div className="cdetail-product-tags">
-                        <span className="cdetail-product-tag">LÀM ĐẸP</span>
-                        <span className="cdetail-product-tag">CHĂM SÓC DA</span>
-                        <span className="cdetail-product-tag">PHONG CÁCH SỐNG</span>
-                      </div>
-                    </div>
-                  </div>
+        {activeTab === 'creators' && (
+          <CampaignCreatorsTab
+            participatingCreators={participatingCreators}
+            creatorColumns={creatorColumns}
+            resolvedId={resolvedId}
+          />
+        )}
 
-                  {/* Thông điệp then chốt */}
-                  <div className="cdetail-bullet-group">
-                    <span className="cdetail-bullet-title">Thông điệp then chốt</span>
-                    <div className="cdetail-key-message-box">
-                      "Bảo vệ toàn diện SPF50+ • Nâng tone sáng hồng tự nhiên suốt ngày dài"
-                    </div>
-                  </div>
+        {activeTab === 'budget' && (
+          <CampaignBudgetTab
+            campaignBudgetFormatted={campaignBudgetFormatted}
+            allocatedBudget={allocatedBudget}
+            remainingBudget={remainingBudget}
+            participatingCreators={participatingCreators}
+            campaignTitle={campaignTitle}
+          />
+        )}
 
-                  {/* Đặc tính nổi bật USP */}
-                  <div className="cdetail-bullet-group">
-                    <span className="cdetail-bullet-title">Đặc tính nổi bật</span>
-                    <div className="cdetail-bullet-item">
-                      <span className="cdetail-bullet-icon">✓</span>
-                      <div><strong>SPF50+ PA++++:</strong> Chống tia UVA/UVB & ánh sáng xanh</div>
-                    </div>
-                    <div className="cdetail-bullet-item">
-                      <span className="cdetail-bullet-icon">✓</span>
-                      <div><strong>Nâng tone tự nhiên:</strong> Kiềm dầu 8 giờ, không bết dính hay vệt trắng</div>
-                    </div>
-                    <div className="cdetail-bullet-item">
-                      <span className="cdetail-bullet-icon">✓</span>
-                      <div><strong>Thành phần dịu nhẹ:</strong> Chiết xuất rau má & Niacinamide cho da nhạy cảm</div>
-                    </div>
-                  </div>
-                </div>
+        {activeTab === 'timeline' && (
+          <CampaignTimelineTab rawCampaign={rawCampaign} />
+        )}
 
-                {/* Card 2: Thông tin vận hành & Quản trị */}
-                <div className="cdetail-card-modern">
-                  <div className="cdetail-card-header">
-                    <span className="cdetail-card-title">
-                      <SettingOutlined style={{ color: '#4F46E5' }} />
-                      Thông tin vận hành & Quản trị
-                    </span>
-                    <Dropdown menu={{ items: moreMenuItems }} trigger={['click']}>
-                      <button type="button" className="cdetail-card-action-btn" title="Thao tác">
-                        <EllipsisOutlined />
-                      </button>
-                    </Dropdown>
-                  </div>
-
-                  <div className="cdetail-ops-list">
-                    <div className="cdetail-ops-row">
-                      <span className="cdetail-ops-label">Trạng thái vận hành</span>
-                      <span className="cdetail-ops-value">
-                        <span className="cdetail-status-dot" />
-                        {currentStatus === 'running'
-                          ? 'Đang triển khai'
-                          : currentStatus === 'completed'
-                          ? 'Hoàn thành'
-                          : currentStatus === 'cancelled'
-                          ? 'Đã lưu trữ'
-                          : 'Bản nháp'}
-                      </span>
-                    </div>
-
-                    <div className="cdetail-ops-row">
-                      <span className="cdetail-ops-label">Đội ngũ phụ trách</span>
-                      <span className="cdetail-ops-value">
-                        <Avatar
-                          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&auto=format&fit=crop&q=80"
-                          size={20}
-                        />
-                        Brand Marketing Team
-                      </span>
-                    </div>
-
-                    <div className="cdetail-ops-row">
-                      <span className="cdetail-ops-label">Khán giả mục tiêu</span>
-                      <span className="cdetail-ops-value">Nữ 18–28 (Trẻ, năng động)</span>
-                    </div>
-
-                    <div className="cdetail-ops-row">
-                      <span className="cdetail-ops-label">Khu vực ưu tiên</span>
-                      <span className="cdetail-ops-value">TP.HCM, Hà Nội & Toàn quốc</span>
-                    </div>
-
-                    <div className="cdetail-ops-row">
-                      <span className="cdetail-ops-label">Thời gian triển khai</span>
-                      <span className="cdetail-ops-value">
-                        {rawCampaign?.startDate ? new Date(rawCampaign.startDate).toLocaleDateString('vi-VN') : '26/10/2026'} – {rawCampaign?.endDate ? new Date(rawCampaign.endDate).toLocaleDateString('vi-VN') : '25/12/2026'}
-                      </span>
-                    </div>
-
-                    <div className="cdetail-ops-row">
-                      <span className="cdetail-ops-label">Ngày khởi tạo</span>
-                      <span className="cdetail-ops-value">
-                        {rawCampaign?.createdAt ? new Date(rawCampaign.createdAt).toLocaleDateString('vi-VN') : '15/10/2026'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* HÀNG 2: Khung đều nhau trên & dưới (Mục tiêu & Luồng vận hành) */}
-              <div className="cdetail-overview-row">
-                {/* Card 3: Mục tiêu chiến dịch & Kênh */}
-                <div className="cdetail-card-modern">
-                  <div className="cdetail-card-header">
-                    <span className="cdetail-card-title">
-                      <AimOutlined style={{ color: '#4F46E5' }} />
-                      Mục tiêu & Kênh phân phối
-                    </span>
-                  </div>
-
-                  <div className="cdetail-bullet-group">
-                    <div className="cdetail-bullet-item">
-                      <span className="cdetail-bullet-icon">🎯</span>
-                      <div><strong>500.000+ Lượt tiếp cận:</strong> Độ phủ tự nhiên trên TikTok & Instagram</div>
-                    </div>
-                    <div className="cdetail-bullet-item">
-                      <span className="cdetail-bullet-icon">💬</span>
-                      <div><strong>Trải nghiệm chân thực:</strong> Đánh giá cận cảnh chất kem và độ kiềm dầu</div>
-                    </div>
-                    <div className="cdetail-bullet-item">
-                      <span className="cdetail-bullet-icon">🛍️</span>
-                      <div><strong>Thúc đẩy chuyển đổi:</strong> Gắn link TikTok Shop & Shopee Mall</div>
-                    </div>
-                  </div>
-
-                  <div className="cdetail-bullet-group" style={{ marginTop: 10 }}>
-                    <span className="cdetail-bullet-title">Kênh truyền thông ưu tiên</span>
-                    <div className="cdetail-platform-badges">
-                      <span className="cdetail-platform-badge tiktok">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
-                        </svg>
-                        TikTok Video ngắn (60s)
-                      </span>
-                      <span className="cdetail-platform-badge instagram">
-                        <InstagramOutlined style={{ fontSize: 12 }} />
-                        Instagram Reels & Story
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card 4: Luồng vận hành chuẩn */}
-                <div className="cdetail-card-modern">
-                  <div className="cdetail-card-header">
-                    <span className="cdetail-card-title">
-                      <RiseOutlined style={{ color: '#4F46E5' }} />
-                      Luồng vận hành chuẩn
-                    </span>
-                    <span style={{ fontSize: 11.5, color: '#4F46E5', fontWeight: 700, background: '#EEF2FF', padding: '2px 8px', borderRadius: 6 }}>
-                      3 Bước
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div
-                      className="cdetail-action-step-item"
-                      onClick={() => {
-                        sessionStorage.setItem('current_campaign_id', resolvedId);
-                        navigate(`/discovery?campaignId=${resolvedId}`);
-                      }}
-                    >
-                      <div className="cdetail-action-step-icon" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
-                        <SearchOutlined />
-                      </div>
-                      <div className="cdetail-action-step-content">
-                        <div className="cdetail-action-step-title">Bước 1: Tìm kiếm KOC</div>
-                        <div className="cdetail-action-step-desc">Chọn lọc nhà sáng tạo phù hợp nhãn hàng</div>
-                      </div>
-                      <RightOutlined style={{ fontSize: 12, color: '#94A3B8' }} />
-                    </div>
-
-                    <div
-                      className="cdetail-action-step-item"
-                      onClick={() => {
-                        sessionStorage.setItem('current_campaign_id', resolvedId);
-                        navigate('/crm');
-                      }}
-                    >
-                      <div className="cdetail-action-step-icon" style={{ background: '#F5F3FF', color: '#7C3AED' }}>
-                        <ApartmentOutlined />
-                      </div>
-                      <div className="cdetail-action-step-content">
-                        <div className="cdetail-action-step-title">Bước 2: Quản lý đàm phán CRM</div>
-                        <div className="cdetail-action-step-desc">{participatingCreators.length} KOC trong quy trình hợp tác</div>
-                      </div>
-                      <RightOutlined style={{ fontSize: 12, color: '#94A3B8' }} />
-                    </div>
-
-                    <div
-                      className="cdetail-action-step-item"
-                      onClick={() => setActiveTab('budget')}
-                    >
-                      <div className="cdetail-action-step-icon" style={{ background: '#ECFDF5', color: '#059669' }}>
-                        <WalletOutlined />
-                      </div>
-                      <div className="cdetail-action-step-content">
-                        <div className="cdetail-action-step-title">Bước 3: Chi phí & Thanh toán</div>
-                        <div className="cdetail-action-step-desc">Theo dõi hạn mức ngân sách & nghiệm thu</div>
-                      </div>
-                      <RightOutlined style={{ fontSize: 12, color: '#94A3B8' }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: NHÀ SÁNG TẠO THAM GIA (Full Table View) */}
-          {activeTab === 'creators' && (
-            <div className="cdetail-card-modern">
-              <div className="cdetail-card-header">
-                <div>
-                  <span className="cdetail-card-title">
-                    <TeamOutlined style={{ color: '#4F46E5' }} />
-                    Danh sách Nhà sáng tạo tham gia ({participatingCreators.length})
-                  </span>
-                  <div style={{ fontSize: 12.5, color: '#64748B', marginTop: 3 }}>
-                    Quản lý thông tin, thỏa thuận chi phí và tiến độ bàn giao của từng KOC
-                  </div>
-                </div>
-                <Space>
-                  <Button
-                    type="primary"
-                    icon={<CompassOutlined />}
-                    style={{ background: '#4F46E5', borderRadius: 10, height: 38, fontWeight: 600 }}
-                    onClick={() => {
-                      sessionStorage.setItem('current_campaign_id', resolvedId);
-                      navigate(`/discovery?campaignId=${resolvedId}`);
-                    }}
-                  >
-                    Tìm thêm KOC bằng AI
-                  </Button>
-                </Space>
-              </div>
-
-              <Table
-                columns={creatorColumns}
-                dataSource={participatingCreators}
-                rowKey="id"
-                pagination={false}
-                style={{ marginTop: 12 }}
-              />
-            </div>
-          )}
-
-          {/* TAB 3: NGÂN SÁCH & THANH TOÁN (Quản lý chi trả KOC) */}
-          {activeTab === 'budget' && (
-            <div className="cdetail-card-modern">
-              <div className="cdetail-card-header">
-                <div>
-                  <span className="cdetail-card-title">
-                    <DollarOutlined style={{ color: '#4F46E5' }} />
-                    Quản lý Ngân sách & Thanh toán KOC
-                  </span>
-                  <div style={{ fontSize: 12.5, color: '#64748B', marginTop: 3 }}>
-                    Theo dõi hạn mức tài chính, tiến độ giải ngân và các đợt quyết toán cho Nhà sáng tạo
-                  </div>
-                </div>
-                <Button
-                  type="primary"
-                  icon={<WalletOutlined />}
-                  style={{ background: '#059669', borderColor: '#059669', borderRadius: 10, height: 38, fontWeight: 600 }}
-                  onClick={() => message.success('Hệ thống sẵn sàng kích hoạt cổng thanh toán VNPay / Tài khoản doanh nghiệp')}
-                >
-                  Duyệt chi & Quyết toán
-                </Button>
-              </div>
-
-              {/* 4 Financial Tiles */}
-              <div className="cdetail-finance-grid">
-                <div className="cdetail-finance-tile plan">
-                  <span className="cdetail-finance-lbl">Ngân sách kế hoạch</span>
-                  <span className="cdetail-finance-val">{campaignBudgetFormatted}</span>
-                  <span className="cdetail-finance-desc">Hạn mức ngân sách tối đa</span>
-                </div>
-                <div className="cdetail-finance-tile committed">
-                  <span className="cdetail-finance-lbl">Đã thỏa thuận KOC</span>
-                  <span className="cdetail-finance-val">{allocatedBudget > 0 ? `${allocatedBudget.toLocaleString('vi-VN')} đ` : '0 đ'}</span>
-                  <span className="cdetail-finance-desc">Chi phí cam kết theo hợp đồng</span>
-                </div>
-                <div className="cdetail-finance-tile paid">
-                  <span className="cdetail-finance-lbl">Đã thanh toán / Tạm ứng</span>
-                  <span className="cdetail-finance-val">{allocatedBudget > 0 ? `${Math.round(allocatedBudget * 0.5).toLocaleString('vi-VN')} đ` : '0 đ'}</span>
-                  <span className="cdetail-finance-desc">Đã cọc 50% khi chốt hợp tác</span>
-                </div>
-                <div className="cdetail-finance-tile remaining">
-                  <span className="cdetail-finance-lbl">Hạn mức còn lại</span>
-                  <span className="cdetail-finance-val">{remainingBudget.toLocaleString('vi-VN')} đ</span>
-                  <span className="cdetail-finance-desc">Khả dụng để tuyển thêm KOC</span>
-                </div>
-              </div>
-
-              {/* Bảng đợt thanh toán KOC */}
-              <div style={{ marginTop: 24 }}>
-                <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 14, marginBottom: 12 }}>
-                  Danh sách đợt thanh toán theo tiến độ KOC ({participatingCreators.length})
-                </div>
-                <Table
-                  columns={[
-                    {
-                      title: 'Nhà sáng tạo',
-                      dataIndex: 'name',
-                      key: 'name',
-                      render: (text, record: any) => (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <Avatar src={record.avatar} size={36} />
-                          <div>
-                            <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>{text}</div>
-                            <div style={{ fontSize: 11.5, color: '#64748B' }}>{record.username}</div>
-                          </div>
-                        </div>
-                      ),
-                    },
-                    {
-                      title: 'Hạng mục chi trả',
-                      key: 'milestone',
-                      render: (_, record: any) => (
-                        <div>
-                          <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 12.5 }}>
-                            {record.deliverableStatus || 'Video review sản phẩm'}
-                          </div>
-                          <div style={{ fontSize: 11.5, color: '#64748B' }}>
-                            Đợt 1: Cọc 50% • Đợt 2: Quyết toán sau nghiệm thu
-                          </div>
-                        </div>
-                      ),
-                    },
-                    {
-                      title: 'Chi phí thỏa thuận',
-                      dataIndex: 'fee',
-                      key: 'fee',
-                      render: (fee) => <span style={{ fontWeight: 700, color: '#4F46E5' }}>{fee}</span>,
-                    },
-                    {
-                      title: 'Phương thức',
-                      key: 'method',
-                      render: () => <Tag color="blue">VNPay / Số dư ví</Tag>,
-                    },
-                    {
-                      title: 'Trạng thái thanh toán',
-                      key: 'paymentStatus',
-                      render: (_, record: any) => {
-                        const isDone = record.stageText === 'Đã hoàn tất' || record.stageText === 'Đã lên bài';
-                        return (
-                          <Tag color={isDone ? 'success' : 'processing'}>
-                            {isDone ? 'ĐÃ HOÀN TẤT' : 'ĐÃ TẠM ỨNG 50%'}
-                          </Tag>
-                        );
-                      },
-                    },
-                    {
-                      title: 'Thao tác',
-                      key: 'action',
-                      render: (_, record: any) => (
-                        <Button
-                          size="small"
-                          type="link"
-                          style={{ color: '#4F46E5', fontWeight: 600 }}
-                          onClick={() => {
-                            Modal.info({
-                              title: `Ủy nhiệm chi: ${record.name}`,
-                              content: (
-                                <div style={{ fontSize: 13, marginTop: 8 }}>
-                                  <p><strong>Mã giao dịch:</strong> TXN_{String(record.id).slice(0, 8)}</p>
-                                  <p><strong>Số tiền:</strong> {record.fee}</p>
-                                  <p><strong>Người thụ hưởng:</strong> {record.name}</p>
-                                  <p><strong>Nội dung:</strong> Quyết toán chi phí hợp tác chiến dịch {campaignTitle}</p>
-                                  <p><strong>Trạng thái:</strong> <Tag color="green">Giao dịch thành công</Tag></p>
-                                </div>
-                              ),
-                              okText: 'Đóng',
-                            });
-                          }}
-                        >
-                          Xem chứng từ
-                        </Button>
-                      ),
-                    },
-                  ]}
-                  dataSource={participatingCreators}
-                  rowKey="id"
-                  pagination={false}
-                  locale={{ emptyText: 'Chưa có KOC trong danh sách chi trả' }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: MỐC THỜI GIAN (LỘ TRÌNH CHIẾN DỊCH) */}
-          {activeTab === 'timeline' && (
-            <div className="cdetail-card-modern">
-              <div className="cdetail-card-header">
-                <span className="cdetail-card-title">
-                  <CalendarOutlined style={{ color: '#4F46E5' }} />
-                  Lộ trình thời gian triển khai chiến dịch
-                </span>
-              </div>
-              <div style={{ marginTop: 16, maxWidth: 640 }}>
-                <Timeline
-                  items={[
-                    {
-                      color: 'green',
-                      children: (
-                        <div>
-                          <div style={{ fontWeight: 700, color: '#0F172A' }}>Khởi tạo chiến dịch</div>
-                          <div style={{ fontSize: 12, color: '#64748B' }}>
-                            15/10/2026 • Đã thiết lập thông số & tiêu chí ghép nối AI
-                          </div>
-                        </div>
-                      ),
-                    },
-                    {
-                      color: 'blue',
-                      children: (
-                        <div>
-                          <div style={{ fontWeight: 700, color: '#0F172A' }}>Kích hoạt & Gửi lời mời KOC</div>
-                          <div style={{ fontSize: 12, color: '#64748B' }}>
-                            26/10/2026 • Đang triển khai gửi yêu cầu brief và liên hệ KOC
-                          </div>
-                        </div>
-                      ),
-                    },
-                    {
-                      color: 'gray',
-                      children: (
-                        <div>
-                          <div style={{ fontWeight: 700, color: '#0F172A' }}>Hoàn tất & Nghiệm thu KPI</div>
-                          <div style={{ fontSize: 12, color: '#64748B' }}>
-                            25/12/2026 • Dự kiến đánh giá kết quả và tổng kết báo cáo
-                          </div>
-                        </div>
-                      ),
-                    },
-                  ]}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: HỒ SƠ YÊU CẦU & BRIEF */}
-          {activeTab === 'guidelines' && (
-            <div className="cdetail-card-modern">
-              <div className="cdetail-card-header">
-                <span className="cdetail-card-title">
-                  <FileTextOutlined style={{ color: '#4F46E5' }} />
-                  Hồ sơ yêu cầu & Hướng dẫn sáng tạo (Brief)
-                </span>
-              </div>
-              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>Quy định gắn hashtag bắt buộc</div>
-                  <div style={{ fontSize: 13, color: '#4F46E5', fontWeight: 600, marginTop: 4 }}>
-                    #SummerGlow2026 #SunscreenReview #SkincareRoutine #KemChongNang
-                  </div>
-                </div>
-                <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>Thông điệp then chốt (Key Messages)</div>
-                  <div style={{ fontSize: 13, color: '#475569', marginTop: 4, lineHeight: 1.6 }}>
-                    Kem chống nắng nâng tone tự nhiên không gây nhờn rít, bảo vệ quang phổ rộng SPF50+ PA++++ suốt ngày dài năng động.
-                  </div>
-                </div>
-                <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>Yêu cầu kiểm duyệt nội dung</div>
-                  <div style={{ fontSize: 13, color: '#475569', marginTop: 4, lineHeight: 1.6 }}>
-                    KOC cần gửi kịch bản trước khi quay 3 ngày và gửi video thô trước khi đăng tải 48 giờ để nhãn hàng duyệt.
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+        {activeTab === 'guidelines' && (
+          <CampaignGuidelinesTab rawCampaign={rawCampaign} />
+        )}
       </div>
 
       {/* Cancel Campaign Confirmation Modal */}

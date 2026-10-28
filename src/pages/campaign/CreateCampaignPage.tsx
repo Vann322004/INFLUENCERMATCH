@@ -106,34 +106,32 @@ export default function CreateCampaignPage() {
   const [isLoadingCampaign, setIsLoadingCampaign] = useState<boolean>(false);
 
   // ================= Step 1 State =================
-  const [campaignName, setCampaignName] = useState('Summer Glow Skincare Launch 2025');
-  const [product, setProduct] = useState('Serum dưỡng sáng da');
-  const [selectedObjectives, setSelectedObjectives] = useState<string[]>(['sales', 'awareness']);
-  const [selectedFormats, setSelectedFormats] = useState<string[]>(['short_video', 'image_post']);
+  const [campaignName, setCampaignName] = useState('');
+  const [product, setProduct] = useState('');
+  const [selectedObjectives, setSelectedObjectives] = useState<string[]>([]);
+  const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
 
   // ================= Step 2 State =================
-  const [creatorQuantity, setCreatorQuantity] = useState<number>(20);
+  const [creatorQuantity, setCreatorQuantity] = useState<number>(10);
   const [creatorTier, setCreatorTier] = useState<string>('micro');
-  const [minFollowers, setMinFollowers] = useState<string>('50k');
-  const [minEngagement, setMinEngagement] = useState<string>('5%');
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['tiktok', 'instagram']);
-  const [selectedAges, setSelectedAges] = useState<string[]>(['18-24', '25-34']);
+  const [minFollowers, setMinFollowers] = useState<string>('');
+  const [minEngagement, setMinEngagement] = useState<string>('');
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [selectedAges, setSelectedAges] = useState<string[]>([]);
   const [selectedGender, setSelectedGender] = useState<string>('all');
   const [locationState, setLocationState] = useState<string>('nationwide');
-  const [interests, setInterests] = useState<string>('Làm đẹp, chăm sóc da, phong cách sống');
-  const [creatorBrief, setCreatorBrief] = useState<string>(
-    'Yêu cầu video trải nghiệm thực tế sản phẩm từ 30s - 60s, quay rõ texture serum, nêu bật khả năng cấp ẩm và làm sáng da sau 7 ngày.'
-  );
+  const [interests, setInterests] = useState<string>('');
+  const [creatorBrief, setCreatorBrief] = useState<string>('');
 
   // ================= Step 3 State =================
-  const [budgetTotal, setBudgetTotal] = useState<number>(25000000); // 25,000,000 VND
-  const [paymentModel, setPaymentModel] = useState<string>('hybrid'); // cash, product, hybrid
-  const [targetReach, setTargetReach] = useState<string>('1.5M');
-  const [targetEngagementRate, setTargetEngagementRate] = useState<string>('7.5%');
-  const [targetConversions, setTargetConversions] = useState<number>(500);
+  const [budgetTotal, setBudgetTotal] = useState<number>(0);
+  const [paymentModel, setPaymentModel] = useState<string>('cash');
+  const [targetReach, setTargetReach] = useState<string>('');
+  const [targetEngagementRate, setTargetEngagementRate] = useState<string>('');
+  const [targetConversions, setTargetConversions] = useState<number>(0);
   const [campaignDuration, setCampaignDuration] = useState<string>('4_weeks');
 
   // Provinces API State
