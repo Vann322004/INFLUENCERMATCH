@@ -1081,6 +1081,38 @@ export default function CreatorShortlistPage() {
             />
           </div>
 
+          {/* Nút chính chuyển sang Đề xuất AI Four-Memory từ toàn bộ Shortlist */}
+          <Button
+            type="primary"
+            icon={<ThunderboltFilled />}
+            onClick={() => {
+              const targetCampId = selectedCampaign !== 'all' ? selectedCampaign : (campaigns[0]?.id || '');
+              if (!targetCampId || targetCampId === 'all') {
+                message.warning('Vui lòng chọn một chiến dịch cụ thể để chạy đề xuất AI!');
+                return;
+              }
+              if (creators.length === 0) {
+                message.warning('Shortlist của chiến dịch này đang trống. Hãy thêm KOC trước khi chạy AI!');
+                return;
+              }
+              message.loading({ content: 'Đang chuyển sang Bước 4: Đề xuất AI (Recommendation)...', duration: 1 });
+              sessionStorage.setItem('current_campaign_id', targetCampId);
+              localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', targetCampId);
+              localStorage.setItem('last_active_campaign_id', targetCampId);
+              navigate(`/campaign-management?tab=recommendation&campaignId=${targetCampId}`);
+            }}
+            style={{
+              height: 38,
+              borderRadius: 8,
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+              borderColor: 'transparent',
+              boxShadow: '0 2px 8px rgba(79, 70, 229, 0.3)',
+            }}
+          >
+            Sang Đề xuất AI ({creators.length}) ➔
+          </Button>
+
           <Button
             className="btn-add-creator-primary"
             icon={<PlusOutlined />}
@@ -1617,10 +1649,10 @@ export default function CreatorShortlistPage() {
                   </div>
                   <div className="shortlist-footer-text">
                     <div className="shortlist-footer-title">
-                      Đã chọn <strong>{selectedCreators.length}/5</strong> Nhà sáng tạo
+                      Đã chọn <strong>{selectedCreators.length}/5</strong> Nhà sáng tạo để so sánh
                     </div>
                     <div className="shortlist-footer-hint">
-                      Sẵn sàng chuyển sang Bước 4: Đề xuất AI (Recommendation) cho chiến dịch
+                      Bấm "So sánh đối chiếu" để phân tích song song chỉ số giữa các ứng viên
                     </div>
                   </div>
                 </div>
@@ -1635,7 +1667,7 @@ export default function CreatorShortlistPage() {
                     Bỏ chọn
                   </Button>
 
-                  {/* Nút phụ: So sánh đối chiếu */}
+                  {/* Nút So sánh đối chiếu */}
                   <Tooltip
                     title={
                       selectedCreators.length < 2
@@ -1646,38 +1678,27 @@ export default function CreatorShortlistPage() {
                   >
                     <span>
                       <Button
-                        className={`btn-shortlist-footer-compare-secondary ${selectedCreators.length < 2 ? 'disabled' : ''}`}
+                        type="primary"
+                        className="btn-shortlist-footer-compare-primary"
+                        icon={<BarChartOutlined />}
                         disabled={selectedCreators.length < 2}
                         onClick={() => {
                           if (selectedCreators.length >= 2) {
                             setViewMode('compare');
                           }
                         }}
+                        style={{
+                          height: 38,
+                          borderRadius: 8,
+                          fontWeight: 700,
+                          background: selectedCreators.length >= 2 ? 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)' : undefined,
+                          borderColor: 'transparent',
+                        }}
                       >
-                        So sánh đối chiếu ({selectedCreators.length})
+                        So sánh đối chiếu ({selectedCreators.length}) ➔
                       </Button>
                     </span>
                   </Tooltip>
-
-                  {/* NÚT CHÍNH (MAIN FLOW): SANG ĐỀ XUẤT AI RECOMMENDATION */}
-                  <Button
-                    className="btn-shortlist-footer-mainflow"
-                    type="primary"
-                    icon={<ThunderboltFilled />}
-                    onClick={() => {
-                      const targetCampId = selectedCampaign !== 'all' ? selectedCampaign : (campaigns[0]?.id || '');
-                      message.loading({ content: 'Đang chuyển sang Bước 4: Đề xuất AI (Recommendation)...', duration: 1 });
-                      if (targetCampId) {
-                        sessionStorage.setItem('current_campaign_id', targetCampId);
-                        localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', targetCampId);
-                        navigate('/campaign-management?tab=recommendation');
-                      } else {
-                        navigate('/campaign-management?tab=recommendation');
-                      }
-                    }}
-                  >
-                    Sang Đề xuất AI (Recommendation) ➔
-                  </Button>
                 </div>
               </div>
             </div>
