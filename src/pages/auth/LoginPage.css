@@ -1,0 +1,288 @@
+/* ==========================================================================
+   LOGIN PAGE — Clean Luxury Aesthetics (Matching Image Mockup)
+   ========================================================================== */
+
+.login-card-inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* ── Headings ── */
+.login-heading-group {
+  margin-bottom: clamp(10px, 1.4vh, 16px);
+}
+
+.login-title {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: clamp(24px, 2.5vw, 28px);
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 2px 0;
+  letter-spacing: normal;
+  line-height: 1.2;
+}
+
+.login-welcome-text {
+  font-size: 13px;
+  color: #64748B;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ── Luxe Text Inputs (Soft grey background, subtle borders) ── */
+.login-card-inner .luxe-input {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 12px !important;
+  height: clamp(38px, 4.2vh, 44px) !important;
+  font-size: 13.5px !important;
+  padding: 0 14px !important;
+  color: #0F172A !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+}
+
+.login-card-inner .luxe-input:hover {
+  background: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+}
+
+.login-card-inner .luxe-input:focus,
+.login-card-inner .luxe-input-focused,
+.login-card-inner .ant-input-affix-wrapper-focused {
+  background: #FFFFFF !important;
+  border-color: #7C3AED !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12) !important;
+}
+
+.login-card-inner .luxe-input input {
+  background: transparent !important;
+  font-size: 14px !important;
+}
+
+.login-card-inner .luxe-input input::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* Eye icon button */
+.login-card-inner .ant-input-password-icon {
+  color: #94A3B8 !important;
+  transition: color 0.2s ease;
+}
+
+.login-card-inner .ant-input-password-icon:hover {
+  color: #6366F1 !important;
+}
+
+/* ── Options Row (Checkbox & Forgot link) ── */
+.login-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 10px 0;
+}
+
+.luxe-checkbox {
+  font-size: 12.5px !important;
+  color: #334155 !important;
+  font-weight: 500 !important;
+}
+
+.luxe-checkbox .ant-checkbox-inner {
+  border-radius: 5px !important;
+  border-color: #CBD5E1 !important;
+}
+
+.luxe-checkbox .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #6366F1 !important;
+  border-color: #6366F1 !important;
+}
+
+.login-forgot-link {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #6366F1;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.login-forgot-link:hover {
+  color: #4F46E5;
+  text-decoration: underline;
+}
+
+/* ── Primary Submit Button (Solid Purple with Arrow) ── */
+.luxe-primary-btn {
+  height: clamp(38px, 4.2vh, 44px) !important;
+  background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #FFFFFF !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  box-shadow: 0 4px 14px -3px rgba(99, 102, 241, 0.4) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.luxe-primary-btn:hover:not(:disabled) {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 18px -3px rgba(99, 102, 241, 0.5) !important;
+  opacity: 0.96 !important;
+}
+
+.luxe-primary-btn:active:not(:disabled) {
+  transform: translateY(0) !important;
+}
+
+.btn-arrow-icon {
+  font-size: 13px;
+  transition: transform 0.2s ease;
+}
+
+.luxe-primary-btn:hover .btn-arrow-icon {
+  transform: translateX(4px);
+}
+
+/* ── Divider ── */
+.luxe-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: clamp(8px, 1.2vh, 12px) 0;
+}
+
+.luxe-divider-line {
+  flex: 1;
+  height: 1px;
+  background: #E2E8F0;
+}
+
+.luxe-divider-text {
+  font-size: 11.5px;
+  color: #94A3B8;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── Google Sign-in Button ── */
+.luxe-google-btn {
+  width: 100%;
+  height: clamp(36px, 4vh, 42px);
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E293B;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.luxe-google-btn:hover:not(:disabled) {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Register Banner Box (Grey capsule matching mockup) ── */
+.login-register-banner {
+  margin-top: clamp(8px, 1.2vh, 12px);
+  padding: 8px 14px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  border: 1px solid #F1F5F9;
+}
+
+.register-prompt {
+  color: #64748B;
+  font-weight: 500;
+}
+
+.register-now-link {
+  color: #6366F1;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.register-now-link:hover {
+  color: #4F46E5;
+  transform: translateX(2px);
+}
+
+/* ── Demo Accounts Bar (Subtle & clean) ── */
+.login-demo-bar {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(99, 102, 241, 0.04);
+  border-radius: 8px;
+}
+
+.demo-hint {
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.demo-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.demo-chip {
+  background: #FFFFFF;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #6366F1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.demo-chip:hover {
+  background: #6366F1;
+  color: #FFFFFF;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 480px) {
+  .login-title {
+    font-size: 24px;
+  }
+  .login-card-inner .luxe-input {
+    height: 42px !important;
+  }
+  .luxe-primary-btn {
+    height: 42px !important;
+  }
+  .login-register-banner {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+}

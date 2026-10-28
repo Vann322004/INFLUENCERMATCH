@@ -1,0 +1,399 @@
+/* ==========================================================================
+   AUTH LAYOUT — Pixel-Perfect Luxury Wave Canvas Single-Screen Design
+   100% Coded for Balanced Typography, High Visual Aesthetics & Zero Scroll
+   ========================================================================== */
+
+/* ── Root: 1 Screen Viewport Locked ── */
+.al-root {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+  background-color: #F8F7FF;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #0F172A;
+  box-sizing: border-box;
+}
+
+/* ── 2K Ultra-HD Wave Artwork Canvas (Crisp, Smooth, Never Blurry) ── */
+.al-bg-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/login-wave-bg-hd.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center bottom;
+  pointer-events: none;
+  z-index: 0;
+  image-rendering: -webkit-optimize-contrast;
+  animation: waveBreath 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes waveBreath {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    transform: scale(1.018) translate(-0.3%, -0.2%);
+  }
+  100% {
+    transform: scale(1.008) translate(0.3%, 0.2%);
+  }
+}
+
+/* ── Dynamic Ambient Shimmer & Sparkles on Light Waves ── */
+.al-effects-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.al-ambient-glow {
+  position: absolute;
+  bottom: 10%;
+  right: 25%;
+  width: 45vw;
+  height: 45vh;
+  background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.16) 0%, rgba(236, 72, 153, 0.06) 45%, transparent 70%);
+  filter: blur(55px);
+  animation: glowPulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes glowPulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 0.95;
+    transform: scale(1.08);
+  }
+}
+
+/* Luxury Light Sparkles along the light curve edge */
+.al-wave-sparkle {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 0 10px #FFFFFF, 0 0 20px #C084FC, 0 0 30px #E879F9;
+  opacity: 0;
+  animation: sparkleTwinkle 4.5s ease-in-out infinite;
+}
+
+/* Sparkle 1: On the intense flare point of the wave */
+.al-wave-sparkle.sparkle-1 {
+  bottom: 27%;
+  left: 69%;
+  animation-delay: 0.4s;
+}
+
+/* Sparkle 2: On the subtle curve under hero text */
+.al-wave-sparkle.sparkle-2 {
+  bottom: 16%;
+  left: 17%;
+  animation-delay: 2.2s;
+}
+
+/* Sparkle 3: On the sweeping arc right edge */
+.al-wave-sparkle.sparkle-3 {
+  bottom: 44%;
+  left: 88%;
+  animation-delay: 3.6s;
+}
+
+@keyframes sparkleTwinkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.4);
+  }
+}
+
+/* ── Container Wrapper (Strictly Locked to 100vh) ── */
+.al-wrap {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(12px, 2vh, 24px) clamp(24px, 4.5vw, 68px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+/* ── Header: Logo on left, Language on right ── */
+.al-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  flex-shrink: 0;
+  margin-bottom: clamp(4px, 1vh, 10px);
+}
+
+.al-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.al-logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(109, 40, 217, 0.22));
+  transition: transform 0.25s ease;
+}
+
+.al-brand:hover .al-logo-img {
+  transform: scale(1.06);
+}
+
+.al-brand-name {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  line-height: 1;
+}
+
+.brand-dark {
+  color: #0F172A;
+}
+
+.brand-purple {
+  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.al-lang-pill {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 20px;
+  padding: 5px 13px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.al-lang-pill:hover {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 2px 10px rgba(109, 40, 217, 0.1);
+  transform: translateY(-1px);
+}
+
+/* ── Main 2-Column Responsive Layout (Centered Balance) ── */
+.al-main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(420px, 1.25fr) minmax(350px, 440px);
+  gap: clamp(28px, 4.5vw, 64px);
+  align-items: center;
+}
+
+/* ════ LEFT COLUMN: Hero Story (Refined Luxury Editorial Typography) ════ */
+.al-hero-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  align-self: center;
+  padding-left: clamp(8px, 2.5vw, 40px);
+  z-index: 2;
+}
+
+.al-hero-text {
+  max-width: 460px;
+}
+
+/* Title matching user reference image exactly — refined, slim, elegant */
+.al-hero-title {
+  font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(38px, 4.2vw, 56px);
+  font-weight: 600;
+  line-height: 1.18;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.015em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Underline specifically under the word "đúng" — slim 2px, spaced below descender */
+.word-dung-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.al-hero-underline {
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, #7C3AED 0%, #C4B5FD 100%);
+}
+
+/* "nhà sáng tạo" in delicate italic violet gradient */
+.al-hero-highlight {
+  font-style: italic;
+  font-weight: 500;
+  background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 50%, #9333EA 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Description text — airy, clean, subtle */
+.al-hero-desc {
+  font-size: clamp(13.5px, 1.05vw, 15px);
+  line-height: 1.62;
+  color: #64748B;
+  margin: 18px 0 0 0;
+  max-width: 400px;
+  font-weight: 400;
+}
+
+/* ════ RIGHT COLUMN: Clean White Luxe Form Card ════ */
+.al-card-col {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  z-index: 2;
+}
+
+.al-form-card {
+  width: 100%;
+  max-width: 440px;
+  background: #FFFFFF;
+  border-radius: 26px;
+  padding: clamp(20px, 2.6vh, 30px) clamp(22px, 2.5vw, 34px);
+  box-shadow:
+    0 24px 60px -15px rgba(109, 40, 217, 0.14),
+    0 8px 24px -6px rgba(15, 23, 42, 0.04),
+    0 0 0 1px rgba(226, 232, 240, 0.85);
+  box-sizing: border-box;
+  transition: box-shadow 0.3s ease;
+}
+
+.al-form-card:hover {
+  box-shadow:
+    0 28px 65px -15px rgba(109, 40, 217, 0.18),
+    0 10px 28px -6px rgba(15, 23, 42, 0.06),
+    0 0 0 1px rgba(196, 181, 253, 0.5);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (Strictly Locked to 1 Screen, Never Overflow)
+   ========================================================================== */
+
+/* Laptops with smaller height (e.g., 1366x768, 1280x800) */
+@media (max-height: 800px) and (min-width: 1024px) {
+  .al-wrap {
+    padding: 10px 40px 14px 40px;
+  }
+  .al-header {
+    height: 38px;
+    margin-bottom: 4px;
+  }
+  .al-hero-title {
+    font-size: 38px;
+    margin-bottom: 12px;
+  }
+  .al-hero-desc {
+    font-size: 13.5px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  .al-hero-stats {
+    padding: 8px 14px;
+  }
+  .stat-number {
+    font-size: 14px;
+  }
+  .al-form-card {
+    padding: 18px 24px;
+  }
+}
+
+/* Medium Desktops 1024px - 1280px */
+@media (max-width: 1280px) {
+  .al-wrap {
+    padding: 14px 36px;
+  }
+  .al-main {
+    grid-template-columns: 1fr 400px;
+    gap: 28px;
+  }
+  .al-hero-title {
+    font-size: 42px;
+  }
+}
+
+/* Tablets (768px - 1023px) — Compact, Center Card */
+@media (max-width: 1023px) {
+  .al-main {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .al-hero-col {
+    display: none;
+  }
+  .al-card-col {
+    justify-content: center;
+    width: 100%;
+  }
+  .al-form-card {
+    max-width: 440px;
+  }
+}
+
+/* Mobile Screens (<768px) */
+@media (max-width: 767px) {
+  .al-wrap {
+    padding: 12px 14px;
+  }
+  .al-header {
+    height: 38px;
+    margin-bottom: 8px;
+  }
+  .al-hero-col {
+    display: none;
+  }
+  .al-main {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .al-card-col {
+    width: 100%;
+  }
+  .al-form-card {
+    max-width: 100%;
+    border-radius: 20px;
+    padding: 20px 16px;
+  }
+}
