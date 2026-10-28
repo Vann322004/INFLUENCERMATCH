@@ -1,61 +1,65 @@
 import React, { useState } from 'react';
-import { Switch, Modal, Tooltip, message } from 'antd';
+import { Switch, Modal, Tooltip } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import type { SubscriptionPlan, PlanStatus } from '../../../../mock/adminData';
+import type { PlanResponse } from '../../../../types/api/subscription.types';
 
 interface Props {
-  plan: SubscriptionPlan;
-  onStatusChange: (planId: string, newStatus: PlanStatus) => void;
+  plan: PlanResponse;
+  onStatusChange: (planId: string, newStatus: 'ACTIVE' | 'INACTIVE') => void;
+  loading?: boolean;
 }
 
-export default function ActivateStopToggle({ plan, onStatusChange }: Props) {
+export default function ActivateStopToggle({ plan, onStatusChange, loading = false }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const isActive = plan.status === 'active';
+  const isActive = plan.status === 'ACTIVE';
 
   const handleToggle = (checked: boolean) => {
-    if (!checked && plan.activeUsers > 0) {
-      // Opening warning modal if users are currently subscribed
+    if (!checked) {
+      // Khi tạm dừng gói, hiển thị modal xác nhận tiếng Việt
       setConfirmOpen(true);
     } else {
-      const next: PlanStatus = checked ? 'active' : 'inactive';
-      onStatusChange(plan.id, next);
-      message.success(`Gói ${plan.name} đã chuyển sang ${checked ? 'Hoạt động' : 'Tạm dừng'}`);
+      onStatusChange(plan.id, 'ACTIVE');
     }
   };
 
   const handleConfirmStop = () => {
-    onStatusChange(plan.id, 'inactive');
+    onStatusChange(plan.id, 'INACTIVE');
     setConfirmOpen(false);
-    message.warning(`Đã tạm dừng gói ${plan.name}. Người dùng hiện tại vẫn giữ quyền lợi đến hết chu kỳ.`);
   };
 
   return (
     <>
-      <Tooltip title={isActive ? 'Tạm dừng cung cấp gói' : 'Kích hoạt mở bán gói'}>
-        <Switch
-          checked={isActive}
-          onChange={handleToggle}
-          style={{ background: isActive ? '#6366F1' : undefined }}
-        />
+      <Tooltip title={isActive ? 'Nhấn để tạm dừng mở bán gói này' : 'Nhấn để kích hoạt mở bán gói này'}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Switch
+            checked={isActive}
+            loading={loading}
+            onChange={handleToggle}
+            style={{ background: isActive ? '#10B981' : undefined }}
+          />
+          <span style={{ fontSize: 12, fontWeight: 600, color: isActive ? '#059669' : '#64748B' }}>
+            {isActive ? 'Đang mở bán' : 'Tạm dừng'}
+          </span>
+        </div>
       </Tooltip>
 
       <Modal
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#D97706' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#D97706', fontSize: 16 }}>
             <ExclamationCircleOutlined />
-            <span>Xác nhận tạm dừng gói "{plan.name}"</span>
+            <span>Xác nhận tạm dừng gói "{plan.planName}"</span>
           </div>
         }
         open={confirmOpen}
         onCancel={() => setConfirmOpen(false)}
         onOk={handleConfirmStop}
-        okText="Vẫn tạm dừng"
+        okText="Tạm dừng gói"
         okButtonProps={{ danger: true }}
-        cancelText="Hủy"
+        cancelText="Hủy bỏ"
       >
         <p style={{ marginTop: 12, color: '#475569', fontSize: 13, lineHeight: 1.6 }}>
-          Hiện có <strong>{plan.activeUsers} khách hàng</strong> đang sử dụng gói dịch vụ này.
-          Khi tạm dừng, người dùng mới sẽ không thể đăng ký gói này nữa, nhưng người dùng hiện tại sẽ không bị ngắt quãng quyền lợi.
+          Khi tạm dừng, nhãn hàng mới sẽ không thể nhìn thấy hoặc đăng ký gói dịch vụ này nữa.
+          Các tài khoản đã đăng ký trước đó vẫn duy trì quyền lợi cho đến hết thời hạn chu kỳ.
         </p>
       </Modal>
     </>

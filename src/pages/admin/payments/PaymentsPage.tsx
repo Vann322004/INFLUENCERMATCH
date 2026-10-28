@@ -1,53 +1,91 @@
-import React, { useState } from 'react';
-import { Card, Table, Tag, Input, Select, Button, Row, Col, Space, Typography, Tooltip, message } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, Table, Tag, Input, Select, Button, Row, Col, Space, Tooltip, message, Alert } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   SearchOutlined,
-  FilterOutlined,
-  DollarCircleOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
   RollbackOutlined,
   EyeOutlined,
   DownloadOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
-import { MOCK_TRANSACTIONS, type Transaction, type TxnStatus } from '../../../mock/adminData';
+import type { Transaction, TxnStatus } from '../../../mock/adminData';
+import { adminService, type PaymentStats } from '../../../services/api/adminService';
 import TransactionDetailModal from './components/TransactionDetailModal';
 import RefundModal from './components/RefundModal';
 
-const { Text } = Typography;
-
 const STATUS_CFG: Record<TxnStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  paid:     { label: 'Thành công',  color: 'success',    icon: <CheckCircleOutlined /> },
-  pending:  { label: 'Đang xử lý',  color: 'processing', icon: <ClockCircleOutlined /> },
+  paid:     { label: 'Thành công',   color: 'success',    icon: <CheckCircleOutlined /> },
+  pending:  { label: 'Đang xử lý',   color: 'processing', icon: <ClockCircleOutlined /> },
   refunded: { label: 'Đã hoàn tiền', color: 'default',    icon: <RollbackOutlined /> },
-  failed:   { label: 'Thất bại',    color: 'error',      icon: <CloseCircleOutlined /> },
+  failed:   { label: 'Thất bại',     color: 'error',      icon: <CloseCircleOutlined /> },
 };
 
 export default function PaymentsPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>(MOCK_TRANSACTIONS);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [stats, setStats] = useState<PaymentStats>({
+    totalRevenue: 0,
+    totalRefunded: 0,
+    totalPending: 0,
+    paidCount: 0,
+    pendingCount: 0,
+    refundedCount: 0,
+    failedCount: 0,
+    totalCount: 0,
+  });
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [gatewayFilter, setGatewayFilter] = useState('all');
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalElements, setTotalElements] = useState(0);
+
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
 
-  // Financial Stats
-  const totalRevenue = transactions
-    .filter(t => t.status === 'paid')
-    .reduce((sum, t) => sum + t.amount, 0);
+  // Fetch transactions and stats from backend API
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setAuthError(null);
+    try {
+      const [txnRes, statsRes] = await Promise.all([
+        adminService.getTransactions({
+          search,
+          status: statusFilter,
+          gateway: gatewayFilter,
+          page,
+          size: pageSize,
+        }),
+        adminService.getTransactionStats(),
+      ]);
 
-  const totalRefunded = transactions
-    .filter(t => t.status === 'refunded')
-    .reduce((sum, t) => sum + t.amount, 0);
+      setTransactions(txnRes.items || []);
+      setTotalElements(txnRes.totalElements || 0);
+      setStats(statsRes);
+    } catch (err: any) {
+      console.error('[PaymentsPage] Error fetching data:', err);
+      if (err?.response?.status === 401) {
+        setAuthError('Yêu cầu xác thực (401 Unauthorized): Cần có token Admin hợp lệ để xem và đối soát dữ liệu giao dịch. Vui lòng đăng nhập lại tài khoản Admin.');
+        message.error('Lỗi 401: Phiên đăng nhập chưa được xác thực hoặc token đã hết hạn!');
+      } else {
+        message.error(err?.response?.data?.message || err?.message || 'Không thể tải danh sách giao dịch từ máy chủ.');
+      }
+      setTransactions([]);
+      setTotalElements(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [search, statusFilter, gatewayFilter, page, pageSize]);
 
-  const totalPending = transactions
-    .filter(t => t.status === 'pending')
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const paidCount = transactions.filter(t => t.status === 'paid').length;
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleOpenDetail = (txn: Transaction) => {
     setSelectedTxn(txn);
@@ -59,29 +97,46 @@ export default function PaymentsPage() {
     setRefundOpen(true);
   };
 
-  const handleConfirmRefund = (txn: Transaction, reason: string) => {
-    setTransactions(prev =>
-      prev.map(t =>
-        t.id === txn.id
-          ? { ...t, status: 'refunded' }
-          : t
-      )
-    );
-    setRefundOpen(false);
-    message.success(`Đã xử lý hoàn tiền thành công cho giao dịch #${txn.ref}!`);
+  const handleConfirmRefund = async (txn: Transaction, reason: string) => {
+    try {
+      const updated = await adminService.refundTransaction(txn.id, reason);
+      if (updated) {
+        setTransactions(prev => prev.map(t => (t.id === txn.id ? { ...t, status: 'refunded' } : t)));
+        message.success(`Đã xử lý hoàn tiền thành công cho giao dịch #${txn.ref}!`);
+      }
+      setRefundOpen(false);
+      fetchData();
+    } catch {
+      message.error('Có lỗi khi xử lý hoàn tiền');
+    }
   };
 
-  const filtered = transactions.filter(t => {
-    const q = search.toLowerCase();
-    const matchQ =
-      !q ||
-      t.ref.toLowerCase().includes(q) ||
-      t.userName.toLowerCase().includes(q) ||
-      t.userEmail.toLowerCase().includes(q);
-    const matchS = statusFilter === 'all' || t.status === statusFilter;
-    const matchG = gatewayFilter === 'all' || t.gateway === gatewayFilter;
-    return matchQ && matchS && matchG;
-  });
+  const handleExportCSV = () => {
+    if (transactions.length === 0) {
+      message.info('Không có dữ liệu để xuất');
+      return;
+    }
+    const headers = ['Mã Ref', 'Khách hàng', 'Email', 'Gói dịch vụ', 'Số tiền (VND)', 'Cổng thanh toán', 'Trạng thái', 'Thời gian'];
+    const rows = transactions.map(t => [
+      t.ref,
+      `"${t.userName}"`,
+      t.userEmail,
+      t.plan,
+      t.amount,
+      t.gateway,
+      t.status,
+      t.createdAt,
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,﻿' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `transactions_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    message.success('Đã xuất báo cáo giao dịch (CSV)!');
+  };
 
   const columns: TableColumnsType<Transaction> = [
     {
@@ -100,7 +155,7 @@ export default function PaymentsPage() {
       render: (_, r) => (
         <div>
           <div style={{ fontWeight: 700, color: '#0F172A' }}>{r.userName}</div>
-          <div style={{ fontSize: 11, color: '#64748B' }}>{r.userEmail}</div>
+          <div style={{ fontSize: 11, color: '#64748B' }}>{r.userEmail || '—'}</div>
         </div>
       ),
     },
@@ -195,20 +250,46 @@ export default function PaymentsPage() {
         }}
       >
         <div>
-          <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>Payments & Transaction Management</div>
+          <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>Quản lý Giao dịch & Thanh toán</div>
           <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
             Theo dõi dòng tiền đăng ký gói, tra cứu lịch sử giao dịch và đối soát hoàn tiền
           </div>
         </div>
 
-        <Button
-          icon={<DownloadOutlined />}
-          onClick={() => message.success('Đang xuất báo cáo giao dịch (CSV)...')}
-          style={{ borderRadius: 8, fontWeight: 600 }}
-        >
-          Xuất báo cáo
-        </Button>
+        <Space>
+          <Button
+            icon={<ReloadOutlined spin={loading} />}
+            onClick={() => fetchData()}
+            style={{ borderRadius: 8 }}
+          >
+            Làm mới
+          </Button>
+          <Button
+            type="primary"
+            icon={<DownloadOutlined />}
+            onClick={handleExportCSV}
+            style={{ borderRadius: 8, fontWeight: 600, background: '#6366F1' }}
+          >
+            Xuất báo cáo
+          </Button>
+        </Space>
       </div>
+
+      {/* Thông báo xác thực nếu gặp 401 */}
+      {authError && (
+        <Alert
+          type="error"
+          showIcon
+          message="Yêu cầu đăng nhập xác thực (401 Unauthorized)"
+          description={authError}
+          style={{ marginBottom: 20, borderRadius: 10 }}
+          action={
+            <Button size="small" type="primary" danger onClick={() => { window.location.href = '/login'; }}>
+              Đăng nhập tài khoản Admin
+            </Button>
+          }
+        />
+      )}
 
       {/* Financial KPI Cards */}
       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
@@ -216,9 +297,9 @@ export default function PaymentsPage() {
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>DOANH THU THỰC NHẬN</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#10B981', marginTop: 4 }}>
-              {(totalRevenue / 1e6).toFixed(2)} tr
+              {stats.totalRevenue >= 1e6 ? `${(stats.totalRevenue / 1e6).toFixed(2)} tr` : `${stats.totalRevenue.toLocaleString('vi-VN')} đ`}
             </div>
-            <div style={{ fontSize: 11, color: '#10B981', marginTop: 2 }}>{paidCount} giao dịch thành công</div>
+            <div style={{ fontSize: 11, color: '#10B981', marginTop: 2 }}>{stats.paidCount} giao dịch thành công</div>
           </Card>
         </Col>
 
@@ -226,9 +307,9 @@ export default function PaymentsPage() {
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>ĐANG CHỜ THANH TOÁN</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#3B82F6', marginTop: 4 }}>
-              {(totalPending / 1e6).toFixed(2)} tr
+              {stats.totalPending >= 1e6 ? `${(stats.totalPending / 1e6).toFixed(2)} tr` : `${stats.totalPending.toLocaleString('vi-VN')} đ`}
             </div>
-            <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Đang chờ xác nhận từ gateway</div>
+            <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{stats.pendingCount} đơn chờ xác nhận từ gateway</div>
           </Card>
         </Col>
 
@@ -236,9 +317,9 @@ export default function PaymentsPage() {
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>TIỀN ĐÃ HOÀN TRẢ</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#EF4444', marginTop: 4 }}>
-              {(totalRefunded / 1e6).toFixed(2)} tr
+              {stats.totalRefunded >= 1e6 ? `${(stats.totalRefunded / 1e6).toFixed(2)} tr` : `${stats.totalRefunded.toLocaleString('vi-VN')} đ`}
             </div>
-            <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Theo yêu cầu bảo đảm quyền lợi</div>
+            <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{stats.refundedCount} giao dịch hoàn trả</div>
           </Card>
         </Col>
 
@@ -246,7 +327,7 @@ export default function PaymentsPage() {
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>TỔNG GIAO DỊCH</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#6366F1', marginTop: 4 }}>
-              {transactions.length} đơn
+              {stats.totalCount || totalElements} đơn
             </div>
             <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Ghi nhận trong toàn hệ thống</div>
           </Card>
@@ -257,23 +338,29 @@ export default function PaymentsPage() {
       <Card
         bordered={false}
         style={{ borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', overflow: 'hidden' }}
-        bodyStyle={{ padding: '16px 20px' }}
+        styles={{ body: { padding: '16px 20px' } }}
       >
         {/* Filters */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
           <Input
-            placeholder="Tìm theo Mã Ref, Tên khách hàng, Email..."
+            placeholder="Tìm theo Mã Ref, Tên khách hàng, Email, Gói..."
             prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
             style={{ flex: '1 1 240px', minWidth: 200, borderRadius: 8 }}
             allowClear
           />
 
           <Select
             value={statusFilter}
-            onChange={setStatusFilter}
-            style={{ flex: '0 1 160px', minWidth: 140 }}
+            onChange={val => {
+              setStatusFilter(val);
+              setPage(0);
+            }}
+            style={{ flex: '0 1 170px', minWidth: 150 }}
           >
             <Select.Option value="all">Tất cả trạng thái</Select.Option>
             <Select.Option value="paid">Thành công</Select.Option>
@@ -284,7 +371,10 @@ export default function PaymentsPage() {
 
           <Select
             value={gatewayFilter}
-            onChange={setGatewayFilter}
+            onChange={val => {
+              setGatewayFilter(val);
+              setPage(0);
+            }}
             style={{ flex: '0 1 160px', minWidth: 140 }}
           >
             <Select.Option value="all">Tất cả cổng</Select.Option>
@@ -294,12 +384,24 @@ export default function PaymentsPage() {
           </Select>
         </div>
 
-        {/* Table with responsive horizontal scroll */}
+        {/* Table with responsive horizontal scroll and server-side/fallback pagination */}
         <Table
           columns={columns}
-          dataSource={filtered}
+          dataSource={transactions}
           rowKey="id"
-          pagination={{ pageSize: 8, showTotal: (t) => `Tổng số ${t} giao dịch`, responsive: true }}
+          loading={loading}
+          pagination={{
+            current: page + 1,
+            pageSize: pageSize,
+            total: totalElements,
+            showTotal: (total) => `Tổng số ${total} giao dịch`,
+            responsive: true,
+            showSizeChanger: true,
+            onChange: (p, s) => {
+              setPage(p - 1);
+              if (s) setPageSize(s);
+            },
+          }}
           size="middle"
           scroll={{ x: 860 }}
         />

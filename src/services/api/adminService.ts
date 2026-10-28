@@ -30,11 +30,40 @@ import type {
 import {
   DEFAULT_ADMIN_ACCOUNTS,
   DEFAULT_AUDIT_LOGS,
+  type Transaction,
+  type TxnStatus,
 } from '../../mock/adminData';
 
 // ── In-Memory State for Local Persistence across Actions ──
 let memoryUsers: AdminUser[] = [...DEFAULT_ADMIN_ACCOUNTS];
 let memoryAuditLogs: AuditLogItem[] = [...DEFAULT_AUDIT_LOGS];
+
+export interface PaymentStats {
+  totalRevenue: number;
+  totalRefunded: number;
+  totalPending: number;
+  paidCount: number;
+  pendingCount: number;
+  refundedCount: number;
+  failedCount: number;
+  totalCount: number;
+}
+
+export interface GetTransactionsParams {
+  search?: string;
+  status?: string;
+  gateway?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface TransactionsResponse {
+  items: Transaction[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+}
 
 // ── Helpers & Normalizers ───────────────────────────────
 
@@ -491,6 +520,106 @@ const getAdminSubscriptions = async (): Promise<AdminSubscription[]> => {
   ];
 };
 
+
+// ── Admin Payments / Transactions ────────────────────────
+
+const normalizeTxnStatus = (status?: string): TxnStatus => {
+  if (!status) return 'pending';
+  const s = status.toLowerCase();
+  if (s === 'paid' || s === 'success') return 'paid';
+  if (s === 'refunded') return 'refunded';
+  if (s === 'failed' || s === 'error') return 'failed';
+  return 'pending';
+};
+
+const formatTxnDate = (isoString?: string): string => {
+  if (!isoString) return '—';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return isoString;
+  }
+};
+
+/** GET /admin/payments — List transactions with backend API */
+const getTransactions = async (params?: GetTransactionsParams): Promise<TransactionsResponse> => {
+  const apiParams: Record<string, any> = {
+    page: params?.page ?? 0,
+    size: params?.size ?? 10,
+  };
+  if (params?.search?.trim()) apiParams.search = params.search.trim();
+  if (params?.status && params.status !== 'all') apiParams.status = params.status.toUpperCase();
+  if (params?.gateway && params.gateway !== 'all') apiParams.gateway = params.gateway;
+
+  const response = await apiClient.get<any>('/admin/payments', { params: apiParams });
+  const payload = response.data;
+  const pageData = payload?.data ?? payload;
+  const rawItems = pageData?.items ?? pageData?.content ?? [];
+
+  const items: Transaction[] = Array.isArray(rawItems)
+    ? rawItems.map((r: any) => ({
+        id: r.id,
+        ref: r.ref || r.transactionCode || r.id,
+        userId: r.userId || '',
+        userName: r.userName || r.brandName || 'Khách hàng',
+        userEmail: r.userEmail || '',
+        plan: r.plan || 'Gói dịch vụ',
+        amount: Number(r.amount) || 0,
+        gateway: r.gateway || 'VNPAY',
+        status: normalizeTxnStatus(r.status),
+        createdAt: formatTxnDate(r.createdAt),
+        paidAt: r.paidAt ? formatTxnDate(r.paidAt) : '—',
+      }))
+    : [];
+
+  return {
+    items,
+    totalElements: pageData?.totalElements ?? items.length,
+    totalPages: pageData?.totalPages ?? 1,
+    page: pageData?.page ?? 0,
+    size: pageData?.size ?? items.length,
+  };
+};
+
+/** GET /admin/payments/stats — Financial metrics */
+const getTransactionStats = async (): Promise<PaymentStats> => {
+  const response = await apiClient.get<any>('/admin/payments/stats');
+  const d = response.data?.data ?? response.data;
+  return {
+    totalRevenue: Number(d?.totalRevenue) || 0,
+    totalRefunded: Number(d?.totalRefunded) || 0,
+    totalPending: Number(d?.totalPending) || 0,
+    paidCount: Number(d?.paidCount) || 0,
+    pendingCount: Number(d?.pendingCount) || 0,
+    refundedCount: Number(d?.refundedCount) || 0,
+    failedCount: Number(d?.failedCount) || 0,
+    totalCount: Number(d?.totalCount) || 0,
+  };
+};
+
+/** POST /admin/payments/{id}/refund — Refund transaction */
+const refundTransaction = async (id: string, reason?: string): Promise<Transaction | null> => {
+  const response = await apiClient.post<any>(`/admin/payments/${id}/refund`, { reason });
+  const r = response.data?.data ?? response.data;
+  if (!r) return null;
+  return {
+    id: r.id,
+    ref: r.ref || r.transactionCode || r.id,
+    userId: r.userId || '',
+    userName: r.userName || r.brandName || 'Khách hàng',
+    userEmail: r.userEmail || '',
+    plan: r.plan || 'Gói dịch vụ',
+    amount: Number(r.amount) || 0,
+    gateway: r.gateway || 'VNPAY',
+    status: 'refunded',
+    createdAt: formatTxnDate(r.createdAt),
+    paidAt: r.paidAt ? formatTxnDate(r.paidAt) : '—',
+  };
+};
+
 export const adminService = {
   getUsers,
   getUserById,
@@ -503,4 +632,7 @@ export const adminService = {
   getRolePermissions,
   updateRolePermissions,
   getAdminSubscriptions,
+  getTransactions,
+  getTransactionStats,
+  refundTransaction,
 };

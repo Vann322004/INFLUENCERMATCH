@@ -57,7 +57,15 @@ export const subscriptionService = {
         const response = await apiClient.get<ApiResponse<PageResponsePlan>>('/plans', {
           params: { page, size },
         });
-        const list = response.data?.data?.content || [];
+        const raw = response.data?.data;
+        let list: PlanResponse[] = [];
+        if (Array.isArray(raw)) {
+          list = raw;
+        } else if (raw && Array.isArray((raw as any).content)) {
+          list = (raw as any).content;
+        } else if (Array.isArray((response.data as any)?.content)) {
+          list = (response.data as any).content;
+        }
         if (list.length > 0) {
           cachedPlans = { data: list, timestamp: Date.now() };
           try {
@@ -208,5 +216,35 @@ export const subscriptionService = {
       planId,
     });
     return response.data.data;
+  },
+
+  /**
+   * Admin: Directly assign a subscription to a brand (POST /admin/subscriptions).
+   */
+  async adminCreateSubscription(brandId: string, planId: string): Promise<SubscriptionResponse> {
+    subscriptionService.clearBrandSubsCache(brandId);
+    const response = await apiClient.post<ApiResponse<SubscriptionResponse>>('/admin/subscriptions', {
+      brandId,
+      planId,
+    });
+    return response.data.data;
+  },
+
+  /**
+   * Admin: Get all subscriptions for a specific brand (GET /admin/subscriptions/brand/:brandId).
+   */
+  async adminGetBrandSubscriptions(brandId: string): Promise<SubscriptionResponse[]> {
+    const response = await apiClient.get<ApiResponse<SubscriptionResponse[]>>(
+      `/admin/subscriptions/brand/${brandId}`
+    );
+    return response.data?.data || [];
+  },
+
+  /**
+   * Admin: Cancel a brand's subscription (DELETE /admin/subscriptions/:id).
+   */
+  async adminCancelSubscription(subscriptionId: string): Promise<void> {
+    subscriptionService.clearBrandSubsCache();
+    await apiClient.delete(`/admin/subscriptions/${subscriptionId}`);
   },
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Descriptions, Tag, Timeline, Button, Divider, Typography } from 'antd';
+import { Modal, Descriptions, Tag, Timeline, Button, Divider } from 'antd';
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -7,8 +7,6 @@ import {
   RollbackOutlined,
 } from '@ant-design/icons';
 import type { Transaction, TxnStatus } from '../../../../mock/adminData';
-
-const { Text } = Typography;
 
 interface Props {
   transaction: Transaction | null;
@@ -18,10 +16,10 @@ interface Props {
 }
 
 const STATUS_CFG: Record<TxnStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  paid:     { label: 'Thành công',  color: 'success',    icon: <CheckCircleOutlined /> },
-  pending:  { label: 'Đang xử lý',  color: 'processing', icon: <ClockCircleOutlined /> },
+  paid:     { label: 'Thành công',   color: 'success',    icon: <CheckCircleOutlined /> },
+  pending:  { label: 'Đang xử lý',   color: 'processing', icon: <ClockCircleOutlined /> },
   refunded: { label: 'Đã hoàn tiền', color: 'default',    icon: <RollbackOutlined /> },
-  failed:   { label: 'Thất bại',    color: 'error',      icon: <CloseCircleOutlined /> },
+  failed:   { label: 'Thất bại',     color: 'error',      icon: <CloseCircleOutlined /> },
 };
 
 export default function TransactionDetailModal({ transaction, open, onClose, onOpenRefund }: Props) {
@@ -66,7 +64,7 @@ export default function TransactionDetailModal({ transaction, open, onClose, onO
           <Descriptions.Item label="Mã tham chiếu">{transaction.ref}</Descriptions.Item>
           <Descriptions.Item label="Cổng thanh toán">{transaction.gateway}</Descriptions.Item>
           <Descriptions.Item label="Khách hàng">{transaction.userName}</Descriptions.Item>
-          <Descriptions.Item label="Email">{transaction.userEmail}</Descriptions.Item>
+          <Descriptions.Item label="Email">{transaction.userEmail || '—'}</Descriptions.Item>
           <Descriptions.Item label="Gói đăng ký">{transaction.plan}</Descriptions.Item>
           <Descriptions.Item label="Số tiền thanh toán">
             <strong style={{ color: '#10B981', fontSize: 15 }}>
@@ -87,7 +85,7 @@ export default function TransactionDetailModal({ transaction, open, onClose, onO
               children: (
                 <div>
                   <strong>Khởi tạo đơn hàng</strong>
-                  <div style={{ fontSize: 12, color: '#64748B' }}>{transaction.createdAt} - User chọn gói {transaction.plan}</div>
+                  <div style={{ fontSize: 12, color: '#64748B' }}>{transaction.createdAt} - Khách chọn gói {transaction.plan}</div>
                 </div>
               ),
             },
@@ -96,7 +94,7 @@ export default function TransactionDetailModal({ transaction, open, onClose, onO
               children: (
                 <div>
                   <strong>Kết nối cổng {transaction.gateway}</strong>
-                  <div style={{ fontSize: 12, color: '#64748B' }}>Redirect qua cổng thanh toán đối tác</div>
+                  <div style={{ fontSize: 12, color: '#64748B' }}>Xử lý qua cổng thanh toán đối tác</div>
                 </div>
               ),
             },
@@ -105,7 +103,7 @@ export default function TransactionDetailModal({ transaction, open, onClose, onO
               children: (
                 <div>
                   <strong>{st.label}</strong>
-                  <div style={{ fontSize: 12, color: '#64748B' }}>{transaction.paidAt !== '—' ? transaction.paidAt : 'Chưa ghi nhận'}</div>
+                  <div style={{ fontSize: 12, color: '#64748B' }}>{transaction.paidAt && transaction.paidAt !== '—' ? transaction.paidAt : 'Chưa ghi nhận'}</div>
                 </div>
               ),
             },
