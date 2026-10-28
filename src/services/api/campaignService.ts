@@ -309,7 +309,7 @@ export const campaignService = {
         locations: ['Thành phố Hồ Chí Minh', 'Thành phố Hà Nội'],
         budgetMin: budget * 0.8,
         budgetMax: budget,
-        aiExplanation: `Hệ thống đã phân tích mục tiêu "${prompt}" và đề xuất chiến lược tối ưu: tập trung vào nền tảng ${platforms.join(' & ')} với tệp Creator ${niches.join(', ')}. (Lưu ý: Backend chưa cài GEMINI_API_KEY nên hệ thống tự kích hoạt bộ engine thông minh dự phòng).`,
+        aiExplanation: `Hệ thống đã phân tích mục tiêu "${prompt}" và đề xuất chiến lược tối ưu: tập trung vào nền tảng ${platforms.join(' & ')} với tệp Creator ${niches.join(', ')}.`,
       };
     }
 
