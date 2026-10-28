@@ -108,9 +108,9 @@ export default function HeroLanding() {
       {/* Hero copy */}
       <div className="hv-hero">
         <h1 className="hv-title">
-          Close the rift <span className="hv-title-accent">linking<br className="hv-br" /> signals and action</span>
+          Find the right creators <span className="hv-title-accent">for every<br className="hv-br" /> brand campaign</span>
         </h1>
-        <p className="hv-sub">Shape scattered signals into meaningful outcomes via AI-driven workflows.</p>
+        <p className="hv-sub">AI-powered influencer matching to discover, manage and measure every collaboration in one place.</p>
       </div>
 
       {/* Bottom-left CTA */}
