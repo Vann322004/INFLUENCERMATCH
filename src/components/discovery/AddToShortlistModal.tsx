@@ -79,7 +79,7 @@ export default function AddToShortlistModal({
       const values = await form.validateFields();
       setSubmitting(true);
 
-      await creatorService.addToShortlist(values.campaignId, {
+      const savedItem = await creatorService.addToShortlist(values.campaignId, {
         creatorId: creator.id,
         creatorName: creator.name,
         avatarUrl: creator.avatar,
@@ -88,15 +88,25 @@ export default function AddToShortlistModal({
         note: values.note || undefined,
       });
 
+      // Đồng bộ đồng nhất tất cả các key lưu trữ giữa Discovery và Shortlist
       sessionStorage.setItem('current_campaign_id', values.campaignId);
+      localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', values.campaignId);
+      localStorage.setItem('last_active_campaign_id', values.campaignId);
+
+      // Kích hoạt custom event để các trang khác đang mở tự động cập nhật
+      window.dispatchEvent(new CustomEvent('im_shortlist_updated', {
+        detail: { campaignId: values.campaignId, creatorId: creator.id }
+      }));
+
       message.success({
         content: (
           <span>
-            Đã thêm <b>{creator.name}</b> vào Danh sách chọn!{' '}
+            Đã lưu <b>{creator.name}</b> vào Danh sách chọn!{' '}
             <a
               style={{ fontWeight: 700, marginLeft: 8, color: '#4F46E5', textDecoration: 'underline' }}
               onClick={() => {
                 sessionStorage.setItem('current_campaign_id', values.campaignId);
+                localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', values.campaignId);
                 navigate('/creators/shortlist', { state: { campaignId: values.campaignId } });
               }}
             >

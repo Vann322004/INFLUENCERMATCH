@@ -1280,6 +1280,11 @@ export default function CreatorDiscoveryPage() {
       });
       await Promise.all(promises);
       sessionStorage.setItem('current_campaign_id', targetCampId);
+      localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', targetCampId);
+      localStorage.setItem('last_active_campaign_id', targetCampId);
+      window.dispatchEvent(new CustomEvent('im_shortlist_updated', {
+        detail: { campaignId: targetCampId }
+      }));
       hide();
       message.success({
         content: (
@@ -1289,6 +1294,7 @@ export default function CreatorDiscoveryPage() {
               style={{ fontWeight: 700, marginLeft: 8, color: '#4F46E5', textDecoration: 'underline' }}
               onClick={() => {
                 sessionStorage.setItem('current_campaign_id', targetCampId);
+                localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', targetCampId);
                 navigate('/creators/shortlist', { state: { campaignId: targetCampId } });
               }}
             >

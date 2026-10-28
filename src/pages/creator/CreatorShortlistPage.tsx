@@ -169,29 +169,85 @@ export const mapCreatorToShortlistItem = (
   };
 };
 
+// In-Memory Global Cache để chuyển trang Discovery <-> Shortlist hiển thị tức thì 0ms, không treo spinner
+interface ShortlistCacheData {
+  creators: CreatorCompareItem[];
+  campaigns: CampaignResponse[];
+  selectedCampaign: string;
+  creatorsMap: Map<string, CreatorItem>;
+  lastUpdated: number;
+}
+
+let globalShortlistCache: ShortlistCacheData | null = null;
+
+const loadCachedShortlist = (): ShortlistCacheData | null => {
+  if (globalShortlistCache && globalShortlistCache.creators.length > 0) {
+    return globalShortlistCache;
+  }
+  try {
+    const rawItems = localStorage.getItem('IM_SHORTLIST_CACHE_CREATORS');
+    const rawCamps = localStorage.getItem('IM_SHORTLIST_CACHE_CAMPAIGNS');
+    const rawSelected = sessionStorage.getItem('current_campaign_id') || localStorage.getItem('IM_SELECTED_CAMPAIGN_ID');
+    if (rawItems) {
+      const parsedItems = JSON.parse(rawItems);
+      const parsedCamps = rawCamps ? JSON.parse(rawCamps) : [];
+      if (Array.isArray(parsedItems) && parsedItems.length > 0) {
+        globalShortlistCache = {
+          creators: parsedItems,
+          campaigns: parsedCamps,
+          selectedCampaign: rawSelected || 'all',
+          creatorsMap: new Map(),
+          lastUpdated: Date.now(),
+        };
+        return globalShortlistCache;
+      }
+    }
+  } catch {}
+  return null;
+};
+
+const updateShortlistCache = (partial: Partial<ShortlistCacheData>) => {
+  if (!globalShortlistCache) {
+    globalShortlistCache = {
+      creators: [],
+      campaigns: [],
+      selectedCampaign: 'all',
+      creatorsMap: new Map(),
+      lastUpdated: Date.now(),
+    };
+  }
+  globalShortlistCache = { ...globalShortlistCache, ...partial, lastUpdated: Date.now() };
+  try {
+    if (partial.creators) {
+      localStorage.setItem('IM_SHORTLIST_CACHE_CREATORS', JSON.stringify(partial.creators));
+    }
+    if (partial.campaigns) {
+      localStorage.setItem('IM_SHORTLIST_CACHE_CAMPAIGNS', JSON.stringify(partial.campaigns));
+    }
+  } catch {}
+};
+
 export default function CreatorShortlistPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
 
-  const urlCampaignId = searchParams.get('campaignId') || (location.state as any)?.campaignId || sessionStorage.getItem('current_campaign_id') || undefined;
+  // Khởi tạo từ Cache ngay lập tức để trang hiển thị 0ms, không lag/spinner
+  const initialCache = useMemo(() => loadCachedShortlist(), []);
 
-  // Clean URL: Tự động ẩn campaignId khỏi thanh địa chỉ URL bar sau khi đã lưu vào sessionStorage/state
-  useEffect(() => {
-    const rawCampParam = searchParams.get('campaignId');
-    if (rawCampParam) {
-      sessionStorage.setItem('current_campaign_id', rawCampParam);
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.delete('campaignId');
-      setSearchParams(nextParams, { replace: true });
-    }
-  }, [searchParams, setSearchParams]);
+  const [loading, setLoading] = useState<boolean>(!initialCache);
+  const [creators, setCreators] = useState<CreatorCompareItem[]>(initialCache?.creators || []);
+  const [campaigns, setCampaigns] = useState<CampaignResponse[]>(initialCache?.campaigns || []);
+  const [creatorsMap, setCreatorsMap] = useState<Map<string, CreatorItem>>(initialCache?.creatorsMap || new Map());
 
-  const [loading, setLoading] = useState(true);
-  const [creators, setCreators] = useState<CreatorCompareItem[]>([]);
-  const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
-  const [creatorsMap, setCreatorsMap] = useState<Map<string, CreatorItem>>(new Map());
-  const [selectedCampaign, setSelectedCampaign] = useState<string>(urlCampaignId || 'all');
+  // Xác định campaignId mục tiêu đồng bộ giữa URL, state và storage
+  const [selectedCampaign, setSelectedCampaign] = useState<string>(() => {
+    const rawUrl = searchParams.get('campaignId');
+    const rawState = (location.state as any)?.campaignId;
+    const rawSession = sessionStorage.getItem('current_campaign_id');
+    const rawLocal = localStorage.getItem('IM_SELECTED_CAMPAIGN_ID');
+    return rawUrl || rawState || rawSession || rawLocal || initialCache?.selectedCampaign || 'all';
+  });
 
   // Candidate Search & Adding state in Add Modal
   const [candidateSearch, setCandidateSearch] = useState('');
@@ -209,37 +265,51 @@ export default function CreatorShortlistPage() {
     return list;
   }, [campaigns]);
 
-  // Load Shortlist for specific campaign or all campaigns
+  // Load Shortlist từ Backend Database kết hợp Persistent Fallback
   const loadShortlist = async (
     campId: string,
     currentCampaigns: CampaignResponse[],
-    cMap: Map<string, CreatorItem>
+    cMap: Map<string, CreatorItem>,
+    isBackground = false
   ) => {
-    setLoading(true);
+    if (!isBackground) {
+      setLoading(true);
+    }
     try {
       let rawShortlistItems: { item: ShortlistItem; campaignName: string }[] = [];
 
       if (campId === 'all') {
-        // Lấy danh sách shortlist thực tế từ Backend Database theo từng chiến dịch của Brand
+        // Tối ưu hóa: Chỉ gửi tối đa 5 chiến dịch hợp lệ (UUID) để tránh nghẽn HTTP connections
+        const uuidCampaigns = currentCampaigns
+          .filter((c) => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(c.id))
+          .slice(0, 5);
+
         let fromBackend: { item: ShortlistItem; campaignName: string }[] = [];
-        if (currentCampaigns.length > 0) {
-          const results = await Promise.all(
-            currentCampaigns.map(async (camp) => {
-              try {
-                const list = await creatorService.getShortlist(camp.id);
-                return (list || []).map((it) => ({ item: it, campaignName: camp.name }));
-              } catch {
-                return [];
-              }
+        if (uuidCampaigns.length > 0) {
+          const settledResults = await Promise.allSettled(
+            uuidCampaigns.map(async (camp) => {
+              const list = await creatorService.getShortlist(camp.id);
+              return (list || []).map((it) => ({ item: it, campaignName: camp.name }));
             })
           );
-          fromBackend = results.flat();
+          settledResults.forEach((res) => {
+            if (res.status === 'fulfilled') {
+              fromBackend.push(...res.value);
+            }
+          });
         }
+
+        // Lấy thêm từ local storage để bảo toàn KOC nếu backend chưa kịp sync
+        const localAll = creatorService.getLocalShortlist('all');
+        const localFormatted = localAll.map((it) => ({
+          item: it,
+          campaignName: currentCampaigns.find((c) => c.id === it.campaignId)?.name || 'Chiến dịch',
+        }));
 
         // Hợp nhất và loại trừ trùng lặp
         const seen = new Set<string>();
         const merged: { item: ShortlistItem; campaignName: string }[] = [];
-        fromBackend.forEach((entry) => {
+        [...fromBackend, ...localFormatted].forEach((entry) => {
           const key = entry.item.creatorId || entry.item.id;
           if (key && !seen.has(key)) {
             seen.add(key);
@@ -280,7 +350,7 @@ export default function CreatorShortlistPage() {
         return {
           id: item.creatorId,
           shortlistItemId: item.id,
-          campaignId: item.campaignId,
+          campaignId: item.campaignId || campId,
           campaignName,
           name: displayName,
           username: (profile?.userName || displayName).replace(/^@+/, ''),
@@ -317,18 +387,24 @@ export default function CreatorShortlistPage() {
       });
 
       setCreators(mapped);
+      updateShortlistCache({ creators: mapped, selectedCampaign: campId });
     } catch (err) {
-      console.error('Lỗi khi tải shortlist:', err);
+      console.error('Lỗi khi tải shortlist từ Database:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  // Khởi tạo dữ liệu 1 lần duy nhất khi Mount (không re-trigger do searchParams)
   useEffect(() => {
     let isMounted = true;
     const initData = async () => {
-      try {
+      const hasCached = Boolean(globalShortlistCache && globalShortlistCache.creators.length > 0);
+      if (!hasCached) {
         setLoading(true);
+      }
+
+      try {
         const [campsRes, apiCreators] = await Promise.all([
           campaignService.getCampaigns(0, 50).catch(() => []),
           creatorService.getCreators().catch(() => []),
@@ -338,16 +414,20 @@ export default function CreatorShortlistPage() {
 
         let camps = Array.isArray(campsRes) ? campsRes : [];
 
-        // Check if there's a campaignId in URL or state
-        const targetCampId = searchParams.get('campaignId') || (location.state as any)?.campaignId || sessionStorage.getItem('current_campaign_id');
+        // Đọc campaignId mục tiêu
+        const rawParam = searchParams.get('campaignId');
+        const rawState = (location.state as any)?.campaignId;
+        const rawSession = sessionStorage.getItem('current_campaign_id');
+        const rawLocal = localStorage.getItem('IM_SELECTED_CAMPAIGN_ID');
+        const targetCampId = rawParam || rawState || rawSession || rawLocal;
+
         let initialCampId = 'all';
 
-        if (targetCampId) {
+        if (targetCampId && targetCampId !== 'all') {
           const found = camps.find((c) => c.id === targetCampId);
           if (found) {
             initialCampId = targetCampId;
-          } else {
-            // Thử nạp thông tin campaign cụ thể
+          } else if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(targetCampId)) {
             try {
               const single = await campaignService.getCampaignById(targetCampId);
               if (single?.id) {
@@ -355,7 +435,13 @@ export default function CreatorShortlistPage() {
                 initialCampId = single.id;
               }
             } catch {
-              // Thêm fallback campaign để hiển thị dropdown đúng tên
+              initialCampId = camps.length > 0 ? camps[0].id : targetCampId;
+            }
+          } else {
+            // targetCampId là ID tạm hoặc không tồn tại trong backend DB:
+            // Ưu tiên chọn chiến dịch thật đầu tiên của user nếu có, hoặc giữ lại nếu có local shortlist
+            const localHasItems = creatorService.getLocalShortlist(targetCampId).length > 0;
+            if (localHasItems) {
               const fallbackCamp = {
                 id: targetCampId,
                 name: 'Chiến dịch mục tiêu',
@@ -368,8 +454,22 @@ export default function CreatorShortlistPage() {
               } as CampaignResponse;
               camps = [fallbackCamp, ...camps];
               initialCampId = targetCampId;
+            } else if (camps.length > 0) {
+              initialCampId = camps[0].id;
             }
           }
+        } else if (camps.length > 0 && initialCampId === 'all') {
+          // Nếu có campaigns, mặc định kiểm tra chiến dịch có shortlist
+          const firstWithItems = camps.find((c) => creatorService.getLocalShortlist(c.id).length > 0);
+          if (firstWithItems) {
+            initialCampId = firstWithItems.id;
+          }
+        }
+
+        // Lưu đồng bộ vào storage
+        if (initialCampId !== 'all') {
+          sessionStorage.setItem('current_campaign_id', initialCampId);
+          localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', initialCampId);
         }
 
         setCampaigns(camps);
@@ -388,8 +488,22 @@ export default function CreatorShortlistPage() {
           setAddCampaignId(camps[0].id);
         }
 
-        // Tải danh sách shortlist cho campaign mục tiêu hoặc all
-        await loadShortlist(initialCampId, camps, cMap);
+        updateShortlistCache({
+          campaigns: camps,
+          creatorsMap: cMap,
+          selectedCampaign: initialCampId,
+        });
+
+        // Tải danh sách shortlist từ DB (chạy ngầm nếu đã có cache)
+        await loadShortlist(initialCampId, camps, cMap, hasCached);
+
+        // Clean URL sau khi đã hoàn tất nạp dữ liệu một cách an toàn
+        if (rawParam) {
+          const nextParams = new URLSearchParams(window.location.search);
+          nextParams.delete('campaignId');
+          const newUrl = `${window.location.pathname}${nextParams.toString() ? `?${nextParams.toString()}` : ''}`;
+          window.history.replaceState({}, '', newUrl);
+        }
       } catch (err) {
         console.error('Lỗi khi khởi tạo dữ liệu shortlist:', err);
       } finally {
@@ -398,31 +512,41 @@ export default function CreatorShortlistPage() {
     };
 
     initData();
+
+    // Lắng nghe sự kiện cập nhật shortlist từ trang Discovery / Modal
+    const handleShortlistUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const targetCamp = customEvent.detail?.campaignId || selectedCampaign;
+      loadShortlist(targetCamp, campaigns, creatorsMap, true);
+    };
+    window.addEventListener('im_shortlist_updated', handleShortlistUpdated);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('im_shortlist_updated', handleShortlistUpdated);
     };
-  }, [searchParams]);
+  }, []);
 
   const handleSelectCampaign = async (val: string) => {
     setSelectedCampaign(val);
     if (val && val !== 'all') {
-      setSearchParams({ campaignId: val }, { replace: true });
       sessionStorage.setItem('current_campaign_id', val);
+      localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', val);
       localStorage.setItem('last_active_campaign_id', val);
     } else {
-      setSearchParams({}, { replace: true });
       sessionStorage.removeItem('current_campaign_id');
+      localStorage.removeItem('IM_SELECTED_CAMPAIGN_ID');
     }
     const targetLabel = campaignOptions.find((o) => o.value === val)?.label || val;
     message.info(`Đang xem danh sách: ${targetLabel}`);
-    await loadShortlist(val, campaigns, creatorsMap);
+    await loadShortlist(val, campaigns, creatorsMap, false);
   };
 
   // Lắng nghe realtime SSE endpoint cập nhật số liệu crawl tự động
   useShortlistRealtime(
     selectedCampaign && selectedCampaign !== 'all' ? selectedCampaign : undefined,
     () => {
-      loadShortlist(selectedCampaign, campaigns, creatorsMap);
+      loadShortlist(selectedCampaign, campaigns, creatorsMap, true);
     }
   );
   const [viewMode, setViewMode] = useState<'board' | 'compare'>('board');
@@ -588,7 +712,11 @@ export default function CreatorShortlistPage() {
           if (target?.campaignId && target.shortlistItemId) {
             await creatorService.removeFromShortlist(target.campaignId, target.shortlistItemId);
           }
-          setCreators((prev) => prev.filter((c) => c.id !== id));
+          setCreators((prev) => {
+            const next = prev.filter((c) => c.id !== id);
+            updateShortlistCache({ creators: next });
+            return next;
+          });
           message.success(`Đã xóa ${name} khỏi danh sách chọn`);
         } catch (err: any) {
           console.error(err);
@@ -622,7 +750,12 @@ export default function CreatorShortlistPage() {
 
   // Filtered creators for Board view
   const filteredCreators = creators.filter((c) => {
-    if (selectedCampaign !== 'all' && c.campaignId !== selectedCampaign) return false;
+    if (selectedCampaign !== 'all') {
+      // Nếu creator có campaignId cụ thể khác với selectedCampaign thì mới loại trừ
+      if (c.campaignId && c.campaignId !== 'all' && c.campaignId !== selectedCampaign) {
+        return false;
+      }
+    }
     if (onlyFavorite && !c.favorite) return false;
     if (priorityFilter !== 'all' && c.priority !== priorityFilter) return false;
     if (searchTerm.trim()) {

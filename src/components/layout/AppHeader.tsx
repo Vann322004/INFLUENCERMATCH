@@ -25,7 +25,12 @@ export default function AppHeader() {
     if (p === '/campaigns/create') {
       return { root: 'Trang chủ', sub: 'Chiến dịch', subLink: '/campaigns', current: 'Tạo chiến dịch mới' };
     }
-    if (p.includes('/campaigns')) return { root: 'Trang chủ', current: 'Chiến dịch' };
+    if (p.includes('/creators/shortlist')) {
+      return { root: 'Trang chủ', sub: 'Khám phá KOC', subLink: '/creators', current: 'Danh sách chọn KOC' };
+    }
+    if (p.includes('/creators/recommendations')) {
+      return { root: 'Trang chủ', sub: 'Khám phá KOC', subLink: '/creators', current: 'Gợi ý AI' };
+    }
     if (p.includes('/creators')) return { root: 'Trang chủ', current: 'Khám phá KOC' };
     if (p.includes('/crm')) return { root: 'Trang chủ', current: 'Tiếp cận & Kết nối' };
     if (p.includes('/collaboration')) return { root: 'Trang chủ', current: 'Hợp tác & Vận hành' };
