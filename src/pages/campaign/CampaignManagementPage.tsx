@@ -81,6 +81,28 @@ export default function CampaignManagementPage() {
     isRecView ? 'recommendation' : 'kanban'
   );
 
+  // Ẩn chuỗi UUID trên thanh URL để URL gọn gàng /campaign-management?tab=...
+  useEffect(() => {
+    if (id) {
+      sessionStorage.setItem('current_campaign_id', id);
+      localStorage.setItem('last_active_campaign_id', id);
+    }
+    if (window.location.pathname.includes('/campaign-management/')) {
+      const search = window.location.search || (activeViewTab === 'recommendation' ? '?tab=recommendation' : '');
+      window.history.replaceState(null, '', `/campaign-management${search}`);
+    }
+  }, [id, activeViewTab]);
+
+  // Đồng bộ tab từ searchParams
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'recommendation' || location.pathname.includes('recommendation')) {
+      setActiveViewTab('recommendation');
+    } else if (tabParam === 'kanban' || tabParam === 'crm' || tabParam === 'pipeline') {
+      setActiveViewTab('kanban');
+    }
+  }, [searchParams, location.pathname]);
+
   useEffect(() => {
     let isMounted = true;
     const loadData = async () => {
@@ -300,7 +322,85 @@ export default function CampaignManagementPage() {
 
   return (
     <div className="pipeline-page-container">
-      {/* 0. Unified Campaign Funnel Stepper */}
+      {/* 0. Breadcrumb chuẩn theo phong cách Discovery */}
+      <div className="pipeline-breadcrumb">
+        <span className="breadcrumb-link" onClick={() => navigate('/dashboard')}>
+          Trang chủ
+        </span>
+        <span className="breadcrumb-sep">›</span>
+        <span className="breadcrumb-link" onClick={() => navigate('/campaigns')}>
+          Chiến dịch
+        </span>
+        <span className="breadcrumb-sep">›</span>
+        <span className="breadcrumb-camp">
+          {campaign?.name || 'Chiến dịch'}
+        </span>
+        <span className="breadcrumb-sep">›</span>
+        <span className="breadcrumb-current">
+          {activeViewTab === 'recommendation' ? 'Đề xuất AI' : 'Pipeline Kanban'}
+        </span>
+      </div>
+
+      {/* 1. Header Title Row & Mode Navigation Tabs đồng bộ với trang Discovery */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div className="pipeline-header-section">
+          <h1 className="pipeline-main-title">
+            {activeViewTab === 'recommendation' ? 'Đề xuất KOC/KOL từ AI' : 'Creator Pipeline'}
+          </h1>
+          <p className="pipeline-header-sub">
+            {activeViewTab === 'recommendation'
+              ? 'Hệ thống Four-Memory tự động phân tích và sàng lọc những nhà sáng tạo tối ưu nhất cho chiến dịch.'
+              : 'Quản lý và theo dõi toàn bộ quá trình làm việc với các influencer cho chiến dịch của bạn.'}
+          </p>
+        </div>
+
+        {/* Tab điều hướng đồng bộ Discovery */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div className="pipeline-mode-tabs">
+            <button
+              type="button"
+              className={`pipeline-tab-btn ${activeViewTab === 'recommendation' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveViewTab('recommendation');
+                navigate('/campaign-management?tab=recommendation');
+              }}
+            >
+              <ThunderboltFilled style={{ color: activeViewTab === 'recommendation' ? '#4F46E5' : '#8B5CF6' }} />
+              <span>Gợi ý AI (Four-Memory)</span>
+            </button>
+            <button
+              type="button"
+              className={`pipeline-tab-btn ${activeViewTab === 'kanban' ? 'active' : ''}`}
+              onClick={() => {
+                setActiveViewTab('kanban');
+                navigate('/campaign-management?tab=crm');
+              }}
+            >
+              <FilterOutlined style={{ color: activeViewTab === 'kanban' ? '#4F46E5' : '#64748B' }} />
+              <span>Pipeline Kanban ({pipelineCreators.length})</span>
+            </button>
+          </div>
+
+          {campaign?.id && (
+            <Button
+              icon={<RightOutlined />}
+              onClick={() => navigate(`/creators/shortlist?campaignId=${campaign.id}`)}
+              style={{
+                borderRadius: 8,
+                fontWeight: 600,
+                color: '#4F46E5',
+                borderColor: '#C7D2FE',
+                background: '#EEF2FF',
+                height: 36,
+              }}
+            >
+              Bảng Shortlist ➔
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* 2. Unified Campaign Funnel Stepper */}
       <CampaignWorkflowBar
         currentStep={activeViewTab === 'recommendation' ? 'recommendation' : 'crm'}
         campaignId={campaign?.id}
@@ -309,133 +409,72 @@ export default function CampaignManagementPage() {
         onSelectCampaign={(val) => {
           sessionStorage.setItem('current_campaign_id', val);
           localStorage.setItem('last_active_campaign_id', val);
-          if (activeViewTab === 'recommendation' || location.pathname.includes('recommendation')) {
-            navigate(`/recommendations?campaignId=${val}&tab=recommendation`);
-          } else {
-            navigate(`/campaign-management/${val}`);
-          }
+          const tabParam = activeViewTab === 'recommendation' ? 'recommendation' : 'crm';
+          navigate(`/campaign-management?tab=${tabParam}`);
         }}
       />
 
-      {/* 1. Header Title Row */}
-      <div className="pipeline-header-row">
-        <div>
-          <h1 className="pipeline-main-title">Creator Pipeline</h1>
-          <div className="pipeline-description">
-            Quản lý và theo dõi toàn bộ quá trình làm việc với các influencer cho chiến dịch của bạn.
+      {/* 3. Campaign Summary Card (Chỉ hiển thị ở tab Kanban, đã loại bỏ ảnh AI mỹ phẩm ảo) */}
+      {activeViewTab === 'kanban' && (
+        <div className="campaign-summary-card">
+          <div className="campaign-summary-left">
+            <div className="campaign-meta-content" style={{ paddingLeft: 0 }}>
+              <div className="campaign-title-row">
+                <span className="campaign-name-title">{campaign?.name || 'Chiến dịch Influencer'}</span>
+                <span className="campaign-status-tag">{campaign?.status || 'Đang diễn ra'}</span>
+              </div>
+
+              <div className="campaign-subtitle-text">
+                {campaign?.productService ? `Sản phẩm / Dịch vụ: ${campaign.productService}` : 'Chiến dịch quảng bá thương hiệu'}
+              </div>
+
+              <div className="campaign-date-text">
+                <CalendarOutlined />
+                <span>{campaign?.createdAt ? new Date(campaign.createdAt).toLocaleDateString('vi-VN') : 'Mới tạo'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="campaign-summary-stats">
+            <div className="campaign-stat-item">
+              <span className="campaign-stat-label">Tổng creator</span>
+              <div className="campaign-stat-value-row">
+                <span className="campaign-stat-number">{pipelineCreators.length}</span>
+                <span className="campaign-stat-badge-green">Realtime</span>
+              </div>
+            </div>
+
+            <div className="campaign-stat-item">
+              <span className="campaign-stat-label">Tổng reach dự kiến</span>
+              <div className="campaign-stat-value-row">
+                <span className="campaign-stat-number">{pipelineCreators.length > 0 ? `${pipelineCreators.length * 120}K` : '0'}</span>
+                <span className="campaign-stat-badge-green">Est.</span>
+              </div>
+            </div>
+
+            <div className="campaign-stat-item">
+              <span className="campaign-stat-label">Ngân sách chiến dịch</span>
+              <div className="campaign-stat-value-row">
+                <span className="campaign-stat-number">{campaign?.budgetMax ? `${(campaign.budgetMax / 1_000_000).toFixed(0)}M ₫` : 'Thỏa thuận'}</span>
+                <span className="campaign-stat-badge-green">VND</span>
+              </div>
+            </div>
+
+            <Button
+              className="btn-export-report"
+              icon={<ExportOutlined />}
+              onClick={() => {
+                message.loading('Đang chuẩn bị file xuất báo cáo pipeline...');
+                setTimeout(() => {
+                  message.success('Đã xuất báo cáo chiến dịch thành công (PDF/Excel)!');
+                }, 800);
+              }}
+            >
+              Xuất báo cáo
+            </Button>
           </div>
         </div>
-      </div>
-
-      {/* 3. Campaign Summary Card */}
-      <div className="campaign-summary-card">
-        <div className="campaign-summary-left">
-          <img
-            src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=120&auto=format&fit=crop&q=80"
-            alt={campaign?.name || 'Chiến dịch'}
-            className="campaign-thumb-img"
-          />
-
-          <div className="campaign-meta-content">
-            <div className="campaign-title-row">
-              <span className="campaign-name-title">{campaign?.name || 'Chiến dịch Influencer'}</span>
-              <span className="campaign-status-tag">{campaign?.status || 'Đang diễn ra'}</span>
-            </div>
-
-            <div className="campaign-subtitle-text">
-              {campaign?.productService ? `Sản phẩm / Dịch vụ: ${campaign.productService}` : 'Chiến dịch quảng bá thương hiệu'}
-            </div>
-
-            <div className="campaign-date-text">
-              <CalendarOutlined />
-              <span>{campaign?.createdAt ? new Date(campaign.createdAt).toLocaleDateString('vi-VN') : 'Mới tạo'}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="campaign-summary-stats">
-          <div className="campaign-stat-item">
-            <span className="campaign-stat-label">Tổng creator</span>
-            <div className="campaign-stat-value-row">
-              <span className="campaign-stat-number">{pipelineCreators.length}</span>
-              <span className="campaign-stat-badge-green">Realtime</span>
-            </div>
-          </div>
-
-          <div className="campaign-stat-item">
-            <span className="campaign-stat-label">Tổng reach dự kiến</span>
-            <div className="campaign-stat-value-row">
-              <span className="campaign-stat-number">{pipelineCreators.length > 0 ? `${pipelineCreators.length * 120}K` : '0'}</span>
-              <span className="campaign-stat-badge-green">Est.</span>
-            </div>
-          </div>
-
-          <div className="campaign-stat-item">
-            <span className="campaign-stat-label">Ngân sách chiến dịch</span>
-            <div className="campaign-stat-value-row">
-              <span className="campaign-stat-number">{campaign?.budgetMax ? `${(campaign.budgetMax / 1_000_000).toFixed(0)}M ₫` : 'Thỏa thuận'}</span>
-              <span className="campaign-stat-badge-green">VND</span>
-            </div>
-          </div>
-
-          <Button
-            className="btn-export-report"
-            icon={<ExportOutlined />}
-            onClick={() => {
-              message.loading('Đang chuẩn bị file xuất báo cáo pipeline...');
-              setTimeout(() => {
-                message.success('Đã xuất báo cáo chiến dịch thành công (PDF/Excel)!');
-              }, 800);
-            }}
-          >
-            Xuất báo cáo
-          </Button>
-        </div>
-      </div>
-
-      {/* 3.1. Main Tab Switcher: Kanban Pipeline vs AI Recommendation */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, marginTop: 12, flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', gap: 8, background: '#F1F5F9', padding: 4, borderRadius: 12 }}>
-          <Button
-            type={activeViewTab === 'kanban' ? 'primary' : 'text'}
-            icon={<FilterOutlined />}
-            onClick={() => setActiveViewTab('kanban')}
-            style={{
-              borderRadius: 8,
-              fontWeight: 700,
-              background: activeViewTab === 'kanban' ? '#4F46E5' : 'transparent',
-              color: activeViewTab === 'kanban' ? '#fff' : '#64748B',
-            }}
-          >
-            📊 Pipeline Kanban ({pipelineCreators.length})
-          </Button>
-
-          <Button
-            type={activeViewTab === 'recommendation' ? 'primary' : 'text'}
-            icon={<ThunderboltFilled style={{ color: activeViewTab === 'recommendation' ? '#fff' : '#8B5CF6' }} />}
-            onClick={() => setActiveViewTab('recommendation')}
-            style={{
-              borderRadius: 8,
-              fontWeight: 700,
-              background: activeViewTab === 'recommendation' ? 'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)' : 'transparent',
-              color: activeViewTab === 'recommendation' ? '#fff' : '#6D28D9',
-              boxShadow: activeViewTab === 'recommendation' ? '0 4px 12px rgba(168, 85, 247, 0.35)' : 'none',
-            }}
-          >
-            ⚡ AI Recommendation (Four-Memory)
-          </Button>
-        </div>
-
-        {campaign?.id && (
-          <Button
-            icon={<RightOutlined />}
-            onClick={() => navigate(`/creators/shortlist?campaignId=${campaign.id}`)}
-            style={{ borderRadius: 8, fontWeight: 600, color: '#4F46E5', borderColor: '#C7D2FE', background: '#EEF2FF' }}
-          >
-            Bảng Shortlist của chiến dịch ➔
-          </Button>
-        )}
-      </div>
+      )}
 
       {activeViewTab === 'recommendation' ? (
         <AiRecommendationTab
@@ -457,11 +496,7 @@ export default function CampaignManagementPage() {
                   onChange={(newCampId) => {
                     sessionStorage.setItem('current_campaign_id', newCampId);
                     localStorage.setItem('last_active_campaign_id', newCampId);
-                    if (activeViewTab === 'recommendation' || location.pathname.includes('recommendation')) {
-                      navigate(`/recommendations?campaignId=${newCampId}&tab=recommendation`);
-                    } else {
-                      navigate(`/campaign-management/${newCampId}`);
-                    }
+                    navigate('/campaign-management?tab=crm');
                   }}
                   style={{ minWidth: 240, height: 32 }}
                   options={availableCampaigns.map((c) => ({

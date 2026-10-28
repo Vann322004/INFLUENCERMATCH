@@ -375,82 +375,91 @@
 }
 
 /* ==========================================================================
-   3. 5 Metrics KPI Cards Row (Đồng bộ chuẩn Campaign Detail)
+   2. 5 Metrics KPI Cards Row (Gom trên 1 hàng duy nhất: Hiệu suất & Báo giá)
    ========================================================================== */
-.cdetail-metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+.creator-metrics-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
 }
 
-@media (max-width: 1080px) {
-  .cdetail-metrics-grid {
-    grid-template-columns: repeat(3, 1fr);
+@media (max-width: 900px) {
+  .creator-metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
 
-@media (max-width: 640px) {
-  .cdetail-metrics-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 600px) {
+  .creator-metrics-grid {
+    grid-template-columns: 1fr !important;
   }
 }
 
-.cdetail-metric-card {
+.creator-metric-card {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
   border-radius: 14px;
-  padding: 16px 18px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 10px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   transition: all 0.2s ease;
+  min-width: 0;
 }
 
-.cdetail-metric-card:hover {
+.creator-metric-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border-color: #CBD5E1;
 }
 
-.cdetail-metric-top {
+.creator-metric-top {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.cdetail-metric-icon-box {
-  width: 32px;
-  height: 32px;
+.creator-metric-icon-box {
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 14px;
+  flex-shrink: 0;
 }
 
-.cdetail-metric-title {
-  font-size: 11px;
+.creator-metric-title {
+  font-size: 10.5px;
   font-weight: 700;
   color: #64748B;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.cdetail-metric-value {
-  font-size: 22px;
+.creator-metric-value {
+  font-size: 20px;
   font-weight: 800;
   color: #0F172A;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.cdetail-metric-footer {
-  font-size: 11.5px;
+.creator-metric-footer {
+  font-size: 11px;
   color: #64748B;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ==========================================================================
@@ -762,4 +771,40 @@
   font-size: 18px;
   font-weight: 800;
   color: #4F46E5;
+}
+
+/* ==========================================================================
+   6. Bottom Navigation Bar: Nút quay lại sàn khám phá
+   ========================================================================== */
+.cdetail-bottom-footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 0 16px 0;
+  margin-top: 12px;
+  border-top: 1px solid #E2E8F0;
+}
+
+.cdetail-bottom-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cdetail-bottom-back-btn:hover {
+  background: #F8FAFC;
+  border-color: #94A3B8;
+  color: #0F172A;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }

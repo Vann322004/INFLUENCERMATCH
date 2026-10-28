@@ -506,32 +506,8 @@ export default function CreatorDetailPage() {
 
   return (
     <div className="creator-detail-container">
-      {/* 1. Breadcrumb Bar - Tuyệt đối không hiển thị ID UUID */}
-      <div className="creator-detail-breadcrumb">
-        <div className="creator-breadcrumb-path">
-          <span className="creator-breadcrumb-link" onClick={() => navigate('/dashboard')}>
-            Trang chủ
-          </span>
-          <span className="creator-breadcrumb-sep">›</span>
-          <span className="creator-breadcrumb-link" onClick={() => navigate('/creators')}>
-            Khám phá Nhà sáng tạo
-          </span>
-          <span className="creator-breadcrumb-sep">›</span>
-          <span className="creator-breadcrumb-current">{creator.name}</span>
-        </div>
-
-        <button
-          className="breadcrumb-back-btn"
-          onClick={() => navigate('/creators')}
-          title="Quay lại danh sách"
-        >
-          <ArrowLeftOutlined style={{ fontSize: 12 }} />
-          Quay lại sàn khám phá
-        </button>
-      </div>
-
       {/* ==========================================================================
-          2. Modern Luxe Hero Welcome Banner (Đồng bộ 100% với Campaign Detail)
+          1. Modern Luxe Hero Welcome Banner (Đồng bộ 100% với Campaign Detail)
           ========================================================================== */}
       <div className="cdetail-hero-banner">
         {/* Banner Top Row: Breadcrumb Tag + Platform Chip */}
@@ -641,19 +617,19 @@ export default function CreatorDetailPage() {
       </div>
 
       {/* ==========================================================================
-          3. 5 Thẻ chỉ số KPI chính (Đồng bộ chuẩn Campaign Detail)
+          2. 5 Thẻ chỉ số KPI chính (Gom trên 1 hàng duy nhất: Hiệu suất & Báo giá)
           ========================================================================== */}
-      <div className="cdetail-metrics-grid">
+      <div className="creator-metrics-grid">
         {creator.metrics.map((item) => (
-          <div key={item.key} className="cdetail-metric-card">
-            <div className="cdetail-metric-top">
-              <div className="cdetail-metric-icon-box" style={{ background: item.iconBg }}>
+          <div key={item.key} className="creator-metric-card">
+            <div className="creator-metric-top">
+              <div className="creator-metric-icon-box" style={{ background: item.iconBg }}>
                 {item.icon}
               </div>
-              <span className="cdetail-metric-title">{item.label}</span>
+              <span className="creator-metric-title">{item.label}</span>
             </div>
-            <div className="cdetail-metric-value">{item.value}</div>
-            <div className="cdetail-metric-footer">
+            <div className="creator-metric-value">{item.value}</div>
+            <div className="creator-metric-footer">
               <span>{item.footer}</span>
             </div>
           </div>
@@ -895,6 +871,19 @@ export default function CreatorDetailPage() {
           </div>
         </div>
       )}
+
+      {/* 6. Bottom Navigation Bar: Nút quay lại sàn khám phá */}
+      <div className="cdetail-bottom-footer-bar">
+        <button
+          type="button"
+          className="cdetail-bottom-back-btn"
+          onClick={() => navigate('/creators')}
+          title="Quay lại sàn khám phá Nhà sáng tạo"
+        >
+          <ArrowLeftOutlined style={{ fontSize: 13 }} />
+          Quay lại sàn khám phá
+        </button>
+      </div>
 
       {/* Modal: Thêm vào Danh sách chọn */}
       <AddToShortlistModal

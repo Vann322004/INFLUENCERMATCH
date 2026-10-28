@@ -57,13 +57,13 @@ export default function CampaignWorkflowBar({
       key: 'recommendation',
       stepNum: 4,
       title: 'Đề xuất AI',
-      path: activeId !== 'current' ? `/campaign-management/${activeId}?tab=recommendation` : '/recommendations?tab=recommendation',
+      path: '/campaign-management?tab=recommendation',
     },
     {
       key: 'crm',
       stepNum: 5,
       title: 'Tiếp cận CRM',
-      path: activeId !== 'current' ? `/campaign-management/${activeId}` : '/crm',
+      path: '/campaign-management?tab=crm',
     },
   ];
 
@@ -156,8 +156,13 @@ export default function CampaignWorkflowBar({
               } else {
                 if (currentStep === 'discovery') navigate(`/creators?campaignId=${val}`);
                 else if (currentStep === 'shortlist') navigate(`/creators/shortlist?campaignId=${val}`);
-                else if (currentStep === 'recommendation') navigate(`/campaign-management/${val}?tab=recommendation`);
-                else if (currentStep === 'crm') navigate(`/campaign-management/${val}`);
+                else if (currentStep === 'recommendation') {
+                  sessionStorage.setItem('current_campaign_id', val);
+                  navigate('/campaign-management?tab=recommendation');
+                } else if (currentStep === 'crm') {
+                  sessionStorage.setItem('current_campaign_id', val);
+                  navigate('/campaign-management?tab=crm');
+                }
               }
             }}
             popupMatchSelectWidth={false}
@@ -323,8 +328,10 @@ export default function CampaignWorkflowBar({
             type="primary"
             size="small"
             onClick={() => {
-              const target = activeId !== 'current' ? activeId : '';
-              navigate(target ? `/campaign-management/${target}?tab=recommendation` : '/recommendations?tab=recommendation');
+              if (activeId && activeId !== 'current') {
+                sessionStorage.setItem('current_campaign_id', activeId);
+              }
+              navigate('/campaign-management?tab=recommendation');
             }}
             style={{
               height: 30,
@@ -346,8 +353,10 @@ export default function CampaignWorkflowBar({
             type="primary"
             size="small"
             onClick={() => {
-              const target = activeId !== 'current' ? activeId : '';
-              navigate(target ? `/campaign-management/${target}` : '/crm');
+              if (activeId && activeId !== 'current') {
+                sessionStorage.setItem('current_campaign_id', activeId);
+              }
+              navigate('/campaign-management?tab=crm');
             }}
             style={{
               height: 30,

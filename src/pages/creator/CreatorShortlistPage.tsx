@@ -1055,7 +1055,7 @@ export default function CreatorShortlistPage() {
               fontWeight: 600,
             }}
           >
-            + Thêm Nhà sáng tạo
+            Thêm Nhà sáng tạo
           </Button>
         </div>
       </div>
@@ -1226,7 +1226,7 @@ export default function CreatorShortlistPage() {
                           style={{ borderRadius: 8, height: 42, fontWeight: 600, color: '#4F46E5', borderColor: '#CBD5E1' }}
                           onClick={() => setAddModalOpen(true)}
                         >
-                          + Thêm từ đề xuất
+                          Thêm từ đề xuất
                         </Button>
                       </>
                     ) : (
@@ -1555,51 +1555,86 @@ export default function CreatorShortlistPage() {
             </div>
           )}
 
-          {/* Sticky Bottom Floating Bar for Comparison */}
+          {/* Sticky Bottom Action Footer Bar */}
           {selectedCreators.length > 0 && (
-            <div className="floating-comparison-bar">
-              <div className="floating-bar-left">
-                <div className="floating-avatar-stack">
-                  {selectedCreators.map((c) => (
-                    <img
-                      key={c.id}
-                      src={c.avatar}
-                      alt={c.name}
-                      title={c.name}
-                      className="floating-avatar-item"
-                    />
-                  ))}
+            <div className="shortlist-action-footer-bar">
+              <div className="shortlist-footer-container">
+                <div className="shortlist-footer-left">
+                  <div className="shortlist-footer-avatar-stack">
+                    {selectedCreators.map((c) => (
+                      <Tooltip key={c.id} title={c.name} placement="top">
+                        <img
+                          src={c.avatar}
+                          alt={c.name}
+                          className="shortlist-footer-avatar"
+                        />
+                      </Tooltip>
+                    ))}
+                  </div>
+                  <div className="shortlist-footer-text">
+                    <div className="shortlist-footer-title">
+                      Đã chọn <strong>{selectedCreators.length}/5</strong> Nhà sáng tạo
+                    </div>
+                    <div className="shortlist-footer-hint">
+                      Sẵn sàng chuyển sang Bước 4: Đề xuất AI (Recommendation) cho chiến dịch
+                    </div>
+                  </div>
                 </div>
-                <div className="floating-text-wrap">
-                  <span className="floating-title">
-                    Đã chọn <strong>{selectedCreators.length}/5</strong> Creator để so sánh
-                  </span>
-                  <span className="floating-hint">
-                    {selectedCreators.length < 2
-                      ? 'Chọn thêm ít nhất 1 Creator nữa để đối chiếu chỉ số'
-                      : 'Sẵn sàng phân tích và lập báo cáo đối chiếu đa chiều!'}
-                  </span>
+
+                <div className="shortlist-footer-right">
+                  <Button
+                    className="btn-shortlist-footer-clear"
+                    onClick={() =>
+                      setCreators((prev) => prev.map((c) => ({ ...c, selected: false })))
+                    }
+                  >
+                    Bỏ chọn
+                  </Button>
+
+                  {/* Nút phụ: So sánh đối chiếu */}
+                  <Tooltip
+                    title={
+                      selectedCreators.length < 2
+                        ? 'Chọn ít nhất 2 Nhà sáng tạo để so sánh đối chiếu'
+                        : ''
+                    }
+                    placement="top"
+                  >
+                    <span>
+                      <Button
+                        className={`btn-shortlist-footer-compare-secondary ${selectedCreators.length < 2 ? 'disabled' : ''}`}
+                        disabled={selectedCreators.length < 2}
+                        onClick={() => {
+                          if (selectedCreators.length >= 2) {
+                            setViewMode('compare');
+                          }
+                        }}
+                      >
+                        So sánh đối chiếu ({selectedCreators.length})
+                      </Button>
+                    </span>
+                  </Tooltip>
+
+                  {/* NÚT CHÍNH (MAIN FLOW): SANG ĐỀ XUẤT AI RECOMMENDATION */}
+                  <Button
+                    className="btn-shortlist-footer-mainflow"
+                    type="primary"
+                    icon={<ThunderboltFilled />}
+                    onClick={() => {
+                      const targetCampId = selectedCampaign !== 'all' ? selectedCampaign : (campaigns[0]?.id || '');
+                      message.loading({ content: 'Đang chuyển sang Bước 4: Đề xuất AI (Recommendation)...', duration: 1 });
+                      if (targetCampId) {
+                        sessionStorage.setItem('current_campaign_id', targetCampId);
+                        localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', targetCampId);
+                        navigate('/campaign-management?tab=recommendation');
+                      } else {
+                        navigate('/campaign-management?tab=recommendation');
+                      }
+                    }}
+                  >
+                    Sang Đề xuất AI (Recommendation) ➔
+                  </Button>
                 </div>
-              </div>
-
-              <div className="floating-bar-right">
-                <Button
-                  className="btn-clear-selection"
-                  onClick={() =>
-                    setCreators((prev) => prev.map((c) => ({ ...c, selected: false })))
-                  }
-                >
-                  Bỏ chọn tất cả
-                </Button>
-
-                <Button
-                  className="btn-start-compare-floating"
-                  type="primary"
-                  icon={<BarChartOutlined />}
-                  onClick={() => setViewMode('compare')}
-                >
-                  Bắt đầu so sánh chi tiết ({selectedCreators.length})
-                </Button>
               </div>
             </div>
           )}
@@ -1616,17 +1651,17 @@ export default function CreatorShortlistPage() {
             <div className="shortlist-empty-box" style={{ background: '#FFFFFF', padding: 40, borderRadius: 16 }}>
               <div style={{ fontSize: 40 }}>⚖️</div>
               <div style={{ fontWeight: 800, fontSize: 17, marginTop: 12 }}>
-                Cần chọn ít nhất 2 Creator để thực hiện so sánh
+                Cần chọn ít nhất 2 Nhà sáng tạo để thực hiện so sánh
               </div>
               <div style={{ color: '#64748B', fontSize: 13, marginTop: 6, maxWidth: 450, margin: '6px auto 0' }}>
-                Hiện tại bạn mới chọn {selectedCreators.length} Creator. Vui lòng quay lại Bảng Shortlist và tick chọn thêm để xem ma trận phân tích chi tiết.
+                Hiện tại bạn mới chọn {selectedCreators.length} Nhà sáng tạo. Vui lòng quay lại Danh sách và tick chọn thêm để xem ma trận phân tích chi tiết.
               </div>
               <Button
                 type="primary"
                 style={{ marginTop: 18, borderRadius: 8, height: 38 }}
                 onClick={() => setViewMode('board')}
               >
-                ← Quay lại Bảng Shortlist để chọn
+                ← Quay lại Danh sách để chọn
               </Button>
             </div>
           ) : (

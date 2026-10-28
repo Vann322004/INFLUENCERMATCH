@@ -1,5 +1,5 @@
 import { ConfigProvider, Layout, App as AntdApp } from 'antd';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import { themeConfig } from './theme/themeConfig';
 import AppSider from './components/layout/AppSider';
 import AppHeader from './components/layout/AppHeader';
@@ -55,6 +55,16 @@ const { Content } = Layout;
 function SessionSyncHandler() {
   useMultiTabSessionSync();
   return null;
+}
+
+// Dispatcher cho route /campaign-management: nếu có query param tab (ví dụ: tab=recommendation) thì mở CampaignManagementPage
+function CampaignManagementRouteDispatcher() {
+  const [searchParams] = useSearchParams();
+  const tab = searchParams.get('tab');
+  if (tab === 'recommendation' || tab === 'crm' || tab === 'pipeline' || tab === 'kanban' || tab === 'tasks' || tab === 'analytics') {
+    return <CampaignManagementPage />;
+  }
+  return <CampaignListPage />;
 }
 
 // Main App Layout Wrapper with Light Linear Sidebar & Top Header
@@ -323,12 +333,12 @@ export default function App() {
             }
           />
 
-          {/* Campaign Management — List of campaigns */}
+          {/* Campaign Management — List or Tab Detail */}
           <Route
             path="/campaign-management"
             element={
               <MainLayout>
-                <CampaignListPage />
+                <CampaignManagementRouteDispatcher />
               </MainLayout>
             }
           />
