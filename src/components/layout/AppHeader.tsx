@@ -14,14 +14,24 @@ export default function AppHeader() {
   // Dynamic Page Context & Breadcrumb (100% tiếng Việt, chuẩn hóa phân cấp điều hướng)
   const getPageInfo = () => {
     const p = location.pathname;
+    if (p.includes('/campaign-management')) {
+      const campName = sessionStorage.getItem('current_campaign_name');
+      const isRec = location.search.includes('recommendation');
+      return {
+        root: 'Trang chủ',
+        sub: campName && campName !== 'Chiến dịch' ? campName : 'Chiến dịch',
+        subLink: '/campaigns',
+        current: isRec ? 'Đề xuất AI' : 'Pipeline Kanban',
+      };
+    }
     if (
       p.includes('/campaigns/detail') ||
       p.includes('/campaign-detail') ||
-      (p.startsWith('/campaigns/') && p !== '/campaigns' && p !== '/campaigns/create') ||
-      p.includes('/campaign-management')
+      (p.startsWith('/campaigns/') && p !== '/campaigns' && p !== '/campaigns/create')
     ) {
       return { root: 'Trang chủ', sub: 'Chiến dịch', subLink: '/campaigns', current: 'Chi tiết chiến dịch' };
     }
+
     if (p === '/campaigns/create') {
       return { root: 'Trang chủ', sub: 'Chiến dịch', subLink: '/campaigns', current: 'Tạo chiến dịch mới' };
     }

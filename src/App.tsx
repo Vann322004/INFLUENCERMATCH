@@ -1,5 +1,6 @@
+import React, { useEffect } from 'react';
 import { ConfigProvider, Layout, App as AntdApp } from 'antd';
-import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useParams } from 'react-router-dom';
 import { themeConfig } from './theme/themeConfig';
 import AppSider from './components/layout/AppSider';
 import AppHeader from './components/layout/AppHeader';
@@ -51,9 +52,29 @@ import { useMultiTabSessionSync } from './hooks/useMultiTabSessionSync';
 
 const { Content } = Layout;
 
-// Đồng bộ trạng thái đăng nhập giữa các tab
+// Đồng bộ trạng thái đăng nhập giữa các tab và tự động làm sạch UUID trên thanh URL
 function SessionSyncHandler() {
   useMultiTabSessionSync();
+
+  useEffect(() => {
+    try {
+      const search = window.location.search;
+      if (search && search.includes('campaignId=')) {
+        const sp = new URLSearchParams(search);
+        const cId = sp.get('campaignId');
+        if (cId) {
+          sessionStorage.setItem('current_campaign_id', cId);
+          localStorage.setItem('last_active_campaign_id', cId);
+          sp.delete('campaignId');
+          const newSearch = sp.toString() ? `?${sp.toString()}` : '';
+          window.history.replaceState({}, '', window.location.pathname + newSearch);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   return null;
 }
 
@@ -65,6 +86,18 @@ function CampaignManagementRouteDispatcher() {
     return <CampaignManagementPage />;
   }
   return <CampaignListPage />;
+}
+
+// Chuyển hướng route /campaign-management/:id để ẩn hoàn toàn UUID khỏi URL bar của trình duyệt
+function CampaignManagementIdRedirect() {
+  const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  if (id) {
+    sessionStorage.setItem('current_campaign_id', id);
+    localStorage.setItem('last_active_campaign_id', id);
+  }
+  const tab = searchParams.get('tab') || 'recommendation';
+  return <Navigate to={`/campaign-management?tab=${tab}`} replace />;
 }
 
 // Main App Layout Wrapper with Light Linear Sidebar & Top Header
@@ -418,14 +451,10 @@ export default function App() {
             }
           />
 
-          {/* Campaign Pipeline Detail — Kanban view for a specific campaign */}
+          {/* Campaign Pipeline Detail — Chuyển hướng và ẩn UUID khỏi URL */}
           <Route
             path="/campaign-management/:id"
-            element={
-              <MainLayout>
-                <CampaignManagementPage />
-              </MainLayout>
-            }
+            element={<CampaignManagementIdRedirect />}
           />
 
           {/* AI Recommendation Routes */}
