@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Button,
   Input,
@@ -7,6 +7,8 @@ import {
   Modal,
   Form,
   Spin,
+  Popover,
+  Radio,
 } from 'antd';
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import {
@@ -14,16 +16,18 @@ import {
   FilterOutlined,
   CalendarOutlined,
   ExportOutlined,
-  RightOutlined,
-  ThunderboltOutlined,
-  ThunderboltFilled,
-  CloseOutlined,
   DownOutlined,
+  CheckOutlined,
+  CheckCircleFilled,
+  RocketOutlined,
+  BarChartOutlined,
+  PlusOutlined,
+  HomeOutlined,
 } from '@ant-design/icons';
 import { campaignService } from '../../services/api/campaignService';
+import { creatorService } from '../../services/api/creatorService';
 import type { CampaignResponse, RelationshipDto, RelationshipStage } from '../../types/api/campaign.types';
 import AiRecommendationTab from '../../components/campaign/AiRecommendationTab';
-import CampaignWorkflowBar from '../../components/campaign/CampaignWorkflowBar';
 import './CampaignManagementPage.css';
 
 export interface PipelineCreator {
@@ -68,10 +72,12 @@ export default function CampaignManagementPage() {
   const [availableCampaigns, setAvailableCampaigns] = useState<CampaignResponse[]>([]);
   const [pipelineCreators, setPipelineCreators] = useState<PipelineCreator[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [selectedChannel, setSelectedChannel] = useState<'all' | 'instagram' | 'youtube' | 'tiktok'>('all');
+  const [selectedChannel, setSelectedChannel] = useState<'all' | 'tiktok' | 'instagram'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'default' | 'match' | 'followers' | 'engagement'>('default');
+  const [filterMinScore, setFilterMinScore] = useState<number>(0);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
 
   // Tab: 'kanban' (Outreach CRM) vs 'recommendation' (Four-Memory)
   const isRecView =
@@ -80,6 +86,44 @@ export default function CampaignManagementPage() {
   const [activeViewTab, setActiveViewTab] = useState<'kanban' | 'recommendation'>(
     isRecView ? 'recommendation' : 'kanban'
   );
+
+  const isUuid = (val?: string) =>
+    !val || /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(val);
+
+  // Ẩn hoàn toàn chuỗi UUID trên thanh URL để URL luôn gọn gàng (/creators/recommendations hoặc /campaign-management?tab=recommendation)
+  useEffect(() => {
+    const rawCampId = id || searchParams.get('campaignId');
+    if (rawCampId) {
+      sessionStorage.setItem('current_campaign_id', rawCampId);
+      localStorage.setItem('last_active_campaign_id', rawCampId);
+    }
+
+    if (id || searchParams.has('campaignId')) {
+      if (location.pathname.includes('/creators/recommendations')) {
+        window.history.replaceState({}, '', '/creators/recommendations');
+        navigate('/creators/recommendations', { replace: true });
+      } else {
+        const tabParam =
+          searchParams.get('tab') ||
+          (location.pathname.includes('recommendation') ? 'recommendation' : activeViewTab);
+        const cleanPath = `/campaign-management?tab=${tabParam}`;
+        window.history.replaceState({}, '', cleanPath);
+        navigate(cleanPath, { replace: true });
+      }
+    }
+  }, [id, searchParams, location.pathname, activeViewTab, navigate]);
+
+  // Đồng bộ tab từ searchParams
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'recommendation' || location.pathname.includes('recommendation')) {
+      setActiveViewTab('recommendation');
+    } else if (tabParam === 'kanban' || tabParam === 'crm' || tabParam === 'pipeline') {
+      setActiveViewTab('kanban');
+    }
+  }, [searchParams, location.pathname]);
+
+  const [shortlistCount, setShortlistCount] = useState<number>(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -105,9 +149,10 @@ export default function CampaignManagementPage() {
         }
 
         if (currentCampId) {
-          const [campDetail, rels] = await Promise.all([
+          const [campDetail, rels, sList] = await Promise.all([
             campaignService.getCampaignById(currentCampId).catch(() => null),
             campaignService.getRelationships(currentCampId).catch(() => [] as RelationshipDto[]),
+            creatorService.getShortlist(currentCampId).catch(() => []),
           ]);
 
           if (isMounted) {
@@ -115,7 +160,10 @@ export default function CampaignManagementPage() {
               setCampaign(campDetail);
               sessionStorage.setItem('current_campaign_id', campDetail.id);
               localStorage.setItem('last_active_campaign_id', campDetail.id);
+              sessionStorage.setItem('current_campaign_name', campDetail.name);
+              localStorage.setItem('IM_SELECTED_CAMPAIGN_NAME', campDetail.name);
             }
+            setShortlistCount(Array.isArray(sList) ? sList.length : 0);
             const mapped: PipelineCreator[] = rels.map((r: RelationshipDto) => {
               const feeNum = r.agreedFee || r.quotedFee || 0;
               const feeText = feeNum > 0 ? `${(feeNum / 1_000_000).toFixed(1)}M ₫` : 'Thỏa thuận';
@@ -149,21 +197,50 @@ export default function CampaignManagementPage() {
     };
   }, [id]);
 
-  // Filter creators based on platform & search
-  const filteredCreators = pipelineCreators.filter((item) => {
-    if (selectedChannel !== 'all' && item.platform !== selectedChannel) {
-      return false;
-    }
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      return (
-        item.name.toLowerCase().includes(q) ||
-        item.username.toLowerCase().includes(q) ||
-        (item.tags && item.tags.toLowerCase().includes(q))
+  // Filter and sort creators based on platform, search, sort and minimum score
+  const filteredCreators = useMemo(() => {
+    let result = pipelineCreators.filter((item) => {
+      if (selectedChannel !== 'all' && item.platform !== selectedChannel) {
+        return false;
+      }
+      if (filterMinScore > 0 && item.matchScore < filterMinScore) {
+        return false;
+      }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return (
+          item.name.toLowerCase().includes(q) ||
+          item.username.toLowerCase().includes(q) ||
+          (item.tags && item.tags.toLowerCase().includes(q)) ||
+          (item.note && item.note.toLowerCase().includes(q))
+        );
+      }
+      return true;
+    });
+
+    if (sortBy === 'match') {
+      result = [...result].sort((a, b) => b.matchScore - a.matchScore);
+    } else if (sortBy === 'followers') {
+      const parseFollowers = (str: string) => {
+        const num = parseFloat(str) || 0;
+        if (str.toUpperCase().includes('M')) return num * 1000000;
+        if (str.toUpperCase().includes('K')) return num * 1000;
+        return num;
+      };
+      result = [...result].sort((a, b) => parseFollowers(b.followers) - parseFollowers(a.followers));
+    } else if (sortBy === 'engagement') {
+      result = [...result].sort(
+        (a, b) => (parseFloat(b.engagement) || 0) - (parseFloat(a.engagement) || 0)
       );
     }
-    return true;
-  });
+
+    return result;
+  }, [pipelineCreators, selectedChannel, searchQuery, sortBy, filterMinScore]);
+
+  // Số lượng Creator đã xác nhận thành công
+  const confirmedCount = useMemo(() => {
+    return pipelineCreators.filter((c) => c.stage === 'confirmed').length;
+  }, [pipelineCreators]);
 
   // Stages configuration
   const stages = [
@@ -300,461 +377,453 @@ export default function CampaignManagementPage() {
 
   return (
     <div className="pipeline-page-container">
-      {/* 0. Unified Campaign Funnel Stepper */}
-      <CampaignWorkflowBar
-        currentStep={activeViewTab === 'recommendation' ? 'recommendation' : 'crm'}
-        campaignId={campaign?.id}
-        campaignName={campaign?.name}
-        availableCampaigns={availableCampaigns.map((c) => ({ id: c.id, name: c.name }))}
-        onSelectCampaign={(val) => {
-          sessionStorage.setItem('current_campaign_id', val);
-          localStorage.setItem('last_active_campaign_id', val);
-          if (activeViewTab === 'recommendation' || location.pathname.includes('recommendation')) {
-            navigate(`/recommendations?campaignId=${val}&tab=recommendation`);
-          } else {
-            navigate(`/campaign-management/${val}`);
-          }
-        }}
-      />
 
-      {/* 1. Header Title Row */}
-      <div className="pipeline-header-row">
-        <div>
-          <h1 className="pipeline-main-title">Creator Pipeline</h1>
-          <div className="pipeline-description">
-            Quản lý và theo dõi toàn bộ quá trình làm việc với các influencer cho chiến dịch của bạn.
+      {/* 1. Top Stepper 7 bước toàn diện từ Lập brief đến Đo lường ROI */}
+      <div className="cdiscovery-top-stepper">
+        <div
+          className="cdiscovery-step-item"
+          onClick={() => navigate(`/campaigns/create${campaign?.id ? `?id=${campaign.id}` : ''}`)}
+        >
+          <div className="cdiscovery-step-badge done">
+            <CheckOutlined />
           </div>
+          <span className="cdiscovery-step-title">1. Tạo brief</span>
         </div>
-      </div>
+        <div className="cdiscovery-step-line done" />
 
-      {/* 3. Campaign Summary Card */}
-      <div className="campaign-summary-card">
-        <div className="campaign-summary-left">
-          <img
-            src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=120&auto=format&fit=crop&q=80"
-            alt={campaign?.name || 'Chiến dịch'}
-            className="campaign-thumb-img"
-          />
-
-          <div className="campaign-meta-content">
-            <div className="campaign-title-row">
-              <span className="campaign-name-title">{campaign?.name || 'Chiến dịch Influencer'}</span>
-              <span className="campaign-status-tag">{campaign?.status || 'Đang diễn ra'}</span>
-            </div>
-
-            <div className="campaign-subtitle-text">
-              {campaign?.productService ? `Sản phẩm / Dịch vụ: ${campaign.productService}` : 'Chiến dịch quảng bá thương hiệu'}
-            </div>
-
-            <div className="campaign-date-text">
-              <CalendarOutlined />
-              <span>{campaign?.createdAt ? new Date(campaign.createdAt).toLocaleDateString('vi-VN') : 'Mới tạo'}</span>
-            </div>
+        <div
+          className="cdiscovery-step-item"
+          onClick={() => {
+            if (campaign?.id) {
+              sessionStorage.setItem('current_campaign_id', campaign.id);
+              localStorage.setItem('last_active_campaign_id', campaign.id);
+            }
+            navigate('/creators');
+          }}
+        >
+          <div className="cdiscovery-step-badge done">
+            <CheckOutlined />
           </div>
+          <span className="cdiscovery-step-title">2. Khám phá</span>
         </div>
+        <div className="cdiscovery-step-line done" />
 
-        <div className="campaign-summary-stats">
-          <div className="campaign-stat-item">
-            <span className="campaign-stat-label">Tổng creator</span>
-            <div className="campaign-stat-value-row">
-              <span className="campaign-stat-number">{pipelineCreators.length}</span>
-              <span className="campaign-stat-badge-green">Realtime</span>
-            </div>
+        <div
+          className="cdiscovery-step-item"
+          onClick={() => {
+            if (campaign?.id) {
+              sessionStorage.setItem('current_campaign_id', campaign.id);
+              localStorage.setItem('last_active_campaign_id', campaign.id);
+            }
+            navigate('/creators/shortlist');
+          }}
+        >
+          <div className="cdiscovery-step-badge done">
+            <CheckOutlined />
           </div>
-
-          <div className="campaign-stat-item">
-            <span className="campaign-stat-label">Tổng reach dự kiến</span>
-            <div className="campaign-stat-value-row">
-              <span className="campaign-stat-number">{pipelineCreators.length > 0 ? `${pipelineCreators.length * 120}K` : '0'}</span>
-              <span className="campaign-stat-badge-green">Est.</span>
-            </div>
-          </div>
-
-          <div className="campaign-stat-item">
-            <span className="campaign-stat-label">Ngân sách chiến dịch</span>
-            <div className="campaign-stat-value-row">
-              <span className="campaign-stat-number">{campaign?.budgetMax ? `${(campaign.budgetMax / 1_000_000).toFixed(0)}M ₫` : 'Thỏa thuận'}</span>
-              <span className="campaign-stat-badge-green">VND</span>
-            </div>
-          </div>
-
-          <Button
-            className="btn-export-report"
-            icon={<ExportOutlined />}
-            onClick={() => {
-              message.loading('Đang chuẩn bị file xuất báo cáo pipeline...');
-              setTimeout(() => {
-                message.success('Đã xuất báo cáo chiến dịch thành công (PDF/Excel)!');
-              }, 800);
-            }}
-          >
-            Xuất báo cáo
-          </Button>
+          <span className="cdiscovery-step-title">
+            3. Danh sách chọn {shortlistCount > 0 ? `(${shortlistCount})` : ''}
+          </span>
         </div>
-      </div>
+        <div className="cdiscovery-step-line done" />
 
-      {/* 3.1. Main Tab Switcher: Kanban Pipeline vs AI Recommendation */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, marginTop: 12, flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', gap: 8, background: '#F1F5F9', padding: 4, borderRadius: 12 }}>
-          <Button
-            type={activeViewTab === 'kanban' ? 'primary' : 'text'}
-            icon={<FilterOutlined />}
-            onClick={() => setActiveViewTab('kanban')}
-            style={{
-              borderRadius: 8,
-              fontWeight: 700,
-              background: activeViewTab === 'kanban' ? '#4F46E5' : 'transparent',
-              color: activeViewTab === 'kanban' ? '#fff' : '#64748B',
-            }}
-          >
-            📊 Pipeline Kanban ({pipelineCreators.length})
-          </Button>
-
-          <Button
-            type={activeViewTab === 'recommendation' ? 'primary' : 'text'}
-            icon={<ThunderboltFilled style={{ color: activeViewTab === 'recommendation' ? '#fff' : '#8B5CF6' }} />}
-            onClick={() => setActiveViewTab('recommendation')}
-            style={{
-              borderRadius: 8,
-              fontWeight: 700,
-              background: activeViewTab === 'recommendation' ? 'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)' : 'transparent',
-              color: activeViewTab === 'recommendation' ? '#fff' : '#6D28D9',
-              boxShadow: activeViewTab === 'recommendation' ? '0 4px 12px rgba(168, 85, 247, 0.35)' : 'none',
-            }}
-          >
-            ⚡ AI Recommendation (Four-Memory)
-          </Button>
+        <div
+          className="cdiscovery-step-item"
+          onClick={() => {
+            setActiveViewTab('recommendation');
+            navigate('/campaign-management?tab=recommendation');
+          }}
+        >
+          <div className={`cdiscovery-step-badge ${activeViewTab === 'recommendation' ? 'active' : 'done'}`}>
+            {activeViewTab === 'recommendation' ? '4' : <CheckOutlined />}
+          </div>
+          <span className={`cdiscovery-step-title ${activeViewTab === 'recommendation' ? 'active' : ''}`}>
+            4. Gợi ý AI
+          </span>
         </div>
+        <div className={`cdiscovery-step-line ${activeViewTab === 'kanban' ? 'done' : ''}`} />
 
-        {campaign?.id && (
-          <Button
-            icon={<RightOutlined />}
-            onClick={() => navigate(`/creators/shortlist?campaignId=${campaign.id}`)}
-            style={{ borderRadius: 8, fontWeight: 600, color: '#4F46E5', borderColor: '#C7D2FE', background: '#EEF2FF' }}
-          >
-            Bảng Shortlist của chiến dịch ➔
-          </Button>
-        )}
+        <div
+          className="cdiscovery-step-item"
+          onClick={() => {
+            setActiveViewTab('kanban');
+            navigate('/campaign-management?tab=crm');
+          }}
+        >
+          <div className={`cdiscovery-step-badge ${activeViewTab === 'kanban' ? 'active' : 'upcoming'}`}>
+            5
+          </div>
+          <span className={`cdiscovery-step-title ${activeViewTab === 'kanban' ? 'active' : ''}`}>
+            5. Hợp tác (CRM)
+          </span>
+        </div>
       </div>
 
       {activeViewTab === 'recommendation' ? (
         <AiRecommendationTab
           campaign={campaign}
+          availableCampaigns={availableCampaigns}
+          onSelectCampaign={(newCampId) => {
+            sessionStorage.setItem('current_campaign_id', newCampId);
+            localStorage.setItem('last_active_campaign_id', newCampId);
+            const targetCamp = availableCampaigns.find((c) => c.id === newCampId);
+            if (targetCamp) {
+              setCampaign(targetCamp);
+              sessionStorage.setItem('current_campaign_name', targetCamp.name);
+              localStorage.setItem('IM_SELECTED_CAMPAIGN_NAME', targetCamp.name);
+            }
+            creatorService.getShortlist(newCampId).then((l: any[]) => setShortlistCount(l.length)).catch(() => {});
+          }}
           onAddedToShortlist={() => {
+            setShortlistCount((prev) => prev + 1);
             message.info('Đã cập nhật KOC vào Shortlist chiến dịch.');
           }}
         />
       ) : (
         <>
-          {/* 4. Filter & Channel Tabs Bar */}
-          <div className="pipeline-filters-bar">
-            <div className="pipeline-channels-group">
-              {/* Campaign dropdown switcher */}
-              {availableCampaigns.length > 0 ? (
-                <Select
-                  className="campaign-select-pill-select"
-                  value={campaign?.id || (availableCampaigns[0] && availableCampaigns[0].id)}
-                  onChange={(newCampId) => {
-                    sessionStorage.setItem('current_campaign_id', newCampId);
-                    localStorage.setItem('last_active_campaign_id', newCampId);
-                    if (activeViewTab === 'recommendation' || location.pathname.includes('recommendation')) {
-                      navigate(`/recommendations?campaignId=${newCampId}&tab=recommendation`);
-                    } else {
-                      navigate(`/campaign-management/${newCampId}`);
-                    }
-                  }}
-                  style={{ minWidth: 240, height: 32 }}
-                  options={availableCampaigns.map((c) => ({
-                    value: c.id,
-                    label: c.name,
-                  }))}
-                />
-              ) : (
-                <div className="campaign-select-pill">
-                  <span>{campaign?.name || 'Chiến dịch hiện tại'}</span>
+          {/* 2. Campaign Summary Card (Chỉ hiển thị ở tab Kanban) */}
+          <div className="campaign-summary-card">
+            <div className="campaign-summary-left">
+              <div className="campaign-meta-content" style={{ paddingLeft: 0 }}>
+                <div className="campaign-title-row">
+                  <span className="campaign-name-title">{campaign?.name || 'Chiến dịch Influencer'}</span>
+                  <span className="campaign-status-tag">{campaign?.status || 'Đang diễn ra'}</span>
                 </div>
-              )}
 
-          {/* Channels Pills */}
-          <div
-            className={`channel-pill-item ${selectedChannel === 'all' ? 'active' : ''}`}
-            onClick={() => setSelectedChannel('all')}
-          >
-            <span>Tất cả ({pipelineCreators.length})</span>
+                <div className="campaign-subtitle-text">
+                  {campaign?.productService ? `Sản phẩm / Dịch vụ: ${campaign.productService}` : 'Chiến dịch quảng bá thương hiệu'}
+                </div>
+
+                <div className="campaign-date-text">
+                  <CalendarOutlined />
+                  <span>{campaign?.createdAt ? new Date(campaign.createdAt).toLocaleDateString('vi-VN') : 'Mới tạo'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="campaign-summary-stats">
+              <div className="campaign-stat-item">
+                <span className="campaign-stat-label">Tổng creator</span>
+                <div className="campaign-stat-value-row">
+                  <span className="campaign-stat-number">{pipelineCreators.length}</span>
+                  <span className="campaign-stat-badge-green">Realtime</span>
+                </div>
+              </div>
+
+              <div className="campaign-stat-item">
+                <span className="campaign-stat-label">Tổng reach dự kiến</span>
+                <div className="campaign-stat-value-row">
+                  <span className="campaign-stat-number">{pipelineCreators.length > 0 ? `${pipelineCreators.length * 120}K` : '0'}</span>
+                  <span className="campaign-stat-badge-green">Est.</span>
+                </div>
+              </div>
+
+              <div className="campaign-stat-item">
+                <span className="campaign-stat-label">Ngân sách chiến dịch</span>
+                <div className="campaign-stat-value-row">
+                  <span className="campaign-stat-number">{campaign?.budgetMax ? `${(campaign.budgetMax / 1_000_000).toFixed(0)}M ₫` : 'Thỏa thuận'}</span>
+                  <span className="campaign-stat-badge-green">VND</span>
+                </div>
+              </div>
+
+              <Button
+                className="btn-export-report"
+                icon={<ExportOutlined />}
+                onClick={() => {
+                  message.loading('Đang chuẩn bị file xuất báo cáo pipeline...');
+                  setTimeout(() => {
+                    message.success('Đã xuất báo cáo chiến dịch thành công (PDF/Excel)!');
+                  }, 800);
+                }}
+              >
+                Xuất báo cáo
+              </Button>
+            </div>
           </div>
 
-          <div
-            className={`channel-pill-item ${selectedChannel === 'tiktok' ? 'active' : ''}`}
-            onClick={() => setSelectedChannel('tiktok')}
-          >
-            <span className="channel-dot" style={{ background: '#0F172A' }} />
-            <span>TikTok ({pipelineCreators.filter((c) => c.platform === 'tiktok').length})</span>
-          </div>
+          {/* 4. Full-width Toolbar: Filter & Channel Tabs & Full-width Search */}
+          <div className="pipeline-filters-full-wrapper">
+            {/* Top Toolbar Row */}
+            <div className="pipeline-toolbar-top-row">
+              <div className="pipeline-channels-group">
+                {/* Campaign dropdown switcher */}
+                {availableCampaigns.length > 0 && availableCampaigns.some((c) => c.id === campaign?.id) ? (
+                  <Select
+                    className="campaign-select-pill-select"
+                    value={campaign?.id}
+                    onChange={(newCampId) => {
+                      sessionStorage.setItem('current_campaign_id', newCampId);
+                      localStorage.setItem('last_active_campaign_id', newCampId);
+                      navigate('/campaign-management?tab=crm');
+                    }}
+                    style={{ minWidth: 260, height: 34 }}
+                    options={availableCampaigns.map((c) => ({
+                      value: c.id,
+                      label: isUuid(c.name) ? 'Chiến dịch' : c.name,
+                    }))}
+                  />
+                ) : (
+                  <div className="campaign-select-pill">
+                    <span>{campaign?.name && !isUuid(campaign.name) ? campaign.name : 'Chiến dịch hiện tại'}</span>
+                  </div>
+                )}
 
-          <div
-            className={`channel-pill-item ${selectedChannel === 'instagram' ? 'active' : ''}`}
-            onClick={() => setSelectedChannel('instagram')}
-          >
-            <span className="channel-dot" style={{ background: '#DD2A7B' }} />
-            <span>Instagram ({pipelineCreators.filter((c) => c.platform === 'instagram').length})</span>
-          </div>
+                {/* Channels Pills (Không có YouTube) */}
+                <div
+                  className={`channel-pill-item ${selectedChannel === 'all' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('all')}
+                >
+                  <span>Tất cả ({pipelineCreators.length})</span>
+                </div>
 
-          <div
-            className={`channel-pill-item ${selectedChannel === 'youtube' ? 'active' : ''}`}
-            onClick={() => setSelectedChannel('youtube')}
-          >
-            <span className="channel-dot" style={{ background: '#EF4444' }} />
-            <span>YouTube ({pipelineCreators.filter((c) => c.platform === 'youtube').length})</span>
-          </div>
-        </div>
+                <div
+                  className={`channel-pill-item ${selectedChannel === 'tiktok' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('tiktok')}
+                >
+                  <span className="channel-dot" style={{ background: '#0F172A' }} />
+                  <span>TikTok ({pipelineCreators.filter((c) => c.platform === 'tiktok').length})</span>
+                </div>
 
-        <div className="pipeline-search-controls">
-          <Input
-            prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
-            placeholder="Tìm creator hoặc tên kênh..."
-            className="pipeline-search-input"
-            allowClear
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+                <div
+                  className={`channel-pill-item ${selectedChannel === 'instagram' ? 'active' : ''}`}
+                  onClick={() => setSelectedChannel('instagram')}
+                >
+                  <span className="channel-dot" style={{ background: '#DD2A7B' }} />
+                  <span>Instagram ({pipelineCreators.filter((c) => c.platform === 'instagram').length})</span>
+                </div>
+              </div>
 
-          <Button className="btn-pipeline-filter" icon={<FilterOutlined />}>
-            Bộ lọc & sắp xếp <DownOutlined style={{ fontSize: 10 }} />
-          </Button>
-        </div>
-      </div>
+              <div className="pipeline-toolbar-actions">
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => setAddModalOpen(true)}
+                  className="btn-pipeline-add-creator"
+                >
+                  + Thêm Creator vào Pipeline
+                </Button>
+              </div>
+            </div>
 
-      {/* 5. Main Layout: 5 Kanban Columns + Right Sidebar Panel */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <Spin size="large" description="Đang tải dữ liệu Pipeline từ máy chủ..." />
-        </div>
-      ) : (
-        <div className="pipeline-layout-grid">
-          {/* Kanban 5 Columns */}
-          <div className="kanban-board-container">
-            {stages.map((stg) => {
-              const colItems = filteredCreators.filter((c) => c.stage === stg.key);
-              return (
-                <div key={stg.key} className="kanban-col">
-                  {/* Column Header */}
-                  <div className={`kanban-col-header ${stg.headerClass}`}>
-                    <div className="col-header-title">
-                      <span>{stg.title}</span>
-                      <span className="col-header-count">{colItems.length}</span>
+            {/* Bottom Row: Full Width Search Input + Filter Popover */}
+            <div className="pipeline-search-full-row">
+              <Input
+                prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
+                placeholder="Tìm creator theo tên, @username, lĩnh vực, ghi chú..."
+                className="pipeline-search-full-input"
+                allowClear
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+
+              <Popover
+                content={
+                  <div style={{ width: 230, padding: '4px 0' }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, color: '#0F172A' }}>
+                      Sắp xếp theo:
                     </div>
-                  </div>
+                    <Radio.Group
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+                    >
+                      <Radio value="default">Mặc định</Radio>
+                      <Radio value="match">Độ phù hợp cao nhất</Radio>
+                      <Radio value="followers">Followers nhiều nhất</Radio>
+                      <Radio value="engagement">Tương tác (ER) cao nhất</Radio>
+                    </Radio.Group>
 
-                  {/* Cards List in this Column */}
-                  <div className="kanban-cards-stack">
-                    {colItems.map((c) => (
-                      <div
-                        key={c.id}
-                        className="kanban-creator-card"
-                        onClick={() => navigate('/creators')}
-                      >
-                        {/* Top Creator row */}
-                        <div className="kcard-top-row">
-                          <img src={c.avatar} alt={c.name} className="kcard-avatar" />
-                          <div className="kcard-identity">
-                            <span className="kcard-name">{c.name}</span>
-                            <span className="kcard-username">@{c.username}</span>
-                            {renderPlatformBadge(c.platform)}
-                          </div>
-                        </div>
+                    <div style={{ borderTop: '1px solid #F1F5F9', margin: '10px 0' }} />
 
-                        {/* 3 Metrics Mini Grid */}
-                        <div className="kcard-metrics-grid">
-                          <div className="kcard-metric-col">
-                            <span className="kcard-metric-num">{c.followers}</span>
-                            <span className="kcard-metric-label">Followers</span>
-                          </div>
-                          <div className="kcard-metric-col">
-                            <span className="kcard-metric-num">{c.engagement}</span>
-                            <span className="kcard-metric-label">Engagement</span>
-                          </div>
-                          <div className="kcard-metric-col">
-                            <span className="kcard-metric-num">{c.fee}</span>
-                            <span className="kcard-metric-label">Est. Fee</span>
-                          </div>
-                        </div>
+                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, color: '#0F172A' }}>
+                      Lọc theo độ phù hợp:
+                    </div>
+                    <Radio.Group
+                      value={filterMinScore}
+                      onChange={(e) => setFilterMinScore(e.target.value)}
+                      style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+                    >
+                      <Radio value={0}>Tất cả mức độ</Radio>
+                      <Radio value={85}>Từ 85% trở lên</Radio>
+                      <Radio value={90}>Từ 90% trở lên (Khớp cao)</Radio>
+                    </Radio.Group>
 
-                        {/* Match rate */}
-                        <div className="kcard-match-row">
-                          <span className="kcard-match-label">Độ phù hợp:</span>
-                          <span className="kcard-match-score">{c.matchScore}%</span>
-                        </div>
-
-                        {/* Suitable tags or Note */}
-                        {c.tags && (
-                          <div className="kcard-suitable-row">
-                            <span>Thích hợp cho: </span>
-                            <strong>{c.tags}</strong>
-                          </div>
-                        )}
-
-                        {c.note && (
-                          <div className={`kcard-action-note ${c.stage}`}>
-                            {c.note}
-                          </div>
-                        )}
-
-                        {/* Bottom Action Button */}
-                        {stg.nextStage && (
-                          <Button
-                            className={`btn-kcard-action ${stg.actionClass}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAdvanceStage(c.id, c.stage);
-                            }}
-                          >
-                            {stg.actionText}
-                          </Button>
-                        )}
+                    {(sortBy !== 'default' || filterMinScore > 0) && (
+                      <div style={{ marginTop: 12, textAlign: 'right' }}>
+                        <Button
+                          size="small"
+                          type="link"
+                          onClick={() => {
+                            setSortBy('default');
+                            setFilterMinScore(0);
+                          }}
+                        >
+                          Đặt lại bộ lọc
+                        </Button>
                       </div>
-                    ))}
+                    )}
                   </div>
-                </div>
-              );
-            })}
+                }
+                trigger="click"
+                placement="bottomRight"
+              >
+                <Button className="btn-pipeline-filter" icon={<FilterOutlined />}>
+                  Bộ lọc & sắp xếp {(sortBy !== 'default' || filterMinScore > 0) && '•'}{' '}
+                  <DownOutlined style={{ fontSize: 10 }} />
+                </Button>
+              </Popover>
+            </div>
           </div>
+
+          {/* Bottom navigation actions */}
+          <div className="crm-completion-banner">
+            <div className="crm-completion-left">
+              <div className="crm-completion-icon-box">
+                <CheckCircleFilled style={{ color: '#10B981', fontSize: 24 }} />
+              </div>
+              <div className="crm-completion-text">
+                <div className="crm-completion-title">
+                  🎉 Bước 5: Tiếp cận & Đàm phán Hợp tác KOC
+                </div>
+                <div className="crm-completion-desc">
+                  {confirmedCount > 0 ? `${confirmedCount} KOC đã chốt xác nhận. ` : ''}Chuyển sang trang CRM để theo dõi chi tiết hoặc quay lại danh sách chiến dịch.
+                </div>
+              </div>
+            </div>
+            <div className="crm-completion-actions">
+              <Button
+                type="primary"
+                className="btn-collab-cta"
+                icon={<RocketOutlined />}
+                onClick={() => {
+                  navigate('/campaign-management?tab=crm');
+                  setActiveViewTab('kanban');
+                }}
+              >
+                Chuyển sang trang CRM ➔
+              </Button>
+              <Button
+                className="btn-performance-cta"
+                icon={<BarChartOutlined />}
+                onClick={() => navigate('/campaigns')}
+              >
+                Quay về Chiến dịch
+              </Button>
+            </div>
+          </div>
+
+          {/* 5. Main Layout: 5 Kanban Columns Full Width (No Horizontal Scrollbar) */}
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '60px 0' }}>
+              <Spin size="large" description="Đang tải dữ liệu Pipeline từ máy chủ..." />
+            </div>
+          ) : (
+            <div className="pipeline-layout-grid">
+              {/* Kanban 5 Columns */}
+              <div className="kanban-board-container">
+                {stages.map((stg) => {
+                  const colItems = filteredCreators.filter((c) => c.stage === stg.key);
+                  return (
+                    <div key={stg.key} className="kanban-col">
+                      {/* Column Header */}
+                      <div className={`kanban-col-header ${stg.headerClass}`}>
+                        <div className="col-header-title">
+                          <span>{stg.title}</span>
+                          <span className="col-header-count">{colItems.length}</span>
+                        </div>
+                      </div>
+
+                      {/* Cards List in this Column */}
+                      <div className="kanban-cards-stack">
+                        {colItems.map((c) => (
+                          <div
+                            key={c.id}
+                            className="kanban-creator-card"
+                            onClick={() => navigate('/creators')}
+                          >
+                            {/* Top Creator row */}
+                            <div className="kcard-top-row">
+                              <img src={c.avatar} alt={c.name} className="kcard-avatar" />
+                              <div className="kcard-identity">
+                                <span className="kcard-name">{c.name}</span>
+                                <span className="kcard-username">@{c.username}</span>
+                                {renderPlatformBadge(c.platform)}
+                              </div>
+                            </div>
+
+                            {/* 3 Metrics Mini Grid */}
+                            <div className="kcard-metrics-grid">
+                              <div className="kcard-metric-col">
+                                <span className="kcard-metric-num">{c.followers}</span>
+                                <span className="kcard-metric-label">Followers</span>
+                              </div>
+                              <div className="kcard-metric-col">
+                                <span className="kcard-metric-num">{c.engagement}</span>
+                                <span className="kcard-metric-label">Engagement</span>
+                              </div>
+                              <div className="kcard-metric-col">
+                                <span className="kcard-metric-num">{c.fee}</span>
+                                <span className="kcard-metric-label">Est. Fee</span>
+                              </div>
+                            </div>
+
+                            {/* Match rate */}
+                            <div className="kcard-match-row">
+                              <span className="kcard-match-label">Độ phù hợp:</span>
+                              <span className="kcard-match-score">{c.matchScore}%</span>
+                            </div>
+
+                            {/* Suitable tags or Note */}
+                            {c.tags && (
+                              <div className="kcard-suitable-row">
+                                <span>Thích hợp cho: </span>
+                                <strong>{c.tags}</strong>
+                              </div>
+                            )}
+
+                            {c.note && (
+                              <div className={`kcard-action-note ${c.stage}`}>
+                                {c.note}
+                              </div>
+                            )}
+
+                            {/* Bottom Action Button: Nếu ở cột Đã xác nhận thì hiện nút Hoàn tất & Về Trang chủ */}
+                            {stg.key === 'confirmed' ? (
+                              <Button
+                                type="primary"
+                                className="btn-kcard-action btn-action-collab-next"
+                                icon={<CheckCircleFilled />}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setIsFinishModalOpen(true);
+                                }}
+                              >
+                                ✓ Đã chốt ➔ Hoàn tất
+                              </Button>
+                            ) : stg.nextStage ? (
+                              <Button
+                                className={`btn-kcard-action ${stg.actionClass}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAdvanceStage(c.id, c.stage);
+                                }}
+                              >
+                                {stg.actionText}
+                              </Button>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
           {/* Pipeline Kanban Board takes full space */}
         </div>
       )}
       </>
       )}
-
-      {/* Floating AI Assistant Round Avatar & Panel */}
-      <div className="floating-ai-assistant-wrapper">
-        {aiAssistantOpen && (
-          <div className="floating-ai-panel">
-            <div className="floating-ai-panel-header">
-              <div className="floating-ai-header-left">
-                <div className="floating-ai-avatar-mini">
-                  <ThunderboltFilled style={{ color: '#FFFFFF', fontSize: 14 }} />
-                </div>
-                <div>
-                  <div className="floating-ai-title">Trợ lý AI</div>
-                  <div className="floating-ai-subtitle">Tối ưu chiến dịch thông minh</div>
-                </div>
-              </div>
-              <div className="floating-ai-header-right">
-                <span className="widget-beta-tag">Beta</span>
-                <button
-                  type="button"
-                  className="floating-ai-close-btn"
-                  onClick={() => setAiAssistantOpen(false)}
-                  aria-label="Đóng trợ lý AI"
-                >
-                  <CloseOutlined />
-                </button>
-              </div>
-            </div>
-
-            <div className="floating-ai-panel-body">
-              <p className="widget-ai-description">
-                Gợi ý creator phù hợp và hỗ trợ bạn tối ưu tiến độ chiến dịch hiệu quả hơn.
-              </p>
-
-              <div className="widget-ai-recommendations-list">
-                <div
-                  className="ai-recommendation-item"
-                  onClick={() => {
-                    setActiveViewTab('recommendation');
-                    setAiAssistantOpen(false);
-                  }}
-                >
-                  <div className="ai-rec-title">
-                    <span>Creator có khả năng phản hồi cao</span>
-                    <RightOutlined style={{ fontSize: 10, color: '#94A3B8' }} />
-                  </div>
-                  <div className="ai-rec-subtitle">
-                    Dựa trên mức độ tương tác và lịch sử hợp tác
-                  </div>
-                </div>
-
-                <div
-                  className="ai-recommendation-item"
-                  onClick={() => message.info('Hiển thị chiến dịch cần follow-up ngay hôm nay.')}
-                >
-                  <div className="ai-rec-title">
-                    <span>Chiến dịch cần follow-up hôm nay</span>
-                    <RightOutlined style={{ fontSize: 10, color: '#94A3B8' }} />
-                  </div>
-                  <div className="ai-rec-subtitle">
-                    Để tăng tỷ lệ phản hồi và đảm bảo tiến độ
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                className="btn-view-ai-proposals"
-                onClick={() => {
-                  setActiveViewTab('recommendation');
-                  setAiAssistantOpen(false);
-                }}
-              >
-                ⚡ Xem đề xuất AI Four-Memory
-              </Button>
-
-              {/* Thông tin nhanh Widget */}
-              <div className="widget-quick-info">
-                <div className="widget-quick-info-title">Thông tin nhanh</div>
-                <div className="widget-quick-info-grid">
-                  <div className="quick-info-stat-box">
-                    <span className="quick-info-label">Tổng creator</span>
-                    <span className="quick-info-number">{pipelineCreators.length}</span>
-                    <span className="quick-info-trend">Live</span>
-                  </div>
-                  <div className="quick-info-stat-box">
-                    <span className="quick-info-label">Đã liên hệ</span>
-                    <span className="quick-info-number">
-                      {pipelineCreators.filter((c) => c.stage === 'contacted').length}
-                    </span>
-                    <span className="quick-info-trend">CRM</span>
-                  </div>
-                  <div className="quick-info-stat-box">
-                    <span className="quick-info-label">Đã xác nhận</span>
-                    <span className="quick-info-number">
-                      {pipelineCreators.filter((c) => c.stage === 'confirmed').length}
-                    </span>
-                    <span className="quick-info-trend">Hợp đồng</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Banner Tạo chiến dịch mới với AI */}
-              <div className="widget-create-campaign-banner" style={{ marginTop: 4 }}>
-                <h4 className="banner-create-title">
-                  Tạo chiến dịch mới với AI chỉ trong 1 phút
-                </h4>
-                <Button
-                  className="btn-banner-create-action"
-                  onClick={() => navigate('/campaigns/create')}
-                >
-                  Tạo chiến dịch ngay
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Circular Avatar Trigger Button */}
-        <button
-          type="button"
-          className={`floating-ai-trigger-btn ${aiAssistantOpen ? 'active' : ''}`}
-          onClick={() => setAiAssistantOpen((prev) => !prev)}
-          title="Mở Trợ lý AI"
-          aria-label="Mở Trợ lý AI"
-        >
-          <div className="floating-ai-pulse-ring" />
-          <div className="floating-ai-avatar-core">
-            <ThunderboltFilled className="floating-ai-icon" />
-            <span className="floating-ai-badge">AI</span>
-          </div>
-        </button>
-      </div>
 
       {/* Modal Thêm Creator vào Pipeline */}
       <Modal
@@ -781,7 +850,6 @@ export default function CampaignManagementPage() {
             <Select>
               <Select.Option value="tiktok">TikTok</Select.Option>
               <Select.Option value="instagram">Instagram</Select.Option>
-              <Select.Option value="youtube">YouTube</Select.Option>
             </Select>
           </Form.Item>
 
@@ -818,6 +886,123 @@ export default function CampaignManagementPage() {
             </Button>
           </div>
         </Form>
+      </Modal>
+
+      {/* Modal Chúc mừng Hoàn tất Quy trình Chiến dịch & Quay về Trang chủ */}
+      <Modal
+        open={isFinishModalOpen}
+        onCancel={() => setIsFinishModalOpen(false)}
+        footer={null}
+        width={500}
+        centered
+      >
+        <div style={{ textAlign: 'center', padding: '16px 8px 8px 8px' }}>
+          <div
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+              color: '#059669',
+              fontSize: 34,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px auto',
+              boxShadow: '0 4px 16px rgba(16, 185, 129, 0.2)',
+            }}
+          >
+            🎉
+          </div>
+
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', marginBottom: 8 }}>
+            Hoàn tất quy trình Chiến dịch!
+          </h2>
+
+          <p style={{ fontSize: 13.5, color: '#64748B', lineHeight: 1.6, maxWidth: 420, margin: '0 auto 20px auto' }}>
+            Chúc mừng bạn đã hoàn thành trọn vẹn 5 bước từ <strong>Tạo Brief ➔ Khám phá ➔ Shortlist ➔ Đề xuất AI ➔ Tiếp cận & Đàm phán (CRM)</strong> cho chiến dịch <strong>"{campaign?.name || 'Chiến dịch'}"</strong>.
+          </p>
+
+          <div
+            style={{
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              borderRadius: 14,
+              padding: '14px 18px',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 12,
+              marginBottom: 24,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#4F46E5' }}>
+                {pipelineCreators.length}
+              </div>
+              <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>KOC trong Pipeline</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#10B981' }}>
+                {confirmedCount}
+              </div>
+              <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Đã chốt xác nhận</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#F59E0B' }}>
+                {pipelineCreators.length > 0 ? `${pipelineCreators.length * 120}K+` : '0'}
+              </div>
+              <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Reach dự kiến</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Button
+              type="primary"
+              size="large"
+              icon={<HomeOutlined />}
+              onClick={() => {
+                setIsFinishModalOpen(false);
+                message.success('Đã hoàn tất quy trình chiến dịch thành công!');
+                navigate('/dashboard');
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+                borderRadius: 10,
+                fontWeight: 700,
+                height: 44,
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                border: 'none',
+              }}
+            >
+              Về Trang chủ (Dashboard)
+            </Button>
+
+            <Button
+              size="large"
+              onClick={() => {
+                setIsFinishModalOpen(false);
+                navigate('/campaigns');
+              }}
+              style={{
+                borderRadius: 10,
+                fontWeight: 600,
+                height: 40,
+                color: '#334155',
+              }}
+            >
+              Xem danh sách tất cả Chiến dịch
+            </Button>
+
+            <Button
+              type="link"
+              size="small"
+              onClick={() => setIsFinishModalOpen(false)}
+              style={{ color: '#94A3B8', marginTop: 4 }}
+            >
+              Ở lại trang này để tiếp tục theo dõi
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

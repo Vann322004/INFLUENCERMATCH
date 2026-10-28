@@ -14,13 +14,13 @@ export default function AdminLayout({ pageTitle }: AdminLayoutProps) {
   return (
     <Layout style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden' }}>
       <AdminSidebar />
-      <Layout style={{ background: '#F5F6FA', height: '100vh', overflow: 'hidden' }}>
+      <Layout style={{ background: '#F5F6FA', height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
         <AdminHeader title={pageTitle} />
         <Content
           style={{
             background: '#F5F6FA',
             padding: '20px 28px 20px 28px',
-            overflowY: 'auto',
+            overflow: 'visible',
             boxSizing: 'border-box',
           }}
         >

@@ -169,24 +169,104 @@ export const mapCreatorToShortlistItem = (
   };
 };
 
+// In-Memory Global Cache để chuyển trang Discovery <-> Shortlist hiển thị tức thì 0ms, không treo spinner
+interface ShortlistCacheData {
+  creators: CreatorCompareItem[];
+  campaigns: CampaignResponse[];
+  selectedCampaign: string;
+  creatorsMap: Map<string, CreatorItem>;
+  lastUpdated: number;
+}
+
+let globalShortlistCache: ShortlistCacheData | null = null;
+
+const loadCachedShortlist = (): ShortlistCacheData | null => {
+  if (globalShortlistCache && globalShortlistCache.creators.length > 0) {
+    return globalShortlistCache;
+  }
+  try {
+    const rawItems = localStorage.getItem('IM_SHORTLIST_CACHE_CREATORS');
+    const rawCamps = localStorage.getItem('IM_SHORTLIST_CACHE_CAMPAIGNS');
+    const rawSelected = sessionStorage.getItem('current_campaign_id') || localStorage.getItem('IM_SELECTED_CAMPAIGN_ID');
+    if (rawItems) {
+      const parsedItems = JSON.parse(rawItems);
+      const parsedCamps = rawCamps ? JSON.parse(rawCamps) : [];
+      if (Array.isArray(parsedItems) && parsedItems.length > 0) {
+        globalShortlistCache = {
+          creators: parsedItems,
+          campaigns: parsedCamps,
+          selectedCampaign: rawSelected || 'all',
+          creatorsMap: new Map(),
+          lastUpdated: Date.now(),
+        };
+        return globalShortlistCache;
+      }
+    }
+  } catch {}
+  return null;
+};
+
+const updateShortlistCache = (partial: Partial<ShortlistCacheData>) => {
+  if (!globalShortlistCache) {
+    globalShortlistCache = {
+      creators: [],
+      campaigns: [],
+      selectedCampaign: 'all',
+      creatorsMap: new Map(),
+      lastUpdated: Date.now(),
+    };
+  }
+  globalShortlistCache = { ...globalShortlistCache, ...partial, lastUpdated: Date.now() };
+  try {
+    if (partial.creators) {
+      localStorage.setItem('IM_SHORTLIST_CACHE_CREATORS', JSON.stringify(partial.creators));
+    }
+    if (partial.campaigns) {
+      localStorage.setItem('IM_SHORTLIST_CACHE_CAMPAIGNS', JSON.stringify(partial.campaigns));
+    }
+  } catch {}
+};
+
 export default function CreatorShortlistPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
 
-  const urlCampaignId = searchParams.get('campaignId') || (location.state as any)?.campaignId || sessionStorage.getItem('current_campaign_id') || undefined;
+  // Khởi tạo từ Cache ngay lập tức để trang hiển thị 0ms, không lag/spinner
+  const initialCache = useMemo(() => loadCachedShortlist(), []);
 
-  const [loading, setLoading] = useState(true);
-  const [creators, setCreators] = useState<CreatorCompareItem[]>([]);
-  const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
-  const [creatorsMap, setCreatorsMap] = useState<Map<string, CreatorItem>>(new Map());
-  const [selectedCampaign, setSelectedCampaign] = useState<string>(urlCampaignId || 'all');
+  const [loading, setLoading] = useState<boolean>(!initialCache);
+  const [creators, setCreators] = useState<CreatorCompareItem[]>(initialCache?.creators || []);
+  const [campaigns, setCampaigns] = useState<CampaignResponse[]>(initialCache?.campaigns || []);
+  const [creatorsMap, setCreatorsMap] = useState<Map<string, CreatorItem>>(initialCache?.creatorsMap || new Map());
+
+  // Xác định campaignId mục tiêu đồng bộ giữa URL, state và storage
+  const [selectedCampaign, setSelectedCampaign] = useState<string>(() => {
+    const rawUrl = searchParams.get('campaignId');
+    const rawState = (location.state as any)?.campaignId;
+    const rawSession = sessionStorage.getItem('current_campaign_id');
+    const rawLocal = localStorage.getItem('IM_SELECTED_CAMPAIGN_ID');
+    return rawUrl || rawState || rawSession || rawLocal || initialCache?.selectedCampaign || 'all';
+  });
+
+  // Clean URL ngay lập tức khi vừa mount để thanh địa chỉ luôn sạch, không lộ UUID thô
+  useEffect(() => {
+    const rawUrl = searchParams.get('campaignId');
+    if (rawUrl) {
+      sessionStorage.setItem('current_campaign_id', rawUrl);
+      localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', rawUrl);
+      const nextParams = new URLSearchParams(window.location.search);
+      nextParams.delete('campaignId');
+      const cleanUrl = `${window.location.pathname}${nextParams.toString() ? `?${nextParams.toString()}` : ''}`;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+  }, []);
 
   // Candidate Search & Adding state in Add Modal
   const [candidateSearch, setCandidateSearch] = useState('');
   const [addingCandidateId, setAddingCandidateId] = useState<string | null>(null);
 
-  // Dynamic Campaign Options for Select
+  // Dynamic Campaign Options for Select (kèm nhãn thân thiện dự phòng tránh flash chuỗi UUID thô)
   const campaignOptions = useMemo(() => {
     const list = [{ value: 'all', label: '📁 Tất cả chiến dịch' }];
     campaigns.forEach((camp) => {
@@ -195,40 +275,67 @@ export default function CreatorShortlistPage() {
         label: `🎯 ${camp.name}`,
       });
     });
-    return list;
-  }, [campaigns]);
 
-  // Load Shortlist for specific campaign or all campaigns
+    // Nếu selectedCampaign là UUID và chưa có trong campaigns (đang tải), thêm nhãn tạm thân thiện thay vì để AntD hiển thị mã UUID
+    if (selectedCampaign && selectedCampaign !== 'all' && !campaigns.some((c) => c.id === selectedCampaign)) {
+      const cachedName =
+        sessionStorage.getItem('current_campaign_name') ||
+        localStorage.getItem('IM_SELECTED_CAMPAIGN_NAME') ||
+        'Đang tải chiến dịch...';
+      list.push({
+        value: selectedCampaign,
+        label: `🎯 ${cachedName}`,
+      });
+    }
+
+    return list;
+  }, [campaigns, selectedCampaign]);
+
+  // Load Shortlist từ Backend Database kết hợp Persistent Fallback
   const loadShortlist = async (
     campId: string,
     currentCampaigns: CampaignResponse[],
-    cMap: Map<string, CreatorItem>
+    cMap: Map<string, CreatorItem>,
+    isBackground = false
   ) => {
-    setLoading(true);
+    if (!isBackground) {
+      setLoading(true);
+    }
     try {
       let rawShortlistItems: { item: ShortlistItem; campaignName: string }[] = [];
 
       if (campId === 'all') {
-        // Lấy danh sách shortlist thực tế từ Backend Database theo từng chiến dịch của Brand
+        // Tối ưu hóa: Chỉ gửi tối đa 5 chiến dịch hợp lệ (UUID) để tránh nghẽn HTTP connections
+        const uuidCampaigns = currentCampaigns
+          .filter((c) => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(c.id))
+          .slice(0, 5);
+
         let fromBackend: { item: ShortlistItem; campaignName: string }[] = [];
-        if (currentCampaigns.length > 0) {
-          const results = await Promise.all(
-            currentCampaigns.map(async (camp) => {
-              try {
-                const list = await creatorService.getShortlist(camp.id);
-                return (list || []).map((it) => ({ item: it, campaignName: camp.name }));
-              } catch {
-                return [];
-              }
+        if (uuidCampaigns.length > 0) {
+          const settledResults = await Promise.allSettled(
+            uuidCampaigns.map(async (camp) => {
+              const list = await creatorService.getShortlist(camp.id);
+              return (list || []).map((it) => ({ item: it, campaignName: camp.name }));
             })
           );
-          fromBackend = results.flat();
+          settledResults.forEach((res) => {
+            if (res.status === 'fulfilled') {
+              fromBackend.push(...res.value);
+            }
+          });
         }
+
+        // Lấy thêm từ local storage để bảo toàn KOC nếu backend chưa kịp sync
+        const localAll = creatorService.getLocalShortlist('all');
+        const localFormatted = localAll.map((it) => ({
+          item: it,
+          campaignName: currentCampaigns.find((c) => c.id === it.campaignId)?.name || 'Chiến dịch',
+        }));
 
         // Hợp nhất và loại trừ trùng lặp
         const seen = new Set<string>();
         const merged: { item: ShortlistItem; campaignName: string }[] = [];
-        fromBackend.forEach((entry) => {
+        [...fromBackend, ...localFormatted].forEach((entry) => {
           const key = entry.item.creatorId || entry.item.id;
           if (key && !seen.has(key)) {
             seen.add(key);
@@ -269,7 +376,7 @@ export default function CreatorShortlistPage() {
         return {
           id: item.creatorId,
           shortlistItemId: item.id,
-          campaignId: item.campaignId,
+          campaignId: item.campaignId || campId,
           campaignName,
           name: displayName,
           username: (profile?.userName || displayName).replace(/^@+/, ''),
@@ -306,18 +413,24 @@ export default function CreatorShortlistPage() {
       });
 
       setCreators(mapped);
+      updateShortlistCache({ creators: mapped, selectedCampaign: campId });
     } catch (err) {
-      console.error('Lỗi khi tải shortlist:', err);
+      console.error('Lỗi khi tải shortlist từ Database:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  // Khởi tạo dữ liệu 1 lần duy nhất khi Mount (không re-trigger do searchParams)
   useEffect(() => {
     let isMounted = true;
     const initData = async () => {
-      try {
+      const hasCached = Boolean(globalShortlistCache && globalShortlistCache.creators.length > 0);
+      if (!hasCached) {
         setLoading(true);
+      }
+
+      try {
         const [campsRes, apiCreators] = await Promise.all([
           campaignService.getCampaigns(0, 50).catch(() => []),
           creatorService.getCreators().catch(() => []),
@@ -327,16 +440,20 @@ export default function CreatorShortlistPage() {
 
         let camps = Array.isArray(campsRes) ? campsRes : [];
 
-        // Check if there's a campaignId in URL or state
-        const targetCampId = searchParams.get('campaignId') || (location.state as any)?.campaignId || sessionStorage.getItem('current_campaign_id');
+        // Đọc campaignId mục tiêu
+        const rawParam = searchParams.get('campaignId');
+        const rawState = (location.state as any)?.campaignId;
+        const rawSession = sessionStorage.getItem('current_campaign_id');
+        const rawLocal = localStorage.getItem('IM_SELECTED_CAMPAIGN_ID');
+        const targetCampId = rawParam || rawState || rawSession || rawLocal;
+
         let initialCampId = 'all';
 
-        if (targetCampId) {
+        if (targetCampId && targetCampId !== 'all') {
           const found = camps.find((c) => c.id === targetCampId);
           if (found) {
             initialCampId = targetCampId;
-          } else {
-            // Thử nạp thông tin campaign cụ thể
+          } else if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(targetCampId)) {
             try {
               const single = await campaignService.getCampaignById(targetCampId);
               if (single?.id) {
@@ -344,7 +461,13 @@ export default function CreatorShortlistPage() {
                 initialCampId = single.id;
               }
             } catch {
-              // Thêm fallback campaign để hiển thị dropdown đúng tên
+              initialCampId = camps.length > 0 ? camps[0].id : targetCampId;
+            }
+          } else {
+            // targetCampId là ID tạm hoặc không tồn tại trong backend DB:
+            // Ưu tiên chọn chiến dịch thật đầu tiên của user nếu có, hoặc giữ lại nếu có local shortlist
+            const localHasItems = creatorService.getLocalShortlist(targetCampId).length > 0;
+            if (localHasItems) {
               const fallbackCamp = {
                 id: targetCampId,
                 name: 'Chiến dịch mục tiêu',
@@ -357,8 +480,22 @@ export default function CreatorShortlistPage() {
               } as CampaignResponse;
               camps = [fallbackCamp, ...camps];
               initialCampId = targetCampId;
+            } else if (camps.length > 0) {
+              initialCampId = camps[0].id;
             }
           }
+        } else if (camps.length > 0 && initialCampId === 'all') {
+          // Nếu có campaigns, mặc định kiểm tra chiến dịch có shortlist
+          const firstWithItems = camps.find((c) => creatorService.getLocalShortlist(c.id).length > 0);
+          if (firstWithItems) {
+            initialCampId = firstWithItems.id;
+          }
+        }
+
+        // Lưu đồng bộ vào storage
+        if (initialCampId !== 'all') {
+          sessionStorage.setItem('current_campaign_id', initialCampId);
+          localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', initialCampId);
         }
 
         setCampaigns(camps);
@@ -377,8 +514,22 @@ export default function CreatorShortlistPage() {
           setAddCampaignId(camps[0].id);
         }
 
-        // Tải danh sách shortlist cho campaign mục tiêu hoặc all
-        await loadShortlist(initialCampId, camps, cMap);
+        updateShortlistCache({
+          campaigns: camps,
+          creatorsMap: cMap,
+          selectedCampaign: initialCampId,
+        });
+
+        // Tải danh sách shortlist từ DB (chạy ngầm nếu đã có cache)
+        await loadShortlist(initialCampId, camps, cMap, hasCached);
+
+        // Clean URL sau khi đã hoàn tất nạp dữ liệu một cách an toàn
+        if (rawParam) {
+          const nextParams = new URLSearchParams(window.location.search);
+          nextParams.delete('campaignId');
+          const newUrl = `${window.location.pathname}${nextParams.toString() ? `?${nextParams.toString()}` : ''}`;
+          window.history.replaceState({}, '', newUrl);
+        }
       } catch (err) {
         console.error('Lỗi khi khởi tạo dữ liệu shortlist:', err);
       } finally {
@@ -387,31 +538,41 @@ export default function CreatorShortlistPage() {
     };
 
     initData();
+
+    // Lắng nghe sự kiện cập nhật shortlist từ trang Discovery / Modal
+    const handleShortlistUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const targetCamp = customEvent.detail?.campaignId || selectedCampaign;
+      loadShortlist(targetCamp, campaigns, creatorsMap, true);
+    };
+    window.addEventListener('im_shortlist_updated', handleShortlistUpdated);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('im_shortlist_updated', handleShortlistUpdated);
     };
-  }, [searchParams]);
+  }, []);
 
   const handleSelectCampaign = async (val: string) => {
     setSelectedCampaign(val);
     if (val && val !== 'all') {
-      setSearchParams({ campaignId: val }, { replace: true });
       sessionStorage.setItem('current_campaign_id', val);
+      localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', val);
       localStorage.setItem('last_active_campaign_id', val);
     } else {
-      setSearchParams({}, { replace: true });
       sessionStorage.removeItem('current_campaign_id');
+      localStorage.removeItem('IM_SELECTED_CAMPAIGN_ID');
     }
     const targetLabel = campaignOptions.find((o) => o.value === val)?.label || val;
     message.info(`Đang xem danh sách: ${targetLabel}`);
-    await loadShortlist(val, campaigns, creatorsMap);
+    await loadShortlist(val, campaigns, creatorsMap, false);
   };
 
   // Lắng nghe realtime SSE endpoint cập nhật số liệu crawl tự động
   useShortlistRealtime(
     selectedCampaign && selectedCampaign !== 'all' ? selectedCampaign : undefined,
     () => {
-      loadShortlist(selectedCampaign, campaigns, creatorsMap);
+      loadShortlist(selectedCampaign, campaigns, creatorsMap, true);
     }
   );
   const [viewMode, setViewMode] = useState<'board' | 'compare'>('board');
@@ -577,7 +738,11 @@ export default function CreatorShortlistPage() {
           if (target?.campaignId && target.shortlistItemId) {
             await creatorService.removeFromShortlist(target.campaignId, target.shortlistItemId);
           }
-          setCreators((prev) => prev.filter((c) => c.id !== id));
+          setCreators((prev) => {
+            const next = prev.filter((c) => c.id !== id);
+            updateShortlistCache({ creators: next });
+            return next;
+          });
           message.success(`Đã xóa ${name} khỏi danh sách chọn`);
         } catch (err: any) {
           console.error(err);
@@ -611,7 +776,12 @@ export default function CreatorShortlistPage() {
 
   // Filtered creators for Board view
   const filteredCreators = creators.filter((c) => {
-    if (selectedCampaign !== 'all' && c.campaignId !== selectedCampaign) return false;
+    if (selectedCampaign !== 'all') {
+      // Nếu creator có campaignId cụ thể khác với selectedCampaign thì mới loại trừ
+      if (c.campaignId && c.campaignId !== 'all' && c.campaignId !== selectedCampaign) {
+        return false;
+      }
+    }
     if (onlyFavorite && !c.favorite) return false;
     if (priorityFilter !== 'all' && c.priority !== priorityFilter) return false;
     if (searchTerm.trim()) {
@@ -802,7 +972,7 @@ export default function CreatorShortlistPage() {
     },
     {
       key: 'remove',
-      label: 'Xóa khỏi Shortlist',
+      label: 'Xóa khỏi danh sách chọn',
       danger: true,
       icon: <DeleteOutlined />,
       onClick: () => handleRemoveFromShortlist(creator.id, creator.name),
@@ -811,28 +981,92 @@ export default function CreatorShortlistPage() {
 
   return (
     <div className="shortlist-page-container">
-      {/* 0. Unified Campaign Funnel Stepper */}
-      <CampaignWorkflowBar
-        currentStep="shortlist"
-        campaignId={selectedCampaign !== 'all' ? selectedCampaign : undefined}
-        campaignName={campaignOptions.find((c) => c.value === selectedCampaign)?.label}
-        shortlistCount={creators.length}
-        availableCampaigns={campaigns.map((c) => ({ id: c.id, name: c.name }))}
-        onSelectCampaign={handleSelectCampaign}
-      />
+      {/* 1. Breadcrumb chuẩn theo thiết kế */}
+      <div className="cdiscovery-breadcrumb">
+        <span className="cdiscovery-breadcrumb-link" onClick={() => navigate('/dashboard')}>
+          Trang chủ
+        </span>
+        <span className="cdiscovery-breadcrumb-sep">›</span>
+        <span className="cdiscovery-breadcrumb-link" onClick={() => navigate('/campaigns')}>
+          Chiến dịch
+        </span>
+        <span className="cdiscovery-breadcrumb-sep">›</span>
+        <span className="cdiscovery-breadcrumb-camp">
+          {campaignOptions.find((c) => c.value === selectedCampaign)?.label?.replace(/^🎯\s*/, '') || 'Tất cả chiến dịch'}
+        </span>
+        <span className="cdiscovery-breadcrumb-sep">›</span>
+        <span className="cdiscovery-breadcrumb-current">Danh sách chọn Nhà sáng tạo</span>
+      </div>
 
-      {/* 1. Header & Title Bar with Campaign Selector */}
+      {/* 2. Top Stepper 5 bước đồng bộ nghiệp vụ */}
+      <div className="cdiscovery-top-stepper">
+        <div
+          className="cdiscovery-step-item"
+          onClick={() => navigate(`/campaigns/create${selectedCampaign !== 'all' ? `?id=${selectedCampaign}` : ''}`)}
+        >
+          <div className="cdiscovery-step-badge done">
+            <CheckOutlined />
+          </div>
+          <span className="cdiscovery-step-title">Tạo brief</span>
+        </div>
+        <div className="cdiscovery-step-line done" />
+
+        <div
+          className="cdiscovery-step-item"
+          onClick={() => {
+            if (selectedCampaign && selectedCampaign !== 'all') {
+              sessionStorage.setItem('current_campaign_id', selectedCampaign);
+              localStorage.setItem('last_active_campaign_id', selectedCampaign);
+            }
+            navigate('/creators');
+          }}
+        >
+          <div className="cdiscovery-step-badge done">
+            <CheckOutlined />
+          </div>
+          <span className="cdiscovery-step-title">Khám phá</span>
+        </div>
+        <div className="cdiscovery-step-line done" />
+
+        <div className="cdiscovery-step-item">
+          <div className="cdiscovery-step-badge active">3</div>
+          <span className="cdiscovery-step-title active">Danh sách chọn</span>
+        </div>
+        <div className="cdiscovery-step-line" />
+
+        <div
+          className="cdiscovery-step-item"
+          onClick={() => {
+            if (creators.length === 0) {
+              message.warning('Vui lòng chọn ít nhất 1 Nhà sáng tạo vào danh sách trước khi xem Gợi ý AI chuyên sâu!');
+              return;
+            }
+            const targetId = selectedCampaign && selectedCampaign !== 'all' ? selectedCampaign : campaigns[0]?.id || 'all';
+            if (targetId && targetId !== 'all') {
+              sessionStorage.setItem('current_campaign_id', targetId);
+              localStorage.setItem('last_active_campaign_id', targetId);
+            }
+            navigate('/creators/recommendations');
+          }}
+        >
+          <div className="cdiscovery-step-badge upcoming">4</div>
+          <span className="cdiscovery-step-title">Gợi ý AI</span>
+        </div>
+        <div className="cdiscovery-step-line" />
+
+        <div className="cdiscovery-step-item" onClick={() => navigate('/crm')}>
+          <div className="cdiscovery-step-badge upcoming">5</div>
+          <span className="cdiscovery-step-title">Hợp tác</span>
+        </div>
+      </div>
+
+      {/* 3. Header Bar với Tiêu đề & Chọn Chiến dịch (Đã tinh gọn, không trùng lặp nút) */}
       <div className="shortlist-header-row">
         <div>
-          <div className="shortlist-title-wrap">
-            <h1 className="shortlist-main-title">Danh sách chọn & So sánh Creator</h1>
-            <span className="shortlist-tagline-cursive">
-              Phù hợp hơn • Quản lý tập trung • So sánh trực quan
-            </span>
-          </div>
-          <div className="shortlist-description">
-            Quản lý shortlist theo từng chiến dịch, đánh dấu ưu tiên, ghi chú nội bộ và so sánh đa chiều từ 2-5 Creator.
-          </div>
+          <h1 className="shortlist-main-title">Danh sách chọn Nhà sáng tạo</h1>
+          <p className="shortlist-description">
+            Quản lý danh sách KOL / KOC theo từng chiến dịch, đánh giá độ phù hợp, ghi chú nội bộ và so sánh trực quan.
+          </p>
         </div>
 
         <div className="shortlist-header-actions">
@@ -842,53 +1076,59 @@ export default function CreatorShortlistPage() {
             <Select
               value={selectedCampaign}
               onChange={handleSelectCampaign}
-              style={{ width: 250 }}
+              style={{ width: 260 }}
               options={campaignOptions}
             />
           </div>
 
-          <Button
-            className="btn-save-shortlist"
-            icon={<SaveOutlined />}
-            onClick={() => message.success('Đã lưu toàn bộ trạng thái shortlist thành công!')}
-          >
-            Lưu danh sách
-          </Button>
-
+          {/* Nút chính chuyển sang Đề xuất AI Four-Memory từ toàn bộ Shortlist */}
           <Button
             type="primary"
             icon={<ThunderboltFilled />}
             onClick={() => {
-              const targetId =
-                selectedCampaign && selectedCampaign !== 'all'
-                  ? selectedCampaign
-                  : campaigns[0]?.id || searchParams.get('campaignId') || 'all';
-              navigate(`/campaign-management/${targetId}?tab=recommendation`, {
-                state: { campaignId: targetId, fromShortlist: true },
-              });
+              const targetCampId = selectedCampaign !== 'all' ? selectedCampaign : (campaigns[0]?.id || '');
+              if (!targetCampId || targetCampId === 'all') {
+                message.warning('Vui lòng chọn một chiến dịch cụ thể để chạy đề xuất AI!');
+                return;
+              }
+              if (creators.length === 0) {
+                message.warning('Shortlist của chiến dịch này đang trống. Hãy thêm KOC trước khi chạy AI!');
+                return;
+              }
+              message.loading({ content: 'Đang chuyển sang Bước 4: Đề xuất AI (Recommendation)...', duration: 1 });
+              sessionStorage.setItem('current_campaign_id', targetCampId);
+              localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', targetCampId);
+              localStorage.setItem('last_active_campaign_id', targetCampId);
+              navigate(`/campaign-management?tab=recommendation&campaignId=${targetCampId}`);
             }}
             style={{
-              background: 'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)',
-              borderColor: 'transparent',
-              fontWeight: 700,
+              height: 38,
               borderRadius: 8,
-              boxShadow: '0 4px 14px rgba(168, 85, 247, 0.35)',
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+              borderColor: 'transparent',
+              boxShadow: '0 2px 8px rgba(79, 70, 229, 0.3)',
             }}
           >
-            ⚡ Đề xuất AI Four-Memory ➔
+            Sang Đề xuất AI ({creators.length}) ➔
           </Button>
 
           <Button
             className="btn-add-creator-primary"
             icon={<PlusOutlined />}
             onClick={() => setAddModalOpen(true)}
+            style={{
+              height: 38,
+              borderRadius: 8,
+              fontWeight: 600,
+            }}
           >
-            Thêm Creator
+            Thêm Nhà sáng tạo
           </Button>
         </div>
       </div>
 
-      {/* 3. Main Navigation Mode Switcher: Board View vs Compare View */}
+      {/* 4. Chuyển đổi chế độ xem: Danh sách vs So sánh */}
       <div className="shortlist-mode-switcher-bar">
         <div className="mode-switcher-tabs">
           <button
@@ -896,7 +1136,7 @@ export default function CreatorShortlistPage() {
             onClick={() => setViewMode('board')}
           >
             <UnorderedListOutlined />
-            <span>Bảng Shortlist</span>
+            <span>Danh sách Nhà sáng tạo</span>
             <span className="mode-count-badge">{filteredCreators.length}</span>
           </button>
 
@@ -904,13 +1144,13 @@ export default function CreatorShortlistPage() {
             className={`mode-tab-btn ${viewMode === 'compare' ? 'active' : ''}`}
             onClick={() => {
               if (selectedCreators.length < 2) {
-                message.info('Mẹo: Hãy tick chọn ít nhất 2 Creator trên bảng Shortlist để so sánh trực quan nhất!');
+                message.info('Mẹo: Hãy tick chọn ít nhất 2 Nhà sáng tạo trên danh sách để so sánh trực quan!');
               }
               setViewMode('compare');
             }}
           >
             <BarChartOutlined />
-            <span>So sánh chi tiết</span>
+            <span>So sánh Nhà sáng tạo</span>
             <span className="mode-count-badge highlight">
               {selectedCreators.length}/5 đã chọn
             </span>
@@ -951,7 +1191,7 @@ export default function CreatorShortlistPage() {
               <div className="search-input-wrap">
                 <Input
                   prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
-                  placeholder="Tìm kiếm creator theo tên, username, ghi chú hoặc lĩnh vực..."
+                  placeholder="Tìm kiếm theo tên, username, ghi chú hoặc lĩnh vực..."
                   allowClear
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -1009,7 +1249,7 @@ export default function CreatorShortlistPage() {
                 <div className="shortlist-empty-box" style={{ padding: '60px 20px', gridColumn: '1 / -1' }}>
                   <Spin size="large" />
                   <div style={{ color: '#64748B', fontWeight: 600, marginTop: 16 }}>
-                    Đang tải danh sách Creator từ máy chủ...
+                    Đang tải danh sách Nhà sáng tạo từ hệ thống...
                   </div>
                 </div>
               ) : filteredCreators.length === 0 ? (
@@ -1017,52 +1257,46 @@ export default function CreatorShortlistPage() {
                   <div style={{ fontSize: 44, marginBottom: 12 }}>🎯</div>
                   <div style={{ fontWeight: 800, fontSize: 18, color: '#0F172A', marginBottom: 6 }}>
                     {creators.length === 0
-                      ? 'Chưa có Creator nào trong Shortlist'
-                      : 'Không tìm thấy Creator nào phù hợp bộ lọc'}
+                      ? 'Chưa có Nhà sáng tạo nào trong Danh sách chọn'
+                      : 'Không tìm thấy Nhà sáng tạo nào phù hợp bộ lọc'}
                   </div>
                   <div style={{ color: '#64748B', fontSize: 14, maxWidth: 520, margin: '0 auto 20px', lineHeight: 1.6 }}>
                     {creators.length === 0
-                      ? `Chiến dịch "${campaignOptions.find((o) => o.value === selectedCampaign)?.label || 'được chọn'}" hiện chưa có Creator nào trong danh sách. Hãy duyệt qua kho Creator tại trang Khám phá và bấm "+ Shortlist" để đưa họ vào đây so sánh.`
+                      ? `Chiến dịch "${campaignOptions.find((o) => o.value === selectedCampaign)?.label?.replace(/^🎯\s*/, '') || 'được chọn'}" hiện chưa có KOL / KOC nào trong danh sách. Hãy khám phá kho hồ sơ đã được hệ thống đề xuất và bấm "+ Lưu vào danh sách" để đưa họ vào đây so sánh.`
                       : 'Thử tìm kiếm với từ khóa khác hoặc bấm đặt lại bộ lọc để xem toàn bộ danh sách.'}
                   </div>
-                  <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center' }}>
                     {creators.length === 0 ? (
                       <>
                         <Button
                           type="primary"
-                          icon={<ThunderboltFilled />}
+                          icon={<SearchOutlined />}
                           style={{
                             borderRadius: 8,
-                            height: 40,
+                            height: 42,
+                            padding: '0 24px',
                             fontWeight: 700,
-                            background: 'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)',
+                            background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
                             borderColor: 'transparent',
-                            boxShadow: '0 4px 12px rgba(168, 85, 247, 0.3)',
+                            boxShadow: '0 4px 14px rgba(79, 70, 229, 0.25)',
                           }}
                           onClick={() => {
-                            const targetId =
-                              selectedCampaign && selectedCampaign !== 'all'
-                                ? selectedCampaign
-                                : campaigns[0]?.id || searchParams.get('campaignId') || 'all';
-                            navigate(`/campaign-management/${targetId}?tab=recommendation`);
+                            if (selectedCampaign && selectedCampaign !== 'all') {
+                              sessionStorage.setItem('current_campaign_id', selectedCampaign);
+                              localStorage.setItem('last_active_campaign_id', selectedCampaign);
+                            }
+                            navigate('/creators');
                           }}
                         >
-                          ⚡ Đề xuất AI Four-Memory
+                          Khám phá Nhà sáng tạo ngay ➔
                         </Button>
                         <Button
                           type="default"
-                          icon={<SearchOutlined />}
-                          style={{ borderRadius: 8, height: 40, fontWeight: 700, color: '#4F46E5', borderColor: '#C7D2FE' }}
-                          onClick={() => navigate('/creators')}
-                        >
-                          Khám phá Creator trên sàn
-                        </Button>
-                        <Button
                           icon={<PlusOutlined />}
-                          style={{ borderRadius: 8, height: 40, fontWeight: 600 }}
+                          style={{ borderRadius: 8, height: 42, fontWeight: 600, color: '#4F46E5', borderColor: '#CBD5E1' }}
                           onClick={() => setAddModalOpen(true)}
                         >
-                          Thêm nhanh Creator
+                          Thêm từ đề xuất
                         </Button>
                       </>
                     ) : (
@@ -1165,7 +1399,7 @@ export default function CreatorShortlistPage() {
                       <div className="board-stats-grid">
                         <div className="board-stat-item">
                           <span className="stat-val">{c.followers}</span>
-                          <span className="stat-lbl">Followers</span>
+                          <span className="stat-lbl">Người theo dõi</span>
                         </div>
                         <div className="board-stat-item">
                           <span className="stat-val" style={{ color: '#059669' }}>
@@ -1175,7 +1409,7 @@ export default function CreatorShortlistPage() {
                         </div>
                         <div className="board-stat-item">
                           <span className="stat-val">{c.price}</span>
-                          <span className="stat-lbl">Giá dự kiến</span>
+                          <span className="stat-lbl">Báo giá tham khảo</span>
                         </div>
                       </div>
 
@@ -1271,12 +1505,12 @@ export default function CreatorShortlistPage() {
                   <tr>
                     <th style={{ width: 40 }}></th>
                     <th style={{ width: 40 }}>⭐</th>
-                    <th>Creator</th>
+                    <th>Nhà sáng tạo</th>
                     <th>Chiến dịch</th>
                     <th>Ưu tiên</th>
-                    <th>Followers</th>
+                    <th>Người theo dõi</th>
                     <th>Tương tác</th>
-                    <th>Giá dự kiến</th>
+                    <th>Báo giá tham khảo</th>
                     <th>Ghi chú cá nhân</th>
                     <th style={{ textAlign: 'right' }}>Hành động</th>
                   </tr>
@@ -1287,17 +1521,23 @@ export default function CreatorShortlistPage() {
                       <td colSpan={10} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748B' }}>
                         <div style={{ fontSize: 32, marginBottom: 8 }}>🎯</div>
                         <div style={{ fontWeight: 700, fontSize: 15, color: '#0F172A', marginBottom: 4 }}>
-                          Chưa có Creator nào trong danh sách
+                          Chưa có Nhà sáng tạo nào trong Danh sách chọn
                         </div>
                         <div style={{ fontSize: 13, marginBottom: 16 }}>
-                          Hãy khám phá và thêm Creator vào shortlist của chiến dịch.
+                          Hãy khám phá và lưu hồ sơ phù hợp vào danh sách chọn của chiến dịch.
                         </div>
                         <Button
                           type="primary"
-                          style={{ background: '#4F46E5', borderRadius: 8 }}
-                          onClick={() => navigate('/creators')}
+                          style={{ background: '#4F46E5', borderRadius: 8, height: 38 }}
+                          onClick={() => {
+                            if (selectedCampaign && selectedCampaign !== 'all') {
+                              sessionStorage.setItem('current_campaign_id', selectedCampaign);
+                              localStorage.setItem('last_active_campaign_id', selectedCampaign);
+                            }
+                            navigate('/creators');
+                          }}
                         >
-                          Khám phá Creator ngay
+                          Khám phá Nhà sáng tạo ngay ➔
                         </Button>
                       </td>
                     </tr>
@@ -1391,51 +1631,75 @@ export default function CreatorShortlistPage() {
             </div>
           )}
 
-          {/* Sticky Bottom Floating Bar for Comparison */}
+          {/* Sticky Bottom Action Footer Bar */}
           {selectedCreators.length > 0 && (
-            <div className="floating-comparison-bar">
-              <div className="floating-bar-left">
-                <div className="floating-avatar-stack">
-                  {selectedCreators.map((c) => (
-                    <img
-                      key={c.id}
-                      src={c.avatar}
-                      alt={c.name}
-                      title={c.name}
-                      className="floating-avatar-item"
-                    />
-                  ))}
+            <div className="shortlist-action-footer-bar">
+              <div className="shortlist-footer-container">
+                <div className="shortlist-footer-left">
+                  <div className="shortlist-footer-avatar-stack">
+                    {selectedCreators.map((c) => (
+                      <Tooltip key={c.id} title={c.name} placement="top">
+                        <img
+                          src={c.avatar}
+                          alt={c.name}
+                          className="shortlist-footer-avatar"
+                        />
+                      </Tooltip>
+                    ))}
+                  </div>
+                  <div className="shortlist-footer-text">
+                    <div className="shortlist-footer-title">
+                      Đã chọn <strong>{selectedCreators.length}/5</strong> Nhà sáng tạo để so sánh
+                    </div>
+                    <div className="shortlist-footer-hint">
+                      Bấm "So sánh đối chiếu" để phân tích song song chỉ số giữa các ứng viên
+                    </div>
+                  </div>
                 </div>
-                <div className="floating-text-wrap">
-                  <span className="floating-title">
-                    Đã chọn <strong>{selectedCreators.length}/5</strong> Creator để so sánh
-                  </span>
-                  <span className="floating-hint">
-                    {selectedCreators.length < 2
-                      ? 'Chọn thêm ít nhất 1 Creator nữa để đối chiếu chỉ số'
-                      : 'Sẵn sàng phân tích và lập báo cáo đối chiếu đa chiều!'}
-                  </span>
+
+                <div className="shortlist-footer-right">
+                  <Button
+                    className="btn-shortlist-footer-clear"
+                    onClick={() =>
+                      setCreators((prev) => prev.map((c) => ({ ...c, selected: false })))
+                    }
+                  >
+                    Bỏ chọn
+                  </Button>
+
+                  {/* Nút So sánh đối chiếu */}
+                  <Tooltip
+                    title={
+                      selectedCreators.length < 2
+                        ? 'Chọn ít nhất 2 Nhà sáng tạo để so sánh đối chiếu'
+                        : ''
+                    }
+                    placement="top"
+                  >
+                    <span>
+                      <Button
+                        type="primary"
+                        className="btn-shortlist-footer-compare-primary"
+                        icon={<BarChartOutlined />}
+                        disabled={selectedCreators.length < 2}
+                        onClick={() => {
+                          if (selectedCreators.length >= 2) {
+                            setViewMode('compare');
+                          }
+                        }}
+                        style={{
+                          height: 38,
+                          borderRadius: 8,
+                          fontWeight: 700,
+                          background: selectedCreators.length >= 2 ? 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)' : undefined,
+                          borderColor: 'transparent',
+                        }}
+                      >
+                        So sánh đối chiếu ({selectedCreators.length}) ➔
+                      </Button>
+                    </span>
+                  </Tooltip>
                 </div>
-              </div>
-
-              <div className="floating-bar-right">
-                <Button
-                  className="btn-clear-selection"
-                  onClick={() =>
-                    setCreators((prev) => prev.map((c) => ({ ...c, selected: false })))
-                  }
-                >
-                  Bỏ chọn tất cả
-                </Button>
-
-                <Button
-                  className="btn-start-compare-floating"
-                  type="primary"
-                  icon={<BarChartOutlined />}
-                  onClick={() => setViewMode('compare')}
-                >
-                  Bắt đầu so sánh chi tiết ({selectedCreators.length})
-                </Button>
               </div>
             </div>
           )}
@@ -1452,17 +1716,17 @@ export default function CreatorShortlistPage() {
             <div className="shortlist-empty-box" style={{ background: '#FFFFFF', padding: 40, borderRadius: 16 }}>
               <div style={{ fontSize: 40 }}>⚖️</div>
               <div style={{ fontWeight: 800, fontSize: 17, marginTop: 12 }}>
-                Cần chọn ít nhất 2 Creator để thực hiện so sánh
+                Cần chọn ít nhất 2 Nhà sáng tạo để thực hiện so sánh
               </div>
               <div style={{ color: '#64748B', fontSize: 13, marginTop: 6, maxWidth: 450, margin: '6px auto 0' }}>
-                Hiện tại bạn mới chọn {selectedCreators.length} Creator. Vui lòng quay lại Bảng Shortlist và tick chọn thêm để xem ma trận phân tích chi tiết.
+                Hiện tại bạn mới chọn {selectedCreators.length} Nhà sáng tạo. Vui lòng quay lại Danh sách và tick chọn thêm để xem ma trận phân tích chi tiết.
               </div>
               <Button
                 type="primary"
                 style={{ marginTop: 18, borderRadius: 8, height: 38 }}
                 onClick={() => setViewMode('board')}
               >
-                ← Quay lại Bảng Shortlist để chọn
+                ← Quay lại Danh sách để chọn
               </Button>
             </div>
           ) : (
@@ -1878,18 +2142,21 @@ export default function CreatorShortlistPage() {
       {/* =========================================================================
           MODAL: THÊM CREATOR VÀO SHORTLIST
           ========================================================================= */}
+      {/* =========================================================================
+          MODAL: THÊM NHÀ SÁNG TẠO VÀO SHORTLIST (TỪ ĐỀ XUẤT DISCOVERY)
+          ========================================================================= */}
       <Modal
-        title="Thêm Creator vào Danh sách chọn (Shortlist)"
+        title="Thêm Nhà sáng tạo vào Danh sách chọn"
         open={addModalOpen}
         onCancel={() => setAddModalOpen(false)}
         footer={null}
-        width={560}
+        width={580}
       >
         <div style={{ marginTop: 14 }}>
           {/* Target Campaign */}
           <div style={{ marginBottom: 14 }}>
             <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
-              Thêm vào chiến dịch:
+              Chiến dịch áp dụng:
             </label>
             <Select
               value={addCampaignId}
@@ -1905,7 +2172,7 @@ export default function CreatorShortlistPage() {
               type="warning"
               showIcon
               message="Chưa có chiến dịch nào"
-              description="Bạn cần tạo chiến dịch trước khi có thể lưu trữ Creator vào danh sách chọn."
+              description="Bạn cần tạo chiến dịch trước khi có thể lưu trữ Nhà sáng tạo vào danh sách chọn."
               action={
                 <Button
                   size="small"
@@ -1922,21 +2189,63 @@ export default function CreatorShortlistPage() {
             />
           ) : (
             <>
-              <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
-                Chọn Creator từ kho ứng viên:
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <label style={{ fontSize: 13, fontWeight: 700, margin: 0 }}>
+                  Nhà sáng tạo được AI đề xuất cho chiến dịch:
+                </label>
+                <Tag color="purple" style={{ borderRadius: 6, fontWeight: 600, margin: 0 }}>
+                  Từ trang Khám phá
+                </Tag>
+              </div>
               <Input
-                prefix={<SearchOutlined />}
-                placeholder="Tìm theo tên hoặc username..."
+                prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
+                placeholder="Tìm nhanh theo tên, username hoặc lĩnh vực..."
                 value={candidateSearch}
                 onChange={(e) => setCandidateSearch(e.target.value)}
                 style={{ marginBottom: 14, borderRadius: 8 }}
                 allowClear
               />
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 280, overflowY: 'auto' }}>
-                {Array.from(creatorsMap.values())
-                  .filter((c) => {
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 300, overflowY: 'auto' }}>
+                {(() => {
+                  // Đọc danh sách KOL/KOC đã được pipeline Discovery đề xuất cho chiến dịch
+                  let candidatesList: any[] = [];
+                  try {
+                    const rawDiscovery = localStorage.getItem('IM_DISCOVERY_CREATORS');
+                    if (rawDiscovery) {
+                      const parsed = JSON.parse(rawDiscovery);
+                      if (Array.isArray(parsed) && parsed.length > 0) {
+                        candidatesList = parsed.map((d: any) => ({
+                          id: d.id,
+                          displayName: d.name || d.displayName || d.username,
+                          userName: d.username || d.userName,
+                          avatarUrl: d.avatar || d.avatarUrl,
+                          followers: d.followersCount || d.followers || 0,
+                          engagementRate: d.engagementValue || d.engagementRate || 3.5,
+                          platform: (d.platforms?.[0] || d.platform || 'tiktok').toLowerCase(),
+                          niche: d.categories?.[0] || d.niche || 'Lối sống',
+                          matchRate: d.matchRate || 92,
+                        }));
+                      }
+                    }
+                  } catch {}
+
+                  // Fallback nếu Discovery cache trống: lấy từ danh sách creators hệ thống
+                  if (candidatesList.length === 0) {
+                    candidatesList = Array.from(creatorsMap.values()).map((c) => ({
+                      id: c.creatorId || c.id,
+                      displayName: c.displayName || c.userName,
+                      userName: c.userName,
+                      avatarUrl: c.avatarUrl,
+                      followers: c.followers || 0,
+                      engagementRate: c.engagementRate || 3.5,
+                      platform: (c.platform || 'tiktok').toLowerCase(),
+                      niche: c.niche || 'Lối sống',
+                      matchRate: 90,
+                    }));
+                  }
+
+                  const filtered = candidatesList.filter((c) => {
                     if (!candidateSearch.trim()) return true;
                     const q = candidateSearch.toLowerCase();
                     return (
@@ -1944,10 +2253,35 @@ export default function CreatorShortlistPage() {
                       c.userName?.toLowerCase().includes(q) ||
                       c.niche?.toLowerCase().includes(q)
                     );
-                  })
-                  .slice(0, 15)
-                  .map((cand) => {
-                    const candId = cand.creatorId || cand.id;
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div style={{ textAlign: 'center', padding: '24px 12px', color: '#64748B' }}>
+                        <div style={{ fontSize: 24, marginBottom: 6 }}>🔍</div>
+                        <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>
+                          Không tìm thấy hồ sơ nào phù hợp từ khóa
+                        </div>
+                        <Button
+                          size="small"
+                          type="primary"
+                          onClick={() => {
+                            setAddModalOpen(false);
+                            if (addCampaignId && addCampaignId !== 'all') {
+                              sessionStorage.setItem('current_campaign_id', addCampaignId);
+                              localStorage.setItem('last_active_campaign_id', addCampaignId);
+                            }
+                            navigate('/creators');
+                          }}
+                        >
+                          Sang Khám phá để AI tìm kiếm thêm ➔
+                        </Button>
+                      </div>
+                    );
+                  }
+
+                  return filtered.map((cand) => {
+                    const candId = cand.id;
                     const isAlreadyIn = creators.some(
                       (item) => item.id === candId && (addCampaignId === 'all' || item.campaignId === addCampaignId)
                     );
@@ -1970,14 +2304,21 @@ export default function CreatorShortlistPage() {
                           <img
                             src={cand.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(cand.displayName || cand.userName)}`}
                             alt={cand.displayName}
-                            style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+                            style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover' }}
                           />
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A' }}>
-                              {cand.displayName || cand.userName}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
+                                {cand.displayName}
+                              </span>
+                              {cand.matchRate && (
+                                <Tag color="green" style={{ fontSize: 10.5, lineHeight: '18px', padding: '0 6px', margin: 0, borderRadius: 4, fontWeight: 700 }}>
+                                  {cand.matchRate}% phù hợp
+                                </Tag>
+                              )}
                             </div>
-                            <div style={{ fontSize: 11.5, color: '#64748B' }}>
-                              @{cand.userName?.replace(/^@+/, '')} • {cand.followers ? `${Math.round(cand.followers / 1000)}K` : '—'} • {normalizeNiche(cand.niche)}
+                            <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>
+                              @{cand.userName?.replace(/^@+/, '')} • {cand.followers ? `${Math.round(cand.followers / 1000)}K followers` : '—'} • {normalizeNiche(cand.niche)}
                             </div>
                           </div>
                         </div>
@@ -1989,6 +2330,7 @@ export default function CreatorShortlistPage() {
                           loading={isSubmitting}
                           style={{
                             borderRadius: 6,
+                            fontWeight: 600,
                             background: isAlreadyIn ? '#F1F5F9' : '#4F46E5',
                             borderColor: isAlreadyIn ? '#CBD5E1' : '#4F46E5',
                           }}
@@ -2001,36 +2343,47 @@ export default function CreatorShortlistPage() {
                             try {
                               await creatorService.addToShortlist(addCampaignId, {
                                 creatorId: candId,
+                                creatorName: cand.displayName || cand.userName,
+                                avatarUrl: cand.avatarUrl,
+                                followers: cand.followers,
+                                engagementRate: cand.engagementRate,
+                                platform: cand.platform,
+                                niche: cand.niche,
                                 priority: 'HIGH',
-                                note: 'Đã thêm từ kho ứng viên',
+                                note: `Đã thêm từ danh sách đề xuất (${cand.matchRate || 92}% phù hợp)`,
                               });
-                              message.success(`Đã thêm ${cand.displayName || cand.userName} vào Shortlist!`);
+                              message.success(`Đã thêm ${cand.displayName || cand.userName} vào Danh sách chọn!`);
                               await loadShortlist(selectedCampaign, campaigns, creatorsMap);
                             } catch (err: any) {
-                              message.error(err?.response?.data?.message || 'Không thể thêm vào shortlist');
+                              message.error(err?.response?.data?.message || 'Không thể thêm vào danh sách');
                             } finally {
                               setAddingCandidateId(null);
                             }
                           }}
                         >
-                          {isAlreadyIn ? 'Đã trong list' : '+ Thêm vào'}
+                          {isAlreadyIn ? 'Đã trong danh sách' : '+ Thêm vào'}
                         </Button>
                       </div>
                     );
-                  })}
+                  });
+                })()}
               </div>
 
               <div style={{ marginTop: 14, textAlign: 'center', paddingTop: 10, borderTop: '1px dashed #E2E8F0' }}>
-                <span style={{ fontSize: 12.5, color: '#64748B' }}>Tìm thêm gương mặt mới? </span>
+                <span style={{ fontSize: 12.5, color: '#64748B' }}>Muốn xem thêm các hồ sơ AI phân tích chuyên sâu? </span>
                 <Button
                   type="link"
-                  style={{ padding: 0, fontWeight: 600, fontSize: 13, color: '#4F46E5' }}
+                  style={{ padding: 0, fontWeight: 700, fontSize: 13, color: '#4F46E5' }}
                   onClick={() => {
                     setAddModalOpen(false);
+                    if (addCampaignId && addCampaignId !== 'all') {
+                      sessionStorage.setItem('current_campaign_id', addCampaignId);
+                      localStorage.setItem('last_active_campaign_id', addCampaignId);
+                    }
                     navigate('/creators');
                   }}
                 >
-                  Khám phá thêm trên Sàn Creator →
+                  Sang trang Khám phá ➔
                 </Button>
               </div>
             </>

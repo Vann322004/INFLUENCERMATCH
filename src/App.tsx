@@ -1,5 +1,6 @@
+import React, { useEffect } from 'react';
 import { ConfigProvider, Layout, App as AntdApp } from 'antd';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useParams } from 'react-router-dom';
 import { themeConfig } from './theme/themeConfig';
 import AppSider from './components/layout/AppSider';
 import AppHeader from './components/layout/AppHeader';
@@ -51,10 +52,52 @@ import { useMultiTabSessionSync } from './hooks/useMultiTabSessionSync';
 
 const { Content } = Layout;
 
-// Đồng bộ trạng thái đăng nhập giữa các tab
+// Đồng bộ trạng thái đăng nhập giữa các tab và tự động làm sạch UUID trên thanh URL
 function SessionSyncHandler() {
   useMultiTabSessionSync();
+
+  useEffect(() => {
+    try {
+      const search = window.location.search;
+      if (search && search.includes('campaignId=')) {
+        const sp = new URLSearchParams(search);
+        const cId = sp.get('campaignId');
+        if (cId) {
+          sessionStorage.setItem('current_campaign_id', cId);
+          localStorage.setItem('last_active_campaign_id', cId);
+          sp.delete('campaignId');
+          const newSearch = sp.toString() ? `?${sp.toString()}` : '';
+          window.history.replaceState({}, '', window.location.pathname + newSearch);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   return null;
+}
+
+// Dispatcher cho route /campaign-management: nếu có query param tab (ví dụ: tab=recommendation) thì mở CampaignManagementPage
+function CampaignManagementRouteDispatcher() {
+  const [searchParams] = useSearchParams();
+  const tab = searchParams.get('tab');
+  if (tab === 'recommendation' || tab === 'crm' || tab === 'pipeline' || tab === 'kanban' || tab === 'tasks' || tab === 'analytics') {
+    return <CampaignManagementPage />;
+  }
+  return <CampaignListPage />;
+}
+
+// Chuyển hướng route /campaign-management/:id để ẩn hoàn toàn UUID khỏi URL bar của trình duyệt
+function CampaignManagementIdRedirect() {
+  const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  if (id) {
+    sessionStorage.setItem('current_campaign_id', id);
+    localStorage.setItem('last_active_campaign_id', id);
+  }
+  const tab = searchParams.get('tab') || 'recommendation';
+  return <Navigate to={`/campaign-management?tab=${tab}`} replace />;
 }
 
 // Main App Layout Wrapper with Light Linear Sidebar & Top Header
@@ -64,24 +107,34 @@ function MainLayout({ children }: { children: React.ReactNode }) {
       {/* Light Linear Gradient Sidebar */}
       <AppSider />
 
-      {/* Main Content Area */}
-      <Layout style={{ background: '#F5F6FA', height: '100vh', overflow: 'hidden', minWidth: 0, flex: 1 }}>
+      {/* Main Content Area - Scrollbar runs from top of screen */}
+      <Layout
+        style={{
+          background: '#F5F6FA',
+          height: '100vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          minWidth: 0,
+          flex: 1,
+          scrollBehavior: 'smooth',
+          boxSizing: 'border-box',
+        }}
+      >
         <AppHeader />
 
         <Content
           style={{
             background: '#F5F6FA',
-            padding: '8px 24px 24px 24px',
-            overflowY: 'auto',
-            overflowX: 'hidden',
+            padding: '12px 24px 32px 24px',
+            overflow: 'visible',
             boxSizing: 'border-box',
             minWidth: 0,
             width: '100%',
-            scrollBehavior: 'smooth',
-            scrollSnapType: 'y proximity',
           }}
         >
-          {children}
+          <div className="app-page-wrapper">
+            {children}
+          </div>
         </Content>
       </Layout>
     </Layout>
@@ -95,6 +148,10 @@ export default function App() {
         <SessionSyncHandler />
         <BrowserRouter>
         <Routes>
+          {/* Public Landing Page / Homepage */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/landing" element={<LandingPage />} />
+
           {/* Auth Routes */}
           <Route
             path="/login"
@@ -209,6 +266,24 @@ export default function App() {
             }
           />
 
+          {/* Edit Campaign Routes */}
+          <Route
+            path="/campaigns/:id/edit"
+            element={
+              <MainLayout>
+                <CreateCampaignPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/campaigns/edit/:id"
+            element={
+              <MainLayout>
+                <CreateCampaignPage />
+              </MainLayout>
+            }
+          />
+
           {/* Discover Creators Route */}
           <Route
             path="/creators"
@@ -228,6 +303,14 @@ export default function App() {
           />
           <Route
             path="/creators-match"
+            element={
+              <MainLayout>
+                <CreatorDiscoveryPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/discovery"
             element={
               <MainLayout>
                 <CreatorDiscoveryPage />
@@ -287,12 +370,12 @@ export default function App() {
             }
           />
 
-          {/* Campaign Management — List of campaigns */}
+          {/* Campaign Management — List or Tab Detail */}
           <Route
             path="/campaign-management"
             element={
               <MainLayout>
-                <CampaignListPage />
+                <CampaignManagementRouteDispatcher />
               </MainLayout>
             }
           />
@@ -372,19 +455,23 @@ export default function App() {
             }
           />
 
-          {/* Campaign Pipeline Detail — Kanban view for a specific campaign */}
+          {/* Campaign Pipeline Detail — Chuyển hướng và ẩn UUID khỏi URL */}
           <Route
             path="/campaign-management/:id"
+            element={<CampaignManagementIdRedirect />}
+          />
+
+          {/* AI Recommendation Routes */}
+          <Route
+            path="/recommendations"
             element={
               <MainLayout>
                 <CampaignManagementPage />
               </MainLayout>
             }
           />
-
-          {/* AI Recommendation Routes */}
           <Route
-            path="/recommendations"
+            path="/creators/recommendations"
             element={
               <MainLayout>
                 <CampaignManagementPage />

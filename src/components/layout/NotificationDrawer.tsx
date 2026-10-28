@@ -111,7 +111,7 @@ export default function NotificationDrawer({ open, onClose }: NotificationDrawer
         </div>
       }
       placement="right"
-      width={440}
+      size={440}
       onClose={onClose}
       open={open}
       styles={{ body: { padding: '0 20px 20px 20px' } }}

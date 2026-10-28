@@ -1,19 +1,21 @@
-import React from 'react';
-import { Card, Select, Button, Badge, Tag, Space } from 'antd';
+import React, { useState } from 'react';
+import { Select, Button, Badge, Tooltip } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
-  CheckCircleFilled,
-  CompassOutlined,
-  UnorderedListOutlined,
-  ThunderboltFilled,
-  TeamOutlined,
+  CheckOutlined,
   RightOutlined,
-  PlusOutlined,
-  RocketOutlined,
-  ArrowRightOutlined,
+  UpOutlined,
+  DownOutlined,
 } from '@ant-design/icons';
 
-export type WorkflowStep = 'create' | 'discovery' | 'shortlist' | 'recommendation' | 'crm';
+export type WorkflowStep =
+  | 'create'
+  | 'discovery'
+  | 'shortlist'
+  | 'recommendation'
+  | 'crm'
+  | 'collaboration'
+  | 'performance';
 
 export interface CampaignWorkflowBarProps {
   currentStep: WorkflowStep;
@@ -33,245 +35,397 @@ export default function CampaignWorkflowBar({
   onSelectCampaign,
 }: CampaignWorkflowBarProps) {
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
 
-  const activeId = campaignId || (availableCampaigns[0]?.id) || 'current';
-  const displayName = campaignName || availableCampaigns.find((c) => c.id === activeId)?.name || 'Chiến dịch hiện tại';
+  const isUuid = (val?: string) =>
+    !val || /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(val);
 
-  // Steps definition
-  const steps: { key: WorkflowStep; stepNum: number; title: string; icon: React.ReactNode; path: string }[] = [
+  // Xác định campaign hợp lệ: nếu campaignId truyền vào có trong availableCampaigns thì dùng, không thì lấy cái đầu tiên
+  const selectedCamp = availableCampaigns.find((c) => c.id === campaignId) || availableCampaigns[0];
+  const activeId = selectedCamp?.id || (campaignId && !isUuid(campaignId) ? campaignId : 'current');
+  const rawDisplayName = campaignName || selectedCamp?.name;
+  const displayName = !rawDisplayName || isUuid(rawDisplayName) ? 'Chiến dịch hiện tại' : rawDisplayName;
+
+  // 7 bước quy trình trọn vẹn của chiến dịch
+  const steps: { key: WorkflowStep; stepNum: number; title: string; path: string }[] = [
     {
       key: 'create',
       stepNum: 1,
-      title: 'Tạo Brief AI',
-      icon: <CheckCircleFilled style={{ color: currentStep === 'create' ? '#4F46E5' : '#10B981' }} />,
+      title: 'Tạo Brief',
       path: '/campaigns/create',
     },
     {
       key: 'discovery',
       stepNum: 2,
       title: 'Khám phá KOC',
-      icon: <CompassOutlined />,
-      path: `/creators${activeId !== 'current' ? `?campaignId=${activeId}` : ''}`,
+      path: '/creators',
     },
     {
       key: 'shortlist',
       stepNum: 3,
       title: 'Danh sách chọn',
-      icon: <UnorderedListOutlined />,
-      path: `/creators/shortlist${activeId !== 'current' ? `?campaignId=${activeId}` : ''}`,
+      path: '/creators/shortlist',
     },
     {
       key: 'recommendation',
       stepNum: 4,
       title: 'Đề xuất AI',
-      icon: <ThunderboltFilled style={{ color: currentStep === 'recommendation' ? '#F59E0B' : undefined }} />,
-      path: activeId !== 'current' ? `/campaign-management/${activeId}?tab=recommendation` : '/recommendations?tab=recommendation',
+      path: '/campaign-management?tab=recommendation',
     },
     {
       key: 'crm',
       stepNum: 5,
       title: 'Tiếp cận CRM',
-      icon: <TeamOutlined />,
-      path: activeId !== 'current' ? `/campaign-management/${activeId}` : '/crm',
+      path: '/campaign-management?tab=crm',
+    },
+    {
+      key: 'collaboration',
+      stepNum: 6,
+      title: 'Quản lý Hợp tác',
+      path: '/collaboration',
+    },
+    {
+      key: 'performance',
+      stepNum: 7,
+      title: 'Đo lường ROI',
+      path: '/performance',
     },
   ];
+
+  const currentIdx = steps.findIndex((s) => s.key === currentStep);
 
   const handleStepClick = (step: typeof steps[0]) => {
     navigate(step.path);
   };
 
+  // Trạng thái thu gọn (Mini Pill Dock căn giữa 100%)
+  if (collapsed) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 20,
+          left: 0,
+          right: 0,
+          margin: '0 auto',
+          width: 'fit-content',
+          zIndex: 1000,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setCollapsed(false)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            height: 32,
+            padding: '0 14px',
+            background: 'rgba(15, 23, 42, 0.92)',
+            backdropFilter: 'blur(12px)',
+            color: '#FFFFFF',
+            border: 'none',
+            borderRadius: 999,
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
+            cursor: 'pointer',
+            fontSize: 12,
+            fontWeight: 600,
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <span>🎯 Tiến trình: {currentIdx + 1}/{steps.length}</span>
+          <UpOutlined style={{ fontSize: 10 }} />
+        </button>
+      </div>
+    );
+  }
+
+  // Dạng Thanh Tiến Trình Căn Giữa 100% Cân Đối (Zero Horizontal Offset)
   return (
-    <Card
+    <div
+      className="im-workflow-bottom-dock"
       style={{
-        borderRadius: 14,
-        marginBottom: 20,
-        background: '#FFFFFF',
+        position: 'fixed',
+        bottom: 20,
+        left: 0,
+        right: 0,
+        margin: '0 auto',
+        width: 'fit-content',
+        maxWidth: 'calc(100vw - 40px)',
+        height: 42,
+        zIndex: 1000,
+        background: 'rgba(255, 255, 255, 0.96)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         border: '1px solid #E2E8F0',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+        borderRadius: 999,
+        boxShadow: '0 10px 30px -4px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04)',
+        padding: '0 8px 0 14px',
+        boxSizing: 'border-box',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        flexWrap: 'nowrap',
+        whiteSpace: 'nowrap',
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
-      bodyStyle={{ padding: '12px 18px' }}
     >
+      {/* 1. Chiến dịch đang chọn */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        {availableCampaigns.length > 0 && availableCampaigns.some((c) => c.id === activeId) ? (
+          <Select
+            value={activeId}
+            onChange={(val) => {
+              sessionStorage.setItem('current_campaign_id', val);
+              localStorage.setItem('last_active_campaign_id', val);
+              if (onSelectCampaign) {
+                onSelectCampaign(val);
+              } else {
+                if (currentStep === 'discovery') navigate('/creators');
+                else if (currentStep === 'shortlist') navigate('/creators/shortlist');
+                else if (currentStep === 'recommendation') {
+                  navigate('/campaign-management?tab=recommendation');
+                } else if (currentStep === 'crm') {
+                  navigate('/campaign-management?tab=crm');
+                }
+              }
+            }}
+            popupMatchSelectWidth={false}
+            bordered={false}
+            size="small"
+            style={{ width: 155 }}
+            options={availableCampaigns.map((c) => ({
+              value: c.id,
+              label: (
+                <span style={{ fontWeight: 700, color: '#0F172A', fontSize: 12.5 }}>
+                  🎯 {isUuid(c.name) ? 'Chiến dịch' : c.name}
+                </span>
+              ),
+            }))}
+          />
+        ) : (
+          <span
+            style={{
+              fontWeight: 700,
+              fontSize: 12.5,
+              color: '#0F172A',
+              maxWidth: 150,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              display: 'inline-block',
+            }}
+            title={displayName}
+          >
+            🎯 {displayName}
+          </span>
+        )}
+      </div>
+
+      {/* Vạch ngăn cách */}
+      <div style={{ height: 16, width: 1, background: '#E2E8F0', flexShrink: 0 }} />
+
+      {/* 2. Stepper 5 bước trên 1 hàng */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 14,
+          gap: 3,
+          flexShrink: 0,
         }}
       >
-        {/* Left: Active Campaign Selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 260 }}>
-          <Tag
-            color="purple"
-            style={{
-              fontWeight: 800,
-              fontSize: 11,
-              borderRadius: 6,
-              padding: '2px 8px',
-              textTransform: 'uppercase',
-            }}
-          >
-            Quy trình chiến dịch
-          </Tag>
+        {steps.map((st, idx) => {
+          const isActive = st.key === currentStep;
+          const isCompleted = currentIdx > idx;
 
-          {availableCampaigns.length > 0 ? (
-            <Select
-              value={activeId}
-              onChange={(val) => {
-                if (onSelectCampaign) {
-                  onSelectCampaign(val);
-                } else {
-                  // Auto redirect to current step with new campaign
-                  if (currentStep === 'discovery') navigate(`/creators?campaignId=${val}`);
-                  else if (currentStep === 'shortlist') navigate(`/creators/shortlist?campaignId=${val}`);
-                  else if (currentStep === 'recommendation') navigate(`/campaign-management/${val}?tab=recommendation`);
-                  else if (currentStep === 'crm') navigate(`/campaign-management/${val}`);
-                }
-              }}
-              style={{ minWidth: 200, fontWeight: 700 }}
-              options={availableCampaigns.map((c) => ({
-                value: c.id,
-                label: `🎯 ${c.name}`,
-              }))}
-            />
-          ) : (
-            <span style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
-              🎯 {displayName}
-            </span>
-          )}
-        </div>
-
-        {/* Center: Funnel Stepper */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            flexWrap: 'wrap',
-            background: '#F8FAFC',
-            padding: '6px 12px',
-            borderRadius: 10,
-            border: '1px solid #EEF2F6',
-          }}
-        >
-          {steps.map((st, idx) => {
-            const isActive = st.key === currentStep;
-            const isCompleted = steps.findIndex((s) => s.key === currentStep) > idx;
-
-            return (
-              <React.Fragment key={st.key}>
-                <button
-                  type="button"
-                  onClick={() => handleStepClick(st)}
+          return (
+            <React.Fragment key={st.key}>
+              <button
+                type="button"
+                onClick={() => handleStepClick(st)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  height: 28,
+                  padding: isActive ? '0 12px' : '0 8px',
+                  borderRadius: 999,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: isActive
+                    ? 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)'
+                    : 'transparent',
+                  color: isActive ? '#FFFFFF' : isCompleted ? '#4F46E5' : '#64748B',
+                  fontWeight: isActive ? 700 : isCompleted ? 600 : 500,
+                  fontSize: 12,
+                  boxShadow: isActive ? '0 2px 8px rgba(79, 70, 229, 0.28)' : 'none',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {/* Số thứ tự hoặc Icon check xanh */}
+                <span
                   style={{
-                    display: 'flex',
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 6,
-                    padding: '5px 12px',
-                    borderRadius: 8,
-                    border: 'none',
-                    cursor: 'pointer',
+                    justifyContent: 'center',
+                    fontSize: 10,
+                    fontWeight: 800,
                     background: isActive
+                      ? '#FFFFFF'
+                      : isCompleted
+                      ? '#DCFCE7'
+                      : '#F1F5F9',
+                    color: isActive
                       ? '#4F46E5'
                       : isCompleted
-                      ? '#EEF2FF'
-                      : 'transparent',
-                    color: isActive ? '#fff' : isCompleted ? '#4338CA' : '#64748B',
-                    fontWeight: isActive ? 800 : isCompleted ? 700 : 500,
-                    fontSize: 12.5,
-                    transition: 'all 0.15s ease',
+                      ? '#16A34A'
+                      : '#94A3B8',
                   }}
                 >
-                  <span>{st.icon}</span>
-                  <span>{st.title}</span>
-                  {st.key === 'shortlist' && typeof shortlistCount === 'number' && (
-                    <Badge
-                      count={shortlistCount}
-                      style={{
-                        backgroundColor: isActive ? '#fff' : '#4F46E5',
-                        color: isActive ? '#4F46E5' : '#fff',
-                        fontWeight: 800,
-                        boxShadow: 'none',
-                      }}
-                    />
-                  )}
-                </button>
+                  {isCompleted ? <CheckOutlined style={{ fontSize: 9 }} /> : st.stepNum}
+                </span>
 
-                {idx < steps.length - 1 && (
-                  <RightOutlined
+                <span>{st.title}</span>
+
+                {/* Badge số KOC trong danh sách chọn */}
+                {st.key === 'shortlist' && typeof shortlistCount === 'number' && shortlistCount > 0 && (
+                  <Badge
+                    count={shortlistCount}
                     style={{
-                      fontSize: 10,
-                      color: isCompleted ? '#818CF8' : '#CBD5E1',
-                      margin: '0 2px',
+                      backgroundColor: isActive ? '#FFFFFF' : '#4F46E5',
+                      color: isActive ? '#4F46E5' : '#FFFFFF',
+                      fontWeight: 800,
+                      boxShadow: 'none',
+                      fontSize: 9.5,
+                      height: 16,
+                      lineHeight: '16px',
+                      minWidth: 16,
+                      padding: '0 4px',
                     }}
                   />
                 )}
-              </React.Fragment>
-            );
-          })}
-        </div>
+              </button>
 
-        {/* Right: Quick Action to next step */}
-        <div>
-          {currentStep === 'discovery' && (
-            <Button
-              type="primary"
-              size="middle"
-              icon={<ArrowRightOutlined />}
-              onClick={() => navigate(`/creators/shortlist${activeId !== 'current' ? `?campaignId=${activeId}` : ''}`)}
-              style={{
-                borderRadius: 8,
-                fontWeight: 700,
-                background: '#4F46E5',
-              }}
-            >
-              Sang Shortlist ({typeof shortlistCount === 'number' ? shortlistCount : '➔'})
-            </Button>
-          )}
-
-          {currentStep === 'shortlist' && (
-            <Button
-              type="primary"
-              size="middle"
-              icon={<ThunderboltFilled />}
-              onClick={() => {
-                const target = activeId !== 'current' ? activeId : '';
-                navigate(target ? `/campaign-management/${target}?tab=recommendation` : '/recommendations?tab=recommendation');
-              }}
-              style={{
-                borderRadius: 8,
-                fontWeight: 700,
-                background: 'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)',
-                borderColor: 'transparent',
-                boxShadow: '0 4px 12px rgba(168, 85, 247, 0.3)',
-              }}
-            >
-              ⚡ Đề xuất AI Four-Memory ➔
-            </Button>
-          )}
-
-          {currentStep === 'recommendation' && (
-            <Button
-              type="primary"
-              size="middle"
-              icon={<TeamOutlined />}
-              onClick={() => {
-                const target = activeId !== 'current' ? activeId : '';
-                navigate(target ? `/campaign-management/${target}` : '/crm');
-              }}
-              style={{
-                borderRadius: 8,
-                fontWeight: 700,
-                background: '#059669',
-                borderColor: 'transparent',
-              }}
-            >
-              Sang Tiếp cận CRM ➔
-            </Button>
-          )}
-        </div>
+              {idx < steps.length - 1 && (
+                <RightOutlined
+                  style={{
+                    fontSize: 8,
+                    color: isCompleted ? '#818CF8' : '#CBD5E1',
+                    margin: '0 1px',
+                  }}
+                />
+              )}
+            </React.Fragment>
+          );
+        })}
       </div>
-    </Card>
+
+      {/* Vạch ngăn cách */}
+      <div style={{ height: 16, width: 1, background: '#E2E8F0', flexShrink: 0 }} />
+
+      {/* 3. Nút chuyển tiếp nhanh (Next Action) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        {currentStep === 'discovery' && (
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => {
+              if (activeId && activeId !== 'current') {
+                sessionStorage.setItem('current_campaign_id', activeId);
+                localStorage.setItem('last_active_campaign_id', activeId);
+              }
+              navigate('/creators/shortlist');
+            }}
+            style={{
+              height: 30,
+              borderRadius: 999,
+              fontWeight: 700,
+              fontSize: 12,
+              background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+              border: 'none',
+              boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
+              padding: '0 14px',
+            }}
+          >
+            Sang Danh sách {typeof shortlistCount === 'number' && shortlistCount > 0 ? `(${shortlistCount})` : ''} ➔
+          </Button>
+        )}
+
+        {currentStep === 'shortlist' && (
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => {
+              if (activeId && activeId !== 'current') {
+                sessionStorage.setItem('current_campaign_id', activeId);
+              }
+              navigate('/campaign-management?tab=recommendation');
+            }}
+            style={{
+              height: 30,
+              borderRadius: 999,
+              fontWeight: 700,
+              fontSize: 12,
+              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+              border: 'none',
+              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
+              padding: '0 14px',
+            }}
+          >
+            Sang Đề xuất AI ➔
+          </Button>
+        )}
+
+        {currentStep === 'recommendation' && (
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => {
+              if (activeId && activeId !== 'current') {
+                sessionStorage.setItem('current_campaign_id', activeId);
+              }
+              navigate('/campaign-management?tab=crm');
+            }}
+            style={{
+              height: 30,
+              borderRadius: 999,
+              fontWeight: 700,
+              fontSize: 12,
+              background: '#059669',
+              border: 'none',
+              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)',
+              padding: '0 14px',
+            }}
+          >
+            Sang Tiếp cận CRM ➔
+          </Button>
+        )}
+
+        {/* Nút thu nhỏ */}
+        <Tooltip title="Ẩn thanh tiến trình">
+          <button
+            type="button"
+            onClick={() => setCollapsed(true)}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              color: '#94A3B8',
+              cursor: 'pointer',
+              padding: '2px 4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              transition: 'color 0.2s',
+            }}
+          >
+            <DownOutlined style={{ fontSize: 10 }} />
+          </button>
+        </Tooltip>
+      </div>
+    </div>
   );
 }
