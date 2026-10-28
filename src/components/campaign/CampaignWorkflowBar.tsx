@@ -8,7 +8,14 @@ import {
   DownOutlined,
 } from '@ant-design/icons';
 
-export type WorkflowStep = 'create' | 'discovery' | 'shortlist' | 'recommendation' | 'crm';
+export type WorkflowStep =
+  | 'create'
+  | 'discovery'
+  | 'shortlist'
+  | 'recommendation'
+  | 'crm'
+  | 'collaboration'
+  | 'performance';
 
 export interface CampaignWorkflowBarProps {
   currentStep: WorkflowStep;
@@ -30,10 +37,16 @@ export default function CampaignWorkflowBar({
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
-  const activeId = campaignId || availableCampaigns[0]?.id || 'current';
-  const displayName = campaignName || availableCampaigns.find((c) => c.id === activeId)?.name || 'Chiến dịch hiện tại';
+  const isUuid = (val?: string) =>
+    !val || /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(val);
 
-  // 5 bước quy trình ngắn gọn, rõ ràng
+  // Xác định campaign hợp lệ: nếu campaignId truyền vào có trong availableCampaigns thì dùng, không thì lấy cái đầu tiên
+  const selectedCamp = availableCampaigns.find((c) => c.id === campaignId) || availableCampaigns[0];
+  const activeId = selectedCamp?.id || (campaignId && !isUuid(campaignId) ? campaignId : 'current');
+  const rawDisplayName = campaignName || selectedCamp?.name;
+  const displayName = !rawDisplayName || isUuid(rawDisplayName) ? 'Chiến dịch hiện tại' : rawDisplayName;
+
+  // 7 bước quy trình trọn vẹn của chiến dịch
   const steps: { key: WorkflowStep; stepNum: number; title: string; path: string }[] = [
     {
       key: 'create',
@@ -45,13 +58,13 @@ export default function CampaignWorkflowBar({
       key: 'discovery',
       stepNum: 2,
       title: 'Khám phá KOC',
-      path: `/creators${activeId !== 'current' ? `?campaignId=${activeId}` : ''}`,
+      path: '/creators',
     },
     {
       key: 'shortlist',
       stepNum: 3,
       title: 'Danh sách chọn',
-      path: `/creators/shortlist${activeId !== 'current' ? `?campaignId=${activeId}` : ''}`,
+      path: '/creators/shortlist',
     },
     {
       key: 'recommendation',
@@ -64,6 +77,18 @@ export default function CampaignWorkflowBar({
       stepNum: 5,
       title: 'Tiếp cận CRM',
       path: '/campaign-management?tab=crm',
+    },
+    {
+      key: 'collaboration',
+      stepNum: 6,
+      title: 'Quản lý Hợp tác',
+      path: '/collaboration',
+    },
+    {
+      key: 'performance',
+      stepNum: 7,
+      title: 'Đo lường ROI',
+      path: '/performance',
     },
   ];
 
@@ -108,7 +133,7 @@ export default function CampaignWorkflowBar({
             transition: 'all 0.2s ease',
           }}
         >
-          <span>🎯 Tiến trình: {currentIdx + 1}/5</span>
+          <span>🎯 Tiến trình: {currentIdx + 1}/{steps.length}</span>
           <UpOutlined style={{ fontSize: 10 }} />
         </button>
       </div>
@@ -147,20 +172,20 @@ export default function CampaignWorkflowBar({
     >
       {/* 1. Chiến dịch đang chọn */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-        {availableCampaigns.length > 0 ? (
+        {availableCampaigns.length > 0 && availableCampaigns.some((c) => c.id === activeId) ? (
           <Select
             value={activeId}
             onChange={(val) => {
+              sessionStorage.setItem('current_campaign_id', val);
+              localStorage.setItem('last_active_campaign_id', val);
               if (onSelectCampaign) {
                 onSelectCampaign(val);
               } else {
-                if (currentStep === 'discovery') navigate(`/creators?campaignId=${val}`);
-                else if (currentStep === 'shortlist') navigate(`/creators/shortlist?campaignId=${val}`);
+                if (currentStep === 'discovery') navigate('/creators');
+                else if (currentStep === 'shortlist') navigate('/creators/shortlist');
                 else if (currentStep === 'recommendation') {
-                  sessionStorage.setItem('current_campaign_id', val);
                   navigate('/campaign-management?tab=recommendation');
                 } else if (currentStep === 'crm') {
-                  sessionStorage.setItem('current_campaign_id', val);
                   navigate('/campaign-management?tab=crm');
                 }
               }
@@ -173,7 +198,7 @@ export default function CampaignWorkflowBar({
               value: c.id,
               label: (
                 <span style={{ fontWeight: 700, color: '#0F172A', fontSize: 12.5 }}>
-                  🎯 {c.name}
+                  🎯 {isUuid(c.name) ? 'Chiến dịch' : c.name}
                 </span>
               ),
             }))}
@@ -307,7 +332,13 @@ export default function CampaignWorkflowBar({
           <Button
             type="primary"
             size="small"
-            onClick={() => navigate(`/creators/shortlist${activeId !== 'current' ? `?campaignId=${activeId}` : ''}`)}
+            onClick={() => {
+              if (activeId && activeId !== 'current') {
+                sessionStorage.setItem('current_campaign_id', activeId);
+                localStorage.setItem('last_active_campaign_id', activeId);
+              }
+              navigate('/creators/shortlist');
+            }}
             style={{
               height: 30,
               borderRadius: 999,
