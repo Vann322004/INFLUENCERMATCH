@@ -23,7 +23,7 @@ import OutreachCrmPage from './pages/crm/OutreachCrmPage';
 import CollaborationPage from './pages/collaboration/CollaborationPage';
 import PerformancePage from './pages/performance/PerformancePage';
 import CampaignHistoryPage from './pages/history/CampaignHistoryPage';
-import LandingPage from './pages/landing/LandingPage';
+import LandingPage from './pages/landing/hero/HeroLanding';
 import './styles/custom.css';
 
 // ── Admin Imports ────────────────────────────────────
