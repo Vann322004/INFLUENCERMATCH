@@ -89,6 +89,7 @@ export default function LoginPage() {
         requiredMark={false}
         size="large"
         aria-live="polite"
+        autoComplete="off"
       >
         <Form.Item
           name="email"
@@ -120,7 +121,7 @@ export default function LoginPage() {
             id="login-password"
             prefix={<LockOutlined className="al-field-icon" aria-hidden="true" />}
             placeholder="Nhập mật khẩu của bạn"
-            autoComplete="current-password"
+            autoComplete="off"
             disabled={loading}
             iconRender={(visible) => (
               <span

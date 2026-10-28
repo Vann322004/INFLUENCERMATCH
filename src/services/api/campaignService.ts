@@ -200,10 +200,24 @@ export const campaignService = {
   },
 
   /**
-   * Xóa chiến dịch
+   * Lưu trữ chiến dịch
+   * PATCH /campaigns/{id}/archive
+   */
+  async archiveCampaign(id: string): Promise<CampaignResponse> {
+    try {
+      const response = await apiClient.patch<ApiResponse<CampaignResponse>>(`/campaigns/${id}/archive`);
+      return response.data?.data || (response.data as unknown as CampaignResponse);
+    } catch {
+      // Fallback: cập nhật trạng thái ARCHIVED
+      return this.updateStatus(id, 'ARCHIVED');
+    }
+  },
+
+  /**
+   * Xóa chiến dịch (Gọi PATCH /campaigns/{id}/archive hoặc PATCH /campaigns/{id}/status -> ARCHIVED)
    */
   async deleteCampaign(id: string): Promise<void> {
-    // 1. Lưu ID vào danh sách đã xóa trên client (ngay cả khi backend dùng soft-delete)
+    // 1. Lưu ID vào danh sách đã xóa trên client
     try {
       const raw = localStorage.getItem('IM_DELETED_CAMPAIGN_IDS');
       const list: string[] = raw ? JSON.parse(raw) : [];
@@ -213,31 +227,19 @@ export const campaignService = {
       }
     } catch {}
 
-    // 2. Thử gọi API DELETE trực tiếp
+    // 2. Gọi API archive chuẩn Swagger PATCH /campaigns/{id}/archive
+    try {
+      await this.archiveCampaign(id);
+      return;
+    } catch (err) {
+      console.warn('[campaignService] Lỗi khi archiveCampaign:', err);
+    }
+
+    // 3. Fallback thử DELETE nếu backend hỗ trợ
     try {
       await apiClient.delete(`/campaigns/${id}`);
-      return;
     } catch {
       // ignore
-    }
-
-    try {
-      const brandId = await this.resolveCurrentBrandId();
-      await apiClient.delete(`/brands/${brandId}/campaigns/${id}`);
-      return;
-    } catch {
-      // ignore
-    }
-
-    // 3. Fallback: chuyển trạng thái sang ARCHIVED trên backend
-    try {
-      await this.updateStatus(id, 'ARCHIVED');
-    } catch {
-      try {
-        await this.archiveCampaign(id);
-      } catch {
-        console.warn('[campaignService] Không có API xóa cứng trên server, đã ghi nhận xóa:', id);
-      }
     }
   },
 
@@ -345,17 +347,6 @@ export const campaignService = {
       } catch (innerErr) {
         throw innerErr || err;
       }
-    }
-  },
-
-  /**
-   * Lưu trữ (Archive) chiến dịch
-   */
-  async archiveCampaign(id: string): Promise<void> {
-    try {
-      await apiClient.patch(`/campaigns/${id}/archive`);
-    } catch {
-      await apiClient.post(`/campaigns/${id}/archive`);
     }
   },
 

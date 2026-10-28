@@ -18,6 +18,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         agent: keepAliveAgent,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            // Chuẩn hóa Origin về http://localhost:5173 để khớp chính xác với whitelist CORS của Backend Spring Boot
+            proxyReq.setHeader('Origin', 'http://localhost:5173');
+          });
+        },
       },
     },
   },

@@ -61,13 +61,34 @@ const MiniBarChart = ({ color = '#6366F1' }) => (
   </svg>
 );
 
-// Global In-Memory Cache (Eliminates Re-loading Flash when switching tabs)
+// Global In-Memory & Session Cache (Eliminates Re-loading Flash when switching tabs or refreshing)
 const dashboardCache = {
   rawCampaigns: null,
   rawCreators: null,
   shortlistItems: null,
   shortlistCount: null,
   lastLoaded: 0,
+};
+
+const loadCachedDashboard = () => {
+  if (dashboardCache.rawCampaigns) {
+    return dashboardCache;
+  }
+  try {
+    const raw = sessionStorage.getItem('IM_DASHBOARD_CACHE');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.rawCampaigns)) {
+        dashboardCache.rawCampaigns = parsed.rawCampaigns;
+        dashboardCache.rawCreators = parsed.rawCreators || [];
+        dashboardCache.shortlistItems = parsed.shortlistItems || [];
+        dashboardCache.shortlistCount = parsed.shortlistCount ?? 0;
+        dashboardCache.lastLoaded = parsed.lastLoaded || Date.now();
+        return parsed;
+      }
+    }
+  } catch {}
+  return null;
 };
 
 export default function DashboardPage() {
@@ -98,13 +119,14 @@ export default function DashboardPage() {
     userProfile?.displayName?.trim() ||
     (userProfile?.email ? userProfile.email.split('@')[0] : '');
 
-  // Instant render from memory cache if available (Prevents spinner reload flash)
-  const hasCache = !!dashboardCache.rawCampaigns;
+  // Instant render from persistent cache if available (Prevents spinner reload flash)
+  const initialCache = loadCachedDashboard();
+  const hasCache = !!initialCache?.rawCampaigns;
   const [loading, setLoading] = useState(!hasCache);
-  const [rawCampaigns, setRawCampaigns] = useState(() => dashboardCache.rawCampaigns || []);
-  const [rawCreators, setRawCreators] = useState(() => dashboardCache.rawCreators || []);
-  const [shortlistItems, setShortlistItems] = useState(() => dashboardCache.shortlistItems || []);
-  const [shortlistCount, setShortlistCount] = useState(() => dashboardCache.shortlistCount ?? 0);
+  const [rawCampaigns, setRawCampaigns] = useState(() => initialCache?.rawCampaigns || []);
+  const [rawCreators, setRawCreators] = useState(() => initialCache?.rawCreators || []);
+  const [shortlistItems, setShortlistItems] = useState(() => initialCache?.shortlistItems || []);
+  const [shortlistCount, setShortlistCount] = useState(() => initialCache?.shortlistCount ?? 0);
 
   const [campaignTab, setCampaignTab] = useState('all');
   const [activityTab, setActivityTab] = useState('all');
@@ -139,12 +161,39 @@ export default function DashboardPage() {
 
       // Compute Brand-specific shortlist items & count trực tiếp từ Database
       try {
+        const campIdsToQuery = new Set(
+          validCList
+            .map((c) => c.id)
+            .filter((id) => Boolean(id) && !id.startsWith('camp_mock'))
+        );
+        const storedCampId = sessionStorage.getItem('current_campaign_id') || localStorage.getItem('IM_SELECTED_CAMPAIGN_ID');
+        if (storedCampId && !storedCampId.startsWith('camp_mock')) {
+          campIdsToQuery.add(storedCampId);
+        }
+
         let backendShortlist = [];
-        if (validCList.length > 0) {
-          const backendLists = await Promise.all(
-            validCList.map((camp) => creatorService.getShortlist(camp.id).catch(() => []))
-          );
-          backendLists.forEach((list) => {
+        if (campIdsToQuery.size > 0) {
+          const promises = Array.from(campIdsToQuery).map(async (cid) => {
+            const [sList, rels] = await Promise.all([
+              creatorService.getShortlist(cid).catch(() => []),
+              campaignService.getRelationships(cid).catch(() => []),
+            ]);
+            const combined = [...(Array.isArray(sList) ? sList : [])];
+            if (Array.isArray(rels)) {
+              rels.forEach((r) => {
+                combined.push({
+                  id: r.id,
+                  creatorId: r.creatorId || r.id,
+                  creatorName: r.creatorName || 'Creator',
+                  platform: 'tiktok',
+                  priority: 'HIGH',
+                });
+              });
+            }
+            return combined;
+          });
+          const results = await Promise.all(promises);
+          results.forEach((list) => {
             if (Array.isArray(list)) backendShortlist.push(...list);
           });
         }
@@ -163,6 +212,18 @@ export default function DashboardPage() {
         setShortlistCount(finalShortlist.length);
         dashboardCache.shortlistItems = finalShortlist;
         dashboardCache.shortlistCount = finalShortlist.length;
+        try {
+          sessionStorage.setItem(
+            'IM_DASHBOARD_CACHE',
+            JSON.stringify({
+              rawCampaigns: validCList,
+              rawCreators: validCrList,
+              shortlistItems: finalShortlist,
+              shortlistCount: finalShortlist.length,
+              lastLoaded: Date.now(),
+            })
+          );
+        } catch {}
       } catch {
         // ignore error
       }
@@ -174,11 +235,8 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    // Stale-While-Revalidate: Only fetch if cache is absent or older than 90s
-    const isStale = !dashboardCache.rawCampaigns || (Date.now() - dashboardCache.lastLoaded > 90000);
-    if (isStale) {
-      loadDashboardData();
-    }
+    // Stale-While-Revalidate: Luôn đồng bộ ngầm dữ liệu mới nhất từ DB khi vào trang
+    loadDashboardData();
   }, [loadDashboardData]);
 
   // Dynamic statistics from brand campaigns
@@ -399,9 +457,9 @@ export default function DashboardPage() {
 
     if (total === 0) {
       return [
-        { label: 'TikTok', percent: 55, color: '#2563EB' },
-        { label: 'Instagram', percent: 30, color: '#06B6D4' },
-        { label: 'Facebook', percent: 15, color: '#10B981' },
+        { label: 'TikTok', percent: 0, color: '#2563EB' },
+        { label: 'Instagram', percent: 0, color: '#06B6D4' },
+        { label: 'Facebook', percent: 0, color: '#10B981' },
       ];
     }
 
@@ -592,7 +650,7 @@ export default function DashboardPage() {
                 Xem tất cả <RightOutlined style={{ fontSize: 9, marginLeft: 2 }} />
               </Button>
             }
-            bodyStyle={{ padding: '12px 16px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}
+            styles={{ body: { padding: '12px 16px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 } }}
           >
             {/* Filter Tabs with horizontal scroll on mobile */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
@@ -744,7 +802,7 @@ export default function DashboardPage() {
                 Xem tất cả <RightOutlined style={{ fontSize: 9, marginLeft: 2 }} />
               </Button>
             }
-            bodyStyle={{ padding: '12px 16px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}
+            styles={{ body: { padding: '12px 16px 14px 16px', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 } }}
           >
             {/* Symmetrical Filter Tabs with horizontal scroll on mobile */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
@@ -863,7 +921,7 @@ export default function DashboardPage() {
                 })}
               </div>
             }
-            bodyStyle={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}
+            styles={{ body: { padding: '16px 20px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' } }}
           >
             <Row gutter={[14, 14]} align="middle">
               {/* Spline Area Chart */}
@@ -879,10 +937,10 @@ export default function DashboardPage() {
                       paddingBottom: 18,
                     }}
                   >
-                    <span>{fmtNum(totalReach * 1.5 || 300000)}</span>
-                    <span>{fmtNum(totalReach || 200000)}</span>
-                    <span>{fmtNum(totalReach * 0.6 || 100000)}</span>
-                    <span>{fmtNum(totalReach * 0.3 || 50000)}</span>
+                    <span>{totalReach > 0 ? fmtNum(Math.round(totalReach * 1.5)) : '0'}</span>
+                    <span>{totalReach > 0 ? fmtNum(totalReach) : '0'}</span>
+                    <span>{totalReach > 0 ? fmtNum(Math.round(totalReach * 0.6)) : '0'}</span>
+                    <span>{totalReach > 0 ? fmtNum(Math.round(totalReach * 0.3)) : '0'}</span>
                     <span>0</span>
                   </div>
 
@@ -1011,7 +1069,7 @@ export default function DashboardPage() {
                 Xem tất cả <RightOutlined style={{ fontSize: 9, marginLeft: 2 }} />
               </Button>
             }
-            bodyStyle={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'flex-start' }}
+            styles={{ body: { padding: '12px 16px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'flex-start' } }}
           >
             {topCreatorsList.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

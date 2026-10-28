@@ -13,6 +13,8 @@ import {
   message,
   Space,
   Tooltip,
+  Skeleton,
+  Progress,
 } from 'antd';
 import type { MenuProps } from 'antd';
 import {
@@ -33,6 +35,9 @@ import {
   WalletOutlined,
   ThunderboltOutlined,
   CompassOutlined,
+  CheckCircleOutlined,
+  RocketOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
@@ -62,141 +67,23 @@ export interface CampaignItemUI {
   thumbnail: string;
 }
 
-// Default 6 campaigns matching user's design mockup (without YouTube)
-export const DEFAULT_CAMPAIGNS: CampaignItemUI[] = [
-  {
-    id: 'camp-summer-glow-2026',
-    name: 'Summer Glow 2026',
-    dateRange: '15 Jun 2026 – 31 Aug 2026',
-    niches: ['Beauty', 'Lifestyle', 'Skincare'],
-    status: 'ACTIVE',
-    statusText: 'Đang triển khai',
-    statusType: 'running',
-    platforms: ['TIKTOK', 'INSTAGRAM'],
-    extraPlatformsCount: 2,
-    creatorsCount: 8,
-    creatorAvatars: [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=80&auto=format&fit=crop&q=80',
-    ],
-    budgetFormatted: '200.000.000 ₫',
-    budgetRaw: 200000000,
-    progressPercent: 45,
-    updatedTime: '10 phút trước',
-    updatedBy: 'bởi Châu Bùi',
-    thumbnail: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'camp-skincare-launch-2025',
-    name: 'Skincare Launch 2025',
-    dateRange: '01 Sep 2026 – 30 Sep 2026',
-    niches: ['Beauty', 'Skincare'],
-    status: 'DRAFT',
-    statusText: 'Bản nháp',
-    statusType: 'draft',
-    platforms: ['TIKTOK', 'FACEBOOK'],
-    creatorsCount: 0,
-    creatorAvatars: [
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80',
-    ],
-    budgetFormatted: '120.000.000 ₫',
-    budgetRaw: 120000000,
-    progressPercent: 0,
-    updatedTime: '2 giờ trước',
-    updatedBy: 'bởi Minh Khoa',
-    thumbnail: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'camp-beauty-routine-challenge',
-    name: 'Beauty Routine Challenge',
-    dateRange: '01 Sep 2026 – 01 Oct 2026',
-    niches: ['Lifestyle', 'Beauty'],
-    status: 'ACTIVE',
-    statusText: 'Đang triển khai',
-    statusType: 'running',
-    platforms: ['TIKTOK', 'INSTAGRAM'],
-    creatorsCount: 4,
-    creatorAvatars: [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=80&auto=format&fit=crop&q=80',
-    ],
-    budgetFormatted: '80.000.000 ₫',
-    budgetRaw: 80000000,
-    progressPercent: 63,
-    updatedTime: '5 giờ trước',
-    updatedBy: 'bởi Lan Le',
-    thumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'camp-acne-care-series-2025',
-    name: 'Acne Care Series 2025',
-    dateRange: '01 Aug 2026 – 15 Sep 2026',
-    niches: ['Skincare', 'Review'],
-    status: 'READY_FOR_DISCOVERY',
-    statusText: 'Sẵn sàng AI',
-    statusType: 'ready',
-    platforms: ['TIKTOK', 'FACEBOOK', 'INSTAGRAM'],
-    creatorsCount: 6,
-    creatorAvatars: [
-      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80',
-    ],
-    budgetFormatted: '150.000.000 ₫',
-    budgetRaw: 150000000,
-    progressPercent: 28,
-    updatedTime: '1 ngày trước',
-    updatedBy: 'bởi Thành Đôn',
-    thumbnail: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'camp-summer-makeup-look-2025',
-    name: 'Summer Makeup Look 2025',
-    dateRange: '01 Jul 2026 – 01 Aug 2026',
-    niches: ['Beauty', 'Make up'],
-    status: 'ACTIVE',
-    statusText: 'Đang triển khai',
-    statusType: 'running',
-    platforms: ['INSTAGRAM', 'FACEBOOK'],
-    creatorsCount: 3,
-    creatorAvatars: [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=80&auto=format&fit=crop&q=80',
-    ],
-    budgetFormatted: '70.000.000 ₫',
-    budgetRaw: 70000000,
-    progressPercent: 75,
-    updatedTime: '2 ngày trước',
-    updatedBy: 'bởi Châu Bùi',
-    thumbnail: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=300&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'camp-tech-product-review',
-    name: 'Tech Product Review',
-    dateRange: '01 Jul 2026 – 31 Jul 2026',
-    niches: ['Technology', 'Review'],
-    status: 'COMPLETED',
-    statusText: 'Đã hoàn thành',
-    statusType: 'completed',
-    platforms: ['TIKTOK', 'FACEBOOK'],
-    extraPlatformsCount: 1,
-    creatorsCount: 5,
-    creatorAvatars: [
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80',
-    ],
-    budgetFormatted: '100.000.000 ₫',
-    budgetRaw: 100000000,
-    progressPercent: 100,
-    updatedTime: '5 ngày trước',
-    updatedBy: 'bởi Minh Khoa',
-    thumbnail: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&auto=format&fit=crop&q=80',
-  },
-];
+// Format relative time helper
+const formatRelativeTime = (dateStr?: string) => {
+  if (!dateStr) return 'Vừa xong';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  if (isNaN(diff) || diff < 0) return 'Vừa xong';
+  const mins = Math.floor(diff / (1000 * 60));
+  if (mins < 1) return 'Vừa xong';
+  if (mins < 60) return `${mins} phút trước`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} giờ trước`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} ngày trước`;
+  return `${Math.floor(days / 30)} tháng trước`;
+};
+
+// Safe fallback placeholder for legacy types
+export const DEFAULT_CAMPAIGNS: CampaignItemUI[] = [];
 
 // Global in-memory cache across route transitions (loại bỏ hoàn toàn reload flash khi chuyển trang)
 const campaignPageCache: {
@@ -208,16 +95,29 @@ const campaignPageCache: {
 };
 const CACHE_TTL = 3 * 60 * 1000; // 3 phút
 
+const loadCachedCampaigns = (): CampaignItemUI[] => {
+  if (campaignPageCache.items && campaignPageCache.items.length > 0) {
+    return campaignPageCache.items;
+  }
+  try {
+    const raw = sessionStorage.getItem('IM_CAMPAIGNS_CACHE');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.items)) {
+        campaignPageCache.items = parsed.items;
+        campaignPageCache.lastLoaded = parsed.lastLoaded || Date.now();
+        return parsed.items;
+      }
+    }
+  } catch {}
+  return [];
+};
+
 export default function CampaignPage() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
   // Khởi tạo tức thì từ cache nếu có dữ liệu sẵn
-  const [campaigns, setCampaigns] = useState<CampaignItemUI[]>(() => {
-    if (campaignPageCache.items && campaignPageCache.items.length > 0) {
-      return campaignPageCache.items;
-    }
-    return DEFAULT_CAMPAIGNS;
-  });
+  const [campaigns, setCampaigns] = useState<CampaignItemUI[]>(loadCachedCampaigns);
+  const [loading, setLoading] = useState(() => campaigns.length === 0);
   const [activeTab, setActiveTab] = useState<'all' | 'running' | 'draft' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('latest');
@@ -242,19 +142,19 @@ export default function CampaignPage() {
     platforms: ['TIKTOK', 'INSTAGRAM'],
   });
 
-  // Fetch campaigns from backend API with smart caching
+  // Fetch campaigns from backend API (100% từ Database, không trộn mock data)
   const fetchCampaigns = async (force = false) => {
     const isCacheValid = campaignPageCache.items && (Date.now() - campaignPageCache.lastLoaded < CACHE_TTL);
-    if (!force && isCacheValid) {
+    if (!force && isCacheValid && campaigns.length > 0) {
       return;
     }
 
     try {
-      if (!campaignPageCache.items) {
+      if (campaigns.length === 0) {
         setLoading(true);
       }
       const apiData = await campaignService.getCampaigns(0, 50);
-      if (Array.isArray(apiData) && apiData.length > 0) {
+      if (Array.isArray(apiData)) {
         let deletedIds: string[] = [];
         try {
           deletedIds = JSON.parse(localStorage.getItem('IM_DELETED_CAMPAIGN_IDS') || '[]');
@@ -262,70 +162,73 @@ export default function CampaignPage() {
 
         const filtered = apiData.filter((c) => c.status !== 'ARCHIVED' && !deletedIds.includes(c.id));
 
-        if (filtered.length > 0) {
-          const mapped: CampaignItemUI[] = filtered.map((c, idx) => {
-            const fallback = DEFAULT_CAMPAIGNS[idx % DEFAULT_CAMPAIGNS.length];
-            const budgetNum = c.budgetMax || c.budgetMin || fallback.budgetRaw;
-            const budgetText = `${budgetNum.toLocaleString('vi-VN')} ₫`;
+        const mapped: CampaignItemUI[] = filtered.map((c, idx) => {
+          const budgetNum = c.budgetMax || c.budgetMin || 0;
+          const budgetText = budgetNum > 0 ? `${budgetNum.toLocaleString('vi-VN')} ₫` : 'Thỏa thuận';
 
-            let statusType: 'running' | 'draft' | 'ready' | 'completed' = 'running';
-            let statusText = 'Đang triển khai';
-            if (c.status === 'DRAFT') {
-              statusType = 'draft';
-              statusText = 'Bản nháp';
-            } else if (c.status === 'READY_FOR_DISCOVERY') {
-              statusType = 'ready';
-              statusText = 'Sẵn sàng AI';
-            } else if (c.status === 'COMPLETED') {
-              statusType = 'completed';
-              statusText = 'Đã hoàn thành';
-            }
+          let statusType: 'running' | 'draft' | 'ready' | 'completed' = 'running';
+          let statusText = 'Đang triển khai';
+          if (c.status === 'DRAFT') {
+            statusType = 'draft';
+            statusText = 'Bản nháp';
+          } else if (c.status === 'READY_FOR_DISCOVERY') {
+            statusType = 'ready';
+            statusText = 'Sẵn sàng tìm KOC';
+          } else if (c.status === 'COMPLETED') {
+            statusType = 'completed';
+            statusText = 'Đã hoàn thành';
+          }
 
-            const startDateStr = c.startDate ? new Date(c.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '15 Jun 2026';
-            const endDateStr = c.endDate ? new Date(c.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '31 Aug 2026';
+          const startDateStr = c.startDate ? new Date(c.startDate).toLocaleDateString('vi-VN') : 'Linh hoạt';
+          const endDateStr = c.endDate ? new Date(c.endDate).toLocaleDateString('vi-VN') : '';
 
-            // Filter out YOUTUBE
-            const validPlatforms = ((c.platforms && c.platforms.length > 0) ? c.platforms : fallback.platforms).filter(
-              (p) => (p as string) !== 'YOUTUBE'
-            );
+          // Filter out YOUTUBE
+          const validPlatforms = ((c.platforms && c.platforms.length > 0) ? c.platforms : (['TIKTOK', 'INSTAGRAM'] as CampaignPlatform[])).filter(
+            (p) => (p as string) !== 'YOUTUBE'
+          );
 
-            return {
-              id: c.id,
-              name: c.name || fallback.name,
-              dateRange: `${startDateStr} – ${endDateStr}`,
-              niches: (c.niches && c.niches.length > 0) ? c.niches : fallback.niches,
-              status: c.status || 'ACTIVE',
-              statusText,
-              statusType,
-              platforms: validPlatforms.length > 0 ? validPlatforms : ['TIKTOK', 'INSTAGRAM'],
-              extraPlatformsCount: fallback.extraPlatformsCount,
-              creatorsCount: fallback.creatorsCount,
-              creatorAvatars: fallback.creatorAvatars,
-              budgetFormatted: budgetText,
-              budgetRaw: budgetNum,
-              progressPercent: fallback.progressPercent,
-              updatedTime: fallback.updatedTime,
-              updatedBy: fallback.updatedBy,
-              thumbnail: fallback.thumbnail,
-            };
-          });
+          const coverImage = (c as any).imageUrl || (c as any).thumbnail || 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80';
 
-          const existingIds = new Set(mapped.map((m) => m.id));
-          const remainingDefaults = DEFAULT_CAMPAIGNS.filter((d) => !existingIds.has(d.id));
-          const combined = [...mapped, ...remainingDefaults];
-          campaignPageCache.items = combined;
-          campaignPageCache.lastLoaded = Date.now();
-          setCampaigns(combined);
-          return;
-        }
+          return {
+            id: c.id,
+            name: c.name || `Chiến dịch #${idx + 1}`,
+            dateRange: endDateStr ? `${startDateStr} – ${endDateStr}` : startDateStr,
+            niches: (c.niches && c.niches.length > 0) ? c.niches : ['Nội dung đa dạng'],
+            status: c.status || 'ACTIVE',
+            statusText,
+            statusType,
+            platforms: validPlatforms.length > 0 ? validPlatforms : ['TIKTOK', 'INSTAGRAM'],
+            creatorsCount: (c as any).creatorsCount || 0,
+            creatorAvatars: (c as any).creatorAvatars || [],
+            budgetFormatted: budgetText,
+            budgetRaw: budgetNum,
+            progressPercent: statusType === 'completed' ? 100 : statusType === 'running' ? 45 : 10,
+            updatedTime: c.updatedAt ? formatRelativeTime(c.updatedAt) : 'Gần đây',
+            updatedBy: 'Thương hiệu',
+            thumbnail: coverImage,
+          };
+        });
+
+        campaignPageCache.items = mapped;
+        campaignPageCache.lastLoaded = Date.now();
+        try {
+          sessionStorage.setItem('IM_CAMPAIGNS_CACHE', JSON.stringify({ items: mapped, lastLoaded: Date.now() }));
+        } catch {}
+        setCampaigns(mapped);
+        return;
       }
-      campaignPageCache.items = DEFAULT_CAMPAIGNS;
+
+      campaignPageCache.items = [];
       campaignPageCache.lastLoaded = Date.now();
-      setCampaigns(DEFAULT_CAMPAIGNS);
-    } catch {
+      try {
+        sessionStorage.setItem('IM_CAMPAIGNS_CACHE', JSON.stringify({ items: [], lastLoaded: Date.now() }));
+      } catch {}
+      setCampaigns([]);
+    } catch (err) {
+      console.warn('Lỗi khi tải danh sách chiến dịch:', err);
       if (!campaignPageCache.items) {
-        campaignPageCache.items = DEFAULT_CAMPAIGNS;
-        setCampaigns(DEFAULT_CAMPAIGNS);
+        campaignPageCache.items = [];
+        setCampaigns([]);
       }
     } finally {
       setLoading(false);
@@ -536,6 +439,62 @@ export default function CampaignPage() {
         return null;
     }
   };
+
+  // Dynamic pending tasks derived 100% from real campaigns
+  const pendingTasks = useMemo(() => {
+    const tasks: Array<{
+      id: string;
+      title: string;
+      campaignName: string;
+      time: string;
+      icon: React.ReactNode;
+      iconBg: string;
+      iconColor: string;
+      onClick: () => void;
+    }> = [];
+
+    campaigns.forEach((camp) => {
+      if (camp.status === 'READY_FOR_DISCOVERY') {
+        tasks.push({
+          id: `task_ready_${camp.id}`,
+          title: 'Sẵn sàng tìm kiếm KOC AI',
+          campaignName: camp.name,
+          time: camp.updatedTime,
+          icon: <ThunderboltOutlined />,
+          iconBg: '#E0F2FE',
+          iconColor: '#0284C7',
+          onClick: () => {
+            sessionStorage.setItem('current_campaign_id', camp.id);
+            navigate('/discovery');
+          },
+        });
+      } else if (camp.status === 'DRAFT') {
+        tasks.push({
+          id: `task_draft_${camp.id}`,
+          title: 'Chiến dịch bản nháp cần hoàn thiện',
+          campaignName: camp.name,
+          time: camp.updatedTime,
+          icon: <WalletOutlined />,
+          iconBg: '#FFEDD5',
+          iconColor: '#EA580C',
+          onClick: () => handleOpenDetail(camp),
+        });
+      } else if (camp.status === 'ACTIVE') {
+        tasks.push({
+          id: `task_active_${camp.id}`,
+          title: 'Chiến dịch đang triển khai',
+          campaignName: camp.name,
+          time: camp.updatedTime,
+          icon: <SendOutlined />,
+          iconBg: '#F3E8FF',
+          iconColor: '#9333EA',
+          onClick: () => handleOpenDetail(camp),
+        });
+      }
+    });
+
+    return tasks.slice(0, 4);
+  }, [campaigns, navigate]);
 
   return (
     <div className="campaign-page-wrapper">
@@ -773,311 +732,351 @@ export default function CampaignPage() {
             </div>
           </div>
 
-          {/* SINGLE-ROW Filter Toolbar: Tabs on Left, Search + Sort + Filter on Right */}
-          <div className="campaign-filter-toolbar">
-            {/* Tabs Group */}
-            <div className="campaign-tabs-group">
-              <div
-                className={`campaign-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('all');
-                  setCurrentPage(1);
-                }}
-              >
-                <span>Tất cả</span>
-                <span className="campaign-tab-badge">{countAll}</span>
-              </div>
-
-              <div
-                className={`campaign-tab-btn ${activeTab === 'running' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('running');
-                  setCurrentPage(1);
-                }}
-              >
-                <span>Đang triển khai</span>
-                <span className="campaign-tab-badge">{countRunning}</span>
-              </div>
-
-              <div
-                className={`campaign-tab-btn ${activeTab === 'draft' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('draft');
-                  setCurrentPage(1);
-                }}
-              >
-                <span>Bản nháp</span>
-                <span className="campaign-tab-badge">{countDraft}</span>
-              </div>
-
-              <div
-                className={`campaign-tab-btn ${activeTab === 'completed' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('completed');
-                  setCurrentPage(1);
-                }}
-              >
-                <span>Đã hoàn thành</span>
-                <span className="campaign-tab-badge">{countCompleted}</span>
-              </div>
-            </div>
-
-            {/* Tools Group (Search, Sort, Filter) on the same line without overflowing */}
-            <div className="campaign-tools-group">
+          {/* Two-Row Filter & Search Toolbar: Search bar on top (full width), buttons below */}
+          <div className="campaign-filter-wrapper">
+            {/* Row 1: Full-width Search Bar (Stretches across equal to campaign card below) */}
+            <div className="campaign-search-bar-row">
               <Input
-                placeholder="Tìm kiếm chiến dịch..."
-                prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 11 }} />}
+                placeholder="Tìm kiếm chiến dịch theo tên, sản phẩm, ngành hàng..."
+                prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 14, marginRight: 6 }} />}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1);
                 }}
-                style={{
-                  width: 135,
-                  height: 32,
-                  borderRadius: 8,
-                  borderColor: '#E2E8F0',
-                  fontSize: 11.5,
-                }}
+                className="campaign-full-search-input"
                 allowClear
               />
+            </div>
 
-              <Select
-                value={sortBy}
-                onChange={setSortBy}
-                size="small"
-                style={{ width: 88, height: 32 }}
-                options={[
-                  { value: 'latest', label: 'Mới nhất' },
-                  { value: 'budget', label: 'Ngân sách' },
-                  { value: 'creators', label: 'KOC' },
-                ]}
-              />
+            {/* Row 2: Action & Filter Buttons below Search Bar */}
+            <div className="campaign-filter-actions-row">
+              {/* Left: Status Filter Tabs */}
+              <div className="campaign-tabs-group">
+                <div
+                  className={`campaign-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('all');
+                    setCurrentPage(1);
+                  }}
+                >
+                  <span>Tất cả</span>
+                  <span className="campaign-tab-badge">{countAll}</span>
+                </div>
 
-              <Button
-                size="small"
-                icon={<FilterOutlined style={{ fontSize: 10 }} />}
-                style={{
-                  height: 32,
-                  borderRadius: 8,
-                  borderColor: '#E2E8F0',
-                  color: '#475569',
-                  fontWeight: 600,
-                  fontSize: 11.5,
-                  padding: '0 8px',
-                }}
-              >
-                Bộ lọc
-              </Button>
+                <div
+                  className={`campaign-tab-btn ${activeTab === 'running' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('running');
+                    setCurrentPage(1);
+                  }}
+                >
+                  <span>Đang triển khai</span>
+                  <span className="campaign-tab-badge">{countRunning}</span>
+                </div>
+
+                <div
+                  className={`campaign-tab-btn ${activeTab === 'draft' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('draft');
+                    setCurrentPage(1);
+                  }}
+                >
+                  <span>Bản nháp</span>
+                  <span className="campaign-tab-badge">{countDraft}</span>
+                </div>
+
+                <div
+                  className={`campaign-tab-btn ${activeTab === 'completed' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('completed');
+                    setCurrentPage(1);
+                  }}
+                >
+                  <span>Đã hoàn thành</span>
+                  <span className="campaign-tab-badge">{countCompleted}</span>
+                </div>
+              </div>
+
+              {/* Right: Sort & Filter Tools */}
+              <div className="campaign-tools-group">
+                <Select
+                  value={sortBy}
+                  onChange={setSortBy}
+                  size="small"
+                  popupMatchSelectWidth={false}
+                  dropdownStyle={{ minWidth: 140 }}
+                  className="campaign-sort-select"
+                  options={[
+                    { value: 'latest', label: 'Mới nhất' },
+                    { value: 'budget', label: 'Ngân sách' },
+                    { value: 'creators', label: 'Số lượng KOC' },
+                  ]}
+                />
+
+                <Button
+                  size="small"
+                  icon={<FilterOutlined style={{ fontSize: 11 }} />}
+                  className="campaign-filter-btn"
+                >
+                  Bộ lọc
+                </Button>
+              </div>
             </div>
           </div>
 
           {/* Campaign List Cards */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            {paginatedList.map((item) => {
-              const actionMenuItems: MenuProps['items'] = [
-                {
-                  key: 'view',
-                  icon: <EyeOutlined />,
-                  label: 'Xem chi tiết',
-                  onClick: () => handleOpenDetail(item),
-                },
-                {
-                  key: 'edit',
-                  icon: <EditOutlined />,
-                  label: 'Chỉnh sửa',
-                  onClick: () => handleOpenEdit(item),
-                },
-                {
-                  key: 'discovery',
-                  icon: <CompassOutlined />,
-                  label: 'Khám phá KOC AI',
-                  onClick: () => {
-                    sessionStorage.setItem('current_campaign_id', item.id);
-                    navigate('/discovery');
+          {loading && campaigns.length === 0 ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[1, 2, 3].map((k) => (
+                <div key={k} style={{ background: '#FFFFFF', padding: '16px 20px', borderRadius: 12, border: '1px solid #F1F5F9' }}>
+                  <Skeleton active avatar={{ size: 52, shape: 'square' }} paragraph={{ rows: 2 }} />
+                </div>
+              ))}
+            </div>
+          ) : paginatedList.length > 0 ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              {paginatedList.map((item) => {
+                const actionMenuItems: MenuProps['items'] = [
+                  {
+                    key: 'view',
+                    icon: <EyeOutlined />,
+                    label: 'Xem chi tiết',
+                    onClick: () => handleOpenDetail(item),
                   },
-                },
-                { type: 'divider' },
-                {
-                  key: 'delete',
-                  icon: <DeleteOutlined />,
-                  danger: true,
-                  label: 'Xóa chiến dịch',
-                  onClick: () => handleDeleteCampaign(item),
-                },
-              ];
+                  {
+                    key: 'edit',
+                    icon: <EditOutlined />,
+                    label: 'Chỉnh sửa',
+                    onClick: () => handleOpenEdit(item),
+                  },
+                  {
+                    key: 'discovery',
+                    icon: <CompassOutlined />,
+                    label: 'Khám phá KOC AI',
+                    onClick: () => {
+                      sessionStorage.setItem('current_campaign_id', item.id);
+                      localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', item.id);
+                      navigate(`/discovery?campaignId=${item.id}`, { state: { campaignId: item.id } });
+                    },
+                  },
+                  { type: 'divider' },
+                  {
+                    key: 'delete',
+                    icon: <DeleteOutlined />,
+                    danger: true,
+                    label: 'Xóa chiến dịch',
+                    onClick: () => handleDeleteCampaign(item),
+                  },
+                ];
 
-              return (
-                <div
-                  key={item.id}
-                  className="campaign-row-card"
-                  onClick={() => handleOpenDetail(item)}
-                >
-                  {/* Left: Thumbnail & Info */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 220, flex: 2 }}>
-                    <img
-                      src={item.thumbnail}
-                      alt={item.name}
-                      style={{
-                        width: 52,
-                        height: 52,
-                        borderRadius: 9,
-                        objectFit: 'cover',
-                        flexShrink: 0,
-                        border: '1px solid #F1F5F9',
-                      }}
-                    />
-
-                    <div style={{ minWidth: 0 }}>
-                      <div
+                return (
+                  <div
+                    key={item.id}
+                    className="campaign-row-card"
+                    onClick={() => handleOpenDetail(item)}
+                  >
+                    {/* Left: Thumbnail & Info */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 220, flex: 2 }}>
+                      <img
+                        src={item.thumbnail}
+                        alt={item.name}
                         style={{
-                          fontWeight: 700,
-                          fontSize: 14,
-                          color: '#0F172A',
-                          lineHeight: 1.25,
-                          marginBottom: 2,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
+                          width: 52,
+                          height: 52,
+                          borderRadius: 9,
+                          objectFit: 'cover',
+                          flexShrink: 0,
+                          border: '1px solid #F1F5F9',
                         }}
-                      >
-                        {item.name}
-                      </div>
+                      />
 
-                      <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 4 }}>
-                        {item.dateRange}
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {item.niches.slice(0, 3).map((niche) => (
-                          <span
-                            key={niche}
-                            style={{
-                              background: '#F8FAFC',
-                              border: '1px solid #F1F5F9',
-                              color: '#64748B',
-                              fontSize: 10,
-                              borderRadius: 4,
-                              padding: '1px 5px',
-                              fontWeight: 500,
-                            }}
-                          >
-                            {niche}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Column 2: Status & Platforms */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 105 }}>
-                    <span className={`status-pill ${item.statusType}`}>
-                      <span className="status-pill-dot" />
-                      {item.statusText}
-                    </span>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                      {item.platforms.map((p) => renderPlatformIcon(p))}
-                      {item.extraPlatformsCount && (
-                        <span className="platform-mini-icon more-pill">
-                          +{item.extraPlatformsCount}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Column 3: Influencers Avatars */}
-                  <div style={{ display: 'flex', alignItems: 'center', minWidth: 70 }}>
-                    <div style={{ display: 'flex', marginRight: 4 }}>
-                      {item.creatorAvatars.slice(0, 3).map((av, idx) => (
-                        <img
-                          key={idx}
-                          src={av}
-                          alt="creator"
-                          style={{
-                            width: 22,
-                            height: 22,
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                            border: '1.5px solid #FFFFFF',
-                            marginLeft: idx === 0 ? 0 : -6,
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#64748B' }}>
-                      {item.creatorsCount}
-                    </span>
-                  </div>
-
-                  {/* Column 4: Budget & Progress */}
-                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 120, flex: 1 }}>
-                    <div style={{ fontSize: 10, color: '#94A3B8', marginBottom: 1 }}>
-                      Ngân sách dự kiến
-                    </div>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>
-                      {item.budgetFormatted}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <div
-                        style={{
-                          flex: 1,
-                          height: 4,
-                          background: '#E2E8F0',
-                          borderRadius: 999,
-                          overflow: 'hidden',
-                        }}
-                      >
+                      <div style={{ minWidth: 0 }}>
                         <div
                           style={{
-                            width: `${item.progressPercent}%`,
-                            height: '100%',
-                            background: '#4F46E5',
-                            borderRadius: 999,
+                            fontWeight: 700,
+                            fontSize: 14,
+                            color: '#0F172A',
+                            lineHeight: 1.25,
+                            marginBottom: 2,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
                           }}
-                        />
+                        >
+                          {item.name}
+                        </div>
+
+                        <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 4 }}>
+                          {item.dateRange}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                          {item.niches.slice(0, 3).map((niche) => (
+                            <span
+                              key={niche}
+                              style={{
+                                background: '#F8FAFC',
+                                border: '1px solid #F1F5F9',
+                                color: '#64748B',
+                                fontSize: 10,
+                                borderRadius: 4,
+                                padding: '1px 5px',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {niche}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: '#64748B' }}>
-                        {item.progressPercent}%
+                    </div>
+
+                    {/* Column 2: Status & Platforms */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 105 }}>
+                      <span className={`status-pill ${item.statusType}`}>
+                        <span className="status-pill-dot" />
+                        {item.statusText}
+                      </span>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                        {item.platforms.map((p) => renderPlatformIcon(p))}
+                        {item.extraPlatformsCount && (
+                          <span className="platform-mini-icon more-pill">
+                            +{item.extraPlatformsCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Column 3: Influencers Avatars */}
+                    <div style={{ display: 'flex', alignItems: 'center', minWidth: 70 }}>
+                      <div style={{ display: 'flex', marginRight: 4 }}>
+                        {item.creatorAvatars.slice(0, 3).map((av, idx) => (
+                          <img
+                            key={idx}
+                            src={av}
+                            alt="creator"
+                            style={{
+                              width: 22,
+                              height: 22,
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: '1.5px solid #FFFFFF',
+                              marginLeft: idx === 0 ? 0 : -6,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#64748B' }}>
+                        {item.creatorsCount}
                       </span>
                     </div>
-                  </div>
 
-                  {/* Column 5: Last Updated */}
-                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 95 }}>
-                    <div style={{ fontSize: 10, color: '#94A3B8', marginBottom: 1 }}>
-                      Cập nhật
+                    {/* Column 4: Budget & Progress */}
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 120, flex: 1 }}>
+                      <div style={{ fontSize: 10, color: '#94A3B8', marginBottom: 1 }}>
+                        Ngân sách dự kiến
+                      </div>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>
+                        {item.budgetFormatted}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <div
+                          style={{
+                            flex: 1,
+                            height: 4,
+                            background: '#E2E8F0',
+                            borderRadius: 999,
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: `${item.progressPercent}%`,
+                              height: '100%',
+                              background: '#4F46E5',
+                              borderRadius: 999,
+                            }}
+                          />
+                        </div>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: '#64748B' }}>
+                          {item.progressPercent}%
+                        </span>
+                      </div>
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#334155' }}>
-                      {item.updatedTime}
-                    </div>
-                    <div style={{ fontSize: 10, color: '#94A3B8' }}>
-                      {item.updatedBy}
-                    </div>
-                  </div>
 
-                  {/* Column 6: Actions */}
-                  <div
-                    style={{ display: 'flex', alignItems: 'center' }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Dropdown
-                      menu={{ items: actionMenuItems }}
-                      trigger={['click']}
-                      placement="bottomRight"
+                    {/* Column 5: Last Updated */}
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 95 }}>
+                      <div style={{ fontSize: 10, color: '#94A3B8', marginBottom: 1 }}>
+                        Cập nhật
+                      </div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#334155' }}>
+                        {item.updatedTime}
+                      </div>
+                      <div style={{ fontSize: 10, color: '#94A3B8' }}>
+                        {item.updatedBy}
+                      </div>
+                    </div>
+
+                    {/* Column 6: Actions */}
+                    <div
+                      style={{ display: 'flex', alignItems: 'center' }}
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<RightOutlined style={{ fontSize: 11, color: '#94A3B8' }} />}
-                        style={{ borderRadius: 6 }}
-                      />
-                    </Dropdown>
+                      <Dropdown
+                        menu={{ items: actionMenuItems }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<RightOutlined style={{ fontSize: 11, color: '#94A3B8' }} />}
+                          style={{ borderRadius: 6 }}
+                        />
+                      </Dropdown>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div
+              style={{
+                flex: 1,
+                textAlign: 'center',
+                padding: '48px 20px',
+                background: '#FFFFFF',
+                borderRadius: 14,
+                border: '1px dashed #CBD5E1',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                minHeight: 260,
+              }}
+            >
+              <FolderOutlined style={{ fontSize: 36, color: '#94A3B8' }} />
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Chưa có chiến dịch nào</div>
+              <div style={{ fontSize: 12.5, color: '#64748B', maxWidth: 360 }}>
+                {searchQuery.trim()
+                  ? `Không tìm thấy chiến dịch nào khớp với từ khóa "${searchQuery}".`
+                  : 'Tạo chiến dịch đầu tiên để kết nối với các Creator tiềm năng cho thương hiệu của bạn.'}
+              </div>
+              {!searchQuery.trim() && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => navigate('/campaigns/create')}
+                  style={{ background: '#4F46E5', borderRadius: 8, height: 36, fontWeight: 600, marginTop: 4 }}
+                >
+                  Tạo chiến dịch mới
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Pagination Footer */}
           <div
@@ -1110,17 +1109,17 @@ export default function CampaignPage() {
           </div>
         </div>
 
-        {/* RIGHT SIDEBAR COLUMN: Việc cần xử lý (4) + Chiến dịch gần đây (Spotlight) with Balanced Equal Heights */}
+        {/* RIGHT SIDEBAR COLUMN: Việc cần xử lý + Chiến dịch gần đây (Spotlight) */}
         <div className="campaign-sidebar-col">
           {/* Card 1: Việc cần xử lý */}
-          <div className="im-campaign-side-card" style={{ flex: 1 }}>
+          <div className="im-campaign-side-card">
             {/* Card Header */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 7,
-                marginBottom: 10,
+                marginBottom: 6,
               }}
             >
               <span style={{ fontSize: 14.5, fontWeight: 800, color: '#0F172A' }}>
@@ -1136,182 +1135,73 @@ export default function CampaignPage() {
                   borderRadius: 999,
                 }}
               >
-                4
+                {pendingTasks.length}
               </span>
             </div>
 
             {/* Tasks List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, justifyContent: 'space-around' }}>
-              {/* Task 1 */}
-              <div
-                className="task-item-row"
-                onClick={() => navigate('/campaigns')}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            {pendingTasks.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {pendingTasks.map((task) => (
                   <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      background: '#F3E8FF',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#9333EA',
-                      fontSize: 13.5,
-                      flexShrink: 0,
-                    }}
+                    key={task.id}
+                    className="task-item-row"
+                    onClick={task.onClick}
                   >
-                    <SendOutlined />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', lineHeight: 1.2 }}>
-                      2 lời mời chờ phản hồi
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                      <div
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
+                          background: task.iconBg,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: task.iconColor,
+                          fontSize: 13.5,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {task.icon}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', lineHeight: 1.2 }}>
+                          {task.title}
+                        </div>
+                        <div style={{ fontSize: 10.5, color: '#94A3B8', marginTop: 1 }}>
+                          {task.campaignName}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ fontSize: 10.5, color: '#94A3B8', marginTop: 1 }}>
-                      Summer Glow 2026
-                    </div>
-                  </div>
-                </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ fontSize: 10, color: '#94A3B8', whiteSpace: 'nowrap' }}>
-                    10 phút trước
-                  </span>
-                  <RightOutlined style={{ fontSize: 9, color: '#CBD5E1' }} />
-                </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: 10, color: '#94A3B8', whiteSpace: 'nowrap' }}>
+                        {task.time}
+                      </span>
+                      <RightOutlined style={{ fontSize: 9, color: '#CBD5E1' }} />
+                    </div>
+                  </div>
+                ))}
               </div>
-
-              {/* Task 2 */}
-              <div
-                className="task-item-row"
-                onClick={() => navigate('/campaigns')}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      background: '#FCE7F3',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#DB2777',
-                      fontSize: 13.5,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <FileTextOutlined />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', lineHeight: 1.2 }}>
-                      1 KOC gửi nội dung xem xét
-                    </div>
-                    <div style={{ fontSize: 10.5, color: '#94A3B8', marginTop: 1 }}>
-                      Beauty Routine Challenge
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ fontSize: 10, color: '#94A3B8', whiteSpace: 'nowrap' }}>
-                    2 giờ trước
-                  </span>
-                  <RightOutlined style={{ fontSize: 9, color: '#CBD5E1' }} />
-                </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 12px', gap: 6, background: '#F8FAFC', borderRadius: 10 }}>
+                <CheckCircleOutlined style={{ fontSize: 20, color: '#10B981' }} />
+                <span style={{ fontSize: 12, color: '#64748B', textAlign: 'center' }}>
+                  Hiện không có việc nào cần xử lý.
+                </span>
               </div>
-
-              {/* Task 3 */}
-              <div
-                className="task-item-row"
-                onClick={() => navigate('/campaigns')}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      background: '#FFEDD5',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#EA580C',
-                      fontSize: 13.5,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <WalletOutlined />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', lineHeight: 1.2 }}>
-                      Cần duyệt ngân sách
-                    </div>
-                    <div style={{ fontSize: 10.5, color: '#94A3B8', marginTop: 1 }}>
-                      Skincare Launch 2025
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ fontSize: 10, color: '#94A3B8', whiteSpace: 'nowrap' }}>
-                    5 giờ trước
-                  </span>
-                  <RightOutlined style={{ fontSize: 9, color: '#CBD5E1' }} />
-                </div>
-              </div>
-
-              {/* Task 4 */}
-              <div
-                className="task-item-row"
-                onClick={() => navigate('/campaigns')}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      background: '#E0F2FE',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#0284C7',
-                      fontSize: 13.5,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <ThunderboltOutlined />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', lineHeight: 1.2 }}>
-                      1 báo cáo chiến dịch mới
-                    </div>
-                    <div style={{ fontSize: 10.5, color: '#94A3B8', marginTop: 1 }}>
-                      Tech Product Review
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ fontSize: 10, color: '#94A3B8', whiteSpace: 'nowrap' }}>
-                    1 ngày trước
-                  </span>
-                  <RightOutlined style={{ fontSize: 9, color: '#CBD5E1' }} />
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Card 2: Chiến dịch gần đây */}
-          <div className="im-campaign-side-card" style={{ flex: 1.1 }}>
+          {/* Card 2: Chiến dịch gần đây (Spotlight) */}
+          <div className="im-campaign-side-card">
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: 8,
+                marginBottom: 2,
               }}
             >
               <span style={{ fontSize: 14.5, fontWeight: 800, color: '#0F172A' }}>
@@ -1333,113 +1223,177 @@ export default function CampaignPage() {
               </span>
             </div>
 
-            {/* Cover Banner */}
-            <div
-              style={{ position: 'relative', width: '100%', height: 110, borderRadius: 10, overflow: 'hidden', cursor: 'pointer' }}
-              onClick={() => handleOpenDetail(campaigns[0] || DEFAULT_CAMPAIGNS[0])}
-            >
-              <img
-                src={campaigns[0]?.thumbnail || DEFAULT_CAMPAIGNS[0].thumbnail}
-                alt={campaigns[0]?.name || DEFAULT_CAMPAIGNS[0].name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-
-              {/* Overlaid Status Pill */}
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: 7,
-                  left: 7,
-                  background: 'rgba(255, 255, 255, 0.95)',
-                  backdropFilter: 'blur(4px)',
-                  padding: '2px 8px',
-                  borderRadius: 999,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: campaigns[0]?.statusType === 'draft' ? '#D97706' : '#059669',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                }}
-              >
-                <span
+            {campaigns.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Cover Banner */}
+                <div
                   style={{
-                    width: 5,
-                    height: 5,
-                    borderRadius: '50%',
-                    background: campaigns[0]?.statusType === 'draft' ? '#F59E0B' : '#10B981',
+                    position: 'relative',
+                    width: '100%',
+                    height: 125,
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                   }}
-                />
-                {campaigns[0]?.statusText || DEFAULT_CAMPAIGNS[0].statusText}
-              </div>
-            </div>
+                  onClick={() => handleOpenDetail(campaigns[0])}
+                >
+                  <img
+                    src={campaigns[0].thumbnail}
+                    alt={campaigns[0].name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
 
-            {/* Info & Progress */}
-            <div style={{ marginTop: 8 }}>
-              <div
-                style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A', cursor: 'pointer' }}
-                onClick={() => handleOpenDetail(campaigns[0] || DEFAULT_CAMPAIGNS[0])}
-              >
-                {campaigns[0]?.name || DEFAULT_CAMPAIGNS[0].name}
-              </div>
-              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1, marginBottom: 8 }}>
-                {campaigns[0]?.dateRange || DEFAULT_CAMPAIGNS[0].dateRange}
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
+                  {/* Overlaid Status Pill */}
                   <div
                     style={{
-                      flex: 1,
-                      height: 4,
-                      background: '#E2E8F0',
+                      position: 'absolute',
+                      top: 8,
+                      left: 8,
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      backdropFilter: 'blur(6px)',
+                      padding: '3px 9px',
                       borderRadius: 999,
-                      overflow: 'hidden',
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      color: campaigns[0].statusType === 'draft' ? '#D97706' : '#059669',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
                     }}
                   >
-                    <div
+                    <span
                       style={{
-                        width: `${campaigns[0]?.progressPercent || 45}%`,
-                        height: '100%',
-                        background: '#4F46E5',
-                        borderRadius: 999,
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: campaigns[0].statusType === 'draft' ? '#F59E0B' : '#10B981',
                       }}
                     />
+                    {campaigns[0].statusText}
                   </div>
-                  <span style={{ fontSize: 10.5, fontWeight: 700, color: '#64748B' }}>
-                    {campaigns[0]?.progressPercent || 45}%
-                  </span>
+
+                  {/* Overlaid Budget Pill */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 8,
+                      right: 8,
+                      background: 'rgba(15, 23, 42, 0.85)',
+                      backdropFilter: 'blur(4px)',
+                      padding: '2.5px 8px',
+                      borderRadius: 6,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: '#FFFFFF',
+                    }}
+                  >
+                    {campaigns[0].budgetFormatted}
+                  </div>
                 </div>
 
-                <Dropdown
-                  menu={{
-                    items: [
-                      {
-                        key: 'view',
-                        icon: <EyeOutlined />,
-                        label: 'Xem chi tiết',
-                        onClick: () => handleOpenDetail(campaigns[0] || DEFAULT_CAMPAIGNS[0]),
-                      },
-                      {
-                        key: 'koc',
-                        icon: <CompassOutlined />,
-                        label: 'Tìm KOC AI',
-                        onClick: () => navigate('/discovery'),
-                      },
-                    ],
-                  }}
-                  trigger={['click']}
-                  placement="bottomRight"
-                >
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<EllipsisOutlined style={{ fontSize: 15, color: '#94A3B8' }} />}
-                  />
-                </Dropdown>
+                {/* Info & Progress */}
+                <div>
+                  <div
+                    style={{
+                      fontWeight: 800,
+                      fontSize: 14,
+                      color: '#0F172A',
+                      cursor: 'pointer',
+                      lineHeight: 1.35,
+                      marginBottom: 4,
+                    }}
+                    onClick={() => handleOpenDetail(campaigns[0])}
+                    title={campaigns[0].name}
+                  >
+                    {campaigns[0].name}
+                  </div>
+
+                  <div style={{ fontSize: 11.5, color: '#94A3B8', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 10 }}>
+                    <CalendarOutlined style={{ fontSize: 11 }} />
+                    <span>{campaigns[0].dateRange}</span>
+                  </div>
+
+                  {/* Progress Box */}
+                  <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 9, padding: '8px 12px', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5, fontSize: 11.5 }}>
+                      <span style={{ color: '#64748B', fontWeight: 500 }}>Tiến độ hoàn thành</span>
+                      <span style={{ fontWeight: 700, color: '#4F46E5' }}>{campaigns[0].progressPercent}%</span>
+                    </div>
+                    <Progress
+                      percent={campaigns[0].progressPercent}
+                      showInfo={false}
+                      strokeColor="#4F46E5"
+                      trailColor="#E2E8F0"
+                      size="small"
+                      style={{ margin: 0 }}
+                    />
+                  </div>
+
+                  {/* Action Buttons: 🧭 Khám phá KOC AI (Nút chính) + Chi tiết */}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Button
+                      type="primary"
+                      icon={<CompassOutlined />}
+                      onClick={() => {
+                        sessionStorage.setItem('current_campaign_id', campaigns[0].id);
+                        localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', campaigns[0].id);
+                        navigate(`/discovery?campaignId=${campaigns[0].id}`, { state: { campaignId: campaigns[0].id } });
+                      }}
+                      style={{
+                        flex: 1,
+                        height: 36,
+                        borderRadius: 9,
+                        fontWeight: 700,
+                        fontSize: 12.5,
+                        background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+                        borderColor: '#4F46E5',
+                        boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 5,
+                      }}
+                    >
+                      Khám phá KOC AI
+                    </Button>
+
+                    <Button
+                      icon={<EyeOutlined />}
+                      onClick={() => handleOpenDetail(campaigns[0])}
+                      style={{
+                        height: 36,
+                        borderRadius: 9,
+                        fontWeight: 600,
+                        fontSize: 12.5,
+                        color: '#475569',
+                        borderColor: '#CBD5E1',
+                        padding: '0 12px',
+                      }}
+                    >
+                      Chi tiết
+                    </Button>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '32px 16px', gap: 8, background: '#F8FAFC', borderRadius: 10 }}>
+                <RocketOutlined style={{ fontSize: 24, color: '#CBD5E1' }} />
+                <span style={{ fontSize: 12.5, color: '#64748B', textAlign: 'center' }}>
+                  Chưa có chiến dịch gần đây
+                </span>
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<PlusOutlined />}
+                  onClick={() => navigate('/campaigns/create')}
+                  style={{ background: '#4F46E5', borderRadius: 6, fontSize: 12, height: 30, marginTop: 4 }}
+                >
+                  Tạo chiến dịch
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

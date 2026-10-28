@@ -1,0 +1,829 @@
+/* ============================================================
+   INFLUENCERMATCH - CREATOR DISCOVERY PAGE STYLESHEET
+   Layout 2 Cột Chuẩn Mẫu (Main Content + Sticky Sidebar Tóm Tắt)
+   Modern Luxe, Indigo / Slate Colorway, Pixel-Perfect Matching
+   ============================================================ */
+
+/* ── Container chính ── */
+.cdiscovery-container {
+  max-width: 1240px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+  padding: 8px 16px 60px 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ── 1. Breadcrumb ── */
+.cdiscovery-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748B;
+}
+
+.cdiscovery-breadcrumb-link {
+  color: #64748B;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.cdiscovery-breadcrumb-link:hover {
+  color: #4F46E5;
+}
+
+.cdiscovery-breadcrumb-sep {
+  color: #CBD5E1;
+  font-size: 12px;
+}
+
+.cdiscovery-breadcrumb-camp {
+  color: #334155;
+  font-weight: 500;
+}
+
+.cdiscovery-breadcrumb-current {
+  color: #0F172A;
+  font-weight: 700;
+}
+
+/* ── Page Title & Subtitle ── */
+.cdiscovery-header-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cdiscovery-header-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  letter-spacing: -0.4px;
+}
+
+.cdiscovery-header-sub {
+  font-size: 13.5px;
+  color: #64748B;
+  margin: 0;
+}
+
+/* ── Mode Navigation Tabs (Khám phá hệ thống / Quét kênh ngoài) ── */
+.cdiscovery-mode-tabs {
+  display: inline-flex;
+  align-items: center;
+  background: #F1F5F9;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  gap: 4px;
+}
+
+.cdiscovery-tab-btn {
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.cdiscovery-tab-btn:hover {
+  color: #1E293B;
+}
+
+.cdiscovery-tab-btn.active {
+  background: #FFFFFF;
+  color: #4F46E5;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+/* ── 2. Top Stepper 5 bước (Top Stepper Bar) ── */
+.cdiscovery-top-stepper {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.cdiscovery-step-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.15s ease;
+}
+
+.cdiscovery-step-item:hover {
+  opacity: 0.85;
+}
+
+.cdiscovery-step-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.cdiscovery-step-badge.done {
+  background: #6366F1;
+  color: #FFFFFF;
+}
+
+.cdiscovery-step-badge.active {
+  background: #4F46E5;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+}
+
+.cdiscovery-step-badge.upcoming {
+  background: #F1F5F9;
+  color: #94A3B8;
+  border: 1px solid #E2E8F0;
+}
+
+.cdiscovery-step-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #64748B;
+  white-space: nowrap;
+}
+
+.cdiscovery-step-title.active {
+  color: #0F172A;
+  font-weight: 700;
+}
+
+.cdiscovery-step-line {
+  flex: 1;
+  height: 2px;
+  background: #E2E8F0;
+  margin: 0 16px;
+  min-width: 24px;
+  border-radius: 1px;
+}
+
+.cdiscovery-step-line.done {
+  background: #818CF8;
+}
+
+/* ── 3. Luồng nội dung chính toàn màn hình (Single Column Layout) ── */
+.cdiscovery-content-flow {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── 5. Panel Tìm Kiếm & Bộ Lọc ── */
+.cdiscovery-search-filter-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.cdiscovery-filter-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cdiscovery-filter-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cdiscovery-filter-toggle-icon {
+  font-size: 14px;
+  color: #64748B;
+}
+
+.cdiscovery-filter-row-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cdiscovery-search-input-group {
+  flex: 1 1 300px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cdiscovery-search-input {
+  height: 40px !important;
+  border-radius: 10px !important;
+  border-color: #E2E8F0 !important;
+  font-size: 13px !important;
+}
+
+.cdiscovery-search-input:focus,
+.cdiscovery-search-input-focused {
+  border-color: #6366F1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15) !important;
+}
+
+.cdiscovery-btn-search {
+  height: 40px !important;
+  border-radius: 10px !important;
+  background: #4F46E5 !important;
+  border: none !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  padding: 0 18px !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25) !important;
+}
+
+.cdiscovery-btn-search:hover {
+  background: #4338CA !important;
+}
+
+.cdiscovery-sort-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cdiscovery-sort-label {
+  font-size: 13px;
+  color: #64748B;
+  white-space: nowrap;
+}
+
+.cdiscovery-sort-select {
+  width: 165px;
+}
+
+.cdiscovery-sort-select .ant-select-selector {
+  height: 40px !important;
+  border-radius: 10px !important;
+  border-color: #E2E8F0 !important;
+  display: flex !important;
+  align-items: center !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.cdiscovery-view-switch-btns {
+  display: flex;
+  background: #F1F5F9;
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+}
+
+.cdiscovery-view-btn {
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-size: 15px;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.cdiscovery-view-btn.active {
+  background: #FFFFFF;
+  color: #4F46E5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Filter Dropdown Pills (Tinh gọn trên 1 hàng duy nhất) ── */
+.cdiscovery-filter-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-top: 10px;
+  padding-bottom: 2px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.cdiscovery-filter-pills-row::-webkit-scrollbar {
+  display: none;
+}
+
+.cdiscovery-pill-select {
+  flex-shrink: 0;
+}
+
+.cdiscovery-pill-select .ant-select-selector {
+  border-radius: 9999px !important;
+  height: 34px !important;
+  border-color: #E2E8F0 !important;
+  background: #F8FAFC !important;
+  padding: 0 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  color: #334155 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) !important;
+}
+
+.cdiscovery-pill-select:hover .ant-select-selector {
+  border-color: #CBD5E1 !important;
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+}
+
+.cdiscovery-pill-select.has-value .ant-select-selector {
+  border-color: #A5B4FC !important;
+  background: #EEF2FF !important;
+  color: #4F46E5 !important;
+  font-weight: 600 !important;
+}
+
+.cdiscovery-filter-reset-btn {
+  color: #DC2626 !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  padding: 0 10px !important;
+  height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  border-radius: 9999px !important;
+  background: #FEF2F2 !important;
+  border: 1px solid #FEE2E2 !important;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition: all 0.15s ease !important;
+}
+
+.cdiscovery-filter-reset-btn:hover {
+  background: #FEE2E2 !important;
+  color: #B91C1C !important;
+  border-color: #FECACA !important;
+}
+
+/* ── 6. Results Toolbar ── */
+.cdiscovery-results-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cdiscovery-results-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cdiscovery-results-heading {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cdiscovery-select-all-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cdiscovery-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #4F46E5;
+  cursor: pointer;
+}
+
+.cdiscovery-results-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cdiscovery-selected-badge {
+  font-size: 13px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.cdiscovery-btn-bulk-shortlist {
+  background: #4F46E5 !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  height: 38px !important;
+  padding: 0 18px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.cdiscovery-btn-bulk-shortlist:disabled {
+  background: #E2E8F0 !important;
+  color: #94A3B8 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+/* ── 7. Lưới KOC (Grid 3 Cột) ── */
+.cdiscovery-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.cdiscovery-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cdiscovery-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.06);
+  transform: translateY(-2px);
+}
+
+.cdiscovery-card-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.cdiscovery-card-left-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.cdiscovery-card-avatar-wrap {
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cdiscovery-card-author-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.cdiscovery-card-name-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cdiscovery-card-name-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cdiscovery-card-username-text {
+  font-size: 12px;
+  color: #64748B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cdiscovery-card-right-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cdiscovery-match-tag-pill {
+  background: #DCFCE7;
+  color: #16A34A;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.cdiscovery-card-dots-btn {
+  border: none;
+  background: transparent;
+  color: #94A3B8;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.cdiscovery-card-dots-btn:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+/* Niche Tags */
+.cdiscovery-card-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cdiscovery-niche-pill {
+  background: #EEF2FF;
+  color: #4F46E5;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* 3 Metrics Box */
+.cdiscovery-card-metrics-box {
+  display: flex;
+  background: #F8FAFC;
+  border: 1px solid #F1F5F9;
+  border-radius: 10px;
+  padding: 8px 0;
+  text-align: center;
+}
+
+.cdiscovery-metric-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+}
+
+.cdiscovery-metric-col:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 15%;
+  height: 70%;
+  width: 1px;
+  background: #E2E8F0;
+}
+
+.cdiscovery-metric-number {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.1;
+}
+
+.cdiscovery-metric-caption {
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+/* Bio Text */
+.cdiscovery-card-bio-text {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.45;
+  min-height: 34px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Action Buttons inside Card */
+.cdiscovery-card-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.cdiscovery-btn-profile-card {
+  flex: 1;
+  height: 36px !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #334155 !important;
+  font-weight: 600 !important;
+  font-size: 12.5px !important;
+  border-radius: 8px !important;
+  transition: all 0.15s ease !important;
+}
+
+.cdiscovery-btn-profile-card:hover {
+  border-color: #CBD5E1 !important;
+  background: #F8FAFC !important;
+}
+
+.cdiscovery-btn-shortlist-card {
+  flex: 1.25;
+  height: 36px !important;
+  background: #4F46E5 !important;
+  border: none !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  font-size: 12.5px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25) !important;
+  transition: all 0.15s ease !important;
+}
+
+.cdiscovery-btn-shortlist-card:hover {
+  background: #4338CA !important;
+}
+
+.cdiscovery-btn-shortlist-card.saved {
+  background: #ECFDF5 !important;
+  color: #059669 !important;
+  border: 1px solid #A7F3D0 !important;
+  box-shadow: none !important;
+}
+
+/* ── 8. Pagination Chân Trang ── */
+.cdiscovery-pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 4px 6px 4px;
+  border-top: 1px solid #F1F5F9;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cdiscovery-pagination-count {
+  font-size: 13px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.cdiscovery-page-size-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748B;
+}
+
+/* ── Responsive Hoàn Chỉnh (Mobile, Tablet, Desktop) ── */
+@media (max-width: 1024px) {
+  .cdiscovery-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .cdiscovery-container {
+    padding: 6px 12px 40px 12px;
+    gap: 12px;
+  }
+  .cdiscovery-header-title {
+    font-size: 20px;
+  }
+  .cdiscovery-header-sub {
+    font-size: 12.5px;
+  }
+  .cdiscovery-mode-tabs {
+    width: 100%;
+    display: flex;
+  }
+  .cdiscovery-tab-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+  .cdiscovery-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .cdiscovery-top-stepper {
+    overflow-x: auto;
+    padding: 10px 14px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cdiscovery-top-stepper::-webkit-scrollbar {
+    display: none;
+  }
+  .cdiscovery-step-item {
+    flex-shrink: 0;
+  }
+  .cdiscovery-filter-row-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cdiscovery-search-input-group {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+  .cdiscovery-sort-group {
+    justify-content: space-between;
+    width: 100%;
+  }
+  .cdiscovery-sort-select {
+    flex: 1;
+  }
+  .cdiscovery-results-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .cdiscovery-results-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .cdiscovery-btn-bulk-shortlist {
+    flex: 1;
+    justify-content: center;
+  }
+  .cdiscovery-pagination-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+}
