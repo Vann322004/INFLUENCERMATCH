@@ -1552,7 +1552,13 @@ export default function CreatorDiscoveryPage() {
 
             <div
               className="cdiscovery-step-item"
-              onClick={() => navigate(`/creators/shortlist${selectedCampaignId ? `?campaignId=${selectedCampaignId}` : ''}`)}
+              onClick={() => {
+                if (selectedCampaignId) {
+                  sessionStorage.setItem('current_campaign_id', selectedCampaignId);
+                  localStorage.setItem('last_active_campaign_id', selectedCampaignId);
+                }
+                navigate('/creators/shortlist');
+              }}
             >
               <div className="cdiscovery-step-badge upcoming">3</div>
               <span className="cdiscovery-step-title">Danh sách chọn</span>
@@ -1561,7 +1567,13 @@ export default function CreatorDiscoveryPage() {
 
             <div
               className="cdiscovery-step-item"
-              onClick={() => navigate(`/creators/recommendations${selectedCampaignId ? `?campaignId=${selectedCampaignId}` : ''}`)}
+              onClick={() => {
+                if (selectedCampaignId) {
+                  sessionStorage.setItem('current_campaign_id', selectedCampaignId);
+                  localStorage.setItem('last_active_campaign_id', selectedCampaignId);
+                }
+                navigate('/creators/recommendations');
+              }}
             >
               <div className="cdiscovery-step-badge upcoming">4</div>
               <span className="cdiscovery-step-title">Gợi ý AI</span>

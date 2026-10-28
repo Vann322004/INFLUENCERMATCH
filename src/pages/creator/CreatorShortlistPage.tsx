@@ -249,11 +249,24 @@ export default function CreatorShortlistPage() {
     return rawUrl || rawState || rawSession || rawLocal || initialCache?.selectedCampaign || 'all';
   });
 
+  // Clean URL ngay lập tức khi vừa mount để thanh địa chỉ luôn sạch, không lộ UUID thô
+  useEffect(() => {
+    const rawUrl = searchParams.get('campaignId');
+    if (rawUrl) {
+      sessionStorage.setItem('current_campaign_id', rawUrl);
+      localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', rawUrl);
+      const nextParams = new URLSearchParams(window.location.search);
+      nextParams.delete('campaignId');
+      const cleanUrl = `${window.location.pathname}${nextParams.toString() ? `?${nextParams.toString()}` : ''}`;
+      window.history.replaceState({}, '', cleanUrl);
+    }
+  }, []);
+
   // Candidate Search & Adding state in Add Modal
   const [candidateSearch, setCandidateSearch] = useState('');
   const [addingCandidateId, setAddingCandidateId] = useState<string | null>(null);
 
-  // Dynamic Campaign Options for Select
+  // Dynamic Campaign Options for Select (kèm nhãn thân thiện dự phòng tránh flash chuỗi UUID thô)
   const campaignOptions = useMemo(() => {
     const list = [{ value: 'all', label: '📁 Tất cả chiến dịch' }];
     campaigns.forEach((camp) => {
@@ -262,8 +275,21 @@ export default function CreatorShortlistPage() {
         label: `🎯 ${camp.name}`,
       });
     });
+
+    // Nếu selectedCampaign là UUID và chưa có trong campaigns (đang tải), thêm nhãn tạm thân thiện thay vì để AntD hiển thị mã UUID
+    if (selectedCampaign && selectedCampaign !== 'all' && !campaigns.some((c) => c.id === selectedCampaign)) {
+      const cachedName =
+        sessionStorage.getItem('current_campaign_name') ||
+        localStorage.getItem('IM_SELECTED_CAMPAIGN_NAME') ||
+        'Đang tải chiến dịch...';
+      list.push({
+        value: selectedCampaign,
+        label: `🎯 ${cachedName}`,
+      });
+    }
+
     return list;
-  }, [campaigns]);
+  }, [campaigns, selectedCampaign]);
 
   // Load Shortlist từ Backend Database kết hợp Persistent Fallback
   const loadShortlist = async (
@@ -987,7 +1013,13 @@ export default function CreatorShortlistPage() {
 
         <div
           className="cdiscovery-step-item"
-          onClick={() => navigate(`/creators${selectedCampaign !== 'all' ? `?campaignId=${selectedCampaign}` : ''}`)}
+          onClick={() => {
+            if (selectedCampaign && selectedCampaign !== 'all') {
+              sessionStorage.setItem('current_campaign_id', selectedCampaign);
+              localStorage.setItem('last_active_campaign_id', selectedCampaign);
+            }
+            navigate('/creators');
+          }}
         >
           <div className="cdiscovery-step-badge done">
             <CheckOutlined />
@@ -1010,7 +1042,11 @@ export default function CreatorShortlistPage() {
               return;
             }
             const targetId = selectedCampaign && selectedCampaign !== 'all' ? selectedCampaign : campaigns[0]?.id || 'all';
-            navigate(`/creators/recommendations${targetId !== 'all' ? `?campaignId=${targetId}` : ''}`);
+            if (targetId && targetId !== 'all') {
+              sessionStorage.setItem('current_campaign_id', targetId);
+              localStorage.setItem('last_active_campaign_id', targetId);
+            }
+            navigate('/creators/recommendations');
           }}
         >
           <div className="cdiscovery-step-badge upcoming">4</div>
@@ -1212,11 +1248,13 @@ export default function CreatorShortlistPage() {
                             borderColor: 'transparent',
                             boxShadow: '0 4px 14px rgba(79, 70, 229, 0.25)',
                           }}
-                          onClick={() =>
-                            navigate(
-                              `/creators${selectedCampaign !== 'all' ? `?campaignId=${selectedCampaign}` : ''}`
-                            )
-                          }
+                          onClick={() => {
+                            if (selectedCampaign && selectedCampaign !== 'all') {
+                              sessionStorage.setItem('current_campaign_id', selectedCampaign);
+                              localStorage.setItem('last_active_campaign_id', selectedCampaign);
+                            }
+                            navigate('/creators');
+                          }}
                         >
                           Khám phá Nhà sáng tạo ngay ➔
                         </Button>
@@ -1459,7 +1497,13 @@ export default function CreatorShortlistPage() {
                         <Button
                           type="primary"
                           style={{ background: '#4F46E5', borderRadius: 8, height: 38 }}
-                          onClick={() => navigate(`/creators${selectedCampaign !== 'all' ? `?campaignId=${selectedCampaign}` : ''}`)}
+                          onClick={() => {
+                            if (selectedCampaign && selectedCampaign !== 'all') {
+                              sessionStorage.setItem('current_campaign_id', selectedCampaign);
+                              localStorage.setItem('last_active_campaign_id', selectedCampaign);
+                            }
+                            navigate('/creators');
+                          }}
                         >
                           Khám phá Nhà sáng tạo ngay ➔
                         </Button>
@@ -2202,7 +2246,11 @@ export default function CreatorShortlistPage() {
                           type="primary"
                           onClick={() => {
                             setAddModalOpen(false);
-                            navigate(`/creators${addCampaignId ? `?campaignId=${addCampaignId}` : ''}`);
+                            if (addCampaignId && addCampaignId !== 'all') {
+                              sessionStorage.setItem('current_campaign_id', addCampaignId);
+                              localStorage.setItem('last_active_campaign_id', addCampaignId);
+                            }
+                            navigate('/creators');
                           }}
                         >
                           Sang Khám phá để AI tìm kiếm thêm ➔
@@ -2307,7 +2355,11 @@ export default function CreatorShortlistPage() {
                   style={{ padding: 0, fontWeight: 700, fontSize: 13, color: '#4F46E5' }}
                   onClick={() => {
                     setAddModalOpen(false);
-                    navigate(`/creators${addCampaignId && addCampaignId !== 'all' ? `?campaignId=${addCampaignId}` : ''}`);
+                    if (addCampaignId && addCampaignId !== 'all') {
+                      sessionStorage.setItem('current_campaign_id', addCampaignId);
+                      localStorage.setItem('last_active_campaign_id', addCampaignId);
+                    }
+                    navigate('/creators');
                   }}
                 >
                   Sang trang Khám phá ➔
