@@ -633,13 +633,20 @@
 
 /* 9. Step 3 - KPI Cards & Overview */
 .ccreate-kpi-card {
-  background: #F8FAFC;
+  background: #FFFFFF;
   border: 1px solid #E2E8F0;
   border-radius: 12px;
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.ccreate-kpi-card:hover {
+  border-color: #DDD6FE;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.06);
 }
 
 .ccreate-kpi-label {

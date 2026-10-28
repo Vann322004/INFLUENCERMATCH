@@ -62,15 +62,15 @@ const { TextArea } = Input;
 
 const AI_SAMPLE_PROMPTS = [
   {
-    label: '🧴 Kem dưỡng phục hồi da Gen-Z',
+    label: 'Kem dưỡng phục hồi da Gen-Z',
     prompt: 'Quảng bá dòng kem dưỡng phục hồi da dành cho giới trẻ 18-24 tuổi tại Hà Nội và TP.HCM, ngân sách tầm 25 triệu trên TikTok và Instagram',
   },
   {
-    label: '⚡ Phụ kiện sạc nhanh công nghệ',
+    label: 'Phụ kiện sạc nhanh công nghệ',
     prompt: 'Tìm kiếm creator công nghệ review phụ kiện sạc nhanh cho người trẻ 18-35 tuổi, ngân sách 30 triệu trên TikTok và Facebook',
   },
   {
-    label: '👗 Thời trang dạo phố OOTD',
+    label: 'Thời trang dạo phố OOTD',
     prompt: 'Quảng bá BST thời trang dạo phố năng động cho nữ giới 18-24 tuổi tại TP.HCM, ngân sách 20 triệu trên Instagram và TikTok',
   },
 ];
@@ -150,12 +150,12 @@ export default function CreateCampaignPage() {
 
   // Provinces API State
   const [provinceOptions, setProvinceOptions] = useState<{ value: string; label: string }[]>([
-    { value: 'nationwide', label: '📍 Toàn quốc' },
-    { value: 'Thành phố Hà Nội', label: '📍 Thành phố Hà Nội' },
-    { value: 'Thành phố Hồ Chí Minh', label: '📍 Thành phố Hồ Chí Minh' },
-    { value: 'Thành phố Đà Nẵng', label: '📍 Thành phố Đà Nẵng' },
-    { value: 'Thành phố Hải Phòng', label: '📍 Thành phố Hải Phòng' },
-    { value: 'Thành phố Cần Thơ', label: '📍 Thành phố Cần Thơ' },
+    { value: 'nationwide', label: 'Toàn quốc' },
+    { value: 'Thành phố Hà Nội', label: 'Thành phố Hà Nội' },
+    { value: 'Thành phố Hồ Chí Minh', label: 'Thành phố Hồ Chí Minh' },
+    { value: 'Thành phố Đà Nẵng', label: 'Thành phố Đà Nẵng' },
+    { value: 'Thành phố Hải Phòng', label: 'Thành phố Hải Phòng' },
+    { value: 'Thành phố Cần Thơ', label: 'Thành phố Cần Thơ' },
   ]);
   const [loadingProvinces, setLoadingProvinces] = useState<boolean>(false);
 
@@ -169,10 +169,10 @@ export default function CreateCampaignPage() {
           const data = await res.json();
           if (isMounted && Array.isArray(data)) {
             const list = [
-              { value: 'nationwide', label: '📍 Toàn quốc' },
+              { value: 'nationwide', label: 'Toàn quốc' },
               ...data.map((item: { name: string; code: number }) => ({
                 value: item.name,
-                label: `📍 ${item.name}`,
+                label: item.name,
               })),
             ];
             setProvinceOptions(list);
@@ -400,7 +400,7 @@ export default function CreateCampaignPage() {
         if (result.aiExplanation) {
           setAiExplanation(result.aiExplanation);
         }
-        message.success({ content: '🎉 AI đã điền tự động các thông số chiến dịch thành công!', key: 'ai_suggest', duration: 3 });
+        message.success({ content: 'AI đã điền tự động các thông số chiến dịch thành công!', key: 'ai_suggest', duration: 3 });
       }
     } catch (error) {
       console.error('Error autofilling campaign with AI:', error);
@@ -408,6 +408,20 @@ export default function CreateCampaignPage() {
     } finally {
       setIsAiLoading(false);
     }
+  };
+
+  // Tính toán chỉ số KPI đề xuất từ AI theo quy mô ngân sách
+  const effectiveBudget = budgetTotal && budgetTotal > 0 ? budgetTotal : 25000000;
+  const aiEstimatedReach = `${Math.round(effectiveBudget / 100).toLocaleString('vi-VN')} lượt xem`;
+  const aiEstimatedER = '5.0%';
+  const aiEstimatedConv = Math.max(20, Math.round(effectiveBudget / 500000));
+
+  // Tính toán lại / Áp dụng chỉ số KPI đề xuất từ AI
+  const handleGenerateAiKpi = () => {
+    setTargetReach(aiEstimatedReach);
+    setTargetEngagementRate(aiEstimatedER);
+    setTargetConversions(aiEstimatedConv);
+    message.success('Đã áp dụng các chỉ số KPI theo ngân sách!');
   };
 
   const scrollToTop = () => {
@@ -560,17 +574,15 @@ export default function CreateCampaignPage() {
       message.warning('Vui lòng nhập hạn chót duyệt kịch bản (Draft Deadline)!');
       return;
     }
+    // Nếu chỉ số KPI để trống, tự động áp dụng ước tính gợi ý từ AI
     if (!targetReach.trim()) {
-      message.warning('Vui lòng nhập lượt tiếp cận mục tiêu!');
-      return;
+      setTargetReach(aiEstimatedReach);
     }
     if (!targetEngagementRate.trim()) {
-      message.warning('Vui lòng nhập tỷ lệ tương tác kỳ vọng!');
-      return;
+      setTargetEngagementRate(aiEstimatedER);
     }
     if (targetConversions === undefined || targetConversions === null || Number(targetConversions) <= 0) {
-      message.warning('Vui lòng nhập số lượng chuyển đổi đơn hàng ước tính (tối thiểu 1 đơn)!');
-      return;
+      setTargetConversions(aiEstimatedConv);
     }
 
     setIsSubmitting(true);
@@ -597,7 +609,7 @@ export default function CreateCampaignPage() {
         }
       } catch {}
 
-      message.success({ content: '🎉 Cập nhật thông tin chiến dịch thành công!', key: 'update_camp', duration: 2 });
+      message.success({ content: 'Cập nhật thông tin chiến dịch thành công!', key: 'update_camp', duration: 2 });
       navigate(`/campaigns/${resolvedCampaignId}`);
     } catch (err) {
       console.error('Lỗi cập nhật chiến dịch:', err);
@@ -727,17 +739,15 @@ export default function CreateCampaignPage() {
         message.warning('Vui lòng nhập hạn chót duyệt kịch bản (Draft Deadline)!');
         return;
       }
+      // Nếu các chỉ số KPI để trống, tự động áp dụng ước tính gợi ý từ AI theo ngân sách
       if (!targetReach.trim()) {
-        message.warning('Vui lòng nhập lượt tiếp cận mục tiêu kỳ vọng!');
-        return;
+        setTargetReach(aiEstimatedReach);
       }
       if (!targetEngagementRate.trim()) {
-        message.warning('Vui lòng nhập tỷ lệ tương tác kỳ vọng!');
-        return;
+        setTargetEngagementRate(aiEstimatedER);
       }
       if (targetConversions === undefined || targetConversions === null || Number(targetConversions) <= 0) {
-        message.warning('Vui lòng nhập số lượng đơn hàng chuyển đổi ước tính (tối thiểu 1 đơn)!');
-        return;
+        setTargetConversions(aiEstimatedConv);
       }
 
       setIsSubmitting(true);
@@ -783,7 +793,7 @@ export default function CreateCampaignPage() {
           console.warn('Cannot write to localStorage:', storageErr);
         }
 
-        message.success({ content: '🎉 Chiến dịch đã khởi tạo thành công! Đang kích hoạt Trợ lý Đề xuất Creator...', key: 'create_camp', duration: 2 });
+        message.success({ content: 'Chiến dịch đã khởi tạo thành công! Đang kích hoạt Trợ lý Đề xuất Creator...', key: 'create_camp', duration: 2 });
         navigate('/creators?autoRun=true', {
           state: {
             campaignId: targetCampaignId,
@@ -1459,9 +1469,9 @@ export default function CreateCampaignPage() {
                       onChange={setPaymentModel}
                       style={{ width: '100%', height: 42 }}
                       options={[
-                        { value: 'cash', label: '💵 Trả phí cố định (Fixed Fee / Video)' },
-                        { value: 'product', label: '🎁 Đổi sản phẩm dùng thử (Gifting / Barter)' },
-                        { value: 'hybrid', label: '💎 Kết hợp: Phí cố định + Tặng quà + Affiliate' },
+                        { value: 'cash', label: 'Trả phí cố định (Fixed Fee / Video)' },
+                        { value: 'product', label: 'Đổi sản phẩm dùng thử (Gifting / Barter)' },
+                        { value: 'hybrid', label: 'Kết hợp: Phí cố định + Tặng quà + Affiliate' },
                       ]}
                     />
                   </Col>
@@ -1475,9 +1485,9 @@ export default function CreateCampaignPage() {
                       onChange={setCampaignDuration}
                       style={{ width: '100%', height: 40 }}
                       options={[
-                        { value: '2_weeks', label: '⏱️ 2 tuần (Chiến dịch thần tốc / Flash campaign)' },
-                        { value: '4_weeks', label: '⏱️ 4 tuần (Khuyên dùng cho ra mắt sản phẩm)' },
-                        { value: '8_weeks', label: '⏱️ 8 tuần (Chiến dịch duy trì nhận diện dài hạn)' },
+                        { value: '2_weeks', label: '2 tuần (Chiến dịch thần tốc / Flash campaign)' },
+                        { value: '4_weeks', label: '4 tuần (Khuyên dùng cho ra mắt sản phẩm)' },
+                        { value: '8_weeks', label: '8 tuần (Chiến dịch duy trì nhận diện dài hạn)' },
                       ]}
                     />
                   </Col>
@@ -1495,50 +1505,198 @@ export default function CreateCampaignPage() {
                   </Col>
                 </Row>
 
-                {/* Phần 2: KPI Kỳ vọng */}
+                {/* Phần 2: KPI Kỳ vọng (AI Gợi ý) */}
                 <div className="ccreate-sub-section">
-                  <div className="ccreate-sub-title">
-                    <span>Chỉ số KPI cam kết kỳ vọng</span>
-                    <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>
-                      Mục tiêu định lượng để đo lường hiệu quả (Bắt buộc)
-                    </span>
+                  <div className="ccreate-sub-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+                    <div>
+                      <span>Chỉ số KPI kỳ vọng</span>
+                      <span style={{ fontSize: 12, color: '#64748B', fontWeight: 400, marginLeft: 8 }}>
+                        Ước tính theo quy mô ngân sách • Bạn có thể tùy chỉnh
+                      </span>
+                    </div>
+                    <Button
+                      size="small"
+                      onClick={handleGenerateAiKpi}
+                      style={{
+                        borderRadius: 6,
+                        fontSize: 12,
+                        borderColor: '#E2E8F0',
+                        color: '#475569',
+                        background: '#F8FAFC',
+                        fontWeight: 500,
+                      }}
+                    >
+                      AI tính theo ngân sách
+                    </Button>
                   </div>
 
                   <Row gutter={[14, 14]}>
                     <Col xs={24} sm={8}>
                       <div className="ccreate-kpi-card">
-                        <span className="ccreate-kpi-label">🎯 Lượt tiếp cận mục tiêu <span className="req" style={{ color: '#EF4444' }}>*</span></span>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                          <span className="ccreate-kpi-label" style={{ margin: 0 }}>Lượt tiếp cận mục tiêu</span>
+                          <Tag style={{ margin: 0, borderRadius: 4, fontSize: 11, fontWeight: 500, border: 'none', background: '#F1F5F9', color: '#475569' }}>
+                            AI gợi ý
+                          </Tag>
+                        </div>
                         <Input
                           value={targetReach}
                           onChange={(e) => setTargetReach(e.target.value)}
-                          placeholder="Ví dụ: 250,000 lượt xem"
-                          style={{ borderRadius: 8, height: 38, fontWeight: 700, fontSize: 13 }}
+                          placeholder={`Gợi ý: ${aiEstimatedReach}`}
+                          style={{ borderRadius: 8, height: 38, fontWeight: 600, fontSize: 13 }}
                         />
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
+                          {targetReach.trim() === aiEstimatedReach ? (
+                            <>
+                              <span style={{ color: '#059669', fontWeight: 500 }}>
+                                Đang dùng gợi ý AI
+                              </span>
+                              <span
+                                style={{ color: '#94A3B8', cursor: 'pointer', textDecoration: 'underline' }}
+                                onClick={() => setTargetReach('')}
+                              >
+                                Nhập khác
+                              </span>
+                            </>
+                          ) : targetReach.trim() ? (
+                            <>
+                              <span style={{ color: '#64748B' }}>
+                                Gợi ý: {aiEstimatedReach}
+                              </span>
+                              <span
+                                style={{ color: '#4F46E5', fontWeight: 500, cursor: 'pointer' }}
+                                onClick={() => setTargetReach(aiEstimatedReach)}
+                              >
+                                Dùng gợi ý
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span style={{ color: '#64748B' }}>
+                                Gợi ý: {aiEstimatedReach}
+                              </span>
+                              <span
+                                style={{ color: '#4F46E5', fontWeight: 500, cursor: 'pointer' }}
+                                onClick={() => setTargetReach(aiEstimatedReach)}
+                              >
+                                Áp dụng
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </Col>
 
                     <Col xs={24} sm={8}>
                       <div className="ccreate-kpi-card">
-                        <span className="ccreate-kpi-label">📈 Tỷ lệ tương tác kỳ vọng <span className="req" style={{ color: '#EF4444' }}>*</span></span>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                          <span className="ccreate-kpi-label" style={{ margin: 0 }}>Tỷ lệ tương tác kỳ vọng</span>
+                          <Tag style={{ margin: 0, borderRadius: 4, fontSize: 11, fontWeight: 500, border: 'none', background: '#F1F5F9', color: '#475569' }}>
+                            AI gợi ý
+                          </Tag>
+                        </div>
                         <Input
                           value={targetEngagementRate}
                           onChange={(e) => setTargetEngagementRate(e.target.value)}
-                          placeholder="Ví dụ: 5.5%"
-                          style={{ borderRadius: 8, height: 38, fontWeight: 700, fontSize: 13 }}
+                          placeholder={`Gợi ý: ${aiEstimatedER}`}
+                          style={{ borderRadius: 8, height: 38, fontWeight: 600, fontSize: 13 }}
                         />
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
+                          {targetEngagementRate.trim() === aiEstimatedER ? (
+                            <>
+                              <span style={{ color: '#059669', fontWeight: 500 }}>
+                                Đang dùng gợi ý AI
+                              </span>
+                              <span
+                                style={{ color: '#94A3B8', cursor: 'pointer', textDecoration: 'underline' }}
+                                onClick={() => setTargetEngagementRate('')}
+                              >
+                                Nhập khác
+                              </span>
+                            </>
+                          ) : targetEngagementRate.trim() ? (
+                            <>
+                              <span style={{ color: '#64748B' }}>
+                                Gợi ý: {aiEstimatedER}
+                              </span>
+                              <span
+                                style={{ color: '#4F46E5', fontWeight: 500, cursor: 'pointer' }}
+                                onClick={() => setTargetEngagementRate(aiEstimatedER)}
+                              >
+                                Dùng gợi ý
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span style={{ color: '#64748B' }}>
+                                Gợi ý: {aiEstimatedER}
+                              </span>
+                              <span
+                                style={{ color: '#4F46E5', fontWeight: 500, cursor: 'pointer' }}
+                                onClick={() => setTargetEngagementRate(aiEstimatedER)}
+                              >
+                                Áp dụng
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </Col>
 
                     <Col xs={24} sm={8}>
                       <div className="ccreate-kpi-card">
-                        <span className="ccreate-kpi-label">🛒 Chuyển đổi đơn hàng ước tính <span className="req" style={{ color: '#EF4444' }}>*</span></span>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                          <span className="ccreate-kpi-label" style={{ margin: 0 }}>Chuyển đổi đơn hàng ước tính</span>
+                          <Tag style={{ margin: 0, borderRadius: 4, fontSize: 11, fontWeight: 500, border: 'none', background: '#F1F5F9', color: '#475569' }}>
+                            AI gợi ý
+                          </Tag>
+                        </div>
                         <InputNumber
-                          value={targetConversions}
+                          value={targetConversions > 0 ? targetConversions : undefined}
                           onChange={(val) => setTargetConversions(val || 0)}
-                          placeholder="0"
-                          style={{ width: '100%', borderRadius: 8, height: 38, lineHeight: '36px', fontWeight: 700, fontSize: 13 }}
+                          placeholder={String(aiEstimatedConv)}
+                          style={{ width: '100%', borderRadius: 8, height: 38, lineHeight: '36px', fontWeight: 600, fontSize: 13 }}
                           suffix="đơn"
                         />
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
+                          {targetConversions === aiEstimatedConv ? (
+                            <>
+                              <span style={{ color: '#059669', fontWeight: 500 }}>
+                                Đang dùng gợi ý AI
+                              </span>
+                              <span
+                                style={{ color: '#94A3B8', cursor: 'pointer', textDecoration: 'underline' }}
+                                onClick={() => setTargetConversions(0)}
+                              >
+                                Nhập khác
+                              </span>
+                            </>
+                          ) : targetConversions > 0 ? (
+                            <>
+                              <span style={{ color: '#64748B' }}>
+                                Gợi ý: {aiEstimatedConv} đơn
+                              </span>
+                              <span
+                                style={{ color: '#4F46E5', fontWeight: 500, cursor: 'pointer' }}
+                                onClick={() => setTargetConversions(aiEstimatedConv)}
+                              >
+                                Dùng gợi ý
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span style={{ color: '#64748B' }}>
+                                Gợi ý: {aiEstimatedConv} đơn
+                              </span>
+                              <span
+                                style={{ color: '#4F46E5', fontWeight: 500, cursor: 'pointer' }}
+                                onClick={() => setTargetConversions(aiEstimatedConv)}
+                              >
+                                Áp dụng
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </Col>
                   </Row>
@@ -1794,7 +1952,7 @@ export default function CreateCampaignPage() {
                       KPI gợi ý
                     </div>
                     <div style={{ fontSize: 11, color: '#64748B', lineHeight: 1.3 }}>
-                      Lượt tiếp cận: {targetReach}+ | Tương tác: {targetEngagementRate}+
+                      Lượt tiếp cận: {targetReach || aiEstimatedReach} | Tương tác: {targetEngagementRate || aiEstimatedER}
                     </div>
                   </div>
                   <RightOutlined style={{ fontSize: 10, color: '#94A3B8' }} />
@@ -1870,7 +2028,7 @@ export default function CreateCampaignPage() {
                   <div>
                     <div style={{ fontSize: 10.5, color: '#94A3B8' }}>Ước tính lượt tiếp cận</div>
                     <div style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A' }}>
-                      {targetReach} – 2.5M
+                      {targetReach || aiEstimatedReach}
                     </div>
                   </div>
                 </div>
@@ -1913,7 +2071,7 @@ export default function CreateCampaignPage() {
                       fontSize: 12,
                     }}
                   >
-                    ⏱️
+                    <ClockCircleOutlined />
                   </div>
                   <div>
                     <div style={{ fontSize: 10.5, color: '#94A3B8' }}>Thời gian triển khai</div>
