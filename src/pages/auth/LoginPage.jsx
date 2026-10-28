@@ -179,6 +179,7 @@ export default function LoginPage() {
             type="button"
             className="demo-chip"
             onClick={() => form.setFieldsValue({ email: 'manager@influencermatch.vn', password: 'manager123' })}
+          >
             Manager
           </button>
           <button
