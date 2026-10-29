@@ -522,7 +522,72 @@ export const creatorService = {
       localStorage.setItem('IM_SHORTLIST_ALL', JSON.stringify(allList));
     } catch {}
 
+    // Tự động kích hoạt cào dữ liệu mới nhất khi Creator được thêm vào Shortlist (POST /crawl/shortlist-trigger)
+    const rawUsername =
+      payload.username ||
+      (payload as any).userName ||
+      (payload as any).handle ||
+      payload.creatorName;
+    if (rawUsername) {
+      this.triggerShortlistCrawl({
+        platform: payload.platform || 'TIKTOK',
+        username: rawUsername,
+        creatorId: payload.creatorId,
+        campaignId,
+      }).catch(() => null);
+    }
+
     return item;
+  },
+
+  /**
+   * Kích hoạt cào dữ liệu khi Creator được thêm vào Shortlist
+   * POST /api/v1/crawl/shortlist-trigger (FastAPI / Crawler worker)
+   */
+  async triggerShortlistCrawl(payload: {
+    platform: string;
+    username: string;
+    creatorId?: string;
+    campaignId?: string;
+  }): Promise<unknown> {
+    const cleanPlatform = (payload.platform || 'TIKTOK').toUpperCase();
+    const cleanUsername = (payload.username || '').replace(/^@+/, '').trim();
+    if (!cleanUsername) return null;
+
+    const body = {
+      platform: cleanPlatform,
+      username: cleanUsername,
+      creatorId: payload.creatorId || null,
+      campaignId: payload.campaignId || null,
+    };
+
+    // 1. Khi đang chạy local (localhost / 127.0.0.1), ưu tiên gọi trực tiếp tới FastAPI / uvicorn crawler (port 8000)
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      try {
+        const resLocal = await fetch('http://localhost:8000/api/v1/crawl/shortlist-trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (resLocal.ok) {
+          const data = await resLocal.json();
+          console.log('[creatorService] Đã kích hoạt cào dữ liệu qua local crawler (port 8000):', data);
+          return data;
+        }
+      } catch {
+        // Local crawler không phản hồi, fallback qua apiClient bên dưới
+      }
+    }
+
+    // 2. Fallback qua API Gateway / Spring Boot (/api/v1/crawl/shortlist-trigger)
+    try {
+      const res = await apiClient.post('/crawl/shortlist-trigger', body, { timeout: 5000 });
+      console.log('[creatorService] Đã kích hoạt cào dữ liệu qua backend API:', res.data);
+      return res.data;
+    } catch (err: any) {
+      console.warn('[creatorService] Không thể gửi yêu cầu cào dữ liệu /crawl/shortlist-trigger:', err?.message);
+      return null;
+    }
   },
 
   /**

@@ -763,6 +763,10 @@ export default function CreatorShortlistPage() {
       }
       await creatorService.addToShortlist(newCampaignId, {
         creatorId,
+        creatorName: target?.name,
+        username: (target as any)?.username || target?.name,
+        platform: target?.platforms?.[0] || 'tiktok',
+        avatarUrl: target?.avatar,
         priority: (target?.priority?.toUpperCase() as any) || 'HIGH',
         note: target?.note,
       });
@@ -2344,6 +2348,7 @@ export default function CreatorShortlistPage() {
                               await creatorService.addToShortlist(addCampaignId, {
                                 creatorId: candId,
                                 creatorName: cand.displayName || cand.userName,
+                                username: cand.userName || cand.displayName,
                                 avatarUrl: cand.avatarUrl,
                                 followers: cand.followers,
                                 engagementRate: cand.engagementRate,

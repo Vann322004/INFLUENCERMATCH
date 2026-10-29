@@ -88,6 +88,7 @@ export interface AddShortlistItemPayload {
   priority: ShortlistPriority;
   note?: string;
   creatorName?: string;
+  username?: string;
   avatarUrl?: string;
   platform?: string;
   followers?: number;

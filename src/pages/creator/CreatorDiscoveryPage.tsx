@@ -1335,6 +1335,7 @@ export default function CreatorDiscoveryPage() {
           .addToShortlist(targetCampId, {
             creatorId: id,
             creatorName: c?.name || 'KOC',
+            username: c?.username || (c as any)?.userName || (c as any)?.handle || c?.name,
             avatarUrl: c?.avatar,
             followers: c?.followersCount,
             engagementRate: c?.engagementValue,
@@ -2585,6 +2586,9 @@ export default function CreatorDiscoveryPage() {
                 name: shortlistModalCreator.name,
                 avatar: shortlistModalCreator.avatar,
                 username: shortlistModalCreator.username,
+                platform: shortlistModalCreator.platforms?.[0] || 'tiktok',
+                followers: shortlistModalCreator.followersCount,
+                engagementRate: shortlistModalCreator.engagementValue,
                 niche: shortlistModalCreator.categories?.[0],
               }
             : null
