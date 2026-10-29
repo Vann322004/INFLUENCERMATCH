@@ -133,21 +133,36 @@ export default function SubscriptionPage() {
     // 2. Pipeline B: Fetch brand & active subscription info concurrently
     const loadSubscriptionData = async () => {
       try {
-        const cachedBrandId = (() => {
-          try {
-            return localStorage.getItem('influencermatch_brand_id');
-          } catch {
-            return null;
-          }
-        })();
+        // 1. Luôn truy vấn profile brand chính chủ của token hiện tại từ /brands/me
+        let brand = await brandService.getMyBrand(true).catch(() => null);
 
-        // Concurrently query brand profile & preloaded subscriptions if brandId is available
-        const [brand, preloadedSubs] = await Promise.all([
-          brandService.getMyBrand().catch(() => null),
-          cachedBrandId
-            ? subscriptionService.getBrandSubscriptions(cachedBrandId).catch(() => [])
-            : Promise.resolve([]),
-        ]);
+        // 2. Nếu tài khoản Brand mới chưa có hồ sơ profile (404), tự động tạo hồ sơ brand để có ID riêng
+        if (!brand?.id) {
+          const user = getStoredUser();
+          if (user) {
+            brand = await brandService.createBrand({
+              businessName: user?.fullName ? `Thương hiệu của ${user.fullName}` : 'Thương hiệu của tôi',
+              industry: 'E-commerce',
+              website: 'https://influencermatch.vn',
+              location: 'Việt Nam',
+              targetMarkets: ['Vietnam'],
+              targetAudiences: ['General Audience'],
+              brandTone: 'Chuyên nghiệp',
+              preferredPlatforms: ['TIKTOK', 'INSTAGRAM'],
+              description: 'Thương hiệu đối tác trên hệ thống InfluencerMatch.',
+            }).catch(() => null);
+          }
+        }
+
+        if (brand?.id) {
+          try {
+            localStorage.setItem('influencermatch_brand_id', brand.id);
+          } catch {}
+        } else {
+          try {
+            localStorage.removeItem('influencermatch_brand_id');
+          } catch {}
+        }
 
         if (brand && isMounted) {
           setCurrentBrand(brand);
@@ -155,17 +170,12 @@ export default function SubscriptionPage() {
 
         let activeSub: SubscriptionResponse | null = null;
         let hadTrial = false;
-        const effectiveBrandId = brand?.id || cachedBrandId;
+        const effectiveBrandId = brand?.id || null;
 
         if (effectiveBrandId) {
           if (isMounted) setCurrentBrandId(effectiveBrandId);
 
-          // Chỉ dùng preloadedSubs nếu cachedBrandId trùng khớp với brand.id của user hiện tại
-          const isCacheConsistent = Boolean(brand?.id && cachedBrandId === brand.id);
-          const subs =
-            isCacheConsistent && preloadedSubs && preloadedSubs.length > 0
-              ? preloadedSubs
-              : await subscriptionService.getBrandSubscriptions(effectiveBrandId, !isCacheConsistent).catch(() => []);
+          const subs = await subscriptionService.getBrandSubscriptions(effectiveBrandId, true).catch(() => []);
 
           activeSub = (subs || []).find((s) => s.status === 'ACTIVE') || null;
           hadTrial = (subs || []).some((s) => {
@@ -380,10 +390,15 @@ export default function SubscriptionPage() {
 
       message.loading({ content: 'Đang kích hoạt gói dùng thử...', key: 'upgrade_msg' });
       try {
-        if (!currentBrandId) {
-          throw new Error('Không tìm thấy thông tin thương hiệu.');
+        let validBrandId = currentBrandId;
+        if (!validBrandId) {
+          const fresh = await brandService.getMyBrand(true).catch(() => null);
+          validBrandId = fresh?.id || null;
         }
-        await subscriptionService.subscribeFreePlan(currentBrandId, selectedPlanForUpgrade.id);
+        if (!validBrandId) {
+          throw new Error('Không tìm thấy thông tin thương hiệu của bạn. Vui lòng thử tải lại trang.');
+        }
+        await subscriptionService.subscribeFreePlan(validBrandId, selectedPlanForUpgrade.id);
         message.success({ content: 'Kích hoạt gói dùng thử thành công!', key: 'upgrade_msg' });
         setIsUpgradeModalOpen(false);
         window.location.reload();

@@ -8,13 +8,16 @@ import {
   UserProfileResponse,
 } from '../../types/api/auth.types';
 import { clearBrandCache } from './campaignService';
+import { brandService } from './brandService';
 
 export const authService = {
   /**
    * Đăng nhập người dùng bằng email và mật khẩu
    */
   async login(payload: LoginRequest): Promise<LoginResponse> {
+    clearAuthSession();
     clearBrandCache();
+    brandService.clearBrandCache();
     const email = payload.email?.toLowerCase().trim();
     try {
       const response = await apiClient.post<ApiResponse<LoginResponse>>('/auth/login', payload);
