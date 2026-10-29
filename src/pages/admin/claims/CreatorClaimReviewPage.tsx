@@ -18,10 +18,10 @@ const { Text, Title } = Typography;
 const { TextArea } = Input;
 
 const STATUS_CFG: Record<ClaimStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  PENDING:  { label: "Cho duyet",  color: "#F59E0B", icon: <ClockCircleOutlined /> },
-  APPROVED: { label: "Da duyet",   color: "#10B981", icon: <CheckCircleOutlined /> },
-  REJECTED: { label: "Tu choi",    color: "#EF4444", icon: <CloseCircleOutlined /> },
-  REVOKED:  { label: "Thu hoi",    color: "#64748B", icon: <StopOutlined /> },
+  PENDING:  { label: "Chờ duyệt",  color: "#F59E0B", icon: <ClockCircleOutlined /> },
+  APPROVED: { label: "Đã duyệt",   color: "#10B981", icon: <CheckCircleOutlined /> },
+  REJECTED: { label: "Từ chối",    color: "#EF4444", icon: <CloseCircleOutlined /> },
+  REVOKED:  { label: "Thu hồi",    color: "#64748B", icon: <StopOutlined /> },
 };
 
 function ClaimDetailDrawer({
@@ -57,7 +57,7 @@ function ClaimDetailDrawer({
       title={
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <FileSearchOutlined style={{ color: "#6366F1", fontSize: 18 }} />
-          <span style={{ fontWeight: 700 }}>Chi tiet Claim</span>
+          <span style={{ fontWeight: 700 }}>Chi tiết hồ sơ xác minh</span>
           <Tag icon={st.icon} style={{ background: st.color + "18", border: `1px solid ${st.color}40`, color: st.color, borderRadius: 20, fontWeight: 700, fontSize: 11 }}>
             {st.label}
           </Tag>
@@ -69,18 +69,18 @@ function ClaimDetailDrawer({
           <Space style={{ width: "100%", justifyContent: "flex-end" }}>
             <Button icon={<CloseCircleOutlined />} onClick={() => { onClose(); onReject(d); }}
               style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444", fontWeight: 700 }}>
-              Tu choi
+              Từ chối
             </Button>
             <Button type="primary" icon={<CheckCircleOutlined />} onClick={() => { onClose(); onApprove(d); }}
               style={{ background: "linear-gradient(135deg,#10B981,#059669)", border: "none", fontWeight: 700 }}>
-              Duyet Claim
+              Duyệt yêu cầu
             </Button>
           </Space>
         ) : d.status === "APPROVED" ? (
           <Space style={{ width: "100%", justifyContent: "flex-end" }}>
             <Button icon={<StopOutlined />} onClick={() => { onClose(); onRevoke(d); }}
               style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444", fontWeight: 700 }}>
-              Thu hoi quyen
+              Thu hồi quyền
             </Button>
           </Space>
         ) : null
@@ -108,13 +108,13 @@ function ClaimDetailDrawer({
           </Card>
 
           <div>
-            <Title level={5} style={{ color: "#334155", marginBottom: 10, fontSize: 13 }}>Nguoi gui yeu cau Claim</Title>
+            <Title level={5} style={{ color: "#334155", marginBottom: 10, fontSize: 13 }}>Người gửi yêu cầu xác minh</Title>
             <Descriptions column={2} size="small" bordered
               labelStyle={{ color: "#64748B", fontSize: 12 }}
               contentStyle={{ color: "#0F172A", fontWeight: 600, fontSize: 12 }}>
-              <Descriptions.Item label="Ten">{d.claimantName || "—"}</Descriptions.Item>
+              <Descriptions.Item label="Họ và tên">{d.claimantName || "—"}</Descriptions.Item>
               <Descriptions.Item label="Email">{d.claimantEmail || "—"}</Descriptions.Item>
-              <Descriptions.Item label="Ngay gui" span={2}>
+              <Descriptions.Item label="Ngày gửi" span={2}>
                 {d.submittedAt ? new Date(d.submittedAt).toLocaleString("vi-VN") : "—"}
               </Descriptions.Item>
             </Descriptions>
@@ -123,13 +123,13 @@ function ClaimDetailDrawer({
           <Divider style={{ margin: "4px 0" }} />
 
           <div>
-            <Title level={5} style={{ color: "#334155", marginBottom: 10, fontSize: 13 }}>Bang chung (Evidence)</Title>
+            <Title level={5} style={{ color: "#334155", marginBottom: 10, fontSize: 13 }}>Minh chứng xác thực (Evidence)</Title>
             {d.evidenceType || d.evidenceUrl || d.evidenceNote ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {d.evidenceType && (
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                     <IdcardOutlined style={{ color: "#6366F1" }} />
-                    <Text style={{ fontSize: 13 }}>Loai: <strong>{d.evidenceType}</strong></Text>
+                    <Text style={{ fontSize: 13 }}>Loại: <strong>{d.evidenceType}</strong></Text>
                   </div>
                 )}
                 {d.evidenceUrl && (
@@ -147,7 +147,7 @@ function ClaimDetailDrawer({
                 )}
               </div>
             ) : (
-              <Alert message="Khong co bang chung dinh kem" type="warning" showIcon />
+              <Alert message="Không có bằng chứng đính kèm" type="warning" showIcon />
             )}
           </div>
 
@@ -155,7 +155,7 @@ function ClaimDetailDrawer({
             <>
               <Divider style={{ margin: "4px 0" }} />
               <Alert type={d.status === "REVOKED" ? "error" : "warning"} showIcon
-                message={d.status === "REVOKED" ? "Ly do thu hoi" : "Ly do tu choi"}
+                message={d.status === "REVOKED" ? "Lý do thu hồi" : "Lý do từ chối"}
                 description={d.reason}
               />
             </>
@@ -163,8 +163,8 @@ function ClaimDetailDrawer({
           {d.status === "APPROVED" && (
             <>
               <Divider style={{ margin: "4px 0" }} />
-              <Alert type="success" showIcon message="Claim da duoc duyet"
-                description={`Duyet boi: ${d.reviewedBy || "Admin"} luc ${d.reviewedAt ? new Date(d.reviewedAt).toLocaleString("vi-VN") : "—"}`}
+              <Alert type="success" showIcon message="Yêu cầu đã được duyệt"
+                description={`Duyệt bởi: ${d.reviewedBy || "Quản trị viên"} lúc ${d.reviewedAt ? new Date(d.reviewedAt).toLocaleString("vi-VN") : "—"}`}
               />
             </>
           )}
@@ -180,15 +180,15 @@ function ApproveModal({ claim, open, onClose, onDone }: { claim: ClaimResponse |
     if (!claim) return;
     try {
       setLoading(true);
-      const updated = await claimService.reviewClaim(claim.id, { approved: true, reason: "Approved by admin" });
+      const updated = await claimService.reviewClaim(claim.id, { approved: true, reason: "Đã duyệt bởi quản trị viên" });
       onDone(updated); onClose();
     } finally { setLoading(false); }
   };
   return (
     <Modal open={open} onCancel={onClose} footer={null} width={440}
-      title={<div style={{ display: "flex", alignItems: "center", gap: 8 }}><CheckCircleOutlined style={{ color: "#10B981", fontSize: 18 }} /><span style={{ fontWeight: 700 }}>Xac nhan Duyet Claim</span></div>}>
+      title={<div style={{ display: "flex", alignItems: "center", gap: 8 }}><CheckCircleOutlined style={{ color: "#10B981", fontSize: 18 }} /><span style={{ fontWeight: 700 }}>Xác nhận duyệt yêu cầu</span></div>}>
       <div style={{ padding: "8px 0" }}>
-        <Alert type="success" showIcon message="Hanh dong nay se xac minh quyen so huu cua creator." style={{ marginBottom: 16 }} />
+        <Alert type="success" showIcon message="Hành động này sẽ xác minh quyền sở hữu của nhà sáng tạo." style={{ marginBottom: 16 }} />
         {claim && (
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "#F0FDF4", border: "1px solid #A7F3D0", borderRadius: 10, marginBottom: 16 }}>
             <Avatar src={claim.creatorAvatar} icon={<UserOutlined />} size={40} />
@@ -199,10 +199,10 @@ function ApproveModal({ claim, open, onClose, onDone }: { claim: ClaimResponse |
           </div>
         )}
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-          <Button onClick={onClose}>Huy</Button>
+          <Button onClick={onClose}>Hủy</Button>
           <Button loading={loading} onClick={handleConfirm}
             style={{ background: "linear-gradient(135deg,#10B981,#059669)", border: "none", color: "#fff", fontWeight: 700 }}>
-            Xac nhan Duyet
+            Xác nhận duyệt
           </Button>
         </div>
       </div>
@@ -224,17 +224,17 @@ function RejectModal({ claim, open, onClose, onDone }: { claim: ClaimResponse | 
   };
   return (
     <Modal open={open} onCancel={onClose} footer={null} width={480}
-      title={<div style={{ display: "flex", alignItems: "center", gap: 8 }}><CloseCircleOutlined style={{ color: "#EF4444", fontSize: 18 }} /><span style={{ fontWeight: 700 }}>Tu choi Claim</span></div>}>
-      <Alert type="error" showIcon message="Claim se bi tu choi va creator khong nhan duoc quyen so huu." style={{ margin: "12px 0 16px" }} />
+      title={<div style={{ display: "flex", alignItems: "center", gap: 8 }}><CloseCircleOutlined style={{ color: "#EF4444", fontSize: 18 }} /><span style={{ fontWeight: 700 }}>Từ chối yêu cầu</span></div>}>
+      <Alert type="error" showIcon message="Yêu cầu sẽ bị từ chối và nhà sáng tạo không nhận được quyền sở hữu." style={{ margin: "12px 0 16px" }} />
       <Form form={form} layout="vertical">
-        <Form.Item name="reason" label="Ly do tu choi *" rules={[{ required: true, message: "Vui long nhap ly do tu choi" }]}>
-          <TextArea rows={4} placeholder="Bang chung khong du thuyet phuc / Thong tin khong khop / ..." style={{ resize: "none" }} />
+        <Form.Item name="reason" label="Lý do từ chối *" rules={[{ required: true, message: "Vui lòng nhập lý do từ chối" }]}>
+          <TextArea rows={4} placeholder="Bằng chứng không đủ thuyết phục / Thông tin không khớp / ..." style={{ resize: "none" }} />
         </Form.Item>
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-          <Button onClick={onClose}>Huy</Button>
+          <Button onClick={onClose}>Hủy</Button>
           <Button loading={loading} onClick={handleConfirm}
             style={{ background: "#EF4444", border: "none", color: "#fff", fontWeight: 700 }}>
-            Xac nhan Tu choi
+            Xác nhận từ chối
           </Button>
         </div>
       </Form>
@@ -256,17 +256,17 @@ function RevokeModal({ claim, open, onClose, onDone }: { claim: ClaimResponse | 
   };
   return (
     <Modal open={open} onCancel={onClose} footer={null} width={480}
-      title={<div style={{ display: "flex", alignItems: "center", gap: 8 }}><StopOutlined style={{ color: "#EF4444", fontSize: 18 }} /><span style={{ fontWeight: 700 }}>Thu hoi quyen Claim</span></div>}>
-      <Alert type="error" showIcon message="Thu hoi se xoa quyen so huu va an rate card cua creator nay." style={{ margin: "12px 0 16px" }} />
+      title={<div style={{ display: "flex", alignItems: "center", gap: 8 }}><StopOutlined style={{ color: "#EF4444", fontSize: 18 }} /><span style={{ fontWeight: 700 }}>Thu hồi quyền sở hữu</span></div>}>
+      <Alert type="error" showIcon message="Thu hồi sẽ xóa quyền sở hữu và ẩn bảng giá dịch vụ của nhà sáng tạo này." style={{ margin: "12px 0 16px" }} />
       <Form form={form} layout="vertical">
-        <Form.Item name="reason" label="Ly do thu hoi *" rules={[{ required: true, message: "Vui long nhap ly do thu hoi" }]}>
-          <TextArea rows={4} placeholder="Phat hien gian lan / Mat quyen so huu kenh / ..." style={{ resize: "none" }} />
+        <Form.Item name="reason" label="Lý do thu hồi *" rules={[{ required: true, message: "Vui lòng nhập lý do thu hồi" }]}>
+          <TextArea rows={4} placeholder="Phát hiện gian lận / Mất quyền sở hữu kênh / ..." style={{ resize: "none" }} />
         </Form.Item>
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-          <Button onClick={onClose}>Huy</Button>
+          <Button onClick={onClose}>Hủy</Button>
           <Button loading={loading} onClick={handleConfirm}
             style={{ background: "#EF4444", border: "none", color: "#fff", fontWeight: 700 }}>
-            Xac nhan Thu hoi
+            Xác nhận thu hồi
           </Button>
         </div>
       </Form>
@@ -326,7 +326,7 @@ export default function CreatorClaimReviewPage() {
       ),
     },
     {
-      title: "Nguoi claim", key: "claimant", width: 180,
+      title: "Người yêu cầu", key: "claimant", width: 180,
       render: (_, r) => (
         <div>
           <div style={{ fontWeight: 600, fontSize: 12, color: "#334155" }}>{r.claimantName || "—"}</div>
@@ -335,15 +335,15 @@ export default function CreatorClaimReviewPage() {
       ),
     },
     {
-      title: "Platform", dataIndex: "creatorPlatform", key: "platform", width: 100,
+      title: "Nền tảng", dataIndex: "creatorPlatform", key: "platform", width: 100,
       render: (v: string) => v ? <Tag style={{ borderRadius: 12, fontWeight: 600, fontSize: 11 }}>{v}</Tag> : <Text type="secondary">—</Text>,
     },
     {
-      title: "Ngay gui", dataIndex: "submittedAt", key: "submittedAt", width: 130,
+      title: "Ngày gửi", dataIndex: "submittedAt", key: "submittedAt", width: 130,
       render: (v: string) => <Text style={{ fontSize: 12, color: "#64748B" }}>{v ? new Date(v).toLocaleDateString("vi-VN") : "—"}</Text>,
     },
     {
-      title: "Trang thai", dataIndex: "status", key: "status", width: 120,
+      title: "Trạng thái", dataIndex: "status", key: "status", width: 120,
       render: (status: ClaimStatus) => {
         const cfg = STATUS_CFG[status];
         return (
@@ -355,22 +355,22 @@ export default function CreatorClaimReviewPage() {
       },
     },
     {
-      title: "Thao tac", key: "actions", width: 160,
+      title: "Thao tác", key: "actions", width: 160,
       render: (_, record) => (
         <Space size={6}>
-          <Tooltip title="Xem bang chung">
+          <Tooltip title="Xem bằng chứng">
             <Button size="small" icon={<EyeOutlined />}
               onClick={e => { e.stopPropagation(); setSelectedClaim(record); setDrawerOpen(true); }}
               style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", color: "#818CF8" }} />
           </Tooltip>
           {record.status === "PENDING" && (
             <>
-              <Tooltip title="Duyet">
+              <Tooltip title="Duyệt">
                 <Button size="small" icon={<CheckCircleOutlined />}
                   onClick={e => { e.stopPropagation(); setApproveTarget(record); }}
                   style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", color: "#10B981" }} />
               </Tooltip>
-              <Tooltip title="Tu choi">
+              <Tooltip title="Từ chối">
                 <Button size="small" icon={<CloseCircleOutlined />}
                   onClick={e => { e.stopPropagation(); setRejectTarget(record); }}
                   style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#EF4444" }} />
@@ -378,7 +378,7 @@ export default function CreatorClaimReviewPage() {
             </>
           )}
           {record.status === "APPROVED" && (
-            <Tooltip title="Thu hoi">
+            <Tooltip title="Thu hồi">
               <Button size="small" icon={<StopOutlined />}
                 onClick={e => { e.stopPropagation(); setRevokeTarget(record); }}
                 style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#EF4444" }} />
@@ -393,7 +393,7 @@ export default function CreatorClaimReviewPage() {
     <Spin spinning={loading}>
       <Table
         columns={columns} dataSource={filtered} rowKey="id" size="middle"
-        pagination={{ current: page, pageSize: 10, total, onChange: setPage, showTotal: t => `${t} claims` }}
+        pagination={{ current: page, pageSize: 10, total, onChange: setPage, showTotal: t => `${t} hồ sơ` }}
         onRow={record => ({ onClick: () => { setSelectedClaim(record); setDrawerOpen(true); }, style: { cursor: "pointer" } })}
       />
     </Spin>
@@ -402,15 +402,15 @@ export default function CreatorClaimReviewPage() {
   const filterBar = (showStatus = false) => (
     <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
       <Input prefix={<SearchOutlined style={{ color: "#94A3B8" }} />}
-        placeholder="Tim theo ten creator, email..."
+        placeholder="Tìm theo tên creator, email..."
         value={search} onChange={e => setSearch(e.target.value)}
         style={{ maxWidth: 340, borderRadius: 8 }} allowClear />
       {showStatus && (
-        <Select value={statusFilter} onChange={setStatusFilter} style={{ width: 160 }}>
-          <Select.Option value="ALL">Tat ca trang thai</Select.Option>
-          <Select.Option value="APPROVED">Da duyet</Select.Option>
-          <Select.Option value="REJECTED">Tu choi</Select.Option>
-          <Select.Option value="REVOKED">Thu hoi</Select.Option>
+        <Select value={statusFilter} onChange={setStatusFilter} style={{ width: 180 }}>
+          <Select.Option value="ALL">Tất cả trạng thái</Select.Option>
+          <Select.Option value="APPROVED">Đã duyệt</Select.Option>
+          <Select.Option value="REJECTED">Từ chối</Select.Option>
+          <Select.Option value="REVOKED">Thu hồi</Select.Option>
         </Select>
       )}
     </div>
@@ -422,10 +422,10 @@ export default function CreatorClaimReviewPage() {
         <div>
           <div style={{ color: "#0F172A", fontWeight: 800, fontSize: 20, display: "flex", alignItems: "center", gap: 10 }}>
             <SafetyCertificateOutlined style={{ color: "#6366F1" }} />
-            Duyet Creator Claim
+            Duyệt yêu cầu xác minh
           </div>
           <div style={{ color: "#64748B", fontSize: 13, marginTop: 2 }}>
-            Xet duyet yeu cau xac minh quyen so huu kenh creator
+            Xét duyệt yêu cầu xác minh quyền sở hữu kênh nhà sáng tạo
           </div>
         </div>
       </div>
@@ -441,7 +441,7 @@ export default function CreatorClaimReviewPage() {
               label: (
                 <span style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
                   <ClockCircleOutlined />
-                  Cho duyet
+                  Chờ duyệt
                   {pendingCount > 0 && (
                     <span style={{ background: "#EF4444", color: "#fff", borderRadius: "50%", width: 18, height: 18, fontSize: 10, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                       {pendingCount}
@@ -456,7 +456,7 @@ export default function CreatorClaimReviewPage() {
               label: (
                 <span style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
                   <FileSearchOutlined />
-                  Lich su
+                  Lịch sử
                 </span>
               ),
               children: <div style={{ padding: "16px 20px 20px" }}>{filterBar(true)}{tableContent}</div>,

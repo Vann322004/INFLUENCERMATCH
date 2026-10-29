@@ -6,14 +6,14 @@ import {
   SortAscendingOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import { MOCK_CONNECTORS, type DataConnector } from '../../../mock/adminData';
+import type { DataConnector } from '../../../types/api/admin.types';
 import ConnectorStatusCard from './components/ConnectorStatusCard';
 import SyncRateLimitPanel from './components/SyncRateLimitPanel';
 import SourcePriorityPanel from './components/SourcePriorityPanel';
 import DataPipelineWorkflowBar from '../../../components/admin/DataPipelineWorkflowBar';
 
 export default function DataSourcesPage() {
-  const [connectors, setConnectors] = useState<DataConnector[]>(MOCK_CONNECTORS);
+  const [connectors, setConnectors] = useState<DataConnector[]>([]);
   const [activeTab, setActiveTab] = useState('connectors');
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [form] = Form.useForm();

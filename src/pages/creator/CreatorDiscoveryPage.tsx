@@ -50,6 +50,8 @@ import {
   DownOutlined,
   UpOutlined,
   RightOutlined,
+  RobotOutlined,
+  CompassOutlined,
 } from '@ant-design/icons';
 import ExternalDiscovery from '../../components/discovery/ExternalDiscovery';
 import AddToShortlistModal from '../../components/discovery/AddToShortlistModal';
@@ -88,7 +90,7 @@ import { creatorService } from '../../services/api/creatorService';
 import type { CreatorItem } from '../../types/api/creator.types';
 
 // Hàm chuyển đổi Creator từ Backend sang format hiển thị trên giao diện
-export const mapApiCreatorToUi = (item: CreatorItem): Creator => {
+const mapApiCreatorToUi = (item: CreatorItem): Creator => {
   const followersNum = item.followers || 0;
   const followersText = followersNum >= 1_000_000
     ? `${(followersNum / 1_000_000).toFixed(1)}M`
@@ -131,11 +133,28 @@ export const mapApiCreatorToUi = (item: CreatorItem): Creator => {
     : 'Lối sống & Sáng tạo';
 
   // Tách ngành hàng nếu có dấu phẩy hoặc chấm phẩy thành các tag riêng biệt
-  const parsedCategories = cleanNiche
+  const rawParsed = cleanNiche
     .split(/[,;]/)
     .map((s) => s.trim())
     .filter(Boolean);
-  const categoriesList = parsedCategories.length > 0 ? parsedCategories : [cleanNiche];
+  let categoriesList = rawParsed.length > 0 ? rawParsed : [cleanNiche];
+
+  // Làm sạch các tag rác: nếu KOC là Nông sản / Thực phẩm / Mẹ & Bé / Làm đẹp nhưng bị gắn nhầm "Điện tử"
+  const textProfile = `${cleanName} ${cleanUsername} ${cleanNiche} ${item.contentSummary || ''}`.toLowerCase();
+  const isFoodNiche = /nông sản|thực phẩm|ẩm thực|nấu ăn|đặc sản|ăn vặt/i.test(textProfile);
+  const isBeautyNiche = /mỹ phẩm|làm đẹp|skincare|son|makeup|dưỡng da|chăm sóc da/i.test(textProfile);
+  const isMomBabyNiche = /mẹ và bé|bỉm|sữa|trẻ em|gia đình/i.test(textProfile);
+
+  if (isFoodNiche) {
+    categoriesList = categoriesList.filter((c) => !/điện tử|tech|công nghệ|thiết bị/i.test(c));
+    if (!categoriesList.some((c) => /thực phẩm|ẩm thực|nông sản/i.test(c))) categoriesList.unshift('Thực phẩm & Nông sản');
+  } else if (isBeautyNiche) {
+    categoriesList = categoriesList.filter((c) => !/điện tử|tech|công nghệ|gia dụng/i.test(c));
+    if (!categoriesList.some((c) => /mỹ phẩm|làm đẹp/i.test(c))) categoriesList.unshift('Mỹ phẩm & Làm đẹp');
+  } else if (isMomBabyNiche) {
+    categoriesList = categoriesList.filter((c) => !/điện tử|tech|công nghệ/i.test(c));
+    if (!categoriesList.some((c) => /mẹ và bé/i.test(c))) categoriesList.unshift('Mẹ và Bé');
+  }
 
   const cleanBio = (item.contentSummary && item.contentSummary.trim().toLowerCase() !== 'creator' && item.contentSummary.trim().length > 5)
     ? item.contentSummary.trim()
@@ -166,7 +185,7 @@ export const mapApiCreatorToUi = (item: CreatorItem): Creator => {
 };
 
 // Helper tạo Bio tiếng Việt tự nhiên, có chiều sâu cho KOC khi dữ liệu gốc bị thiếu hoặc là chữ "Creator"
-export const getDisplayBio = (creator: { bio?: string; categories?: string[]; name?: string; platform?: string }): string => {
+const getDisplayBio = (creator: { bio?: string; categories?: string[]; name?: string; platform?: string }): string => {
   const rawBio = (creator.bio || '').trim();
   if (!rawBio || rawBio.toLowerCase() === 'creator' || rawBio.length < 6) {
     const cats = creator.categories && creator.categories.length > 0
@@ -191,11 +210,11 @@ const STOP_WORDS = new Set([
   'thương hiệu', 'và', 'cho', 'của', 'với', 'trong', 'các', 'những', 'để', 'mới'
 ]);
 
-export const computeCreatorMatch = (
+const computeCreatorMatch = (
   creator: Creator,
   camp: BrandCampaignItem
 ): { matchRate: number; matchLevel: 'high' | 'medium' | 'low'; reason: string } => {
-  // 1. Chuẩn hóa từ khóa chiến dịch & loại bỏ stop words
+  // 1. Chuẩn hóa từ khóa chiến dịch
   const rawCampText = [
     camp.name || '',
     camp.tag || '',
@@ -204,6 +223,7 @@ export const computeCreatorMatch = (
   ].join(' ').toLowerCase();
 
   const cCats = (creator.categories || []).map((c) => c.toLowerCase());
+  const primaryCat = cCats[0] || '';
   const cBio = (creator.bio || '').toLowerCase();
   const cName = (creator.name || '').toLowerCase();
   const creatorFullText = `${cCats.join(' ')} ${cBio} ${cName}`;
@@ -215,125 +235,148 @@ export const computeCreatorMatch = (
   const isCampFashion = DOMAIN_CLUSTERS.FASHION.some((kw) => rawCampText.includes(kw));
   const isCampFitness = DOMAIN_CLUSTERS.FITNESS.some((kw) => rawCampText.includes(kw));
 
-  // 3. Xác định Domain của Creator
+  // 3. Xác định Domain cốt lõi của Creator (ưu tiên primary category)
+  const isCreatorPrimaryTech = DOMAIN_CLUSTERS.TECH.some((kw) => primaryCat.includes(kw));
+  const isCreatorPrimaryBeauty = DOMAIN_CLUSTERS.BEAUTY.some((kw) => primaryCat.includes(kw));
+  const isCreatorPrimaryFood = DOMAIN_CLUSTERS.FOOD.some((kw) => primaryCat.includes(kw));
+  const isCreatorPrimaryFashion = DOMAIN_CLUSTERS.FASHION.some((kw) => primaryCat.includes(kw));
+  const isCreatorPrimaryFitness = DOMAIN_CLUSTERS.FITNESS.some((kw) => primaryCat.includes(kw));
+
+  // Tín hiệu thứ cấp từ toàn bộ profile
   const isCreatorTech = DOMAIN_CLUSTERS.TECH.some((kw) => creatorFullText.includes(kw));
   const isCreatorBeauty = DOMAIN_CLUSTERS.BEAUTY.some((kw) => creatorFullText.includes(kw));
   const isCreatorFood = DOMAIN_CLUSTERS.FOOD.some((kw) => creatorFullText.includes(kw));
   const isCreatorFashion = DOMAIN_CLUSTERS.FASHION.some((kw) => creatorFullText.includes(kw));
   const isCreatorFitness = DOMAIN_CLUSTERS.FITNESS.some((kw) => creatorFullText.includes(kw));
 
-  // 4. Kiểm tra mức độ tương thích ngành hàng thực tế (Tránh lỗi "Sản phẩm" dính "Thực phẩm")
-  let categoryScore = 0;
+  let categoryScore = 15;
   let isStrictMismatch = false;
 
   if (isCampTech) {
-    if (isCreatorTech) {
-      categoryScore = 40; // Khớp chuẩn xác ngành công nghệ
-    } else if (isCreatorBeauty || isCreatorFood || isCreatorFitness) {
-      isStrictMismatch = true; // Chiến dịch công nghệ nhưng Creator là Mỹ phẩm/Thực phẩm/Thể hình
-      categoryScore = 0;
+    if (isCreatorPrimaryTech) {
+      categoryScore = 46; // Khớp chuẩn xác ngành cốt lõi
+    } else if (isCreatorTech && !isCreatorPrimaryFood && !isCreatorPrimaryBeauty) {
+      categoryScore = 32; // Ngành bổ trợ công nghệ / gia dụng
+    } else if (isCreatorPrimaryFood || isCreatorPrimaryBeauty || isCreatorPrimaryFitness) {
+      isStrictMismatch = true; // Lệch ngành nghiêm trọng
+      categoryScore = 5;
     } else {
-      categoryScore = 15; // Ngành chung / Lifestyle
+      categoryScore = 15;
     }
   } else if (isCampBeauty) {
-    if (isCreatorBeauty) {
-      categoryScore = 40;
-    } else if (isCreatorTech || isCreatorFood) {
+    if (isCreatorPrimaryBeauty) {
+      categoryScore = 46;
+    } else if (isCreatorBeauty && !isCreatorPrimaryFood && !isCreatorPrimaryTech) {
+      categoryScore = 32;
+    } else if (isCreatorPrimaryTech || isCreatorPrimaryFood) {
       isStrictMismatch = true;
       categoryScore = 5;
     } else {
       categoryScore = 15;
     }
   } else if (isCampFood) {
-    if (isCreatorFood) {
-      categoryScore = 40;
-    } else if (isCreatorTech) {
+    if (isCreatorPrimaryFood) {
+      categoryScore = 46;
+    } else if (isCreatorFood && !isCreatorPrimaryTech) {
+      categoryScore = 32;
+    } else if (isCreatorPrimaryTech) {
       isStrictMismatch = true;
       categoryScore = 5;
     } else {
       categoryScore = 15;
     }
   } else if (isCampFashion) {
-    if (isCreatorFashion) {
-      categoryScore = 40;
+    if (isCreatorPrimaryFashion) {
+      categoryScore = 46;
+    } else if (isCreatorFashion || isCreatorBeauty) {
+      categoryScore = 30;
+    } else if (isCreatorPrimaryFood || isCreatorPrimaryTech) {
+      isStrictMismatch = true;
+      categoryScore = 5;
     } else {
-      categoryScore = isCreatorBeauty ? 25 : 10;
+      categoryScore = 15;
     }
   } else {
-    // Trường hợp chung: kiểm tra từng từ có nghĩa (bỏ qua stop words)
+    // Trường hợp chung: tính theo mức độ trùng lặp từ khóa
     const validWords = rawCampText
       .split(/[\s,./&+-]+/)
       .map((w) => w.trim())
       .filter((w) => w.length >= 3 && !STOP_WORDS.has(w));
-
-    const matchedWord = validWords.find((w) => creatorFullText.includes(w));
-    if (matchedWord) {
-      categoryScore = 30;
-    } else {
-      categoryScore = 10;
-    }
+    const matchedCount = validWords.filter((w) => creatorFullText.includes(w)).length;
+    categoryScore = matchedCount >= 2 ? 42 : matchedCount === 1 ? 30 : 15;
   }
 
-  // 5. Điểm chất lượng tương tác (Engagement Score): 4 - 28 điểm
+  // 4. Điểm chất lượng tương tác (Engagement Score): tính động theo mức độ tương tác thực tế
   const eng = creator.engagementValue || 0;
-  let engagementScore = 6;
-  if (eng >= 5.0) engagementScore = 28;
-  else if (eng >= 3.0) engagementScore = 22;
-  else if (eng >= 1.5) engagementScore = 16;
-  else if (eng >= 0.5) engagementScore = 10;
+  let engagementScore = 8;
+  if (eng >= 30.0) engagementScore = 26;
+  else if (eng >= 15.0) engagementScore = 24;
+  else if (eng >= 8.0) engagementScore = 21;
+  else if (eng >= 4.0) engagementScore = 17;
+  else if (eng >= 2.0) engagementScore = 13;
 
-  // 6. Điểm quy mô người theo dõi: 6 - 16 điểm
+  // 5. Điểm quy mô người theo dõi & Kiểm tra tiêu chuẩn Follower của chiến dịch
   const followers = creator.followersCount || 0;
+  if (camp.followerMin && followers < camp.followerMin) {
+    return {
+      matchRate: 35,
+      matchLevel: 'low',
+      reason: `Lượng follower (${creator.followers}) thấp hơn mức tối thiểu yêu cầu của chiến dịch (${camp.followerMin.toLocaleString('vi-VN')} followers).`,
+    };
+  }
+  if (camp.followerMax && followers > camp.followerMax) {
+    return {
+      matchRate: 40,
+      matchLevel: 'low',
+      reason: `Lượng follower (${creator.followers}) vượt quá mức tối đa yêu cầu của chiến dịch (${camp.followerMax.toLocaleString('vi-VN')} followers).`,
+    };
+  }
   let followerScore = 10;
-  if (followers >= 50000 && followers <= 500000) followerScore = 16;
-  else if (followers > 500000 && followers <= 2000000) followerScore = 14;
-  else if (followers > 2000000) followerScore = 12;
+  if (followers >= 50000 && followers <= 300000) followerScore = 16;
+  else if (followers > 300000 && followers <= 1000000) followerScore = 14;
+  else if (followers > 1000000) followerScore = 12;
 
   const verifyScore = creator.isVerified ? 4 : 1;
 
-  // Seed tính toán
+  // 6. Seed băm phân hóa mượt mà cho từng Creator
   const seed = `${creator.id || creator.username}_${camp.id || camp.name}`;
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
     hash = (hash * 37 + seed.charCodeAt(i)) & 0x7fffffff;
   }
-  const variance = (hash % 7) - 3; // -3 đến +3
+  const variance = (hash % 11) - 5; // Dao động mượt -5% đến +5%
 
   let finalScore = categoryScore + engagementScore + followerScore + verifyScore + variance;
 
-  // Xử lý nghiêm ngặt khi KHÔNG KHỚP NGÀNH HÀNG
+  // Xử lý khi lệch ngành nghiêm trọng
   if (isStrictMismatch) {
-    // Ép trần điểm: tối đa chỉ từ 32% - 46% (Mức Thấp, không được phép lên 90% Khớp cao)
-    finalScore = Math.min(46, Math.max(30, 28 + (hash % 15)));
+    finalScore = Math.min(48, Math.max(28, 30 + (hash % 15)));
     const catStr = creator.categories.length > 0 ? creator.categories.slice(0, 2).join(', ') : 'Khác';
     return {
       matchRate: finalScore,
       matchLevel: 'low',
-      reason: `Ngành hàng (${catStr}) không tương thích với sản phẩm ${camp.name || 'công nghệ'}. Cần ưu tiên Creator chuyên Tech / Review đồ số.`,
+      reason: `Ngành hàng chính (${catStr}) không phù hợp với chiến dịch "${camp.name || 'Công nghệ'}". Đã lọc ra khỏi danh sách ưu tiên.`,
     };
   }
 
-  finalScore = Math.min(96, Math.max(50, finalScore));
+  finalScore = Math.min(97, Math.max(55, finalScore));
   const level: 'high' | 'medium' | 'low' =
-    finalScore >= 78 ? 'high' : finalScore >= 60 ? 'medium' : 'low';
-
-  const femaleRatio = 55 + (hash % 36);
-  const ageGroup = (hash % 3 === 0) ? '18-24 tuổi' : (hash % 3 === 1) ? '22-30 tuổi' : '20-35 tuổi';
+    finalScore >= 80 ? 'high' : finalScore >= 65 ? 'medium' : 'low';
 
   let reason = '';
-  if (categoryScore >= 35) {
-    reason = `Khớp chuẩn xác ngành hàng mục tiêu. Tệp khán giả quan tâm sản phẩm công nghệ / đời sống, tương tác ${creator.engagementRate} tốt.`;
-  } else if (categoryScore >= 15) {
-    reason = `Creator phong cách sống / đời sống số, tệp ${creator.followers} người theo dõi có thể mở rộng tiếp cận tệp Gen Z (${ageGroup}).`;
+  if (finalScore >= 90) {
+    reason = `Độ phù hợp xuất sắc (${finalScore}%). Đúng ngành hàng cốt lõi, tỷ lệ tương tác ${creator.engagementRate} vượt trội.`;
+  } else if (finalScore >= 78) {
+    reason = `Phù hợp tốt (${finalScore}%). Kênh có tệp khán giả phù hợp mở rộng và tương tác ổn định ${creator.engagementRate}.`;
   } else {
-    reason = `Chỉ số tương tác ${creator.engagementRate}, cần cân nhắc thêm độ phù hợp nội dung trước khi gửi lời mời.`;
+    reason = `Khả quan (${finalScore}%). Tương tác ${creator.engagementRate}, cần cân nhắc thêm độ phù hợp chi tiết trước khi gửi lời mời.`;
   }
 
   return { matchRate: finalScore, matchLevel: level, reason };
 };
 
 // Component Avatar chịu lỗi cao: chống 403 Forbidden hotlink từ CDN mạng xã hội (TikTok/Instagram) & fallback đẹp mắt
-export const CreatorAvatar: React.FC<{
+const CreatorAvatar: React.FC<{
   src?: string;
   name?: string;
   size?: number;
@@ -402,11 +445,13 @@ export interface BrandCampaignItem {
   channels?: string[];
   status?: string;
   requirements?: string;
+  followerMin?: number;
+  followerMax?: number;
 }
 
-export const BRAND_CAMPAIGNS: BrandCampaignItem[] = [];
+const BRAND_CAMPAIGNS: BrandCampaignItem[] = [];
 
-const mapApiCampaignToItem = (c: CampaignResponse): BrandCampaignItem => {
+const mapApiCampaignToItem = (c: CampaignResponse | any): BrandCampaignItem => {
   const tag = (c.niches && c.niches.length > 0)
     ? c.niches.join(', ')
     : (c.productService || 'Chiến dịch');
@@ -423,6 +468,9 @@ const mapApiCampaignToItem = (c: CampaignResponse): BrandCampaignItem => {
     tag,
     target,
     suggestedCategory,
+    budget: c.budgetMax ? `${(c.budgetMax / 1000000).toFixed(1)}M VND` : undefined,
+    followerMin: c.followerMin !== undefined && c.followerMin !== null ? Number(c.followerMin) : undefined,
+    followerMax: c.followerMax !== undefined && c.followerMax !== null ? Number(c.followerMax) : undefined,
   };
 };
 
@@ -515,7 +563,7 @@ export default function CreatorDiscoveryPage() {
   const [audienceAge, setAudienceAge] = useState<string>('all');
   const [audienceGender, setAudienceGender] = useState<string>('all');
   const [otherFilters, setOtherFilters] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('match');
+  const [sortBy, setSortBy] = useState<string>(() => (initialCampId ? 'match' : 'followers'));
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
@@ -553,15 +601,21 @@ export default function CreatorDiscoveryPage() {
         let mapped: BrandCampaignItem[] = [];
         if (Array.isArray(apiCampaigns) && apiCampaigns.length > 0) {
           mapped = apiCampaigns.map(mapApiCampaignToItem);
-        }
 
-        const targetId = initialCampId;
-        if (targetId) {
-          let matched = mapped.find((c) => c.id === targetId);
+          const targetId = initialCampId;
+          let matched: BrandCampaignItem | undefined;
+          if (targetId) {
+            matched = mapped.find((c) => c.id === targetId);
+
+          const passedCampaign = (location.state as any)?.createdCampaign;
+          let storedCampaign: any = null;
+          try {
+            const rawStored = localStorage.getItem('IM_MATCHED_CAMPAIGN');
+            if (rawStored) storedCampaign = JSON.parse(rawStored);
+          } catch {}
 
           // If not in the list, check location.state or fetch by ID
           if (!matched) {
-            const passedCampaign = (location.state as any)?.createdCampaign;
             if (passedCampaign && (passedCampaign.id === targetId || !passedCampaign.id)) {
               matched = mapApiCampaignToItem(passedCampaign);
             } else {
@@ -571,33 +625,44 @@ export default function CreatorDiscoveryPage() {
                   matched = mapApiCampaignToItem(fetched);
                 }
               } catch {
-                try {
-                  const stored = localStorage.getItem('IM_MATCHED_CAMPAIGN');
-                  if (stored) {
-                    const parsed = JSON.parse(stored);
-                    if (parsed.id === targetId || targetId) {
-                      matched = {
-                        id: targetId,
-                        name: parsed.name || 'Chiến dịch mới',
-                        tag: parsed.category || 'Mới khởi tạo',
-                        target: parsed.target || parsed.targetAudience || 'Khán giả mục tiêu',
-                        budget: parsed.budget || '25.0M VND',
-                        targetAudience: parsed.targetAudience || 'Khán giả mục tiêu',
-                        category: parsed.category || 'Làm đẹp',
-                        channels: parsed.channels || ['tiktok'],
-                        status: 'ACTIVE',
-                        requirements: parsed.requirements || '',
-                      };
-                    }
-                  }
-                } catch {}
+                if (storedCampaign && (storedCampaign.id === targetId || targetId)) {
+                  matched = {
+                    id: targetId,
+                    name: storedCampaign.name || 'Chiến dịch mới',
+                    tag: storedCampaign.category || 'Mới khởi tạo',
+                    target: storedCampaign.target || storedCampaign.targetAudience || 'Khán giả mục tiêu',
+                    budget: storedCampaign.budget || '25.0M VND',
+                    targetAudience: storedCampaign.targetAudience || 'Khán giả mục tiêu',
+                    category: storedCampaign.category || 'Làm đẹp',
+                    channels: storedCampaign.channels || ['tiktok'],
+                    status: 'ACTIVE',
+                    requirements: storedCampaign.requirements || '',
+                    followerMin: storedCampaign.followerMin ? Number(storedCampaign.followerMin) : undefined,
+                    followerMax: storedCampaign.followerMax ? Number(storedCampaign.followerMax) : undefined,
+                  };
+                }
               }
             }
-
-            if (matched) {
-              mapped = [matched, ...mapped.filter((c) => c.id !== matched!.id)];
-            }
           }
+
+          // Bảo toàn followerMin / followerMax từ thông số người dùng vừa tạo
+          if (matched) {
+            if (!matched.followerMin && passedCampaign?.followerMin) {
+              matched.followerMin = Number(passedCampaign.followerMin);
+            }
+            if (!matched.followerMax && passedCampaign?.followerMax) {
+              matched.followerMax = Number(passedCampaign.followerMax);
+            }
+            if (!matched.followerMin && storedCampaign?.followerMin) {
+              matched.followerMin = Number(storedCampaign.followerMin);
+            }
+            if (!matched.followerMax && storedCampaign?.followerMax) {
+              matched.followerMax = Number(storedCampaign.followerMax);
+            }
+
+            mapped = [matched, ...mapped.filter((c) => c.id !== matched!.id)];
+          }
+        }
 
           setCampaignsList(mapped);
           updateDiscoveryCache({ campaigns: mapped });
@@ -630,30 +695,46 @@ export default function CreatorDiscoveryPage() {
           const targetId = initialCampId;
           if (targetId) {
             const passedCampaign = (location.state as any)?.createdCampaign;
+            let storedCampaign: any = null;
+            try {
+              const rawStored = localStorage.getItem('IM_MATCHED_CAMPAIGN');
+              if (rawStored) storedCampaign = JSON.parse(rawStored);
+            } catch {}
+
             let matched: BrandCampaignItem | undefined;
             if (passedCampaign) {
               matched = mapApiCampaignToItem(passedCampaign);
-            } else {
-              try {
-                const stored = localStorage.getItem('IM_MATCHED_CAMPAIGN');
-                if (stored) {
-                  const parsed = JSON.parse(stored);
-                  matched = {
-                    id: targetId,
-                    name: parsed.name || 'Chiến dịch mới',
-                    tag: parsed.category || 'Mới khởi tạo',
-                    target: parsed.target || parsed.targetAudience || 'Khán giả mục tiêu',
-                    budget: parsed.budget || '25.0M VND',
-                    targetAudience: parsed.targetAudience || 'Khán giả mục tiêu',
-                    category: parsed.category || 'Làm đẹp',
-                    channels: parsed.channels || ['tiktok'],
-                    status: 'ACTIVE',
-                    requirements: parsed.requirements || '',
-                  };
-                }
-              } catch {}
+            } else if (storedCampaign) {
+              matched = {
+                id: targetId,
+                name: storedCampaign.name || 'Chiến dịch mới',
+                tag: storedCampaign.category || 'Mới khởi tạo',
+                target: storedCampaign.target || storedCampaign.targetAudience || 'Khán giả mục tiêu',
+                budget: storedCampaign.budget || '25.0M VND',
+                targetAudience: storedCampaign.targetAudience || 'Khán giả mục tiêu',
+                category: storedCampaign.category || 'Làm đẹp',
+                channels: storedCampaign.channels || ['tiktok'],
+                status: 'ACTIVE',
+                requirements: storedCampaign.requirements || '',
+                followerMin: storedCampaign.followerMin ? Number(storedCampaign.followerMin) : undefined,
+                followerMax: storedCampaign.followerMax ? Number(storedCampaign.followerMax) : undefined,
+              };
             }
+
             if (matched) {
+              if (!matched.followerMin && passedCampaign?.followerMin) {
+                matched.followerMin = Number(passedCampaign.followerMin);
+              }
+              if (!matched.followerMax && passedCampaign?.followerMax) {
+                matched.followerMax = Number(passedCampaign.followerMax);
+              }
+              if (!matched.followerMin && storedCampaign?.followerMin) {
+                matched.followerMin = Number(storedCampaign.followerMin);
+              }
+              if (!matched.followerMax && storedCampaign?.followerMax) {
+                matched.followerMax = Number(storedCampaign.followerMax);
+              }
+
               mapped = [matched, ...mapped];
               setSelectedCampaignId(matched.id);
               setMatchedCampaign(matched);
@@ -688,12 +769,27 @@ export default function CreatorDiscoveryPage() {
     });
 
     try {
-      let minF: number | undefined;
-      let maxF: number | undefined;
-      if (followerTier === 'nano') { minF = 1000; maxF = 20000; }
-      else if (followerTier === 'micro') { minF = 20000; maxF = 100000; }
-      else if (followerTier === 'macro') { minF = 100000; maxF = 500000; }
-      else if (followerTier === 'mega') { minF = 500000; }
+      let minF: number | undefined = camp.followerMin;
+      let maxF: number | undefined = camp.followerMax;
+
+      // Ưu tiên cao nhất: Nếu chiến dịch có tiêu chí followerMin/followerMax thì BẮT BUỘC dùng tiêu chuẩn của chiến dịch
+      if (camp.followerMin || camp.followerMax) {
+        minF = camp.followerMin;
+        maxF = camp.followerMax;
+      } else {
+        if (followerTier === 'nano') { minF = 1000; maxF = 50000; }
+        else if (followerTier === 'micro') { minF = 50000; maxF = 200000; }
+        else if (followerTier === 'macro') { minF = 200000; maxF = 500000; }
+        else if (followerTier === 'mega') { minF = 500000; maxF = undefined; }
+      }
+
+      // Tự động đồng bộ bộ lọc followerTier theo ngưỡng followerMin của chiến dịch
+      if (camp.followerMin) {
+        if (camp.followerMin >= 500000) setFollowerTier('mega');
+        else if (camp.followerMin >= 200000) setFollowerTier('macro');
+        else if (camp.followerMin >= 50000) setFollowerTier('micro');
+        else setFollowerTier('nano');
+      }
 
       let backendCandidates: any[] = [];
       try {
@@ -784,6 +880,12 @@ export default function CreatorDiscoveryPage() {
   const handleClearMatch = () => {
     setSelectedCampaignId(null);
     setMatchedCampaign(null);
+    setSortBy('followers');
+    try {
+      localStorage.removeItem('IM_MATCHED_CAMPAIGN');
+      localStorage.removeItem('IM_SELECTED_CAMPAIGN_ID');
+      sessionStorage.removeItem('current_campaign_id');
+    } catch {}
     setCreators((prev) => {
       const reset = prev.map((c) => ({
         ...c,
@@ -793,7 +895,7 @@ export default function CreatorDiscoveryPage() {
       updateDiscoveryCache({ matchedCampaign: null, selectedCampaignId: null, creators: reset });
       return reset;
     });
-    message.info('Đã thoát chế độ so khớp dự án. Đang hiển thị danh sách khám phá chung.');
+    message.info('Đã thoát chế độ gợi ý chiến dịch. Đang hiển thị danh sách khám phá toàn bộ KOC.');
   };
 
   // Creators list: Luôn khởi tạo loading = true và creators = [] cho đến khi có dữ liệu thật từ API/DB
@@ -881,6 +983,8 @@ export default function CreatorDiscoveryPage() {
             const discoveryRes = await creatorService.discoverCreators(matchedCampaign.id, {
               keyword: searchTerm.trim() || undefined,
               niche: selectedCategory !== 'all' ? selectedCategory : undefined,
+              minFollowers: matchedCampaign.followerMin,
+              maxFollowers: matchedCampaign.followerMax,
               page: 0,
               size: 20,
             });
@@ -1079,7 +1183,7 @@ export default function CreatorDiscoveryPage() {
 
   // Filter & Sort Logic
   const filteredCreators = useMemo(() => {
-    return creators
+    const baseList = creators
       .filter((c) => {
         // Search term
         if (searchTerm) {
@@ -1104,8 +1208,8 @@ export default function CreatorDiscoveryPage() {
         // Follower Tier
         if (followerTier === 'nano' && c.followersCount > 50000) return false;
         if (followerTier === 'micro' && (c.followersCount < 50000 || c.followersCount > 200000)) return false;
-        if (followerTier === 'macro' && (c.followersCount < 200000 || c.followersCount > 1000000)) return false;
-        if (followerTier === 'mega' && c.followersCount < 1000000) return false;
+        if (followerTier === 'macro' && (c.followersCount < 200000 || c.followersCount > 500000)) return false;
+        if (followerTier === 'mega' && c.followersCount < 500000) return false;
 
         // Engagement Tier
         if (engagementTier === 'high' && c.engagementValue < 5) return false;
@@ -1121,19 +1225,50 @@ export default function CreatorDiscoveryPage() {
           if (c.location !== selectedLocation) return false;
         }
 
+        // Khi đang tìm KOC cho Chiến dịch:
+        if (matchedCampaign) {
+          // Bắt buộc: Lọc chặt chẽ theo ngưỡng followerMin / followerMax của chiến dịch
+          if (matchedCampaign.followerMin && c.followersCount < matchedCampaign.followerMin) {
+            return false;
+          }
+          if (matchedCampaign.followerMax && c.followersCount > matchedCampaign.followerMax) {
+            return false;
+          }
+
+          // Chỉ giữ lại những ai thực sự phù hợp (matchRate >= 65 và không bị low)
+          if (c.matchRate < 65 || c.matchLevel === 'low') return false;
+        }
+
         return true;
       })
       .sort((a, b) => {
+        // LUÔN ƯU TIÊN: Người có độ phù hợp cao nhất (matchRate) lên vị trí trên cùng
+        if (matchedCampaign) {
+          if ((b.matchRate || 0) !== (a.matchRate || 0)) {
+            return (b.matchRate || 0) - (a.matchRate || 0);
+          }
+          return (b.engagementValue || 0) - (a.engagementValue || 0);
+        }
         if (sortBy === 'match') {
-          if (matchedCampaign) return b.matchRate - a.matchRate;
-          return b.followersCount - a.followersCount;
+          if ((b.matchRate || 0) !== (a.matchRate || 0)) {
+            return (b.matchRate || 0) - (a.matchRate || 0);
+          }
+          return (b.engagementValue || 0) - (a.engagementValue || 0);
         }
         if (sortBy === 'followers') return b.followersCount - a.followersCount;
         if (sortBy === 'engagement') return b.engagementValue - a.engagementValue;
         if (sortBy === 'priceAsc') return a.avgPriceValue - b.avgPriceValue;
         if (sortBy === 'priceDesc') return b.avgPriceValue - a.avgPriceValue;
-        return 0;
+        return (b.matchRate || 0) - (a.matchRate || 0);
       });
+
+    // Khi đang đề xuất KOC cho Chiến dịch: Giữ lại Top 30 KOC có điểm phù hợp cao nhất
+    if (matchedCampaign) {
+      return baseList.slice(0, 30);
+    }
+
+    // Khi ở chế độ Khám phá tự do: hiển thị đầy đủ danh sách toàn sàn để nhãn hàng tìm kiếm & lọc
+    return baseList;
   }, [
     creators,
     searchTerm,
@@ -1517,8 +1652,97 @@ export default function CreatorDiscoveryPage() {
             </div>
           </div>
 
-          {/* 4. Nội dung chính toàn màn hình (Full Width 1240px, tinh gọn không tóm tắt chiến dịch) */}
+          {/* 4. Nội dung chính toàn màn hình (Full Width 1240px) */}
           <div className="cdiscovery-content-flow">
+            {/* Banner chế độ: Phân định rõ ràng giữa Gợi ý AI theo Chiến dịch vs Khám phá tự do */}
+            {matchedCampaign ? (
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 100%)',
+                  border: '1.5px solid #C7D2FE',
+                  borderRadius: 14,
+                  padding: '14px 18px',
+                  marginBottom: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
+                      background: '#4F46E5',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 18,
+                    }}
+                  >
+                    <RobotOutlined />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: 14, color: '#1E1B4B', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span>Đang gợi ý KOC cho chiến dịch: <strong>{matchedCampaign.name}</strong></span>
+                      <Tag color="purple" style={{ borderRadius: 12, fontWeight: 700, margin: 0 }}>Đề xuất AI</Tag>
+                    </div>
+                    <div style={{ fontSize: 12.5, color: '#4338CA', marginTop: 2 }}>
+                      AI đã chọn lọc <strong>Top {filteredCreators.length} KOC phù hợp nhất</strong> với ngành hàng & mục tiêu. Bấm <strong>"+ Lưu vào danh sách"</strong> để đưa KOC vào bước 3 (Danh sách chọn).
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  size="small"
+                  onClick={handleClearMatch}
+                  style={{ borderRadius: 8, fontWeight: 600, borderColor: '#A5B4FC', color: '#4338CA' }}
+                >
+                  ✕ Thoát gợi ý (Xem toàn bộ 1.446 KOC)
+                </Button>
+              </div>
+            ) : (
+              <div
+                style={{
+                  background: '#F8FAFC',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: 14,
+                  padding: '12px 18px',
+                  marginBottom: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <CompassOutlined style={{ fontSize: 18, color: '#6366F1' }} />
+                  <div style={{ fontSize: 13, color: '#475569' }}>
+                    <strong>Chế độ Khám phá tự do:</strong> Đang hiển thị toàn bộ <strong>{filteredCreators.length.toLocaleString('vi-VN')} KOC</strong> hệ thống. Bạn có thể chọn một chiến dịch để AI tự động lọc Top KOC tương thích nhất.
+                  </div>
+                </div>
+                {campaignsList.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 12.5, color: '#64748B', fontWeight: 600 }}>Gợi ý theo chiến dịch:</span>
+                    <Select
+                      placeholder="Chọn chiến dịch..."
+                      style={{ width: 230 }}
+                      value={selectedCampaignId || undefined}
+                      onChange={(campId) => {
+                        const found = campaignsList.find((c) => c.id === campId);
+                        if (found) handleTriggerMatch(found);
+                      }}
+                      options={campaignsList.map((c) => ({ value: c.id, label: c.name }))}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Panel Tìm kiếm & Bộ lọc tinh gọn, chuẩn mực */}
             <div className="cdiscovery-search-filter-card">
               <div
@@ -1650,8 +1874,8 @@ export default function CreatorDiscoveryPage() {
                           { value: 'all', label: 'Quy mô: Tất cả' },
                           { value: 'nano', label: 'Nano (< 50K)' },
                           { value: 'micro', label: 'Micro (50K – 200K)' },
-                          { value: 'macro', label: 'Macro (200K – 1M)' },
-                          { value: 'mega', label: 'Mega (Trên 1M)' },
+                          { value: 'macro', label: 'Macro (200K – 500K)' },
+                          { value: 'mega', label: 'Mega (500K+)' },
                         ]}
                       />
 
@@ -1746,7 +1970,11 @@ export default function CreatorDiscoveryPage() {
               <div className="cdiscovery-results-toolbar">
                 <div className="cdiscovery-results-left">
                   <span className="cdiscovery-results-heading">
-                    {loading || isMatching ? 'Đang tải danh sách KOC...' : filteredCreators.length > 0 ? 'KOC phù hợp' : 'Không có KOC phù hợp'}
+                    {loading || isMatching
+                      ? 'Đang tải danh sách KOC...'
+                      : matchedCampaign
+                      ? `Đề xuất AI cho "${matchedCampaign.name}" (Top ${filteredCreators.length} KOC phù hợp nhất)`
+                      : `Tất cả KOC hệ thống (${filteredCreators.length.toLocaleString('vi-VN')} KOC)`}
                   </span>
                   <label className="cdiscovery-select-all-label">
                     <input
@@ -1823,7 +2051,7 @@ export default function CreatorDiscoveryPage() {
               ) : viewMode === 'grid' ? (
                 /* GRID 3 CỘT CHUẨN MẪU THIẾT KẾ */
                 <div className="cdiscovery-cards-grid">
-                  {paginatedCreators.map((creator) => {
+                  {paginatedCreators.map((creator, index) => {
                     const isSelected = selectedCreatorIds.has(creator.id);
                     const displayTags = (creator.categories || [])
                       .flatMap((cat) => cat.split(/[,;]/).map((s) => s.trim()))
@@ -1867,9 +2095,76 @@ export default function CreatorDiscoveryPage() {
                           </div>
 
                           <div className="cdiscovery-card-right-group">
-                            <span className="cdiscovery-match-tag-pill">
-                              ✦ {creator.matchRate}% Phù hợp
-                            </span>
+                            {matchedCampaign && safeCurrentPage === 1 && index === 0 && creator.matchRate >= 70 && (
+                              <span style={{
+                                background: '#FEF9C3',
+                                color: '#854D0E',
+                                fontWeight: 800,
+                                fontSize: 10.5,
+                                padding: '2px 8px',
+                                borderRadius: 999,
+                                border: '1px solid #FDE047',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 2,
+                                boxShadow: '0 1px 2px rgba(234, 179, 8, 0.15)',
+                              }}>
+                                Top 1
+                              </span>
+                            )}
+                            {matchedCampaign && safeCurrentPage === 1 && index === 1 && creator.matchRate >= 70 && (
+                              <span style={{
+                                background: '#F1F5F9',
+                                color: '#475569',
+                                fontWeight: 800,
+                                fontSize: 10.5,
+                                padding: '2px 8px',
+                                borderRadius: 999,
+                                border: '1px solid #CBD5E1',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 2,
+                              }}>
+                                Top 2
+                              </span>
+                            )}
+                            {matchedCampaign && safeCurrentPage === 1 && index === 2 && creator.matchRate >= 70 && (
+                              <span style={{
+                                background: '#FFF7ED',
+                                color: '#9A3412',
+                                fontWeight: 800,
+                                fontSize: 10.5,
+                                padding: '2px 8px',
+                                borderRadius: 999,
+                                border: '1px solid #FDBA74',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 2,
+                              }}>
+                                Top 3
+                              </span>
+                            )}
+                            {matchedCampaign && creator.matchRate > 0 ? (
+                              <span className="cdiscovery-match-tag-pill">
+                                ✦ {creator.matchRate}% Phù hợp
+                              </span>
+                            ) : (
+                              <Tag
+                                color="default"
+                                style={{
+                                  borderRadius: 12,
+                                  margin: 0,
+                                  fontWeight: 600,
+                                  fontSize: 11,
+                                  border: '1px solid #E2E8F0',
+                                  background: '#F8FAFC',
+                                  color: '#64748B',
+                                  textTransform: 'uppercase',
+                                }}
+                              >
+                                {creator.platforms[0] || 'TikTok'}
+                              </Tag>
+                            )}
                             <Dropdown
                               menu={{
                                 items: [
@@ -1958,7 +2253,7 @@ export default function CreatorDiscoveryPage() {
               ) : (
                 /* LIST VIEW NẾU CHỌN */
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {paginatedCreators.map((creator) => {
+                  {paginatedCreators.map((creator, index) => {
                     const isSelected = selectedCreatorIds.has(creator.id);
                     return (
                       <Card
@@ -1992,9 +2287,27 @@ export default function CreatorDiscoveryPage() {
                                     {creator.isVerified && (
                                       <CheckCircleFilled style={{ color: '#3B82F6', fontSize: 13 }} />
                                     )}
-                                    <span className="cdiscovery-match-tag-pill">
-                                      ✦ {creator.matchRate}% Phù hợp
-                                    </span>
+                                    {matchedCampaign && creator.matchRate > 0 ? (
+                                      <span className="cdiscovery-match-tag-pill">
+                                        ✦ {creator.matchRate}% Phù hợp
+                                      </span>
+                                    ) : (
+                                      <Tag
+                                        color="default"
+                                        style={{
+                                          borderRadius: 12,
+                                          margin: 0,
+                                          fontWeight: 600,
+                                          fontSize: 11,
+                                          border: '1px solid #E2E8F0',
+                                          background: '#F8FAFC',
+                                          color: '#64748B',
+                                          textTransform: 'uppercase',
+                                        }}
+                                      >
+                                        {creator.platforms[0] || 'TikTok'}
+                                      </Tag>
+                                    )}
                                   </div>
                                   <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
                                     @{creator.username}

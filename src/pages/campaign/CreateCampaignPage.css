@@ -243,7 +243,8 @@
 
 .ccreate-ai-input-wrap {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  align-items: flex-start;
 }
 
 @media (max-width: 640px) {
@@ -253,11 +254,17 @@
 }
 
 .ccreate-ai-input-field {
-  border-radius: 10px !important;
+  border-radius: 12px !important;
   border: 1.5px solid #DDD6FE !important;
-  height: 40px !important;
-  font-size: 13px !important;
+  min-height: 52px !important;
+  height: auto !important;
+  padding: 10px 14px !important;
+  font-size: 13.5px !important;
+  line-height: 1.55 !important;
   background: #FFFFFF !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+  transition: all 0.2s ease !important;
+  resize: vertical !important;
 }
 
 .ccreate-ai-input-field:focus {
@@ -268,16 +275,18 @@
 .ccreate-ai-action-btn {
   background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%) !important;
   border: none !important;
-  border-radius: 10px !important;
-  height: 40px !important;
-  padding: 0 18px !important;
+  border-radius: 12px !important;
+  min-height: 52px !important;
+  height: auto !important;
+  padding: 12px 20px !important;
   font-weight: 700 !important;
-  font-size: 13px !important;
+  font-size: 13.5px !important;
   color: #FFFFFF !important;
-  box-shadow: 0 3px 10px rgba(79, 70, 229, 0.25) !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25) !important;
   display: inline-flex !important;
   align-items: center !important;
-  gap: 6px !important;
+  justify-content: center !important;
+  gap: 8px !important;
   flex-shrink: 0 !important;
   transition: all 0.2s ease !important;
 }
@@ -624,13 +633,20 @@
 
 /* 9. Step 3 - KPI Cards & Overview */
 .ccreate-kpi-card {
-  background: #F8FAFC;
+  background: #FFFFFF;
   border: 1px solid #E2E8F0;
   border-radius: 12px;
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.ccreate-kpi-card:hover {
+  border-color: #DDD6FE;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.06);
 }
 
 .ccreate-kpi-label {

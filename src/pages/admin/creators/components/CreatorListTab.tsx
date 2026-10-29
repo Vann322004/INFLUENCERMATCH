@@ -9,7 +9,7 @@ import {
   InstagramOutlined, YoutubeOutlined, ReloadOutlined,
 } from '@ant-design/icons';
 import { creatorService } from '../../../../services/api/creatorService';
-import type { AdminCreator, CreatorStatus } from '../../../../mock/adminData';
+import type { AdminCreator, CreatorStatus } from '../../../../types/api/admin.types';
 
 const { Text } = Typography;
 const { Option } = Select;

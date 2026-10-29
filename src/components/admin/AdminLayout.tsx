@@ -12,19 +12,34 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ pageTitle }: AdminLayoutProps) {
   return (
-    <Layout style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden' }}>
+    <Layout hasSider style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden', width: '100vw' }}>
       <AdminSidebar />
-      <Layout style={{ background: '#F5F6FA', height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
+      <Layout
+        style={{
+          background: '#F5F6FA',
+          height: '100vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          minWidth: 0,
+          flex: 1,
+          scrollBehavior: 'smooth',
+          boxSizing: 'border-box',
+        }}
+      >
         <AdminHeader title={pageTitle} />
         <Content
           style={{
             background: '#F5F6FA',
-            padding: '20px 28px 20px 28px',
+            padding: '16px 24px 32px 24px',
             overflow: 'visible',
             boxSizing: 'border-box',
+            minWidth: 0,
+            width: '100%',
           }}
         >
-          <Outlet />
+          <div className="app-page-wrapper" style={{ maxWidth: '100%' }}>
+            <Outlet />
+          </div>
         </Content>
       </Layout>
     </Layout>

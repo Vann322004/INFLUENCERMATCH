@@ -1442,7 +1442,7 @@ export default function AiRecommendationTab({
                     type="link"
                     icon={<EyeOutlined />}
                     onClick={() => {
-                      setActiveSubTab('recommendation');
+                      setActiveSubTab('shortlist');
                       message.info('Đang hiển thị danh sách KOC của phiên đề xuất này.');
                     }}
                     style={{ fontWeight: 700, padding: 0 }}

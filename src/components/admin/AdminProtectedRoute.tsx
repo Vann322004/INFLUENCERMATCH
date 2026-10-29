@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { adminAuthService } from '../../mock/adminData';
+import { adminAuthService } from '../../services/api/adminAuthService';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { authService } from '../../services/api/authService';
 

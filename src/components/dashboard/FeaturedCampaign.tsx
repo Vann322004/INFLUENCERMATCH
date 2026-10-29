@@ -94,7 +94,7 @@ export default function FeaturedCampaign({ campaign }: FeaturedCampaignProps) {
     ? (campaign.followerMin ? `${(campaign.followerMin / 1000).toFixed(0)}K` : '0')
     : FEATURED_CAMPAIGN.reach;
   const engagement = campaign ? '4.8%' : FEATURED_CAMPAIGN.engagement;
-  const detailLink = campaign ? `/campaigns/${campaign.id}` : '/campaign-management';
+  const detailLink = campaign ? `/campaigns/${campaign.id}` : '/campaigns';
 
   return (
     <Card
@@ -236,20 +236,29 @@ export default function FeaturedCampaign({ campaign }: FeaturedCampaignProps) {
           if (campaign?.id) {
             sessionStorage.setItem('current_campaign_id', campaign.id);
             try {
-              sessionStorage.setItem('current_campaign_data', JSON.stringify({
-                id: campaign.id,
-                name: campaign.title,
-                budgetFormatted: campaign.spent,
-                budgetRaw: campaign.spentNumber,
-                niches: campaign.tags,
-                dateRange: campaign.date,
-                thumbnail: campaign.thumbnail,
-                status: campaign.status === 'completed' ? 'COMPLETED' : (campaign.status === 'draft' ? 'DRAFT' : 'ACTIVE'),
-                statusText: campaign.statusText,
-                creatorsCount: campaign.creatorsCount,
-              }));
+              const c = campaign as any;
+              sessionStorage.setItem(
+                'current_campaign_data',
+                JSON.stringify({
+                  id: campaign.id,
+                  name: campaign.name || c.title || 'Chiến dịch',
+                  budgetFormatted: cost,
+                  budgetRaw: budgetNum,
+                  niches: campaign.niches || c.tags || [],
+                  dateRange:
+                    campaign.startDate && campaign.endDate
+                      ? `${campaign.startDate} - ${campaign.endDate}`
+                      : c.date || '2026',
+                  thumbnail:
+                    c.thumbnail ||
+                    'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=120&auto=format&fit=crop&q=80',
+                  status: campaign.status,
+                  statusText: statusText,
+                  creatorsCount: c.creatorsCount || 0,
+                })
+              );
             } catch {}
-            navigate('/campaigns/detail', { state: { id: campaign.id, item: campaign } });
+            navigate(detailLink, { state: { id: campaign.id, item: campaign } });
           } else {
             navigate('/campaigns');
           }

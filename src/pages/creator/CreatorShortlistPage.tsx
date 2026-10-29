@@ -100,14 +100,14 @@ import type { CampaignResponse } from '../../types/api/campaign.types';
 import CampaignWorkflowBar from '../../components/campaign/CampaignWorkflowBar';
 import { useShortlistRealtime } from '../../hooks/useShortlistRealtime';
 
-export const normalizeNiche = (niche?: string): string => {
+const normalizeNiche = (niche?: string): string => {
   if (!niche || niche.toUpperCase() === 'UNKNOWN' || niche.trim() === '') {
     return 'Lối sống & Sáng tạo';
   }
   return niche;
 };
 
-export const mapCreatorToShortlistItem = (
+const mapCreatorToShortlistItem = (
   c: CreatorItem,
   campaignName = 'Tất cả chiến dịch',
   shortlistItemId?: string,

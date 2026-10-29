@@ -24,54 +24,92 @@ const { Title, Text } = Typography;
 interface KpiCardProps {
   icon: React.ReactNode;
   title: string;
-  value: string;
+  value: React.ReactNode;
+  unit?: string;
+  badge?: React.ReactNode;
   trend?: number;
-  subText?: string;
+  subText?: React.ReactNode;
   color: string;
   bg: string;
 }
 
-function KpiCard({ icon, title, value, trend, subText, color, bg }: KpiCardProps) {
+function KpiCard({ icon, title, value, unit, badge, trend, subText, color, bg }: KpiCardProps) {
   const isUp = (trend ?? 0) >= 0;
   return (
     <Card
       bordered={false}
-      style={{ borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', height: '100%' }}
-      styles={{ body: { padding: '20px 22px' } }}
+      style={{
+        borderRadius: 16,
+        boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+        border: '1px solid #EEF2F6',
+        height: '100%',
+        transition: 'all 0.2s ease-in-out',
+        background: '#FFFFFF',
+      }}
+      styles={{ body: { padding: '18px 20px' } }}
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)';
+        e.currentTarget.style.borderColor = '#CBD5E1';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.03)';
+        e.currentTarget.style.borderColor = '#EEF2F6';
+      }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <div style={{ flex: 1 }}>
-          <Text style={{ color: '#64748B', fontSize: 12, fontWeight: 600, letterSpacing: 0.4, textTransform: 'uppercase' }}>
-            {title}
-          </Text>
-          <div style={{ color: '#0F172A', fontSize: 28, fontWeight: 800, lineHeight: 1.2, marginTop: 4 }}>
-            {value}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-            {trend !== undefined ? (
-              <>
-                {isUp
-                  ? <ArrowUpOutlined style={{ color: '#10B981', fontSize: 11 }} />
-                  : <ArrowDownOutlined style={{ color: '#EF4444', fontSize: 11 }} />}
-                <Text style={{ color: isUp ? '#10B981' : '#EF4444', fontSize: 12, fontWeight: 600 }}>
-                  {Math.abs(trend)}%
-                </Text>
-                <Text style={{ color: '#94A3B8', fontSize: 11 }}>so với tháng trước</Text>
-              </>
-            ) : (
-              <Text style={{ color: '#64748B', fontSize: 12, fontWeight: 500 }}>
-                {subText || 'Số liệu cập nhật thời gian thực'}
-              </Text>
-            )}
-          </div>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <span style={{ color: '#475569', fontSize: 13.5, fontWeight: 700 }}>
+          {title}
+        </span>
         <div style={{
-          width: 44, height: 44, background: bg, borderRadius: 12,
+          width: 38, height: 38, background: bg, borderRadius: 10,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color, fontSize: 20, flexShrink: 0,
+          color, fontSize: 18, flexShrink: 0,
         }}>
           {icon}
         </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'nowrap' }}>
+        <div style={{
+          color: '#0F172A',
+          fontSize: 28,
+          fontWeight: 800,
+          lineHeight: 1.15,
+          letterSpacing: '-0.02em',
+          whiteSpace: 'nowrap',
+        }}>
+          {value}
+        </div>
+        {unit && (
+          <span style={{ color: '#64748B', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>
+            {unit}
+          </span>
+        )}
+        {badge && (
+          <div style={{ marginLeft: 'auto' }}>
+            {badge}
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+        {trend !== undefined ? (
+          <>
+            {isUp
+              ? <ArrowUpOutlined style={{ color: '#10B981', fontSize: 11 }} />
+              : <ArrowDownOutlined style={{ color: '#EF4444', fontSize: 11 }} />}
+            <Text style={{ color: isUp ? '#10B981' : '#EF4444', fontSize: 12, fontWeight: 700 }}>
+              {Math.abs(trend)}%
+            </Text>
+            <Text style={{ color: '#94A3B8', fontSize: 11 }}>so với tháng trước</Text>
+          </>
+        ) : (
+          <div style={{ color: '#64748B', fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {subText || 'Số liệu cập nhật thời gian thực'}
+          </div>
+        )}
       </div>
     </Card>
   );
@@ -253,31 +291,65 @@ export default function AdminDashboardPage() {
       icon: <TeamOutlined />,
       title: 'Tổng người dùng',
       value: totalUsers > 0 ? totalUsers.toLocaleString('vi-VN') : '—',
-      subText: `${brandUsers} Brand • ${creatorUsers} Creator`,
+      unit: 'tài khoản',
+      subText: (
+        <span>
+          <strong style={{ color: '#0F172A' }}>{brandUsers}</strong> Doanh nghiệp • <strong style={{ color: '#0F172A' }}>{creatorUsers}</strong> Nhà sáng tạo
+        </span>
+      ),
       color: '#5B5BF0',
       bg: '#EEF2FF',
     },
     {
       icon: <UserOutlined />,
-      title: 'Creator hệ thống',
+      title: 'Nhà sáng tạo hệ thống',
       value: (totalCreators || creatorUsers).toLocaleString('vi-VN'),
-      subText: `${activeCreators || totalCreators} hồ sơ hoạt động`,
+      unit: 'hồ sơ',
+      subText: (
+        <span>
+          <strong style={{ color: '#10B981' }}>{activeCreators || totalCreators}</strong> hồ sơ đang hoạt động
+        </span>
+      ),
       color: '#10B981',
       bg: '#ECFDF5',
     },
     {
       icon: <ThunderboltOutlined />,
       title: 'Chiến dịch',
-      value: `${activeCampaigns} / ${totalCampaigns}`,
-      subText: `${activeCampaigns} chiến dịch đang chạy`,
+      value: activeCampaigns,
+      unit: `/ ${totalCampaigns} chiến dịch`,
+      subText: (
+        <span>
+          <strong style={{ color: '#0EA5E9' }}>{activeCampaigns}</strong> chiến dịch đang chạy
+        </span>
+      ),
       color: '#0EA5E9',
       bg: '#F0F9FF',
     },
     {
       icon: <DollarOutlined />,
       title: 'Gói dịch vụ',
-      value: `${activeSubscriptions || plans.length} gói active`,
-      subText: `Doanh thu ước tính ${(totalRevenue / 1_000_000).toFixed(1)}M ₫`,
+      value: plans.length || 3,
+      unit: 'gói kích hoạt',
+      badge: (
+        <Tag style={{
+          margin: 0,
+          borderRadius: 20,
+          fontSize: 11,
+          fontWeight: 700,
+          border: 'none',
+          background: '#FEF3C7',
+          color: '#B45309',
+          padding: '1px 8px',
+        }}>
+          Đang mở
+        </Tag>
+      ),
+      subText: (
+        <span>
+          Doanh thu: <strong style={{ color: '#0F172A' }}>{(totalRevenue / 1_000_000).toFixed(1)}M ₫</strong>
+        </span>
+      ),
       color: '#F59E0B',
       bg: '#FFFBEB',
     },
@@ -296,7 +368,7 @@ export default function AdminDashboardPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <Title level={3} style={{ color: '#0F172A', margin: 0, fontWeight: 800 }}>
-            Admin Dashboard
+            Bảng điều khiển Quản trị
           </Title>
           <Text style={{ color: '#64748B', fontSize: 13 }}>
             Tổng quan dữ liệu thời gian thực InfluencerMatch •{' '}
@@ -332,7 +404,7 @@ export default function AdminDashboardPage() {
             style={{ borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', height: '100%' }}
             styles={{ body: { padding: '20px 22px' } }}
           >
-            {sectionTitle('Tăng trưởng người dùng', 'Thực tế theo nhóm Brand & Creator')}
+            {sectionTitle('Tăng trưởng người dùng', 'Thực tế theo nhóm Doanh nghiệp & Nhà sáng tạo')}
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={growthData} margin={{ top: 4, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
@@ -340,8 +412,8 @@ export default function AdminDashboardPage() {
                 <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <RechartsTooltip content={<ChartTip />} />
                 <Legend wrapperStyle={{ paddingTop: 12 }} formatter={v => <span style={{ color: '#64748B', fontSize: 12 }}>{v}</span>} />
-                <Line type="monotone" dataKey="brands" name="Brand" stroke="#5B5BF0" strokeWidth={2.5} dot={false} />
-                <Line type="monotone" dataKey="creators" name="Creator" stroke="#10B981" strokeWidth={2.5} dot={false} />
+                <Line type="monotone" dataKey="brands" name="Doanh nghiệp" stroke="#5B5BF0" strokeWidth={2.5} dot={false} />
+                <Line type="monotone" dataKey="creators" name="Nhà sáng tạo" stroke="#10B981" strokeWidth={2.5} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </Card>
@@ -354,7 +426,7 @@ export default function AdminDashboardPage() {
             style={{ borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', height: '100%' }}
             styles={{ body: { padding: '20px 22px' } }}
           >
-            {sectionTitle('Doanh thu theo gói cước', 'Dựa trên subscriptions hệ thống')}
+            {sectionTitle('Doanh thu theo gói cước', 'Dựa trên gói dịch vụ đang hoạt động')}
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={revenueData} margin={{ top: 4, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
@@ -380,13 +452,13 @@ export default function AdminDashboardPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div>
                 <Title level={5} style={{ color: '#0F172A', margin: 0, fontWeight: 700, fontSize: 15 }}>
-                  Nhật ký hoạt động hệ thống (Audit Logs)
+                  Nhật ký hoạt động hệ thống
                 </Title>
                 <Text style={{ color: '#94A3B8', fontSize: 12 }}>
                   Sự kiện và thay đổi dữ liệu thời gian thực được ghi lại bởi hệ thống kiểm toán
                 </Text>
               </div>
-              <Tag color="processing" icon={<SafetyCertificateOutlined />}>Live Audit Stream</Tag>
+              <Tag color="processing" icon={<SafetyCertificateOutlined />}>Ghi nhận trực tiếp</Tag>
             </div>
 
             {loading ? (

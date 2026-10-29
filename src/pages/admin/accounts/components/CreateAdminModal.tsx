@@ -84,9 +84,9 @@ export default function CreateAdminModal({ open, onClose, onCreate }: CreateAdmi
           initialValue="admin"
         >
           <Select size="large">
-            <Option value="admin">Admin (Quản trị hệ thống & Tài khoản)</Option>
-            <Option value="manager">Manager (Quản lý nghiệp vụ & Creator)</Option>
-            <Option value="super_admin">Super Admin (Cấp cao nhất)</Option>
+            <Option value="admin">Quản trị viên (Hệ thống & Tài khoản)</Option>
+            <Option value="manager">Quản lý (Vận hành & Nhà sáng tạo)</Option>
+            <Option value="super_admin">Quản trị viên cấp cao</Option>
           </Select>
         </Form.Item>
 

@@ -12,7 +12,7 @@ export const ADMIN_USER = {
   email: 'admin@influencermatch.vn',
   password: 'admin123',
   role: 'ADMIN' as const,
-  roleLabel: 'Super Admin',
+  roleLabel: 'Quản trị viên cấp cao',
   avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
 };
 
@@ -22,7 +22,7 @@ export const MANAGER_USER = {
   email: 'manager@influencermatch.vn',
   password: 'manager123',
   role: 'DATA_MANAGER' as const,
-  roleLabel: 'Manager (Quản lý)',
+  roleLabel: 'Quản lý',
   avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
 };
 
@@ -71,14 +71,14 @@ export const adminAuthService = {
 import type { AdminUser, AuditLogItem } from '../types/api/admin.types';
 
 export const DEFAULT_ADMIN_ACCOUNTS: AdminUser[] = [
-  { id: 'usr_001', name: 'Trần Minh Khoa', email: 'admin@influencermatch.vn', role: 'super_admin', roleLabel: 'Super Admin', status: 'active', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 08:30', joinedAt: '2024-01-15', ip: '113.161.77.10' },
-  { id: 'usr_008', name: 'Nguyễn Hoàng Long', email: 'manager@influencermatch.vn', role: 'manager', roleLabel: 'Manager (Quản lý)', status: 'active', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 09:10', joinedAt: '2024-03-01', ip: '113.161.88.25' },
-  { id: 'usr_002', name: 'Nguyễn Thị Mai', email: 'mai.nguyen@brand.vn', role: 'brand', roleLabel: 'Brand', status: 'active', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 07:15', joinedAt: '2024-02-20', ip: '118.69.182.44' },
-  { id: 'usr_003', name: 'Phạm Quốc Hùng', email: 'hungpq@gmail.com', role: 'creator', roleLabel: 'Creator', status: 'active', avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&auto=format&fit=crop', lastLogin: '2026-10-21 22:00', joinedAt: '2024-03-10', ip: '171.244.33.12' },
-  { id: 'usr_004', name: 'Lê Văn Dũng', email: 'dungadmin@influencermatch.vn', role: 'admin', roleLabel: 'Admin', status: 'active', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 06:45', joinedAt: '2024-01-20', ip: '14.161.22.8' },
-  { id: 'usr_005', name: 'Trần Thị Hoa', email: 'hoatran@beauty.com', role: 'brand', roleLabel: 'Brand', status: 'locked', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&auto=format&fit=crop', lastLogin: '2026-10-18 11:30', joinedAt: '2024-05-01', ip: '210.245.34.55' },
-  { id: 'usr_006', name: 'Võ Minh Tuấn', email: 'tuanvo.creator@tiktok.vn', role: 'creator', roleLabel: 'Creator', status: 'inactive', avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=80&auto=format&fit=crop', lastLogin: '2026-09-12 08:00', joinedAt: '2024-06-12', ip: '103.48.194.22' },
-  { id: 'usr_007', name: 'Nguyễn Lan Anh', email: 'lananh@fashion.co', role: 'brand', roleLabel: 'Brand', status: 'pending', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop', lastLogin: '—', joinedAt: '2026-10-20', ip: '—' },
+  { id: 'usr_001', name: 'Trần Minh Khoa', email: 'admin@influencermatch.vn', role: 'super_admin', roleLabel: 'Quản trị viên cấp cao', status: 'active', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 08:30', joinedAt: '2024-01-15', ip: '113.161.77.10' },
+  { id: 'usr_008', name: 'Nguyễn Hoàng Long', email: 'manager@influencermatch.vn', role: 'manager', roleLabel: 'Quản lý', status: 'active', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 09:10', joinedAt: '2024-03-01', ip: '113.161.88.25' },
+  { id: 'usr_002', name: 'Nguyễn Thị Mai', email: 'mai.nguyen@brand.vn', role: 'brand', roleLabel: 'Doanh nghiệp', status: 'active', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 07:15', joinedAt: '2024-02-20', ip: '118.69.182.44' },
+  { id: 'usr_003', name: 'Phạm Quốc Hùng', email: 'hungpq@gmail.com', role: 'creator', roleLabel: 'Nhà sáng tạo', status: 'active', avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=80&auto=format&fit=crop', lastLogin: '2026-10-21 22:00', joinedAt: '2024-03-10', ip: '171.244.33.12' },
+  { id: 'usr_004', name: 'Lê Văn Dũng', email: 'dungadmin@influencermatch.vn', role: 'admin', roleLabel: 'Quản trị viên', status: 'active', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop', lastLogin: '2026-10-22 06:45', joinedAt: '2024-01-20', ip: '14.161.22.8' },
+  { id: 'usr_005', name: 'Trần Thị Hoa', email: 'hoatran@beauty.com', role: 'brand', roleLabel: 'Doanh nghiệp', status: 'locked', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&auto=format&fit=crop', lastLogin: '2026-10-18 11:30', joinedAt: '2024-05-01', ip: '210.245.34.55' },
+  { id: 'usr_006', name: 'Võ Minh Tuấn', email: 'tuanvo.creator@tiktok.vn', role: 'creator', roleLabel: 'Nhà sáng tạo', status: 'inactive', avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=80&auto=format&fit=crop', lastLogin: '2026-09-12 08:00', joinedAt: '2024-06-12', ip: '103.48.194.22' },
+  { id: 'usr_007', name: 'Nguyễn Lan Anh', email: 'lananh@fashion.co', role: 'brand', roleLabel: 'Doanh nghiệp', status: 'pending', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop', lastLogin: '—', joinedAt: '2026-10-20', ip: '—' },
 ];
 
 export const DEFAULT_AUDIT_LOGS: AuditLogItem[] = [
