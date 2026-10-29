@@ -131,7 +131,7 @@ export default function CreateCampaignPage() {
   // ================= Step 2 State =================
   const [creatorQuantity, setCreatorQuantity] = useState<number>(10);
   const [creatorTier, setCreatorTier] = useState<string>('micro');
-  const [minFollowers, setMinFollowers] = useState<string>('');
+  const [minFollowers, setMinFollowers] = useState<string>('50k');
   const [minEngagement, setMinEngagement] = useState<string>('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedAges, setSelectedAges] = useState<string[]>([]);
@@ -259,11 +259,35 @@ export default function CreateCampaignPage() {
 
           // Phân khúc Creator (Follower range)
           if (camp.followerMin !== undefined || camp.followerMax !== undefined) {
-            const maxF = camp.followerMax || 200000;
-            if (maxF <= 50000) setCreatorTier('nano');
-            else if (maxF <= 200000) setCreatorTier('micro');
-            else if (maxF <= 1000000) setCreatorTier('macro');
-            else setCreatorTier('mega');
+            const minF = camp.followerMin ? Number(camp.followerMin) : undefined;
+            const maxF = camp.followerMax ? Number(camp.followerMax) : undefined;
+            if (minF && minF >= 500000) {
+              setCreatorTier('mega');
+              setMinFollowers('500k');
+            } else if (minF && minF >= 100000) {
+              setCreatorTier('macro');
+              setMinFollowers('100k');
+            } else if (minF && minF >= 50000) {
+              setCreatorTier('micro');
+              setMinFollowers('50k');
+            } else if (minF && minF >= 10000) {
+              setCreatorTier('nano');
+              setMinFollowers('10k');
+            } else if (maxF) {
+              if (maxF <= 50000) {
+                setCreatorTier('nano');
+                setMinFollowers('10k');
+              } else if (maxF <= 200000) {
+                setCreatorTier('micro');
+                setMinFollowers('50k');
+              } else if (maxF <= 500000) {
+                setCreatorTier('macro');
+                setMinFollowers('100k');
+              } else {
+                setCreatorTier('mega');
+                setMinFollowers('500k');
+              }
+            }
           }
         };
 
@@ -349,6 +373,23 @@ export default function CreateCampaignPage() {
     );
   };
 
+  // Đồng bộ 2 chiều chặt chẽ giữa Phân khúc Creator và Lượng Follower tối thiểu
+  const handleTierChange = (tier: string) => {
+    setCreatorTier(tier);
+    if (tier === 'nano') setMinFollowers('10k');
+    else if (tier === 'micro') setMinFollowers('50k');
+    else if (tier === 'macro') setMinFollowers('100k');
+    else if (tier === 'mega') setMinFollowers('500k');
+  };
+
+  const handleMinFollowersChange = (val: string) => {
+    setMinFollowers(val);
+    if (val === '10k') setCreatorTier('nano');
+    else if (val === '50k') setCreatorTier('micro');
+    else if (val === '100k') setCreatorTier('macro');
+    else if (val === '500k') setCreatorTier('mega');
+  };
+
   const handleAiSuggest = async (overridePrompt?: string) => {
     const promptToUse = (typeof overridePrompt === 'string' ? overridePrompt : aiPrompt).trim();
     if (!promptToUse || promptToUse.length < 5) {
@@ -389,8 +430,28 @@ export default function CreateCampaignPage() {
         } else if (result.budgetMin) {
           setBudgetTotal(result.budgetMin);
         }
-        if (!minEngagement) setMinEngagement('5%');
-        if (!minFollowers) setMinFollowers('50k');
+        if (result.followerMin || result.followerMax) {
+          const fMin = result.followerMin ? Number(result.followerMin) : undefined;
+          if (fMin && fMin >= 500000) {
+            setCreatorTier('mega');
+            setMinFollowers('500k');
+          } else if (fMin && fMin >= 100000) {
+            setCreatorTier('macro');
+            setMinFollowers('100k');
+          } else if (fMin && fMin >= 50000) {
+            setCreatorTier('micro');
+            setMinFollowers('50k');
+          } else if (fMin && fMin >= 10000) {
+            setCreatorTier('nano');
+            setMinFollowers('10k');
+          }
+        } else {
+          if (!minEngagement) setMinEngagement('5%');
+          if (!minFollowers) {
+            setMinFollowers('50k');
+            setCreatorTier('micro');
+          }
+        }
         if (!targetReach) setTargetReach('250,000 lượt xem');
         if (!targetEngagementRate) setTargetEngagementRate('5.0%');
         if (!targetConversions || targetConversions <= 0) setTargetConversions(50);
@@ -460,19 +521,25 @@ export default function CreateCampaignPage() {
     };
     const parsedMinFollowers = minFollowers ? minFollowersMap[minFollowers.toLowerCase()] : undefined;
 
-    const tierFollowersMap: Record<string, { min: number; max: number }> = {
-      nano: { min: 5000, max: 50000 },
-      micro: { min: 50000, max: 200000 },
-      macro: { min: 200000, max: 1000000 },
-      mega: { min: 1000000, max: 10000000 },
-    };
-    const tierRange = tierFollowersMap[creatorTier] || { min: 50000, max: 200000 };
+    let finalFollowerMin: number = 50000;
+    let finalFollowerMax: number | undefined = 200000;
 
-    // Ưu tiên chọn ngưỡng follower lớn hơn giữa phân khúc creatorTier và minFollowers người dùng chọn
-    const finalFollowerMin = parsedMinFollowers !== undefined
-      ? Math.max(parsedMinFollowers, tierRange.min)
-      : tierRange.min;
-    const finalFollowerMax = Math.max(tierRange.max, finalFollowerMin * 2);
+    if (minFollowers === '500k' || creatorTier === 'mega') {
+      finalFollowerMin = 500000;
+      finalFollowerMax = undefined; // 500k+ không áp đặt giới hạn trần trên
+    } else if (minFollowers === '100k' || creatorTier === 'macro') {
+      finalFollowerMin = 100000;
+      finalFollowerMax = 1000000;
+    } else if (minFollowers === '50k' || creatorTier === 'micro') {
+      finalFollowerMin = 50000;
+      finalFollowerMax = 200000;
+    } else if (minFollowers === '10k' || creatorTier === 'nano') {
+      finalFollowerMin = 10000;
+      finalFollowerMax = 50000;
+    } else if (parsedMinFollowers) {
+      finalFollowerMin = parsedMinFollowers;
+      finalFollowerMax = parsedMinFollowers >= 500000 ? undefined : parsedMinFollowers * 5;
+    }
 
     const primaryObj = selectedObjectives[0] || 'awareness';
     const niches = interests
@@ -1314,14 +1381,14 @@ export default function CreateCampaignPage() {
                     </div>
                     <Select
                       value={creatorTier}
-                      onChange={setCreatorTier}
+                      onChange={handleTierChange}
                       placeholder="Chọn phân khúc Creator"
                       style={{ width: '100%', height: 40 }}
                       options={[
-                        { value: 'nano', label: '🌱 Nano Creator (5K - 50K)' },
-                        { value: 'micro', label: '⭐ Micro Creator (50K - 200K)' },
-                        { value: 'macro', label: '🔥 Macro Creator (200K - 1M)' },
-                        { value: 'mega', label: '👑 Mega / Celeb (1M+)' },
+                        { value: 'nano', label: 'Nano Creator (5K - 50K)' },
+                        { value: 'micro', label: 'Micro Creator (50K - 200K)' },
+                        { value: 'macro', label: 'Macro Creator (200K - 500K)' },
+                        { value: 'mega', label: 'Mega / Celeb (500K+)' },
                       ]}
                     />
                   </Col>
@@ -1349,7 +1416,7 @@ export default function CreateCampaignPage() {
                     </div>
                     <Select
                       value={minFollowers || undefined}
-                      onChange={setMinFollowers}
+                      onChange={handleMinFollowersChange}
                       placeholder="Chọn lượng Follower tối thiểu"
                       style={{ width: '100%', height: 40 }}
                       options={[
