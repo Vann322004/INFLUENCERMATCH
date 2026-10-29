@@ -169,7 +169,7 @@ const stageMapToKanban: Record<RelationshipStage, KanbanCreator['stage']> = {
   NOT_INTERESTED: 'review',
 };
 
-export const stageMapFromKanban: Record<KanbanCreator['stage'], RelationshipStage> = {
+const stageMapFromKanban: Record<KanbanCreator['stage'], RelationshipStage> = {
   found: 'SHORTLISTED',
   review: 'INTERESTED',
   contacted: 'CONTACTED',
@@ -177,7 +177,7 @@ export const stageMapFromKanban: Record<KanbanCreator['stage'], RelationshipStag
   confirmed: 'COMPLETED',
 };
 
-export const mapRelationshipToKanban = (r: RelationshipDto): KanbanCreator => {
+const mapRelationshipToKanban = (r: RelationshipDto): KanbanCreator => {
   const feeNum = r.agreedFee || r.quotedFee || 0;
   const feeText = feeNum > 0 ? `${(feeNum / 1_000_000).toFixed(1)}M ₫` : 'Thỏa thuận';
 
