@@ -90,7 +90,7 @@ import { creatorService } from '../../services/api/creatorService';
 import type { CreatorItem } from '../../types/api/creator.types';
 
 // Hàm chuyển đổi Creator từ Backend sang format hiển thị trên giao diện
-export const mapApiCreatorToUi = (item: CreatorItem): Creator => {
+const mapApiCreatorToUi = (item: CreatorItem): Creator => {
   const followersNum = item.followers || 0;
   const followersText = followersNum >= 1_000_000
     ? `${(followersNum / 1_000_000).toFixed(1)}M`
@@ -185,7 +185,7 @@ export const mapApiCreatorToUi = (item: CreatorItem): Creator => {
 };
 
 // Helper tạo Bio tiếng Việt tự nhiên, có chiều sâu cho KOC khi dữ liệu gốc bị thiếu hoặc là chữ "Creator"
-export const getDisplayBio = (creator: { bio?: string; categories?: string[]; name?: string; platform?: string }): string => {
+const getDisplayBio = (creator: { bio?: string; categories?: string[]; name?: string; platform?: string }): string => {
   const rawBio = (creator.bio || '').trim();
   if (!rawBio || rawBio.toLowerCase() === 'creator' || rawBio.length < 6) {
     const cats = creator.categories && creator.categories.length > 0
@@ -210,7 +210,7 @@ const STOP_WORDS = new Set([
   'thương hiệu', 'và', 'cho', 'của', 'với', 'trong', 'các', 'những', 'để', 'mới'
 ]);
 
-export const computeCreatorMatch = (
+const computeCreatorMatch = (
   creator: Creator,
   camp: BrandCampaignItem
 ): { matchRate: number; matchLevel: 'high' | 'medium' | 'low'; reason: string } => {
@@ -376,7 +376,7 @@ export const computeCreatorMatch = (
 };
 
 // Component Avatar chịu lỗi cao: chống 403 Forbidden hotlink từ CDN mạng xã hội (TikTok/Instagram) & fallback đẹp mắt
-export const CreatorAvatar: React.FC<{
+const CreatorAvatar: React.FC<{
   src?: string;
   name?: string;
   size?: number;
@@ -449,7 +449,7 @@ export interface BrandCampaignItem {
   followerMax?: number;
 }
 
-export const BRAND_CAMPAIGNS: BrandCampaignItem[] = [];
+const BRAND_CAMPAIGNS: BrandCampaignItem[] = [];
 
 const mapApiCampaignToItem = (c: CampaignResponse | any): BrandCampaignItem => {
   const tag = (c.niches && c.niches.length > 0)
@@ -601,15 +601,21 @@ export default function CreatorDiscoveryPage() {
         let mapped: BrandCampaignItem[] = [];
         if (Array.isArray(apiCampaigns) && apiCampaigns.length > 0) {
           mapped = apiCampaigns.map(mapApiCampaignToItem);
-        }
 
-        const targetId = initialCampId;
-        if (targetId) {
-          let matched = mapped.find((c) => c.id === targetId);
+          const targetId = initialCampId;
+          let matched: BrandCampaignItem | undefined;
+          if (targetId) {
+            matched = mapped.find((c) => c.id === targetId);
+
+          const passedCampaign = (location.state as any)?.createdCampaign;
+          let storedCampaign: any = null;
+          try {
+            const rawStored = localStorage.getItem('IM_MATCHED_CAMPAIGN');
+            if (rawStored) storedCampaign = JSON.parse(rawStored);
+          } catch {}
 
           // If not in the list, check location.state or fetch by ID
           if (!matched) {
-            const passedCampaign = (location.state as any)?.createdCampaign;
             if (passedCampaign && (passedCampaign.id === targetId || !passedCampaign.id)) {
               matched = mapApiCampaignToItem(passedCampaign);
             } else {
@@ -619,35 +625,44 @@ export default function CreatorDiscoveryPage() {
                   matched = mapApiCampaignToItem(fetched);
                 }
               } catch {
-                try {
-                  const stored = localStorage.getItem('IM_MATCHED_CAMPAIGN');
-                  if (stored) {
-                    const parsed = JSON.parse(stored);
-                    if (parsed.id === targetId || targetId) {
-                      matched = {
-                        id: targetId,
-                        name: parsed.name || 'Chiến dịch mới',
-                        tag: parsed.category || 'Mới khởi tạo',
-                        target: parsed.target || parsed.targetAudience || 'Khán giả mục tiêu',
-                        budget: parsed.budget || '25.0M VND',
-                        targetAudience: parsed.targetAudience || 'Khán giả mục tiêu',
-                        category: parsed.category || 'Làm đẹp',
-                        channels: parsed.channels || ['tiktok'],
-                        status: 'ACTIVE',
-                        requirements: parsed.requirements || '',
-                        followerMin: parsed.followerMin ? Number(parsed.followerMin) : undefined,
-                        followerMax: parsed.followerMax ? Number(parsed.followerMax) : undefined,
-                      };
-                    }
-                  }
-                } catch {}
+                if (storedCampaign && (storedCampaign.id === targetId || targetId)) {
+                  matched = {
+                    id: targetId,
+                    name: storedCampaign.name || 'Chiến dịch mới',
+                    tag: storedCampaign.category || 'Mới khởi tạo',
+                    target: storedCampaign.target || storedCampaign.targetAudience || 'Khán giả mục tiêu',
+                    budget: storedCampaign.budget || '25.0M VND',
+                    targetAudience: storedCampaign.targetAudience || 'Khán giả mục tiêu',
+                    category: storedCampaign.category || 'Làm đẹp',
+                    channels: storedCampaign.channels || ['tiktok'],
+                    status: 'ACTIVE',
+                    requirements: storedCampaign.requirements || '',
+                    followerMin: storedCampaign.followerMin ? Number(storedCampaign.followerMin) : undefined,
+                    followerMax: storedCampaign.followerMax ? Number(storedCampaign.followerMax) : undefined,
+                  };
+                }
               }
             }
-
-            if (matched) {
-              mapped = [matched, ...mapped.filter((c) => c.id !== matched!.id)];
-            }
           }
+
+          // Bảo toàn followerMin / followerMax từ thông số người dùng vừa tạo
+          if (matched) {
+            if (!matched.followerMin && passedCampaign?.followerMin) {
+              matched.followerMin = Number(passedCampaign.followerMin);
+            }
+            if (!matched.followerMax && passedCampaign?.followerMax) {
+              matched.followerMax = Number(passedCampaign.followerMax);
+            }
+            if (!matched.followerMin && storedCampaign?.followerMin) {
+              matched.followerMin = Number(storedCampaign.followerMin);
+            }
+            if (!matched.followerMax && storedCampaign?.followerMax) {
+              matched.followerMax = Number(storedCampaign.followerMax);
+            }
+
+            mapped = [matched, ...mapped.filter((c) => c.id !== matched!.id)];
+          }
+        }
 
           setCampaignsList(mapped);
           updateDiscoveryCache({ campaigns: mapped });
@@ -680,32 +695,46 @@ export default function CreatorDiscoveryPage() {
           const targetId = initialCampId;
           if (targetId) {
             const passedCampaign = (location.state as any)?.createdCampaign;
+            let storedCampaign: any = null;
+            try {
+              const rawStored = localStorage.getItem('IM_MATCHED_CAMPAIGN');
+              if (rawStored) storedCampaign = JSON.parse(rawStored);
+            } catch {}
+
             let matched: BrandCampaignItem | undefined;
             if (passedCampaign) {
               matched = mapApiCampaignToItem(passedCampaign);
-            } else {
-              try {
-                const stored = localStorage.getItem('IM_MATCHED_CAMPAIGN');
-                if (stored) {
-                  const parsed = JSON.parse(stored);
-                  matched = {
-                    id: targetId,
-                    name: parsed.name || 'Chiến dịch mới',
-                    tag: parsed.category || 'Mới khởi tạo',
-                    target: parsed.target || parsed.targetAudience || 'Khán giả mục tiêu',
-                    budget: parsed.budget || '25.0M VND',
-                    targetAudience: parsed.targetAudience || 'Khán giả mục tiêu',
-                    category: parsed.category || 'Làm đẹp',
-                    channels: parsed.channels || ['tiktok'],
-                    status: 'ACTIVE',
-                    requirements: parsed.requirements || '',
-                    followerMin: parsed.followerMin ? Number(parsed.followerMin) : undefined,
-                    followerMax: parsed.followerMax ? Number(parsed.followerMax) : undefined,
-                  };
-                }
-              } catch {}
+            } else if (storedCampaign) {
+              matched = {
+                id: targetId,
+                name: storedCampaign.name || 'Chiến dịch mới',
+                tag: storedCampaign.category || 'Mới khởi tạo',
+                target: storedCampaign.target || storedCampaign.targetAudience || 'Khán giả mục tiêu',
+                budget: storedCampaign.budget || '25.0M VND',
+                targetAudience: storedCampaign.targetAudience || 'Khán giả mục tiêu',
+                category: storedCampaign.category || 'Làm đẹp',
+                channels: storedCampaign.channels || ['tiktok'],
+                status: 'ACTIVE',
+                requirements: storedCampaign.requirements || '',
+                followerMin: storedCampaign.followerMin ? Number(storedCampaign.followerMin) : undefined,
+                followerMax: storedCampaign.followerMax ? Number(storedCampaign.followerMax) : undefined,
+              };
             }
+
             if (matched) {
+              if (!matched.followerMin && passedCampaign?.followerMin) {
+                matched.followerMin = Number(passedCampaign.followerMin);
+              }
+              if (!matched.followerMax && passedCampaign?.followerMax) {
+                matched.followerMax = Number(passedCampaign.followerMax);
+              }
+              if (!matched.followerMin && storedCampaign?.followerMin) {
+                matched.followerMin = Number(storedCampaign.followerMin);
+              }
+              if (!matched.followerMax && storedCampaign?.followerMax) {
+                matched.followerMax = Number(storedCampaign.followerMax);
+              }
+
               mapped = [matched, ...mapped];
               setSelectedCampaignId(matched.id);
               setMatchedCampaign(matched);
@@ -742,21 +771,24 @@ export default function CreatorDiscoveryPage() {
     try {
       let minF: number | undefined = camp.followerMin;
       let maxF: number | undefined = camp.followerMax;
-      if (followerTier === 'nano') { minF = 1000; maxF = 50000; }
-      else if (followerTier === 'micro') { minF = 50000; maxF = 200000; }
-      else if (followerTier === 'macro') { minF = 200000; maxF = 1000000; }
-      else if (followerTier === 'mega') { minF = 1000000; maxF = undefined; }
-      else if (camp.followerMin) {
+
+      // Ưu tiên cao nhất: Nếu chiến dịch có tiêu chí followerMin/followerMax thì BẮT BUỘC dùng tiêu chuẩn của chiến dịch
+      if (camp.followerMin || camp.followerMax) {
         minF = camp.followerMin;
         maxF = camp.followerMax;
+      } else {
+        if (followerTier === 'nano') { minF = 1000; maxF = 50000; }
+        else if (followerTier === 'micro') { minF = 50000; maxF = 200000; }
+        else if (followerTier === 'macro') { minF = 200000; maxF = 500000; }
+        else if (followerTier === 'mega') { minF = 500000; maxF = undefined; }
       }
 
-      // Đồng bộ bộ lọc hiển thị Follower theo chiến dịch nếu chưa chọn lọc tay
-      if (followerTier === 'all' && camp.followerMin) {
-        if (camp.followerMin >= 1000000) setFollowerTier('mega');
+      // Tự động đồng bộ bộ lọc followerTier theo ngưỡng followerMin của chiến dịch
+      if (camp.followerMin) {
+        if (camp.followerMin >= 500000) setFollowerTier('mega');
         else if (camp.followerMin >= 200000) setFollowerTier('macro');
         else if (camp.followerMin >= 50000) setFollowerTier('micro');
-        else if (camp.followerMin < 50000) setFollowerTier('nano');
+        else setFollowerTier('nano');
       }
 
       let backendCandidates: any[] = [];
@@ -1176,8 +1208,8 @@ export default function CreatorDiscoveryPage() {
         // Follower Tier
         if (followerTier === 'nano' && c.followersCount > 50000) return false;
         if (followerTier === 'micro' && (c.followersCount < 50000 || c.followersCount > 200000)) return false;
-        if (followerTier === 'macro' && (c.followersCount < 200000 || c.followersCount > 1000000)) return false;
-        if (followerTier === 'mega' && c.followersCount < 1000000) return false;
+        if (followerTier === 'macro' && (c.followersCount < 200000 || c.followersCount > 500000)) return false;
+        if (followerTier === 'mega' && c.followersCount < 500000) return false;
 
         // Engagement Tier
         if (engagementTier === 'high' && c.engagementValue < 5) return false;
@@ -1842,8 +1874,8 @@ export default function CreatorDiscoveryPage() {
                           { value: 'all', label: 'Quy mô: Tất cả' },
                           { value: 'nano', label: 'Nano (< 50K)' },
                           { value: 'micro', label: 'Micro (50K – 200K)' },
-                          { value: 'macro', label: 'Macro (200K – 1M)' },
-                          { value: 'mega', label: 'Mega (Trên 1M)' },
+                          { value: 'macro', label: 'Macro (200K – 500K)' },
+                          { value: 'mega', label: 'Mega (500K+)' },
                         ]}
                       />
 
@@ -2063,53 +2095,53 @@ export default function CreatorDiscoveryPage() {
                           </div>
 
                           <div className="cdiscovery-card-right-group">
-                            {matchedCampaign && index === 0 && creator.matchRate >= 70 && (
+                            {matchedCampaign && safeCurrentPage === 1 && index === 0 && creator.matchRate >= 70 && (
                               <span style={{
-                                background: 'linear-gradient(135deg, #FEF08A 0%, #FDE047 100%)',
+                                background: '#FEF9C3',
                                 color: '#854D0E',
                                 fontWeight: 800,
                                 fontSize: 10.5,
-                                padding: '2px 7px',
+                                padding: '2px 8px',
                                 borderRadius: 999,
-                                border: '1px solid #FACC15',
+                                border: '1px solid #FDE047',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: 2,
-                                boxShadow: '0 1px 2px rgba(234, 179, 8, 0.25)',
+                                boxShadow: '0 1px 2px rgba(234, 179, 8, 0.15)',
                               }}>
-                                👑 Top 1
+                                Top 1
                               </span>
                             )}
-                            {matchedCampaign && index === 1 && creator.matchRate >= 70 && (
+                            {matchedCampaign && safeCurrentPage === 1 && index === 1 && creator.matchRate >= 70 && (
                               <span style={{
                                 background: '#F1F5F9',
                                 color: '#475569',
                                 fontWeight: 800,
                                 fontSize: 10.5,
-                                padding: '2px 7px',
+                                padding: '2px 8px',
                                 borderRadius: 999,
                                 border: '1px solid #CBD5E1',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: 2,
                               }}>
-                                🥈 Top 2
+                                Top 2
                               </span>
                             )}
-                            {matchedCampaign && index === 2 && creator.matchRate >= 70 && (
+                            {matchedCampaign && safeCurrentPage === 1 && index === 2 && creator.matchRate >= 70 && (
                               <span style={{
                                 background: '#FFF7ED',
                                 color: '#9A3412',
                                 fontWeight: 800,
                                 fontSize: 10.5,
-                                padding: '2px 7px',
+                                padding: '2px 8px',
                                 borderRadius: 999,
                                 border: '1px solid #FDBA74',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: 2,
                               }}>
-                                🥉 Top 3
+                                Top 3
                               </span>
                             )}
                             {matchedCampaign && creator.matchRate > 0 ? (
