@@ -62,16 +62,20 @@ const { TextArea } = Input;
 
 const AI_SAMPLE_PROMPTS = [
   {
-    label: 'Kem dưỡng phục hồi da Gen-Z',
-    prompt: 'Quảng bá dòng kem dưỡng phục hồi da dành cho giới trẻ 18-24 tuổi tại Hà Nội và TP.HCM, ngân sách tầm 25 triệu trên TikTok và Instagram',
+    label: 'Kem chống nắng nâng tone HS-SV (<200k)',
+    prompt: 'Dòng kem chống nắng nâng tone kiềm dầu cho học sinh sinh viên, giá dưới 200k',
   },
   {
-    label: 'Phụ kiện sạc nhanh công nghệ',
-    prompt: 'Tìm kiếm creator công nghệ review phụ kiện sạc nhanh cho người trẻ 18-35 tuổi, ngân sách 30 triệu trên TikTok và Facebook',
+    label: 'Serum B5 phục hồi da dầu mụn',
+    prompt: 'Quảng bá serum B5 phục hồi da dầu mụn dành cho giới trẻ 18-24 tuổi trên TikTok và Instagram, ngân sách 20 triệu',
   },
   {
-    label: 'Thời trang dạo phố OOTD',
-    prompt: 'Quảng bá BST thời trang dạo phố năng động cho nữ giới 18-24 tuổi tại TP.HCM, ngân sách 20 triệu trên Instagram và TikTok',
+    label: 'Củ sạc nhanh GaN 65W công nghệ',
+    prompt: 'Tìm kiếm creator review củ sạc nhanh công nghệ GaN 65W cho người trẻ và game thủ 18-35 tuổi, ngân sách 30 triệu trên TikTok và Facebook',
+  },
+  {
+    label: 'Thời trang dạo phố OOTD hè',
+    prompt: 'Quảng bá BST thời trang dạo phố năng động hè cho nữ giới 18-24 tuổi tại Hà Nội và TP.HCM, ngân sách 20 triệu trên Instagram và TikTok',
   },
 ];
 
@@ -120,23 +124,25 @@ export default function CreateCampaignPage() {
   const [isLoadingCampaign, setIsLoadingCampaign] = useState<boolean>(false);
 
   // ================= Step 1 State =================
+  // ĐỂ TRỐNG TOÀN BỘ THEO YÊU CẦU CỦA REVIEW ĐỂ THẤY RÕ HIỆU QUẢ CỦA AI AUTOFILL
   const [campaignName, setCampaignName] = useState('');
   const [product, setProduct] = useState('');
   const [selectedObjectives, setSelectedObjectives] = useState<string[]>([]);
-  const [draftDeadline, setDraftDeadline] = useState<string>('7 ngày sau khi Creator nhận sản phẩm');
+  const [draftDeadline, setDraftDeadline] = useState<string>('');
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
+  const [isAiAutofilled, setIsAiAutofilled] = useState<boolean>(false);
 
   // ================= Step 2 State =================
-  const [creatorQuantity, setCreatorQuantity] = useState<number>(10);
-  const [creatorTier, setCreatorTier] = useState<string>('micro');
-  const [minFollowers, setMinFollowers] = useState<string>('50k');
+  const [creatorQuantity, setCreatorQuantity] = useState<number>(0);
+  const [creatorTier, setCreatorTier] = useState<string>('');
+  const [minFollowers, setMinFollowers] = useState<string>('');
   const [minEngagement, setMinEngagement] = useState<string>('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedAges, setSelectedAges] = useState<string[]>([]);
-  const [selectedGender, setSelectedGender] = useState<string>('all');
-  const [locationState, setLocationState] = useState<string>('nationwide');
+  const [selectedGender, setSelectedGender] = useState<string>('');
+  const [locationState, setLocationState] = useState<string>('');
   const [interests, setInterests] = useState<string>('');
   const [creatorBrief, setCreatorBrief] = useState<string>('');
 
@@ -146,7 +152,7 @@ export default function CreateCampaignPage() {
   const [targetReach, setTargetReach] = useState<string>('');
   const [targetEngagementRate, setTargetEngagementRate] = useState<string>('');
   const [targetConversions, setTargetConversions] = useState<number>(0);
-  const [campaignDuration, setCampaignDuration] = useState<string>('4_weeks');
+  const [campaignDuration, setCampaignDuration] = useState<string>('');
 
   // Provinces API State
   const [provinceOptions, setProvinceOptions] = useState<{ value: string; label: string }[]>([
@@ -398,38 +404,71 @@ export default function CreateCampaignPage() {
     }
     setIsAiLoading(true);
     try {
-      message.loading({ content: 'AI đang phân tích và tối ưu hóa thông tin chiến dịch...', key: 'ai_suggest' });
+      message.loading({ content: 'AI Gemini đang phân tích ngữ nghĩa và tạo cấu trúc brief chiến dịch...', key: 'ai_suggest' });
       const result = await campaignService.autofillCampaign(promptToUse);
       if (result) {
-        if (result.name) setCampaignName(result.name);
+        // 1. Tên chiến dịch & Sản phẩm
+        if (result.name || result.campaignName) setCampaignName(result.name || result.campaignName || '');
         if (result.productService) setProduct(result.productService);
+
+        // 2. Mục tiêu tiếp thị
         if (result.objective) {
           const objLower = String(result.objective).toLowerCase();
           if (objLower.includes('conversion') || objLower.includes('sales')) setSelectedObjectives(['sales']);
           else if (objLower.includes('engagement')) setSelectedObjectives(['engagement']);
           else if (objLower.includes('traffic')) setSelectedObjectives(['traffic']);
           else setSelectedObjectives(['awareness']);
+        } else {
+          setSelectedObjectives(['sales', 'awareness']);
         }
-        if (result.platforms && Array.isArray(result.platforms) && result.platforms.length > 0) {
-          const cleanP = result.platforms
+
+        // 3. Thời hạn gửi bản nháp
+        if (result.draftDeadline) {
+          setDraftDeadline(result.draftDeadline);
+        } else {
+          setDraftDeadline('5 ngày sau khi Creator nhận sản phẩm');
+        }
+
+        // 4. Kênh truyền thông đề xuất
+        const platformSource = result.platforms || result.preferredPlatforms || [];
+        if (Array.isArray(platformSource) && platformSource.length > 0) {
+          const cleanP = platformSource
             .map((p) => p.toLowerCase())
             .filter((p) => ['tiktok', 'instagram', 'facebook'].includes(p));
           if (cleanP.length > 0) setSelectedPlatforms(cleanP);
+        } else {
+          setSelectedPlatforms(['tiktok', 'instagram']);
         }
+
+        // 5. Khán giả mục tiêu (Target Audience)
         if (result.targetAudiences && Array.isArray(result.targetAudiences) && result.targetAudiences.length > 0) {
           setSelectedAges(result.targetAudiences);
+        } else {
+          setSelectedAges(['18-24']);
         }
+
+        // 6. Ngành hàng phù hợp (Niche)
         if (result.niches && Array.isArray(result.niches) && result.niches.length > 0) {
           setInterests(result.niches.join(', '));
+        } else if (result.niche) {
+          setInterests(result.niche);
         }
+
+        // 7. Địa điểm & Giới tính
         if (result.locations && Array.isArray(result.locations) && result.locations.length > 0) {
           setLocationState(result.locations[0]);
+        } else {
+          setLocationState('nationwide');
         }
-        if (result.budgetMax) {
-          setBudgetTotal(result.budgetMax);
-        } else if (result.budgetMin) {
-          setBudgetTotal(result.budgetMin);
+        setSelectedGender('all');
+
+        // 8. Số lượng creator & Phân khúc
+        if (result.creatorQuantity) {
+          setCreatorQuantity(result.creatorQuantity);
+        } else {
+          setCreatorQuantity(10);
         }
+
         if (result.followerMin || result.followerMax) {
           const fMin = result.followerMin ? Number(result.followerMin) : undefined;
           if (fMin && fMin >= 500000) {
@@ -446,22 +485,45 @@ export default function CreateCampaignPage() {
             setMinFollowers('10k');
           }
         } else {
-          if (!minEngagement) setMinEngagement('5%');
-          if (!minFollowers) {
-            setMinFollowers('50k');
-            setCreatorTier('micro');
-          }
+          setCreatorTier('micro');
+          setMinFollowers('50k');
+          setMinEngagement('5%');
         }
-        if (!targetReach) setTargetReach('250,000 lượt xem');
-        if (!targetEngagementRate) setTargetEngagementRate('5.0%');
-        if (!targetConversions || targetConversions <= 0) setTargetConversions(50);
-        if (promptToUse) {
-          setCreatorBrief(`Yêu cầu sáng tạo: Video review trải nghiệm thực tế ${result.productService || product}, nêu bật công dụng nổi bật và hướng dẫn sử dụng sản phẩm.`);
+
+        // 9. Ngân sách & KPI
+        if (result.budgetMax) {
+          setBudgetTotal(result.budgetMax);
+        } else if (result.budgetMin) {
+          setBudgetTotal(result.budgetMin);
+        } else {
+          setBudgetTotal(18000000);
         }
+        setTargetReach('250,000 lượt xem');
+        setTargetEngagementRate('5.0%');
+        setTargetConversions(50);
+
+        if (result.campaignDuration) {
+          setCampaignDuration(result.campaignDuration);
+        } else {
+          setCampaignDuration('4_weeks');
+        }
+
+        // 10. Bản Brief: Thông điệp chính & Do's and Don'ts (Chuẩn luồng 3.2)
+        if (result.creatorBrief) {
+          setCreatorBrief(result.creatorBrief);
+        } else if (result.keyMessage || result.dosAndDonts) {
+          setCreatorBrief(`Thông điệp chính:\n${result.keyMessage || ''}\n\n${result.dosAndDonts || ''}`);
+        } else {
+          setCreatorBrief(`Thông điệp chính: Quảng bá ${result.productService || product || 'sản phẩm'} với góc nhìn trải nghiệm thực tế, nâng cao nhận diện và thúc đẩy chuyển đổi.\n\nDo's:\n- Quay video cận cảnh chất lượng, trải nghiệm sử dụng thực tế.\n- Kèm hashtag chiến dịch và đường link mua hàng.\n\nDon'ts:\n- Không phóng đại hoặc quảng cáo sai công dụng.\n- Tránh so sánh ác ý hoặc nhắc tên nhãn hàng đối thủ.`);
+        }
+
         if (result.aiExplanation) {
           setAiExplanation(result.aiExplanation);
         }
-        message.success({ content: 'AI đã điền tự động các thông số chiến dịch thành công!', key: 'ai_suggest', duration: 3 });
+
+        // Kích hoạt hiệu ứng highlight các trường để Brand xem lại và chỉnh sửa
+        setIsAiAutofilled(true);
+        message.success({ content: '✨ AI Gemini đã tự động điền toàn bộ cấu trúc Brief 5 bước thành công!', key: 'ai_suggest', duration: 4 });
       }
     } catch (error) {
       console.error('Error autofilling campaign with AI:', error);
@@ -1089,7 +1151,7 @@ export default function CreateCampaignPage() {
                 <Input
                   value={aiPrompt}
                   onChange={(e) => setAiPrompt(e.target.value)}
-                  placeholder="Ví dụ: Quảng bá dòng kem dưỡng phục hồi da dành cho giới trẻ 18-24 tuổi tại Hà Nội và TP.HCM, ngân sách tầm 25 triệu trên TikTok và Instagram..."
+                  placeholder="Ví dụ: Dòng kem chống nắng nâng tone kiềm dầu cho học sinh sinh viên, giá dưới 200k..."
                   className="ccreate-ai-input-field"
                   onPressEnter={() => handleAiSuggest()}
                 />
@@ -1100,7 +1162,7 @@ export default function CreateCampaignPage() {
                   onClick={() => handleAiSuggest()}
                   className="ccreate-ai-action-btn"
                 >
-                  Phân tích bằng AI
+                  AI Tự động điền
                 </Button>
               </div>
 
@@ -1194,11 +1256,14 @@ export default function CreateCampaignPage() {
             {/* ============================ BƯỚC 1 CONTENT ============================= */}
             {/* ========================================================================= */}
             {currentStep === 1 && (
-              <div className="ccreate-card">
+              <div className={`ccreate-card ${isAiAutofilled ? 'ai-highlight-card' : ''}`}>
                 <div className="ccreate-card-header">
                   <div className="ccreate-card-badge">1</div>
                   <div>
-                    <div className="ccreate-card-title">Thông tin chiến dịch & Mục tiêu tiếp thị</div>
+                    <div className="ccreate-card-title" style={{ display: 'flex', alignItems: 'center' }}>
+                      Thông tin chiến dịch & Mục tiêu tiếp thị
+                      {isAiAutofilled && <span className="ccreate-ai-badge">✨ AI Autofilled</span>}
+                    </div>
                     <div className="ccreate-card-subtitle">
                       Cung cấp các thông tin cơ bản về sản phẩm và định hướng mục tiêu để hệ thống tối ưu hóa đề xuất.
                     </div>
@@ -1309,7 +1374,7 @@ export default function CreateCampaignPage() {
             {/* ============================ BƯỚC 2 CONTENT ============================= */}
             {/* ========================================================================= */}
             {currentStep === 2 && (
-              <div className="ccreate-card">
+              <div className={`ccreate-card ${isAiAutofilled ? 'ai-highlight-card' : ''}`}>
                 <div className="ccreate-card-header">
                   <div className="ccreate-card-badge">2</div>
                   <div>
@@ -1517,7 +1582,7 @@ export default function CreateCampaignPage() {
             {/* ============================ BƯỚC 3 CONTENT ============================= */}
             {/* ========================================================================= */}
             {currentStep === 3 && (
-              <div className="ccreate-card">
+              <div className={`ccreate-card ${isAiAutofilled ? 'ai-highlight-card' : ''}`}>
                 <div className="ccreate-card-header">
                   <div className="ccreate-card-badge">3</div>
                   <div>

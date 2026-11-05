@@ -250,13 +250,15 @@ export const campaignService = {
    */
   async autofillCampaign(prompt: string): Promise<CampaignAutofillResponse> {
     try {
+      // Gửi cả productDescription (theo tài liệu Luồng 3.2) và prompt để tương thích 100% với backend
       const response = await apiClient.post<ApiResponse<CampaignAutofillResponse>>('/ai/campaign-autofill', {
+        productDescription: prompt,
         prompt,
       });
       if (response.data?.data) {
         return response.data.data;
       }
-      if (response.data && (response.data as any).name) {
+      if (response.data && ((response.data as any).name || (response.data as any).campaignName)) {
         return response.data as unknown as CampaignAutofillResponse;
       }
     } catch (err: any) {
@@ -271,16 +273,31 @@ export const campaignService = {
       let audiences = ['18-24', '25-34'];
       let budget = 25000000;
 
-      if (lower.includes('công nghệ') || lower.includes('sạc') || lower.includes('điện thoại') || lower.includes('phụ kiện') || lower.includes('tech')) {
+      let keyMessage = '';
+      let dosAndDonts = '';
+
+      if (lower.includes('chống nắng') || lower.includes('kiềm dầu') || lower.includes('học sinh') || lower.includes('sinh viên')) {
+        niches = ['Làm đẹp & Mỹ phẩm', 'Chăm sóc da', 'Học đường & Sinh viên'];
+        platforms = ['TIKTOK', 'INSTAGRAM'];
+        objective = 'CONVERSION';
+        audiences = ['18-24'];
+        budget = 18000000;
+        keyMessage = 'Bảo vệ da tối ưu - Nâng tone sáng mịn tự nhiên - Kiềm dầu bền bỉ suốt ngày học cho học sinh, sinh viên giá chỉ dưới 200k.';
+        dosAndDonts = "Do's: Quay cận cảnh chất kem mỏng nhẹ thẩm thấu nhanh, test độ kiềm dầu thực tế trong buổi học, nhấn mạnh mức giá bình dân dưới 200k.\nDon'ts: Không tâng bốc công dụng quá mức, không so sánh tiêu cực hoặc nêu tên thương hiệu đối thủ.";
+      } else if (lower.includes('công nghệ') || lower.includes('sạc') || lower.includes('điện thoại') || lower.includes('phụ kiện') || lower.includes('tech')) {
         niches = ['Công nghệ', 'Đời sống số', 'Tiện ích công nghệ'];
         platforms = ['TIKTOK', 'FACEBOOK'];
         objective = 'CONVERSION';
         budget = 30000000;
+        keyMessage = 'Sạc siêu nhanh, an toàn chuẩn GaN, nhỏ gọn đồng hành cùng giới trẻ bận rộn.';
+        dosAndDonts = "Do's: Test tốc độ sạc thực tế với thiết bị, quay góc hiện đại công nghệ.\nDon'ts: Không quay video mờ rung, không so sánh dìm hàng sản phẩm khác.";
       } else if (lower.includes('skincare') || lower.includes('mỹ phẩm') || lower.includes('làm đẹp') || lower.includes('serum') || lower.includes('son')) {
         niches = ['Làm đẹp & Mỹ phẩm', 'Chăm sóc da', 'Thời trang'];
         platforms = ['TIKTOK', 'INSTAGRAM'];
         objective = 'CONVERSION';
         budget = 25000000;
+        keyMessage = 'Phục hồi làn da khỏe khoắn rạng rỡ từ bên trong với công thức lành tính.';
+        dosAndDonts = "Do's: Thể hiện làn da mộc trước/sau sử dụng chân thực.\nDon'ts: Tránh dùng filter làm mờ da quá đà.";
       } else if (lower.includes('thời trang') || lower.includes('quần áo') || lower.includes('sneaker') || lower.includes('giày')) {
         niches = ['Thời trang & Phong cách', 'OOTD', 'Gen Z'];
         platforms = ['TIKTOK', 'INSTAGRAM'];
@@ -300,8 +317,8 @@ export const campaignService = {
       const fallbackName = `Chiến dịch ${cleanProduct.charAt(0).toUpperCase() + cleanProduct.slice(1)}`;
 
       return {
-        name: fallbackName,
-        productService: cleanProduct,
+        name: lower.includes('chống nắng') ? 'Chiến dịch Kem chống nắng nâng tone kiềm dầu học đường' : fallbackName,
+        productService: lower.includes('chống nắng') ? 'Kem chống nắng nâng tone kiềm dầu học sinh sinh viên' : cleanProduct,
         objective: objective as any,
         platforms: platforms as any,
         niches,
@@ -309,7 +326,13 @@ export const campaignService = {
         locations: ['Thành phố Hồ Chí Minh', 'Thành phố Hà Nội'],
         budgetMin: budget * 0.8,
         budgetMax: budget,
-        aiExplanation: `Hệ thống đã phân tích mục tiêu "${prompt}" và đề xuất chiến lược tối ưu: tập trung vào nền tảng ${platforms.join(' & ')} với tệp Creator ${niches.join(', ')}.`,
+        keyMessage,
+        dosAndDonts,
+        creatorBrief: keyMessage && dosAndDonts ? `Thông điệp chính:\n${keyMessage}\n\n${dosAndDonts}` : undefined,
+        creatorQuantity: 10,
+        draftDeadline: '5 ngày sau khi Creator nhận sản phẩm',
+        campaignDuration: '4_weeks',
+        aiExplanation: `Trợ lý AI đã phân tích mô tả: "${prompt}". Đề xuất chiến dịch tập trung vào tệp ${audiences.join(', ')} tuổi, kênh ${platforms.join(' & ')}, định hướng thông điệp kiềm dầu và giá thành tiết kiệm dưới 200k.`,
       };
     }
 

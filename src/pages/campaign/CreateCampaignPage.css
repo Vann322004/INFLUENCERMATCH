@@ -817,3 +817,55 @@
     opacity: 1;
   }
 }
+
+/* ==========================================================================
+   AI Autofill Highlight & Pulse Animation (Luồng 3.2)
+   ========================================================================== */
+
+@keyframes aiCardPulseGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.45);
+    border-color: #8B5CF6;
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(139, 92, 246, 0.15);
+    border-color: #6366F1;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+    border-color: #C4B5FD;
+  }
+}
+
+.ccreate-card.ai-highlight-card {
+  border: 1.5px solid #8B5CF6 !important;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.15) !important;
+  transition: all 0.3s ease;
+  animation: aiCardPulseGlow 3s ease-out;
+}
+
+.ccreate-ai-autofilled-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 50%, #EDE9FE 100%);
+  border: 1px solid #C4B5FD;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.08);
+}
+
+.ccreate-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #F3E8FF;
+  border: 1px solid #DDD6FE;
+  color: #7C3AED;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-left: 8px;
+}
