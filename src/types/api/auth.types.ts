@@ -24,6 +24,8 @@ export interface RegisterRequest {
   email: string;
   password: string;
   fullName: string;
+  brandName?: string;
+  phone?: string;
 }
 
 export interface RefreshTokenRequest {
