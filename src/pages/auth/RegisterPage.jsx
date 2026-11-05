@@ -25,6 +25,11 @@ export default function RegisterPage() {
     if (loading) return;
     setLoading(true);
     try {
+      if (values.brandName?.trim()) {
+        try {
+          sessionStorage.setItem('pending_brand_name', values.brandName.trim());
+        } catch {}
+      }
       await authService.register({
         fullName: values.fullName?.trim(),
         email: values.email?.trim(),

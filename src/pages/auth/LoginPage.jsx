@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { LABELS } from '../../constants/labels';
 import { ROUTES } from '../../constants/routes';
 import { authService } from '../../services/api/authService';
+import { brandService } from '../../services/api/brandService';
 import { getErrorMessage } from '../../services/apiClient';
 import './LoginPage.css';
 
@@ -13,12 +14,27 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const redirectByRole = (user) => {
+  const redirectByRole = async (user) => {
     if (user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'DATA_MANAGER')) {
       navigate('/admin/dashboard');
     } else if (user && (user.role === 'CREATOR' || user.role === 'creator')) {
       navigate('/creator/dashboard');
     } else {
+      // Role BRAND / SME: Kiểm tra xem thương hiệu đã cập nhật hồ sơ lần đầu chưa
+      try {
+        const brand = await brandService.getMyBrand(true);
+        // Nếu chưa có hồ sơ (null/404) hoặc chưa hoàn thiện thông tin (chưa có tên thương hiệu hoặc ngành hàng)
+        const hasCompletedProfile = Boolean(brand && (brand.businessName?.trim() || brand.industry?.trim()));
+        if (!hasCompletedProfile) {
+          message.info('Chào mừng bạn! Vui lòng hoàn thiện thông tin hồ sơ thương hiệu để bắt đầu.');
+          navigate('/brand-profile');
+          return;
+        }
+      } catch (err) {
+        console.warn('Lỗi kiểm tra hồ sơ brand, chuyển hướng trang tạo hồ sơ:', err);
+        navigate('/brand-profile');
+        return;
+      }
       navigate(ROUTES.DASHBOARD || '/dashboard');
     }
   };
@@ -33,7 +49,7 @@ export default function LoginPage() {
       });
 
       message.success(`Đăng nhập thành công! Xin chào ${loginData.user?.fullName || loginData.user?.email}`);
-      redirectByRole(loginData.user);
+      await redirectByRole(loginData.user);
     } catch (error) {
       message.error(getErrorMessage(error, 'Đăng nhập thất bại! Vui lòng kiểm tra lại email và mật khẩu.'));
     } finally {

@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/api/authService';
 import { campaignService } from '../../services/api/campaignService';
 import { creatorService } from '../../services/api/creatorService';
+import { brandService } from '../../services/api/brandService';
 import './Dashboard.css';
 
 const fmtNum = (n) =>
@@ -111,7 +112,22 @@ export default function DashboardPage() {
         if (profile) setUserProfile(profile);
       })
       .catch(() => {});
-  }, []);
+
+    // Kiểm tra nếu là Brand/SME nhưng chưa cập nhật profile lần đầu thì điều hướng sang trang hoàn thiện hồ sơ
+    const checkBrandProfile = async () => {
+      try {
+        const u = authService.getCurrentUser();
+        const role = u?.role?.toUpperCase();
+        if (role === 'BRAND' || role === 'ROLE_BRAND' || (!role || role === 'USER')) {
+          const brand = await brandService.getMyBrand();
+          if (!brand || !brand.businessName?.trim()) {
+            navigate('/brand-profile', { replace: true });
+          }
+        }
+      } catch {}
+    };
+    checkBrandProfile();
+  }, [navigate]);
 
   const userName =
     userProfile?.fullName?.trim() ||
