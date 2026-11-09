@@ -385,13 +385,16 @@ export default function CreateCampaignPage() {
     );
   };
 
-  // Đồng bộ 2 chiều chặt chẽ giữa Phân khúc Creator và Lượng Follower tối thiểu
+  // Đồng bộ 2 chiều chặt chẽ giữa Phân khúc Creator, Lượng Follower tối thiểu và Tỷ lệ tương tác ER
   const handleTierChange = (tier: string) => {
     setCreatorTier(tier);
     if (tier === 'nano') setMinFollowers('10k');
     else if (tier === 'micro') setMinFollowers('50k');
     else if (tier === 'macro') setMinFollowers('100k');
     else if (tier === 'mega') setMinFollowers('500k');
+    if (!minEngagement) {
+      setMinEngagement(tier === 'macro' || tier === 'mega' ? '3%' : '5%');
+    }
   };
 
   const handleMinFollowersChange = (val: string) => {
@@ -400,6 +403,9 @@ export default function CreateCampaignPage() {
     else if (val === '50k') setCreatorTier('micro');
     else if (val === '100k') setCreatorTier('macro');
     else if (val === '500k') setCreatorTier('mega');
+    if (!minEngagement) {
+      setMinEngagement(val === '100k' || val === '500k' ? '3%' : '5%');
+    }
   };
 
   const handleAiSuggest = async (overridePrompt?: string) => {
@@ -493,7 +499,17 @@ export default function CreateCampaignPage() {
         } else {
           setCreatorTier('micro');
           setMinFollowers('50k');
-          setMinEngagement('5%');
+        }
+
+        // Tự động thiết lập tỷ lệ tương tác tối thiểu (ER) khuyên dùng theo phân khúc Creator
+        if ((result as any).minEngagement || (result as any).engagementRate) {
+          const erVal = String((result as any).minEngagement || (result as any).engagementRate);
+          if (erVal.includes('8')) setMinEngagement('8%');
+          else if (erVal.includes('3')) setMinEngagement('3%');
+          else setMinEngagement('5%');
+        } else {
+          const fMin = result.followerMin ? Number(result.followerMin) : 50000;
+          setMinEngagement(fMin >= 200000 ? '3%' : '5%');
         }
 
         // 9. Ngân sách & KPI
