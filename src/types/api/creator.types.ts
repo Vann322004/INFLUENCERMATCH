@@ -143,6 +143,9 @@ export interface CreatorDiscoveryCandidate {
   score?: number;
   reason?: string;
   summary?: string;
+  isSimilarFallback?: boolean;
+  isExpandedMatch?: boolean;
+  priceSource?: string;
   [key: string]: any;
 }
 

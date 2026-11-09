@@ -92,6 +92,12 @@ const InstagramBrandIcon: React.FC<{ size?: number; color?: string }> = ({ size 
   </svg>
 );
 
+const YouTubeBrandIcon: React.FC<{ size?: number; color?: string }> = ({ size = 16, color }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color || 'currentColor'} style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
+    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+  </svg>
+);
+
 const FacebookBrandIcon: React.FC<{ size?: number; color?: string }> = ({ size = 16, color }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color || 'currentColor'} style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -398,13 +404,13 @@ export default function CreateCampaignPage() {
 
   const handleAiSuggest = async (overridePrompt?: string) => {
     const promptToUse = (typeof overridePrompt === 'string' ? overridePrompt : aiPrompt).trim();
-    if (!promptToUse || promptToUse.length < 5) {
-      message.warning('Vui lòng nhập mô tả mục tiêu chi tiết hơn (tối thiểu 5 ký tự) để AI gợi ý!');
+    if (!promptToUse || promptToUse.length < 10) {
+      message.warning('Vui lòng nhập mô tả mục tiêu chi tiết hơn (tối thiểu 10 ký tự) để AI gợi ý!');
       return;
     }
     setIsAiLoading(true);
     try {
-      message.loading({ content: 'AI Gemini đang phân tích ngữ nghĩa và tạo cấu trúc brief chiến dịch...', key: 'ai_suggest' });
+      message.loading({ content: 'Trợ lý AI đang phân tích và tạo cấu trúc brief chiến dịch...', key: 'ai_suggest' });
       const result = await campaignService.autofillCampaign(promptToUse);
       if (result) {
         // 1. Tên chiến dịch & Sản phẩm
@@ -434,7 +440,7 @@ export default function CreateCampaignPage() {
         if (Array.isArray(platformSource) && platformSource.length > 0) {
           const cleanP = platformSource
             .map((p) => p.toLowerCase())
-            .filter((p) => ['tiktok', 'instagram', 'facebook'].includes(p));
+            .filter((p) => ['tiktok', 'instagram', 'youtube', 'facebook'].includes(p));
           if (cleanP.length > 0) setSelectedPlatforms(cleanP);
         } else {
           setSelectedPlatforms(['tiktok', 'instagram']);
@@ -511,19 +517,25 @@ export default function CreateCampaignPage() {
         // 10. Bản Brief: Thông điệp chính & Do's and Don'ts (Chuẩn luồng 3.2)
         if (result.creatorBrief) {
           setCreatorBrief(result.creatorBrief);
-        } else if (result.keyMessage || result.dosAndDonts) {
-          setCreatorBrief(`Thông điệp chính:\n${result.keyMessage || ''}\n\n${result.dosAndDonts || ''}`);
+        } else if (result.keyMessage || result.dosAndDonts || (result as any).contentType) {
+          const parts: string[] = [];
+          if (result.keyMessage) parts.push(`Thông điệp chính:\n${result.keyMessage}`);
+          if ((result as any).contentType) parts.push(`Định dạng nội dung:\n${(result as any).contentType}`);
+          if (result.dosAndDonts) parts.push(result.dosAndDonts);
+          setCreatorBrief(parts.join('\n\n'));
         } else {
           setCreatorBrief(`Thông điệp chính: Quảng bá ${result.productService || product || 'sản phẩm'} với góc nhìn trải nghiệm thực tế, nâng cao nhận diện và thúc đẩy chuyển đổi.\n\nDo's:\n- Quay video cận cảnh chất lượng, trải nghiệm sử dụng thực tế.\n- Kèm hashtag chiến dịch và đường link mua hàng.\n\nDon'ts:\n- Không phóng đại hoặc quảng cáo sai công dụng.\n- Tránh so sánh ác ý hoặc nhắc tên nhãn hàng đối thủ.`);
         }
 
         if (result.aiExplanation) {
           setAiExplanation(result.aiExplanation);
+        } else {
+          setAiExplanation(`Trợ lý AI InfluencerMatch đã phân tích mô tả của bạn và tự động điền các thông tin gợi ý về mục tiêu, nền tảng, đối tượng khán giả, ngân sách và cấu trúc Brief. Hãy rà soát và điều chỉnh các trường trước khi tiến hành lưu chiến dịch.`);
         }
 
         // Kích hoạt hiệu ứng highlight các trường để Brand xem lại và chỉnh sửa
         setIsAiAutofilled(true);
-        message.success({ content: '✨ AI Gemini đã tự động điền toàn bộ cấu trúc Brief 5 bước thành công!', key: 'ai_suggest', duration: 4 });
+        message.success({ content: '✨ Trợ lý AI đã tự động điền cấu trúc Brief chiến dịch thành công!', key: 'ai_suggest', duration: 3 });
       }
     } catch (error) {
       console.error('Error autofilling campaign with AI:', error);
@@ -572,7 +584,7 @@ export default function CreateCampaignPage() {
     };
     const mappedPlatforms = selectedPlatforms
       .map((p) => platformMap[p.toLowerCase()])
-      .filter(Boolean) as CampaignPlatform[];
+      .filter((p) => p === 'TIKTOK' || p === 'INSTAGRAM' || p === 'YOUTUBE') as CampaignPlatform[];
 
     // Map phân khúc creator sang followerMin / followerMax cho backend
     const minFollowersMap: Record<string, number> = {
@@ -614,12 +626,17 @@ export default function CreateCampaignPage() {
     if (selectedGender === 'female') audiences.push('Khán giả: Nữ');
     else if (selectedGender === 'male') audiences.push('Khán giả: Nam');
 
+    const today = new Date().toISOString().slice(0, 10);
+    const endDefault = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
     return {
       name: campaignName.trim(),
       productService: product.trim() || 'Sản phẩm mới',
       description: creatorBrief.trim() || undefined,
       objective: objectiveMap[primaryObj] || 'AWARENESS',
       platforms: mappedPlatforms.length > 0 ? mappedPlatforms : ['TIKTOK', 'INSTAGRAM'],
+      startDate: today,
+      endDate: draftDeadline && draftDeadline.length >= 10 ? draftDeadline.slice(0, 10) : endDefault,
       budgetMin: budgetTotal ? Math.round(budgetTotal * 0.8) : 10000000,
       budgetMax: budgetTotal || 25000000,
       followerMin: finalFollowerMin,
@@ -1401,6 +1418,11 @@ export default function CreateCampaignPage() {
                         key: 'instagram',
                         name: 'Instagram',
                         icon: <InstagramBrandIcon size={16} color={selectedPlatforms.includes('instagram') ? '#E1306C' : '#64748B'} />,
+                      },
+                      {
+                        key: 'youtube',
+                        name: 'YouTube',
+                        icon: <YouTubeBrandIcon size={16} color={selectedPlatforms.includes('youtube') ? '#FF0000' : '#64748B'} />,
                       },
                       {
                         key: 'facebook',

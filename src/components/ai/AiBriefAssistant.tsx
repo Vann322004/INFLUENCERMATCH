@@ -91,6 +91,10 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
       message.warning('Vui lòng nhập yêu cầu chiến dịch hoặc bấm vào gợi ý mẫu!');
       return;
     }
+    if (!customBrief && promptText.trim().length < 10) {
+      message.warning('Vui lòng nhập mô tả chi tiết hơn (tối thiểu 10 ký tự) để AI phân tích!');
+      return;
+    }
 
     setIsAnalyzing(true);
     message.loading({ content: 'AI đang phân tích yêu cầu & trích xuất tiêu chí...', key: 'ai_brief' });
