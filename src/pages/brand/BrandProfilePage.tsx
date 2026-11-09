@@ -155,7 +155,7 @@ export default function BrandProfilePage() {
       if (brandId) {
         await brandService.updateBrand(brandId, payload);
         if (isFirstTime) {
-          message.success({ content: '🎉 Khởi tạo hồ sơ thương hiệu thành công! Đang chuyển hướng vào bảng điều khiển...', key: 'save_profile' });
+          message.success({ content: 'Khởi tạo hồ sơ thương hiệu thành công! Đang chuyển hướng vào bảng điều khiển...', key: 'save_profile' });
           setTimeout(() => {
             navigate('/dashboard');
           }, 1000);
@@ -166,7 +166,7 @@ export default function BrandProfilePage() {
         const created = await brandService.createBrand(payload);
         setBrandId(created.id);
         if (isFirstTime) {
-          message.success({ content: '🎉 Khởi tạo hồ sơ thương hiệu thành công! Đang chuyển hướng vào bảng điều khiển...', key: 'save_profile' });
+          message.success({ content: 'Khởi tạo hồ sơ thương hiệu thành công! Đang chuyển hướng vào bảng điều khiển...', key: 'save_profile' });
           setTimeout(() => {
             navigate('/dashboard');
           }, 1000);

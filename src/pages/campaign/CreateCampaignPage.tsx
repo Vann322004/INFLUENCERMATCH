@@ -551,7 +551,7 @@ export default function CreateCampaignPage() {
 
         // Kích hoạt hiệu ứng highlight các trường để Brand xem lại và chỉnh sửa
         setIsAiAutofilled(true);
-        message.success({ content: '✨ Trợ lý AI đã tự động điền cấu trúc Brief chiến dịch thành công!', key: 'ai_suggest', duration: 3 });
+        message.success({ content: 'Trợ lý AI đã tự động điền cấu trúc Brief chiến dịch thành công!', key: 'ai_suggest', duration: 3 });
       }
     } catch (error) {
       console.error('Error autofilling campaign with AI:', error);

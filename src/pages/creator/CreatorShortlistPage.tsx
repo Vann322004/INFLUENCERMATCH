@@ -690,7 +690,7 @@ export default function CreatorShortlistPage() {
         if (c.id === id) {
           const nextFav = !c.favorite;
           if (nextFav) {
-            message.success(`Đã thêm ${c.name} vào danh sách yêu thích ⭐`);
+            message.success(`Đã thêm ${c.name} vào danh sách yêu thích!`);
           } else {
             message.info(`Đã bỏ ${c.name} khỏi danh sách yêu thích`);
           }

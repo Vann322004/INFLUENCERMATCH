@@ -561,7 +561,7 @@ export default function CollaborationPage() {
           : p
       )
     );
-    message.success('🎉 Đã phê duyệt ấn phẩm! Thông báo và link xác nhận đã được gửi tới Creator.');
+    message.success('Đã phê duyệt ấn phẩm! Thông báo và link xác nhận đã được gửi tới Creator.');
   };
 
   // Request revision

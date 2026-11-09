@@ -685,7 +685,7 @@ export default function CreatorDiscoveryPage() {
             setCurrentPage(1);
             updateDiscoveryCache({ matchedCampaign: matched, selectedCampaignId: matched.id });
             message.success({
-              content: `🎯 Đã tự động chọn dự án "${matched.name}" để đề xuất Creator!`,
+              content: `Đã tự động chọn dự án "${matched.name}" để đề xuất Creator!`,
               key: 'auto_selected_campaign',
               duration: 2.5,
             });
