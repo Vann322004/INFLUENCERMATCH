@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Typography, Card, Tabs, message } from 'antd';
 import { CrownOutlined, PieChartOutlined, HistoryOutlined } from '@ant-design/icons';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -69,17 +69,7 @@ export default function SubscriptionPage() {
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
-  // Bắt kết quả giao dịch chuyển hướng về từ VNPay
-  useEffect(() => {
-    const vnpResponse = searchParams.get('vnp_ResponseCode');
-    if (vnpResponse === '00') {
-      message.success('Thanh toán qua VNPAY thành công! Gói dịch vụ của bạn đã được kích hoạt.');
-      setActiveTab('quota');
-    } else if (vnpResponse && vnpResponse !== '00') {
-      message.error(`Giao dịch VNPAY không thành công hoặc đã bị hủy (Mã phản hồi: ${vnpResponse}).`);
-    }
-  }, [searchParams]);
+  const isMountedRef = useRef(true);
 
   // Active Subscription Info from API
   const [subInfo, setSubInfo] = useState<SubInfoData>({
@@ -113,255 +103,289 @@ export default function SubscriptionPage() {
     return !name.includes('free') && !name.includes('trải nghiệm') && !name.includes('trial');
   }, [subInfo.isActive, subInfo.currentPlanName]);
 
+  // 2. Fetch brand & active subscription info concurrently
+  const loadSubscriptionData = useCallback(async (forceRefresh = false) => {
+    try {
+      // 1. Luôn truy vấn profile brand chính chủ của token hiện tại từ /brands/me
+      let brand = await brandService.getMyBrand(true).catch(() => null);
+
+      // 2. Nếu tài khoản Brand mới chưa có hồ sơ profile (404), tự động tạo hồ sơ brand để có ID riêng
+      if (!brand?.id) {
+        const user = getStoredUser();
+        if (user) {
+          brand = await brandService.createBrand({
+            businessName: user?.fullName ? `Thương hiệu của ${user.fullName}` : 'Thương hiệu của tôi',
+            industry: 'E-commerce',
+            website: 'https://influencermatch.vn',
+            location: 'Việt Nam',
+            targetMarkets: ['Vietnam'],
+            targetAudiences: ['General Audience'],
+            brandTone: 'Chuyên nghiệp',
+            preferredPlatforms: ['TIKTOK', 'INSTAGRAM'],
+            description: 'Thương hiệu đối tác trên hệ thống InfluencerMatch.',
+          }).catch(() => null);
+        }
+      }
+
+      if (brand?.id) {
+        try {
+          localStorage.setItem('influencermatch_brand_id', brand.id);
+        } catch {}
+      } else {
+        try {
+          localStorage.removeItem('influencermatch_brand_id');
+        } catch {}
+      }
+
+      if (brand && isMountedRef.current) {
+        setCurrentBrand(brand);
+      }
+
+      let activeSub: SubscriptionResponse | null = null;
+      let hadTrial = false;
+      const effectiveBrandId = brand?.id || null;
+
+      if (effectiveBrandId) {
+        if (isMountedRef.current) setCurrentBrandId(effectiveBrandId);
+
+        const subs = await subscriptionService.getBrandSubscriptions(effectiveBrandId, forceRefresh).catch(() => []);
+
+        activeSub = (subs || []).find((s) => s.status === 'ACTIVE') || null;
+        hadTrial = (subs || []).some((s) => {
+          const p = s.plan;
+          return p?.planName?.toLowerCase().includes('trial');
+        });
+
+        // Chuẩn hóa danh sách hóa đơn theo đúng các subscription của brand hiện tại
+        const brandInvoices: PaymentInvoice[] = (subs || []).map((s) => {
+          const pName = s.plan?.planName?.replace(/-[0-9]+$/, '').trim() || 'Gói dịch vụ';
+          const sDate = s.startDate ? new Date(s.startDate).toLocaleDateString('vi-VN') : '';
+          const eDate = s.expirationDate ? new Date(s.expirationDate).toLocaleDateString('vi-VN') : '';
+          const isZeroPrice = !s.plan?.price || s.plan.price <= 0;
+          return {
+            id: s.id,
+            code: `INV-${s.id.slice(0, 8).toUpperCase()}`,
+            planName: `Gói ${pName}`,
+            billingPeriod: sDate && eDate ? `${sDate} – ${eDate}` : 'Theo chu kỳ',
+            date: sDate || 'Gần đây',
+            amount: s.plan?.price || 0,
+            method: isZeroPrice ? 'Kích hoạt hệ thống (Miễn phí / Dùng thử)' : 'Cổng VNPAY (QR / ATM / Visa)',
+            status: s.status === 'ACTIVE' ? 'success' : s.status === 'EXPIRED' ? 'failed' : 'pending',
+            statusText: s.status === 'ACTIVE' ? 'Đã kích hoạt' : s.status === 'EXPIRED' ? 'Đã hết hạn' : s.status,
+          };
+        });
+
+        if (isMountedRef.current) setInvoices(brandInvoices);
+      } else {
+        if (isMountedRef.current) setInvoices([]);
+      }
+
+      if (!isMountedRef.current) return;
+      setHasUsedTrial(hadTrial);
+
+      if (activeSub) {
+        const activePlanId = activeSub.plan?.id;
+        activePlanIdRef.current = activePlanId || null;
+
+        // Update current plan indicator on plans
+        if (activePlanId) {
+          setPlans((prev) =>
+            prev.map((p) => ({
+              ...p,
+              isCurrent: p.id === activePlanId,
+            }))
+          );
+        }
+
+        const rawActiveName = activeSub.plan?.planName?.replace(/-[0-9]+$/, '').trim() || 'Professional';
+        const isTrialActive =
+          activeSub.plan?.price === 0 ||
+          rawActiveName.toUpperCase() === 'FREE' ||
+          rawActiveName.toLowerCase().includes('trial');
+        const planName = isTrialActive ? 'Dùng Thử (Trial)' : rawActiveName;
+        const expTime = new Date(activeSub.expirationDate).getTime();
+        const daysRemaining = Math.max(0, Math.ceil((expTime - Date.now()) / (1000 * 60 * 60 * 24)));
+        const renewalDate = new Date(activeSub.expirationDate).toLocaleDateString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        });
+        const totalCamp = activeSub.plan?.campaignQuota || (activeSub as any).campaignQuota || 15;
+        const usedCamp = activeSub.usedCampaignQuota || 0;
+        const totalReco = activeSub.plan?.recommendationQuota || (activeSub as any).recommendationQuota || 500;
+        const usedReco = activeSub.usedRecommendationQuota || 0;
+        const totalRef = activeSub.plan?.refreshQuota || (activeSub as any).refreshQuota || 50;
+        const usedRef = activeSub.usedRefreshQuota || 0;
+
+        setSubInfo({
+          currentPlanName: planName,
+          renewalDate,
+          daysRemaining,
+          isActive: activeSub.status === 'ACTIVE',
+          usedCampaigns: usedCamp,
+          totalCampaigns: totalCamp,
+          usedRefresh: usedRef,
+          totalRefresh: totalRef,
+        });
+
+        setQuotas([
+          {
+            id: 'q-campaigns',
+            title: 'Chiến dịch hoạt động',
+            used: usedCamp,
+            total: totalCamp,
+            unit: 'chiến dịch',
+            color: '#6366F1',
+            description: 'Số lượng chiến dịch Influencer marketing đang vận hành',
+          },
+          {
+            id: 'q-discovery',
+            title: 'Khám phá',
+            used: usedReco,
+            total: totalReco,
+            unit: 'lượt',
+            color: '#3B82F6',
+            description: 'Lượt gợi ý Creator phù hợp từ mô hình AI Search',
+          },
+          {
+            id: 'q-refresh',
+            title: 'Làm mới số liệu AI (Refresh)',
+            used: usedRef,
+            total: totalRef,
+            unit: 'lượt',
+            color: '#10B981',
+            description: 'Lượt cập nhật trực tiếp tương tác, follower Creator từ MXH',
+          },
+        ]);
+      } else {
+        // Chưa có subscription hoạt động
+        const usedCamp = 0;
+        setSubInfo({
+          currentPlanName: hadTrial ? 'Đã hết hạn dùng thử' : 'Chưa kích hoạt',
+          renewalDate: 'Chưa kích hoạt',
+          daysRemaining: 0,
+          isActive: false,
+          usedCampaigns: usedCamp,
+          totalCampaigns: 0,
+          usedRefresh: 0,
+          totalRefresh: 0,
+        });
+
+        setQuotas([
+          {
+            id: 'q-campaigns',
+            title: 'Chiến dịch hoạt động',
+            used: usedCamp,
+            total: 0,
+            unit: 'chiến dịch',
+            color: '#6366F1',
+            description: 'Đăng ký gói dịch vụ để bắt đầu tạo chiến dịch',
+          },
+          {
+            id: 'q-discovery',
+            title: 'Khám phá & AI Semantic Search',
+            used: 0,
+            total: 0,
+            unit: 'lượt',
+            color: '#3B82F6',
+            description: 'Đăng ký gói dịch vụ để mở khóa tìm kiếm Creator',
+          },
+          {
+            id: 'q-refresh',
+            title: 'Làm mới số liệu AI (Refresh)',
+            used: 0,
+            total: 0,
+            unit: 'lượt',
+            color: '#10B981',
+            description: 'Đăng ký gói dịch vụ để cập nhật số liệu Creator',
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error('Failed to load subscription data:', err);
+    } finally {
+      if (isMountedRef.current) setLoadingSubInfo(false);
+    }
+  }, []);
+
   useEffect(() => {
-    let isMounted = true;
+    isMountedRef.current = true;
 
     // 1. Pipeline A: Fetch plans immediately and independently
     subscriptionService
       .getPlans()
       .then((remotePlans) => {
-        if (!isMounted) return;
+        if (!isMountedRef.current) return;
         const rawList = Array.isArray(remotePlans) ? remotePlans : [];
         setPlans(mapPlans(rawList, activePlanIdRef.current || undefined));
         setLoadingPlans(false);
       })
       .catch((err) => {
         console.warn('[SubscriptionPage] Không thể lấy plans từ API:', err);
-        if (isMounted) setLoadingPlans(false);
+        if (isMountedRef.current) setLoadingPlans(false);
       });
 
-    // 2. Pipeline B: Fetch brand & active subscription info concurrently
-    const loadSubscriptionData = async () => {
-      try {
-        // 1. Luôn truy vấn profile brand chính chủ của token hiện tại từ /brands/me
-        let brand = await brandService.getMyBrand(true).catch(() => null);
-
-        // 2. Nếu tài khoản Brand mới chưa có hồ sơ profile (404), tự động tạo hồ sơ brand để có ID riêng
-        if (!brand?.id) {
-          const user = getStoredUser();
-          if (user) {
-            brand = await brandService.createBrand({
-              businessName: user?.fullName ? `Thương hiệu của ${user.fullName}` : 'Thương hiệu của tôi',
-              industry: 'E-commerce',
-              website: 'https://influencermatch.vn',
-              location: 'Việt Nam',
-              targetMarkets: ['Vietnam'],
-              targetAudiences: ['General Audience'],
-              brandTone: 'Chuyên nghiệp',
-              preferredPlatforms: ['TIKTOK', 'INSTAGRAM'],
-              description: 'Thương hiệu đối tác trên hệ thống InfluencerMatch.',
-            }).catch(() => null);
-          }
-        }
-
-        if (brand?.id) {
-          try {
-            localStorage.setItem('influencermatch_brand_id', brand.id);
-          } catch {}
-        } else {
-          try {
-            localStorage.removeItem('influencermatch_brand_id');
-          } catch {}
-        }
-
-        if (brand && isMounted) {
-          setCurrentBrand(brand);
-        }
-
-        let activeSub: SubscriptionResponse | null = null;
-        let hadTrial = false;
-        const effectiveBrandId = brand?.id || null;
-
-        if (effectiveBrandId) {
-          if (isMounted) setCurrentBrandId(effectiveBrandId);
-
-          const subs = await subscriptionService.getBrandSubscriptions(effectiveBrandId, true).catch(() => []);
-
-          activeSub = (subs || []).find((s) => s.status === 'ACTIVE') || null;
-          hadTrial = (subs || []).some((s) => {
-            const p = s.plan;
-            return p?.planName?.toLowerCase().includes('trial');
-          });
-
-          // Chuẩn hóa danh sách hóa đơn theo đúng các subscription của brand hiện tại
-          const brandInvoices: PaymentInvoice[] = (subs || []).map((s) => {
-            const pName = s.plan?.planName?.replace(/-[0-9]+$/, '').trim() || 'Gói dịch vụ';
-            const sDate = s.startDate ? new Date(s.startDate).toLocaleDateString('vi-VN') : '';
-            const eDate = s.expirationDate ? new Date(s.expirationDate).toLocaleDateString('vi-VN') : '';
-            const isZeroPrice = !s.plan?.price || s.plan.price <= 0;
-            return {
-              id: s.id,
-              code: `INV-${s.id.slice(0, 8).toUpperCase()}`,
-              planName: `Gói ${pName}`,
-              billingPeriod: sDate && eDate ? `${sDate} – ${eDate}` : 'Theo chu kỳ',
-              date: sDate || 'Gần đây',
-              amount: s.plan?.price || 0,
-              method: isZeroPrice ? 'Kích hoạt hệ thống (Miễn phí / Dùng thử)' : 'Cổng VNPAY (QR / ATM / Visa)',
-              status: s.status === 'ACTIVE' ? 'success' : s.status === 'EXPIRED' ? 'failed' : 'pending',
-              statusText: s.status === 'ACTIVE' ? 'Đã kích hoạt' : s.status === 'EXPIRED' ? 'Đã hết hạn' : s.status,
-            };
-          });
-
-          if (isMounted) setInvoices(brandInvoices);
-        } else {
-          if (isMounted) setInvoices([]);
-        }
-
-        if (!isMounted) return;
-        setHasUsedTrial(hadTrial);
-
-        if (activeSub) {
-          const activePlanId = activeSub.plan?.id;
-          activePlanIdRef.current = activePlanId || null;
-
-          // Update current plan indicator on plans
-          if (activePlanId) {
-            setPlans((prev) =>
-              prev.map((p) => ({
-                ...p,
-                isCurrent: p.id === activePlanId,
-              }))
-            );
-          }
-
-          const rawActiveName = activeSub.plan?.planName?.replace(/-[0-9]+$/, '').trim() || 'Professional';
-          const isTrialActive =
-            activeSub.plan?.price === 0 ||
-            rawActiveName.toUpperCase() === 'FREE' ||
-            rawActiveName.toLowerCase().includes('trial');
-          const planName = isTrialActive ? 'Dùng Thử (Trial)' : rawActiveName;
-          const expTime = new Date(activeSub.expirationDate).getTime();
-          const daysRemaining = Math.max(0, Math.ceil((expTime - Date.now()) / (1000 * 60 * 60 * 24)));
-          const renewalDate = new Date(activeSub.expirationDate).toLocaleDateString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          });
-          const totalCamp = activeSub.plan?.campaignQuota || 15;
-          const usedCamp = activeSub.usedCampaignQuota || 0;
-          const totalReco = activeSub.plan?.recommendationQuota || 500;
-          const usedReco = activeSub.usedRecommendationQuota || 0;
-          const totalRef = activeSub.plan?.refreshQuota || 50;
-          const usedRef = activeSub.usedRefreshQuota || 0;
-
-          setSubInfo({
-            currentPlanName: planName,
-            renewalDate,
-            daysRemaining,
-            isActive: activeSub.status === 'ACTIVE',
-            usedCampaigns: usedCamp,
-            totalCampaigns: totalCamp,
-            usedRefresh: usedRef,
-            totalRefresh: totalRef,
-          });
-
-          setQuotas([
-            {
-              id: 'q-campaigns',
-              title: 'Chiến dịch hoạt động',
-              used: usedCamp,
-              total: totalCamp,
-              unit: 'chiến dịch',
-              color: '#6366F1',
-              description: 'Số lượng chiến dịch Influencer marketing đang vận hành',
-            },
-            {
-              id: 'q-discovery',
-              title: 'Khám phá',
-              used: usedReco,
-              total: totalReco,
-              unit: 'lượt',
-              color: '#3B82F6',
-              description: 'Lượt gợi ý Creator phù hợp từ mô hình AI Search',
-            },
-            {
-              id: 'q-refresh',
-              title: 'Làm mới số liệu AI (Refresh)',
-              used: usedRef,
-              total: totalRef,
-              unit: 'lượt',
-              color: '#10B981',
-              description: 'Lượt cập nhật trực tiếp tương tác, follower Creator từ MXH',
-            },
-          ]);
-        } else {
-          // Chưa có subscription hoạt động
-          const usedCamp = 0;
-          setSubInfo({
-            currentPlanName: hadTrial ? 'Đã hết hạn dùng thử' : 'Chưa kích hoạt',
-            renewalDate: 'Chưa kích hoạt',
-            daysRemaining: 0,
-            isActive: false,
-            usedCampaigns: usedCamp,
-            totalCampaigns: 0,
-            usedRefresh: 0,
-            totalRefresh: 0,
-          });
-
-          setQuotas([
-            {
-              id: 'q-campaigns',
-              title: 'Chiến dịch hoạt động',
-              used: usedCamp,
-              total: 0,
-              unit: 'chiến dịch',
-              color: '#6366F1',
-              description: 'Đăng ký gói dịch vụ để bắt đầu tạo chiến dịch',
-            },
-            {
-              id: 'q-discovery',
-              title: 'Khám phá & AI Semantic Search',
-              used: 0,
-              total: 0,
-              unit: 'lượt',
-              color: '#3B82F6',
-              description: 'Đăng ký gói dịch vụ để mở khóa tìm kiếm Creator',
-            },
-            {
-              id: 'q-refresh',
-              title: 'Làm mới số liệu AI (Refresh)',
-              used: 0,
-              total: 0,
-              unit: 'lượt',
-              color: '#10B981',
-              description: 'Đăng ký gói dịch vụ để cập nhật số liệu Creator',
-            },
-          ]);
-        }
-      } catch (err) {
-        console.error('Failed to load subscription data:', err);
-      } finally {
-        if (isMounted) setLoadingSubInfo(false);
-      }
-    };
-
+    // 2. Load active subscription
     loadSubscriptionData();
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
-  }, []);
+  }, [loadSubscriptionData]);
 
-  // Lắng nghe kết quả redirect từ cổng thanh toán VNPAY
+  // Lắng nghe kết quả redirect từ cổng thanh toán VNPAY (bắt cả payment=success/failed và vnp_ResponseCode / vnp_TransactionStatus / status)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const payment = params.get('payment');
-    if (payment === 'success') {
+    const vnpResponse = params.get('vnp_ResponseCode');
+    const vnpTxnStatus = params.get('vnp_TransactionStatus');
+    const statusParam = (params.get('status') || '').toUpperCase();
+
+    const isSuccess =
+      payment === 'success' ||
+      vnpResponse === '00' ||
+      vnpTxnStatus === '00' ||
+      statusParam === 'PAID' ||
+      statusParam === 'SUCCESS';
+
+    const isFailed =
+      payment === 'failed' ||
+      payment === 'cancel' ||
+      (Boolean(vnpResponse) && vnpResponse !== '00') ||
+      (Boolean(vnpTxnStatus) && vnpTxnStatus !== '00') ||
+      statusParam === 'FAILED' ||
+      statusParam === 'CANCELLED';
+
+    if (isSuccess) {
       message.success({
         content: 'Chúc mừng! Thanh toán nâng cấp gói dịch vụ qua VNPAY thành công. Hạn mức đã được kích hoạt!',
         duration: 6,
         key: 'vnpay_payment_toast',
       });
+      setActiveTab('quota');
       window.history.replaceState({}, '', window.location.pathname);
-    } else if (payment === 'failed') {
+
+      // Xóa cache và nạp lại dữ liệu subscription & quota mới nhất từ backend
+      subscriptionService.clearBrandSubsCache();
+      loadSubscriptionData(true);
+
+      // Dự phòng độ trễ xử lý IPN từ phía ngân hàng: nạp lại sau 2s
+      const timer = setTimeout(() => {
+        loadSubscriptionData(true);
+      }, 2000);
+      return () => clearTimeout(timer);
+    } else if (isFailed) {
+      const isUserCancel = vnpResponse === '24' || payment === 'cancel';
       message.error({
-        content: 'Giao dịch thanh toán VNPAY không thành công hoặc đã bị hủy.',
+        content: isUserCancel
+          ? 'Giao dịch thanh toán VNPAY đã bị hủy bởi người dùng.'
+          : `Giao dịch thanh toán VNPAY không thành công hoặc đã bị hủy${vnpResponse ? ` (Mã: ${vnpResponse})` : ''}.`,
         duration: 5,
         key: 'vnpay_payment_toast',
       });
       window.history.replaceState({}, '', window.location.pathname);
     }
-  }, []);
+  }, [loadSubscriptionData]);
 
   // Handle plan upgrade click
   const handleOpenUpgrade = (plan: SubscriptionPlan) => {

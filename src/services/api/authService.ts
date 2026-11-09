@@ -1,4 +1,4 @@
-import { apiClient, setAuthSession, clearAuthSession, getStoredUser, getAccessToken } from '../apiClient';
+import { apiClient, setAuthSession, clearAuthSession, getStoredUser, getAccessToken, getRefreshToken } from '../apiClient';
 import { ApiResponse } from '../../types/api/common.types';
 import {
   LoginRequest,
@@ -21,7 +21,7 @@ export const authService = {
     const email = payload.email?.toLowerCase().trim();
     try {
       const response = await apiClient.post<ApiResponse<LoginResponse>>('/auth/login', payload);
-      const loginData = response.data.data;
+      const loginData = (response.data as any)?.data ?? response.data;
 
       // Lưu session token và thông tin user
       setAuthSession(loginData.accessToken, loginData.refreshToken, loginData.user);
@@ -120,11 +120,29 @@ export const authService = {
   },
 
   /**
+   * Đổi mã Google OAuth code lấy token đăng nhập
+   */
+  async googleExchange(code: string): Promise<LoginResponse> {
+    clearAuthSession();
+    clearBrandCache();
+    brandService.clearBrandCache();
+    const response = await apiClient.post<ApiResponse<LoginResponse>>('/auth/google/exchange', {
+      code,
+    });
+    const loginData = (response.data as any)?.data ?? response.data;
+    setAuthSession(loginData.accessToken, loginData.refreshToken, loginData.user);
+    return loginData;
+  },
+
+  /**
    * Đăng xuất người dùng
    */
   async logout(): Promise<void> {
     try {
-      await apiClient.post('/auth/logout');
+      const refreshToken = getRefreshToken();
+      await apiClient.post('/auth/logout', {
+        refreshToken: refreshToken || '',
+      });
     } catch {
       // Bỏ qua lỗi backend khi logout để đảm bảo client luôn được dọn dẹp
     } finally {

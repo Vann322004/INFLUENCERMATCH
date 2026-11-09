@@ -32,6 +32,10 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
+export interface GoogleCodeExchangeRequest {
+  code: string;
+}
+
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
