@@ -11,6 +11,7 @@ import {
   Radio,
   Badge,
   Form,
+  Segmented,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -177,15 +178,37 @@ const stageMapFromKanban: Record<KanbanCreator['stage'], RelationshipStage> = {
   confirmed: 'COMPLETED',
 };
 
+const REALISTIC_PORTRAITS = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&auto=format&fit=crop&q=80',
+];
+
+const hashKey = (str: string) => {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+};
+
 const mapRelationshipToKanban = (r: RelationshipDto): KanbanCreator => {
   const feeNum = r.agreedFee || r.quotedFee || 0;
   const feeText = feeNum > 0 ? `${(feeNum / 1_000_000).toFixed(1)}M ₫` : 'Thỏa thuận';
+  const realAvatar = (r as any).creatorAvatar || (r as any).avatarUrl || (r as any).avatar || REALISTIC_PORTRAITS[hashKey(r.creatorId || r.creatorName || r.id) % REALISTIC_PORTRAITS.length];
 
   return {
     id: r.id,
     name: r.creatorName || 'Creator',
     username: r.creatorName ? r.creatorName.toLowerCase().replace(/\s+/g, '_') : 'creator',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    avatar: realAvatar,
     platform: 'tiktok',
     followers: '500K',
     engagement: '5.2%',
@@ -682,23 +705,43 @@ export default function OutreachCrmPage() {
 
               {/* Compact AI Generator Bar */}
               <div className="composer-ai-bar">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <ThunderboltOutlined style={{ color: '#7C3AED', fontSize: 13 }} />
-                  <span style={{ fontSize: 12.5, fontWeight: 700, color: '#334155' }}>Trợ lý AI:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      background: 'linear-gradient(135deg, #7C3AED 0%, #6366F1 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#FFFFFF',
+                      fontSize: 14,
+                      boxShadow: '0 2px 6px rgba(124, 58, 237, 0.25)',
+                    }}
+                  >
+                    <RobotOutlined />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1E1B4B' }}>Trợ lý AI soạn thư</div>
+                    <div style={{ fontSize: 11, color: '#6B7280' }}>Cá nhân hóa theo thông tin Creator</div>
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 12, color: '#64748B' }}>Giọng điệu:</span>
-                    <Radio.Group
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#4C1D95' }}>Giọng điệu:</span>
+                    <Segmented
                       size="small"
                       value={aiTone}
-                      onChange={(e) => setAiTone(e.target.value)}
-                    >
-                      <Radio.Button value="friendly">Thân thiện</Radio.Button>
-                      <Radio.Button value="formal">Trang trọng</Radio.Button>
-                      <Radio.Button value="concise">Ngắn gọn</Radio.Button>
-                    </Radio.Group>
+                      onChange={(val) => setAiTone(val as 'friendly' | 'formal' | 'concise')}
+                      options={[
+                        { label: 'Thân thiện', value: 'friendly' },
+                        { label: 'Trang trọng', value: 'formal' },
+                        { label: 'Ngắn gọn', value: 'concise' },
+                      ]}
+                      className="custom-tone-segmented"
+                    />
                   </div>
 
                   <Button
@@ -706,14 +749,16 @@ export default function OutreachCrmPage() {
                     size="small"
                     loading={aiGenerating}
                     onClick={handleGenerateAiEmail}
-                    icon={<RobotOutlined />}
+                    icon={<ThunderboltOutlined />}
                     style={{
-                      background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
-                      borderRadius: 6,
+                      background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)',
+                      borderRadius: 8,
                       fontSize: 12,
                       fontWeight: 600,
                       border: 'none',
-                      height: 28,
+                      height: 30,
+                      padding: '0 12px',
+                      boxShadow: '0 2px 6px rgba(124, 58, 237, 0.25)',
                     }}
                   >
                     {aiGenerating ? 'Đang viết...' : 'Tạo thư mẫu'}
