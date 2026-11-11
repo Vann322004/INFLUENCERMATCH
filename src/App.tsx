@@ -614,6 +614,25 @@ export default function App() {
             <Route path="creator-claims" element={<CreatorClaimReviewPage />} />
           </Route>
 
+          {/* ── Data Manager Dedicated Routes (/data-manager/*) ─── */}
+          <Route
+            path="/data-manager"
+            element={
+              <AdminProtectedRoute>
+                <AdminLayout />
+              </AdminProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/data-manager/jobs" replace />} />
+            <Route path="jobs" element={<CollectionJobsPage />} />
+            <Route path="data-quality" element={<DataQualityPage />} />
+            <Route path="data-sources" element={<DataSourcesPage />} />
+            <Route path="scoring" element={<ScoringConfigPage />} />
+            <Route path="creators" element={<CreatorCatalogPage />} />
+            <Route path="creator-claims" element={<CreatorClaimReviewPage />} />
+            <Route path="dashboard" element={<AdminDashboardPage />} />
+          </Route>
+
           {/* ── Creator Actor Routes (/creator/*) ──────────── */}
           <Route
             path="/creator"

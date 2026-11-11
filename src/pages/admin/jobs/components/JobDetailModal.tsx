@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Descriptions, Tag, Alert, Typography, Button, Divider, Timeline, message } from 'antd';
+import { Modal, Descriptions, Tag, Alert, Typography, Button, message } from 'antd';
 import {
   CopyOutlined,
   CheckCircleOutlined,
@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons';
 import type { CollectionJob, JobStatus } from '../../../../types/api/admin.types';
 
-const { Text, Paragraph } = Typography;
+const { Text } = Typography;
 
 interface Props {
   job: CollectionJob | null;
