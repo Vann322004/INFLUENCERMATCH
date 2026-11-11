@@ -6,15 +6,23 @@ import {
 import {
   UserAddOutlined, UploadOutlined, DownloadOutlined,
   InstagramOutlined, YoutubeOutlined, LinkOutlined, CheckCircleOutlined,
+  ThunderboltFilled,
 } from '@ant-design/icons';
+import LiveCrawlTab from '../../jobs/components/LiveCrawlTab';
 
 const { Text, Title } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-function ManualAddForm() {
+function ManualAddForm({ initialValues }: { initialValues?: any }) {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (initialValues) {
+      form.setFieldsValue(initialValues);
+    }
+  }, [initialValues, form]);
 
   const handleSubmit = async () => {
     try {
@@ -36,6 +44,7 @@ function ManualAddForm() {
               <Option value="tiktok">🎵 TikTok</Option>
               <Option value="instagram"><InstagramOutlined style={{ color: '#E1306C' }} /> Instagram</Option>
               <Option value="youtube"><YoutubeOutlined style={{ color: '#FF0000' }} /> YouTube</Option>
+              <Option value="facebook">📘 Facebook</Option>
             </Select>
           </Form.Item>
         </Col>
@@ -156,14 +165,59 @@ function CsvImportForm() {
 }
 
 export default function AddImportTab() {
+  const [activeSubTab, setActiveSubTab] = useState<string>('crawl');
+  const [prefilledForm, setPrefilledForm] = useState<any>(null);
+
+  const handleCrawlImport = (result: any) => {
+    setPrefilledForm({
+      platform: (result.platform || 'tiktok').toLowerCase(),
+      handle: result.username,
+      profileUrl: result.profile_url,
+      note: `Tự động cào từ ${result.platform}: ${result.followers?.toLocaleString()} followers, Bio: ${result.bio || ''}`,
+    });
+    setActiveSubTab('manual');
+    message.info('Đã chuyển số liệu KOC vừa cào vào biểu mẫu thêm Creator!');
+  };
+
   return (
     <div>
       <Tabs
+        activeKey={activeSubTab}
+        onChange={setActiveSubTab}
         type="card"
         size="small"
         items={[
-          { key: 'manual', label: <span><UserAddOutlined /> Thêm thủ công</span>, children: <div style={{ paddingTop: 20 }}><ManualAddForm /></div> },
-          { key: 'csv',    label: <span><UploadOutlined /> Import CSV</span>,     children: <div style={{ paddingTop: 20 }}><CsvImportForm /></div> },
+          {
+            key: 'crawl',
+            label: (
+              <span style={{ fontWeight: 700, color: '#4F46E5' }}>
+                <ThunderboltFilled style={{ color: '#F59E0B' }} /> Cào trực tiếp từ Mạng xã hội
+              </span>
+            ),
+            children: (
+              <div style={{ paddingTop: 16 }}>
+                <LiveCrawlTab onImportSuccess={handleCrawlImport} />
+              </div>
+            ),
+          },
+          {
+            key: 'manual',
+            label: <span><UserAddOutlined /> Thêm thủ công</span>,
+            children: (
+              <div style={{ paddingTop: 20 }}>
+                <ManualAddForm initialValues={prefilledForm} />
+              </div>
+            ),
+          },
+          {
+            key: 'csv',
+            label: <span><UploadOutlined /> Nhập tệp CSV</span>,
+            children: (
+              <div style={{ paddingTop: 20 }}>
+                <CsvImportForm />
+              </div>
+            ),
+          },
         ]}
       />
     </div>

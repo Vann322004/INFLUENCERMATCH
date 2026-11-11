@@ -10,7 +10,6 @@ import type { DataConnector } from '../../../types/api/admin.types';
 import ConnectorStatusCard from './components/ConnectorStatusCard';
 import SyncRateLimitPanel from './components/SyncRateLimitPanel';
 import SourcePriorityPanel from './components/SourcePriorityPanel';
-import DataPipelineWorkflowBar from '../../../components/admin/DataPipelineWorkflowBar';
 
 export default function DataSourcesPage() {
   const [connectors, setConnectors] = useState<DataConnector[]>([]);
@@ -48,14 +47,6 @@ export default function DataSourcesPage() {
 
   return (
     <div>
-      {/* 0. Unified Data Pipeline Stepper */}
-      <DataPipelineWorkflowBar
-        currentStep="sources"
-        activeConnectorsCount={activeCount}
-        runningJobsCount={2}
-        pendingQualityCount={5}
-      />
-
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
