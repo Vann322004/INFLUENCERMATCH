@@ -19,6 +19,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
 import { collaborationService } from '../../services/api/collaborationService';
+import { creatorService } from '../../services/api/creatorService';
 import {
   FileTextOutlined,
   VideoCameraOutlined,
@@ -46,6 +47,28 @@ import {
   FilterOutlined,
 } from '@ant-design/icons';
 import './CollaborationPage.css';
+
+// Danh sách chân dung Creator thực tế độ phân giải cao
+const REALISTIC_PORTRAITS = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=200&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&auto=format&fit=crop&q=80',
+];
+
+const hashKey = (str: string) => {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+};
 
 // Campaign selector options - loaded dynamically from campaignService
 
@@ -469,6 +492,40 @@ export default function CollaborationPage() {
     const fetchRelationships = async () => {
       try {
         setLoadingPartners(true);
+
+        // 1. Tải trước từ điển Avatar Creator từ API / Cache
+        const creatorMap: Record<string, string> = {};
+        try {
+          const allCreators = await creatorService.getCreators();
+          if (Array.isArray(allCreators)) {
+            allCreators.forEach((c) => {
+              if (c.id && c.avatarUrl) creatorMap[c.id] = c.avatarUrl;
+              if (c.displayName && c.avatarUrl) creatorMap[c.displayName.toLowerCase().trim()] = c.avatarUrl;
+              if (c.userName && c.avatarUrl) creatorMap[c.userName.toLowerCase().trim()] = c.avatarUrl;
+            });
+          }
+        } catch {}
+
+        try {
+          ['IM_MATCHED_CREATORS', 'IM_SHOWCASE_CREATORS', 'IM_SAVED_CREATORS', 'IM_SHORTLIST_ITEMS'].forEach((key) => {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+              const list = JSON.parse(raw);
+              if (Array.isArray(list)) {
+                list.forEach((c: any) => {
+                  const av = c.avatarUrl || c.avatar || c.profileImageUrl;
+                  if (av) {
+                    if (c.id) creatorMap[c.id] = av;
+                    if (c.name) creatorMap[c.name.toLowerCase().trim()] = av;
+                    if (c.displayName) creatorMap[c.displayName.toLowerCase().trim()] = av;
+                    if (c.handle) creatorMap[c.handle.toLowerCase().replace('@', '').trim()] = av;
+                  }
+                });
+              }
+            }
+          });
+        } catch {}
+
         const rels = await campaignService.getRelationships(selectedCampaign);
         if (isMounted) {
           if (rels && rels.length > 0) {
@@ -488,21 +545,32 @@ export default function CollaborationPage() {
               COMPLETED: 100,
               NOT_INTERESTED: 0,
             };
-            const mapped: CollabPartner[] = rels.map((r) => ({
-              id: r.id,
-              creatorName: r.creatorName || `Creator #${r.creatorId.substring(0, 6)}`,
-              creatorAvatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.creatorId}`,
-              platform: 'tiktok',
-              handle: `@${(r.creatorName || 'creator').toLowerCase().replace(/[^a-z0-9]/g, '')}`,
-              deliverableSummary: r.notes || '1 Video Reels/TikTok + 1 Story nghiệm thu',
-              stage: stageMap[r.stage] || 'contract_signed',
-              progressPercent: progressMap[r.stage] || 30,
-              postDeadline: r.nextAction || 'Theo kế hoạch',
-              picBrand: 'Trang Nguyễn (Brand Lead)',
-              fee: r.agreedFee ? `${r.agreedFee.toLocaleString()} ₫` : (r.quotedFee ? `${r.quotedFee.toLocaleString()} ₫` : 'Thương lượng'),
-              depositStatus: 'paid',
-              finalStatus: r.stage === 'COMPLETED' ? 'paid' : 'pending',
-            }));
+            const mapped: CollabPartner[] = rels.map((r, idx) => {
+              const nameKey = (r.creatorName || '').toLowerCase().trim();
+              const realAvatar =
+                (r as any).creatorAvatar ||
+                (r as any).avatarUrl ||
+                (r as any).avatar ||
+                creatorMap[r.creatorId] ||
+                creatorMap[nameKey] ||
+                REALISTIC_PORTRAITS[hashKey(r.creatorId || r.creatorName || String(idx)) % REALISTIC_PORTRAITS.length];
+
+              return {
+                id: r.id,
+                creatorName: r.creatorName || `Creator #${r.creatorId.substring(0, 6)}`,
+                creatorAvatar: realAvatar,
+                platform: 'tiktok',
+                handle: `@${(r.creatorName || 'creator').toLowerCase().replace(/[^a-z0-9]/g, '')}`,
+                deliverableSummary: r.notes || '1 Video Reels/TikTok + 1 Story nghiệm thu',
+                stage: stageMap[r.stage] || 'contract_signed',
+                progressPercent: progressMap[r.stage] || 30,
+                postDeadline: r.nextAction || 'Theo kế hoạch',
+                picBrand: 'Trang Nguyễn (Brand Lead)',
+                fee: r.agreedFee ? `${r.agreedFee.toLocaleString()} ₫` : (r.quotedFee ? `${r.quotedFee.toLocaleString()} ₫` : 'Thương lượng'),
+                depositStatus: 'paid',
+                finalStatus: r.stage === 'COMPLETED' ? 'paid' : 'pending',
+              };
+            });
             setPartners(mapped);
           } else {
             setPartners([]);
@@ -561,7 +629,7 @@ export default function CollaborationPage() {
           : p
       )
     );
-    message.success('🎉 Đã phê duyệt ấn phẩm! Thông báo và link xác nhận đã được gửi tới Creator.');
+    message.success('Đã phê duyệt ấn phẩm! Thông báo và link xác nhận đã được gửi tới Creator.');
   };
 
   // Request revision

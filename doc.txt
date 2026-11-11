@@ -1,0 +1,880 @@
+﻿INFLUENCERMATCH AI – ĐẶC TẢ TOÀN BỘ LUỒNG HỆ THỐNG
+Bản trình bày đơn giản · 15 phân hệ · 39 luồng có nội dung · 1 phân hệ thiếu đặc tả
+I. Bảng tổng quan 15 phân hệ
+STT
+	Phân hệ
+	Luồng
+	Ghi chú
+	1
+	Xác thực, Đăng ký, Đăng nhập & Quản lý Phiên
+	5
+	Đã viết lại và liên thông
+	2
+	Quản lý Hồ sơ Doanh nghiệp & M4 Brand Context
+	2
+	Đã viết lại và liên thông
+	3
+	Khởi tạo Campaign & AI Brief Autofill
+	3
+	Đã viết lại và liên thông
+	4
+	Creator Discovery & Similar Fallback
+	2
+	Đã viết lại và liên thông
+	5
+	Shortlist & So sánh Creator
+	2
+	Đã viết lại và liên thông
+	6
+	Four-Memory AI Recommendation
+	1
+	Đã viết lại và liên thông
+	7
+	Outreach CRM & Đàm phán hợp tác
+	2
+	Đã viết lại và liên thông
+	8
+	Collaboration, Content Review & Outcome
+	3
+	Đã viết lại và liên thông
+	9
+	Performance Analytics
+	0
+	Chưa có đặc tả trong nguồn
+	10
+	Campaign History
+	1
+	Đã viết lại và liên thông
+	11
+	Creator Portal, Rate Card & Ownership Verification
+	3
+	Đã viết lại và liên thông
+	12
+	Subscription & VNPay
+	2
+	Đã viết lại và liên thông
+	13
+	Data Manager Console
+	6
+	Đã viết lại và liên thông
+	14
+	System Admin Console
+	5
+	Đã viết lại và liên thông
+	15
+	Notifications & Post-Campaign Learning
+	2
+	Đã viết lại và liên thông
+	II. Danh mục các luồng
+Mã
+	Tên luồng
+	Phân hệ
+	1.1
+	Đăng ký tài khoản Brand/SME mới (Register & Onboarding)
+	1
+	1.2
+	Đăng nhập bằng Email & Mật khẩu (Login)
+	1
+	1.3
+	Đăng nhập bằng Google OAuth2
+	1
+	1.4
+	Tự động cấp mới Access Token (Token Refresh Rotation)
+	1
+	1.5
+	Đăng xuất & Thu hồi phiên tức thì (Logout & Session Invalidation)
+	1
+	2.1
+	Khởi tạo Hồ sơ Brand lần đầu (Brand Onboarding & First-time Profile Setup)
+	2
+	2.2
+	Cập nhật Hồ sơ Brand & Nạp trước Vector Bộ nhớ M4
+	2
+	3.1
+	Nhập liệu Brief chiến dịch thủ công (Manual Campaign Brief Creation)
+	3
+	3.2
+	Tự động tạo cấu trúc Brief bằng AI Gemini (AI Brief Autofill)
+	3
+	3.3
+	Lưu chiến dịch & Tạo Vector nhúng Brief M3 (Campaign Activation & Brief Vectorization)
+	3
+	4.1
+	Khám phá Creator tự động nạp tiêu chí từ Brief chiến dịch
+	4
+	4.2
+	Lọc thu hẹp thủ công trên tập kết quả Discovery (Drill-down Filter)
+	4
+	5.1
+	Lưu KOC vào Shortlist chiến dịch
+	5
+	5.2
+	Quản lý & So sánh đối đầu KOC trong Shortlist
+	5
+	6.1
+	Chấm điểm & Xếp hạng Four-Memory bằng Trọng số Thích ứng Động (Dynamic Adaptive Weights)
+	6
+	7.1
+	Gửi lời mời hợp tác & Đẩy vào phễu CRM Kanban (Outreach & Multi-channel Invitation)
+	7
+	7.2
+	Quản lý & Cập nhật đàm phán trên bảng Kanban (Kanban Progression & Deal Closing)
+	7
+	8.1
+	Kiểm duyệt nội dung bài đăng KOC (Content Review Flow)
+	8
+	8.2
+	Nghiệm thu kết quả & Tính toán chỉ số tài chính (Outcome Verification & ROI Engine)
+	8
+	8.3
+	Đánh giá KOC, Hoàn tất Hợp tác & Nạp Bằng chứng Lịch sử M1 (Creator Review & M1 Ground-Truth Distillation)
+	8
+	10
+	Tra cứu lịch sử chiến dịch & bằng chứng quá khứ (không đánh số luồng trong file gốc)
+	10
+	11.1
+	Creator Quản lý Hồ sơ, Bảng giá Verified Rate Card & Portfolio
+	11
+	11.2
+	Kết nối kênh mạng xã hội qua OAuth2
+	11
+	11.3
+	Nộp đơn Claim nhận kênh & Cấp Tích Xanh chính chủ (Verified Badge)
+	11
+	12.1
+	Khởi tạo đơn hàng & Chuyển hướng thanh toán VNPay
+	12
+	12.2
+	Đối soát Webhook IPN & Nâng cấp hạn ngạch tài khoản
+	12
+	DM-01
+	Quản lý Định danh Master KOC (Manage Creator Master Identity)
+	13
+	DM-02
+	Kiểm duyệt đơn nhận kênh KOC & Cấp Tích Xanh (Review Claim Requests)
+	13
+	DM-03
+	Thẩm định tư cách Creator & Lọc dữ liệu rác cào về (KOC Qualification Review)
+	13
+	DM-04
+	Cấu hình Trọng số Thích ứng Động Four-Memory (Manage Recommendation Config)
+	13
+	DM-05
+	Giám sát Crawler Dashboard & Cào thử nghiệm 1 KOC (Monitor Crawler & Test Crawl)
+	13
+	DM-06
+	Quản lý Danh mục Ngành hàng (Manage Topics & Categories)
+	13
+	AD-01
+	Quản trị Tài khoản Người dùng & Khóa tức thì (Manage User Accounts)
+	14
+	AD-02
+	Giám sát Hệ thống & Truy vết Nhật ký Kiểm toán (Monitor System & Audit Logs)
+	14
+	AD-03
+	Quản lý Gói cước Dịch vụ (Manage Subscription Plans)
+	14
+	AD-04
+	Giám sát Giao dịch & Báo cáo Doanh thu (Monitor Transactions & Payments)
+	14
+	AD-05
+	Quản lý Vai trò & Phân bổ Quyền hạn RBAC (Role & Permission Management)
+	14
+	15.1
+	Bắn thông báo Realtime & Điều phối Email (Notification Dispatcher)
+	15
+	15.2
+	Khép kín vòng lặp Four-Memory tự học sau chiến dịch (Post-Campaign Learning)
+	15
+	III. Quy tắc liên thông phải áp dụng thống nhất
+Chủ đề
+	Quy tắc
+	Campaign và Creator
+	Một Campaign có thể gắn nhiều Creator; Shortlist không đồng nghĩa số hợp tác được xác nhận. Từng Creator có Relationship, Collaboration, Deliverable, Outcome và Review riêng.
+	Độc quyền
+	Single-Creator Campaign khác thỏa thuận độc quyền. Độc quyền và giới hạn nhận việc phải được ghi nhận/đồng ý trong CRM, không tự suy ra từ Shortlist.
+	Fee Lifecycle
+	Estimated Fee (ước tính) → Rate Card (Creator khai báo) → Offered/Counter Fee (đàm phán) → Agreed Fee (đã chốt) → Actual Cost (nghiệm thu). Không gọi Rate Card là actual fee.
+	Ngân sách
+	Budget tại Discovery/Recommendation là ưu tiên mềm theo mặc định. Best Match và Budget-Fit First là hai thứ tự hiển thị riêng, không sửa TOPSIS Match Score; trước khi chốt nhóm phải kiểm tra tổng chi phí.
+	Verification và riêng tư
+	Xác minh quyền quản lý kênh không xác minh giá/hiệu suất. Chỉ cấp dữ liệu liên hệ riêng khi đúng quyền và đúng điều kiện Creator cho phép.
+	Recommendation
+	Shared weights trong cùng Run; cold-start không tự đặt trọng số riêng bằng 0. M1–M4 → CRITIC/Fallback → Blending → Fixed-Ideal TOPSIS → Confidence; MMR và Budget Sorting tùy chọn.
+	Completion và Learning
+	Một Collaboration hoàn thành không tự kết thúc toàn Campaign. Dữ liệu lịch sử M1 được tích lũy theo kết quả nghiệm thu, không cộng/trừ điểm ngoài thang SM1.
+	Identity/Claim
+	Phải thống nhất chính sách invitation-only và cơ chế Claim qua OAuth; kênh đã được claim trả 409 Conflict; không mô tả tranh chấp/PENDING thủ công như đã triển khai nếu bị loại khỏi phạm vi.
+	IV. Đặc tả chi tiết từng luồng
+* Phân hệ 1. Xác thực, Đăng ký, Đăng nhập & Quản lý Phiên   (KHẢI + VĂN)
+* Luồng 1.1: Đăng ký tài khoản Brand/SME mới (Register & Onboarding) [a][b]
+Thành phần:FE (RegisterPage, VerifyEmailPage, BrandOnboardingWizard); BE (AuthController, AuthService, PasswordEncoder, EmailVerificationService, BrandService); DB (user, brand_profile, dữ liệu OTP, bản ghi chấp thuận chính sách). 
+Tương tác:
+1. FE: Brand nhập họ tên, email, tên thương hiệu, số điện thoại và mật khẩu; chấp thuận Terms/Privacy trước khi gửi form.
+2. FE → BE: Gửi POST /api/v1/auth/register. Request không cho phép người dùng tự chọn role hoặc trạng thái xác minh.
+3. BE: Chuẩn hóa email, kiểm tra dữ liệu bắt buộc, email không trùng, định dạng số điện thoại và chính sách mật khẩu. Mật khẩu tối thiểu 8 ký tự.
+4. BE: Kiểm tra việc chấp thuận chính sách; ghi nhận phiên bản Terms/Privacy và thời điểm chấp thuận do server xác định.
+5. BE → DB: Mã hóa mật khẩu bằng BCrypt; tạo User role BRAND, chưa xác minh email, cùng Brand Profile ban đầu gắn với tài khoản. Hồ sơ chỉ chứa dữ liệu người dùng cung cấp, không tự điền thông tin doanh nghiệp giả.
+6. BE: Sinh OTP xác minh email, lưu bản hash và gửi thư. Việc tạo User, Brand Profile, bản ghi chấp thuận và OTP phải nhất quán; lỗi trước khi hoàn tất không để lại tài khoản hoặc hồ sơ tạo dở.
+7. BE → FE: Trả 201 Created và thông tin cần thiết để tiếp tục xác minh; không trả mật khẩu/hash, access token hoặc refresh token.
+8. FE: Chuyển đến xác minh email theo luồng 1.7.1.
+9. Sau xác minh, người dùng đăng nhập theo luồng 1.2. FE điều hướng đến Brand Onboarding (2.1) để hoàn thiện thông tin doanh nghiệp và M4 Brand Context.
+10. Hệ thống phân biệt rõ tài khoản đã tạo, email đã xác minh và hồ sơ đã hoàn tất onboarding. Không xem việc tạo User hoặc Brand Profile ban đầu là đã hoàn thành hồ sơ M4.
+
+
+
+
+Luồng liên quan: 1.2 · 1.3 · 2.1
+Luồng 1.2: Đăng nhập bằng Email & Mật khẩu (Login)
+Thành phần: FE (LoginPage, authService, TokenManager); BE (AuthController, AuthService, AuthenticationManager, JwtTokenProvider, RefreshTokenService, EffectivePermissionService); DB (user, dữ liệu phiên và refresh token, brand_profile). 
+Tương tác:
+1. FE: Brand/Creator/Data Manager/Admin nhập email và mật khẩu.
+2. FE → BE: Gửi POST /api/v1/auth/login.
+3. BE: Chuẩn hóa email, xác thực mật khẩu và kiểm tra trạng thái tài khoản. Không cấp phiên cho tài khoản bị khóa hoặc vô hiệu hóa.
+4. BE: Kiểm tra email đã xác minh. Đúng mật khẩu nhưng chưa xác minh email trả 403 EMAIL_NOT_VERIFIED và hướng người dùng về luồng OTP.
+5. BE → DB: Tạo phiên đăng nhập, tạo refresh token ngẫu nhiên, lưu bản hash cùng thời hạn và thông tin thu hồi; cập nhật thời điểm đăng nhập.
+6. BE: Tạo access token gắn với User và phiên; phân giải role cùng permissions hiệu lực từ cấu hình hiện tại.
+7. BE → FE: Trả access token, thời hạn và thông tin User cần thiết; đặt refresh token bằng HttpOnly Secure cookie theo luồng 1.4. Không trả mật khẩu/hash hoặc dữ liệu riêng tư của kênh Creator.
+8. FE: Giữ access token theo cơ chế thống nhất và điều hướng:
+- Brand chưa hoàn tất hồ sơ đến Onboarding (2.1); đã hoàn tất đến Dashboard.
+- Creator đến Portal (11.1).
+- Data Manager đến DM-01/03.
+- Admin đến AD-01.
+9. FE → BE: Các request bảo vệ gửi Authorization: Bearer <accessToken>.
+10. BE: Kiểm tra hiệu lực token, phiên, trạng thái User và phiên bản xác thực. Quyền sử dụng API được xác định từ permissions hiệu lực; không chỉ dựa vào nút/menu phía FE.
+11. Khi access token hết hạn, FE áp dụng luồng refresh 1.4.
+
+
+Luồng liên quan: 1.4 · 1.5 · 2.1 · 11.1 · DM-01 · AD-01
+* Luồng 1.3: Đăng nhập bằng Google OAuth2[c]
+Thành phần: FE (LoginPage, AccountSecurityPage, Google Identity Services); BE (GoogleBrandLoginController, GoogleIdTokenVerifier, GoogleBrandLoginService, dịch vụ liên kết tài khoản, JwtTokenProvider, RefreshTokenService); Google Identity Services; DB (google_login_session, user, external_identity, brand_profile, dữ liệu phiên). 
+Tương tác:
+1. FE: Người dùng chọn Đăng nhập bằng Google.
+2. FE → BE: Gửi POST /api/v1/auth/google/start, cho phép trình duyệt gửi/nhận cookie.
+3. BE → DB: Tạo phiên Google Login hạn 10 phút, sinh nonce và giá trị ràng buộc trình duyệt ngẫu nhiên; chỉ lưu hash.
+4. BE → FE: Trả sessionId, clientId, nonce, expiresAt; đặt cookie HttpOnly ràng buộc trình duyệt.
+5. FE: Khởi tạo Google Identity Services bằng Client ID và nonce; người dùng chọn tài khoản Google và chấp thuận đăng nhập.
+6. Google → FE: Trả ID token trong trường credential.
+7. FE → BE: Gửi POST /api/v1/auth/google/login với sessionId, credential, kèm cookie từ trình duyệt đã bắt đầu phiên.
+8. BE: Xác minh chữ ký, issuer, audience/authorized party, thời hạn, subject và email đã được Google xác minh. Kiểm tra nonce, cookie, thời hạn và trạng thái sử dụng của phiên.
+9. BE → DB: Tìm Google identity theo provider và subject:- Đã liên kết với Brand hợp lệ: sử dụng tài khoản hiện có.
+- Chưa liên kết và email chưa tồn tại: tạo tài khoản Brand đã xác minh email, chưa có mật khẩu; tạo hồ sơ khởi tạo phù hợp với dữ liệu thực có.
+- Email đã thuộc tài khoản hiện hữu nhưng chưa liên kết: không tự hợp nhất; yêu cầu người dùng xác thực tài khoản hiện tại để thực hiện liên kết.
+- Identity thuộc role khác Brand: từ chối Google Login.
+10. Với tài khoản Brand mới, FE yêu cầu chấp thuận Terms/Privacy và hoàn thiện thông tin còn thiếu trong quá trình đăng ký/onboarding. Không tự coi việc Google xác minh email là đã hoàn thành hồ sơ M4.
+11. BE → DB: Ghi nhận identity, phiên đăng nhập và việc sử dụng phiên Google trong transaction nhất quán.
+12. BE → FE: Cấp phiên InfluencerMatch theo chính sách chung ở 1.2 và 1.4. ID token Google không được dùng thay access token của hệ thống.
+13. FE: Điều hướng đến Onboarding (2.1) hoặc Dashboard theo trạng thái hồ sơ.
+Nhánh liên kết Google với tài khoản hiện hữu:
+1. Brand đăng nhập bằng phương thức hiện có và mở phần bảo mật tài khoản.
+2. BE yêu cầu xác thực lại bằng phương thức phù hợp trước khi cho phép liên kết.
+3. Người dùng thực hiện Google OAuth với challenge mới, ràng buộc với User đang đăng nhập và mục đích liên kết.
+4. BE kiểm tra Google identity chưa thuộc tài khoản khác; trong phạm vi này, email Google phải khớp email tài khoản Brand.
+5. BE → DB: Lưu liên kết trong transaction, không đổi role, không tạo User mới và không bỏ qua OTP đang chờ.
+6. Liên kết trùng, thuộc tài khoản khác hoặc request lặp không được ghi đè identity.
+
+
+Luồng liên quan: 2.1 · 1.4
+* Luồng 1.4: Tự động cấp mới Access Token (Token Refresh Rotation)[d]
+Thành phần:FE (apiClient Interceptor, TokenManager); BE (AuthController, RefreshTokenService, JwtTokenProvider, dịch vụ quản lý phiên); DB (user, dữ liệu phiên và refresh token). 
+Tương tác:
+1. FE: Khi xác định access token hết hạn, chỉ tạo một refresh request; các request song song chờ kết quả.
+2. FE → BE: Gửi POST /api/v1/auth/refresh; trình duyệt tự gửi refresh token qua HttpOnly Secure cookie. JavaScript không đọc hoặc sao chép refresh token sang localStorage.
+3. BE: Kiểm tra refresh token, thời hạn, trạng thái thu hồi, quan hệ phiên và dấu hiệu tái sử dụng.
+4. BE: Kiểm tra User còn được phép đăng nhập, email đã xác minh và phiên chưa bị vô hiệu hóa.
+5. BE → DB: Thu hồi refresh token cũ, tạo token thay thế và cập nhật quan hệ rotation trong cùng transaction.
+6. BE → FE: Trả access token mới và cập nhật refresh cookie; permissions được xác định theo cấu hình hiệu lực.
+7. FE: Cập nhật access token, sau đó gửi lại các request đang chờ.
+8. Nếu phát hiện replay, BE thu hồi refresh token theo chính sách bảo vệ, vô hiệu các phiên bị ảnh hưởng và lưu thay đổi dù request bị từ chối.
+9. Nếu refresh thất bại, FE xóa trạng thái xác thực và chuyển đến Login; không lặp refresh vô hạn.
+Chính sách bảo mật:
+* Access token mặc định 15 phút; refresh token 7 ngày.
+* Refresh token lưu trong DB dưới dạng hash.
+* Cookie sử dụng HttpOnly, Secure trên HTTPS và SameSite phù hợp với mô hình triển khai.
+* BE áp dụng CORS theo origin cụ thể và bảo vệ CSRF cho các thao tác dựa trên cookie.
+* Không mô tả đồng thời việc dùng HttpOnly cookie và yêu cầu JavaScript đọc cùng refresh token.
+Luồng liên quan: 1.2 · 1.5
+* Luồng 1.5: Đăng xuất & Thu hồi phiên tức thì (Logout & Session Invalidation)[e]
+Thành phần:FE (HeaderMenu, TokenManager, BroadcastChannel); BE (AuthController, RefreshTokenService, JwtAuthenticationFilter, dịch vụ quản lý phiên); DB (user, dữ liệu phiên và refresh token).
+Tương tác:
+1. FE: Người dùng chọn Đăng xuất phiên hiện tại hoặc Đăng xuất mọi thiết bị.
+2. FE → BE: Gửi yêu cầu đăng xuất bằng phiên đang xác thực; backend xác định phiên/User từ thông tin đã xác minh, không tin User ID do client tự khai báo.
+3. Với đăng xuất phiên hiện tại:- BE thu hồi refresh token thuộc phiên.
+4. - BE vô hiệu phiên để access token gắn với phiên đó không tiếp tục sử dụng được.
+5. - Các phiên khác của User được giữ nguyên.
+6. 7. Với đăng xuất mọi thiết bị:- BE vô hiệu toàn bộ phiên và refresh token của User.
+8. - Sử dụng authVersion hoặc cơ chế tương đương để các access token đã cấp bị từ chối từ request tiếp theo.
+9. 10. BE → FE: Trả kết quả thành công và xóa refresh cookie phù hợp.
+11. FE: Xóa access token, thông tin User và dữ liệu nhạy cảm đang cache; đồng bộ logout giữa các tab và chuyển đến Login.
+12. BE: Các request bảo vệ sau khi phiên bị thu hồi phải yêu cầu đăng nhập lại. Request đang xử lý không bắt buộc bị hủy giữa chừng.
+13. Không xóa dữ liệu Brand, Campaign, Creator, Shortlist hoặc Collaboration.
+Luồng liên quan: 1.2
+
+
+Luồng 1.6: Đăng ký Creator qua Lời mời (Invited Creator Registration)
+Thành phần: FE (trang gửi lời mời, CreatorRegisterPage, VerifyEmailPage); BE (CreatorRegistrationController, CreatorRegistrationInvitationService, PasswordEncoder, EmailVerificationService); DB (creator_registration_invitation, user, creator_master, dữ liệu OTP).
+Tương tác:
+1. FE: Admin/Data Manager nhập email Creator cần mời đăng ký.
+2. FE → BE: Gửi POST /api/v1/data/creator-invitations; người gọi phải có permission hiệu lực INVITE_CREATOR.
+3. BE: Chuẩn hóa email, kiểm tra email chưa có tài khoản và giới hạn gửi.
+4. BE → DB: Tạo token ngẫu nhiên, chỉ lưu hash, gắn với email và thời hạn 48 giờ.
+5. BE: Gửi email chứa link frontend /auth/creator/register?token=..., sử dụng base URL cấu hình backend.
+6. BE → FE: Trả 201 với ID, email và thời hạn; không trả token thô.
+7. Creator mở link; FE gọi POST /api/v1/auth/creator-invitations/resolve để kiểm tra lời mời. Resolve không tiêu thụ token.
+8. FE: Creator nhập họ tên, mật khẩu và chấp thuận Terms/Privacy. Email lấy từ lời mời; không cho tự đổi email hoặc role.
+9. FE → BE: Gửi POST /api/v1/auth/creator/register.
+10. BE: Khóa và kiểm tra lại lời mời, email, thời hạn và trạng thái sử dụng.
+11. BE → DB: Tạo User CREATOR chưa xác minh email, CreatorMaster, bản ghi chấp thuận và OTP; tiêu thụ lời mời trong cùng transaction.
+12. BE: Gửi OTP xác minh; lỗi phải được xử lý nhất quán, không để lời mời bị tiêu thụ nhưng tài khoản tạo thất bại.
+13. BE → FE: Trả 201, không cấp token.
+14. Creator xác minh OTP theo 1.7.1, sau đó đăng nhập theo 1.2.
+15. Creator thực hiện Claim hoặc kết nối nền tảng theo luồng xác minh kênh riêng; đăng ký tài khoản không tự cấp ownership/tick.
+
+
+Luồng liên quan: 1.2 · 1.7.1 · 11.1 · 11.2.
+________________
+
+
+Luồng 1.7: Xác minh Email & Thiết lập mật khẩu (Email Verification & Password Setup)
+Luồng 1.7.1: Xác minh Email và Gửi lại OTP
+Thành phần: FE (VerifyEmailPage); BE (AuthController, EmailVerificationService, OtpChallengePolicy, EmailOtpCodes, VerificationEmailSender); DB (user, email_verification_otp, email_verification_delivery).
+Tương tác:
+1. Sau đăng ký bằng mật khẩu, BE sinh OTP 6 chữ số bằng SecureRandom, hạn 10 phút, dùng một lần.
+2. BE → DB: Lưu OTP dưới dạng HMAC-SHA256 cùng thời hạn, lượt sai và trạng thái tiêu thụ; không lưu mã thô.
+3. BE: Gửi mã đến email tài khoản; không trả OTP trong response hoặc ghi mã vào log/audit.
+4. FE → BE: Người dùng nhập mã; FE gửi POST /api/v1/auth/verify-email với email, otp.
+5. BE: Khóa và kiểm tra tài khoản, mã, thời hạn, trạng thái sử dụng và giới hạn thử.
+6. BE → DB: Mã hợp lệ được tiêu thụ; cập nhật emailVerified=true.
+7. BE → FE: Trả 200; người dùng tiếp tục đăng nhập. Xác minh email không tự cấp phiên.
+8. Khi cần mã mới, FE gửi POST /api/v1/auth/resend-verification.
+9. BE: Kiểm tra giới hạn gửi, thay OTP và gửi email mới. Gửi lại thành công vô hiệu mã trước.
+Ngoại lệ và quy tắc:
+* OTP sai/hết hạn: trả 400.
+* Tối đa 5 lần nhập sai/mã; lượt sai phải được lưu dù API trả lỗi.
+* Vượt giới hạn thử/gửi: trả 429.
+* Gửi lại sau ít nhất 60 giây, tối đa 5 email/giờ/tài khoản, tính cả email đăng ký.
+* Xác minh lại tài khoản đã xác minh: trả 409.
+* Email không tồn tại hoặc đã xác minh nhận thông báo gửi lại chung, không gửi thêm mã.
+* Xác minh đồng thời chỉ một request được tiêu thụ mã thành công.
+* Tài khoản chưa xác minh bị chặn ở login, JWT authentication và refresh.
+Luồng liên quan: 1.1 · 1.2 · 1.6.
+Luồng 1.7.2: Đặt mật khẩu lần đầu cho Tài khoản Google
+Thành phần: FE (PasswordSetupPage); BE (CreatorRegistrationController, PasswordSetupService, OtpChallengePolicy, PasswordEncoder, RefreshTokenService); DB (user, external_identity, password_setup_otp, dữ liệu giới hạn gửi, dữ liệu phiên).
+Tương tác:
+1. Người dùng có tài khoản Google chưa có mật khẩu yêu cầu thiết lập mật khẩu lần đầu.
+2. FE → BE: Gửi POST /api/v1/auth/password-setup/request với email.
+3. BE: Kiểm tra tài khoản thuộc BRAND hoặc CREATOR, đang ACTIVE, email đã xác minh, có Google identity và chưa có mật khẩu.
+4. BE → DB: Sinh OTP riêng cho mục đích PASSWORD_SETUP; dùng chung ngân sách gửi OTP theo tài khoản.
+5. BE: Gửi OTP đến email; trả thông báo chung để hạn chế tiết lộ thông tin tài khoản.
+6. FE → BE: Gửi POST /api/v1/auth/password-setup/confirm với email, otp, newPassword.
+7. BE: Khóa và kiểm tra lại điều kiện tài khoản, mã, thời hạn, lượt thử và trạng thái sử dụng.
+8. BE → DB: Lưu mật khẩu BCrypt, tiêu thụ OTP, tăng authVersion và thu hồi các phiên/refresh token trong cùng transaction.
+9. BE → FE: Trả 200, không tự cấp token; người dùng đăng nhập theo 1.2.
+Ngoại lệ và quy tắc:
+* OTP đặt mật khẩu và OTP xác minh email khác mục đích, không được dùng thay nhau.
+* Giữ giới hạn thời hạn, lượt thử và ngân sách gửi OTP.
+* Không đổi role/trạng thái hoặc cấp ownership.
+* Không áp dụng cho tài khoản đã có mật khẩu.
+* Đây không phải chức năng quên mật khẩu chung.
+* Google identity lịch sử của Creator có thể phục vụ đặt mật khẩu, nhưng không cho Creator dùng Google Login mới.
+Luồng liên quan: 1.2 · 1.3 · 1.4 · 1.5.
+
+
+* Phân hệ 2. Quản lý Hồ sơ Doanh nghiệp & M4 Brand Context[f] (KHẢI + VĂN)
+* Luồng 2.1: Khởi tạo Hồ sơ Brand lần đầu (Brand Onboarding & First-time Profile Setup)
+Thành phần: FE (BrandOnboardingWizard, BrandProfilePage); BE (BrandController, BrandService, thành phần xử lý embedding M4); DB (brand_profile, brand_context, brand_pattern và dữ liệu theo dõi embedding). 
+Tương tác:
+1. Sau khi đăng ký Brand thành công ở Phân hệ 1, BE đã tạo brand_profile ban đầu, explicit brand_context version 1 và trạng thái onboarding PENDING. Hồ sơ chỉ chứa thông tin thực do người dùng cung cấp; không tự tạo sở thích hoặc learned patterns.
+2. FE → BE: Gọi GET /api/v1/brands/me để tải hồ sơ hiện tại. Nếu tài khoản Brand lịch sử chưa có hồ sơ, sử dụng POST /api/v1/brands để khởi tạo; mỗi tài khoản chỉ có một hồ sơ Brand.
+3. FE: Brand bổ sung ngành hàng, nhóm sản phẩm, đối tượng khách hàng, thị trường mục tiêu, Brand Tone và nền tảng ưu tiên. Website, mô tả, địa điểm, định vị, guideline và ngân sách tham khảo là thông tin tùy chọn; ngân sách chiến dịch được quản lý riêng trong Campaign.
+4. FE → BE: Gửi yêu cầu lưu hồ sơ. BE kiểm tra JWT, permission hiệu lực, quyền sở hữu và dữ liệu đầu vào; chuẩn hóa điện thoại và các danh sách hợp lệ.
+5. BE → DB: Lưu hồ sơ và explicit Brand Context trong cùng transaction. Chỉ tăng context version khi nội dung ngữ cảnh thực sự thay đổi; không ghi đè learned patterns hoặc tạo bằng chứng học giả.
+6. BE → AI Worker: Khi dữ liệu dùng cho M4 thay đổi, xếp yêu cầu tạo embedding gắn với context version và model version. Không đưa mật khẩu, token hoặc thông tin liên hệ không cần thiết vào nội dung embedding.
+7. BE → FE: Trả hồ sơ, context version, trạng thái onboarding và trạng thái embedding PENDING / PROCESSING / READY / FAILED. Lưu hồ sơ thành công không đồng nghĩa embedding đã tạo thành công.
+8. FE → BE: Khi người dùng chọn hoàn tất onboarding, gọi POST /api/v1/brands/me/onboarding/complete. BE yêu cầu tên thương hiệu, điện thoại hợp lệ, ngành hàng, ít nhất một nhóm sản phẩm, một nhóm khách hàng mục tiêu, Brand Tone và một nền tảng hợp lệ.
+9. BE → DB: Nếu đủ dữ liệu, chuyển onboarding sang COMPLETED và lưu thời điểm hoàn tất. Thiếu dữ liệu trả 400 kèm danh sách trường cần bổ sung; gọi lại sau khi đã hoàn tất không tạo thay đổi hoặc audit giả.
+10. FE: Điều hướng Brand đến Dashboard hoặc tạo Campaign. Embedding chưa sẵn sàng không ngăn lưu hồ sơ hoặc hoàn tất onboarding; Recommendation sử dụng explicit context theo quy tắc SM4 và thể hiện rõ mức độ sẵn có của dữ liệu.
+
+
+Luồng liên quan: 2.2 · 3.1 · 6.1
+* Luồng 2.2: Cập nhật Hồ sơ Brand & Nạp trước Vector Bộ nhớ M4[g]
+Thành phần: FE (BrandProfilePage); BE (BrandController, BrandService, thành phần xử lý embedding M4); DB (brand_profile, brand_context, brand_pattern và dữ liệu phiên bản/snapshot context). 
+Tương tác:
+1. FE → BE: Gọi GET /api/v1/brands/me để tải hồ sơ và context version hiện tại trước khi chỉnh sửa.
+2. FE: Brand chỉnh sửa thông tin doanh nghiệp, sản phẩm/ngành hàng, thị trường, đối tượng khách hàng, Brand Tone, định vị hoặc guideline.
+3. FE → BE: Gửi cập nhật từng phần qua PATCH /api/v1/brands/me, kèm phiên bản đã đọc. Trường không được gửi giữ nguyên giá trị; việc xóa trường phải được thể hiện rõ. PUT /api/v1/brands/me tiếp tục được hỗ trợ với quy ước cập nhật toàn bộ hồ sơ.
+4. BE: Kiểm tra permission hiệu lực, ownership, dữ liệu đầu vào và phiên bản. Nếu dữ liệu đã được request khác cập nhật, trả 409 để FE tải lại; không âm thầm ghi đè.
+5. BE: Với hồ sơ đã COMPLETED, từ chối cập nhật làm mất các thông tin bắt buộc. Cho phép xóa hoặc thay đổi các trường tùy chọn theo validation tương ứng.
+6. BE → DB: So sánh dữ liệu đã chuẩn hóa với dữ liệu hiện tại. Nếu không thay đổi, trả kết quả hiện có; nếu explicit context thay đổi, cập nhật hồ sơ và tăng context version trong cùng transaction.
+7. BE → AI Worker: Khi nội dung đầu vào embedding thay đổi, xếp yêu cầu tạo vector mới. Kết quả phải gắn với đúng Brand, context version và model version; kết quả của phiên bản cũ không được thay thế vector hiện hành.
+8. BE: Nếu worker lỗi hoặc chưa sẵn sàng, giữ dữ liệu hồ sơ đã lưu, ghi trạng thái embedding tương ứng và cho phép thử lại. Không sử dụng vector cũ như thể nó đại diện cho context mới.
+9. BE → FE: Trả hồ sơ mới, context version, trạng thái onboarding và embedding. FE hiển thị trạng thái xử lý thực tế, không thông báo “AI đã cập nhật thành công” khi mới xếp hàng.
+10. Liên thông: Campaign/Recommendation ghi nhận phiên bản hoặc snapshot Brand Context được sử dụng để truy vết. Cập nhật hồ sơ sau đó không tự thay đổi dữ liệu hoặc kết quả lịch sử đã được chốt.
+
+
+Luồng liên quan: 3.1 · 6.1 · 15.2
+* Phân hệ 3. Khởi tạo Campaign & AI Brief Autofill (VĂN + KHẢI + NGỌC)
+* Luồng 3.1: Nhập liệu Brief chiến dịch thủ công (Manual Campaign Brief Creation)[h]
+Thành phần: FE (CreateCampaignPage, CampaignStepperForm); BE (CampaignController, CampaignService); DB (campaign, campaign_context). 
+Tương tác:
+1. FE: Brand nhập tên chiến dịch, sản phẩm/dịch vụ, brief, mục tiêu AWARENESS/ENGAGEMENT/TRAFFIC/CONVERSION, nền tảng, đối tượng khán giả, thời gian và tổng ngân sách kèm đơn vị tiền tệ.
+2. FE: Brand chọn Single-Creator hoặc Multi-Creator. Single-Creator có số Creator mục tiêu là 1; Multi-Creator cho khai báo số Creator mục tiêu và deliverables theo nền tảng, loại nội dung và số lượng.
+3. FE: Brand khai báo tiêu chuẩn KOC như niche, địa điểm, khoảng followers và khoảng fee/Creator. Fee mặc định là ưu tiên mềm; chỉ áp dụng Hard Constraint khi Brand xác nhận và dữ liệu phí đủ điều kiện so sánh.
+4. FE → BE: Gửi yêu cầu tạo Campaign qua /api/v1/brands/{brandId}/campaigns. BE kiểm tra quyền Brand, ownership, quota, dữ liệu bắt buộc và tính hợp lệ của timeline, ngân sách, số Creator và deliverables.
+5. BE → DB: Lưu Campaign ở trạng thái DRAFT. Tổng ngân sách Campaign được lưu riêng với khoảng fee/Creator; không tự chia tổng ngân sách thành giới hạn phí bắt buộc cho từng Creator.
+6. FE → BE: Khi Brand sửa bản nháp, gửi phiên bản hiện hành. BE kiểm tra phiên bản để tránh ghi đè thay đổi từ request khác; cập nhật không làm thay đổi dữ liệu thì không tạo phiên bản mới.
+7. FE: Có thể dùng AI Brief Autofill (3.2), xem lại và chỉnh sửa đề xuất trước khi lưu. Autofill không tự xác nhận điều kiện bắt buộc, kích hoạt Campaign hoặc chạy Recommendation.
+8. Nguyên tắc: Số Creator mục tiêu là kế hoạch hợp tác, không giới hạn số ứng viên được thêm vào Shortlist. Thiếu dữ liệu phí phải được biểu diễn là chưa đủ bằng chứng, không coi là phí bằng 0 hoặc tự kết luận phù hợp ngân sách.
+Luồng liên quan: 3.2 · 3.3 · 4.1
+* Luồng 3.2: Tự động tạo cấu trúc Brief bằng AI Gemini (AI Brief Autofill)[i]
+Thành phần: FE (CreateCampaignPage, AiBriefModal); BE (AiRecommendationController, GeminiBriefService); Google Gemini API.
+Tương tác:
+1. FE: Brand viết prompt mô tả Campaign hoặc chọn prompt mẫu, bấm AI Tự điền Brief.[j]
+2. FE → BE: Gửi /api/v1/ai/campaign-autofill; BE gọi AI có yêu cầu JSON Schema, xác thực cấu trúc và chỉ cho phép objective/platform được hỗ trợ.
+3. BE → FE: Trả về các trường đề xuất, phân biệt dữ liệu có trong prompt với nội dung AI suy diễn; lỗi AI không được ghi dữ liệu vào Campaign.
+4. FE: Hiển thị form đã điền, Brand tự sửa và xác nhận các trường nhạy cảm như ngân sách, thời gian, số Creator và yêu cầu nội dung.
+5. FE: Chỉ khi Brand nhấn Lưu/Kích hoạt mới chuyển sang 3.3; không coi kết quả AI Autofill là Brief đã phê duyệt.
+Luồng liên quan: 3.1 · 3.3
+* Luồng 3.3: Lưu chiến dịch & Tạo Vector nhúng Brief M3 (Campaign Activation & Brief Vectorization)[k]
+Thành phần: FE (CreateCampaignPage, CampaignDetailPage); BE (CampaignController, CampaignService, AiServiceClient, CampaignEmbeddingWorker); Python Embedding Service; DB (campaign, campaign_context, embedding job và vector tương ứng). 
+Tương tác:
+1. FE → BE: Brand xác nhận Campaign đã đủ thông tin để khám phá Creator. BE kiểm tra quyền sở hữu, phiên bản hiện hành và các điều kiện bắt buộc trước khi chuyển từ DRAFT sang READY_FOR_DISCOVERY.
+2. BE → DB: Lưu Campaign Context có phiên bản, gồm brief, sản phẩm/dịch vụ, mục tiêu, nền tảng, đối tượng, tiêu chuẩn KOC, timeline, tổng ngân sách, chế độ Single/Multi-Creator, deliverables và các điều kiện đã xác nhận.
+3. BE → DB: Campaign Context ghi nhận Brand Context được tham chiếu tại thời điểm tạo. Tiêu chí Campaign được ưu tiên; explicit Brand Context chỉ bổ sung sở thích chưa được Campaign khai báo, không tự tạo bộ lọc cứng mới.
+4. BE → DB: Lưu Context và yêu cầu tạo Brief Embedding M3 trong cùng transaction. Sau commit, worker bất đồng bộ gọi Python Embedding Service; không giữ khóa database trong lúc gọi AI.
+5. BE → AI/DB: Kiểm tra kết quả embedding và lưu vector gắn với đúng Context, model và model version. Chỉ thay đổi nội dung ảnh hưởng đến brief/ngữ cảnh mới tạo phiên bản và yêu cầu embedding mới; không dùng vector cũ như kết quả của phiên bản mới.
+6. BE → FE: Trả trạng thái embedding PENDING / PROCESSING / READY / FAILED, model/version và thời điểm sẵn sàng; không trả raw vector. Khi AI lỗi, Campaign đã lưu vẫn được giữ, worker retry theo chính sách và cho phép yêu cầu thử lại khi phù hợp.
+7. BE: Quản lý lifecycle riêng với trạng thái embedding: DRAFT → READY_FOR_DISCOVERY → ACTIVE → COMPLETED; bản nháp có thể chuyển ARCHIVED. Không coi Campaign ACTIVE là bằng chứng vector đã tạo thành công.
+8. BE: Bản nháp được chỉnh sửa theo quy tắc hiện hành. Nếu cho phép sửa brief sau READY_FOR_DISCOVERY, phải tạo Context mới theo quy trình được kiểm soát, giữ nguyên Context và kết quả Recommendation lịch sử.
+9. FE: Điều hướng Campaign → Discovery (4.1) → Shortlist (5.1/5.2) → Recommendation (6.1). Không tự chạy Recommendation khi lưu hoặc xác nhận Campaign.
+10. FE → BE: Khi chạy Recommendation, Brand chọn rõ chấm điểm Shortlist hoặc tìm thêm từ Discovery. Nếu Shortlist không còn ứng viên hợp lệ, hệ thống thông báo rõ; không âm thầm chuyển sang quét toàn bộ Discovery.
+11. BE: Recommendation ghi nhận phiên bản Campaign Context, Brand Context và dữ liệu chấm điểm đã sử dụng. Nếu vector chưa sẵn sàng, hệ thống trả trạng thái chờ hoặc fallback được công bố rõ; không thông báo đã xử lý ngữ nghĩa thành công.
+Luồng liên quan: 4.1 · 5.1 · 6.1
+* Phân hệ 4. Creator Discovery & Similar Fallback (NGỌC + VĂN)
+* Luồng 4.1: Khám phá Creator tự động nạp tiêu chí từ Brief chiến dịch[l]
+Thành phần: FE (CreatorDiscoveryPage, CreatorGrid); BE (CreatorDiscoveryService, PublicCreatorMetricRepository, EstimatedFeeEngine); PostgreSQL/pgvector; DB (creator, creator_master, public_creator_metric, creator_profile, creator_rate_card, campaign).
+Tương tác:
+1. FE: Brand vào Discovery trong ngữ cảnh Campaign; hệ thống nạp platform, niche, khoảng followers, brief embedding và điều kiện loại trừ.
+2. BE: Tìm ứng viên từ Creator Database đã được background acquisition xử lý; KHÔNG gọi crawler trực tiếp trong Discovery request.
+3. BE: Áp dụng Hard Constraints thực sự bắt buộc (ví dụ platform, trạng thái không hợp lệ); follower, niche và budget có thể là lựa chọn lọc/sắp xếp linh hoạt tùy cấu hình Brand.
+4. BE: Tính semantic relevance từ vector tương thích; đánh dấu Creator đã OAuth-claim/verified ownership nhưng không cộng điểm AI chỉ vì đã claim.
+5. BE: Chọn nguồn phí phù hợp theo thứ tự campaign-confirmed quote nếu có → Rate Card Creator khai báo còn hiệu lực → khoảng ước tính theo Policy/Platform/Tier/Deliverable → PRICE_UNKNOWN.
+6. BE: Với fee estimate từ followers, chỉ dùng policy được version hóa, không tự coi các khoảng giá ví dụ trong tài liệu là mức giá thị trường đã kiểm chứng.
+7. BE: Nếu kết quả quá ít, cho Similar Fallback có đánh dấu expanded match; không âm thầm nới lỏng các điều kiện Brand đặt là không thể thương lượng.
+8. FE: Hiển thị Creator Card (followers, ER, semantic relevance, ownership verification, phí và nguồn phí); mặc định không Hard Filter theo fee dự đoán.
+Luồng liên quan: 4.2 · 5.1 · 11.1 · 11.2 · DM-03
+Luồng 4.2: Lọc thu hẹp thủ công trên tập kết quả Discovery (Drill-down Filter)[m]
+Thành phần: FE (CreatorDiscoveryPage, FilterPillBar); BE (CreatorController, CreatorDiscoveryService); DB (creator, public_creator_metric, creator_rate_card).
+Tương tác:
+1. FE: Brand tinh chỉnh platform, niche, follower tier, ER, claim status và khoảng phí bằng các điều khiển rõ ràng.
+2. FE: Cung cấp Sort: Semantic Relevance, Budget-Fit First, Lowest Comparable Fee; nhãn PRICE_UNKNOWN vẫn có thể xuất hiện.
+3. FE → BE: Gửi search/filter query; backend phân trang và truy xuất dữ liệu từ DB đã lưu.
+4. BE: Phân biệt bộ lọc do Brand chủ động áp dụng với hệ thống tự động loại; Estimated Fee chỉ hỗ trợ lựa chọn, không Hard Filter mặc định.
+5. FE: Hiển thị số kết quả và lý do nếu áp dụng chỉ xem Verified; cho reset lọc và thêm nhiều KOC vào Shortlist (5.1).
+Luồng liên quan: 4.1 · 5.1
+* Phân hệ 5. Shortlist & So sánh Creator (KHẢI + VĂN + NGỌC)
+* Luồng 5.1: Lưu KOC vào Shortlist chiến dịch[n]
+Thành phần: FE (CreatorDiscoveryPage, CreatorCard); BE (ShortlistController, ShortlistService); DB (shortlist_item, campaign, creator, creator_master). 
+Tương tác:
+1. FE: Brand chọn một hoặc nhiều kênh Creator trên Discovery để thêm vào Shortlist của Campaign. Mỗi kênh được nhận diện bằng creatorId; các kênh cùng CreatorMaster được hiển thị có liên quan với nhau.
+2. FE → BE: Gửi yêu cầu thêm kênh qua /api/v1/campaigns/{campaignId}/shortlist. Hệ thống hỗ trợ thêm từng kênh và xử lý batch khi Brand chọn nhiều kênh.
+3. BE: Kiểm tra phiên đăng nhập, permission hiệu lực MANAGE_OWN_SHORTLIST, quyền sở hữu Campaign và sự tồn tại của từng kênh; không tin thông tin ownership do client cung cấp.
+4. BE: Kiểm tra trùng theo Campaign và kênh. Kênh chưa có được thêm mới; item đang tồn tại được tái sử dụng; item đã REMOVED được khôi phục về SAVED. Các request lặp hoặc đồng thời không tạo bản ghi trùng.
+5. BE → DB: Lưu priority, note, nguồn thêm và tham chiếu RecommendationRun nếu có. Tham chiếu RecommendationRun phải thuộc đúng Campaign và nằm trong quyền truy cập của Brand.
+6. BE → FE: Trả kết quả cho từng kênh, phân biệt thêm mới, đã tồn tại, khôi phục hoặc không hợp lệ; trả số lượng item hiện hành để FE cập nhật giao diện.
+7. BE: Nếu cần làm mới dữ liệu công khai, xếp yêu cầu crawl nền và cung cấp trạng thái xử lý. Thêm Shortlist thành công không đồng nghĩa dữ liệu mới đã được thu thập thành công; dữ liệu đang có vẫn phải được hiển thị kèm thời điểm và độ mới.
+8. Nguyên tắc: Cho phép lưu nhiều kênh của cùng CreatorMaster để cân nhắc nền tảng, nhưng không thêm trùng cùng một kênh. Campaign dự kiến thuê một Creator vẫn được phép lưu nhiều ứng viên.
+9. Nguyên tắc: Thêm Shortlist không xác nhận booking, không giữ phí, không tự gửi lời mời hợp tác và không tạo Collaboration. Liên hệ và Outreach là thao tác riêng.
+Luồng liên quan: 5.2 · 6.1
+* Luồng 5.2: Quản lý & So sánh đối đầu KOC trong Shortlist[o]
+Thành phần:FE (CreatorShortlistPage, CompareModal); BE (ShortlistController, ShortlistService, ShortlistCompareService); DB (shortlist_item, campaign, creator, creator_master, public_creator_metric); Relationship/Collaboration nếu sử dụng dữ liệu phí được phép truy cập. 
+Tương tác:
+1. FE: Brand xem Shortlist của Campaign, lọc theo trạng thái, priority hoặc nền tảng; cập nhật priority, ghi chú và bỏ kênh khỏi danh sách bằng thao tác soft delete.
+2. BE: Kiểm tra permission hiệu lực và quyền sở hữu Campaign/item trong mọi thao tác. Danh sách mặc định không hiển thị item REMOVED; việc bỏ kênh không xóa dữ liệu Creator, metric hoặc lịch sử hợp tác.
+3. FE → BE: Brand chọn 2–5 kênh khác nhau và gửi creatorIds đến POST /api/v1/campaigns/{campaignId}/shortlist/compare.
+4. BE: Kiểm tra các kênh đều thuộc Shortlist hiện hành của Campaign, chưa REMOVED và nằm trong quyền truy cập. Giữ thứ tự kênh theo request; không tự thêm ứng viên ngoài danh sách.
+5. BE → DB: Đọc hồ sơ công khai và snapshot metric mới nhất của mỗi kênh. Trả followers, lượt xem/tương tác trung bình, engagement rate, niche, confidence, freshness, nguồn dữ liệu nếu có và thời điểm thu thập.
+6. BE → FE: Trả trạng thái xác minh của InfluencerMatch, nền tảng và thông tin liên quan CreatorMaster để nhận biết nhiều kênh cùng một Creator. Không diễn giải tick của hệ thống thành dấu xác minh chính thức của nền tảng.
+7. BE: Thiếu metric thì trả trạng thái chưa có dữ liệu hoặc metrics: null; không thay bằng số 0. Các chỉ số trong Compare là dữ liệu công khai đầu vào cho M2, không tự coi là điểm M2 hoặc kết quả Four-Memory Recommendation.
+8. BE: Nếu có dữ liệu phí phù hợp và được phép truy cập, trả số tiền, tiền tệ, nguồn, thời điểm và phạm vi công việc. Phân biệt phí đề xuất, phí thỏa thuận và chi phí lịch sử; chỉ so sánh khi các điều kiện tương đương.
+9. FE: Hiển thị so sánh side by side, đánh dấu dữ liệu thiếu/cũ và nguồn metric/fee. Khi chưa đủ dữ liệu phí, hiển thị “Chưa đủ dữ liệu phí”; không coi là phí bằng 0 hoặc tự kết luận phù hợp ngân sách.
+10. Nguyên tắc: Compare chỉ đọc, không sửa Shortlist, không tạo booking/Collaboration và không tự xếp hạng. Thêm, cập nhật hoặc bỏ kênh phải gọi API quản lý Shortlist riêng.
+11. FE → BE: Khi Brand bấm Four-Memory Recommendation, gửi Campaign ID với candidateSource=SHORTLIST. Backend tự lấy tập ứng viên hợp lệ, kiểm tra M3 và quyền truy cập; không tin tập ứng viên tùy ý từ client.
+12. BE: Recommendation áp dụng quy tắc khử trùng CreatorMaster của Phân hệ 6. Shortlist rỗng hoặc không còn ứng viên hợp lệ phải được thông báo rõ, không tự chuyển sang Discovery.
+13. Nguyên tắc: Shortlist là tập ứng viên được chấm điểm; Reference Candidate Pool là tập tham chiếu riêng nếu triển khai CRITIC. Không tự tính trọng số CRITIC từ 2–5 kênh đang Compare khi chưa có phương pháp và dữ liệu đáp ứng điều kiện.
+
+
+Luồng liên quan: 6.1 · 7.1
+* Phân hệ 6. Four-Memory AI Recommendation (VY + VĂN)
+* Luồng 6.1: Chấm điểm & Xếp hạng Four-Memory bằng Trọng số Thích ứng Động (Dynamic Adaptive Weights)[p]
+Thành phần: FE (AiRecommendationTab, CampaignManagementPage); BE (RecommendationOrchestrator, FourMemoryScoringService và các scoring services); PostgreSQL/pgvector; DB (campaign, history, public metrics, embeddings, scoring configs, rate card, recommendation results).
+Tương tác:
+1. FE → BE: Brand bấm Chạy Four-Memory AI, gửi POST /api/v1/campaigns/{campaignId}/recommendations/generate (API thiết kế cần đối chiếu code).
+2. Phase 0: Lấy Candidate Set, validate dữ liệu; phân biệt Hard/Soft Constraints, price source và Verification. Fee/claim không được lẫn vào điểm SM1–SM4.
+3. Phase 1: SM1 dùng Bayesian Completion + Historical KPI + Brand Review; SM2 = trung bình ER/View/Stability đã chuẩn hóa; SM3 là Cosine Brief–Creator Content; SM4 là Explicit Brand Affinity, Learned chỉ khi có dữ liệu hợp lệ.
+4. Phase 2–3: CRITIC trên Reference Pool hợp lệ, fallback Business Weights nếu không đủ; blend bằng Lambda theo Objective, một bộ trọng số chung cho cả Run; MVP chưa bật Data Readiness Adjustment.
+5. Phase 4–6: Fixed-Ideal TOPSIS trả Match Score 0–100; Confidence tách riêng; MMR chỉ khi bật Diversity Mode và không ghi đè Match Score.
+6. Post-processing: Deterministic Reasoning Card từ Score Breakdown; Best Match mặc định, Budget-Ready First là chế độ sort sau scoring, không cộng thưởng cho Verified Creator.
+7. BE → FE: Trả ranking, breakdown, confidence, claim/price status và recommendation snapshot; FE cho chọn một/nhiều Creator để đi CRM (7.1).
+Luồng liên quan: 5.2 · 7.1 · DM-04 · 11.1 · 15.2
+* Phân hệ 7. Outreach CRM & Đàm phán hợp tác (KHẢI + VĂN)
+* Luồng 7.1: Gửi lời mời hợp tác & Đẩy vào phễu CRM Kanban (Outreach & Multi-channel Invitation)[q]
+Thành phần: FE (OutreachCrmPage, InviteModal); BE (RelationshipController, RelationshipService, CooperationInvitationService, Email Outbox, NotificationService); DB (relationship, lời mời hợp tác, email_outbox, creator, creator_master, shortlist_item). 
+Tương tác:
+1. FE: Brand chọn một hoặc nhiều kênh từ Shortlist/Recommendation và tạo đề nghị hợp tác cho từng kênh. Mỗi đề nghị được theo dõi độc lập trong Campaign; các kênh thuộc cùng CreatorMaster được nhận diện để tránh nhầm thành nhiều Creator khác nhau.
+2. FE → BE: Gửi yêu cầu qua /api/v1/campaigns/{campaignId}/relationships, gồm creatorId, Shortlist liên quan nếu có, offeredFee, currency, nội dung đề nghị và ghi chú. Khi gửi batch, hệ thống trả kết quả riêng cho từng kênh.
+3. BE: Kiểm tra permission hiệu lực, quyền sở hữu Campaign, kênh và nguồn Recommendation/Shortlist liên quan. Request lặp hoặc đồng thời không tạo trùng Relationship và không tự ghi đè điều khoản đã đàm phán.
+4. BE → DB: Tạo Relationship ở CONTACTED, lưu đề nghị ban đầu và lịch sử thao tác. Trạng thái này biểu thị Brand đã khởi tạo liên hệ; không xác nhận email đã gửi, Creator đã đồng ý, booking đã được chốt hoặc actual cost đã phát sinh.
+5. BE: Chọn phương thức chuyển lời mời:
+- Creator đã có tài khoản Portal hợp lệ: tạo thông báo trong hệ thống; gửi email bổ sung theo cấu hình.
+- Có booking email hợp lệ: lưu lời mời và email outbox trong cùng transaction; gửi sau commit.
+- Chỉ có đường dẫn mạng xã hội: cung cấp Magic Link hợp tác có hạn dùng để Brand chủ động sao chép và gửi.
+6. BE: Theo dõi trạng thái chuyển lời mời riêng với trạng thái CRM, gồm xếp hàng, gửi thành công, gửi thất bại hoặc chờ liên hệ thủ công. Không thông báo đã gửi thành công khi thư mới nằm trong hàng đợi; lỗi gửi không làm mất Relationship đã lưu.
+7. An toàn: Lời mời hợp tác tách biệt với lời mời đăng ký Creator và lời mời Claim kênh. Magic Link chỉ phục vụ xem hoặc tiếp tục xử lý lời mời theo quyền cho phép; không tự tạo User, CreatorMaster, ownership hoặc tick xác minh. Thao tác chấp nhận/ràng buộc tài khoản yêu cầu xác thực phù hợp và kiểm tra người nhận.
+8. FE: Hiển thị Relationship trong CRM Kanban, trạng thái chuyển lời mời và phản hồi của từng Creator. Nếu lời mời chưa thể gửi, Brand vẫn có thể tiếp tục theo dõi và thực hiện liên hệ thủ công; hệ thống không tự đánh dấu Creator đã nhận hoặc đã đồng ý.
+Luồng liên quan: 7.2 · 11.1 · 11.2 · 15.1
+* Luồng 7.2: Quản lý & Cập nhật đàm phán trên bảng Kanban (Kanban Progression & Deal Closing)[r]
+Thành phần: FE (OutreachCrmPage, KanbanBoard, NegotiationHistory, ConfirmDealModal); BE (RelationshipController, RelationshipService, DealConfirmationService, CollaborationService); DB (relationship, lịch sử đàm phán, lời mời hợp tác, collaboration, campaign, creator_master). 
+Tương tác:
+1. FE: Brand quản lý tiến trình CONTACTED → NEGOTIATING → CONFIRMED theo từng quan hệ hợp tác. Các trường hợp từ chối hoặc hủy được ghi nhận riêng; BE chỉ cho phép các bước chuyển hợp lệ và không chấp nhận kéo thả trạng thái để bỏ qua điều kiện chốt deal.
+2. FE → BE: Brand hoặc Creator có quyền gửi đề xuất phí, phản hồi và ghi chú. BE lưu lịch sử theo người thực hiện, thời điểm, tiền tệ và phạm vi deliverables; phân biệt:
+- offeredFee: phí Brand đề xuất.
+- counterofferFee: phí Creator phản hồi cho hợp tác này.
+               - agreedFee: phí đã được hai bên thống nhất.
+Không dùng Rate Card đã gỡ hoặc historical actual cost làm giá hiện hành của Creator.
+3. BE: Relationship được theo dõi theo kênh, nhưng khi tính số Creator và commitment phải nhận diện CreatorMaster cùng các Collaboration liên quan. Không đếm nhiều kênh của cùng một hợp tác thành nhiều Creator hoặc cộng trùng cùng khoản phí.
+4. Trước CONFIRMED, BE kiểm tra quyền, lifecycle Campaign, trạng thái đàm phán, deliverables, điều khoản và bằng chứng đồng thuận. SINGLE chỉ cho phép một Creator được chốt; với MULTI, số Creator mục tiêu là kế hoạch, không tự biến thành giới hạn cứng nếu chưa có chính sách được xác nhận.
+5. BE: Tính commitment dự kiến sau khi chốt và đối chiếu tổng ngân sách Campaign. Hiển thị rõ khoản đã cam kết, khoản đang thương lượng và phần ngân sách còn lại; đề xuất đang đàm phán chưa được tính là commitment. Nếu vượt ngân sách, áp dụng chính sách chặn hoặc xác nhận ngoại lệ đã được quy định, không âm thầm chốt.
+6. BE: Kiểm tra năng lực, lịch làm việc hoặc exclusivity khi hệ thống có dữ liệu và điều khoản đủ để đánh giá. Thiếu dữ liệu phải được biểu diễn là chưa xác định, không tự khẳng định Creator còn lịch hoặc đủ năng lực.
+7. Exclusivity: Creator có thể đề xuất điều khoản độc quyền, bao gồm phạm vi, thời hạn và các hạn chế liên quan. Điều khoản chỉ có hiệu lực khi Brand chấp thuận và được lưu trong thỏa thuận. SINGLE không mặc nhiên đồng nghĩa độc quyền thương hiệu.
+8. FE: ConfirmDealModal yêu cầu xác nhận đồng thuận, deliverables và agreedFee hợp lệ hoặc hình thức barter có mô tả rõ. Trường hợp Brand ghi nhận thỏa thuận bên ngoài hệ thống phải lưu nguồn và bằng chứng phù hợp, không giả nhận Creator đã xác nhận trong Portal. Hủy modal không thay đổi trạng thái nghiệp vụ.
+9. FE → BE: Gửi yêu cầu xác nhận deal. BE khóa và đọc lại dữ liệu liên quan, kiểm tra các điều kiện, lưu điều khoản đã chốt, commitment, chuyển Relationship sang CONFIRMED và tạo/liên kết Collaboration trong cùng transaction. Request lặp không tạo thêm Collaboration hoặc cộng commitment lần nữa; lỗi phải rollback toàn bộ lần xác nhận.
+10. BE: Giữ riêng lifecycle CRM, tiến độ thực hiện Collaboration và trạng thái thanh toán. CONFIRMED không có nghĩa công việc đã bắt đầu, đã hoàn tất hoặc đã thanh toán. Không tự chuyển Campaign sang ACTIVE hay ghi actual cost chỉ vì deal được chốt.
+11. FE: CRM hiển thị số Creator confirmed, các kênh liên quan, Committed Budget, khoản đang thương lượng và cảnh báo ngân sách. Việc đổi phí, hủy hoặc điều chỉnh deal sau xác nhận phải theo luồng điều chỉnh có lịch sử, không sửa trực tiếp đề xuất cũ để làm thay đổi ngầm thỏa thuận.
+Luồng liên quan: 8.1 · 8.2 · 11.1
+* Phân hệ 8. Collaboration, Content Review & Outcome (KHẢI + VĂN + VY)
+* Luồng 8.1: Kiểm duyệt nội dung bài đăng KOC (Content Review Flow)[s]
+Thành phần: FE (Creator Portal, CollaborationDetailView, ContentReviewPanel); BE (CollaborationController, DeliverableService, ContentReviewService); DB (collaboration, collaboration_channel, deliverable, submission revision, review decision, evidence_asset). 
+Tương tác:
+1. BE: Mỗi Deal được xác nhận tạo một Collaboration ở PLANNED. Collaboration có thể gồm nhiều kênh của cùng CreatorMaster, một bộ điều khoản và một khoản phí. Deliverables được chụp từ proposal đã chốt; thay đổi Campaign hoặc proposal về sau không tự sửa thỏa thuận đã xác nhận.
+2. BE: Mỗi deliverable xác định kênh thực hiện, loại nội dung, số lượng, hạn nộp, yêu cầu nội dung và revision policy. Tiến độ được theo dõi trên từng đầu việc cần nghiệm thu; không dùng một trạng thái chung để đại diện toàn bộ deliverables.
+3. FE → BE: Khi Campaign ACTIVE, Brand bắt đầu Collaboration, chuyển PLANNED → IN_PROGRESS. Thao tác này không tự đánh dấu nội dung đã được duyệt, đã xuất bản hoặc đã thanh toán.
+4. FE: Creator có Portal gửi URL bản nháp và thông tin submission trên đúng deliverable. Creator ngoài Portal có thể chuyển nội dung cho Brand; Brand nhập thay phải ghi rõ nguồn, thời điểm nhận và người ghi nhận, không giả nhận Creator đã trực tiếp nộp qua hệ thống.
+5. BE → DB: Kiểm tra quyền trên Collaboration và kênh liên quan; lưu submission thành revision mới, giữ nguyên lịch sử cũ. Không ghi đè nội dung đã được phê duyệt hoặc cho phép một kênh nộp thay deliverable thuộc kênh khác.
+6. FE: Brand xem nội dung hoặc mở đường dẫn, đối chiếu Do/Don’t checklist và yêu cầu đã chốt; chọn phê duyệt hoặc yêu cầu chỉnh sửa kèm lý do. Preview không truy cập được phải được thể hiện rõ, không coi là nội dung đã được kiểm tra.
+7. BE: Lưu quyết định review gắn với đúng submission revision. Số vòng sửa được kiểm tra theo revision policy của từng deliverable; không áp một giới hạn chung cho toàn Campaign. Revision mới sau khi đã duyệt phải được xét duyệt lại.
+8. BE: Chỉ cho ghi nhận bước xuất bản/nghiệm thu theo workflow đối với revision đã APPROVED và các điều kiện bắt buộc liên quan đã được đáp ứng. Hệ thống không khẳng định có thể ngăn Creator tự đăng bài bên ngoài khi chưa tích hợp chức năng xuất bản lên nền tảng.
+9. FE → BE: Creator hoặc Brand cung cấp published URL cho đầu việc tương ứng. Nếu nội dung được đăng trước khi duyệt hoặc khác bản đã duyệt, BE ghi nhận ngoại lệ và yêu cầu xử lý; không tự đánh dấu đã tuân thủ quy trình.
+10. BE: Cập nhật tiến độ từng deliverable và Collaboration hiện tại. Việc duyệt hoặc xuất bản một nội dung không tự chuyển Collaboration hay toàn Campaign sang COMPLETED; thông báo liên quan được gửi theo Phân hệ 15.1.
+Luồng liên quan: 8.2 · 15.1
+* Luồng 8.2: Nghiệm thu kết quả & Tính toán chỉ số tài chính (Outcome Verification & ROI Engine)[t]
+Thành phần: FE (CollaborationOutcomeModal, OutcomeEvidencePanel); BE (CollaborationController, OutcomeService, OutcomeCalculationEngine, CrawlerServiceClient); DB (collaboration, campaign_outcome, kết quả theo deliverable/bài đăng, evidence_asset). 
+Tương tác:
+1. FE: Creator hoặc Brand cung cấp published URL, số liệu và bằng chứng theo từng bài đăng/deliverable. BE kiểm tra quyền, liên kết nội dung với đúng kênh và Collaboration; không dùng một URL chung để giả nhận mọi đầu việc đã hoàn tất.
+2. BE: Khi có adapter phù hợp, lấy số liệu views, clicks, likes, comments và shares từ nguồn công khai hợp lệ. Hệ thống ghi nhận nguồn, thời điểm quan sát, định danh nội dung và phương thức thu thập; không ghi đè mất số liệu hoặc bằng chứng lịch sử.
+3. BE: Phân biệt số liệu SELF_REPORTED với VERIFIED_CRAWL. Việc Brand xác nhận nghiệm thu hoặc gửi Review không tự biến số liệu nhập tay thành số liệu đã được crawler kiểm chứng.
+4. FE → BE: Brand ghi nhận actualCost, tiền tệ, các khoản cấu thành chi phí và bằng chứng đối soát. agreedFee, committed budget, actual cost và trạng thái thanh toán được lưu với ý nghĩa riêng; không tự lấy phí thỏa thuận hoặc dữ liệu giá lịch sử để điền chi phí thực tế.
+5. FE: Brand cung cấp GMV và/hoặc revenue theo định nghĩa nghiệp vụ đã thống nhất, kèm nguồn và kỳ đo lường. GMV và revenue là hai trường riêng; dữ liệu thiếu không được tự coi là 0.
+6. BE: Tính các chỉ số khi có đủ đầu vào tương thích:
+   1. ROAS: doanh thu hoặc GMV được lựa chọn rõ ràng chia cho khoản chi tiêu đã được quy định trong chính sách đo lường.
+   2. CPM: chi phí trong phạm vi đánh giá chia cho views, nhân 1.000.
+   3. CPE: chi phí trong phạm vi đánh giá chia cho engagements; thành phần engagements phải được định nghĩa rõ.
+   4. ROI: tính theo chính sách doanh thu và chi phí đã thống nhất, tách biệt với ROAS.
+7. Mỗi kết quả lưu phiên bản công thức, phạm vi và nguồn đầu vào. Thiếu dữ liệu cần thiết hoặc mẫu số không hợp lệ trả kết quả không khả dụng; không tự điền số để tạo kết quả thành công giả.
+8. BE: Khi tổng hợp nhiều bài đăng, loại trùng nội dung và phân biệt số liệu cấp bài đăng với số liệu cấp kênh. Không cộng số liệu cùng một bài qua nhiều lần crawl hoặc nhiều submission revision.
+9. FE: Brand xem kết quả, kiểm tra bằng chứng và xác nhận nghiệm thu Outcome. Khi toàn bộ deliverables bắt buộc đã được xử lý hợp lệ và Outcome được nghiệm thu, BE chuyển Collaboration sang AWAITING_REVIEW; lưu số liệu đơn thuần không tự chuyển COMPLETED.
+10. BE → DB: Lưu Outcome và lịch sử điều chỉnh theo Collaboration. Các lần sửa phải có người thực hiện, thời điểm và lý do; kết quả tài chính được tính lại theo dữ liệu có phiên bản, không âm thầm sửa bằng chứng đã dùng trong kết quả Recommendation lịch sử.
+11. Liên thông: Analytics tổng hợp chi phí và hiệu quả ở mức Campaign từ dữ liệu đủ điều kiện, phân biệt các khoản đã cam kết, thực tế và đang thiếu đối soát. Không coi tổng agreed fee là actual cost đã được xác nhận.
+Giới hạn MVP: Chỉ hỗ trợ hợp tác trả phí tiền mặt VND theo Phân hệ 7 hiện tại. Barter và thỏa thuận kết hợp tiền/sản phẩm là mục tiêu mở rộng; không mở agreedFee = 0 để tự coi là đã hỗ trợ barter hoặc chiến dịch không phát sinh chi phí.
+Luồng liên quan: 8.3 · 10 · 15.2
+* Luồng 8.3: Đánh giá KOC, Hoàn tất Hợp tác & Nạp Bằng chứng Lịch sử M1 (Creator Review & M1 Ground-Truth Distillation)[u]
+Thành phần:FE (CreatorReviewModal, CollaborationDetailView); BE (CollaborationReviewService, CollaborationCompletionService, HistoricalEvidenceService, Learning Service); DB (collaboration, creator_review, campaign_outcome, historical_campaign, brand_pattern). 
+Tương tác:
+1. FE: Brand đánh giá Collaboration đang AWAITING_REVIEW, sau khi các deliverables bắt buộc và Outcome đã được nghiệm thu; nhập overallRating, brandFitRating, wouldCollaborateAgain, notes và review tags.
+2. BE: Kiểm tra permission hiệu lực, quyền sở hữu Campaign, trạng thái Collaboration và phiên bản dữ liệu đang đánh giá. Review phải gắn với người đánh giá, Outcome và bằng chứng tương ứng; không tin điểm hoặc số lượng bằng chứng do event/client tự khai báo.
+3. FE → BE: Brand xác nhận Review cuối và hoàn tất hợp tác. BE lưu Review, chuyển Collaboration sang COMPLETED, ghi completion time và yêu cầu đồng bộ bằng chứng trong cùng ranh giới transaction phù hợp. Request lặp không tạo Review hoặc lần hoàn tất thứ hai.
+4. BE: Giữ riêng trạng thái CRM CONFIRMED, tiến độ Collaboration và thanh toán. Hoàn tất Collaboration không tự khẳng định đã thanh toán, cũng không sửa agreed fee hoặc actual cost đã ghi nhận.
+5. BE → DB: Tạo hoặc cập nhật Historical Campaign Evidence từ dữ liệu Review/Outcome thực đã lưu, gồm KPI, completion, chi phí có nguồn, đánh giá và các tham chiếu bằng chứng. Giữ định danh Collaboration, kênh thành viên và CreatorMaster phù hợp; không suy diễn ownership lịch sử khi không có dữ liệu.
+6. BE: Một Collaboration nhiều kênh vẫn là một hợp tác và một Review ở cấp thỏa thuận. Không nhân cùng Review thành nhiều bằng chứng độc lập chỉ vì có nhiều kênh; bằng chứng riêng từng kênh chỉ được tạo khi có kết quả riêng và quy tắc tổng hợp rõ ràng.
+7. Chất lượng bằng chứng: Tách biệt các thông tin:
+- Người đánh giá đã được xác thực.
+- Outcome đã được Brand nghiệm thu.
+- Số liệu do người dùng cung cấp.
+- Số liệu được crawler hoặc nguồn phù hợp kiểm chứng.
+Không gắn nhãn VERIFIED cho toàn bộ số liệu chỉ vì Brand đã gửi Review.
+8. BE: Cơ chế đồng bộ M1/M4 phải idempotent theo nguồn bằng chứng và revision. Retry hoặc event lặp không tạo thêm Historical Evidence, tăng evidence count nhiều lần hoặc chỉ giữ các đánh giá tích cực. Lỗi đồng bộ phải có trạng thái và cơ chế phục hồi, không bị bỏ qua như đã xử lý thành công.
+9. Recommendation sau này sử dụng chính sách Bayesian/KPI/Review và Normalization được chốt trong SDD 6.1, có phiên bản và truy vết đầu vào. Không cộng điểm hoặc phạt bằng các hằng số tùy ý; thiếu bằng chứng được thể hiện là chưa đủ dữ liệu, không tự coi là thành tích tốt hoặc kém.
+10. BE: Learned M4 tiếp tục sử dụng nguồn brand_pattern và các aggregate có bằng chứng đã quy định. Không duy trì thêm một bộ đếm legacy độc lập để tạo kết quả mâu thuẫn hoặc ghi đè explicit Brand preferences.
+11. FE: Nếu Campaign có nhiều Creator, thao tác hoàn tất chỉ tác động Collaboration hiện tại. Brand chỉ được chốt Campaign COMPLETED khi mọi Collaboration trong phạm vi đã ở trạng thái kết thúc hợp lệ và không còn công việc bắt buộc chưa xử lý. Collaboration CANCELLED không được tính là hợp tác hoàn thành thành công.
+12. Liên thông: Analytics, History và Learning đọc dữ liệu theo nguồn, revision và chính sách đã sử dụng. Không tự tái tính hoặc ghi đè kết quả Recommendation lịch sử sau khi Review/Outcome thay đổi.
+
+
+Luồng liên quan: 10 · 15.2 · 6.1
+* Phân hệ 10. Campaign History (KHẢI + VĂN)
+* Luồng 10: Tra cứu lịch sử chiến dịch & bằng chứng quá khứ (không đánh số luồng trong file gốc)[v]
+Thành phần: FE (CampaignHistoryPage / CampaignDetailView theo nguồn); BE (Campaign History/Report Service, tên chưa xác nhận); DB (campaign, collaboration, collaboration_outcome, creator_review, historical_campaign).
+Tương tác:
+1. FE: Brand chọn Campaign trước đây để xem brief, mục tiêu, timeline, danh sách Creator, trạng thái từng hợp tác và kết quả nghiệm thu.
+2. BE: Trả KPI theo từng Collaboration cùng tổng hợp mức Campaign khi đủ dữ liệu; nêu rõ chỉ số do khai báo hay được xác minh.
+3. FE: Cho xem bằng chứng published URL, proof links, nguồn và ngày cập nhật; kiểm soát quyền truy cập hóa đơn, số liệu tài chính và đánh giá nội bộ.
+4. FE: Có thể Duplicate Brief, chỉ sao chép cấu trúc Campaign; không sao chép Creator, review, outcome, phí chốt hoặc trạng thái COMPLETED.
+5. FE: Khi nhân bản Campaign yêu cầu Brand xem lại timeline, budget, số Creator dự kiến và deliverables trước khi lưu qua 3.1–3.3.
+6. Lưu ý: File nguồn có mục 10 nhưng không đặt mã Luồng 10.1; giữ ID 10 cho đến khi nhóm chốt đánh số.
+Luồng liên quan: 3.1 · 8.3 · 15.2
+* Phân hệ 11. Creator Portal, Rate Card & Ownership Verification (KHẢI + VĂN)
+Luồng 11.1: Creator Quản lý Hồ sơ, Bảng giá Verified Rate Card & Portfolio[w]
+Thành phần: FE (CreatorPortalPage, CreatorProfileForm); BE (CreatorPortalService, CreatorProfileRepository); DB (creator_profile, creator_master, creator_rate_card).
+Tương tác:
+1. FE: Creator có tài khoản hợp lệ cập nhật địa điểm nhận việc, ngành hàng chấp nhận, lịch nhận việc, portfolio và các thông tin giới thiệu.
+2. FE: Creator nhập Rate Card theo deliverable (video ngắn, video dài, combo), currency và thời hạn; trường này là RATE_CARD_DECLARED, không phải actualFee.
+3. BE: Liên kết profile/rate card với Creator Identity theo chính sách OAuth Claim; trạng thái verified ownership độc lập với giá đã khai báo.
+4. BE: Chỉ công khai field Creator đồng ý chia sẻ; booking email, Zalo, manager contact và thông tin thanh toán phải có access control.
+5. FE/BE: Creator có thể đặt availability hoặc yêu cầu độc quyền cho lời mời cụ thể; đây là yêu cầu cần Brand chấp thuận tại CRM 7.2.
+6. Liên thông: Discovery 4.1 hiển thị fee/source; Recommendation 6.1 không cộng điểm verified; CRM 7.1 lấy contact theo quyền.
+Luồng liên quan: 4.1 · 6.1 · 7.1 · 7.2
+* Luồng 11.2: Kết nối kênh mạng xã hội qua OAuth2[x]
+Thành phần: FE (CreatorPortalPage); BE (CreatorOAuthService, OAuthProofProvider); Provider OAuth APIs; DB (creator_platform_accounts, creator, creator_master).
+Tương tác:
+1. FE: Creator được mời vào Portal, đăng nhập và chọn kết nối kênh TikTok/YouTube/Meta theo luồng OAuth mà provider hỗ trợ.
+2. BE: Tạo state/PKCE nếu phù hợp, nhận authorization code, xác thực provider identity, kiểm tra channel_id và quyền cần thiết.
+3. BE: Nếu channel đã được người khác claim, trả 409 Conflict, không tự chuyển quyền và không mở Dispute Screen như flow cũ.
+4. BE → DB: Tạo Master Creator Identity chỉ khi OAuth Claim hợp lệ theo chính sách đã chốt; sau đó liên kết bổ sung những kênh khác được chính Creator ủy quyền.
+5. BE: Duy trì lock/constraint chống race condition; ghi Creator Identity Audit và không làm mất Creator platform records đã crawl.
+6. FE: Hiển thị Ownership Verified và danh sách kênh đã kết nối; không dùng badge này để cam kết giá hoặc chất lượng hiệu suất.
+Luồng liên quan: 11.1 · 11.3 · DM-01 · 4.1
+* Luồng 11.3: Nộp đơn Claim nhận kênh & Cấp Tích Xanh chính chủ (Verified Badge)[y]
+Thành phần: FE (Creator Portal/Invitation Accept, Claim Status); BE (CreatorClaimService, CreatorOAuthService); DB (creator, creator_master, creator_platform_accounts, creator_identity_audit).
+Tương tác:
+1. MVP: Creator tham gia Portal theo Invitation Only và Claim qua OAuth tại 11.2; không có luồng nộp ảnh/mã bio để Data Manager duyệt PENDING như văn bản cũ.
+2. FE: Người nhận lời mời xem thông tin creator/channel có thể claim, thực hiện OAuth theo provider chính thức.
+3. BE: Xác minh channel ownership, chống claim trùng và trả 409 Conflict nếu channel đã thuộc Master khác.
+4. BE → DB: Lưu Claim Outcome/Identity Audit, cập nhật badge sau khi xác minh thành công; không tự thay đổi các quan hệ CRM chưa được Brand xác nhận.
+5. FE: Nếu OAuth thất bại/hạn chế API, thông báo chưa xác minh và để Creator tiếp tục quy trình hỗ trợ được phép; không gắn Verified giả định.
+6. Ghi chú nguồn: Phần manual proof/DM review/dispute trong văn bản gốc không còn thuộc MVP đã thống nhất; không dùng đồng thời hai luồng claim.
+Luồng liên quan: 11.2 · DM-02 · 4.1
+________________
+* Phân hệ 12. Subscription & VNPay (NGỌC + VĂN)
+* Luồng 12.1: Khởi tạo đơn hàng & Chuyển hướng thanh toán VNPay[z]
+Thành phần: FE (SubscriptionPage); BE (PaymentController, PaymentService); VNPay; DB (plan, payment, subscription).
+Tương tác:
+1. FE: Brand chọn gói dịch vụ của nền tảng, bấm Nâng cấp.
+2. FE → BE: Gửi /api/v1/billing/subscribe với planId; BE validate plan, giá và quyền Brand.
+3. BE → DB: Tạo payment/subscription PENDING có reference duy nhất; sinh URL thanh toán VNPay và chữ ký theo tài liệu tích hợp.
+4. BE → FE: Trả paymentUrl; FE chuyển đến VNPay để hoàn tất giao dịch.
+5. Phân biệt: Phí mua gói InfluencerMatch KHÔNG phải phí Brand trả Creator trong Campaign (CRM/Outcome).
+Luồng liên quan: 12.2 · AD-03 · AD-04
+* Luồng 12.2: Đối soát Webhook IPN & Nâng cấp hạn ngạch tài khoản[aa]
+Thành phần: VNPay; BE (PaymentController, PaymentService, PaymentSettlementService); DB (payment, subscription); FE.
+Tương tác:
+1. VNPay → BE (Return): Chuyển hướng trình duyệt về GET /api/v1/billing/vnpay/return, BE đối soát rồi chuyển tiếp (HTTP 302) Brand về trang kết quả FE.
+2. VNPay → BE (IPN ngầm): Máy chủ VNPay gửi ngầm GET /api/v1/billing/vnpay/ipn.
+3. BE: Xác minh chữ ký vnp_SecureHash, mã vnp_TxnRef, số tiền vnp_Amount và trạng thái vnp_ResponseCode = '00'; thao tác settlement đảm bảo tính idempotent. Phản hồi VNPay {"RspCode":"00","Message":"Confirm Success"}.
+4. BE → DB: Cập nhật payment sang PAID, subscription sang ACTIVE và kích hoạt quota (campaignQuota, recommendationQuota, refreshQuota); hủy gói cũ nếu có.
+5. FE: Return URL chỉ dùng hiển thị thông báo tạm thời; FE gọi GET /api/v1/subscriptions/brand/{brandId} để đối chiếu trạng thái thực tế từ Backend/DB và cập nhật giao diện (không tin cậy tham số từ trình duyệt).
+Luồng liên quan: 12.1 · AD-04 · 6.1
+________________
+* Phân hệ 13. Data Manager Console (KHẢI + VĂN + NGỌC + VY)
+* Luồng DM-01: Quản lý Định danh Master KOC (Manage Creator Master Identity)[ab]
+Thành phần: FE (CreatorMasterCatalogPage); BE (CreatorMasterController, CreatorMasterService); DB (creator, creator_master, creator_platform_accounts, creator_identity_audit).
+Tương tác:
+1. Data Manager: Xem Master Catalog, các kênh đã OAuth link và các bản ghi platform được crawler thu thập.
+2. BE: Chỉ tạo Master Identity khi có OAuth Claim hợp lệ; dữ liệu crawl không tự sinh Master và không được gộp chỉ vì trùng username/tên hiển thị.
+3. Data Manager: Theo dõi nghi vấn duplicate/misclassification và audit; tác vụ sửa quan hệ định danh phải tuân thủ quyền và chứng cứ được phép.
+4. BE: Không cho liên kết một channel đã claim sang Master khác bằng thao tác thủ công tùy ý; mọi conflict trả 409 và ghi audit.
+5. BE: Nếu có luồng merge dữ liệu lịch sử được phê duyệt, cần transaction, kiểm tra tham chiếu và khả năng rollback; chưa mặc định đã triển khai.
+Luồng liên quan: 11.2 · 11.3 · DM-02 · DM-03
+* Luồng DM-02: Kiểm duyệt đơn nhận kênh KOC & Cấp Tích Xanh (Review Claim Requests)[ac]
+Thành phần: FE (Data Manager Console, Creator Identity Audit view – nếu có); BE (CreatorClaimService/CreatorIdentityAuditService theo thiết kế); DB (creator_identity_audit, creator, creator_master).
+Tương tác:
+1. Điều chỉnh kiến trúc: Phần DM duyệt PENDING manual claims, chứng cứ ảnh chụp và dispute screen trong file gốc KHÔNG thuộc MVP Invitation-Only OAuth Claim.
+2. Data Manager: Chỉ xem lịch sử OAuth Claim, 409 conflicts và lỗi đồng bộ danh tính trong phạm vi quyền được cấp.
+3. BE: Không cấp Verified Ownership từ trạng thái PENDING thủ công; chỉ cập nhật badge từ bằng chứng xác minh phù hợp với 11.2.
+4. Nếu tổ chức triển khai quy trình hỗ trợ claim ngoại lệ sau này, cần SDD và RBAC riêng, không tái sử dụng nhánh manual cũ mà chưa được phê duyệt.
+5. Trạng thái của DM-02: Có trong tài liệu cũ; phải đổi mục đích hoặc đánh dấu Không triển khai MVP để tránh mâu thuẫn 11.2–11.3.
+Luồng liên quan: 11.3 · DM-01 · 15.1
+* Luồng DM-03: Thẩm định tư cách Creator & Lọc dữ liệu rác cào về (KOC Qualification Review)[ad]
+Thành phần: FE (DataQualityReviewPage); BE (DataQualityController, DataQualityService); DB (creator, public_creator_metric, data_curation_log).
+Tương tác:
+1. Background Acquisition: Candidate Seed → Lightweight Preflight → Hard Filter → Auto Accept/Reject/Selective Data Manager Review → Deep Crawl → Post-validation → Creator DB.
+2. BE: Chỉ chuyển các trường hợp mơ hồ/flagged sang Data Manager; không bắt mọi Creator crawl được chờ phê duyệt thủ công.
+3. Data Manager: Kiểm tra phân loại KOC/Brand, dữ liệu trùng, link sai, metric bất thường và những hồ sơ cần review.
+4. BE → DB: Ghi quality decision, provenance, audit trail; các creator đã đủ điều kiện mới có trong Discovery Database.
+5. Liên thông: DM-05 giám sát crawl; Discovery 4.1 đọc dữ liệu DB, không chạy lại pipeline Acquisition.
+Luồng liên quan: DM-05 · 4.1 · 11.2
+* Luồng DM-04: Cấu hình Trọng số Thích ứng Động Four-Memory (Manage Recommendation Config)[ae]
+Thành phần: FE (ScoringConfigPage); BE (ScoringConfigController, ScoringConfigService, FourMemoryScoringService); DB (scoring_configs, audit log theo triển khai).
+Tương tác:
+1. FE: Data Manager xem Active Version, Normalization K/Hierarchical Fallback, Bayesian Prior, SM1/SM2/SM3/SM4 Policy, Objective Weights, Lambda, CRITIC Fallback, Minimum Evidence, Confidence/MMR.
+2. FE: Sửa Draft Scoring Config theo phạm vi quyền; Data Readiness Adjustment và Learned M4 nằm ở Optional/Future nếu chưa được kiểm chứng.
+3. FE → BE: Validate range/weight sum, policy compatibility, model/version và RBAC; cấu hình không hợp lệ không ảnh hưởng phiên bản Active.
+4. FE → BE: Nếu Simulation được triển khai, chạy trên Campaign/Test Dataset, so sánh Effective Weights, breakdown và TOPSIS Ranking; không ghi đè Run thật.
+5. BE → DB: Lưu Draft/version/updatedBy/timestamp; chỉ role có quyền cấu hình hoặc activation rõ ràng mới được kích hoạt.
+6. BE: Recommendation Runs mới chụp Active Config Version; các Run lịch sử giữ nguyên Match Score/weights. Rollback = kích hoạt lại bản hợp lệ, không âm thầm tính lại quá khứ.
+7. Ràng buộc RBAC: DATA_MANAGER chưa mặc định có quyền đổi/activate Scoring Config; phải cấp quyền tương ứng hoặc giao ADMIN duyệt.
+Luồng liên quan: 6.1 · AD-05
+* Luồng DM-05: Giám sát Crawler Dashboard & Cào thử nghiệm 1 KOC (Monitor Crawler & Test Crawl)[af]
+Thành phần: FE (CrawlerMonitorDashboardPage, TestCrawlModal); BE (AdminCrawlerController, CrawlerOrchestrationService); Python Worker, Redis Queue; DB (crawler_job, crawler_metrics_log, creator).
+Tương tác:
+1. Data Manager: Xem jobs, kết quả Preflight, Hard Filter, Deep Crawl, cảnh báo và thống kê lỗi.
+2. FE → BE: Yêu cầu Test Crawl trên creator/channel cụ thể nếu có quyền; BE đưa job vào background queue.
+3. Worker: Thu thập dữ liệu hợp lệ, cập nhật metric/embeddings và ghi nguồn/thời điểm; qua Post-validation trước khi cập nhật Creator DB.
+4. BE → FE: Cập nhật trạng thái queued/running/success/failed, cho retry an toàn theo quyền; không block Discovery/Recommendation chờ crawl xong.
+5. Liên thông: DM-03 chỉ review các hồ sơ cần người kiểm; 4.1 và 6.1 chỉ đọc các snapshot đã được lưu.
+Luồng liên quan: DM-03 · 4.1
+* Luồng DM-06: Quản lý Danh mục Ngành hàng (Manage Topics & Categories)[ag]
+Thành phần: FE (TaxonomyManagementPage, CategoryModal); BE (TaxonomyController, TaxonomyService); DB (taxonomy_term, taxonomy_keyword, audit_log).
+Tương tác:
+1. Data Manager: Xem/sửa phân cấp ngành hàng và các từ khóa/alias hỗ trợ phân loại Creator.
+2. BE: Validate unique code, mapping parent-child, vòng lặp taxonomy và ảnh hưởng đến các Creator/Campaign đã phân loại.
+3. BE → DB: Lưu version, người chỉnh sửa, thời điểm, trạng thái active; không xóa dữ liệu lịch sử không kiểm soát.
+4. Khi taxonomy thay đổi, lập kế hoạch đồng bộ mapping/crawler labels nếu có; không tự thay đổi điểm Recommendation lịch sử.
+5. Liên thông: Tạo Brief 3.1, Discovery 4.1 và Qualification Review DM-03.
+Luồng liên quan: DM-03 · 4.1 · 3.1
+* Phân hệ 14. System Admin Console (KHẢI + VĂN + NGỌC + VY)
+* Luồng AD-01: Quản trị Tài khoản Người dùng & Khóa tức thì (Manage User Accounts)[ah]
+Thành phần: FE (AccountManagementPage, UserActionModal); BE (AdminUserController, AdminUserService); DB (user, refresh_token, audit_log).
+Tương tác:
+1. Admin: Xem tài khoản theo role/trạng thái và thực hiện khóa/mở theo quyền.
+2. BE: Chặn thao tác tự khóa tài khoản quản trị cuối cùng và xác thực quyền thực hiện hành động nhạy cảm.
+3. BE → DB: Cập nhật user status, thu hồi phiên khi yêu cầu; ghi audit log với actor, target, lý do, thời điểm.
+4. FE: Cập nhật danh sách và thông báo trạng thái; luồng đăng nhập 1.2 tôn trọng trạng thái tài khoản mới.
+Luồng liên quan: 1.1 · 1.2 · AD-05 · 15.1
+* Luồng AD-02: Giám sát Hệ thống & Truy vết Nhật ký Kiểm toán (Monitor System & Audit Logs)[ai]
+Thành phần: FE (Admin Audit/System Monitor, tên chi tiết tùy triển khai); BE (AuditLogService và các controller có audit); DB (audit_log, operational logs).
+Tương tác:
+1. Admin: Xem sự kiện đăng nhập/quyền, thay đổi scoring config, sửa Creator identity, thanh toán và hành vi quản trị quan trọng.
+2. BE: Ghi actor, target, event type, timestamp, outcome và metadata cần thiết; không log raw passwords, OAuth tokens hoặc private contact không cần thiết.
+3. FE: Tìm kiếm theo user/action/time, xem nguyên nhân lỗi và export khi được phân quyền.
+4. BE: Theo dõi health, failed jobs hoặc error rates nếu môi trường triển khai hỗ trợ; không khẳng định mọi chỉ số vận hành đã có sẵn.
+Luồng liên quan: AD-01 · DM-04 · AD-04
+* Luồng AD-03: Quản lý Gói cước Dịch vụ (Manage Subscription Plans)[aj]
+Thành phần: FE (SubscriptionPlansPage); BE (PlanController, PlanService); DB (plan).
+Tương tác:
+1. Admin: Tạo/cập nhật mức giá nền tảng InfluencerMatch, thời hạn, quota Campaign/Recommendation/Refresh, trạng thái plan ACTIVE/INACTIVE.
+2. FE → BE: Gửi yêu cầu lưu config gói; BE validate giới hạn, tính nhất quán và quyền admin.
+3. BE → DB: Lưu version/audit khi thay đổi chính sách giá; giao dịch đã mua được xử lý theo điều khoản và gói tại thời điểm thanh toán.
+4. Liên thông: Brand mua gói ở 12.1/12.2, AD-04 đối soát thanh toán. Phí gói KHÔNG phải Creator Fee.
+Luồng liên quan: 12.1 · 12.2 · AD-04
+* Luồng AD-04: Giám sát Giao dịch & Báo cáo Doanh thu (Monitor Transactions & Payments)[ak]
+Thành phần: FE (AdminPaymentDashboard, PaymentsPage, RefundConfirmModal); BE (AdminPaymentController, AdminPaymentService, SubscriptionService, AuditLogService); VNPay; DB (payment, subscription, audit_log).
+Tương tác:
+1. Admin: Tra cứu giao dịch mua gói, PAID/PENDING/FAILED và dữ liệu đối soát từ VNPay.
+2. BE: Không dựa duy nhất trên callback giao diện; settlement theo webhook/IPN có chữ ký và idempotency của 12.2.
+3. FE → BE: Yêu cầu điều tra sai lệch/refund nếu nghiệp vụ cho phép; cần phân quyền, chứng từ và trạng thái hoàn tiền có đối soát.
+4. BE → DB: Ghi mọi thay đổi tài chính và lịch sử quota/subscription; không tự suy ra refund đã xong từ thao tác UI.
+5. Phân biệt: Dashboard này quản lý doanh thu từ gói InfluencerMatch, không cộng phí Creator trong CRM vào doanh thu nền tảng.
+Luồng liên quan: 12.1 · 12.2 · AD-03 · AD-02
+* Luồng AD-05: Quản lý Vai trò & Phân bổ Quyền hạn RBAC (Role & Permission Management)[al]
+Thành phần: FE (AccountManagementPage / Permission Matrix); BE (RolePermissionController); DB (role_permissions, user).
+Tương tác:
+1. Admin: Xem vai trò ADMIN, DATA_MANAGER, BRAND và CREATOR cùng permission hiệu lực.
+2. FE → BE: Nếu hỗ trợ chỉnh RBAC động, Admin thay đổi cấp quyền; BE validate quyền cao nhất và tránh tự làm mất quyền quản trị.
+3. BE → DB: Lưu audit, tăng authVersion/thu hồi phiên nếu quyền cần có hiệu lực ngay; không chỉ cập nhật UI.
+4. Nguyên tắc: DATA_MANAGER chỉ được manage scoring config/activate khi đã được cấp permission cụ thể; quyền review Creator không tự kéo theo quyền chỉnh thuật toán.
+Luồng liên quan: 1.2 · DM-04 · DM-02 · AD-01
+* Phân hệ 15. Notifications & Post-Campaign Learning (VĂN + VY + KHẢI )
+* Luồng 15.1: Bắn thông báo Realtime & Điều phối Email (Notification Dispatcher)[am]
+Thành phần: FE (NotificationBellComponent, ToastProvider); BE (NotificationController, NotificationService, EmailService, WebSocket/STOMP); Redis Pub/Sub nếu có; DB (notification, user).
+Tương tác:
+1. BE: Nhận event từ CRM, Collaborations, Claim, Billing hoặc quản trị; tạo notification record được phân quyền theo user.
+2. BE → FE: Đẩy sự kiện qua WebSocket nếu hỗ trợ và email tùy loại; lỗi gửi email không được đảo trạng thái giao dịch đã lưu DB.
+3. FE: Hiển thị unread count, dropdown, toast; khi offline/reload gọi API lấy thông báo từ DB và đánh dấu đã đọc.
+4. An toàn: Chỉ gửi dữ liệu notification tối thiểu; notification không thay thế việc BE kiểm tra trạng thái/điều kiện nghiệp vụ tại trang đích.
+Luồng liên quan: 7.1 · 7.2 · 8.1 · 11.2 · 12.2 · DM-02
+* Luồng 15.2: Khép kín vòng lặp Four-Memory tự học sau chiến dịch (Post-Campaign Learning)[an]
+Thành phần: BE (PostCampaignLearningScheduler, FourMemoryLearningService); Worker/Embedding Service nếu có; DB (historical_campaign, creator_review, brand_pattern, scoring_config).
+Tương tác:
+1. Trigger: Khi một Collaboration đủ điều kiện COMPLETED hoặc khi batch định kỳ phát hiện outcome chưa được cập nhật vào M1; phải idempotent theo event/record.
+2. M1: Chuyển completion, KPI, Brand Review và evidence có nguồn vào historical_campaign, để lần Recommendation kế tiếp áp dụng Bayesian/normalized SM1.
+3. M4: Learned Brand Pattern chỉ cập nhật khi đủ verified successful history và đã có policy kiểm chứng; không mặc định áp dụng Adaptive EMA/Time Decay chỉ vì tài liệu cũ có mô tả.
+4. BE: Lưu version/evidence provenance, tránh tính đúp khi vừa chạy event-driven vừa chạy nightly batch; không chỉnh hồi tố Snapshot Match Score cũ.
+5. Liên thông: 8.3 → 15.2 → Recommendation 6.1; các thay đổi phải được kiểm thử và phân biệt với bản nâng cấp Future.
+Luồng liên quan: 8.3 · 6.1 · 2.2
+[a]@vanntse183679@fpt.edu.vn
+_Đã giao cho vanntse183679@fpt.edu.vn_
+[b]@khaivpmse184623@fpt.edu.vn
+_Đã giao cho khaivpmse184623@fpt.edu.vn_
+[c]@vanntse183679@fpt.edu.vn @khaivpmse184623@fpt.edu.vn
+[d]@vanntse183679@fpt.edu.vn 
+@khaivpmse184623@fpt.edu.vn
+[e]@vanntse183679@fpt.edu.vn 
+@khaivpmse184623@fpt.edu.vn
+[f]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[g]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[h]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[i]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn 
+@ngocnguyen120305@gmail.com
+[j]Hiển thị giao diện chào mừng & biểu mẫu khởi tạo nhanh (Onboarding Wizard):
+Điền sẵn businessName (đã lấy từ form đăng ký) hoặc cho phép chỉnh sửa.
+Chọn ngành hàng chủ đạo (industry: Thời trang, Mỹ phẩm, FMCG, Công nghệ, Ẩm thực...).
+Chọn danh mục sản phẩm chính (productCategories).
+Chọn giọng điệu thương hiệu / Brand Voice (brandTone: Trẻ trung, Sang trọng, Tối giản, Chuyên nghiệp...).
+Chọn tệp khách hàng mục tiêu mặc định: Độ tuổi (targetAudiences), Khu vực hoạt động (targetMarkets).
+Nhập ngân sách dự kiến trung bình mỗi chiến dịch (averageBudget).
+[k]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[l]@ngocnguyen120305@gmail.com 
+@vanntse183679@fpt.edu.vn
+[m]@ngocnguyen120305@gmail.com
+@vanntse183679@fpt.edu.vn
+[n]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[o]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn 
+@ngocnguyen120305@gmail.com HỖ TRỢ PHẦN FEE
+[p]@nguyenvy19042005@gmail.com 
+@vanntse183679@fpt.edu.vn
+[q]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[r]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[s]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[t]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[u]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn 
+@nguyenvy19042005@gmail.com HỖ TRỢ THUẬT TOÁN(NẾU CÓ)
+[v]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[w]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[x]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[y]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[z]@ngocnguyen120305@gmail.com 
+@vanntse183679@fpt.edu.vn
+[aa]@ngocnguyen120305@gmail.com  
+@vanntse183679@fpt.edu.vn
+[ab]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[ac]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[ad]@ngocnguyen120305@gmail.com 
+@vanntse183679@fpt.edu.vn
+[ae]@nguyenvy19042005@gmail.com  
+@vanntse183679@fpt.edu.vn
+[af]@ngocnguyen120305@gmail.com 
+@vanntse183679@fpt.edu.vn
+[ag]@ngocnguyen120305@gmail.com 
+@vanntse183679@fpt.edu.vn
+[ah]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[ai]@nguyenvy19042005@gmail.com 
+@vanntse183679@fpt.edu.vn
+[aj]@ngocnguyen120305@gmail.com 
+@vanntse183679@fpt.edu.vn
+[ak]@ngocnguyen120305@gmail.com 
+@vanntse183679@fpt.edu.vn
+[al]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn
+[am]@nguyenvy19042005@gmail.com 
+@vanntse183679@fpt.edu.vn
+[an]@khaivpmse184623@fpt.edu.vn 
+@vanntse183679@fpt.edu.vn 
+@nguyenvy19042005@gmail.com

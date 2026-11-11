@@ -173,10 +173,16 @@ export const subscriptionService = {
 
     const fetchPromise = (async () => {
       try {
-        const response = await apiClient.get<ApiResponse<SubscriptionResponse[]>>(
+        const response = await apiClient.get<any>(
           `/subscriptions/brand/${brandId}`
         );
-        const list = response.data?.data || [];
+        const raw = response.data?.data ?? response.data;
+        let list: SubscriptionResponse[] = [];
+        if (Array.isArray(raw)) {
+          list = raw;
+        } else if (raw && typeof raw === 'object' && ('id' in raw || 'plan' in raw || 'status' in raw)) {
+          list = [raw as SubscriptionResponse];
+        }
         const entry = { data: list, timestamp: Date.now() };
         brandSubsCache.set(brandId, entry);
         try {
@@ -212,10 +218,14 @@ export const subscriptionService = {
    */
   async subscribeVNPay(planId: string): Promise<PaymentResponse> {
     subscriptionService.clearBrandSubsCache();
-    const response = await apiClient.post<ApiResponse<PaymentResponse>>('/billing/subscribe', {
+    const response = await apiClient.post<any>('/billing/subscribe', {
       planId,
     });
-    return response.data.data;
+    const resData = response.data?.data ?? response.data;
+    return {
+      paymentUrl: resData?.paymentUrl || resData?.url || '',
+      transactionCode: resData?.transactionCode || resData?.txnRef || resData?.reference || '',
+    };
   },
 
   /**

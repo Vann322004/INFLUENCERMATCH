@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Checkbox, message } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { LABELS } from '../../constants/labels';
 import { ROUTES } from '../../constants/routes';
 import { authService } from '../../services/api/authService';
-import { getErrorMessage } from '../../services/apiClient';
+import { brandService } from '../../services/api/brandService';
+import { getErrorMessage, setAuthSession } from '../../services/apiClient';
 import './LoginPage.css';
 
 export default function LoginPage() {
@@ -13,12 +14,70 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const redirectByRole = (user) => {
+  // Lắng nghe callback redirect từ Google OAuth2 (Luồng 1.3)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleCode = params.get('code');
+    const tokenParam = params.get('accessToken') || params.get('token');
+
+    if (googleCode) {
+      setLoading(true);
+      message.loading({ content: 'Đang xác thực đăng nhập Google...', key: 'google_login' });
+      authService
+        .googleExchange(googleCode)
+        .then(async (loginData) => {
+          message.success({
+            content: `Đăng nhập Google thành công! Xin chào ${loginData.user?.fullName || loginData.user?.email}`,
+            key: 'google_login',
+          });
+          window.history.replaceState({}, '', window.location.pathname);
+          await redirectByRole(loginData.user);
+        })
+        .catch((err) => {
+          message.error({
+            content: getErrorMessage(err, 'Đăng nhập Google không thành công. Vui lòng thử lại.'),
+            key: 'google_login',
+          });
+          window.history.replaceState({}, '', window.location.pathname);
+        })
+        .finally(() => setLoading(false));
+    } else if (tokenParam) {
+      const refreshTokenParam = params.get('refreshToken') || '';
+      setAuthSession(tokenParam, refreshTokenParam);
+      window.history.replaceState({}, '', window.location.pathname);
+      authService
+        .getMe()
+        .then(async (user) => {
+          message.success(`Đăng nhập thành công! Xin chào ${user?.fullName || user?.email}`);
+          await redirectByRole(user);
+        })
+        .catch(() => {
+          navigate('/dashboard');
+        });
+    }
+  }, []);
+
+  const redirectByRole = async (user) => {
     if (user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'DATA_MANAGER')) {
       navigate('/admin/dashboard');
     } else if (user && (user.role === 'CREATOR' || user.role === 'creator')) {
       navigate('/creator/dashboard');
     } else {
+      // Role BRAND / SME: Kiểm tra xem thương hiệu đã cập nhật hồ sơ lần đầu chưa
+      try {
+        const brand = await brandService.getMyBrand(true);
+        // Nếu chưa có hồ sơ (null/404) hoặc chưa hoàn thiện thông tin (chưa có tên thương hiệu hoặc ngành hàng)
+        const hasCompletedProfile = Boolean(brand && (brand.businessName?.trim() || brand.industry?.trim()));
+        if (!hasCompletedProfile) {
+          message.info('Chào mừng bạn! Vui lòng hoàn thiện thông tin hồ sơ thương hiệu để bắt đầu.');
+          navigate('/brand-profile');
+          return;
+        }
+      } catch (err) {
+        console.warn('Lỗi kiểm tra hồ sơ brand, chuyển hướng trang tạo hồ sơ:', err);
+        navigate('/brand-profile');
+        return;
+      }
       navigate(ROUTES.DASHBOARD || '/dashboard');
     }
   };
@@ -33,7 +92,7 @@ export default function LoginPage() {
       });
 
       message.success(`Đăng nhập thành công! Xin chào ${loginData.user?.fullName || loginData.user?.email}`);
-      redirectByRole(loginData.user);
+      await redirectByRole(loginData.user);
     } catch (error) {
       message.error(getErrorMessage(error, 'Đăng nhập thất bại! Vui lòng kiểm tra lại email và mật khẩu.'));
     } finally {
@@ -43,7 +102,8 @@ export default function LoginPage() {
 
   const handleSocialLogin = (provider) => {
     if (provider === 'Google') {
-      window.location.href = `${import.meta.env.VITE_API_BASE_URL || 'http://221.121.3.226:8080/api/v1'}/auth/google`;
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+      window.location.href = `${apiBase}/auth/google`;
     } else {
       message.info(`Đang kết nối với ${provider}...`);
     }

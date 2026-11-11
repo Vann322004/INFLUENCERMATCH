@@ -16,7 +16,9 @@ import {
   Tooltip,
   Spin,
   Checkbox,
+  Alert,
 } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import {
   ShopOutlined,
   CheckCircleFilled,
@@ -73,6 +75,8 @@ export default function BrandProfilePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState('general');
+  const navigate = useNavigate();
+  const [isFirstTime, setIsFirstTime] = useState(false);
 
   // New tag inputs
   const [inputSubCat, setInputSubCat] = useState('');
@@ -84,21 +88,32 @@ export default function BrandProfilePage() {
       setLoading(true);
       try {
         const brand: BrandResponse | null = await brandService.getMyBrand();
-        if (isMounted && brand) {
-          setBrandId(brand.id);
-          setProfile((prev) => ({
-            ...prev,
-            brandName: brand.businessName || '',
-            description: brand.description || '',
-            industry: brand.industry || '',
-            subCategories: brand.productCategories || [],
-            website: brand.website || '',
-            location: brand.location || '',
-            targetLocations: brand.targetMarkets || [],
-            targetAgeRange: brand.targetAudiences || [],
-            brandTone: brand.brandTone || '',
-            preferredPlatforms: brand.preferredPlatforms || [],
-          }));
+        const pendingBrandName = sessionStorage.getItem('pending_brand_name') || '';
+        const isProfileIncomplete = !brand || !brand.businessName?.trim();
+        setIsFirstTime(isProfileIncomplete);
+
+        if (isMounted) {
+          if (brand) {
+            setBrandId(brand.id);
+            setProfile((prev) => ({
+              ...prev,
+              brandName: brand.businessName || pendingBrandName || '',
+              description: brand.description || '',
+              industry: brand.industry || '',
+              subCategories: brand.productCategories || [],
+              website: brand.website || '',
+              location: brand.location || '',
+              targetLocations: brand.targetMarkets || [],
+              targetAgeRange: brand.targetAudiences || [],
+              brandTone: brand.brandTone || '',
+              preferredPlatforms: brand.preferredPlatforms || [],
+            }));
+          } else if (pendingBrandName) {
+            setProfile((prev) => ({
+              ...prev,
+              brandName: pendingBrandName,
+            }));
+          }
         }
       } catch (err) {
         console.error('Failed to load brand profile:', err);
@@ -136,13 +151,28 @@ export default function BrandProfilePage() {
     };
 
     try {
+      sessionStorage.removeItem('pending_brand_name');
       if (brandId) {
         await brandService.updateBrand(brandId, payload);
-        message.success({ content: 'Đã cập nhật hồ sơ thương hiệu thành công!', key: 'save_profile' });
+        if (isFirstTime) {
+          message.success({ content: 'Khởi tạo hồ sơ thương hiệu thành công! Đang chuyển hướng vào bảng điều khiển...', key: 'save_profile' });
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1000);
+        } else {
+          message.success({ content: 'Đã cập nhật hồ sơ thương hiệu thành công!', key: 'save_profile' });
+        }
       } else {
         const created = await brandService.createBrand(payload);
         setBrandId(created.id);
-        message.success({ content: 'Đã khởi tạo hồ sơ thương hiệu thành công!', key: 'save_profile' });
+        if (isFirstTime) {
+          message.success({ content: 'Khởi tạo hồ sơ thương hiệu thành công! Đang chuyển hướng vào bảng điều khiển...', key: 'save_profile' });
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1000);
+        } else {
+          message.success({ content: 'Đã khởi tạo hồ sơ thương hiệu thành công!', key: 'save_profile' });
+        }
       }
     } catch (err) {
       message.error({ content: getErrorMessage(err, 'Lưu hồ sơ thất bại.'), key: 'save_profile' });
@@ -212,6 +242,15 @@ export default function BrandProfilePage() {
         </div>
       </div>
 
+      {isFirstTime && !loading && (
+        <Alert
+          type="info"
+          showIcon
+          message="Hoàn thiện hồ sơ thương hiệu lần đầu"
+          description="Chào mừng bạn đến với InfluencerMatch! Vui lòng điền thông tin thương hiệu của bạn bên dưới và nhấn 'Lưu thay đổi' để kích hoạt hồ sơ và bắt đầu tạo chiến dịch kết nối cùng các Creator."
+          style={{ marginBottom: 16, borderRadius: 12, border: '1px solid #C7D2FE', background: '#EEF2FF' }}
+        />
+      )}
       <Spin spinning={loading} tip="Đang đồng bộ dữ liệu hồ sơ thương hiệu...">
         <div style={{ marginTop: 8 }}>
           {/* 2. Cover Banner & Header Card */}

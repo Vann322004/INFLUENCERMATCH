@@ -867,7 +867,7 @@ export default function LandingPage() {
                 Nhập Mô Tả Chiến Dịch
               </h3>
               <p style={{ fontSize: 14, color: '#94A3B8', lineHeight: 1.6 }}>
-                Chỉ cần nhập sản phẩm và ngân sách của bạn (hoặc để AI Gemini tự động viết brief chuẩn hóa từ đường link sản phẩm).
+                Chỉ cần nhập sản phẩm và ngân sách của bạn (hoặc để Trợ lý AI tự động viết brief chuẩn hóa từ đường link sản phẩm).
               </p>
             </div>
 

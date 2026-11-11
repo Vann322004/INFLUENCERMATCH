@@ -270,7 +270,7 @@ export default function CampaignTable() {
         }
       } catch {}
 
-      message.success({ content: '🎉 Đã cập nhật chiến dịch thành công!', key: 'edit_camp' });
+      message.success({ content: 'Đã cập nhật chiến dịch thành công!', key: 'edit_camp' });
       setEditModalVisible(false);
       setEditingCampaign(null);
     } catch (err) {
@@ -311,7 +311,7 @@ export default function CampaignTable() {
             }
           } catch {}
 
-          message.success({ content: `🗑️ Đã xóa chiến dịch "${record.title}" thành công!`, key: 'del_camp' });
+          message.success({ content: `Đã xóa chiến dịch "${record.title}" thành công!`, key: 'del_camp' });
         } catch (err) {
           message.error({ content: getErrorMessage(err, 'Không thể xóa chiến dịch.'), key: 'del_camp' });
         }

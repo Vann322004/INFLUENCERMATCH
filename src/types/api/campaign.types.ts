@@ -28,19 +28,29 @@ export interface CampaignAutofillRequest {
 
 export interface CampaignAutofillResponse {
   name?: string;
+  campaignName?: string;
   productService?: string;
   objective?: CampaignObjective;
   targetAudiences?: string[];
+  targetAudience?: string;
+  keyMessage?: string;
+  dosAndDonts?: string;
+  creatorBrief?: string;
   contentType?: string;
   startDate?: string;
   endDate?: string;
   platforms?: CampaignPlatform[];
+  preferredPlatforms?: CampaignPlatform[];
   niches?: string[];
+  niche?: string;
   locations?: string[];
   followerMin?: number;
   followerMax?: number;
   budgetMin?: number;
   budgetMax?: number;
+  creatorQuantity?: number;
+  draftDeadline?: string;
+  campaignDuration?: string;
   aiExplanation?: string;
 }
 

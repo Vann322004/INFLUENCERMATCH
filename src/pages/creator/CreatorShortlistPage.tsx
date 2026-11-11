@@ -690,7 +690,7 @@ export default function CreatorShortlistPage() {
         if (c.id === id) {
           const nextFav = !c.favorite;
           if (nextFav) {
-            message.success(`Đã thêm ${c.name} vào danh sách yêu thích ⭐`);
+            message.success(`Đã thêm ${c.name} vào danh sách yêu thích!`);
           } else {
             message.info(`Đã bỏ ${c.name} khỏi danh sách yêu thích`);
           }
@@ -801,6 +801,57 @@ export default function CreatorShortlistPage() {
 
   // Selected creators for comparison
   const selectedCreators = creators.filter((c) => c.selected);
+
+  // Luồng 5.2: Tự động đối soát và tải số liệu so sánh đối đầu KOC từ Backend API
+  useEffect(() => {
+    if (viewMode !== 'compare') return;
+    const selectedIds = selectedCreators.map((c) => c.id);
+    if (selectedIds.length < 2 || selectedIds.length > 5) return;
+
+    const targetCampaignId =
+      selectedCampaign !== 'all'
+        ? selectedCampaign
+        : (selectedCreators[0]?.campaignId || '');
+
+    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(targetCampaignId);
+
+    if (isUuid && targetCampaignId) {
+      creatorService
+        .compareShortlist(targetCampaignId, selectedIds)
+        .then((res: any) => {
+          const compData = res?.data ?? res;
+          const returnedCreators: any[] = compData?.creators ?? [];
+          if (Array.isArray(returnedCreators) && returnedCreators.length > 0) {
+            setCreators((prev) =>
+              prev.map((c) => {
+                const match = returnedCreators.find(
+                  (rc: any) => rc.creatorId === c.id || rc.id === c.id
+                );
+                if (match && match.metrics) {
+                  const m = match.metrics;
+                  const fNum = m.followers ?? 0;
+                  const fText = fNum >= 1_000_000 ? `${(fNum / 1_000_000).toFixed(1)}M` : fNum >= 1_000 ? `${Math.round(fNum / 1_000)}K` : `${fNum}`;
+                  const vNum = m.avgViews ?? 0;
+                  const vText = vNum >= 1_000_000 ? `${(vNum / 1_000_000).toFixed(1)}M` : vNum >= 1_000 ? `${Math.round(vNum / 1_000)}K` : `${vNum}`;
+                  const engVal = typeof m.engagementRate === 'number' ? m.engagementRate : 0;
+                  return {
+                    ...c,
+                    followers: fNum > 0 ? fText : c.followers,
+                    views: vNum > 0 ? vText : c.views,
+                    engagement: engVal > 0 ? `${engVal.toFixed(1)}%` : c.engagement,
+                    isVerified: Boolean(match.verifiedByInfluencerMatch ?? c.isVerified),
+                  };
+                }
+                return c;
+              })
+            );
+          }
+        })
+        .catch((err) => {
+          console.warn('[CreatorShortlistPage] Backend compareShortlist notice:', err);
+        });
+    }
+  }, [viewMode, selectedCreators.length, selectedCampaign]);
 
   // Render social platform icons
   const renderPlatformIcon = (platform: string) => {

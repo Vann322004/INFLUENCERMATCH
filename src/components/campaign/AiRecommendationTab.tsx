@@ -453,7 +453,7 @@ export default function AiRecommendationTab({
       onAddedToShortlist?.(creator.creatorId);
 
       message.success({
-        content: `🎉 Đã ghi nhận phù hợp và thêm @${creator.userName} vào chiến dịch thành công!`,
+        content: `Đã ghi nhận phù hợp và thêm @${creator.userName} vào chiến dịch thành công!`,
         key: 'feedback_act',
         duration: 3,
       });

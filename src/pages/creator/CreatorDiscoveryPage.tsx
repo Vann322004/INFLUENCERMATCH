@@ -69,6 +69,7 @@ export interface Creator {
   username: string;
   avatar: string;
   isVerified: boolean;
+  isSimilarFallback?: boolean;
   matchRate: number;
   matchLevel: 'high' | 'medium' | 'low';
   matchReason?: string;
@@ -81,6 +82,7 @@ export interface Creator {
   engagementValue: number;
   avgPrice: string;
   avgPriceValue: number;
+  priceSource?: string;
   location: string;
   language?: string;
   saved?: boolean;
@@ -90,18 +92,21 @@ import { creatorService } from '../../services/api/creatorService';
 import type { CreatorItem } from '../../types/api/creator.types';
 
 // Hàm chuyển đổi Creator từ Backend sang format hiển thị trên giao diện
-const mapApiCreatorToUi = (item: CreatorItem): Creator => {
-  const followersNum = item.followers || 0;
+const mapApiCreatorToUi = (item: any): Creator => {
+  const followersNum = item.followers ?? item.follower_count ?? item.followerCount ?? item.followersCount ?? 0;
   const followersText = followersNum >= 1_000_000
     ? `${(followersNum / 1_000_000).toFixed(1)}M`
     : followersNum >= 1_000
     ? `${Math.round(followersNum / 1_000)}K`
     : `${followersNum}`;
 
-  const platformLower = (item.platform?.toLowerCase() || 'tiktok') as 'tiktok' | 'instagram' | 'youtube' | 'facebook' | 'x';
+  const platformRaw = (item.platform?.toLowerCase() || 'tiktok');
+  const platformLower = (platformRaw === 'youtube' || platformRaw === 'instagram' || platformRaw === 'facebook' || platformRaw === 'x')
+    ? (platformRaw as 'tiktok' | 'instagram' | 'youtube' | 'facebook' | 'x')
+    : 'tiktok';
   
   // Chuẩn hóa engagementRate: Backend/crawler lưu dạng số thập phân tỷ lệ (ví dụ 0.0489 = 4.89%)
-  const rawEng = item.engagementRate;
+  const rawEng = item.engagementRate ?? item.engagement_rate ?? item.engagementValue;
   let engVal = 3.5;
   if (typeof rawEng === 'number' && !isNaN(rawEng)) {
     if (rawEng > 0 && rawEng <= 1) {
@@ -121,21 +126,25 @@ const mapApiCreatorToUi = (item: CreatorItem): Creator => {
     if (followers < 1000000) return 1600;
     return 3200;
   };
-  const priceVal = calcPrice(followersNum);
+  const priceVal = item.avgPriceValue || item.price || item.estimatedFee || item.estimated_fee || calcPrice(followersNum);
 
-  const cleanUsername = (item.userName || '').replace(/^@+/, '');
-  const cleanName = item.displayName || cleanUsername || 'Creator';
+  const cleanUsername = (item.userName || item.user_name || item.username || '').replace(/^@+/, '');
+  const cleanName = item.displayName || item.display_name || item.name || cleanUsername || 'Creator';
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=4F46E5&color=fff&size=150&bold=true`;
-  const avatarUrl = item.avatarUrl && item.avatarUrl.trim() !== '' ? item.avatarUrl : fallbackAvatar;
+  const avatarRaw = item.avatarUrl || item.avatar_url || item.avatar;
+  const avatarUrl = avatarRaw && avatarRaw.trim() !== '' ? avatarRaw : fallbackAvatar;
+  const isVerified = Boolean(item.verifiedByInfluencerMatch ?? item.verified ?? item.is_verified ?? item.isVerified);
+  const isSimilarFallback = Boolean(item.isSimilarFallback ?? item.isExpandedMatch ?? item.is_fallback ?? item.expandedMatch);
+  const priceSource = item.priceSource || item.feeSource || item.fee_source || (item.rateCard ? 'RATE_CARD' : 'ESTIMATED');
 
-  const cleanNiche = item.niche && item.niche.toUpperCase() !== 'UNKNOWN' && item.niche.trim() !== ''
-    ? item.niche
+  const cleanNiche = item.niche && String(item.niche).toUpperCase() !== 'UNKNOWN' && String(item.niche).trim() !== ''
+    ? String(item.niche)
     : 'Lối sống & Sáng tạo';
 
   // Tách ngành hàng nếu có dấu phẩy hoặc chấm phẩy thành các tag riêng biệt
   const rawParsed = cleanNiche
     .split(/[,;]/)
-    .map((s) => s.trim())
+    .map((s: string) => s.trim())
     .filter(Boolean);
   let categoriesList = rawParsed.length > 0 ? rawParsed : [cleanNiche];
 
@@ -161,11 +170,12 @@ const mapApiCreatorToUi = (item: CreatorItem): Creator => {
     : `Nhà sáng tạo nội dung chuyên về ${categoriesList.join(', ')}, chia sẻ trải nghiệm thực tế và truyền cảm hứng ✨`;
 
   return {
-    id: item.creatorId || item.id,
+    id: item.creatorId || item.id || item.creator_id || cleanUsername,
     name: cleanName,
     username: cleanUsername,
     avatar: avatarUrl,
-    isVerified: !!item.verifiedByInfluencerMatch,
+    isVerified,
+    isSimilarFallback,
     matchRate: 0,
     matchLevel: 'medium',
     matchReason: '',
@@ -178,6 +188,7 @@ const mapApiCreatorToUi = (item: CreatorItem): Creator => {
     engagementValue: engVal,
     avgPrice: `$${priceVal.toLocaleString()}`,
     avgPriceValue: priceVal,
+    priceSource,
     location: item.location || 'Việt Nam',
     language: 'vi',
     saved: false,
@@ -674,7 +685,7 @@ export default function CreatorDiscoveryPage() {
             setCurrentPage(1);
             updateDiscoveryCache({ matchedCampaign: matched, selectedCampaignId: matched.id });
             message.success({
-              content: `🎯 Đã tự động chọn dự án "${matched.name}" để đề xuất Creator!`,
+              content: `Đã tự động chọn dự án "${matched.name}" để đề xuất Creator!`,
               key: 'auto_selected_campaign',
               duration: 2.5,
             });
@@ -2088,6 +2099,11 @@ export default function CreatorDiscoveryPage() {
                                 {creator.isVerified && (
                                   <CheckCircleFilled style={{ color: '#3B82F6', fontSize: 13 }} />
                                 )}
+                                {creator.isSimilarFallback && (
+                                  <Tag color="orange" style={{ borderRadius: 999, fontSize: 10, padding: '0 6px', margin: '0 0 0 4px', lineHeight: '18px', fontWeight: 600 }}>
+                                    Expanded
+                                  </Tag>
+                                )}
                               </div>
                               <div className="cdiscovery-card-username-text">
                                 @{creator.username}
@@ -2287,6 +2303,11 @@ export default function CreatorDiscoveryPage() {
                                     </span>
                                     {creator.isVerified && (
                                       <CheckCircleFilled style={{ color: '#3B82F6', fontSize: 13 }} />
+                                    )}
+                                    {creator.isSimilarFallback && (
+                                      <Tag color="orange" style={{ borderRadius: 999, fontSize: 10, padding: '0 6px', margin: '0 0 0 4px', lineHeight: '18px', fontWeight: 600 }}>
+                                        Expanded
+                                      </Tag>
                                     )}
                                     {matchedCampaign && creator.matchRate > 0 ? (
                                       <span className="cdiscovery-match-tag-pill">
