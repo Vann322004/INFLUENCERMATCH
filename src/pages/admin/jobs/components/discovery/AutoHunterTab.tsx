@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { message } from 'antd';
 import HunterSetupCard from './HunterSetupCard';
 import { TOPIC_PRESETS } from './hunterConstants';
@@ -80,6 +81,15 @@ export default function AutoHunterTab() {
   const [inspectUsername, setInspectUsername] = useState<string>('');
 
   const feedRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleNavigateQuality = () => {
+    const target = location.pathname.startsWith('/data-manager')
+      ? '/data-manager/data-quality'
+      : '/admin/data-quality';
+    navigate(target);
+  };
 
   const handleSelectTopic = (topicId: string) => {
     setSelectedTopic(topicId);
@@ -178,6 +188,7 @@ export default function AutoHunterTab() {
       let lowFollowersCount = 0;
       const passedResults: typeof rawResults = [];
       const shopRemovedNames: string[] = [];
+      const reviewPendingCandidates: { username: string; platform: string }[] = [];
 
       for (const r of rawResults) {
         const uname = r.username || '';
@@ -189,12 +200,14 @@ export default function AutoHunterTab() {
         if (isShopAccount(uname, dname, bio)) {
           shopFilteredCount++;
           shopRemovedNames.push(`@${uname.replace(/^@/, '')}`);
+          reviewPendingCandidates.push({ username: uname, platform: r.platform || 'TIKTOK' });
           continue;
         }
 
         // 2. Loại bỏ tài khoản dưới 7.000 followers
         if (followers < 7000) {
           lowFollowersCount++;
+          reviewPendingCandidates.push({ username: uname, platform: r.platform || 'TIKTOK' });
           continue;
         }
 
@@ -202,6 +215,7 @@ export default function AutoHunterTab() {
         if (r.decision === 'AUTO_REJECT' || r.primary_type === 'BRAND' || r.primary_type === 'SPAM') {
           shopFilteredCount++;
           shopRemovedNames.push(`@${uname.replace(/^@/, '')}`);
+          reviewPendingCandidates.push({ username: uname, platform: r.platform || 'TIKTOK' });
           continue;
         }
 
@@ -212,6 +226,12 @@ export default function AutoHunterTab() {
       setScannedCount(totalReq);
       setFilteredOutCount(totalExcluded);
       setMatchedCount(passedResults.length);
+
+      // Đưa các tài khoản chưa đạt tự động vào hàng đợi kiểm định chất lượng (Staging) để Manager xem xét
+      reviewPendingCandidates.forEach((cand) => {
+        const u = cand.username.replace(/^@/, '');
+        crawlerService.enqueueCandidate(cand.platform as any, u, false).catch(() => {});
+      });
 
       if (passedResults.length > 0) {
         const mappedList: DiscoveredKocItem[] = passedResults.map((r, idx) => {
@@ -258,8 +278,28 @@ export default function AutoHunterTab() {
         if (lowFollowersCount > 0) {
           newLogs.push(`[${now()}] Đã loại bỏ ${lowFollowersCount} tài khoản có lượng theo dõi dưới 7.000.`);
         }
+        if (totalExcluded > 0) {
+          newLogs.push(`[${now()}] Đã chuyển ${totalExcluded} tài khoản chưa đạt vào hàng đợi Kiểm định chất lượng.`);
+        }
         setLogLines(newLogs);
         message.success(`Đã săn và tự động lưu ${mappedList.length} KOC đạt chuẩn vào hệ thống!`);
+
+        if (totalExcluded > 0) {
+          message.info({
+            content: (
+              <span>
+                Có {totalExcluded} kênh chưa đạt tự động.{' '}
+                <a
+                  onClick={handleNavigateQuality}
+                  style={{ color: '#4F46E5', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
+                >
+                  Chuyển qua duyệt chất lượng →
+                </a>
+              </span>
+            ),
+            duration: 6,
+          });
+        }
 
         // Tự động cuộn xuống bảng kết quả
         setTimeout(() => {
@@ -272,9 +312,24 @@ export default function AutoHunterTab() {
           : 'Không có tài khoản nào đạt tiêu chuẩn Tier-0 trong danh mục này.';
         setLogLines([
           `[${now()}] ${reason}`,
-          `[${now()}] Gợi ý: Hãy thử chọn danh mục khác hoặc tăng số lượng mục tiêu cào.`,
+          totalExcluded > 0
+            ? `[${now()}] Đã chuyển ${totalExcluded} kênh vào hàng đợi Kiểm định chất lượng để xem xét thủ công.`
+            : `[${now()}] Gợi ý: Hãy thử chọn danh mục khác hoặc tăng số lượng mục tiêu cào.`,
         ]);
-        message.warning(`Không có KOC nào đạt chuẩn (đã lọc bỏ ${shopFilteredCount} tài khoản shop).`);
+        message.warning({
+          content: (
+            <span>
+              Không có KOC nào đạt chuẩn tự động (đã lọc ${totalExcluded} tài khoản).{' '}
+              <a
+                onClick={handleNavigateQuality}
+                style={{ color: '#4F46E5', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
+              >
+                Chuyển qua duyệt chất lượng →
+              </a>
+            </span>
+          ),
+          duration: 6,
+        });
       }
     } catch (err: any) {
       clearTimeout(timer1);
@@ -348,6 +403,7 @@ export default function AutoHunterTab() {
           filteredOutCount={filteredOutCount}
           matchedCount={matchedCount}
           logLines={logLines}
+          onNavigateQuality={handleNavigateQuality}
         />
       )}
 

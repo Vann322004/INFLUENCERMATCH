@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, Progress, Tag, Spin } from 'antd';
-import { SyncOutlined } from '@ant-design/icons';
+import { Card, Progress, Tag, Spin, Alert, Button } from 'antd';
+import { SyncOutlined, ArrowRightOutlined, AuditOutlined } from '@ant-design/icons';
 
 interface HunterRadarScannerProps {
   currentKeyword: string;
@@ -9,6 +9,7 @@ interface HunterRadarScannerProps {
   filteredOutCount: number;
   matchedCount: number;
   logLines: string[];
+  onNavigateQuality?: () => void;
 }
 
 export default function HunterRadarScanner({
@@ -18,6 +19,7 @@ export default function HunterRadarScanner({
   filteredOutCount,
   matchedCount,
   logLines,
+  onNavigateQuality,
 }: HunterRadarScannerProps) {
   const isRunning = progressPercent > 0 && progressPercent < 100;
   const isDone = progressPercent === 100;
@@ -58,11 +60,65 @@ export default function HunterRadarScanner({
       />
 
       {/* Stats row */}
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: logLines.length > 0 ? 16 : 0 }}>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         <StatBadge label="Tổng số yêu cầu" value={scannedCount} unit="kênh" color="#6366F1" />
-        <StatBadge label="Không lấy được" value={filteredOutCount} unit="kênh" color="#F87171" />
+        <StatBadge
+          label="Cần xem xét / Chưa đạt"
+          value={filteredOutCount}
+          unit="kênh"
+          color="#F59E0B"
+          clickable={filteredOutCount > 0 && !!onNavigateQuality}
+          onClick={filteredOutCount > 0 ? onNavigateQuality : undefined}
+          actionHint={filteredOutCount > 0 && !!onNavigateQuality ? 'Xem & duyệt →' : undefined}
+        />
         <StatBadge label="Cào thành công" value={matchedCount} unit="tài khoản" color="#10B981" />
       </div>
+
+      {/* Alert banner to navigate to Data Quality if there are accounts needing review */}
+      {isDone && filteredOutCount > 0 && (
+        <Alert
+          type="warning"
+          showIcon
+          icon={<AuditOutlined style={{ color: '#D97706', fontSize: 18 }} />}
+          style={{
+            marginBottom: 16,
+            borderRadius: 10,
+            border: '1px solid #FDE68A',
+            background: '#FFFBEB',
+            padding: '12px 16px',
+          }}
+          message={
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 13.5, color: '#92400E' }}>
+                  Có {filteredOutCount} tài khoản chưa đạt tự động hoặc cần kiểm định chất lượng & ngách
+                </div>
+                <div style={{ fontSize: 12, color: '#B45309', marginTop: 2 }}>
+                  Các kênh này có thể bị nghi vấn Shop hoặc cần chuẩn hóa lại ngách ngành hàng thủ công.
+                </div>
+              </div>
+              {onNavigateQuality && (
+                <Button
+                  type="primary"
+                  icon={<ArrowRightOutlined />}
+                  onClick={onNavigateQuality}
+                  style={{
+                    background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+                    border: 'none',
+                    fontWeight: 700,
+                    borderRadius: 8,
+                    height: 36,
+                    padding: '0 16px',
+                    boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
+                  }}
+                >
+                  Chuyển qua phần Kiểm định chất lượng ({filteredOutCount})
+                </Button>
+              )}
+            </div>
+          }
+        />
+      )}
 
       {/* Log stream */}
       {logLines.length > 0 && (
@@ -94,23 +150,50 @@ function StatBadge({
   value,
   unit,
   color,
+  clickable,
+  onClick,
+  actionHint,
 }: {
   label: string;
   value: number;
   unit: string;
   color: string;
+  clickable?: boolean;
+  onClick?: () => void;
+  actionHint?: string;
 }) {
   return (
     <div
+      onClick={clickable ? onClick : undefined}
       style={{
         flex: '1 1 140px',
         background: '#FFFFFF',
-        border: `1px solid ${color}30`,
+        border: `1px solid ${color}40`,
         borderRadius: 10,
         padding: '10px 14px',
+        cursor: clickable ? 'pointer' : 'default',
+        transition: 'all 0.2s ease',
+        boxShadow: clickable ? '0 1px 3px rgba(0,0,0,0.04)' : 'none',
+      }}
+      onMouseEnter={(e) => {
+        if (clickable) {
+          e.currentTarget.style.borderColor = color;
+          e.currentTarget.style.transform = 'translateY(-1px)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (clickable) {
+          e.currentTarget.style.borderColor = `${color}40`;
+          e.currentTarget.style.transform = 'none';
+        }
       }}
     >
-      <div style={{ fontSize: 20, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <div style={{ fontSize: 20, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+        {actionHint && (
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#4F46E5' }}>{actionHint}</span>
+        )}
+      </div>
       <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>{label} ({unit})</div>
     </div>
   );

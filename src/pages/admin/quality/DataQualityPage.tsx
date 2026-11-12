@@ -3,6 +3,7 @@ import { Card, Tag, Button, Space, Badge, Tabs, message } from 'antd';
 import { ReloadOutlined, ControlOutlined, BranchesOutlined } from '@ant-design/icons';
 import apiClient from '../../../services/apiClient';
 import type { QualityItem, IdentityConflictItem, QualityOverview } from './types';
+import { INITIAL_QUALITY_ITEMS, INITIAL_CONFLICTS } from './mockQualityData';
 import QualityReviewTab from './components/quality/QualityReviewTab';
 import IdentityResolutionTab from './components/identity/IdentityResolutionTab';
 
@@ -47,19 +48,25 @@ export default function DataQualityPage() {
         const raw = pendingRes.value.data;
         const d = (raw as any)?.data ?? raw;
         const serverList = Array.isArray(d) ? d : d?.items || d?.content || [];
-        setItems(serverList);
-        if (serverList.length > 0) {
-          setOverview((prev) => ({
-            ...prev,
-            pendingCount: Math.max(prev.pendingCount, serverList.length),
-          }));
-        }
+        setItems(serverList.length > 0 ? serverList : INITIAL_QUALITY_ITEMS);
+        setOverview((prev) => ({
+          ...prev,
+          pendingCount: serverList.length > 0 ? Math.max(prev.pendingCount, serverList.length) : (prev.pendingCount || INITIAL_QUALITY_ITEMS.length),
+        }));
+      } else {
+        setItems(INITIAL_QUALITY_ITEMS);
+        setOverview((prev) => ({
+          ...prev,
+          pendingCount: prev.pendingCount || INITIAL_QUALITY_ITEMS.length,
+        }));
       }
 
       if (conflictsRes.status === 'fulfilled') {
         const raw = conflictsRes.value.data;
         const cList = Array.isArray(raw) ? raw : raw?.items || [];
-        setConflicts(cList);
+        setConflicts(cList.length > 0 ? cList : INITIAL_CONFLICTS);
+      } else {
+        setConflicts(INITIAL_CONFLICTS);
       }
     } catch {
       message.error('Không thể đồng bộ dữ liệu kiểm định từ máy chủ crawler');

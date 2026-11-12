@@ -70,11 +70,19 @@ export const QualityTable: React.FC<QualityTableProps> = ({
       title: 'Ngành hàng dự đoán',
       key: 'niche',
       width: 170,
-      render: (_, r) => (
-        <Tag color="orange" style={{ borderRadius: 6, fontWeight: 600, padding: '2px 8px' }}>
-          {r.niche || 'Sản phẩm tiêu dùng'}
-        </Tag>
-      ),
+      render: (_, r) => {
+        const n = r.niche || 'Sản phẩm tiêu dùng';
+        let color = 'orange';
+        if (n.includes('Đời sống') || n.includes('Gia đình')) color = 'gold';
+        else if (n.includes('Khác')) color = 'default';
+        else if (n.includes('Công nghệ')) color = 'blue';
+        else if (n.includes('Mỹ phẩm') || n.includes('Thời trang')) color = 'purple';
+        return (
+          <Tag color={color} style={{ borderRadius: 6, fontWeight: 600, padding: '2px 8px' }}>
+            {n}
+          </Tag>
+        );
+      },
     },
     {
       title: 'Tóm tắt nội dung cào',
