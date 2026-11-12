@@ -40,7 +40,7 @@ export default function AdminSidebar() {
   const isManager = authService.isManager() || currentUser?.role === 'DATA_MANAGER' || currentUser?.role === 'manager';
 
   const activeKey = Object.entries(ROUTE_KEY_MAP).find(([path]) =>
-    location.pathname.startsWith(path)
+    location.pathname.replace(/^\/data-manager(?=\/)/, '/admin').startsWith(path)
   )?.[1] ?? 'dashboard';
 
   const handleLogout = () => {
@@ -76,7 +76,7 @@ export default function AdminSidebar() {
           collapsed={collapsed}
           activeKey={activeKey}
           isManager={isManager}
-          onNavigate={(path) => navigate(path)}
+          onNavigate={(path) => navigate(isManager ? path.replace(/^\/admin(?=\/)/, '/data-manager') : path)}
         />
 
         {/* Bottom Section: User Profile & Quick Action */}

@@ -45,40 +45,41 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
   // Dynamic Breadcrumb Computation matching Brand Header
   const getPageInfo = () => {
     const p = location.pathname;
+    const isDataPipeline = p.includes('/jobs') || p.includes('/data-quality') || p.includes('/data-sources') || p.includes('/scoring');
     if (title) {
-      return { sub: isManager ? 'Vận hành' : 'Quản trị', current: title };
+      return { sub: isDataPipeline || isManager ? 'Quản lý Dữ liệu' : 'Quản trị hệ thống', current: title };
     }
-    if (p.includes('/admin/data-sources')) {
-      return { sub: 'Thu thập dữ liệu', current: 'Nguồn dữ liệu & API' };
+    if (p.includes('/data-sources')) {
+      return { sub: 'Quản lý Dữ liệu', current: 'Quản lý dữ liệu' };
     }
-    if (p.includes('/admin/jobs')) {
-      return { sub: 'Thu thập dữ liệu', current: 'Tiến trình thu thập' };
+    if (p.includes('/jobs')) {
+      return { sub: 'Quản lý Dữ liệu', current: 'Tiến trình thu thập & Săn KOC' };
     }
-    if (p.includes('/admin/data-quality')) {
-      return { sub: 'Thu thập dữ liệu', current: 'Kiểm định chất lượng' };
+    if (p.includes('/data-quality')) {
+      return { sub: 'Kiểm định Dữ liệu', current: 'Kiểm định chất lượng KOC' };
     }
-    if (p.includes('/admin/scoring')) {
-      return { sub: 'Thu thập dữ liệu', current: 'Cấu hình tính điểm' };
+    if (p.includes('/scoring')) {
+      return { sub: 'Quản lý Dữ liệu', current: 'Cấu hình tính điểm' };
     }
-    if (p.includes('/admin/creator-claims')) {
+    if (p.includes('/creator-claims')) {
       return { sub: 'Danh mục & Xác thực', current: 'Duyệt hồ sơ xác minh' };
     }
-    if (p.includes('/admin/creators')) {
+    if (p.includes('/creators')) {
       return { sub: 'Danh mục & Xác thực', current: 'Danh mục Nhà sáng tạo' };
     }
-    if (p.includes('/admin/accounts')) {
+    if (p.includes('/accounts')) {
       return { sub: 'Quản trị hệ thống', current: 'Tài khoản người dùng' };
     }
-    if (p.includes('/admin/subscriptions')) {
+    if (p.includes('/subscriptions')) {
       return { sub: 'Quản trị hệ thống', current: 'Gói đăng ký dịch vụ' };
     }
-    if (p.includes('/admin/payments')) {
+    if (p.includes('/payments')) {
       return { sub: 'Quản trị hệ thống', current: 'Giao dịch & Thanh toán' };
     }
-    if (p.includes('/admin/audit')) {
+    if (p.includes('/audit')) {
       return { sub: 'Quản trị hệ thống', current: 'Nhật ký hoạt động' };
     }
-    return { sub: undefined, current: isManager ? 'Tổng quan vận hành' : 'Tổng quan hệ thống' };
+    return { sub: undefined, current: isManager ? 'Tổng quan vận hành dữ liệu' : 'Tổng quan hệ thống' };
   };
 
   const pageInfo = getPageInfo();

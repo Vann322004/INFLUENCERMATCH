@@ -435,6 +435,12 @@ export default function AiRecommendationTab({
       // 2. Đồng thời thêm vào Shortlist của chiến dịch
       await creatorService.addToShortlist(campaign.id, {
         creatorId: creator.creatorId,
+        creatorName: creator.displayName || creator.userName,
+        username: creator.userName || creator.displayName,
+        platform: creator.platform || 'TIKTOK',
+        avatarUrl: creator.avatarUrl,
+        followers: creator.followers,
+        engagementRate: creator.engagementRate,
         priority: 'HIGH',
         note: `AI Four-Memory (Khớp ${Math.round(creator.finalScore * 100)}%)`,
       });
@@ -510,6 +516,12 @@ export default function AiRecommendationTab({
     try {
       await creatorService.addToShortlist(campaign.id, {
         creatorId: creator.creatorId,
+        creatorName: creator.displayName || creator.userName,
+        username: creator.userName || creator.displayName,
+        platform: creator.platform || 'TIKTOK',
+        avatarUrl: creator.avatarUrl,
+        followers: creator.followers,
+        engagementRate: creator.engagementRate,
         priority: 'HIGH',
         note: `AI Four-Memory (Khớp ${Math.round(creator.finalScore * 100)}%)`,
       });

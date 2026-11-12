@@ -29,7 +29,7 @@ export default function SyncRateLimitPanel({ connectors, onUpdateConnector }: Pr
     setTestingId(id);
     await new Promise(r => setTimeout(r, 1200));
     setTestingId(null);
-    message.success(`Kiểm tra ping tới API [${name}] thành công! Phản hồi 142ms.`);
+    message.success(`Kiểm tra kết nối tới API [${name}] thành công! Phản hồi sau 142 ms.`);
   };
 
   const handleRateLimitChange = (id: string, newRate: number) => {
@@ -41,7 +41,7 @@ export default function SyncRateLimitPanel({ connectors, onUpdateConnector }: Pr
 
   const columns: TableColumnsType<DataConnector> = [
     {
-      title: 'Connector',
+      title: 'Kết nối',
       key: 'name',
       render: (_, r) => (
         <div>
@@ -51,7 +51,7 @@ export default function SyncRateLimitPanel({ connectors, onUpdateConnector }: Pr
       ),
     },
     {
-      title: 'Success / Fail',
+      title: 'Thành công / Thất bại',
       key: 'stats',
       render: (_, r) => {
         const sum = r.successCount + r.failCount;
@@ -59,8 +59,8 @@ export default function SyncRateLimitPanel({ connectors, onUpdateConnector }: Pr
         return (
           <div style={{ minWidth: 140 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 2 }}>
-              <span style={{ color: '#10B981', fontWeight: 600 }}>{r.successCount.toLocaleString()}</span>
-              <span style={{ color: '#EF4444', fontWeight: 600 }}>{r.failCount.toLocaleString()}</span>
+              <span style={{ color: '#10B981', fontWeight: 600 }}>{r.successCount.toLocaleString('vi-VN')}</span>
+              <span style={{ color: '#EF4444', fontWeight: 600 }}>{r.failCount.toLocaleString('vi-VN')}</span>
             </div>
             <Progress percent={rate} size="small" strokeColor={rate > 90 ? '#10B981' : '#EF4444'} showInfo={false} />
           </div>
@@ -68,7 +68,7 @@ export default function SyncRateLimitPanel({ connectors, onUpdateConnector }: Pr
       },
     },
     {
-      title: 'Rate-Limit (req/min)',
+      title: 'Giới hạn yêu cầu (yêu cầu/phút)',
       key: 'rateLimit',
       render: (_, r) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 200 }}>
@@ -101,7 +101,7 @@ export default function SyncRateLimitPanel({ connectors, onUpdateConnector }: Pr
             loading={testingId === r.id}
             onClick={() => handleTestConnection(r.id, r.name)}
           >
-            Test Ping
+            Kiểm tra kết nối
           </Button>
         </Space>
       ),
@@ -114,12 +114,12 @@ export default function SyncRateLimitPanel({ connectors, onUpdateConnector }: Pr
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={8}>
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-            <div style={{ color: '#64748B', fontSize: 12, fontWeight: 600 }}>TỔNG REQUESTS HÔM NAY</div>
+            <div style={{ color: '#64748B', fontSize: 12, fontWeight: 600 }}>TỔNG YÊU CẦU HÔM NAY</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', marginTop: 4 }}>
-              {totalReq.toLocaleString()}
+              {totalReq.toLocaleString('vi-VN')}
             </div>
             <div style={{ color: '#10B981', fontSize: 12, fontWeight: 600, marginTop: 4 }}>
-              ✓ Đạt 94.2% quota tối đa cho phép
+              ✓ Đạt 94,2% hạn mức tối đa cho phép
             </div>
           </Card>
         </Col>
@@ -128,22 +128,22 @@ export default function SyncRateLimitPanel({ connectors, onUpdateConnector }: Pr
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
             <div style={{ color: '#64748B', fontSize: 12, fontWeight: 600 }}>TỶ LỆ THÀNH CÔNG CHUNG</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: '#10B981', marginTop: 4 }}>
-              {overallSuccessRate}%
+              {Number(overallSuccessRate).toLocaleString('vi-VN')}%
             </div>
             <div style={{ color: '#64748B', fontSize: 12, marginTop: 4 }}>
-              Thành công: <strong>{totalSuccess.toLocaleString()}</strong> | Lỗi: <strong style={{ color: '#EF4444' }}>{totalFail.toLocaleString()}</strong>
+              Thành công: <strong>{totalSuccess.toLocaleString('vi-VN')}</strong> | Lỗi: <strong style={{ color: '#EF4444' }}>{totalFail.toLocaleString('vi-VN')}</strong>
             </div>
           </Card>
         </Col>
 
         <Col xs={24} sm={8}>
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-            <div style={{ color: '#64748B', fontSize: 12, fontWeight: 600 }}>TÌNH TRẠNG RATE-LIMIT</div>
+            <div style={{ color: '#64748B', fontSize: 12, fontWeight: 600 }}>TÌNH TRẠNG GIỚI HẠN YÊU CẦU</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: '#6366F1', marginTop: 4 }}>
               Ổn định
             </div>
             <div style={{ color: '#64748B', fontSize: 12, marginTop: 4 }}>
-              Không có nguồn nào bị throttle trong 24h qua
+              Không có nguồn nào bị hạn chế tốc độ trong 24 giờ qua
             </div>
           </Card>
         </Col>
@@ -151,8 +151,8 @@ export default function SyncRateLimitPanel({ connectors, onUpdateConnector }: Pr
 
       {/* Info alert */}
       <Alert
-        message="Quản lý băng thông & điều tiết request"
-        description="Khi hệ thống đạt 80% ngưỡng rate-limit của nhà cung cấp, cơ chế backoff lũy thừa (Exponential Backoff) sẽ tự động kích hoạt để tránh bị khóa API key."
+        message="Quản lý băng thông và điều tiết yêu cầu"
+        description="Khi hệ thống đạt 80% giới hạn yêu cầu của nhà cung cấp, thời gian chờ giữa các lần thử lại sẽ tự động tăng theo cấp số nhân để bảo vệ khóa API."
         type="info"
         showIcon
         style={{ borderRadius: 10 }}
@@ -166,7 +166,7 @@ export default function SyncRateLimitPanel({ connectors, onUpdateConnector }: Pr
           <Button
             icon={<ReloadOutlined />}
             size="small"
-            onClick={() => message.success('Đã làm mới thông số rate-limit')}
+            onClick={() => message.success('Đã làm mới thông số giới hạn yêu cầu')}
           >
             Làm mới bộ đếm
           </Button>

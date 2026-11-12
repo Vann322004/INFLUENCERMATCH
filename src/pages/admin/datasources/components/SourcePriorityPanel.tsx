@@ -51,7 +51,7 @@ export default function SourcePriorityPanel({ connectors, onSavePriority }: Prop
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Alert
         message="Nguyên tắc phân định thứ tự ưu tiên dữ liệu"
-        description="Khi đồng bộ hoặc hợp nhất hồ sơ Creator xuất hiện ở nhiều mạng xã hội, các trường thông tin chuẩn (Tên hiển thị, Avatar chính, Bio chuẩn, Thể loại chính) sẽ ưu tiên lấy từ nguồn có mức ưu tiên cao nhất."
+        description="Khi đồng bộ hoặc hợp nhất hồ sơ nhà sáng tạo xuất hiện ở nhiều mạng xã hội, các trường thông tin chuẩn (tên hiển thị, ảnh đại diện chính, tiểu sử chuẩn, thể loại chính) sẽ ưu tiên lấy từ nguồn có mức ưu tiên cao nhất."
         type="warning"
         icon={<InfoCircleOutlined />}
         showIcon
@@ -121,9 +121,9 @@ export default function SourcePriorityPanel({ connectors, onSavePriority }: Prop
                     {item.name}
                   </div>
                   <div style={{ fontSize: 12, color: '#64748B', display: 'flex', gap: 10 }}>
-                    <span>Platform: <strong>{item.platform}</strong></span>
+                    <span>Nền tảng: <strong>{item.platform}</strong></span>
                     <span>•</span>
-                    <span>Rate limit: <strong>{item.rateLimit} req/min</strong></span>
+                    <span>Giới hạn yêu cầu: <strong>{item.rateLimit} yêu cầu/phút</strong></span>
                   </div>
                 </div>
               </div>

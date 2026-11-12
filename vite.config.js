@@ -13,6 +13,37 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      '/crawler-api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        timeout: 120000,
+        rewrite: (path) => path.replace(/^\/crawler-api/, ''),
+      },
+      '/api/v1/crawl': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        timeout: 120000,
+      },
+      '/api/v1/monitor': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        timeout: 120000,
+      },
+      '/api/v1/ai': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        timeout: 120000,
+      },
+      '/api/v1/quality': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        timeout: 120000,
+      },
+      '/api/v1/candidates': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        timeout: 120000,
+      },
       '/api': {
         target: 'https://api.influencermatch.site',
         changeOrigin: true,

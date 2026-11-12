@@ -1,12 +1,11 @@
 import React from 'react';
-import { Card, Tag, Button } from 'antd';
+import { Card, Tag } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
   ApiOutlined,
   SyncOutlined,
   CheckCircleOutlined,
   RightOutlined,
-  ArrowRightOutlined,
   DatabaseOutlined,
 } from '@ant-design/icons';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
@@ -32,7 +31,7 @@ export default function DataPipelineWorkflowBar({
     {
       key: 'sources' as DataStep,
       stepNum: 1,
-      title: 'Nguồn dữ liệu (Data Sources)',
+      title: 'Nguồn dữ liệu',
       icon: <ApiOutlined />,
       path: ADMIN_ROUTES.DATA_SOURCES,
       meta: typeof activeConnectorsCount === 'number' ? `${activeConnectorsCount} kết nối` : undefined,
@@ -40,7 +39,7 @@ export default function DataPipelineWorkflowBar({
     {
       key: 'jobs' as DataStep,
       stepNum: 2,
-      title: 'Tiến trình cào (Crawler Jobs)',
+      title: 'Tiến trình cào dữ liệu',
       icon: <SyncOutlined spin={currentStep === 'jobs'} />,
       path: ADMIN_ROUTES.JOBS,
       meta: typeof runningJobsCount === 'number' ? `${runningJobsCount} đang chạy` : undefined,
@@ -48,7 +47,7 @@ export default function DataPipelineWorkflowBar({
     {
       key: 'quality' as DataStep,
       stepNum: 3,
-      title: 'Kiểm định dữ liệu (Data Quality)',
+      title: 'Kiểm định chất lượng',
       icon: <CheckCircleOutlined />,
       path: '/admin/data-quality',
       meta: typeof pendingQualityCount === 'number' ? `${pendingQualityCount} chờ duyệt` : undefined,
@@ -95,10 +94,10 @@ export default function DataPipelineWorkflowBar({
           </div>
           <div>
             <div style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A', lineHeight: 1.2 }}>
-              DATA INGESTION PIPELINE
+              QUY TRÌNH THU THẬP DỮ LIỆU
             </div>
             <div style={{ fontSize: 11, color: '#64748B' }}>
-              Quy trình thu thập, giám sát và kiểm định chất lượng Creator
+              Quy trình thu thập, giám sát và kiểm định chất lượng nhà sáng tạo
             </div>
           </div>
         </div>
@@ -167,43 +166,6 @@ export default function DataPipelineWorkflowBar({
               </React.Fragment>
             );
           })}
-        </div>
-
-        {/* Right: Next step button */}
-        <div>
-          {currentStep === 'sources' && (
-            <Button
-              type="primary"
-              size="middle"
-              icon={<ArrowRightOutlined />}
-              onClick={() => navigate(ADMIN_ROUTES.JOBS)}
-              style={{ borderRadius: 8, fontWeight: 600, background: '#4F46E5' }}
-            >
-              Xem Crawler Jobs ➔
-            </Button>
-          )}
-
-          {currentStep === 'jobs' && (
-            <Button
-              type="primary"
-              size="middle"
-              icon={<ArrowRightOutlined />}
-              onClick={() => navigate('/admin/data-quality')}
-              style={{ borderRadius: 8, fontWeight: 600, background: '#4F46E5' }}
-            >
-              Kiểm định chất lượng ➔
-            </Button>
-          )}
-
-          {currentStep === 'quality' && (
-            <Button
-              size="middle"
-              onClick={() => navigate(ADMIN_ROUTES.CREATORS)}
-              style={{ borderRadius: 8, fontWeight: 600, color: '#4F46E5', borderColor: '#C7D2FE' }}
-            >
-              Mở Creator Catalog ➔
-            </Button>
-          )}
         </div>
       </div>
     </Card>

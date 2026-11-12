@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { Card, Tabs, Row, Col, Button, Modal, Form, Input, InputNumber, Select, message } from 'antd';
+import { Card, Tabs, Row, Col, Button, Modal, Form, Input, InputNumber, Select, ConfigProvider, message } from 'antd';
+import viVN from 'antd/locale/vi_VN';
 import {
   ApiOutlined,
   ControlOutlined,
   SortAscendingOutlined,
   PlusOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 import type { DataConnector } from '../../../types/api/admin.types';
 import ConnectorStatusCard from './components/ConnectorStatusCard';
 import SyncRateLimitPanel from './components/SyncRateLimitPanel';
 import SourcePriorityPanel from './components/SourcePriorityPanel';
-import DataPipelineWorkflowBar from '../../../components/admin/DataPipelineWorkflowBar';
+import NicheManagementPanel from './components/NicheManagementPanel';
 
 export default function DataSourcesPage() {
   const [connectors, setConnectors] = useState<DataConnector[]>([]);
@@ -41,31 +43,24 @@ export default function DataSourcesPage() {
     setConnectors(prev => [...prev, newConnector]);
     setAddModalOpen(false);
     form.resetFields();
-    message.success(`Đã thêm connector ${values.name} thành công!`);
+    message.success(`Đã thêm kết nối ${values.name} thành công!`);
   };
 
   const activeCount = connectors.filter(c => c.status === 'active').length;
 
   return (
+    <ConfigProvider locale={viVN}>
     <div>
-      {/* 0. Unified Data Pipeline Stepper */}
-      <DataPipelineWorkflowBar
-        currentStep="sources"
-        activeConnectorsCount={activeCount}
-        runningJobsCount={2}
-        pendingQualityCount={5}
-      />
-
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
-          <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>Data Sources & Connectors</div>
+          <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>Quản lý dữ liệu</div>
           <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
-            Quản lý tích hợp API, tỷ lệ đồng bộ dữ liệu và điều tiết lưu lượng từ các mạng xã hội
+            Quản lý kết nối API, đồng bộ dữ liệu và danh mục ngành hàng trong hệ thống
           </div>
         </div>
 
-        <Button
+        {activeTab !== 'niches' && <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => setAddModalOpen(true)}
@@ -77,8 +72,8 @@ export default function DataSourcesPage() {
             boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
           }}
         >
-          Thêm Connector mới
-        </Button>
+          Thêm kết nối mới
+        </Button>}
       </div>
 
       <Card
@@ -92,6 +87,19 @@ export default function DataSourcesPage() {
           type="line"
           tabBarStyle={{ padding: '0 20px', marginBottom: 0, borderBottom: '1px solid #EEF0F6' }}
           items={[
+            {
+              key: 'niches',
+              label: (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
+                  <AppstoreOutlined /> Quản lý ngành hàng
+                </span>
+              ),
+              children: (
+                <div style={{ padding: '24px 20px' }}>
+                  <NicheManagementPanel />
+                </div>
+              ),
+            },
             {
               key: 'connectors',
               label: (
@@ -118,7 +126,7 @@ export default function DataSourcesPage() {
               key: 'rate-limit',
               label: (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
-                  <ControlOutlined /> Quản lý Tốc độ & Giới hạn
+                  <ControlOutlined /> Quản lý tốc độ và giới hạn
                 </span>
               ),
               children: (
@@ -152,19 +160,19 @@ export default function DataSourcesPage() {
 
       {/* Add Connector Modal */}
       <Modal
-        title="Thêm Connector mới"
+        title="Thêm kết nối mới"
         open={addModalOpen}
         onCancel={() => setAddModalOpen(false)}
         onOk={() => form.submit()}
-        okText="Thêm connector"
+        okText="Thêm kết nối"
         cancelText="Hủy"
         destroyOnClose
       >
         <Form form={form} layout="vertical" onFinish={handleCreateConnector} style={{ marginTop: 16 }}>
           <Form.Item
             name="name"
-            label="Tên Connector"
-            rules={[{ required: true, message: 'Vui lòng nhập tên connector' }]}
+            label="Tên kết nối"
+            rules={[{ required: true, message: 'Vui lòng nhập tên kết nối' }]}
           >
             <Input placeholder="VD: Facebook Graph API v19" />
           </Form.Item>
@@ -185,7 +193,7 @@ export default function DataSourcesPage() {
 
           <Form.Item
             name="rateLimit"
-            label="Rate-Limit mặc định (req/phút)"
+            label="Giới hạn yêu cầu mặc định (yêu cầu/phút)"
             initialValue={60}
           >
             <InputNumber min={10} max={1000} style={{ width: '100%' }} />
@@ -193,5 +201,6 @@ export default function DataSourcesPage() {
         </Form>
       </Modal>
     </div>
+    </ConfigProvider>
   );
 }

@@ -98,8 +98,7 @@ export default function DashboardPage() {
     try {
       const u = authService.getCurrentUser();
       if (u) return u;
-      const raw = localStorage.getItem('influencermatch_user') || localStorage.getItem('user');
-      return raw ? JSON.parse(raw) : null;
+      return null;
     } catch {
       return null;
     }

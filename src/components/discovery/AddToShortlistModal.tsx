@@ -16,6 +16,9 @@ export interface AddToShortlistModalProps {
     name: string;
     avatar?: string;
     username?: string;
+    platform?: string;
+    followers?: number;
+    engagementRate?: number;
     niche?: string;
   } | null;
   defaultCampaignId?: string;
@@ -82,7 +85,11 @@ export default function AddToShortlistModal({
       const savedItem = await creatorService.addToShortlist(values.campaignId, {
         creatorId: creator.id,
         creatorName: creator.name,
+        username: creator.username || (creator as any).userName || (creator as any).handle || creator.name,
+        platform: creator.platform || (creator as any).platform || 'tiktok',
         avatarUrl: creator.avatar,
+        followers: creator.followers,
+        engagementRate: creator.engagementRate,
         niche: creator.niche,
         priority: priorityVal as ShortlistPriority,
         note: values.note || undefined,

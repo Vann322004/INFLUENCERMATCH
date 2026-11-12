@@ -69,6 +69,7 @@ export const brandService = {
    */
   clearBrandCache() {
     cachedBrand = null;
+    inFlightBrandPromise = null;
     try {
       sessionStorage.removeItem(STORAGE_KEY_BRAND);
     } catch {}
