@@ -1,0 +1,10 @@
+{
+    "type": "https://api.influencermatch/errorhttp://221.121.3.226:8080/api/v1/swagger-ui/index.htmls/resource-not-found",
+    "title": "Resource not found",
+    "status": 404,
+    "detail": "Resource not found",
+    "instance": "/api/v1/v3/api-docs",
+    "code": "RESOURCE_NOT_FOUND",
+    "traceId": "e29ebe68-b099-48dd-a8e7-308da7d3d210",
+    "timestamp": "2026-11-12T14:41:42.824074021Z"
+}

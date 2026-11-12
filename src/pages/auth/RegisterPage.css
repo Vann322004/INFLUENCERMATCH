@@ -81,8 +81,8 @@
 .register-card-inner .luxe-input-focused,
 .register-card-inner .ant-input-affix-wrapper-focused {
   background: #FFFFFF !important;
-  border-color: #7C3AED !important;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12) !important;
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
 }
 
 .register-card-inner .luxe-input input {
@@ -160,14 +160,14 @@
 }
 
 .register-legal-link:hover {
-  color: #4F46E5;
+  color: #1D4ED8;
   text-decoration: underline;
 }
 
 /* ── Primary Submit Button ── */
 .register-card-inner .luxe-primary-btn {
   height: 42px !important;
-  background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%) !important;
+  background: linear-gradient(135deg, #6366F1 0%, #2563EB 100%) !important;
   border: none !important;
   border-radius: 10px !important;
   font-size: 13.5px !important;
@@ -228,7 +228,7 @@
 }
 
 .register-login-banner .link:hover {
-  color: #4F46E5;
+  color: #1D4ED8;
   transform: translateX(2px);
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Input, Select, Button, Space, Typography, Tooltip, message, Spin } from 'antd';
+import { Card, Table, Tag, Input, Select, Button, Space, Typography, Tooltip, message, Spin, Row, Col, Statistic } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   SearchOutlined,
@@ -7,6 +7,10 @@ import {
   AuditOutlined,
   EyeOutlined,
   DownloadOutlined,
+  CheckCircleOutlined,
+  DatabaseOutlined,
+  DashboardOutlined,
+  CloudServerOutlined,
 } from '@ant-design/icons';
 import { adminService } from '../../../services/api/adminService';
 import type { AuditLogItem, AuditAction } from '../../../types/api/admin.types';
@@ -32,6 +36,11 @@ export default function AuditLogPage() {
   const [resourceFilter, setResourceFilter] = useState('all');
   const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [systemStatus, setSystemStatus] = useState<any>(null);
+
+  useEffect(() => {
+    adminService.getSystemStatus().then(setSystemStatus).catch(() => {});
+  }, []);
 
   const fetchLogs = async (p = page) => {
     try {
@@ -141,6 +150,53 @@ export default function AuditLogPage() {
           Xuất CSV
         </Button>
       </div>
+
+      {/* System Health Metrics (GET /admin/system-status - Luồng AD-02) */}
+      {systemStatus && (
+        <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+          <Col xs={12} sm={6}>
+            <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }} bodyStyle={{ padding: '14px 16px' }}>
+              <Statistic
+                title={<span style={{ fontSize: 12, color: '#64748B' }}>Trạng thái hệ thống</span>}
+                value={systemStatus.overallStatus || 'UP'}
+                prefix={<CheckCircleOutlined style={{ color: '#10B981' }} />}
+                valueStyle={{ fontSize: 18, fontWeight: 700, color: systemStatus.overallStatus === 'DOWN' ? '#EF4444' : '#10B981' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={12} sm={6}>
+            <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }} bodyStyle={{ padding: '14px 16px' }}>
+              <Statistic
+                title={<span style={{ fontSize: 12, color: '#64748B' }}>Database</span>}
+                value={systemStatus.database?.status || 'UP'}
+                prefix={<DatabaseOutlined style={{ color: '#4F46E5' }} />}
+                valueStyle={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={12} sm={6}>
+            <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }} bodyStyle={{ padding: '14px 16px' }}>
+              <Statistic
+                title={<span style={{ fontSize: 12, color: '#64748B' }}>JVM Heap Used</span>}
+                value={systemStatus.jvm?.usedMemoryMb ?? systemStatus.jvm?.heapUsedMb ?? '—'}
+                suffix={systemStatus.jvm?.maxMemoryMb ? `/ ${systemStatus.jvm.maxMemoryMb} MB` : 'MB'}
+                prefix={<CloudServerOutlined style={{ color: '#7C3AED' }} />}
+                valueStyle={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={12} sm={6}>
+            <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }} bodyStyle={{ padding: '14px 16px' }}>
+              <Statistic
+                title={<span style={{ fontSize: 12, color: '#64748B' }}>DB Pool (Active/Max)</span>}
+                value={`${systemStatus.connectionPool?.activeConnections ?? 0} / ${systemStatus.connectionPool?.maxPoolSize ?? 10}`}
+                prefix={<DashboardOutlined style={{ color: '#0EA5E9' }} />}
+                valueStyle={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}
+              />
+            </Card>
+          </Col>
+        </Row>
+      )}
 
       {/* Main Table Card */}
       <Card

@@ -16,26 +16,28 @@ export const aiRecommendationService = {
    * OperationId: runRecommendation
    * Quyền yêu cầu: hasAuthority('RUN_RECOMMENDATION')
    */
-  async runRecommendation(campaignId: string, limit = 10): Promise<RecommendationResponseDto> {
+  async runRecommendation(
+    campaignId: string,
+    limit = 10,
+    options?: { displayMode?: string; candidateSource?: string }
+  ): Promise<RecommendationResponseDto> {
     try {
-      console.log(`[aiRecommendationService] Kích hoạt POST /campaigns/${campaignId}/ai-recommendations?limit=${limit}`);
+      const params: Record<string, any> = { limit };
+      if (options?.displayMode) params.displayMode = options.displayMode;
+      if (options?.candidateSource) params.candidateSource = options.candidateSource;
+
+      console.log(`[aiRecommendationService] Kích hoạt POST /campaigns/${campaignId}/ai-recommendations`, params);
       const response = await apiClient.post<any>(
         `/campaigns/${campaignId}/ai-recommendations`,
         null,
-        { params: { limit } }
+        { params }
       );
       console.log('[aiRecommendationService] Raw API response:', response.data);
 
       const resBody = response.data;
       const data = resBody?.data ?? resBody;
 
-      // Hỗ trợ linh hoạt cấu trúc trả về từ backend (recommendations, content, hoặc array)
-      const rawRecs =
-        data?.recommendations ??
-        data?.content ??
-        (Array.isArray(data) ? data : []);
-
-      const parsedRecs: CreatorRecommendationItemDto[] = rawRecs.map((item: any) => ({
+      const mapCandidate = (item: any): CreatorRecommendationItemDto => ({
         creatorId: item.creatorId || item.id,
         masterId: item.masterId,
         platform: item.platform || 'TIKTOK',
@@ -53,9 +55,23 @@ export const aiRecommendationService = {
         finalScore: typeof item.finalScore === 'number' ? item.finalScore : Number(item.matchScore ?? 0.85),
         scoreBreakdown: item.scoreBreakdown,
         reasoning: item.reasoning,
+        priceStatus: item.priceStatus,
+        isScoreReady: item.isScoreReady,
+        isProvisional: item.isProvisional,
         claimed: item.claimed,
         inShortlist: Boolean(item.inShortlist || item.isInShortlist),
-      }));
+      });
+
+      // Hỗ trợ linh hoạt cấu trúc trả về từ backend (recommendations, content, hoặc array)
+      const rawRecs =
+        data?.recommendations ??
+        data?.content ??
+        (Array.isArray(data) ? data : []);
+
+      const parsedRecs: CreatorRecommendationItemDto[] = rawRecs.map(mapCandidate);
+      const parsedProvisional: CreatorRecommendationItemDto[] = Array.isArray(data?.provisionalRecommendations)
+        ? data.provisionalRecommendations.map(mapCandidate)
+        : [];
 
       console.log(`[aiRecommendationService] Đã xử lý ${parsedRecs.length} ứng viên từ API:`, parsedRecs);
 
@@ -65,6 +81,7 @@ export const aiRecommendationService = {
         contextVersion: data?.contextVersion || 1,
         totalCandidates: data?.totalCandidates ?? parsedRecs.length,
         recommendations: parsedRecs,
+        provisionalRecommendations: parsedProvisional,
       };
     } catch (err: any) {
       console.error('[aiRecommendationService] Lỗi khi gọi POST /campaigns/:id/ai-recommendations:', err);

@@ -1,15 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, Badge, Tooltip } from 'antd';
 import { BellOutlined, HomeOutlined, RightOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import NotificationDrawer from './NotificationDrawer';
+import { notificationService } from '../../services/api/notificationService';
 
 const { Header } = Layout;
 
 export default function AppHeader() {
   const [notifOpen, setNotifOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const refreshUnread = () => {
+    notificationService.getUnreadCount().then(setUnreadCount).catch(() => {});
+  };
+
+  useEffect(() => {
+    refreshUnread();
+  }, []);
+
+  useEffect(() => {
+    if (!notifOpen) {
+      refreshUnread();
+    }
+  }, [notifOpen]);
 
   // Dynamic Page Context & Breadcrumb (100% tiếng Việt, chuẩn hóa phân cấp điều hướng)
   const getPageInfo = () => {
@@ -87,7 +103,7 @@ export default function AppHeader() {
 
         {/* Right: Chuông thông báo duy nhất */}
         <Tooltip title="Thông báo hệ thống">
-          <Badge dot color="#EF4444" offset={[-2, 2]} style={{ boxShadow: '0 0 0 2px #FFFFFF' }}>
+          <Badge count={unreadCount} size="small" color="#EF4444" offset={[-2, 2]} style={{ boxShadow: '0 0 0 2px #FFFFFF' }}>
             <button
               type="button"
               className="standalone-action-btn"

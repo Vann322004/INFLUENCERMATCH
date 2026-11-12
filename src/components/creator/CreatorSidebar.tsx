@@ -20,11 +20,10 @@ import { authService } from '../../services/api/authService';
 const { Sider } = Layout;
 
 export const CREATOR_MENU_ITEMS = [
-  { key: 'dashboard', icon: <LineChartOutlined />, label: 'Tổng quan & Reach' },
-  { key: 'verification', icon: <SafetyCertificateOutlined />, label: 'Xác minh & Claim' },
-  { key: 'social-accounts', icon: <ApiOutlined />, label: 'Kênh Mạng xã hội' },
+  { key: 'dashboard', icon: <LineChartOutlined />, label: 'Tổng quan' },
   { key: 'rate-card', icon: <DollarOutlined />, label: 'Bảng giá Rate Card' },
-  { key: 'bookings', icon: <CalendarOutlined />, label: 'Booking & Hợp tác' },
+  { key: 'social-accounts', icon: <ApiOutlined />, label: 'Kênh liên kết' },
+  { key: 'bookings', icon: <CalendarOutlined />, label: 'Lời mời hợp tác' },
 ];
 
 export default function CreatorSidebar() {

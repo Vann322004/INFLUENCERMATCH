@@ -412,6 +412,24 @@ const refundTransaction = async (id: string, reason?: string): Promise<Transacti
   };
 };
 
+/** GET /admin/payments/{id} — Get single transaction detail */
+const getTransactionById = async (id: string): Promise<any> => {
+  const response = await apiClient.get<any>(`/admin/payments/${id}`);
+  return response.data?.data ?? response.data;
+};
+
+/** GET /admin/recommendation-config — Get active Four-Memory engine config (Luồng DM-04) */
+const getRecommendationConfig = async (): Promise<any> => {
+  const response = await apiClient.get<any>('/admin/recommendation-config');
+  return response.data?.data ?? response.data;
+};
+
+/** GET /admin/system-status — Get system health and runtime metrics (Luồng AD-02) */
+const getSystemStatus = async (): Promise<any> => {
+  const response = await apiClient.get<any>('/admin/system-status');
+  return response.data?.data ?? response.data;
+};
+
 export const adminService = {
   getUsers,
   getUserById,
@@ -425,6 +443,9 @@ export const adminService = {
   updateRolePermissions,
   getAdminSubscriptions,
   getTransactions,
+  getTransactionById,
   getTransactionStats,
   refundTransaction,
+  getRecommendationConfig,
+  getSystemStatus,
 };

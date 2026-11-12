@@ -427,31 +427,7 @@ export default function CreatorPortalPage() {
             label: (
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
                 <LineChartOutlined />
-                <span>1. Theo dõi Reach & Khán giả</span>
-              </span>
-            ),
-          },
-          {
-            key: 'verification',
-            label: (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
-                <SafetyCertificateOutlined />
-                <span>2. Xác minh Hồ sơ & Claim</span>
-                {verification.status === 'VERIFIED' ? (
-                  <Badge status="success" />
-                ) : (
-                  <Badge count="Cần duyệt" style={{ backgroundColor: '#F59E0B' }} />
-                )}
-              </span>
-            ),
-          },
-          {
-            key: 'social',
-            label: (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
-                <ApiOutlined />
-                <span>3. Kênh Mạng Xã Hội</span>
-                <Badge count={channels.filter((c) => c.connected).length} style={{ backgroundColor: '#059669' }} />
+                <span>Tổng quan</span>
               </span>
             ),
           },
@@ -460,8 +436,18 @@ export default function CreatorPortalPage() {
             label: (
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
                 <DollarOutlined />
-                <span>4. Bảng giá Rate Card</span>
-                <Badge count={rateCards.length} style={{ backgroundColor: '#6366F1' }} />
+                <span>Bảng giá Rate Card</span>
+                <Badge count={rateCards.length} style={{ backgroundColor: '#2563EB' }} />
+              </span>
+            ),
+          },
+          {
+            key: 'social',
+            label: (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
+                <ApiOutlined />
+                <span>Kênh liên kết & Claim Tích Xanh</span>
+                <Badge count={channels.filter((c) => c.connected).length} style={{ backgroundColor: '#059669' }} />
               </span>
             ),
           },
@@ -470,7 +456,7 @@ export default function CreatorPortalPage() {
             label: (
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
                 <CalendarOutlined />
-                <span>5. Trạng thái Booking & Job</span>
+                <span>Lời mời hợp tác</span>
                 <Badge count={bookings.filter((b) => b.status === 'PENDING').length} overflowCount={9} style={{ backgroundColor: '#EF4444' }} />
               </span>
             ),
@@ -741,10 +727,34 @@ export default function CreatorPortalPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 3: KẾT NỐI TÀI KHOẢN MẠNG XÃ HỘI                                     */}
+      {/* TAB: KẾT NỐI TÀI KHOẢN MẠNG XÃ HỘI & CLAIM KÊNH                          */}
       {/* ========================================================================= */}
       {activeTab === 'social' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Header Action Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#0F172A' }}>Kênh liên kết & Claim Tích Xanh</div>
+              <div style={{ fontSize: 13, color: '#64748B' }}>
+                Quản lý các kênh mạng xã hội chính chủ, kết nối OAuth hoặc nộp hồ sơ nhận kênh (Claim KOC)
+              </div>
+            </div>
+            <Button
+              type="primary"
+              icon={<SafetyCertificateOutlined />}
+              onClick={handleOpenClaimModal}
+              style={{
+                borderRadius: 8,
+                background: '#2563EB',
+                borderColor: '#2563EB',
+                fontWeight: 700,
+                height: 38,
+              }}
+            >
+              Nộp đơn Claim Tích Xanh
+            </Button>
+          </div>
+
           <Alert
             message="Kết nối Mạng xã hội để tự động đồng bộ hóa Chỉ số Reach & Lượt xem"
             description="InfluencerMatch sử dụng giao thức chính thức của TikTok Creator API, Instagram Graph API và YouTube Data API để tự động cập nhật số lượng người theo dõi và tương tác hàng ngày của bạn."

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Drawer,
   Tabs,
@@ -11,6 +11,7 @@ import {
   Typography,
   Radio,
   Divider,
+  Spin,
 } from 'antd';
 import {
   BellOutlined,
@@ -30,6 +31,7 @@ import {
   INITIAL_EMAIL_ALERTS,
 } from '../../data/mockData';
 import type { InAppNotification, EmailAlertSettings } from '../../data/mockData';
+import { notificationService, type NotificationDto } from '../../services/api/notificationService';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -38,24 +40,91 @@ interface NotificationDrawerProps {
   onClose: () => void;
 }
 
+const mapDtoToUi = (dto: NotificationDto): InAppNotification => {
+  const t = (dto.type || '').toLowerCase();
+  let uiType: InAppNotification['type'] = 'system';
+  if (t.includes('deliverable') || t.includes('submission') || t.includes('content')) uiType = 'deliverable';
+  else if (t.includes('invit') || t.includes('deal') || t.includes('crm')) uiType = 'invitation';
+  else if (t.includes('quota')) uiType = 'quota';
+  else if (t.includes('pay') || t.includes('sub') || t.includes('vnpay')) uiType = 'payment';
+
+  let linkUrl = '';
+  const ent = (dto.entityType || '').toUpperCase();
+  if (ent === 'CAMPAIGN' && dto.entityId) linkUrl = `/campaigns/${dto.entityId}`;
+  else if (ent === 'COLLABORATION') linkUrl = '/collaboration';
+  else if (ent === 'RELATIONSHIP' || ent === 'DEAL' || ent === 'COOPERATION_INVITATION') linkUrl = '/crm';
+  else if (ent === 'SUBSCRIPTION' || ent === 'PAYMENT') linkUrl = '/subscription';
+
+  return {
+    id: dto.id,
+    type: uiType,
+    title: dto.title || 'Thông báo hệ thống',
+    message: dto.message || '',
+    timeAgo: dto.createdAt ? new Date(dto.createdAt).toLocaleString('vi-VN') : 'Vừa xong',
+    read: Boolean(dto.read || dto.readAt),
+    linkUrl: linkUrl || undefined,
+  };
+};
+
 export default function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<InAppNotification[]>(INITIAL_NOTIFICATIONS);
+  const [loading, setLoading] = useState<boolean>(false);
   const [filterType, setFilterType] = useState<'all' | 'unread'>('all');
   const [emailAlerts, setEmailAlerts] = useState<EmailAlertSettings>(INITIAL_EMAIL_ALERTS);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    message.success('Đã đánh dấu tất cả thông báo là đã đọc!');
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const list = await notificationService.getNotifications(0, 30);
+      if (Array.isArray(list)) {
+        setNotifications(list.map(mapDtoToUi));
+      }
+    } catch (err) {
+      console.warn('[NotificationDrawer] Không thể tải thông báo từ API, dùng fallback:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleNotificationClick = (item: InAppNotification) => {
-    // Mark as read
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === item.id ? { ...n, read: true } : n))
-    );
+  useEffect(() => {
+    fetchNotifications();
+    const unsubscribe = notificationService.subscribeToStream((incoming) => {
+      const uiItem = mapDtoToUi(incoming);
+      setNotifications((prev) => {
+        if (prev.some((n) => n.id === uiItem.id)) return prev;
+        return [uiItem, ...prev];
+      });
+      message.info(uiItem.title);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      fetchNotifications();
+    }
+  }, [open]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const handleMarkAllAsRead = async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    try {
+      await notificationService.markAllAsRead();
+      message.success('Đã đánh dấu tất cả thông báo là đã đọc!');
+    } catch {
+      message.success('Đã đánh dấu tất cả thông báo là đã đọc!');
+    }
+  };
+
+  const handleNotificationClick = async (item: InAppNotification) => {
+    if (!item.read) {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === item.id ? { ...n, read: true } : n))
+      );
+      notificationService.markAsRead(item.id).catch(() => {});
+    }
     if (item.linkUrl) {
       onClose();
       navigate(item.linkUrl);

@@ -17,6 +17,13 @@ export interface ReasoningCardDto {
   explanationAvailable: boolean;
 }
 
+export type PriceStatus =
+  | 'CONFIRMED_WITHIN_BUDGET'
+  | 'DECLARED_ESTIMATE'
+  | 'PRICE_UNKNOWN'
+  | 'ESTIMATED_OVER_BUDGET'
+  | 'CONFIRMED_OVER_BUDGET';
+
 export interface CreatorRecommendationItemDto {
   creatorId: string;
   masterId?: string;
@@ -35,6 +42,9 @@ export interface CreatorRecommendationItemDto {
   finalScore: number;
   scoreBreakdown?: ScoreBreakdownDto;
   reasoning?: ReasoningCardDto;
+  priceStatus?: PriceStatus;
+  isScoreReady?: boolean;
+  isProvisional?: boolean;
   claimed?: boolean;
   inShortlist?: boolean;
 }
@@ -45,6 +55,7 @@ export interface RecommendationResponseDto {
   contextVersion: number;
   totalCandidates: number;
   recommendations: CreatorRecommendationItemDto[];
+  provisionalRecommendations?: CreatorRecommendationItemDto[];
 }
 
 export interface RecommendationRun {

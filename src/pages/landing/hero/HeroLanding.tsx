@@ -8,9 +8,9 @@ const BG_VIDEO =
   'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261014_144105_b4b14bc7-788f-4997-86aa-ce920dc8fe96.mp4';
 
 const navLinks = [
-  { href: '#mission', label: 'About' },
-  { href: '#how', label: 'How it works' },
-  { href: '#pricing', label: 'Pricing' },
+  { href: '#tinh-nang', label: 'Tính năng' },
+  { href: '#demo-sandbox', label: 'Trải nghiệm AI' },
+  { href: '#bang-gia', label: 'Bảng giá' },
 ];
 
 export default function HeroLanding() {
@@ -42,23 +42,23 @@ export default function HeroLanding() {
             </a>
           ))}
           <Link to="/register" className="hv-btn-dark">
-            Get Started
+            Bắt đầu ngay
           </Link>
         </div>
 
         <div className="hv-nav-right">
           <Link to="/register" className="hv-auth-link">
             <UserPlus size={16} />
-            Sign Up
+            Đăng ký
           </Link>
           <Link to="/login" className="hv-auth-link">
             <LogIn size={16} />
-            Log In
+            Đăng nhập
           </Link>
           <button
             onClick={() => setMenuOpen((v) => !v)}
             className="hv-burger"
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
             aria-expanded={menuOpen}
           >
             <Menu size={20} className={`hv-burger-icon ${menuOpen ? 'out-menu' : ''}`} />
@@ -92,14 +92,14 @@ export default function HeroLanding() {
           <div className="hv-drawer-cta" style={{ transitionDelay: menuOpen ? '400ms' : '0ms' }}>
             <Link to="/register" className="hv-drawer-auth">
               <UserPlus size={16} />
-              Sign Up
+              Đăng ký
             </Link>
             <Link to="/login" className="hv-drawer-auth">
               <LogIn size={16} />
-              Log In
+              Đăng nhập
             </Link>
             <Link to="/register" className="hv-btn-dark hv-btn-drawer">
-              Get Started
+              Bắt đầu ngay
             </Link>
           </div>
         </div>
@@ -108,9 +108,9 @@ export default function HeroLanding() {
       {/* Hero copy */}
       <div className="hv-hero">
         <h1 className="hv-title">
-          Find the right creators <span className="hv-title-accent">for every<br className="hv-br" /> brand campaign</span>
+          Kết nối đúng Creator <span className="hv-title-accent">cho mọi<br className="hv-br" /> chiến dịch thương hiệu</span>
         </h1>
-        <p className="hv-sub">AI-powered influencer matching to discover, manage and measure every collaboration in one place.</p>
+        <p className="hv-sub">Hệ thống ghép đôi KOC/KOL bằng AI Four-Memory: Khám phá thông minh, quản lý phễu CRM và đo lường hiệu quả tập trung.</p>
       </div>
 
       {/* Bottom-left CTA */}
@@ -122,25 +122,24 @@ export default function HeroLanding() {
           </span>
         </div>
         <p className="hv-bl-text">
-          InfluencerMatch connects brands with the right creators using AI matching, so you can discover, manage and
-          measure influencer campaigns in one place.
+          InfluencerMatch kết nối doanh nghiệp với nhà sáng tạo nội dung phù hợp nhất thông qua thuật toán AI, giúp bạn tìm kiếm, vận hành và nghiệm thu chiến dịch trên cùng một nền tảng.
         </p>
         <div className="hv-bl-actions">
           <Link to="/register" className="hv-btn-bl">
-            Get Started
+            Bắt đầu ngay
           </Link>
-          <a href="#mission" className="hv-link-bl">
-            Learn More
+          <a href="#tinh-nang" className="hv-link-bl">
+            Xem tính năng
           </a>
         </div>
       </div>
 
       {/* Bottom-right video link */}
       <div className="hv-br-video">
-        <button className="hv-play" aria-label="Play video">
+        <button className="hv-play" aria-label="Xem video giới thiệu">
           <Play size={12} fill="#fff" color="#fff" style={{ marginLeft: 2 }} />
         </button>
-        <span className="hv-br-label">Watch demo</span>
+        <span className="hv-br-label">Xem demo giới thiệu</span>
         <span className="hv-br-time">1:35</span>
       </div>
     </section>

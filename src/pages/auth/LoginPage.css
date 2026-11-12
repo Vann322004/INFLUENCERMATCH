@@ -52,8 +52,8 @@
 .login-card-inner .luxe-input-focused,
 .login-card-inner .ant-input-affix-wrapper-focused {
   background: #FFFFFF !important;
-  border-color: #7C3AED !important;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12) !important;
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
 }
 
 .login-card-inner .luxe-input input {
@@ -108,14 +108,14 @@
 }
 
 .login-forgot-link:hover {
-  color: #4F46E5;
+  color: #1D4ED8;
   text-decoration: underline;
 }
 
 /* ── Primary Submit Button (Solid Purple with Arrow) ── */
 .luxe-primary-btn {
   height: clamp(38px, 4.2vh, 44px) !important;
-  background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%) !important;
+  background: linear-gradient(135deg, #6366F1 0%, #2563EB 100%) !important;
   border: none !important;
   border-radius: 12px !important;
   font-size: 14px !important;
@@ -222,7 +222,7 @@
 }
 
 .register-now-link:hover {
-  color: #4F46E5;
+  color: #1D4ED8;
   transform: translateX(2px);
 }
 
