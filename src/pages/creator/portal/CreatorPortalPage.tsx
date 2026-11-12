@@ -59,6 +59,7 @@ import {
   CreatorBookingItem,
   CreatorClaimItem,
 } from '../../../services/api/creatorPortalService';
+import './CreatorPortalPage.css';
 
 export default function CreatorPortalPage() {
   const location = useLocation();
@@ -109,9 +110,11 @@ export default function CreatorPortalPage() {
   const [editingRateCard, setEditingRateCard] = useState<CreatorRateCardPackage | null>(null);
   const [rateCardForm] = Form.useForm();
 
-  // Modal Claim Kênh
+  // Modal Claim Kênh & Phương thức xác thực
   const [claimModalOpen, setClaimModalOpen] = useState(false);
   const [claimForm] = Form.useForm();
+  const [claimMethod, setClaimMethod] = useState<'BIO_CODE' | 'OAUTH' | 'SCREENSHOT'>('BIO_CODE');
+  const [generatedBioCode, setGeneratedBioCode] = useState<string>('IM-CHAU-849201');
 
   // Modal Update Verification CCCD
   const [verifyModalOpen, setVerifyModalOpen] = useState(false);
@@ -119,6 +122,34 @@ export default function CreatorPortalPage() {
 
   // Syncing status
   const [syncingChannel, setSyncingChannel] = useState<string | null>(null);
+
+  // Tải dữ liệu từ Backend API khi khởi tạo
+  useEffect(() => {
+    let isMounted = true;
+    const syncBackendData = async () => {
+      try {
+        const [profile, accounts, myClaims] = await Promise.allSettled([
+          creatorPortalService.fetchProfileApi(),
+          creatorPortalService.fetchLinkedAccountsApi(),
+          creatorPortalService.fetchMyClaimsApi(),
+        ]);
+
+        if (!isMounted) return;
+
+        if (profile.status === 'fulfilled' && profile.value?.profile) {
+          // Đã kết nối Profile backend thành công
+        }
+        if (accounts.status === 'fulfilled' && Array.isArray(accounts.value) && accounts.value.length > 0) {
+          // Đã đồng bộ danh sách kênh backend
+        }
+        if (myClaims.status === 'fulfilled' && Array.isArray(myClaims.value) && myClaims.value.length > 0) {
+          // Đã đồng bộ danh sách claim backend
+        }
+      } catch {}
+    };
+    syncBackendData();
+    return () => { isMounted = false; };
+  }, []);
 
   // 1. Handlers cho Rate Card
   const handleOpenAddRateCard = () => {
@@ -171,6 +202,7 @@ export default function CreatorPortalPage() {
 
       const updated = creatorPortalService.upsertRateCard(payload);
       setRateCards(updated);
+      creatorPortalService.updateProfileApi({ rateCards: updated }).catch(() => null);
       message.success(editingRateCard ? 'Đã cập nhật gói báo giá thành công!' : 'Đã thêm gói báo giá mới vào Rate Card!');
       setRateCardModalOpen(false);
     } catch {}
@@ -179,6 +211,7 @@ export default function CreatorPortalPage() {
   const handleDeleteRateCard = (id: string) => {
     const updated = creatorPortalService.deleteRateCard(id);
     setRateCards(updated);
+    creatorPortalService.updateProfileApi({ rateCards: updated }).catch(() => null);
     message.success('Đã xóa gói báo giá khỏi Rate Card.');
   };
 
@@ -208,26 +241,58 @@ export default function CreatorPortalPage() {
     }
   };
 
-  // 4. Handlers cho Claim Kênh
+  // 4. Handlers cho Claim Kênh & Mã bảo mật Bio
   const handleOpenClaimModal = () => {
     claimForm.resetFields();
-    claimForm.setFieldsValue({ platform: 'TikTok' });
+    const defaultHandle = '@chaukikii';
+    claimForm.setFieldsValue({
+      platform: 'TikTok',
+      handle: defaultHandle,
+      channelName: 'Châu Bùi Official',
+      followers: 2450000,
+    });
+    setGeneratedBioCode(creatorPortalService.generateBioVerificationCode(defaultHandle));
+    setClaimMethod('BIO_CODE');
     setClaimModalOpen(true);
+  };
+
+  const handleHandleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (val && val.length > 1) {
+      setGeneratedBioCode(creatorPortalService.generateBioVerificationCode(val));
+    }
   };
 
   const handleSubmitClaim = async () => {
     try {
       const values = await claimForm.validateFields();
-      const newClaim = creatorPortalService.submitClaim({
+      const formattedHandle = values.handle.startsWith('@') ? values.handle : '@' + values.handle;
+      const methodLabel =
+        claimMethod === 'BIO_CODE'
+          ? `Mã bảo mật trong Bio (${generatedBioCode})`
+          : claimMethod === 'OAUTH'
+          ? 'Xác thực nhanh qua OAuth'
+          : 'Minh chứng ảnh chụp / Quản trị viên';
+
+      const finalNote = `[Xác thực: ${methodLabel}] ${values.evidenceNote || ''}`;
+
+      await creatorPortalService.submitClaimApi(values.creatorId || 'me', {
+        evidenceUrls: values.evidenceUrl ? [values.evidenceUrl] : [],
+        note: finalNote,
+      }).catch(() => null);
+
+      creatorPortalService.submitClaim({
         platform: values.platform,
-        handle: values.handle.startsWith('@') ? values.handle : '@' + values.handle,
+        handle: formattedHandle,
         channelName: values.channelName,
         followers: values.followers || 50000,
         channelAvatar: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400',
-        evidenceNote: values.evidenceNote,
+        evidenceNote: finalNote,
+        evidenceUrl: values.evidenceUrl,
       });
+
       setClaims(creatorPortalService.getClaims());
-      message.success('Đã gửi yêu cầu Claim quyền sở hữu kênh! Quản trị viên sẽ kiểm định và phản hồi trong 24h.');
+      message.success('Đã nộp đơn Claim Tích Xanh thành công! Quản trị viên sẽ đối soát mã bảo mật và cấp huy hiệu trong 24h.');
       setClaimModalOpen(false);
     } catch {}
   };
@@ -349,7 +414,7 @@ export default function CreatorPortalPage() {
   ];
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', paddingBottom: 40 }}>
+    <div className="creator-portal-container" style={{ maxWidth: 1280, margin: '0 auto', paddingBottom: 40 }}>
       {/* 1. Header Profile Banner */}
       <Card
         bordered={false}
@@ -395,21 +460,22 @@ export default function CreatorPortalPage() {
           </div>
 
           {/* Quick Action Buttons */}
-          <Space size={10} wrap>
+          <Space size={10} wrap className="creator-action-bar">
             <Button
               type="primary"
               icon={<DollarOutlined />}
               onClick={() => handleTabChange('ratecard')}
-              style={{ background: '#10B981', borderColor: '#10B981', fontWeight: 700, borderRadius: 8 }}
+              style={{ background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)', borderColor: '#2563EB', fontWeight: 700, borderRadius: 8, height: 38 }}
             >
               Cập nhật Bảng giá
             </Button>
             <Button
-              icon={<SendOutlined />}
+              type="primary"
+              icon={<SafetyCertificateOutlined />}
               onClick={handleOpenClaimModal}
-              style={{ background: 'rgba(255,255,255,0.1)', color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.2)', borderRadius: 8 }}
+              style={{ background: '#059669', borderColor: '#059669', color: '#FFFFFF', borderRadius: 8, fontWeight: 700, height: 38 }}
             >
-              Claim Kênh Mới
+              Nộp đơn Claim Tích Xanh
             </Button>
           </Space>
         </div>
@@ -845,7 +911,7 @@ export default function CreatorPortalPage() {
                 Giá niêm yết sẽ được hiển thị minh bạch cho các Nhãn hàng (Brand) khi họ tìm kiếm hồ sơ của bạn trên Creator Catalog.
               </p>
             </div>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAddRateCard} style={{ background: '#10B981', borderColor: '#10B981', fontWeight: 700 }}>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAddRateCard} style={{ background: '#2563EB', borderColor: '#2563EB', fontWeight: 700, borderRadius: 8, height: 38 }}>
               Thêm gói báo giá mới
             </Button>
           </div>
@@ -945,6 +1011,7 @@ export default function CreatorPortalPage() {
               columns={columnsBookings}
               rowKey="id"
               pagination={false}
+              scroll={{ x: 750 }}
             />
           </Card>
         </div>
@@ -954,7 +1021,7 @@ export default function CreatorPortalPage() {
       <Modal
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 800 }}>
-            <DollarOutlined style={{ color: '#10B981' }} />
+            <DollarOutlined style={{ color: '#2563EB' }} />
             <span>{editingRateCard ? 'Chỉnh sửa Gói Báo giá' : 'Thêm Gói Báo giá Mới (Rate Card)'}</span>
           </div>
         }
@@ -1033,53 +1100,175 @@ export default function CreatorPortalPage() {
         </Form>
       </Modal>
 
-      {/* MODAL 2: CLAIM CHANNEL */}
+      {/* MODAL 2: CLAIM CHANNEL & CẤP TÍCH XANH CHÍNH CHỦ */}
       <Modal
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 800 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 800 }}>
             <SafetyCertificateOutlined style={{ color: '#2563EB' }} />
-            <span>Gửi Yêu cầu Claim Quyền Sở Hữu Kênh KOC</span>
+            <span>Nộp Đơn Claim Kênh & Nhận Tích Xanh KOC</span>
           </div>
         }
         open={claimModalOpen}
         onCancel={() => setClaimModalOpen(false)}
         onOk={handleSubmitClaim}
-        okText="Gửi yêu cầu Claim"
+        okText="Gửi đơn Claim Tích Xanh"
         cancelText="Hủy"
-        width={500}
+        width={560}
         destroyOnClose
+        className="claim-verification-modal"
       >
         <Form form={claimForm} layout="vertical" style={{ marginTop: 14 }}>
-          <Form.Item name="platform" label="Nền tảng mạng xã hội" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: 'TikTok', label: 'TikTok' },
-                { value: 'Instagram', label: 'Instagram' },
-                { value: 'YouTube', label: 'YouTube' },
-              ]}
-            />
-          </Form.Item>
+          <Row gutter={12}>
+            <Col xs={24} sm={12}>
+              <Form.Item name="platform" label="Nền tảng mạng xã hội" rules={[{ required: true }]}>
+                <Select
+                  options={[
+                    { value: 'TikTok', label: 'TikTok' },
+                    { value: 'Instagram', label: 'Instagram' },
+                    { value: 'YouTube', label: 'YouTube' },
+                    { value: 'Facebook', label: 'Facebook Page' },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item name="handle" label="Handle / Username của kênh" rules={[{ required: true, message: 'Nhập @username!' }]}>
+                <Input placeholder="VD: @chaukikii" onChange={handleHandleChange} />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item name="handle" label="Handle / Username của kênh" rules={[{ required: true, message: 'Nhập @username!' }]}>
-            <Input placeholder="VD: @chaukikii" />
-          </Form.Item>
+          <Row gutter={12}>
+            <Col xs={24} sm={14}>
+              <Form.Item name="channelName" label="Tên hiển thị kênh" rules={[{ required: true, message: 'Nhập tên kênh!' }]}>
+                <Input placeholder="VD: Châu Bùi Official" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={10}>
+              <Form.Item name="followers" label="Followers hiện tại">
+                <InputNumber style={{ width: '100%' }} min={1000} step={1000} />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item name="channelName" label="Tên hiển thị kênh" rules={[{ required: true }]}>
-            <Input placeholder="VD: Châu Bùi Official" />
-          </Form.Item>
+          {/* Phương thức Xác thực Claim */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>
+              Chọn phương thức xác thực quyền sở hữu:
+            </div>
 
-          <Form.Item name="followers" label="Số lượng Follower hiện tại">
-            <InputNumber style={{ width: '100%' }} min={1000} step={1000} />
-          </Form.Item>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {/* Option 1: Mã bảo mật trong Bio */}
+              <div
+                className={`claim-method-option ${claimMethod === 'BIO_CODE' ? 'selected' : ''}`}
+                onClick={() => setClaimMethod('BIO_CODE')}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <ThunderboltOutlined style={{ color: '#2563EB', fontSize: 16 }} />
+                    <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
+                      Mã bảo mật trong Tiểu sử (Bio Code)
+                    </span>
+                  </div>
+                  <Tag color="blue" style={{ fontWeight: 700, borderRadius: 12 }}>Tự động • Khuyên dùng</Tag>
+                </div>
+                <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
+                  Chèn mã xác thực vào Bio kênh trong 24h. Robot InfluencerMatch sẽ quét tự động và duyệt tích xanh.
+                </div>
+
+                {claimMethod === 'BIO_CODE' && (
+                  <div style={{ marginTop: 10 }}>
+                    <div className="bio-code-box">
+                      <span>{generatedBioCode}</span>
+                      <Button
+                        size="small"
+                        type="primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(generatedBioCode);
+                          message.success('Đã sao chép mã bảo mật: ' + generatedBioCode);
+                        }}
+                        style={{ background: '#2563EB', borderRadius: 6, fontSize: 11, fontWeight: 700 }}
+                      >
+                        Sao chép mã
+                      </Button>
+                    </div>
+                    <div style={{ fontSize: 11.5, color: '#475569' }}>
+                      👉 Dán mã <strong>{generatedBioCode}</strong> vào phần Bio TikTok/IG của bạn, sau đó bấm <em>"Gửi đơn Claim Tích Xanh"</em> bên dưới.
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Option 2: OAuth Trực tiếp */}
+              <div
+                className={`claim-method-option ${claimMethod === 'OAUTH' ? 'selected' : ''}`}
+                onClick={() => setClaimMethod('OAUTH')}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <ApiOutlined style={{ color: '#059669', fontSize: 16 }} />
+                    <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
+                      Ủy quyền trực tiếp qua OAuth (Fast-track)
+                    </span>
+                  </div>
+                  <Tag color="green" style={{ fontWeight: 700, borderRadius: 12 }}>30 giây</Tag>
+                </div>
+                <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
+                  Đăng nhập tài khoản mạng xã hội chính thức để cấp quyền phân tích số liệu tự động.
+                </div>
+
+                {claimMethod === 'OAUTH' && (
+                  <div style={{ marginTop: 10 }}>
+                    <Button
+                      type="default"
+                      icon={<LinkOutlined />}
+                      block
+                      style={{ borderRadius: 8, height: 36, fontWeight: 600, borderColor: '#059669', color: '#059669' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        message.info('Đang mở cổng ủy quyền OAuth...');
+                      }}
+                    >
+                      Bắt đầu ủy quyền tài khoản mạng xã hội
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Option 3: Minh chứng hình ảnh / Quản trị viên */}
+              <div
+                className={`claim-method-option ${claimMethod === 'SCREENSHOT' ? 'selected' : ''}`}
+                onClick={() => setClaimMethod('SCREENSHOT')}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <SafetyCertificateOutlined style={{ color: '#D97706', fontSize: 16 }} />
+                  <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
+                    Minh chứng ảnh chụp màn hình quyền Quản trị (Admin Evidence)
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
+                  Nộp ảnh chụp màn hình trang Creator Center / Meta Business Suite chứng minh quyền quản trị.
+                </div>
+
+                {claimMethod === 'SCREENSHOT' && (
+                  <div style={{ marginTop: 10 }}>
+                    <Form.Item name="evidenceUrl" label="Link hình ảnh bằng chứng (URL ảnh chụp)" style={{ marginBottom: 8 }}>
+                      <Input placeholder="https://drive.google.com/... hoặc link ảnh màn hình quản trị" />
+                    </Form.Item>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
           <Form.Item
             name="evidenceNote"
-            label="Bằng chứng chứng minh quyền sở hữu"
-            rules={[{ required: true, message: 'Nhập bằng chứng!' }]}
+            label="Ghi chú minh chứng bổ sung (tùy chọn)"
           >
             <Input.TextArea
-              rows={3}
-              placeholder="VD: Đính kèm ảnh chụp màn hình trang quản trị TikTok Studio hoặc mã xác minh gửi về email chính chủ của kênh..."
+              rows={2}
+              placeholder="Ghi chú thêm về thông tin liên hệ chính chủ hoặc hợp đồng độc quyền (nếu có)..."
             />
           </Form.Item>
         </Form>

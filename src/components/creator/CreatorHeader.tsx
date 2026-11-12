@@ -12,8 +12,12 @@ import {
   CalendarOutlined,
   DollarOutlined,
   SafetyCertificateOutlined,
+  MenuOutlined,
+  LineChartOutlined,
+  ApiOutlined,
 } from '@ant-design/icons';
 import { authService } from '../../services/api/authService';
+import '../../pages/creator/portal/CreatorPortalPage.css';
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -25,6 +29,7 @@ interface CreatorHeaderProps {
 export default function CreatorHeader({ title }: CreatorHeaderProps) {
   const navigate = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [notifications, setNotifications] = useState([
     {
       id: 'nt_1',
@@ -78,10 +83,18 @@ export default function CreatorHeader({ title }: CreatorHeaderProps) {
     <>
       <Header className="app-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A', letterSpacing: -0.2 }}>
+          <button
+            type="button"
+            className="creator-mobile-hamburger"
+            onClick={() => setMobileDrawerOpen(true)}
+            aria-label="Mở menu KOC"
+          >
+            <MenuOutlined />
+          </button>
+          <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A', letterSpacing: -0.2 }} className="creator-header-title">
             {title || 'Creator Portal — Không gian Sáng tạo & Booking'}
           </div>
-          <Tag color="green" style={{ fontWeight: 700, borderRadius: 20, padding: '1px 10px', fontSize: 11, border: 'none', background: '#ECFDF5', color: '#059669' }}>
+          <Tag color="green" className="creator-header-verified-tag" style={{ fontWeight: 700, borderRadius: 20, padding: '1px 10px', fontSize: 11, border: 'none', background: '#ECFDF5', color: '#059669' }}>
             <CheckCircleFilled style={{ marginRight: 4 }} />
             VERIFIED CREATOR
           </Tag>
@@ -180,6 +193,111 @@ export default function CreatorHeader({ title }: CreatorHeaderProps) {
             </List.Item>
           )}
         />
+      </Drawer>
+
+      {/* Mobile Navigation Drawer for KOC */}
+      <Drawer
+        placement="left"
+        open={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        width={290}
+        styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column', height: '100%' } }}
+        className="creator-mobile-drawer"
+      >
+        {/* Drawer Header Brand */}
+        <div style={{ padding: '18px 16px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
+              borderRadius: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#FFFFFF',
+              fontSize: 18,
+            }}
+          >
+            <SafetyCertificateOutlined />
+          </div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A', lineHeight: 1.2 }}>
+              CREATOR PORTAL
+            </div>
+            <div style={{ fontSize: 11, color: '#2563EB', fontWeight: 600 }}>
+              InfluencerMatch KOC
+            </div>
+          </div>
+        </div>
+
+        {/* 4 Core KOC Navigation Links */}
+        <div style={{ padding: '14px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {[
+            { key: 'dashboard', label: 'Tổng quan', path: '/creator/dashboard', icon: <LineChartOutlined /> },
+            { key: 'rate-card', label: 'Bảng giá Rate Card', path: '/creator/rate-card', icon: <DollarOutlined /> },
+            { key: 'social-accounts', label: 'Kênh liên kết & Claim', path: '/creator/social-accounts', icon: <ApiOutlined /> },
+            { key: 'bookings', label: 'Lời mời hợp tác', path: '/creator/bookings', icon: <CalendarOutlined /> },
+          ].map((item) => (
+            <div
+              key={item.key}
+              onClick={() => {
+                navigate(item.path);
+                setMobileDrawerOpen(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 14px',
+                borderRadius: 10,
+                cursor: 'pointer',
+                fontSize: 14,
+                fontWeight: 600,
+                color: location.pathname.includes(item.key) ? '#1D4ED8' : '#334155',
+                background: location.pathname.includes(item.key) ? '#EFF6FF' : 'transparent',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span style={{ fontSize: 18, color: location.pathname.includes(item.key) ? '#2563EB' : '#64748B' }}>
+                {item.icon}
+              </span>
+              <span>{item.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Drawer Footer User Profile */}
+        <div style={{ padding: '14px 16px', borderTop: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <Avatar
+              size={36}
+              src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&auto=format&fit=crop&q=80"
+              style={{ border: '2px solid #2563EB' }}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {currentUser.fullName || 'Châu Bùi'}
+              </div>
+              <div style={{ fontSize: 11, color: '#059669', fontWeight: 600 }}>
+                KOC Verified • Level 5
+              </div>
+            </div>
+          </div>
+
+          <Button
+            danger
+            block
+            icon={<LogoutOutlined />}
+            onClick={() => {
+              setMobileDrawerOpen(false);
+              handleLogout();
+            }}
+            style={{ borderRadius: 8, height: 36, fontWeight: 600 }}
+          >
+            Đăng xuất
+          </Button>
+        </div>
       </Drawer>
     </>
   );

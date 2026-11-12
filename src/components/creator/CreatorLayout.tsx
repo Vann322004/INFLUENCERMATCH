@@ -17,9 +17,9 @@ export default function CreatorLayout({ pageTitle }: CreatorLayoutProps) {
       <Layout style={{ background: '#F8FAFC', height: '100vh', overflow: 'hidden' }}>
         <CreatorHeader title={pageTitle} />
         <Content
+          className="creator-content-layout"
           style={{
             background: '#F8FAFC',
-            padding: '20px 28px',
             overflowY: 'auto',
             boxSizing: 'border-box',
           }}

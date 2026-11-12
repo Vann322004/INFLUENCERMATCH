@@ -66,7 +66,7 @@ export default function CreatorSidebar() {
       width={240}
       collapsedWidth={68}
       collapsed={collapsed}
-      className="app-sider"
+      className="app-sider creator-desktop-sidebar"
       style={{ position: 'sticky', top: 0, height: '100vh' }}
     >
       {/* Logo + Brand */}

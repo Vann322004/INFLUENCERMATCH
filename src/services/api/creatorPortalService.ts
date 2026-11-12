@@ -476,4 +476,71 @@ export const creatorPortalService = {
     } catch {}
     return newClaim;
   },
+
+  /** 7. Sinh mã bảo mật Bio ngẫu nhiên cho Claim */
+  generateBioVerificationCode(handle: string): string {
+    const cleanHandle = (handle || 'koc').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 4);
+    const rand = Math.floor(100000 + Math.random() * 900000);
+    return `IM-${cleanHandle}-${rand}`;
+  },
+
+  /** 8. Backend API: Lấy thông tin Profile (GET /creators/portal/profile) */
+  async fetchProfileApi(): Promise<any> {
+    try {
+      const response = await apiClient.get('/creators/portal/profile');
+      return response.data?.data || response.data;
+    } catch (err) {
+      console.warn('[creatorPortalService.fetchProfileApi] API error or unauthorized:', err);
+      return null;
+    }
+  },
+
+  /** 8b. Backend API: Cập nhật Profile & Rate Card (PATCH /creators/portal/profile) */
+  async updateProfileApi(data: any): Promise<any> {
+    try {
+      const response = await apiClient.patch('/creators/portal/profile', data, {
+        headers: { 'If-Match': '*' },
+      });
+      return response.data?.data || response.data;
+    } catch (err) {
+      console.warn('[creatorPortalService.updateProfileApi] API error or unauthorized:', err);
+      return null;
+    }
+  },
+
+  /** 9. Backend API: Lấy danh sách kênh mạng xã hội đã liên kết (GET /creators/portal/accounts) */
+  async fetchLinkedAccountsApi(): Promise<any[]> {
+    try {
+      const response = await apiClient.get('/creators/portal/accounts');
+      const items = response.data?.data || response.data || [];
+      return Array.isArray(items) ? items : [];
+    } catch (err) {
+      console.warn('[creatorPortalService.fetchLinkedAccountsApi] API error or unauthorized:', err);
+      return [];
+    }
+  },
+
+  /** 10. Backend API: Nộp đơn Claim quyền sở hữu (POST /creators/{id}/claim) */
+  async submitClaimApi(creatorId: string, payload: { evidenceUrls: string[]; note: string }): Promise<any> {
+    try {
+      const response = await apiClient.post(`/creators/${creatorId}/claim`, payload);
+      return response.data?.data || response.data;
+    } catch (err) {
+      console.warn('[creatorPortalService.submitClaimApi] API error or unauthorized:', err);
+      return null;
+    }
+  },
+
+  /** 11. Backend API: Lấy danh sách Claim của tôi (GET /creator-claims/me) */
+  async fetchMyClaimsApi(): Promise<any[]> {
+    try {
+      const response = await apiClient.get('/creator-claims/me');
+      const data = response.data?.data || response.data;
+      const items = data?.content || data?.items || (Array.isArray(data) ? data : []);
+      return items;
+    } catch (err) {
+      console.warn('[creatorPortalService.fetchMyClaimsApi] API error or unauthorized:', err);
+      return [];
+    }
+  },
 };

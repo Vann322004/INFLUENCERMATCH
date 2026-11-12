@@ -1,0 +1,165 @@
+/* CreatorPortalPage.css - Mobile Responsive & Dark Slate / Royal Blue Style */
+
+/* Base Layout & Padding */
+.creator-content-layout {
+  padding: 20px 28px;
+}
+
+.creator-portal-container {
+  padding: 10px 4px;
+  box-sizing: border-box;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Header & Hamburger */
+.creator-mobile-hamburger {
+  display: none !important;
+}
+
+.creator-desktop-sidebar {
+  display: block;
+}
+
+/* Stat Card */
+.creator-stat-card {
+  border-radius: 12px !important;
+  border: 1px solid #E2E8F0 !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.2s ease;
+}
+
+.creator-stat-card:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+  transform: translateY(-2px);
+}
+
+/* Rate Card Package Card */
+.rate-card-pkg-card {
+  border-radius: 14px !important;
+  border: 1.5px solid #E2E8F0 !important;
+  background: #FFFFFF !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.rate-card-pkg-card:hover {
+  border-color: #2563EB !important;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12) !important;
+  transform: translateY(-3px);
+}
+
+.rate-card-pkg-card.popular {
+  border-color: #2563EB !important;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12) !important;
+}
+
+.rate-card-popular-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 20px;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+}
+
+/* Claim Verification Modal Options */
+.claim-method-option {
+  border: 1.5px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 10px;
+  background: #FFFFFF;
+}
+
+.claim-method-option:hover {
+  border-color: #93C5FD;
+  background: #F8FAFC;
+}
+
+.claim-method-option.selected {
+  border-color: #2563EB;
+  background: #EFF6FF;
+}
+
+.bio-code-box {
+  background: #0F172A;
+  color: #38BDF8;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0;
+}
+
+/* Responsive Media Queries for Mobile Screens */
+@media (max-width: 991px) {
+  .creator-desktop-sidebar {
+    display: none !important;
+  }
+
+  .creator-mobile-hamburger {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #F8FAFC;
+    border: 1px solid #CBD5E1;
+    color: #0F172A;
+    font-size: 18px;
+    cursor: pointer;
+    margin-right: 6px;
+  }
+
+  .creator-portal-container {
+    padding: 12px 10px !important;
+  }
+
+  .creator-header-verified-tag {
+    display: none !important;
+  }
+
+  .creator-tab-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .creator-tab-header-btn {
+    width: 100% !important;
+  }
+
+  .rate-card-grid .ant-col {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+
+  .creator-claim-item-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .creator-claim-item-right {
+    width: 100% !important;
+    text-align: left !important;
+    border-top: 1px solid #F1F5F9;
+    padding-top: 8px;
+  }
+}
