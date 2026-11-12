@@ -1,45 +1,8 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { ApiProblemDetails } from '../types/api/common.types';
-
-export const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'access_token',
-  REFRESH_TOKEN: 'refresh_token',
-  USER: 'influencermatch_user',
-};
-
-// Token helper utilities
-export const getAccessToken = (): string | null => {
-  return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-};
-
-export const getRefreshToken = (): string | null => {
-  return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-};
-
-export const setAuthSession = (accessToken: string, refreshToken?: string, user?: unknown) => {
-  if (accessToken) localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-  if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-  if (user) localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-};
-
-export const clearAuthSession = () => {
-  localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-  localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-  localStorage.removeItem(STORAGE_KEYS.USER);
-  localStorage.removeItem('influencermatch_brand_id');
-  try {
-    sessionStorage.clear();
-  } catch {}
-};
-
-export const getStoredUser = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.USER);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-};
+import axios from 'axios';
+import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import type { ApiProblemDetails } from '../types/api/common.types';
+import { getAccessToken, getStoredUser, getAuthSessionId, setAuthSession, clearAuthSession, ownsRefreshCookie, withAuthCookieLock, consumeAccountLogout } from './authSession';
+export { STORAGE_KEYS, getAccessToken, getRefreshToken, getStoredUser, getAuthSessionId, setAuthSession, clearAuthSession } from './authSession';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
@@ -52,27 +15,52 @@ export const apiClient = axios.create({
   },
 });
 
-// Flag to avoid infinite loops during refresh
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (value?: unknown) => void;
-  reject: (reason?: unknown) => void;
-}> = [];
+export const cookieAuthClient = axios.create({ baseURL: BASE_URL, timeout: 30000, withCredentials: true, withXSRFToken: true });
+type SessionRequest = InternalAxiosRequestConfig & { _retry?: boolean; _sessionId?: string };
+const staleSession = () => new axios.CanceledError('Phiên đăng nhập đã thay đổi.');
+const refreshes = new Map<string, Promise<string>>();
 
-const processQueue = (error: unknown, token: string | null = null) => {
-  failedQueue.forEach((promise) => {
-    if (error) {
-      promise.reject(error);
-    } else {
-      promise.resolve(token);
+const refreshSession = (sessionId: string): Promise<string> => {
+  const pending = refreshes.get(sessionId);
+  if (pending) return pending;
+  const user = getStoredUser();
+  const expectedUserId = user?.id || user?.userId || user?.email;
+  const promise = withAuthCookieLock(async () => {
+    if (getAuthSessionId() !== sessionId) throw staleSession();
+    // The refresh cookie is shared by the browser. Never use another tab's
+    // cookie to replace this tab's identity.
+    if (!ownsRefreshCookie()) throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại tài khoản của tab này.');
+    await cookieAuthClient.get('/auth/csrf');
+    if (getAuthSessionId() !== sessionId) throw staleSession();
+    const { data } = await cookieAuthClient.post('/auth/refresh');
+    if (getAuthSessionId() !== sessionId) throw staleSession();
+    const refreshed = data?.data ?? data;
+    const refreshedId = refreshed.user?.id || refreshed.user?.userId || refreshed.user?.email;
+    if (!refreshed.accessToken || !expectedUserId || refreshedId !== expectedUserId) {
+      throw new Error('Phiên đăng nhập không khớp tài khoản hiện tại. Vui lòng đăng nhập lại.');
     }
-  });
-  failedQueue = [];
+    setAuthSession(refreshed.accessToken, refreshed.refreshToken, { ...user, ...refreshed.user });
+    return refreshed.accessToken;
+  }).catch(error => {
+    if (getAuthSessionId() === sessionId) {
+      clearAuthSession();
+      window.location.assign('/login');
+    }
+    throw error;
+  }).finally(() => { refreshes.delete(sessionId); });
+  refreshes.set(sessionId, promise);
+  return promise;
 };
 
 // ── Request Interceptor ──────────────────────────────
 apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  (config: SessionRequest) => {
+    if (consumeAccountLogout()) {
+      window.location.assign('/login');
+      throw staleSession();
+    }
+    if (config._sessionId && config._sessionId !== getAuthSessionId()) throw staleSession();
+    config._sessionId = getAuthSessionId();
     const token = getAccessToken();
     if (token && !token.startsWith('mock_') && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -84,9 +72,18 @@ apiClient.interceptors.request.use(
 
 // ── Response Interceptor ─────────────────────────────
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (consumeAccountLogout()) {
+      window.location.assign('/login');
+      throw staleSession();
+    }
+    const config = response.config as SessionRequest;
+    if (config._sessionId !== getAuthSessionId()) throw staleSession();
+    return response;
+  },
   async (error: AxiosError<ApiProblemDetails>) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as SessionRequest | undefined;
+    if (originalRequest?._sessionId && originalRequest._sessionId !== getAuthSessionId()) throw staleSession();
 
     // Không xử lý refresh hoặc tự động logout nếu đang ở chế độ mock demo token
     const currentToken = getAccessToken();
@@ -99,56 +96,18 @@ apiClient.interceptors.response.use(
       // Do not attempt refresh if the failed request was already login/refresh
       if (
         originalRequest.url?.includes('/auth/login') ||
-        originalRequest.url?.includes('/auth/refresh')
+        originalRequest.url?.includes('/auth/refresh') ||
+        originalRequest.url?.includes('/auth/logout') ||
+        originalRequest.url?.includes('/auth/google/')
       ) {
         return Promise.reject(error);
       }
 
-      const refreshToken = getRefreshToken();
-      if (!refreshToken || refreshToken.startsWith('mock_')) {
-        clearAuthSession();
-        return Promise.reject(error);
-      }
-
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            if (originalRequest.headers && token) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-            }
-            return apiClient(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
-
+      if (!currentToken || !originalRequest._sessionId) return Promise.reject(error);
       originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        const { data } = await axios.post(`${BASE_URL}/auth/refresh`, {
-          refreshToken,
-        });
-
-        const newAccessToken = data?.data?.accessToken || data?.accessToken;
-        const newRefreshToken = data?.data?.refreshToken || data?.refreshToken;
-
-        setAuthSession(newAccessToken, newRefreshToken);
-        processQueue(null, newAccessToken);
-
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        }
-        return apiClient(originalRequest);
-      } catch (refreshErr) {
-        processQueue(refreshErr, null);
-        clearAuthSession();
-        window.location.href = '/login';
-        return Promise.reject(refreshErr);
-      } finally {
-        isRefreshing = false;
-      }
+      const token = await refreshSession(originalRequest._sessionId);
+      originalRequest.headers.Authorization = `Bearer ${token}`;
+      return apiClient(originalRequest);
     }
 
     return Promise.reject(error);

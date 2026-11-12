@@ -47,14 +47,14 @@ import DataQualityPage from './pages/admin/quality/DataQualityPage';
 import CreatorLayout from './components/creator/CreatorLayout';
 import CreatorProtectedRoute from './components/creator/CreatorProtectedRoute';
 import CreatorPortalPage from './pages/creator/portal/CreatorPortalPage';
+import { useAccountLogoutSync } from './hooks/useAccountLogoutSync';
 
-import { useMultiTabSessionSync } from './hooks/useMultiTabSessionSync';
 
 const { Content } = Layout;
 
-// Đồng bộ trạng thái đăng nhập giữa các tab và tự động làm sạch UUID trên thanh URL
+// Đồng bộ đăng xuất cùng tài khoản và làm sạch UUID trên thanh URL.
 function SessionSyncHandler() {
-  useMultiTabSessionSync();
+  useAccountLogoutSync();
 
   useEffect(() => {
     try {

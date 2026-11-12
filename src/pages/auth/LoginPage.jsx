@@ -6,7 +6,8 @@ import { LABELS } from '../../constants/labels';
 import { ROUTES } from '../../constants/routes';
 import { authService } from '../../services/api/authService';
 import { brandService } from '../../services/api/brandService';
-import { getErrorMessage, setAuthSession } from '../../services/apiClient';
+import { getErrorMessage, setAuthSession, clearAuthSession, getAuthSessionId } from '../../services/apiClient';
+import { claimRefreshCookie } from '../../services/authSession';
 import './LoginPage.css';
 
 export default function LoginPage() {
@@ -43,7 +44,10 @@ export default function LoginPage() {
         .finally(() => setLoading(false));
     } else if (tokenParam) {
       const refreshTokenParam = params.get('refreshToken') || '';
+      clearAuthSession();
       setAuthSession(tokenParam, refreshTokenParam);
+      claimRefreshCookie();
+      const sessionId = getAuthSessionId();
       window.history.replaceState({}, '', window.location.pathname);
       authService
         .getMe()
@@ -52,12 +56,16 @@ export default function LoginPage() {
           await redirectByRole(user);
         })
         .catch(() => {
-          navigate('/dashboard');
+          if (getAuthSessionId() !== sessionId) return;
+          clearAuthSession();
+          message.error('Không xác thực được tài khoản. Vui lòng đăng nhập lại.');
+          navigate('/login');
         });
     }
   }, []);
 
   const redirectByRole = async (user) => {
+    const sessionId = getAuthSessionId();
     if (user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'DATA_MANAGER')) {
       navigate('/admin/dashboard');
     } else if (user && (user.role === 'CREATOR' || user.role === 'creator')) {
@@ -66,6 +74,7 @@ export default function LoginPage() {
       // Role BRAND / SME: Kiểm tra xem thương hiệu đã cập nhật hồ sơ lần đầu chưa
       try {
         const brand = await brandService.getMyBrand(true);
+        if (getAuthSessionId() !== sessionId) return;
         // Nếu chưa có hồ sơ (null/404) hoặc chưa hoàn thiện thông tin (chưa có tên thương hiệu hoặc ngành hàng)
         const hasCompletedProfile = Boolean(brand && (brand.businessName?.trim() || brand.industry?.trim()));
         if (!hasCompletedProfile) {
@@ -74,6 +83,7 @@ export default function LoginPage() {
           return;
         }
       } catch (err) {
+        if (getAuthSessionId() !== sessionId) return;
         console.warn('Lỗi kiểm tra hồ sơ brand, chuyển hướng trang tạo hồ sơ:', err);
         navigate('/brand-profile');
         return;

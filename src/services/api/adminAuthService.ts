@@ -22,7 +22,7 @@ export const adminAuthService = {
   },
 
   logout: () => {
-    authService.logout();
+    return authService.logout();
   },
 
   isAuthenticated: () => {

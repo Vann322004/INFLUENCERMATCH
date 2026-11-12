@@ -1,6 +1,7 @@
-import { apiClient, setAuthSession, clearAuthSession, getStoredUser, getAccessToken, getRefreshToken } from '../apiClient';
-import { ApiResponse } from '../../types/api/common.types';
-import {
+import { apiClient, cookieAuthClient, setAuthSession, clearAuthSession, getStoredUser, getAccessToken, getAuthSessionId } from '../apiClient';
+import { claimRefreshCookie, ownsRefreshCookie, hasRefreshCookieOwner, withAuthCookieLock, publishAccountLogout } from '../authSession';
+import type { ApiResponse } from '../../types/api/common.types';
+import type {
   LoginRequest,
   LoginResponse,
   RegisterRequest,
@@ -10,6 +11,18 @@ import {
 import { clearBrandCache } from './campaignService';
 import { brandService } from './brandService';
 
+async function requestLogin(path: string, payload: unknown, sessionId: string) {
+  return withAuthCookieLock(async () => {
+    if (getAuthSessionId() !== sessionId) throw new Error('Yêu cầu đăng nhập đã được thay thế.');
+    await cookieAuthClient.get('/auth/csrf');
+    if (getAuthSessionId() !== sessionId) throw new Error('Yêu cầu đăng nhập đã được thay thế.');
+    const response = await apiClient.post<ApiResponse<LoginResponse>>(path, payload);
+    if (getAuthSessionId() !== sessionId) throw new Error('Yêu cầu đăng nhập đã được thay thế.');
+    claimRefreshCookie();
+    return response;
+  });
+}
+
 export const authService = {
   /**
    * Đăng nhập người dùng bằng email và mật khẩu
@@ -18,9 +31,11 @@ export const authService = {
     clearAuthSession();
     clearBrandCache();
     brandService.clearBrandCache();
+    const sessionId = getAuthSessionId();
     const email = payload.email?.toLowerCase().trim();
     try {
-      const response = await apiClient.post<ApiResponse<LoginResponse>>('/auth/login', payload);
+      const response = await requestLogin('/auth/login', payload, sessionId);
+      if (getAuthSessionId() !== sessionId) throw new Error('Yêu cầu đăng nhập đã được thay thế.');
       const loginData = (response.data as any)?.data ?? response.data;
 
       // Lưu session token và thông tin user
@@ -28,6 +43,7 @@ export const authService = {
 
       return loginData;
     } catch (error) {
+      if (getAuthSessionId() !== sessionId) throw error;
       // Demo fallback nếu tài khoản demo chưa có trên Backend Database
       if (email === 'manager@influencermatch.vn' && payload.password === 'manager123') {
         const mockUser: UserProfile = {
@@ -101,6 +117,7 @@ export const authService = {
    * Lấy thông tin chi tiết của người dùng hiện tại từ backend
    */
   async getMe(): Promise<UserProfileResponse> {
+    const sessionId = getAuthSessionId();
     const stored = getStoredUser();
     if (getAccessToken()?.startsWith('mock_') && stored) {
       return stored as UserProfileResponse;
@@ -108,12 +125,15 @@ export const authService = {
     try {
       const response = await apiClient.get<ApiResponse<UserProfileResponse>>('/auth/me');
       const userProfile = response.data.data;
+      if (getAuthSessionId() !== sessionId) throw new Error('Phiên đăng nhập đã thay đổi.');
+      if (stored?.id && userProfile.id !== stored.id) throw new Error('Thông tin tài khoản không khớp phiên đăng nhập.');
 
       // Cập nhật lại thông tin user trong local storage nếu có thay đổi
-      setAuthSession(getAccessToken() || '', undefined, { ...stored, ...userProfile });
+      setAuthSession(getAccessToken() || '', undefined, { ...getStoredUser(), ...userProfile });
 
       return userProfile;
     } catch (err) {
+      if (getAuthSessionId() !== sessionId) throw err;
       if (stored) return stored as UserProfileResponse;
       throw err;
     }
@@ -126,9 +146,11 @@ export const authService = {
     clearAuthSession();
     clearBrandCache();
     brandService.clearBrandCache();
-    const response = await apiClient.post<ApiResponse<LoginResponse>>('/auth/google/exchange', {
+    const sessionId = getAuthSessionId();
+    const response = await requestLogin('/auth/google/exchange', {
       code,
-    });
+    }, sessionId);
+    if (getAuthSessionId() !== sessionId) throw new Error('Yêu cầu đăng nhập đã được thay thế.');
     const loginData = (response.data as any)?.data ?? response.data;
     setAuthSession(loginData.accessToken, loginData.refreshToken, loginData.user);
     return loginData;
@@ -138,21 +160,28 @@ export const authService = {
    * Đăng xuất người dùng
    */
   async logout(): Promise<void> {
+    const revokeCookie = ownsRefreshCookie() && !getAccessToken()?.startsWith('mock_');
+    publishAccountLogout();
+    // Clear immediately, before navigation or any pending network response.
+    clearAuthSession();
+    clearBrandCache();
+    brandService.clearBrandCache();
+    const loggedOutSessionId = getAuthSessionId();
+    if (!revokeCookie) return;
     try {
-      const refreshToken = getRefreshToken();
-      await apiClient.post('/auth/logout', {
-        refreshToken: refreshToken || '',
+      await withAuthCookieLock(async () => {
+        if (getAuthSessionId() !== loggedOutSessionId || hasRefreshCookieOwner()) return;
+        await cookieAuthClient.get('/auth/csrf');
+        if (getAuthSessionId() !== loggedOutSessionId || hasRefreshCookieOwner()) return;
+        await cookieAuthClient.post('/auth/logout');
       });
     } catch {
       // Bỏ qua lỗi backend khi logout để đảm bảo client luôn được dọn dẹp
-    } finally {
-      clearAuthSession();
-      clearBrandCache();
     }
   },
 
   /**
-   * Lấy thông tin user hiện tại đang được lưu trong LocalStorage
+   * Lấy thông tin tài khoản của phiên đăng nhập trong tab hiện tại
    */
   getCurrentUser(): UserProfile | null {
     return getStoredUser() as UserProfile | null;
