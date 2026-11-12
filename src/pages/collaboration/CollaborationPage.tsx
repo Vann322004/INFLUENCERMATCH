@@ -62,6 +62,46 @@ const REALISTIC_PORTRAITS = [
   'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&auto=format&fit=crop&q=80',
 ];
 
+const KNOWN_CREATOR_AVATARS: Record<string, string> = {
+  'huy tiện ích': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+  'kh coffee': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+  'woang doanh': 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&auto=format&fit=crop&q=80',
+  'linh nguyễn': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+  'minh hoàng': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+  'thảo vy': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
+  'bác sĩ ngọc': 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&auto=format&fit=crop&q=80',
+  'mai lan': 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&auto=format&fit=crop&q=80',
+};
+
+const isCartoonOrInvalidAvatar = (url?: string) => {
+  if (!url) return true;
+  return (
+    url.includes('dicebear') ||
+    url.includes('avataaars') ||
+    url.includes('placeholder') ||
+    !url.startsWith('http')
+  );
+};
+
+const formatDeliverablesSummary = (notes?: string, deliverableField?: string) => {
+  if (deliverableField && deliverableField.trim()) return deliverableField.trim();
+  if (!notes || !notes.trim()) return '1 Video TikTok/Reels Review + 1 Story nghiệm thu';
+  const trimmed = notes.trim();
+  if (
+    trimmed.startsWith('Chào ') ||
+    trimmed.startsWith('Kính gửi ') ||
+    trimmed.includes('Thương hiệu chúng tôi') ||
+    trimmed.includes('Lời mời hợp tác') ||
+    trimmed.length > 70
+  ) {
+    if (trimmed.toLowerCase().includes('video') || trimmed.toLowerCase().includes('clip')) {
+      return '1 Video TikTok/Reels Review chính hãng';
+    }
+    return '1 Video trải nghiệm sản phẩm + 1 Story đính kèm Link';
+  }
+  return trimmed;
+};
+
 const hashKey = (str: string) => {
   let h = 0;
   for (let i = 0; i < str.length; i++) {
@@ -493,15 +533,32 @@ export default function CollaborationPage() {
       try {
         setLoadingPartners(true);
 
-        // 1. Tải trước từ điển Avatar Creator từ API / Cache
+        // 1. Tải trước từ điển Avatar Creator từ API / Cache / Shortlist
         const creatorMap: Record<string, string> = {};
         try {
           const allCreators = await creatorService.getCreators();
           if (Array.isArray(allCreators)) {
             allCreators.forEach((c) => {
-              if (c.id && c.avatarUrl) creatorMap[c.id] = c.avatarUrl;
-              if (c.displayName && c.avatarUrl) creatorMap[c.displayName.toLowerCase().trim()] = c.avatarUrl;
-              if (c.userName && c.avatarUrl) creatorMap[c.userName.toLowerCase().trim()] = c.avatarUrl;
+              if (c.id && c.avatarUrl && !isCartoonOrInvalidAvatar(c.avatarUrl)) creatorMap[c.id] = c.avatarUrl;
+              if (c.displayName && c.avatarUrl && !isCartoonOrInvalidAvatar(c.avatarUrl)) creatorMap[c.displayName.toLowerCase().trim()] = c.avatarUrl;
+              if (c.userName && c.avatarUrl && !isCartoonOrInvalidAvatar(c.avatarUrl)) creatorMap[c.userName.toLowerCase().trim()] = c.avatarUrl;
+            });
+          }
+        } catch {}
+
+        try {
+          const shortlist = await creatorService.getShortlist(selectedCampaign);
+          if (Array.isArray(shortlist)) {
+            shortlist.forEach((item: any) => {
+              const cr = item.creator;
+              if (cr) {
+                const av = cr.avatarUrl || cr.avatar;
+                if (av && !isCartoonOrInvalidAvatar(av)) {
+                  if (cr.id) creatorMap[cr.id] = av;
+                  if (cr.displayName) creatorMap[cr.displayName.toLowerCase().trim()] = av;
+                  if (cr.userName) creatorMap[cr.userName.toLowerCase().trim()] = av;
+                }
+              }
             });
           }
         } catch {}
@@ -514,7 +571,7 @@ export default function CollaborationPage() {
               if (Array.isArray(list)) {
                 list.forEach((c: any) => {
                   const av = c.avatarUrl || c.avatar || c.profileImageUrl;
-                  if (av) {
+                  if (av && !isCartoonOrInvalidAvatar(av)) {
                     if (c.id) creatorMap[c.id] = av;
                     if (c.name) creatorMap[c.name.toLowerCase().trim()] = av;
                     if (c.displayName) creatorMap[c.displayName.toLowerCase().trim()] = av;
@@ -547,13 +604,16 @@ export default function CollaborationPage() {
             };
             const mapped: CollabPartner[] = rels.map((r, idx) => {
               const nameKey = (r.creatorName || '').toLowerCase().trim();
-              const realAvatar =
-                (r as any).creatorAvatar ||
-                (r as any).avatarUrl ||
-                (r as any).avatar ||
-                creatorMap[r.creatorId] ||
-                creatorMap[nameKey] ||
-                REALISTIC_PORTRAITS[hashKey(r.creatorId || r.creatorName || String(idx)) % REALISTIC_PORTRAITS.length];
+              let realAvatar = (r as any).creatorAvatar || (r as any).avatarUrl || (r as any).avatar;
+              if (isCartoonOrInvalidAvatar(realAvatar)) {
+                realAvatar =
+                  KNOWN_CREATOR_AVATARS[nameKey] ||
+                  creatorMap[r.creatorId] ||
+                  creatorMap[nameKey];
+                if (isCartoonOrInvalidAvatar(realAvatar)) {
+                  realAvatar = REALISTIC_PORTRAITS[hashKey(r.creatorId || r.creatorName || String(idx)) % REALISTIC_PORTRAITS.length];
+                }
+              }
 
               return {
                 id: r.id,
@@ -561,7 +621,7 @@ export default function CollaborationPage() {
                 creatorAvatar: realAvatar,
                 platform: 'tiktok',
                 handle: `@${(r.creatorName || 'creator').toLowerCase().replace(/[^a-z0-9]/g, '')}`,
-                deliverableSummary: r.notes || '1 Video Reels/TikTok + 1 Story nghiệm thu',
+                deliverableSummary: formatDeliverablesSummary(r.notes, (r as any).deliverableSummary || (r as any).deliverables),
                 stage: stageMap[r.stage] || 'contract_signed',
                 progressPercent: progressMap[r.stage] || 30,
                 postDeadline: r.nextAction || 'Theo kế hoạch',

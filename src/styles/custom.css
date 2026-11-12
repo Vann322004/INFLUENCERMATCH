@@ -66,21 +66,21 @@ body {
 }
 
 .sidebar-menu .ant-menu-item:hover {
-  color: #7C3AED !important;
-  background: rgba(139, 92, 246, 0.08) !important;
+  color: #2563EB !important;
+  background: rgba(37, 99, 235, 0.08) !important;
   transform: none !important;
 }
 
 .sidebar-menu .ant-menu-item:hover .ant-menu-item-icon {
-  color: #7C3AED !important;
+  color: #2563EB !important;
 }
 
-/* Active Menu Item: Signature Purple Pill */
+/* Active Menu Item: Signature Royal Blue Pill */
 .sidebar-menu .ant-menu-item-selected {
-  background: linear-gradient(135deg, #7C3AED 0%, #5B5BF0 100%) !important;
+  background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%) !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3) !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
 }
 
 .sidebar-menu .ant-menu-item-selected .ant-menu-item-icon {
@@ -156,14 +156,14 @@ body {
 }
 
 .sidebar-rail-btn:hover {
-  background: rgba(139, 92, 246, 0.09);
-  color: #7C3AED;
+  background: rgba(37, 99, 235, 0.09);
+  color: #2563EB;
 }
 
 .sidebar-rail-btn.active {
-  background: linear-gradient(135deg, #7C3AED 0%, #5B5BF0 100%) !important;
+  background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%) !important;
   color: #FFFFFF !important;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.28);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
 }
 
 .sidebar-rail-btn.active svg {
@@ -200,7 +200,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7C3AED;
+  color: #2563EB;
   opacity: 0;
   transform: scale(0.8);
   transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
@@ -228,7 +228,7 @@ body {
 }
 
 .sidebar-brand-btn:hover {
-  background: rgba(124, 58, 237, 0.08);
+  background: rgba(37, 99, 235, 0.08);
 }
 
 .sidebar-brand-name {
@@ -243,7 +243,7 @@ body {
 }
 
 .sidebar-brand-btn:hover .sidebar-brand-name {
-  color: #7C3AED;
+  color: #2563EB;
 }
 
 /* Collapsed Mode Rail Logo Button */
@@ -317,36 +317,36 @@ body {
 }
 
 .sidebar-nav-item:hover {
-  background: #F5F3FF;
-  color: #7C3AED;
+  background: #EFF6FF;
+  color: #2563EB;
 }
 
 .sidebar-nav-item:hover .sidebar-nav-icon {
-  color: #7C3AED;
+  color: #2563EB;
 }
 
 .sidebar-nav-item:hover .sidebar-nav-icon svg {
-  stroke: #7C3AED;
+  stroke: #2563EB;
 }
 
 .sidebar-nav-item.active {
-  background: linear-gradient(135deg, #6366F1 0%, #7C3AED 100%) !important;
+  background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%) !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
 }
 
 .sidebar-nav-item.active-parent {
-  background: #F5F3FF !important;
-  color: #6D28D9 !important;
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
   font-weight: 700 !important;
-  border: 1px solid rgba(124, 58, 237, 0.15) !important;
+  border: 1px solid rgba(37, 99, 235, 0.15) !important;
 }
 
 .sidebar-nav-item.active-parent .sidebar-nav-icon,
 .sidebar-nav-item.active-parent .sidebar-nav-icon svg {
-  color: #6D28D9 !important;
-  stroke: #6D28D9 !important;
+  color: #1D4ED8 !important;
+  stroke: #1D4ED8 !important;
 }
 
 .sidebar-nav-item.active .sidebar-nav-icon,
@@ -375,7 +375,7 @@ body {
 }
 
 .sidebar-nav-badge {
-  background: #7C3AED;
+  background: #2563EB;
   color: #FFFFFF;
   font-size: 11px;
   font-weight: 700;
@@ -390,7 +390,7 @@ body {
 
 .sidebar-nav-item.active .sidebar-nav-badge {
   background: #FFFFFF;
-  color: #7C3AED;
+  color: #2563EB;
 }
 
 /* ==========================================================================
@@ -423,14 +423,14 @@ body {
 }
 
 .sidebar-sub-nav-item:hover {
-  color: #7C3AED;
-  background: rgba(139, 92, 246, 0.08);
+  color: #2563EB;
+  background: rgba(37, 99, 235, 0.08);
 }
 
 .sidebar-sub-nav-item.active {
-  color: #7C3AED !important;
+  color: #2563EB !important;
   font-weight: 700 !important;
-  background: rgba(139, 92, 246, 0.12) !important;
+  background: rgba(37, 99, 235, 0.12) !important;
 }
 
 .sidebar-sub-nav-bullet {
@@ -443,13 +443,13 @@ body {
 }
 
 .sidebar-sub-nav-item:hover .sidebar-sub-nav-bullet {
-  background: #7C3AED;
+  background: #2563EB;
   transform: scale(1.3);
 }
 
 .sidebar-sub-nav-item.active .sidebar-sub-nav-bullet {
-  background: #7C3AED;
-  box-shadow: 0 0 6px rgba(124, 58, 237, 0.6);
+  background: #2563EB;
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.6);
   transform: scale(1.3);
 }
 
@@ -520,9 +520,9 @@ body {
   width: 100%;
   height: 36px;
   border-radius: 9999px;
-  border: 1px solid #DDD6FE;
-  background: #EDE9FE;
-  color: #6D28D9;
+  border: 1px solid #DBEAFE;
+  background: #EFF6FF;
+  color: #1D4ED8;
   font-weight: 600;
   font-size: 12.5px;
   display: flex;
@@ -530,7 +530,7 @@ body {
   justify-content: center;
   gap: 7px;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(124, 58, 237, 0.06);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.06);
   transition: all 0.15s ease;
   outline: none;
   margin-top: 10px;
@@ -538,9 +538,9 @@ body {
 }
 
 .sidebar-claim-pill-btn:hover {
-  background: #E0E7FF;
-  border-color: #C7D2FE;
-  color: #5B21B6;
+  background: #DBEAFE;
+  border-color: #BFDBFE;
+  color: #1E40AF;
 }
 
 /* Header - Standalone Floating Action Buttons for Dashboard */

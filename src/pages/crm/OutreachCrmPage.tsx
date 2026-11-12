@@ -191,6 +191,27 @@ const REALISTIC_PORTRAITS = [
   'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&auto=format&fit=crop&q=80',
 ];
 
+const KNOWN_CREATOR_AVATARS: Record<string, string> = {
+  'huy tiện ích': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+  'kh coffee': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+  'woang doanh': 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&auto=format&fit=crop&q=80',
+  'linh nguyễn': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+  'minh hoàng': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+  'thảo vy': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
+  'bác sĩ ngọc': 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&auto=format&fit=crop&q=80',
+  'mai lan': 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&auto=format&fit=crop&q=80',
+};
+
+const isCartoonOrInvalidAvatar = (url?: string) => {
+  if (!url) return true;
+  return (
+    url.includes('dicebear') ||
+    url.includes('avataaars') ||
+    url.includes('placeholder') ||
+    !url.startsWith('http')
+  );
+};
+
 const hashKey = (str: string) => {
   let h = 0;
   for (let i = 0; i < str.length; i++) {
@@ -202,7 +223,11 @@ const hashKey = (str: string) => {
 const mapRelationshipToKanban = (r: RelationshipDto): KanbanCreator => {
   const feeNum = r.agreedFee || r.quotedFee || 0;
   const feeText = feeNum > 0 ? `${(feeNum / 1_000_000).toFixed(1)}M ₫` : 'Thỏa thuận';
-  const realAvatar = (r as any).creatorAvatar || (r as any).avatarUrl || (r as any).avatar || REALISTIC_PORTRAITS[hashKey(r.creatorId || r.creatorName || r.id) % REALISTIC_PORTRAITS.length];
+  const nameKey = (r.creatorName || '').toLowerCase().trim();
+  let realAvatar = (r as any).creatorAvatar || (r as any).avatarUrl || (r as any).avatar;
+  if (isCartoonOrInvalidAvatar(realAvatar)) {
+    realAvatar = KNOWN_CREATOR_AVATARS[nameKey] || REALISTIC_PORTRAITS[hashKey(r.creatorId || r.creatorName || r.id) % REALISTIC_PORTRAITS.length];
+  }
 
   return {
     id: r.id,
@@ -581,12 +606,12 @@ export default function OutreachCrmPage() {
             type="primary"
             icon={<PlusOutlined />}
             style={{
-              background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+              background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
               borderRadius: 8,
               height: 38,
               fontWeight: 600,
               border: 'none',
-              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.25)',
+              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
             }}
             onClick={() => setCreateInviteModalOpen(true)}
           >
@@ -598,7 +623,7 @@ export default function OutreachCrmPage() {
       {/* 2. Funnel Summary Stats Banner */}
       <div className="crm-stats-banner">
         <div className="stat-card">
-          <div className="stat-icon-wrap" style={{ background: '#F5F3FF', color: '#7C3AED' }}>
+          <div className="stat-icon-wrap" style={{ background: '#EFF6FF', color: '#2563EB' }}>
             <UserOutlined />
           </div>
           <div className="stat-info">
@@ -705,43 +730,48 @@ export default function OutreachCrmPage() {
 
               {/* Compact AI Generator Bar */}
               <div className="composer-ai-bar">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div
                     style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 8,
-                      background: 'linear-gradient(135deg, #7C3AED 0%, #6366F1 100%)',
+                      width: 32,
+                      height: 32,
+                      borderRadius: 9,
+                      background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: '#FFFFFF',
-                      fontSize: 14,
-                      boxShadow: '0 2px 6px rgba(124, 58, 237, 0.25)',
+                      fontSize: 16,
+                      boxShadow: '0 2px 8px rgba(37, 99, 235, 0.28)',
                     }}
                   >
                     <RobotOutlined />
                   </div>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1E1B4B' }}>Trợ lý AI soạn thư</div>
-                    <div style={{ fontSize: 11, color: '#6B7280' }}>Cá nhân hóa theo thông tin Creator</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>Trợ lý AI soạn thư</div>
+                    <div style={{ fontSize: 11.5, color: '#64748B' }}>Cá nhân hóa theo thông tin Creator</div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#4C1D95' }}>Giọng điệu:</span>
-                    <Segmented
-                      size="small"
-                      value={aiTone}
-                      onChange={(val) => setAiTone(val as 'friendly' | 'formal' | 'concise')}
-                      options={[
-                        { label: 'Thân thiện', value: 'friendly' },
-                        { label: 'Trang trọng', value: 'formal' },
-                        { label: 'Ngắn gọn', value: 'concise' },
-                      ]}
-                      className="custom-tone-segmented"
-                    />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <div className="crm-tone-selector">
+                    <span className="crm-tone-label">Giọng điệu:</span>
+                    <div className="crm-tone-pills">
+                      {[
+                        { key: 'friendly', label: 'Thân thiện' },
+                        { key: 'formal', label: 'Trang trọng' },
+                        { key: 'concise', label: 'Ngắn gọn' },
+                      ].map((t) => (
+                        <button
+                          key={t.key}
+                          type="button"
+                          className={`crm-tone-pill ${aiTone === t.key ? 'active' : ''}`}
+                          onClick={() => setAiTone(t.key as any)}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <Button
@@ -751,14 +781,14 @@ export default function OutreachCrmPage() {
                     onClick={handleGenerateAiEmail}
                     icon={<ThunderboltOutlined />}
                     style={{
-                      background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)',
+                      background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
                       borderRadius: 8,
-                      fontSize: 12,
+                      fontSize: 12.5,
                       fontWeight: 600,
                       border: 'none',
-                      height: 30,
-                      padding: '0 12px',
-                      boxShadow: '0 2px 6px rgba(124, 58, 237, 0.25)',
+                      height: 32,
+                      padding: '0 14px',
+                      boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
                     }}
                   >
                     {aiGenerating ? 'Đang viết...' : 'Tạo thư mẫu'}

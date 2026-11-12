@@ -502,18 +502,18 @@ export default function LandingPage() {
                 </li>
                 <li className="lp-feature-list-item">
                   <CheckCircle2 className="lp-feature-check" />
-                  <span>Định lượng điểm số phù hợp (AI Match Score) từ 0 đến 100</span>
+                  <span>Định lượng điểm số phù hợp (Điểm tương thích AI) từ 0 đến 100</span>
                 </li>
                 <li className="lp-feature-list-item">
                   <CheckCircle2 className="lp-feature-check" />
-                  <span>Tự động gợi ý Creator tương tự (Lookalike Creator Matching)</span>
+                  <span>Tự động gợi ý Creator tương đồng (Gợi ý Creator tương đồng)</span>
                 </li>
               </ul>
             </div>
 
             {/* Feature 2 */}
             <div className="lp-feature-card">
-              <div className="lp-feature-icon-wrap" style={{ background: 'rgba(236, 72, 153, 0.15)', color: '#F472B6' }}>
+              <div className="lp-feature-icon-wrap" style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#22D3EE' }}>
                 <ShieldCheck size={26} />
               </div>
               <h3 className="lp-feature-title">Kiểm Toán Bot & Seeding Ảo</h3>
@@ -523,7 +523,7 @@ export default function LandingPage() {
               <ul className="lp-feature-list">
                 <li className="lp-feature-list-item">
                   <CheckCircle2 className="lp-feature-check" />
-                  <span>Phân loại rõ ràng tỷ lệ người theo dõi thật (Audience Authenticity)</span>
+                  <span>Phân loại rõ ràng tỷ lệ người theo dõi thật (Độ chân thực người theo dõi)</span>
                 </li>
                 <li className="lp-feature-list-item">
                   <CheckCircle2 className="lp-feature-check" />
@@ -538,17 +538,17 @@ export default function LandingPage() {
 
             {/* Feature 3 */}
             <div className="lp-feature-card">
-              <div className="lp-feature-icon-wrap" style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#22D3EE' }}>
+              <div className="lp-feature-icon-wrap" style={{ background: 'rgba(37, 99, 235, 0.15)', color: '#2563EB' }}>
                 <BarChart3 size={26} />
               </div>
-              <h3 className="lp-feature-title">Ledger Báo Cáo Real-Time ROI & ROAS</h3>
+              <h3 className="lp-feature-title">Báo Cáo Hiệu Suất & Doanh Thu Real-Time</h3>
               <p className="lp-feature-desc">
                 Gắn mã tracking link thông minh tự động. Đo lường tức thì lượt click, tỷ lệ chuyển đổi, doanh thu bán hàng (GMV) và chi phí thực tế cho từng Creator.
               </p>
               <ul className="lp-feature-list">
                 <li className="lp-feature-list-item">
                   <CheckCircle2 className="lp-feature-check" />
-                  <span>Tổng hợp ROAS chiến dịch theo thời gian thực (Live Dashboard)</span>
+                  <span>Tổng hợp hiệu quả chiến dịch theo thời gian thực (Bảng điều khiển trực tiếp)</span>
                 </li>
                 <li className="lp-feature-list-item">
                   <CheckCircle2 className="lp-feature-check" />
@@ -651,7 +651,7 @@ export default function LandingPage() {
                 <div className="lp-dossier-metrics">
                   <div className="lp-dossier-metric-item">
                     <div className="lp-dossier-metric-num">{activeCreator.followers}</div>
-                    <div className="lp-dossier-metric-label">Followers</div>
+                    <div className="lp-dossier-metric-label">Người theo dõi</div>
                   </div>
                   <div className="lp-dossier-metric-item">
                     <div className="lp-dossier-metric-num" style={{ color: '#10B981' }}>{activeCreator.engagement}</div>
@@ -880,7 +880,7 @@ export default function LandingPage() {
                 AI Ghép Nối & Mời 1-Click
               </h3>
               <p style={{ fontSize: 14, color: '#94A3B8', lineHeight: 1.6 }}>
-                Thuật toán xếp hạng danh sách Creator tối ưu theo điểm số Match Score. Gửi lời mời đồng loạt và đàm phán chi phí minh bạch.
+                Thuật toán xếp hạng danh sách Creator tối ưu theo độ phù hợp AI. Gửi lời mời đồng loạt và đàm phán chi phí minh bạch.
               </p>
             </div>
 
@@ -1123,7 +1123,7 @@ export default function LandingPage() {
                 />
                 <div>
                   <div className="lp-testi-name">Huy Tiện Ích</div>
-                  <div className="lp-testi-role">Tech & Lifestyle Creator (305K followers)</div>
+                  <div className="lp-testi-role">KOC Công nghệ & Đời sống (305K người theo dõi)</div>
                 </div>
               </div>
             </div>

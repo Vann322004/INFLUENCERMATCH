@@ -278,7 +278,7 @@ export default function AppSider({ collapsed: initialCollapsed = false }: AppSid
               style={{
                 width: 32,
                 height: 1,
-                backgroundColor: 'rgba(124, 58, 237, 0.12)',
+                backgroundColor: 'rgba(37, 99, 235, 0.12)',
                 marginBottom: 10,
               }}
             />
@@ -401,7 +401,7 @@ export default function AppSider({ collapsed: initialCollapsed = false }: AppSid
               onClick={() => navigate('/subscription')}
               className="sidebar-claim-pill-btn"
             >
-              <CrownOutlined style={{ fontSize: 13, color: '#7C3AED' }} />
+              <CrownOutlined style={{ fontSize: 13, color: '#2563EB' }} />
               <span>Quản lý gói & Hạn mức</span>
             </button>
           </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Checkbox, Row, Col, message } from 'antd';
-import { ArrowRightOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Checkbox, Row, Col, message, Modal } from 'antd';
+import { ArrowRightOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 import { authService } from '../../services/api/authService';
@@ -9,9 +9,11 @@ import './RegisterPage.css';
 
 export default function RegisterPage() {
   const [form] = Form.useForm();
+  const [otpForm] = Form.useForm();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
   React.useEffect(() => {
@@ -55,7 +57,9 @@ export default function RegisterPage() {
 
       setVerificationEmail(values.email.trim());
       setResendCooldown(60);
-      message.success('Đã tạo tài khoản. Vui lòng nhập mã xác minh được gửi đến email.');
+      setIsOtpModalOpen(true);
+      otpForm.resetFields();
+      message.success('Đăng ký tài khoản thành công! Vui lòng nhập mã OTP để kích hoạt.');
     } catch (error) {
       message.error(getErrorMessage(error, 'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.'));
     } finally {
@@ -68,7 +72,8 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await authService.verifyEmail(verificationEmail, otp);
-      message.success('Xác minh email thành công! Bạn có thể đăng nhập.');
+      setIsOtpModalOpen(false);
+      message.success('Xác minh email thành công! Bạn có thể đăng nhập ngay.');
       navigate(ROUTES.AUTH.LOGIN || '/login');
     } catch (error) {
       message.error(getErrorMessage(error, 'Không xác minh được email. Vui lòng thử lại.'));
@@ -83,39 +88,13 @@ export default function RegisterPage() {
     try {
       await authService.resendVerification(verificationEmail);
       setResendCooldown(60);
-      message.success('Yêu cầu gửi lại mã đã được tiếp nhận. Vui lòng kiểm tra email.');
+      message.success('Mã OTP mới đã được gửi lại. Vui lòng kiểm tra hòm thư.');
     } catch (error) {
       message.error(getErrorMessage(error, 'Không gửi lại được mã xác minh.'));
     } finally {
       setLoading(false);
     }
   };
-
-  if (verificationEmail) {
-    return (
-      <div className="register-card-inner">
-        <div className="register-heading-group">
-          <h2 className="register-title">Xác minh email</h2>
-          <p className="register-subtitle">Nhập mã 6 chữ số gửi đến {verificationEmail}. Hãy kiểm tra cả thư rác.</p>
-        </div>
-        <Form layout="vertical" onFinish={verifyEmail} requiredMark={false}>
-          <Form.Item name="otp" label="Mã xác minh" rules={[
-            { required: true, message: 'Vui lòng nhập mã xác minh.' },
-            { pattern: /^\d{6}$/, message: 'Mã xác minh gồm 6 chữ số.' },
-          ]}>
-            <Input autoComplete="one-time-code" inputMode="numeric" maxLength={6} disabled={loading} className="luxe-input" />
-          </Form.Item>
-          <Button type="primary" htmlType="submit" block loading={loading} className="luxe-primary-btn">Xác minh email</Button>
-          <Button type="link" onClick={resendVerification} disabled={loading || resendCooldown > 0}>
-            {resendCooldown > 0 ? `Gửi lại mã sau ${resendCooldown}s` : 'Gửi lại mã'}
-          </Button>
-        </Form>
-        <div className="register-login-banner">
-          <Link to={ROUTES.AUTH.LOGIN || '/login'} className="link">Về trang đăng nhập</Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="register-card-inner">
