@@ -61,13 +61,27 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '' }: Liv
     message.success('Đã sao chép toàn bộ dữ liệu vào bộ nhớ tạm!');
   };
 
-  const handleImportToCatalog = () => {
+  const handleImportToCatalog = async () => {
     if (!result) return;
     message.loading({ content: `Đang lưu hồ sơ @${result.username} vào hệ thống...`, key: 'import_catalog' });
-    setTimeout(() => {
+    try {
+      await crawlerService.enqueueCandidate(platform, result.username, true);
       message.success({ content: `Đã lưu @${result.username} vào hệ thống thành công!`, key: 'import_catalog' });
       if (onImportSuccess) onImportSuccess(result);
-    }, 600);
+    } catch (err: any) {
+      message.error({ content: err.message || 'Lỗi khi lưu vào hệ thống', key: 'import_catalog' });
+    }
+  };
+
+  const handleSendToQuality = async () => {
+    if (!result) return;
+    message.loading({ content: `Đang gửi @${result.username} sang kiểm định...`, key: 'send_quality' });
+    try {
+      await crawlerService.enqueueCandidate(platform, result.username, false);
+      message.success({ content: `Đã đưa @${result.username} vào danh sách kiểm định chất lượng!`, key: 'send_quality' });
+    } catch (err: any) {
+      message.error({ content: err.message || 'Lỗi khi đưa vào kiểm định', key: 'send_quality' });
+    }
   };
 
   const calculateEngagementRate = () => {
@@ -156,7 +170,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '' }: Liv
                 Cào lại
               </Button>
               <Button
-                onClick={() => message.success(`Đã đưa @${result.username} vào danh sách kiểm định chất lượng!`)}
+                onClick={handleSendToQuality}
                 style={{ borderColor: '#F59E0B', color: '#D97706', fontWeight: 600 }}
               >
                 Gửi sang Kiểm định
