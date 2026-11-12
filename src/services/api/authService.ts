@@ -49,6 +49,19 @@ export const authService = {
     await apiClient.post<ApiResponse<null>>('/auth/register', payload);
   },
 
+  async getPolicies(): Promise<{ termsVersion: string; privacyVersion: string }> {
+    const response = await apiClient.get('/auth/policies');
+    return response.data.data;
+  },
+
+  async verifyEmail(email: string, otp: string): Promise<void> {
+    await apiClient.post('/auth/verify-email', { email, otp });
+  },
+
+  async resendVerification(email: string): Promise<void> {
+    await apiClient.post('/auth/resend-verification', { email });
+  },
+
   /**
    * Lấy thông tin chi tiết của người dùng hiện tại từ backend
    */

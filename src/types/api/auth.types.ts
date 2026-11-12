@@ -24,8 +24,14 @@ export interface RegisterRequest {
   email: string;
   password: string;
   fullName: string;
-  brandName?: string;
-  phone?: string;
+  businessName: string;
+  phoneNumber: string;
+  policyAcceptance: {
+    acceptedTerms: boolean;
+    termsVersion: string;
+    acceptedPrivacy: boolean;
+    privacyVersion: string;
+  };
 }
 
 export interface RefreshTokenRequest {
