@@ -1,6 +1,6 @@
 import React from 'react';
-import { Space, Input, Select } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Space, Input, Select, Button, Popconfirm } from 'antd';
+import { SearchOutlined, CheckOutlined } from '@ant-design/icons';
 
 interface QualityFilterBarProps {
   search: string;
@@ -11,6 +11,9 @@ interface QualityFilterBarProps {
   onConfidenceChange: (value: string) => void;
   filteredCount: number;
   totalCount: number;
+  highConfidenceCount: number;
+  onBatchApproveHighConfidence: () => void;
+  batchApproving: boolean;
 }
 
 export const QualityFilterBar: React.FC<QualityFilterBarProps> = ({
@@ -22,6 +25,9 @@ export const QualityFilterBar: React.FC<QualityFilterBarProps> = ({
   onConfidenceChange,
   filteredCount,
   totalCount,
+  highConfidenceCount,
+  onBatchApproveHighConfidence,
+  batchApproving,
 }) => {
   return (
     <div
@@ -37,17 +43,17 @@ export const QualityFilterBar: React.FC<QualityFilterBarProps> = ({
       <Space size={10} wrap>
         <Input
           prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
-          placeholder="Tìm kiếm KOC, username, nội dung..."
+          placeholder="Tìm theo tên, @username, bio..."
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          style={{ width: 260, borderRadius: 8 }}
+          style={{ width: 250, borderRadius: 8 }}
           allowClear
         />
 
         <Select
           value={platformFilter}
           onChange={onPlatformChange}
-          style={{ width: 150 }}
+          style={{ width: 145 }}
           options={[
             { value: 'all', label: 'Tất cả nền tảng' },
             { value: 'tiktok', label: 'TikTok' },
@@ -60,22 +66,50 @@ export const QualityFilterBar: React.FC<QualityFilterBarProps> = ({
         <Select
           value={confidenceFilter}
           onChange={onConfidenceChange}
-          style={{ width: 170 }}
+          style={{ width: 165 }}
           options={[
             { value: 'all', label: 'Tất cả độ tin cậy' },
-            { value: 'high', label: '≥ 70% (Chuẩn cao)' },
-            { value: 'medium', label: '50% - 70% (Trung bình)' },
-            { value: 'low', label: '< 50% (Rất thấp)' },
+            { value: 'high', label: 'Tin cậy cao (≥ 70%)' },
+            { value: 'medium', label: 'Trung bình (50-70%)' },
+            { value: 'low', label: 'Cần xem lại (< 50%)' },
           ]}
         />
       </Space>
 
-      <span style={{ fontSize: 12.5, color: '#64748B' }}>
-        Hiển thị <strong>{filteredCount}</strong> / {totalCount} bản ghi cần kiểm duyệt
-      </span>
+      <Space size={12} wrap>
+        {totalCount > 0 && (
+          <span style={{ fontSize: 13, color: '#64748B' }}>
+            Hiển thị <strong>{filteredCount}</strong> / {totalCount} hồ sơ
+          </span>
+        )}
+
+        {highConfidenceCount > 0 && (
+          <Popconfirm
+            title={`Phê duyệt ${highConfidenceCount} hồ sơ đạt chuẩn?`}
+            description="Các hồ sơ này sẽ được xác nhận theo ngành hàng gợi ý và nạp vào danh mục KOC."
+            onConfirm={onBatchApproveHighConfidence}
+            okText="Duyệt tất cả"
+            cancelText="Hủy"
+          >
+            <Button
+              type="primary"
+              icon={<CheckOutlined />}
+              loading={batchApproving}
+              style={{
+                background: '#10B981',
+                borderColor: '#10B981',
+                borderRadius: 8,
+                fontWeight: 600,
+                fontSize: 13,
+              }}
+            >
+              Duyệt nhanh ({highConfidenceCount})
+            </Button>
+          </Popconfirm>
+        )}
+      </Space>
     </div>
   );
 };
 
 export default QualityFilterBar;
-

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Tag, Button, Space, Badge, Tabs, message } from 'antd';
-import { ReloadOutlined, ControlOutlined, BranchesOutlined } from '@ant-design/icons';
+import { ReloadOutlined } from '@ant-design/icons';
 import apiClient from '../../../services/apiClient';
 import type { QualityItem, IdentityConflictItem, QualityOverview } from './types';
-import { INITIAL_QUALITY_ITEMS, INITIAL_CONFLICTS } from './mockQualityData';
 import QualityReviewTab from './components/quality/QualityReviewTab';
 import IdentityResolutionTab from './components/identity/IdentityResolutionTab';
 
@@ -11,15 +10,16 @@ export default function DataQualityPage() {
   const [activeTab, setActiveTab] = useState<'quality' | 'identity'>('quality');
   const [loading, setLoading] = useState(false);
   const [recrawlingId, setRecrawlingId] = useState<string | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
 
-  // Overview Stats
+  // Overview Stats (100% Real API)
   const [overview, setOverview] = useState<QualityOverview>({
     pendingCount: 0,
-    accuracyRate: 92.4,
+    accuracyRate: 0,
     standardizedTodayCount: 0,
   });
 
-  // Tab 1 & Tab 2 Real State
+  // Tab 1 & Tab 2 Real State (Khởi tạo rỗng, hoàn toàn không dùng mock data)
   const [items, setItems] = useState<QualityItem[]>([]);
   const [conflicts, setConflicts] = useState<IdentityConflictItem[]>([]);
 
@@ -37,39 +37,46 @@ export default function DataQualityPage() {
         const d = overviewRes.value.data;
         if (d && typeof d === 'object') {
           setOverview({
-            pendingCount: d.pendingCount ?? 0,
-            accuracyRate: d.accuracyRate ?? 92.4,
-            standardizedTodayCount: d.standardizedTodayCount ?? 0,
+            pendingCount: d.pendingCount ?? d.pending_count ?? 0,
+            accuracyRate: d.accuracyRate ?? d.accuracy_rate ?? 0,
+            standardizedTodayCount: d.standardizedTodayCount ?? d.standardized_today_count ?? 0,
           });
         }
+      } else {
+        setOverview({
+          pendingCount: 0,
+          accuracyRate: 0,
+          standardizedTodayCount: 0,
+        });
       }
 
       if (pendingRes.status === 'fulfilled') {
         const raw = pendingRes.value.data;
         const d = (raw as any)?.data ?? raw;
         const serverList = Array.isArray(d) ? d : d?.items || d?.content || [];
-        setItems(serverList.length > 0 ? serverList : INITIAL_QUALITY_ITEMS);
+        setItems(serverList);
         setOverview((prev) => ({
           ...prev,
-          pendingCount: serverList.length > 0 ? Math.max(prev.pendingCount, serverList.length) : (prev.pendingCount || INITIAL_QUALITY_ITEMS.length),
+          pendingCount: serverList.length,
         }));
       } else {
-        setItems(INITIAL_QUALITY_ITEMS);
+        setItems([]);
         setOverview((prev) => ({
           ...prev,
-          pendingCount: prev.pendingCount || INITIAL_QUALITY_ITEMS.length,
+          pendingCount: 0,
         }));
       }
 
       if (conflictsRes.status === 'fulfilled') {
         const raw = conflictsRes.value.data;
         const cList = Array.isArray(raw) ? raw : raw?.items || [];
-        setConflicts(cList.length > 0 ? cList : INITIAL_CONFLICTS);
+        setConflicts(cList);
       } else {
-        setConflicts(INITIAL_CONFLICTS);
+        setConflicts([]);
       }
     } catch {
-      message.error('Không thể đồng bộ dữ liệu kiểm định từ máy chủ crawler');
+      setItems([]);
+      setConflicts([]);
     } finally {
       setLoading(false);
     }
@@ -103,6 +110,27 @@ export default function DataQualityPage() {
       const errorMsg = err?.response?.data?.detail || err?.message || 'Không thể hoàn tất chuẩn hóa.';
       message.error(errorMsg);
       throw err;
+    }
+  };
+
+  // Reject candidate in Tab 1 (Real API)
+  const handleReject = async (item: QualityItem) => {
+    setRejectingId(item.metricId);
+    try {
+      const targetId = item.creatorId || item.metricId;
+      await apiClient.post(`/quality/${targetId}/reject`);
+      message.success(`Đã từ chối và loại bỏ hồ sơ @${item.userName} khỏi hàng đợi kiểm duyệt.`);
+      setItems((prev) => prev.filter((i) => i.metricId !== item.metricId));
+      setOverview((prev) => ({
+        ...prev,
+        pendingCount: Math.max(0, prev.pendingCount - 1),
+      }));
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.detail || err?.message || 'Không thể từ chối hồ sơ.';
+      message.error(errorMsg);
+      throw err;
+    } finally {
+      setRejectingId(null);
     }
   };
 
@@ -174,7 +202,7 @@ export default function DataQualityPage() {
   };
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '4px 0 32px' }}>
+    <div>
       {/* 1. Page Header */}
       <div
         style={{
@@ -188,7 +216,7 @@ export default function DataQualityPage() {
       >
         <div>
           <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 22, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span>Kiểm định Chất lượng & Xử lý Xung đột Danh tính</span>
+            <span>Kiểm định Chất lượng & Chuẩn hóa KOC</span>
             <Tag color="purple" style={{ borderRadius: 6, fontWeight: 700 }}>
               Chuẩn hóa dữ liệu KOC
             </Tag>
@@ -205,7 +233,7 @@ export default function DataQualityPage() {
             loading={loading}
             style={{ borderRadius: 8, fontWeight: 600 }}
           >
-            Làm mới dữ liệu
+            Làm mới dữ liệu KOC
           </Button>
         </Space>
       </div>
@@ -231,9 +259,8 @@ export default function DataQualityPage() {
               key: 'quality',
               label: (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 14, padding: '4px 0' }}>
-                  <ControlOutlined />
-                  <span>1. Chuẩn hóa Ngách & Dữ liệu Cào</span>
-                  <Badge count={items.length} overflowCount={99} style={{ backgroundColor: '#F59E0B' }} />
+                  <span>Duyệt ngành hàng KOC</span>
+                  <Badge count={items.length} overflowCount={99} style={{ backgroundColor: items.length > 0 ? '#F59E0B' : '#94A3B8' }} />
                 </span>
               ),
               children: (
@@ -242,7 +269,9 @@ export default function DataQualityPage() {
                   items={items}
                   loading={loading}
                   recrawlingId={recrawlingId}
+                  rejectingId={rejectingId}
                   onApproveSubmit={handleApproveSubmit}
+                  onReject={handleReject}
                   onRecrawl={handleRecrawl}
                 />
               ),
@@ -251,9 +280,8 @@ export default function DataQualityPage() {
               key: 'identity',
               label: (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700, fontSize: 14, padding: '4px 0' }}>
-                  <BranchesOutlined />
-                  <span>2. Xử lý Xung đột Danh tính (Identity Resolution)</span>
-                  <Badge count={conflicts.length} overflowCount={99} style={{ backgroundColor: '#2563EB' }} />
+                  <span>Hồ sơ trùng lặp đa kênh</span>
+                  <Badge count={conflicts.length} overflowCount={99} style={{ backgroundColor: conflicts.length > 0 ? '#6366F1' : '#94A3B8' }} />
                 </span>
               ),
               children: (

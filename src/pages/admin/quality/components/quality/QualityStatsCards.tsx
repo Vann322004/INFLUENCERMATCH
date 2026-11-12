@@ -1,102 +1,65 @@
 import React from 'react';
-import { Row, Col, Card } from 'antd';
-import { InboxOutlined, ControlOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import type { QualityOverview } from '../../types';
 
 interface QualityStatsCardsProps {
   overview: QualityOverview;
   fallbackPendingCount: number;
+  highConfidenceCount?: number;
 }
 
-export const QualityStatsCards: React.FC<QualityStatsCardsProps> = ({ overview, fallbackPendingCount }) => {
+export const QualityStatsCards: React.FC<QualityStatsCardsProps> = ({
+  overview,
+  fallbackPendingCount,
+}) => {
+  const pendingCount = overview.pendingCount || fallbackPendingCount;
+
   return (
-    <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
-      <Col xs={24} sm={8}>
-        <Card bordered={false} style={{ borderRadius: 12, border: '1px solid #E2E8F0' }} bodyStyle={{ padding: '16px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>Cần kiểm duyệt</div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#F59E0B', marginTop: 2 }}>
-                {overview.pendingCount || fallbackPendingCount} hồ sơ
-              </div>
-            </div>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 10,
-                background: '#FFFBEB',
-                color: '#D97706',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 18,
-              }}
-            >
-              <InboxOutlined />
-            </div>
-          </div>
-        </Card>
-      </Col>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        background: '#FFFFFF',
+        border: '1px solid #E2E8F0',
+        borderRadius: 12,
+        padding: '16px 24px',
+        marginBottom: 20,
+        gap: 36,
+        flexWrap: 'wrap',
+      }}
+    >
+      <div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+          Chờ kiểm duyệt
+        </div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: pendingCount > 0 ? '#D97706' : '#0F172A', marginTop: 2 }}>
+          {pendingCount} <span style={{ fontSize: 13, fontWeight: 500, color: '#64748B' }}>hồ sơ</span>
+        </div>
+      </div>
 
-      <Col xs={24} sm={8}>
-        <Card bordered={false} style={{ borderRadius: 12, border: '1px solid #E2E8F0' }} bodyStyle={{ padding: '16px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>Tỷ lệ AI phân loại chuẩn</div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', marginTop: 2 }}>
-                {overview.accuracyRate}%
-              </div>
-            </div>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 10,
-                background: '#EEF2FF',
-                color: '#4F46E5',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 18,
-              }}
-            >
-              <ControlOutlined />
-            </div>
-          </div>
-        </Card>
-      </Col>
+      <div style={{ width: 1, height: 34, background: '#E2E8F0' }} />
 
-      <Col xs={24} sm={8}>
-        <Card bordered={false} style={{ borderRadius: 12, border: '1px solid #E2E8F0' }} bodyStyle={{ padding: '16px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>Đã chuẩn hóa hôm nay</div>
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#10B981', marginTop: 2 }}>
-                {overview.standardizedTodayCount} hồ sơ
-              </div>
-            </div>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 10,
-                background: '#ECFDF5',
-                color: '#059669',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 18,
-              }}
-            >
-              <CheckCircleOutlined />
-            </div>
-          </div>
-        </Card>
-      </Col>
-    </Row>
+      <div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+          Đã duyệt hôm nay
+        </div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: '#10B981', marginTop: 2 }}>
+          {overview.standardizedTodayCount}{' '}
+          <span style={{ fontSize: 13, fontWeight: 500, color: '#64748B' }}>hồ sơ</span>
+        </div>
+      </div>
+
+      <div style={{ width: 1, height: 34, background: '#E2E8F0' }} />
+
+      <div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+          Độ tin cậy phân loại
+        </div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: '#4F46E5', marginTop: 2 }}>
+          {overview.accuracyRate ? `${overview.accuracyRate}%` : '—'}
+        </div>
+      </div>
+    </div>
   );
 };
 
 export default QualityStatsCards;
-

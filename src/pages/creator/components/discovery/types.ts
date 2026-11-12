@@ -48,17 +48,6 @@ export interface DiscoveryCache {
   lastUpdated: number;
 }
 
-export const ALL_CATEGORIES = [
-  'Làm đẹp & Chăm sóc da',
-  'Thời trang',
-  'Thể hình & Sức khỏe',
-  'Ẩm thực & Đồ uống',
-  'Du lịch',
-  'Phong cách sống',
-  'Công nghệ & Game',
-  'Mẹ & Bé',
-];
-
 export const DOMAIN_CLUSTERS = {
   TECH: ['công nghệ', 'tech', 'sạc', 'điện tử', 'phụ kiện', 'laptop', 'điện thoại', 'máy tính', 'gadget', 'game', 'gaming', 'tai nghe', 'audio', 'số', 'thiết bị'],
   BEAUTY: ['mỹ phẩm', 'làm đẹp', 'skincare', 'chăm sóc da', 'son', 'makeup', 'trang điểm', 'nước hoa', 'dưỡng da'],

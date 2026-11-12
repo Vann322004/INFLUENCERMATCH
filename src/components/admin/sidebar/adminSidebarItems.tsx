@@ -38,7 +38,7 @@ export const ROUTE_KEY_MAP: Record<string, string> = {
 export const PIPELINE_ITEMS: AdminNavItem[] = [
   {
     key: 'data-sources',
-    label: 'Nguồn dữ liệu & API',
+    label: 'Quản lý dữ liệu',
     icon: <ApiOutlined style={{ fontSize: 17 }} />,
     path: ADMIN_ROUTES.DATA_SOURCES,
   },

@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { TeamOutlined, GlobalOutlined } from '@ant-design/icons';
 
 import type { Creator, BrandCampaignItem } from './components/discovery/types';
-import { ALL_CATEGORIES } from './components/discovery/types';
 import {
   mapApiCreatorToUi,
   mapApiCampaignToItem,
@@ -121,7 +120,7 @@ export default function CreatorDiscoveryPage() {
   });
 
   const [categoriesList, setCategoriesList] = useState<string[]>(
-    () => cachedData?.categoriesList || ALL_CATEGORIES
+    () => cachedData?.categoriesList || []
   );
 
   // Load Brand Campaigns
@@ -383,10 +382,9 @@ export default function CreatorDiscoveryPage() {
           creatorService.getNiches().catch(() => []),
         ]);
 
-        if (isMounted && Array.isArray(apiNiches) && apiNiches.length > 0) {
-          const mergedNiches = Array.from(new Set([...apiNiches, ...ALL_CATEGORIES]));
-          setCategoriesList(mergedNiches);
-          updateDiscoveryCache({ categoriesList: mergedNiches });
+        if (isMounted && Array.isArray(apiNiches)) {
+          setCategoriesList(apiNiches);
+          updateDiscoveryCache({ categoriesList: apiNiches });
         }
 
         let loadedCandidates: any[] = [];

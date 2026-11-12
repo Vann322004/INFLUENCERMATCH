@@ -50,7 +50,7 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
       return { sub: isDataPipeline || isManager ? 'Quản lý Dữ liệu' : 'Quản trị hệ thống', current: title };
     }
     if (p.includes('/data-sources')) {
-      return { sub: 'Quản lý Dữ liệu', current: 'Nguồn dữ liệu & API' };
+      return { sub: 'Quản lý Dữ liệu', current: 'Quản lý dữ liệu' };
     }
     if (p.includes('/jobs')) {
       return { sub: 'Quản lý Dữ liệu', current: 'Tiến trình thu thập & Săn KOC' };

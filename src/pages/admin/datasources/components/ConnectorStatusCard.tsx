@@ -63,7 +63,7 @@ export default function ConnectorStatusCard({ connector, onUpdate }: Props) {
     const randomLatency = Math.floor(32 + Math.random() * 38);
     setLatency(randomLatency);
     setPinging(false);
-    message.success(`Kiểm tra kết nối API ${connector.name} ổn định (${randomLatency}ms - HTTP 200 OK)`);
+    message.success(`Kiểm tra kết nối API ${connector.name} ổn định (${randomLatency} ms - HTTP 200)`);
   };
 
   const totalReq = connector.successCount + connector.failCount;
@@ -99,7 +99,7 @@ export default function ConnectorStatusCard({ connector, onUpdate }: Props) {
       rateLimit: values.rateLimit,
     });
     setModalOpen(false);
-    message.success('Đã lưu cấu hình connector thành công!');
+    message.success('Đã lưu cấu hình kết nối thành công!');
   };
 
   const cfg = STATUS_CONFIG[connector.status] || STATUS_CONFIG.active;
@@ -151,7 +151,7 @@ export default function ConnectorStatusCard({ connector, onUpdate }: Props) {
             </div>
           </div>
 
-          <Tooltip title={connector.status === 'active' ? 'Tạm dừng connector' : 'Kích hoạt connector'}>
+          <Tooltip title={connector.status === 'active' ? 'Tạm dừng kết nối' : 'Kích hoạt kết nối'}>
             <Switch
               checked={connector.status === 'active'}
               onChange={handleToggle}
@@ -175,8 +175,8 @@ export default function ConnectorStatusCard({ connector, onUpdate }: Props) {
             showInfo={false}
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11, color: '#64748B' }}>
-            <span>Thành công: <strong style={{ color: '#10B981' }}>{connector.successCount.toLocaleString()}</strong></span>
-            <span>Thất bại: <strong style={{ color: '#EF4444' }}>{connector.failCount.toLocaleString()}</strong></span>
+            <span>Thành công: <strong style={{ color: '#10B981' }}>{connector.successCount.toLocaleString('vi-VN')}</strong></span>
+            <span>Thất bại: <strong style={{ color: '#EF4444' }}>{connector.failCount.toLocaleString('vi-VN')}</strong></span>
           </div>
         </div>
 
@@ -187,14 +187,14 @@ export default function ConnectorStatusCard({ connector, onUpdate }: Props) {
             <strong style={{ color: '#334155' }}>{connector.lastSync}</strong>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Giới hạn Rate-limit:</span>
-            <strong style={{ color: '#6366F1' }}>{connector.rateLimit} req/min</strong>
+            <span>Giới hạn yêu cầu:</span>
+            <strong style={{ color: '#6366F1' }}>{connector.rateLimit} yêu cầu/phút</strong>
           </div>
           {latency !== null && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>Độ trễ Ping:</span>
+              <span>Độ trễ kết nối:</span>
               <Tag color="success" style={{ margin: 0, borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
-                {latency}ms (200 OK)
+                {latency} ms (HTTP 200)
               </Tag>
             </div>
           )}
@@ -202,7 +202,7 @@ export default function ConnectorStatusCard({ connector, onUpdate }: Props) {
 
         {/* Actions Footer */}
         <div style={{ marginTop: 'auto', display: 'flex', gap: 6, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
-          <Tooltip title="Kiểm tra kết nối & độ trễ API (Ping)">
+          <Tooltip title="Kiểm tra kết nối và độ trễ API">
             <Button
               size="small"
               icon={<WifiOutlined />}
@@ -210,7 +210,7 @@ export default function ConnectorStatusCard({ connector, onUpdate }: Props) {
               onClick={handlePing}
               style={{ borderRadius: 8 }}
             >
-              Ping
+              Kiểm tra
             </Button>
           </Tooltip>
           <Button
@@ -249,17 +249,17 @@ export default function ConnectorStatusCard({ connector, onUpdate }: Props) {
         <Form form={form} layout="vertical" onFinish={handleSaveSettings} style={{ marginTop: 16 }}>
           <Form.Item
             name="rateLimit"
-            label="Rate Limit (requests / phút)"
+            label="Giới hạn yêu cầu (yêu cầu/phút)"
             rules={[{ required: true, message: 'Vui lòng nhập giới hạn' }]}
           >
             <InputNumber min={10} max={1000} step={10} style={{ width: '100%' }} />
           </Form.Item>
 
-          <Form.Item name="apiKey" label="API Key / Token (Masked)">
+          <Form.Item name="apiKey" label="Khóa API / Mã truy cập (ẩn nội dung)">
             <Input.Password placeholder="••••••••••••••••••••••••••••••••" />
           </Form.Item>
 
-          <Form.Item name="webhookUrl" label="Webhook URL thông báo lỗi">
+          <Form.Item name="webhookUrl" label="Địa chỉ nhận thông báo lỗi">
             <Input placeholder={`https://api.influencermatch.vn/webhook/${connector.platform.toLowerCase()}`} />
           </Form.Item>
         </Form>

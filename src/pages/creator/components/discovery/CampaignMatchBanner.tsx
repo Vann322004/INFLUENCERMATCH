@@ -8,8 +8,8 @@ interface CampaignMatchBannerProps {
   filteredCount: number;
   campaignsList: BrandCampaignItem[];
   selectedCampaignId: string | null;
-  onClearMatch: () => void;
   onSelectCampaign: (campaignId: string) => void;
+  onClearMatch?: () => void;
 }
 
 export const CampaignMatchBanner: React.FC<CampaignMatchBannerProps> = ({
@@ -17,8 +17,8 @@ export const CampaignMatchBanner: React.FC<CampaignMatchBannerProps> = ({
   filteredCount,
   campaignsList,
   selectedCampaignId,
-  onClearMatch,
   onSelectCampaign,
+  onClearMatch,
 }) => {
   if (matchedCampaign) {
     return (
@@ -62,13 +62,25 @@ export const CampaignMatchBanner: React.FC<CampaignMatchBannerProps> = ({
             </div>
           </div>
         </div>
-        <Button
-          size="small"
-          onClick={onClearMatch}
-          style={{ borderRadius: 8, fontWeight: 600, borderColor: '#A5B4FC', color: '#4338CA' }}
-        >
-          ✕ Thoát gợi ý (Xem toàn bộ KOC)
-        </Button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {campaignsList.length > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12.5, color: '#4338CA', fontWeight: 600 }}>Đổi chiến dịch:</span>
+              <Select
+                placeholder="Chọn chiến dịch khác..."
+                style={{ width: 200 }}
+                value={selectedCampaignId || undefined}
+                onChange={onSelectCampaign}
+                options={campaignsList.map((c) => ({ value: c.id, label: c.name }))}
+              />
+            </div>
+          )}
+          {onClearMatch && (
+            <Button size="small" onClick={onClearMatch} style={{ borderRadius: 6, fontSize: 12 }}>
+              Xóa lọc chiến dịch
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
@@ -91,12 +103,12 @@ export const CampaignMatchBanner: React.FC<CampaignMatchBannerProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <CompassOutlined style={{ fontSize: 18, color: '#6366F1' }} />
         <div style={{ fontSize: 13, color: '#475569' }}>
-          <strong>Chế độ Khám phá tự do:</strong> Đang hiển thị toàn bộ <strong>{filteredCount.toLocaleString('vi-VN')} KOC</strong> hệ thống. Bạn có thể chọn một chiến dịch để AI tự động lọc Top KOC tương thích nhất.
+          <strong>Gợi ý thông minh theo Chiến dịch:</strong> Vui lòng chọn chiến dịch mục tiêu để AI xếp hạng Top KOC phù hợp nhất.
         </div>
       </div>
       {campaignsList.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12.5, color: '#64748B', fontWeight: 600 }}>Gợi ý theo chiến dịch:</span>
+          <span style={{ fontSize: 12.5, color: '#64748B', fontWeight: 600 }}>Chiến dịch mục tiêu:</span>
           <Select
             placeholder="Chọn chiến dịch..."
             style={{ width: 230 }}

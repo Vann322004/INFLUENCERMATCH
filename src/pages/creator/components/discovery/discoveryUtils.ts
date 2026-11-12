@@ -1,5 +1,5 @@
 import type { Creator, BrandCampaignItem, DiscoveryCache } from './types';
-import { DOMAIN_CLUSTERS, STOP_WORDS, ALL_CATEGORIES } from './types';
+import { DOMAIN_CLUSTERS, STOP_WORDS } from './types';
 import type { CampaignResponse } from '../../../../types/api/campaign.types';
 
 // Hàm chuyển đổi Creator từ Backend sang format hiển thị trên giao diện
@@ -322,7 +322,7 @@ export const updateDiscoveryCache = (partial: Partial<DiscoveryCache>) => {
       campaigns: [],
       matchedCampaign: null,
       selectedCampaignId: null,
-      categoriesList: ALL_CATEGORIES,
+      categoriesList: [],
       lastUpdated: Date.now(),
     };
   }
