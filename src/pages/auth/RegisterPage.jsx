@@ -11,6 +11,14 @@ export default function RegisterPage() {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  React.useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timeout = setTimeout(() => setResendCooldown(value => value - 1), 1000);
+    return () => clearTimeout(timeout);
+  }, [resendCooldown]);
 
   // Thêm class để card mở rộng vừa vặn cho layout 2 cột đều nhau
   React.useEffect(() => {
@@ -25,6 +33,7 @@ export default function RegisterPage() {
     if (loading) return;
     setLoading(true);
     try {
+      const policies = await authService.getPolicies();
       if (values.brandName?.trim()) {
         try {
           sessionStorage.setItem('pending_brand_name', values.brandName.trim());
@@ -33,19 +42,80 @@ export default function RegisterPage() {
       await authService.register({
         fullName: values.fullName?.trim(),
         email: values.email?.trim(),
-        brandName: values.brandName?.trim(),
-        phone: values.phone?.trim(),
+        businessName: values.brandName?.trim(),
+        phoneNumber: values.phone?.trim(),
         password: values.password,
+        policyAcceptance: {
+          acceptedTerms: values.agreement === true,
+          acceptedPrivacy: values.agreement === true,
+          termsVersion: policies.termsVersion,
+          privacyVersion: policies.privacyVersion,
+        },
       });
 
-      message.success('Đăng ký tài khoản Brand/SME thành công! Vui lòng đăng nhập.');
-      navigate(ROUTES.AUTH.LOGIN || '/login');
+      setVerificationEmail(values.email.trim());
+      setResendCooldown(60);
+      message.success('Đã tạo tài khoản. Vui lòng nhập mã xác minh được gửi đến email.');
     } catch (error) {
       message.error(getErrorMessage(error, 'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.'));
     } finally {
       setLoading(false);
     }
   };
+
+  const verifyEmail = async ({ otp }) => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      await authService.verifyEmail(verificationEmail, otp);
+      message.success('Xác minh email thành công! Bạn có thể đăng nhập.');
+      navigate(ROUTES.AUTH.LOGIN || '/login');
+    } catch (error) {
+      message.error(getErrorMessage(error, 'Không xác minh được email. Vui lòng thử lại.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resendVerification = async () => {
+    if (loading || resendCooldown > 0) return;
+    setLoading(true);
+    try {
+      await authService.resendVerification(verificationEmail);
+      setResendCooldown(60);
+      message.success('Yêu cầu gửi lại mã đã được tiếp nhận. Vui lòng kiểm tra email.');
+    } catch (error) {
+      message.error(getErrorMessage(error, 'Không gửi lại được mã xác minh.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (verificationEmail) {
+    return (
+      <div className="register-card-inner">
+        <div className="register-heading-group">
+          <h2 className="register-title">Xác minh email</h2>
+          <p className="register-subtitle">Nhập mã 6 chữ số gửi đến {verificationEmail}. Hãy kiểm tra cả thư rác.</p>
+        </div>
+        <Form layout="vertical" onFinish={verifyEmail} requiredMark={false}>
+          <Form.Item name="otp" label="Mã xác minh" rules={[
+            { required: true, message: 'Vui lòng nhập mã xác minh.' },
+            { pattern: /^\d{6}$/, message: 'Mã xác minh gồm 6 chữ số.' },
+          ]}>
+            <Input autoComplete="one-time-code" inputMode="numeric" maxLength={6} disabled={loading} className="luxe-input" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block loading={loading} className="luxe-primary-btn">Xác minh email</Button>
+          <Button type="link" onClick={resendVerification} disabled={loading || resendCooldown > 0}>
+            {resendCooldown > 0 ? `Gửi lại mã sau ${resendCooldown}s` : 'Gửi lại mã'}
+          </Button>
+        </Form>
+        <div className="register-login-banner">
+          <Link to={ROUTES.AUTH.LOGIN || '/login'} className="link">Về trang đăng nhập</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="register-card-inner">
