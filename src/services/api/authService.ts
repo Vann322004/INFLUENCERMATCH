@@ -1,4 +1,4 @@
-import { apiClient, cookieAuthClient, setAuthSession, clearAuthSession, getStoredUser, getAccessToken, getAuthSessionId } from '../apiClient';
+import { apiClient, cookieAuthClient, getCsrfRequestConfig, setAuthSession, clearAuthSession, getStoredUser, getAccessToken, getAuthSessionId } from '../apiClient';
 import { claimRefreshCookie, ownsRefreshCookie, hasRefreshCookieOwner, withAuthCookieLock, publishAccountLogout } from '../authSession';
 import type { ApiResponse } from '../../types/api/common.types';
 import type {
@@ -14,9 +14,9 @@ import { brandService } from './brandService';
 async function requestLogin(path: string, payload: unknown, sessionId: string) {
   return withAuthCookieLock(async () => {
     if (getAuthSessionId() !== sessionId) throw new Error('Yêu cầu đăng nhập đã được thay thế.');
-    await cookieAuthClient.get('/auth/csrf');
+    const csrfConfig = await getCsrfRequestConfig();
     if (getAuthSessionId() !== sessionId) throw new Error('Yêu cầu đăng nhập đã được thay thế.');
-    const response = await apiClient.post<ApiResponse<LoginResponse>>(path, payload);
+    const response = await apiClient.post<ApiResponse<LoginResponse>>(path, payload, csrfConfig);
     if (getAuthSessionId() !== sessionId) throw new Error('Yêu cầu đăng nhập đã được thay thế.');
     claimRefreshCookie();
     return response;
@@ -32,78 +32,14 @@ export const authService = {
     clearBrandCache();
     brandService.clearBrandCache();
     const sessionId = getAuthSessionId();
-    const email = payload.email?.toLowerCase().trim();
-    try {
-      const response = await requestLogin('/auth/login', payload, sessionId);
-      if (getAuthSessionId() !== sessionId) throw new Error('Yêu cầu đăng nhập đã được thay thế.');
-      const loginData = (response.data as any)?.data ?? response.data;
+    const response = await requestLogin('/auth/login', payload, sessionId);
+    if (getAuthSessionId() !== sessionId) throw new Error('Yêu cầu đăng nhập đã được thay thế.');
+    const loginData = (response.data as any)?.data ?? response.data;
 
-      // Lưu session token và thông tin user
-      setAuthSession(loginData.accessToken, loginData.refreshToken, loginData.user);
+    // Lưu session token và thông tin user
+    setAuthSession(loginData.accessToken, loginData.refreshToken, loginData.user);
 
-      return loginData;
-    } catch (error) {
-      if (getAuthSessionId() !== sessionId) throw error;
-      // Demo fallback nếu tài khoản demo chưa có trên Backend Database
-      if (email === 'manager@influencermatch.vn' && payload.password === 'manager123') {
-        const mockUser: UserProfile = {
-          id: 'usr_008',
-          email: 'manager@influencermatch.vn',
-          fullName: 'Nguyễn Hoàng Long',
-          role: 'DATA_MANAGER',
-          status: 'ACTIVE',
-        };
-        const mockData: LoginResponse = {
-          accessToken: 'mock_manager_token_' + Date.now(),
-          refreshToken: 'mock_manager_refresh_token',
-          tokenType: 'Bearer',
-          expiresIn: 86400,
-          user: mockUser,
-        };
-        setAuthSession(mockData.accessToken, mockData.refreshToken, mockData.user);
-        return mockData;
-      }
-
-      if (email === 'admin@influencermatch.vn' && payload.password === 'admin123') {
-        const mockUser: UserProfile = {
-          id: 'usr_001',
-          email: 'admin@influencermatch.vn',
-          fullName: 'Trần Minh Khoa',
-          role: 'ADMIN',
-          status: 'ACTIVE',
-        };
-        const mockData: LoginResponse = {
-          accessToken: 'mock_admin_token_' + Date.now(),
-          refreshToken: 'mock_admin_refresh_token',
-          tokenType: 'Bearer',
-          expiresIn: 86400,
-          user: mockUser,
-        };
-        setAuthSession(mockData.accessToken, mockData.refreshToken, mockData.user);
-        return mockData;
-      }
-
-      if (email === 'creator@influencermatch.vn' && payload.password === 'creator123') {
-        const mockUser: UserProfile = {
-          id: 'usr_creator_01',
-          email: 'creator@influencermatch.vn',
-          fullName: 'Châu Bùi (KOC / Creator)',
-          role: 'CREATOR',
-          status: 'ACTIVE',
-        };
-        const mockData: LoginResponse = {
-          accessToken: 'mock_creator_token_' + Date.now(),
-          refreshToken: 'mock_creator_refresh_token',
-          tokenType: 'Bearer',
-          expiresIn: 86400,
-          user: mockUser,
-        };
-        setAuthSession(mockData.accessToken, mockData.refreshToken, mockData.user);
-        return mockData;
-      }
-
-      throw error;
-    }
+    return loginData;
   },
 
   /**
@@ -119,16 +55,13 @@ export const authService = {
   async getMe(): Promise<UserProfileResponse> {
     const sessionId = getAuthSessionId();
     const stored = getStoredUser();
-    if (getAccessToken()?.startsWith('mock_') && stored) {
-      return stored as UserProfileResponse;
-    }
     try {
       const response = await apiClient.get<ApiResponse<UserProfileResponse>>('/auth/me');
       const userProfile = response.data.data;
       if (getAuthSessionId() !== sessionId) throw new Error('Phiên đăng nhập đã thay đổi.');
       if (stored?.id && userProfile.id !== stored.id) throw new Error('Thông tin tài khoản không khớp phiên đăng nhập.');
 
-      // Cập nhật lại thông tin user trong local storage nếu có thay đổi
+      // Cập nhật thông tin của phiên đăng nhập hiện tại.
       setAuthSession(getAccessToken() || '', undefined, { ...getStoredUser(), ...userProfile });
 
       return userProfile;
@@ -171,9 +104,9 @@ export const authService = {
     try {
       await withAuthCookieLock(async () => {
         if (getAuthSessionId() !== loggedOutSessionId || hasRefreshCookieOwner()) return;
-        await cookieAuthClient.get('/auth/csrf');
+        const csrfConfig = await getCsrfRequestConfig();
         if (getAuthSessionId() !== loggedOutSessionId || hasRefreshCookieOwner()) return;
-        await cookieAuthClient.post('/auth/logout');
+        await cookieAuthClient.post('/auth/logout', undefined, csrfConfig);
       });
     } catch {
       // Bỏ qua lỗi backend khi logout để đảm bảo client luôn được dọn dẹp
@@ -218,7 +151,7 @@ export const authService = {
    * Kiểm tra người dùng có quyền truy cập vào khu vực quản trị/vận hành (Admin hoặc Manager)
    */
   hasManagementAccess(): boolean {
-    return this.isAdmin() || this.isManager();
+    return this.isAuthenticated() && (this.isAdmin() || this.isManager());
   },
 
   /**

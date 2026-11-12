@@ -10,12 +10,23 @@ export const apiClient = axios.create({
   baseURL: BASE_URL,
   timeout: 30000,
   withCredentials: true,
+  withXSRFToken: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 export const cookieAuthClient = axios.create({ baseURL: BASE_URL, timeout: 30000, withCredentials: true, withXSRFToken: true });
+export const getCsrfRequestConfig = async () => {
+  const { data } = await cookieAuthClient.get('/auth/csrf');
+  const csrf = data?.data ?? data;
+  if (typeof csrf?.token !== 'string' || typeof csrf?.headerName !== 'string') {
+    throw new Error('Không lấy được mã xác thực phiên. Vui lòng thử lại.');
+  }
+  // Spring returns a masked CSRF token. Do not let Axios replace it with the
+  // raw cookie value when constructing the request.
+  return { headers: { [csrf.headerName]: csrf.token }, withXSRFToken: false };
+};
 type SessionRequest = InternalAxiosRequestConfig & { _retry?: boolean; _sessionId?: string };
 const staleSession = () => new axios.CanceledError('Phiên đăng nhập đã thay đổi.');
 const refreshes = new Map<string, Promise<string>>();
@@ -30,9 +41,9 @@ const refreshSession = (sessionId: string): Promise<string> => {
     // The refresh cookie is shared by the browser. Never use another tab's
     // cookie to replace this tab's identity.
     if (!ownsRefreshCookie()) throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại tài khoản của tab này.');
-    await cookieAuthClient.get('/auth/csrf');
+    const csrfConfig = await getCsrfRequestConfig();
     if (getAuthSessionId() !== sessionId) throw staleSession();
-    const { data } = await cookieAuthClient.post('/auth/refresh');
+    const { data } = await cookieAuthClient.post('/auth/refresh', undefined, csrfConfig);
     if (getAuthSessionId() !== sessionId) throw staleSession();
     const refreshed = data?.data ?? data;
     const refreshedId = refreshed.user?.id || refreshed.user?.userId || refreshed.user?.email;

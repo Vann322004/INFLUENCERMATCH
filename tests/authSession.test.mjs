@@ -47,7 +47,11 @@ async function tab(shared = new Storage(), existing = new Storage()) {
 
 const manager = { id: 'manager-id', role: 'DATA_MANAGER' };
 const brand = { id: 'brand-id', role: 'BRAND' };
-const response = (config, data) => ({ config, data, status: 200, statusText: 'OK', headers: {} });
+const response = (config, data) => ({ config,
+  data: config.url === '/auth/csrf' && Object.keys(data).length === 0
+    ? { data: { token: 'masked-csrf-token', headerName: 'X-XSRF-TOKEN' } } : data,
+  status: 200, statusText: 'OK', headers: {},
+});
 const unauthorized = config => Promise.reject(new axios.AxiosError('Expired', 'ERR_BAD_REQUEST', config, {}, { status: 401, data: {} }));
 
 test('tabs retain separate identities and logout does not remove another tab session', async () => {
@@ -263,4 +267,49 @@ test('a background tab cannot send another request after the same account logs o
   await assert.rejects(b.client.apiClient.get('/manager'), error => axios.isCancel(error));
   assert.equal(requests, 0);
   assert.deepEqual(b.redirects, ['/login']);
+});
+
+test('a failed manager login cannot become a successful demo login', async () => {
+  const a = await tab();
+  a.client.cookieAuthClient.defaults.adapter = async config => response(config, {});
+  a.client.apiClient.defaults.adapter = unauthorized;
+  await assert.rejects(a.auth.login({ email: 'manager@influencermatch.vn', password: 'manager123' }));
+  assert.equal(a.session.getAccessToken(), null);
+  assert.equal(a.session.getStoredUser(), null);
+  assert.equal(a.auth.hasManagementAccess(), false);
+});
+
+test('successful manager login sends the real bearer token on subsequent API calls', async () => {
+  const a = await tab();
+  a.client.cookieAuthClient.defaults.adapter = async config => response(config, {});
+  a.client.apiClient.defaults.adapter = async config => {
+    if (config.url === '/auth/login') {
+      assert.equal(config.headers.get('X-XSRF-TOKEN'), 'masked-csrf-token');
+      assert.equal(config.withXSRFToken, false);
+      return response(config, { data: { accessToken: 'real-manager-token', user: manager } });
+    }
+    assert.equal(config.headers.Authorization, 'Bearer real-manager-token');
+    return response(config, { data: [] });
+  };
+  await a.auth.login({ email: 'manager@example.com', password: 'example' });
+  assert.equal(a.auth.hasManagementAccess(), true);
+  await a.client.apiClient.get('/data/niches');
+});
+
+test('previously persisted demo sessions are discarded on reload', async () => {
+  const storage = new Storage();
+  storage.setItem('im_tab_auth_session', JSON.stringify({ id: 'old-demo', accessToken: 'mock_manager_token_123', user: manager }));
+  const a = await tab(new Storage(), storage);
+  assert.equal(a.session.getAccessToken(), null);
+  assert.equal(a.session.getStoredUser(), null);
+  assert.equal(a.auth.hasManagementAccess(), false);
+});
+
+test('legacy demo sessions are not migrated into authenticated tabs', async () => {
+  const shared = new Storage();
+  shared.setItem('access_token', 'mock_manager_token_123');
+  shared.setItem('influencermatch_user', JSON.stringify(manager));
+  const a = await tab(shared);
+  assert.equal(a.session.getAccessToken(), null);
+  assert.equal(a.auth.hasManagementAccess(), false);
 });

@@ -10,6 +10,20 @@ import { getErrorMessage, setAuthSession, clearAuthSession, getAuthSessionId } f
 import { claimRefreshCookie } from '../../services/authSession';
 import './LoginPage.css';
 
+const QUICK_LOGIN_ACCOUNTS = import.meta.env.DEV
+  ? [
+      ['ADMIN', 'Quản trị viên', 'admin@influencermatch.com', 'Password123!'],
+      ['DATA_MANAGER', 'Quản lý dữ liệu', 'manager@influencermatch.vn', 'manager123'],
+      ['BRAND', 'Thương hiệu'],
+      ['CREATOR', 'Nhà sáng tạo', 'creator@influencermatch.vn', 'creator123'],
+    ].map(([role, label, defaultEmail, defaultPassword]) => ({
+      role,
+      label,
+      email: import.meta.env[`VITE_DEMO_${role}_EMAIL`] || defaultEmail,
+      password: import.meta.env[`VITE_DEMO_${role}_PASSWORD`] || defaultPassword,
+    })).filter(account => account.email && account.password)
+  : [];
+
 export default function LoginPage() {
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -234,33 +248,24 @@ export default function LoginPage() {
         </Link>
       </div>
 
-      {/* ── Demo Accounts Quick-fill (Collapsible/Subtle to keep UI ultra-clean) ── */}
-      <div className="login-demo-bar">
-        <span className="demo-hint">Tài khoản demo:</span>
+      {QUICK_LOGIN_ACCOUNTS.length > 0 && <div className="login-demo-bar">
+        <span className="demo-hint">Điền nhanh tài khoản demo:</span>
         <div className="demo-chip-group">
+          {QUICK_LOGIN_ACCOUNTS.map(account => (
           <button
+            key={account.role}
             type="button"
             className="demo-chip"
-            onClick={() => form.setFieldsValue({ email: 'creator@influencermatch.vn', password: 'creator123' })}
+            disabled={loading}
+            onClick={() => {
+              form.setFieldsValue({ email: account.email, password: account.password });
+            }}
           >
-            Creator
+            {account.label}
           </button>
-          <button
-            type="button"
-            className="demo-chip"
-            onClick={() => form.setFieldsValue({ email: 'manager@influencermatch.vn', password: 'manager123' })}
-          >
-            Manager
-          </button>
-          <button
-            type="button"
-            className="demo-chip"
-            onClick={() => form.setFieldsValue({ email: 'admin@influencermatch.com', password: 'Password123!' })}
-          >
-            Admin
-          </button>
+          ))}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

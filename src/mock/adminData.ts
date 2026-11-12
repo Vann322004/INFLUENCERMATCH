@@ -2,8 +2,7 @@
 // ADMIN MOCK DATA - InfluencerMatch Admin Panel
 // =============================================
 
-import { authService } from '../services/api/authService';
-import { setAuthSession } from '../services/apiClient';
+import { adminAuthService as realAdminAuthService } from '../services/api/adminAuthService';
 
 // ── Auth ──────────────────────────────────────
 export const ADMIN_USER = {
@@ -26,46 +25,7 @@ export const MANAGER_USER = {
   avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
 };
 
-export const adminAuthService = {
-  login: async (email: string, password: string) => {
-    try {
-      const loginData = await authService.login({ email, password });
-      return { success: true, user: loginData.user };
-    } catch {
-      // Local demo fallback if backend DB doesn't have seed accounts yet
-      if (email === ADMIN_USER.email && password === ADMIN_USER.password) {
-        const mockUser = {
-          id: ADMIN_USER.id,
-          email: ADMIN_USER.email,
-          fullName: ADMIN_USER.name,
-          role: ADMIN_USER.role,
-          status: 'ACTIVE' as const,
-        };
-        setAuthSession('mock_admin_token', undefined, mockUser);
-        return { success: true, user: mockUser };
-      }
-      if (email === MANAGER_USER.email && password === MANAGER_USER.password) {
-        const mockUser = {
-          id: MANAGER_USER.id,
-          email: MANAGER_USER.email,
-          fullName: MANAGER_USER.name,
-          role: MANAGER_USER.role,
-          status: 'ACTIVE' as const,
-        };
-        setAuthSession('mock_manager_token', undefined, mockUser);
-        return { success: true, user: mockUser };
-      }
-      return { success: false, message: 'Sai thông tin đăng nhập hoặc không có quyền truy cập.' };
-    }
-  },
-  logout: () => authService.logout(),
-  isAuthenticated: () => {
-    return authService.hasManagementAccess();
-  },
-  getCurrentUser: () => {
-    return authService.getCurrentUser();
-  },
-};
+export const adminAuthService = realAdminAuthService;
 
 // ── Fallback Admin Accounts ───────────────────
 import type { AdminUser, AuditLogItem } from '../types/api/admin.types';

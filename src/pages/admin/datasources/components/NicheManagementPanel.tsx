@@ -4,6 +4,8 @@ import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { nicheService, type Niche, type NicheInput } from '../../../../services/api/nicheService';
 
 function errorText(error: any): string {
+  if (error?.response?.status === 401) return 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại bằng tài khoản manager.';
+  if (error?.response?.status === 403) return 'Tài khoản chưa được cấp quyền quản lý ngành hàng.';
   return error?.response?.data?.detail || error?.response?.data?.message || 'Không thể cập nhật ngành hàng. Vui lòng thử lại.';
 }
 

@@ -23,13 +23,23 @@ const emptySession = (): Session => ({ id: crypto.randomUUID(), accessToken: nul
 let session: Session = (() => {
   const saved = sessionStorage.getItem(SESSION_KEY);
   if (saved) {
-    try { return JSON.parse(saved) as Session; } catch { /* Replace invalid data. */ }
+    try {
+      const parsed = JSON.parse(saved) as Session;
+      if (parsed?.id && !parsed.accessToken?.startsWith('mock_')) return parsed;
+      const clean = emptySession();
+      if (localStorage.getItem(COOKIE_OWNER_KEY) === parsed?.id) localStorage.removeItem(COOKIE_OWNER_KEY);
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(clean));
+      return clean;
+    } catch { /* Replace invalid data. */ }
   }
   const initial = emptySession();
   // Migrate the existing login once, then stop sharing credentials across tabs.
-  initial.accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-  initial.refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-  try { initial.user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || 'null'); } catch { /* No profile. */ }
+  const legacyToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+  if (legacyToken && !legacyToken.startsWith('mock_')) {
+    initial.accessToken = legacyToken;
+    initial.refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+    try { initial.user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || 'null'); } catch { /* No profile. */ }
+  }
   const userId = identity(initial.user);
   if (userId) initial.logoutMarker = localStorage.getItem(logoutKey(userId));
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(initial));
@@ -52,6 +62,9 @@ export const withAuthCookieLock = <T>(action: () => Promise<T>): Promise<T> =>
     : action();
 
 export const setAuthSession = (accessToken: string, refreshToken?: string, user?: unknown) => {
+  if (!accessToken || accessToken.startsWith('mock_')) {
+    throw new Error('Không nhận được phiên đăng nhập hợp lệ từ máy chủ. Vui lòng đăng nhập lại.');
+  }
   const userId = identity(user);
   if (userId && userId !== identity(session.user)) {
     session.logoutMarker = localStorage.getItem(logoutKey(userId));
