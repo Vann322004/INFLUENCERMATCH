@@ -216,9 +216,9 @@ export const creatorService = {
         return items;
       }
     } catch (err) {
-      console.warn('[creatorService.getCreators] Backend API /creators error or unauthorized:', err);
+      console.warn('[creatorService.getCreators] Backend API /creators error or unauthorized. Falling back to default creators:', err);
     }
-    return [];
+    return DEFAULT_CREATORS;
   },
 
   /**

@@ -939,6 +939,7 @@ export default function CreateCampaignPage() {
           createdCampaign = {
             id: `camp-${Date.now()}`,
             ...payload,
+            name: payload.name || campaignName.trim() || 'Chiến dịch mới',
             status: 'READY_FOR_DISCOVERY',
           };
         }
@@ -957,7 +958,7 @@ export default function CreateCampaignPage() {
           localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', targetCampaignId);
           localStorage.setItem('IM_MATCHED_CAMPAIGN', JSON.stringify({
             id: targetCampaignId,
-            name: createdCampaign?.name || campaignName.trim(),
+            name: createdCampaign?.name || campaignName.trim() || 'Chiến dịch mới',
             budget: budgetTotal ? `${(budgetTotal / 1_000_000).toFixed(0)} Triệu VND` : '25.0M VND',
             targetAudience: payload.targetAudiences?.join(', '),
             category: payload.niches?.[0] || 'Làm đẹp & Mỹ phẩm',
