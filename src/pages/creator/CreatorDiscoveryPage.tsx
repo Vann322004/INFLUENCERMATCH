@@ -21,7 +21,7 @@ import CreatorDetailDrawer from './components/discovery/CreatorDetailDrawer';
 
 import ExternalDiscovery from '../../components/discovery/ExternalDiscovery';
 import AddToShortlistModal from '../../components/discovery/AddToShortlistModal';
-import { creatorService, DEFAULT_CREATORS } from '../../services/api/creatorService';
+import { creatorService } from '../../services/api/creatorService';
 import { campaignService } from '../../services/api/campaignService';
 import './CreatorDiscoveryPage.css';
 
@@ -106,17 +106,17 @@ export default function CreatorDiscoveryPage() {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [isRefreshingCreator, setIsRefreshingCreator] = useState(false);
 
-  // Creators list: Khởi tạo với cache hoặc danh sách Creator chuẩn để tránh trắng trang
+  // Reuse real cached records only; discard legacy synthetic fallback IDs.
   const [loading, setLoading] = useState<boolean>(false);
   const [creators, setCreators] = useState<Creator[]>(() => {
     try {
       const raw = localStorage.getItem('IM_DISCOVERY_CREATORS');
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed.filter(c => !/^cr_\d+$/.test(c.id));
       }
     } catch {}
-    return DEFAULT_CREATORS.map(mapApiCreatorToUi);
+    return [];
   });
 
   const [categoriesList, setCategoriesList] = useState<string[]>(
@@ -328,7 +328,7 @@ export default function CreatorDiscoveryPage() {
         });
       } else {
         setCreators((prev) => {
-          const base = prev.length > 0 ? prev : DEFAULT_CREATORS.map(mapApiCreatorToUi);
+          const base = prev;
           const updated = base.map((c) => {
             const res = computeCreatorMatch(c, camp);
             return {
@@ -426,9 +426,7 @@ export default function CreatorDiscoveryPage() {
             updateDiscoveryCache({ creators: mapped, matchedCampaign });
           } else {
             const apiCreators = await creatorService.getCreators();
-            const sourceList = (Array.isArray(apiCreators) && apiCreators.length > 0)
-              ? apiCreators
-              : DEFAULT_CREATORS;
+            const sourceList = apiCreators;
             if (isMounted) {
               const rawUi = sourceList.map(mapApiCreatorToUi);
               let finalList = rawUi;

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import type { ApiProblemDetails } from '../types/api/common.types';
+import { invalidateDataManagerCacheForMutation } from './requestCache';
 import { getAccessToken, getStoredUser, getAuthSessionId, setAuthSession, clearAuthSession, ownsRefreshCookie, withAuthCookieLock, consumeAccountLogout } from './authSession';
 export { STORAGE_KEYS, getAccessToken, getRefreshToken, getStoredUser, getAuthSessionId, setAuthSession, clearAuthSession } from './authSession';
 
@@ -90,6 +91,9 @@ apiClient.interceptors.response.use(
     }
     const config = response.config as SessionRequest;
     if (config._sessionId !== getAuthSessionId()) throw staleSession();
+    if ((response.data as { success?: boolean })?.success !== false) {
+      invalidateDataManagerCacheForMutation(config.method, config.url);
+    }
     return response;
   },
   async (error: AxiosError<ApiProblemDetails>) => {

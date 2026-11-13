@@ -1,33 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Layout, Badge, Tooltip } from 'antd';
-import { BellOutlined, HomeOutlined, RightOutlined } from '@ant-design/icons';
+import React from 'react';
+import { Layout } from 'antd';
+import { HomeOutlined, RightOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import NotificationDrawer from './NotificationDrawer';
-import { notificationService } from '../../services/api/notificationService';
+import NotificationBell from './NotificationBell';
 
 const { Header } = Layout;
 
 export default function AppHeader() {
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const refreshUnread = () => {
-    notificationService.getUnreadCount().then(setUnreadCount).catch(() => {});
-  };
-
-  useEffect(() => {
-    refreshUnread();
-  }, []);
-
-  useEffect(() => {
-    if (!notifOpen) {
-      refreshUnread();
-    }
-  }, [notifOpen]);
-
-  // Dynamic Page Context & Breadcrumb (100% tiếng Việt, chuẩn hóa phân cấp điều hướng)
   const getPageInfo = () => {
     const p = location.pathname;
     if (p.includes('/campaign-management')) {
@@ -102,22 +84,8 @@ export default function AppHeader() {
         </div>
 
         {/* Right: Chuông thông báo duy nhất */}
-        <Tooltip title="Thông báo hệ thống">
-          <Badge count={unreadCount} size="small" color="#EF4444" offset={[-2, 2]} style={{ boxShadow: '0 0 0 2px #FFFFFF' }}>
-            <button
-              type="button"
-              className="standalone-action-btn"
-              onClick={() => setNotifOpen(true)}
-              aria-label="Thông báo hệ thống"
-            >
-              <BellOutlined style={{ fontSize: 16 }} />
-            </button>
-          </Badge>
-        </Tooltip>
+        <NotificationBell />
       </div>
-
-      {/* Notification Drawer Component */}
-      <NotificationDrawer open={notifOpen} onClose={() => setNotifOpen(false)} />
     </Header>
   );
 }
