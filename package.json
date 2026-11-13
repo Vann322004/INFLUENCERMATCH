@@ -7,13 +7,6 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "test:auth": "node --experimental-vm-modules --test tests/authSession.test.mjs",
-    "test:dashboard-data": "node --experimental-vm-modules --test tests/dashboardBackendData.test.mjs",
-    "test:dashboard-live": "node --experimental-vm-modules tests/checkDashboardBackend.mjs",
-    "test:recommendation-config": "node --experimental-vm-modules --test tests/recommendationConfigData.test.mjs",
-    "test:cache": "node --experimental-vm-modules --test tests/requestCache.test.mjs",
-    "test:cache-browser": "node tests/dataManagerCacheBrowser.mjs",
-    "test:responsive": "node tests/adminResponsive.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

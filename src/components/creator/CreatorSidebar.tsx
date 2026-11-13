@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Avatar, Dropdown, Tooltip, Tag } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   LineChartOutlined,
@@ -13,7 +13,6 @@ import {
   SettingOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  CheckCircleFilled,
 } from '@ant-design/icons';
 import { authService } from '../../services/api/authService';
 
@@ -31,10 +30,7 @@ export default function CreatorSidebar() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
-  const currentUser = authService.getCurrentUser() || {
-    fullName: 'Châu Bùi',
-    email: 'creator@influencermatch.vn',
-  };
+  const currentUser = authService.getCurrentUser();
 
   const getActiveKey = () => {
     const path = location.pathname;
@@ -153,7 +149,7 @@ export default function CreatorSidebar() {
         <Dropdown menu={{ items: userDropdown }} placement="topRight" trigger={['click']}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
             <Avatar
-              src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&auto=format&fit=crop&q=80"
+              icon={<UserOutlined />}
               size={36}
               style={{ border: '2px solid #10B981', flexShrink: 0 }}
             />
@@ -161,12 +157,11 @@ export default function CreatorSidebar() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {currentUser.fullName || 'Châu Bùi'}
+                    {currentUser?.fullName || currentUser?.email || '—'}
                   </span>
-                  <CheckCircleFilled style={{ color: '#10B981', fontSize: 12 }} />
                 </div>
                 <div style={{ fontSize: 10.5, color: '#64748B' }}>
-                  KOC • Verified
+                  Creator
                 </div>
               </div>
             )}

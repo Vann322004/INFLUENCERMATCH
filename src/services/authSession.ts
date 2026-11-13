@@ -52,6 +52,12 @@ let session: Session = (() => {
 })();
 
 const persist = () => sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+const sessionListeners = new Set<() => void>();
+export const subscribeAuthSession = (listener: () => void) => {
+  sessionListeners.add(listener);
+  return () => { sessionListeners.delete(listener); };
+};
+const notifySession = () => sessionListeners.forEach(listener => listener());
 export const getAuthSessionId = () => session.id;
 export const getAccessToken = () => session.accessToken;
 export const getRefreshToken = () => session.refreshToken;
@@ -77,6 +83,7 @@ export const setAuthSession = (accessToken: string, refreshToken?: string, user?
   if (refreshToken !== undefined) session.refreshToken = refreshToken || null;
   if (user !== undefined) session.user = user;
   persist();
+  notifySession();
 };
 
 export const clearAuthSession = () => {
@@ -87,6 +94,7 @@ export const clearAuthSession = () => {
   Object.values(STORAGE_KEYS).forEach(key => sessionStorage.removeItem(key));
   sessionStorage.removeItem('im_cached_brand_profile');
   persist();
+  notifySession();
 };
 
 export const publishAccountLogout = () => {

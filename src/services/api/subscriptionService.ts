@@ -1,4 +1,6 @@
 import { apiClient } from '../apiClient';
+import { readPage } from './pageResponse';
+import type { PageResponse } from '../../types/api/common.types';
 import type { ApiResponse } from '../../types/api/common.types';
 import type {
   PlanResponse,
@@ -40,6 +42,11 @@ const brandSubsCache = new Map<string, { data: SubscriptionResponse[]; timestamp
 const subsInFlight = new Map<string, Promise<SubscriptionResponse[]>>();
 
 export const subscriptionService = {
+  /** Paginated catalog with authoritative totals, separate from the storefront list cache. */
+  async getPlansPage(page = 0, size = 1): Promise<PageResponse<PlanResponse>> {
+    const response = await apiClient.get('/plans', { params: { page, size } });
+    return readPage<PlanResponse>(response.data);
+  },
   /**
    * Get all active subscription plans (with memory & sessionStorage cache & deduplication).
    */

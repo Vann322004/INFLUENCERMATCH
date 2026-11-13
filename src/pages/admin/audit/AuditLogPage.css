@@ -1,0 +1,60 @@
+.audit-page .ad-panel h2 { margin-bottom: 12px; }
+.audit-section-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.audit-health-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+.audit-health-grid > div { border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; min-width: 0; }
+.audit-health-grid h3 { margin: 0 0 12px; font-size: 14px; color: #64748b; }
+.audit-health-grid p { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
+.audit-filter-form { margin-block: 24px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+.audit-filter-primary { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.audit-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 16px; }
+.audit-filter-form .ant-form-item, .audit-filter-form .ant-form-item-control-input-content { min-width: 0; }
+.audit-filter-form .ant-form-item { margin-bottom: 16px; }
+.audit-filter-form input { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+.audit-advanced-filters { border-top: 1px solid #e2e8f0; margin-bottom: 16px; }
+.audit-advanced-filters summary { color: #475569; font-weight: 600; cursor: pointer; padding-block: 14px; }
+.audit-advanced-filters summary:focus-visible { outline: 2px solid #4f46e5; outline-offset: 3px; }
+.audit-filter-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.audit-page .ant-btn { min-height: 40px; height: auto; white-space: normal; }
+.audit-logs .ant-table-wrapper { min-width: 0; max-width: 100%; }
+.audit-logs .ant-table-content table { width: 100%; table-layout: fixed; }
+.audit-logs .ant-table-cell { overflow-wrap: anywhere; white-space: normal; font-size: 13px; padding: 16px 12px; }
+.audit-logs .ant-table-cell code { font-size: 12px; line-height: 1.7; }
+.audit-logs .ant-tag { max-width: 100%; margin: 0; white-space: normal; overflow-wrap: anywhere; color: #475569; background: #f8fafc; border-color: #e2e8f0; }
+.audit-cell-label { display: none; }
+.audit-cell-secondary { display: block; margin-top: 6px; color: #64748b; font-size: 12px; }
+.audit-entity-type { font-weight: 600; }
+.audit-record-action { text-align: right; }
+.audit-logs-header h2 { margin-bottom: 4px !important; }
+.audit-logs .ant-pagination { flex-wrap: wrap; gap: 8px; }
+.audit-logs .ant-pagination-total-text { height: auto; }
+.audit-detail-meta { margin: 0 0 24px; }
+.audit-detail-meta > div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; padding-block: 8px; }
+.audit-detail-meta dt { color: #64748b; }
+.audit-detail-meta dd { margin: 0; overflow-wrap: anywhere; }
+.audit-diff-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+.audit-diff-grid section { min-width: 0; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; background: #f8fafc; }
+.audit-diff-grid h3 { margin: 0 0 12px; font-size: 14px; }
+.audit-diff-grid pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow: auto; margin: 0; font-size: 12px; }
+@container admin-dashboard (max-width: 900px) {
+  .audit-health-grid, .audit-filters, .audit-filter-primary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .audit-filter-primary > .ant-form-item:first-child { grid-column: 1 / -1; }
+  .audit-logs .ant-table-thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .audit-logs .ant-table-content table { display: block; }
+  .audit-logs colgroup { display: none; }
+  .audit-logs .ant-table-tbody { display: grid; gap: 12px; }
+  .audit-logs .ant-table-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid #e2e8f0; border-radius: 12px; }
+  .audit-logs .ant-table-row > td { display: block; min-width: 0; border-bottom: 0; }
+  .audit-logs .audit-record-action { grid-column: 1 / -1; border-top: 1px solid #e2e8f0; }
+  .audit-cell-label { display: block; color: #64748b; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+  .audit-logs .ant-table-placeholder, .audit-logs .ant-table-placeholder > td { display: block; width: 100%; box-sizing: border-box; }
+}
+@container admin-dashboard (max-width: 575px) {
+  .audit-health-grid, .audit-filters, .audit-filter-primary, .audit-logs .ant-table-row { grid-template-columns: minmax(0, 1fr); }
+  .audit-filter-form { padding: 16px 12px; }
+  .audit-filter-actions > .ant-btn { flex: 1; }
+}
+@media (max-width: 575px) {
+  .audit-detail-meta > div, .audit-diff-grid { grid-template-columns: minmax(0, 1fr); }
+  .audit-page .ant-btn { min-height: 44px; }
+  .audit-detail-drawer .ant-drawer-body { padding: 16px; }
+}

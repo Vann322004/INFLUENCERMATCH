@@ -6,10 +6,13 @@
 // - /admin/data-quality/pending, /admin/data-quality/{id}/approve
 // - /admin/role-permissions, /admin/role-permissions/{role}
 // - /admin/subscriptions, /subscriptions
-// Graceful fallback to verified structured mock datasets for seamless dev/demo experience.
+// Dashboard list requests propagate errors and retain server pagination metadata.
 // =============================================
 
 import apiClient from '../apiClient';
+import { readPage } from './pageResponse';
+import { readSystemStatus } from './systemStatusMapping';
+import type { SystemStatus } from './systemStatusMapping';
 import { createDataManagerQuery } from '../dataManagerCache';
 import type {
   AdminUser,
@@ -119,16 +122,22 @@ const normalizeUser = (raw: any): AdminUser => {
   };
 };
 
-const normalizeAuditLog = (raw: any, index = 0): AuditLogItem => {
+const normalizeAuditLog = (raw: any): AuditLogItem => {
+  if (!raw || typeof raw.id !== 'string') throw new Error('Invalid audit log response.');
   return {
-    id: raw.id || `al_${Date.now()}_${index}`,
-    timestamp: raw.createdAt || raw.timestamp || new Date().toISOString().replace('T', ' ').slice(0, 19),
-    actor: raw.actor || raw.userName || raw.userId || 'Hệ thống',
-    actorEmail: raw.actorEmail || (raw.userId ? `user-${String(raw.userId).slice(0, 6)}@system.vn` : 'system@influencermatch.site'),
-    action: (raw.action || 'UPDATE').toUpperCase() as AuditAction,
-    resource: raw.resource || raw.entityType || 'Account',
-    resourceId: raw.resourceId || raw.entityId || 'res_system',
-    ip: raw.ip || raw.ipAddress || '—',
+    id: raw.id,
+    actorId: raw.actorId ?? raw.userId ?? null,
+    entityType: raw.entityType ?? '',
+    entityId: raw.entityId ?? null,
+    createdAt: raw.createdAt ?? raw.timestamp ?? null,
+    description: null,
+    timestamp: raw.createdAt ?? raw.timestamp ?? '',
+    actor: raw.actorId ?? raw.userId ?? '',
+    actorEmail: '',
+    action: (raw.action ?? '') as AuditAction,
+    resource: raw.entityType ?? '',
+    resourceId: raw.entityId ?? '',
+    ip: raw.ipAddress ?? raw.ip ?? '',
     oldValue: raw.oldValue,
     newValue: raw.newValue,
   };
@@ -146,25 +155,10 @@ const getUsers = async (params?: AdminUsersParams): Promise<AdminUsersResponse> 
   }
 
   const response = await apiClient.get<any>('/admin/users', { params: cleaned });
-  const payload = response.data;
-  
-  const rawList =
-    payload?.data?.items ??
-    payload?.data?.content ??
-    payload?.items ??
-    payload?.content ??
-    (Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []);
+  const page = readPage<any>(response.data);
+  const items = page.items.map(normalizeUser);
+  return { ...page, items, content: items, number: page.page };
 
-  const items = (Array.isArray(rawList) ? rawList : []).map(normalizeUser);
-  return {
-    items,
-    content: items,
-    totalElements: payload?.data?.totalElements ?? payload?.totalElements ?? items.length,
-    totalPages: payload?.data?.totalPages ?? payload?.totalPages ?? 1,
-    number: payload?.data?.page ?? payload?.page ?? 0,
-    page: payload?.data?.page ?? payload?.page ?? 0,
-    size: payload?.data?.size ?? payload?.size ?? items.length,
-  };
 };
 
 /** GET /admin/users/{id} — single user detail */
@@ -248,33 +242,34 @@ const approveClaim = async (id: string, payload: ApproveClaimPayload): Promise<v
 // ── Audit Logs ------------------------------------------
 
 /** GET /admin/audit-logs — paginated audit log */
-const getAuditLogs = async (params?: AuditLogsParams): Promise<AuditLogsResponse> => {
+const auditFilterParams = (params?: AuditLogsParams, pagination = true): Record<string, unknown> => {
   const cleaned: Record<string, unknown> = {};
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
-      if (v !== undefined && v !== 'all') cleaned[k] = v;
+      if ([...(pagination ? ['page', 'size'] : []), 'actorId', 'entityId', 'action', 'entityType', 'from', 'to', 'keyword'].includes(k) && v !== undefined && v !== '' && v !== 'all') cleaned[k] = v;
     });
   }
 
-  const response = await apiClient.get<any>('/admin/audit-logs', { params: cleaned });
-  const payload = response.data;
-  const rawList =
-    payload?.data?.items ??
-    payload?.data?.content ??
-    payload?.items ??
-    payload?.content ??
-    (Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []);
+  return cleaned;
+};
 
-  const items = (Array.isArray(rawList) ? rawList : []).map(normalizeAuditLog);
-  return {
-    items,
-    content: items,
-    totalElements: payload?.data?.totalElements ?? payload?.totalElements ?? items.length,
-    totalPages: payload?.data?.totalPages ?? payload?.totalPages ?? 1,
-    number: payload?.data?.page ?? payload?.page ?? 0,
-    page: payload?.data?.page ?? payload?.page ?? 0,
-    size: payload?.data?.size ?? payload?.size ?? items.length,
-  };
+const getAuditLogs = async (params?: AuditLogsParams): Promise<AuditLogsResponse> => {
+  const response = await apiClient.get<any>('/admin/audit-logs', { params: auditFilterParams(params) });
+  const page = readPage<any>(response.data);
+  const items = page.items.map(normalizeAuditLog);
+  return { ...page, items, content: items, number: page.page };
+
+};
+
+/** Real CSV metadata export, same filters; the BE caps the requested limit at 10,000. */
+const exportAuditLogs = async (params?: AuditLogsParams): Promise<Blob> => {
+  const response = await apiClient.get('/admin/audit-logs/export', {
+    params: { ...auditFilterParams(params, false), limit: 10_000 }, responseType: 'blob',
+  });
+  if (!(response.data instanceof Blob) || !String(response.headers['content-type'] ?? response.data.type).includes('text/csv')) {
+    throw new Error('Phản hồi xuất CSV không hợp lệ.');
+  }
+  return response.data;
 };
 
 // ── Role Permissions ------------------------------------
@@ -434,9 +429,9 @@ const getRecommendationConfig = createDataManagerQuery('recommendation-config', 
 }, { tags: ['recommendation-config'] });
 
 /** GET /admin/system-status — Get system health and runtime metrics (Luồng AD-02) */
-const getSystemStatus = async (): Promise<any> => {
-  const response = await apiClient.get<any>('/admin/system-status');
-  return response.data?.data ?? response.data;
+const getSystemStatus = async (): Promise<SystemStatus> => {
+  const response = await apiClient.get('/admin/system-status');
+  return readSystemStatus(response.data);
 };
 
 /** GET /data/creator-masters — Get paginated Master identities (Luồng DM-01) */
@@ -460,6 +455,7 @@ export const adminService = {
   getPendingClaims,
   approveClaim,
   getAuditLogs,
+  exportAuditLogs,
   getRolePermissions,
   updateRolePermissions,
   getAdminSubscriptions,

@@ -30,7 +30,7 @@ export default function CreatorDetailTab() {
           rawPlatform === 'youtube' ? 'youtube' : rawPlatform === 'instagram' ? 'instagram' : 'tiktok';
 
         return {
-          id: c.id || c.creatorId || `cr_${idx}`,
+          id: c.creatorId || c.id,
           handle: c.userName ? (c.userName.startsWith('@') ? c.userName : `@${c.userName}`) : `@${c.displayName?.toLowerCase().replace(/\s+/g, '') || 'creator'}`,
           name: c.displayName || c.userName || 'Creator',
           platform: normPlatform,
@@ -78,7 +78,7 @@ export default function CreatorDetailTab() {
       }
       message.success('Đã cập nhật dữ liệu Creator mới nhất từ hệ thống');
     } catch {
-      message.info('Đã làm mới thông tin Creator');
+      message.error('Không thể tải thông tin Creator. Vui lòng thử lại.');
     } finally {
       setDetailLoading(false);
     }
