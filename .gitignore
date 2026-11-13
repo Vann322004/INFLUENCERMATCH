@@ -34,3 +34,6 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 .cache/
+
+# Local responsive QA screenshots and reports
+/artifacts/admin-responsive/

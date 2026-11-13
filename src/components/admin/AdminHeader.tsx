@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Badge, Tooltip, Drawer, List, Typography, Tag, Empty, Button } from 'antd';
 import {
   BellOutlined,
+  MenuOutlined,
   HomeOutlined,
   RightOutlined,
   CheckOutlined,
@@ -28,9 +29,12 @@ const NOTIF_ICON: Record<string, React.ReactNode> = {
 
 interface AdminHeaderProps {
   title?: string;
+  mobile?: boolean;
+  menuOpen?: boolean;
+  onOpenMenu?: () => void;
 }
 
-export default function AdminHeader({ title }: AdminHeaderProps) {
+export default function AdminHeader({ title, mobile, menuOpen, onOpenMenu }: AdminHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [notifOpen, setNotifOpen] = useState(false);
@@ -88,6 +92,8 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
     <>
       <Header className="app-header">
         <div className="app-header-inner" style={{ maxWidth: '100%' }}>
+          {mobile && <Button className="admin-menu-trigger" aria-label="Mở menu điều hướng" aria-expanded={menuOpen}
+            aria-controls="admin-navigation" icon={<MenuOutlined />} onClick={onOpenMenu} />}
           {/* Left: Breadcrumbs matching Brand layout */}
           <div className="header-breadcrumbs">
             <span
@@ -151,7 +157,7 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
         }
         open={notifOpen}
         onClose={() => setNotifOpen(false)}
-        width={380}
+        width="min(380px, 100vw)"
         styles={{ body: { padding: 0 } }}
       >
         {notifications.length === 0 ? (

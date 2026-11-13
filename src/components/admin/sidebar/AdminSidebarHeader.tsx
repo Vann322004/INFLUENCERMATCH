@@ -4,9 +4,10 @@ import { SidebarToggleIcon, ChatGptTooltip } from './AdminSidebarTooltip';
 interface AdminSidebarHeaderProps {
   collapsed: boolean;
   onToggle: () => void;
+  toggleLabel?: string;
 }
 
-export default function AdminSidebarHeader({ collapsed, onToggle }: AdminSidebarHeaderProps) {
+export default function AdminSidebarHeader({ collapsed, onToggle, toggleLabel = 'Thu gọn thanh bên' }: AdminSidebarHeaderProps) {
   if (collapsed) {
     return (
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -43,13 +44,12 @@ export default function AdminSidebarHeader({ collapsed, onToggle }: AdminSidebar
 
   return (
     <div className="sidebar-expanded-header">
-      <ChatGptTooltip title="Thu gọn thanh bên" shortcut="Ctrl+Shift+S" placement="bottom">
-        <div
+      <ChatGptTooltip title={toggleLabel} shortcut="Ctrl+Shift+S" placement="bottom">
+        <button
+          type="button"
           className="sidebar-brand-btn"
           onClick={onToggle}
-          role="button"
-          tabIndex={0}
-          aria-label="Thu gọn thanh bên"
+          aria-label={toggleLabel}
         >
           <div className="sidebar-logo-icon-box">
             <img src="/logo.png" alt="InfluencerMatch Logo" className="sidebar-logo-img" />
@@ -58,7 +58,7 @@ export default function AdminSidebarHeader({ collapsed, onToggle }: AdminSidebar
             </span>
           </div>
           <span className="sidebar-brand-name">InfluencerMatch</span>
-        </div>
+        </button>
       </ChatGptTooltip>
     </div>
   );

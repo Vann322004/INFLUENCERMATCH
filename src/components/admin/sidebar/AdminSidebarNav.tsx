@@ -68,6 +68,7 @@ export default function AdminSidebarNav({
                     className={`sidebar-rail-btn ${active ? 'active' : ''}`}
                     onClick={() => onNavigate(item.path)}
                     aria-label={item.label}
+                    aria-current={active ? 'page' : undefined}
                   >
                     {item.icon}
                   </button>
@@ -93,16 +94,17 @@ export default function AdminSidebarNav({
               const active = isItemActive(item);
 
               return (
-                <div
+                <button
+                  type="button"
                   key={item.key}
                   className={`admin-nav-item ${active ? 'active' : ''}`}
                   onClick={() => onNavigate(item.path)}
-                  role="button"
-                  tabIndex={0}
+                  aria-current={active ? 'page' : undefined}
+                  aria-label={item.label}
                 >
-                  <span className="admin-nav-icon">{item.icon}</span>
+                  <span className="admin-nav-icon" aria-hidden="true">{item.icon}</span>
                   <span className="admin-nav-label">{item.label}</span>
-                </div>
+                </button>
               );
             })}
           </div>
