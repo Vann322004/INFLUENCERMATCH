@@ -1,12 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { message } from 'antd';
+import { Alert, message } from 'antd';
 import HunterSetupCard from './HunterSetupCard';
-import { TOPIC_PRESETS } from './hunterConstants';
+import { nicheService, type Niche } from '../../../../../services/api/nicheService';
 import HunterRadarScanner from './HunterRadarScanner';
 import DiscoveredFeedCard, { type DiscoveredKocItem } from './DiscoveredFeedCard';
 import DirectCrawlModal from '../DirectCrawlModal';
 import { crawlerService } from '../../../../../services/api/crawlerService';
+import { dataQualityService } from '../../../../../services/api/dataQualityService';
 import type { CrawlPlatform } from '../../../../../types/api/crawler.types';
 
 // Kiểm tra tài khoản shop, bán sỉ, kho hàng
@@ -61,8 +62,12 @@ function isShopAccount(username: string, displayName?: string, bio?: string): bo
 export default function AutoHunterTab() {
   const [mode, setMode] = useState<'category' | 'custom'>('category');
   const [platform, setPlatform] = useState<string>('ALL');
-  const [selectedTopic, setSelectedTopic] = useState<string>('beauty');
-  const [activeKeywords, setActiveKeywords] = useState<string[]>(TOPIC_PRESETS[0].keywords);
+  const [topics, setTopics] = useState<Niche[]>([]);
+  const [topicsLoading, setTopicsLoading] = useState(true);
+  const [topicsError, setTopicsError] = useState('');
+  const [topicsVersion, setTopicsVersion] = useState(0);
+  const [selectedTopic, setSelectedTopic] = useState<string>('');
+  const [activeKeywords, setActiveKeywords] = useState<string[]>([]);
   const [customUsernames, setCustomUsernames] = useState<string>('');
   const [maxKocs, setMaxKocs] = useState<number>(5);
   const [loading, setLoading] = useState<boolean>(false);
@@ -72,6 +77,7 @@ export default function AutoHunterTab() {
   const [progressPercent, setProgressPercent] = useState<number>(0);
   const [scannedCount, setScannedCount] = useState<number>(0);
   const [filteredOutCount, setFilteredOutCount] = useState<number>(0);
+  const [pendingReviewCount, setPendingReviewCount] = useState<number | null>(null);
   const [matchedCount, setMatchedCount] = useState<number>(0);
   const [logLines, setLogLines] = useState<string[]>([]);
 
@@ -84,6 +90,37 @@ export default function AutoHunterTab() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  useEffect(() => {
+    let active = true;
+    nicheService.list().then(rows => {
+      if (!active) return;
+      const enabled = rows.filter(row => row.active);
+      setTopics(enabled);
+      setSelectedTopic(enabled[0]?.id || '');
+      setActiveKeywords(enabled[0]?.keywords || []);
+    }).catch((error) => {
+      if (!active) return;
+      setTopics([]);
+      setSelectedTopic('');
+      setActiveKeywords([]);
+      const status = error?.response?.status;
+      const detail = status === 401 ? 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.'
+        : status === 403 ? 'Yêu cầu bị từ chối. Kiểm tra quyền tài khoản hoặc cấu hình máy chủ.'
+        : status === 404 ? 'Máy chủ chưa có API quản lý lĩnh vực. Cần cập nhật backend.'
+        : status >= 500 ? 'Máy chủ gặp lỗi khi tải lĩnh vực. Vui lòng thử lại sau.'
+        : error?.message === 'INVALID_CRAWL_FIELDS_RESPONSE' ? 'Dữ liệu lĩnh vực trả về không đúng định dạng.'
+        : 'Không kết nối được API lĩnh vực. Vui lòng kiểm tra kết nối và thử lại.';
+      setTopicsError(`Không tải được lĩnh vực săn KOC${status ? ` (HTTP ${status})` : ''}. ${detail}`);
+    }).finally(() => { if (active) setTopicsLoading(false); });
+    return () => { active = false; };
+  }, [topicsVersion]);
+
+  const reloadTopics = () => {
+    setTopicsLoading(true);
+    setTopicsError('');
+    setTopicsVersion(value => value + 1);
+  };
+
   const handleNavigateQuality = () => {
     const target = location.pathname.startsWith('/data-manager')
       ? '/data-manager/data-quality'
@@ -93,20 +130,8 @@ export default function AutoHunterTab() {
 
   const handleSelectTopic = (topicId: string) => {
     setSelectedTopic(topicId);
-    const found = TOPIC_PRESETS.find((t) => t.id === topicId);
-    if (found) setActiveKeywords(found.keywords);
-  };
-
-  const topicToCategoryCode = (topicId: string): string => {
-    const map: Record<string, string> = {
-      beauty: 'BEAUTY',
-      food: 'FOOD',
-      tech: 'TECH',
-      fashion: 'FASHION',
-      travel: 'TRAVEL',
-      lifestyle: 'LIFESTYLE',
-    };
-    return map[topicId] || 'BEAUTY';
+    const found = topics.find((t) => t.id === topicId);
+    if (found) setActiveKeywords(found.keywords || []);
   };
 
   const handleStartHunting = async () => {
@@ -123,6 +148,10 @@ export default function AutoHunterTab() {
         return;
       }
     } else {
+      if (topicsLoading || topicsError || !topics.some(topic => topic.id === selectedTopic)) {
+        message.warning('Vui lòng chọn một lĩnh vực đang bật.');
+        return;
+      }
       if (activeKeywords.length === 0) {
         message.warning('Vui lòng chọn hoặc nhập ít nhất 1 từ khóa để săn KOC!');
         return;
@@ -137,8 +166,8 @@ export default function AutoHunterTab() {
     setDiscoveredList([]);
 
     const now = () => new Date().toLocaleTimeString('vi-VN');
-    const topicObj = TOPIC_PRESETS.find((t) => t.id === selectedTopic) || TOPIC_PRESETS[0];
-    const categoryCode = topicToCategoryCode(selectedTopic);
+    const topicObj = topics.find((t) => t.id === selectedTopic);
+    const categoryCode = topicObj?.name || '';
     const crawlPlatform = platform as CrawlPlatform;
 
     if (mode === 'custom') {
@@ -149,10 +178,10 @@ export default function AutoHunterTab() {
       setCurrentKeyword(usernamesToCrawl[0] || 'custom');
     } else {
       setLogLines([
-        `[${now()}] Bắt đầu cào ${maxKocs} kênh thuộc ngành ${topicObj.label}...`,
+        `[${now()}] Bắt đầu cào ${maxKocs} kênh thuộc lĩnh vực ${topicObj?.name}...`,
         `[${now()}] Nền tảng: ${platform === 'ALL' ? 'Tất cả nền tảng (TikTok + Facebook)' : platform} | Từ khóa: ${activeKeywords.join(', ')}`,
       ]);
-      setCurrentKeyword(activeKeywords[0] || categoryCode);
+      setCurrentKeyword(activeKeywords[0] || categoryCode || '');
     }
 
     // Dynamic progress feedback
@@ -170,6 +199,7 @@ export default function AutoHunterTab() {
       const res = await crawlerService.batchCrawl({
         platform: crawlPlatform,
         category: mode === 'category' ? categoryCode : undefined,
+        keywords: mode === 'category' ? activeKeywords : undefined,
         usernames: mode === 'custom' ? usernamesToCrawl : undefined,
         maxChannels: maxKocs,
       });
@@ -181,7 +211,7 @@ export default function AutoHunterTab() {
       const totalReq = summary?.total_requested ?? (res.results?.length ?? maxKocs);
       const failedCnt = summary?.failed_count ?? 0;
 
-      const rawResults = (res.results || []).filter((r) => !!r.username);
+      const rawResults = (res.results || []).filter((r) => r.status === 'success' && !!r.username);
 
       // Áp dụng bộ lọc Tier-0 Guards
       let shopFilteredCount = 0;
@@ -227,7 +257,7 @@ export default function AutoHunterTab() {
       setFilteredOutCount(totalExcluded);
       setMatchedCount(passedResults.length);
 
-      // Đưa các tài khoản chưa đạt tự động vào hàng đợi kiểm định chất lượng (Staging) để Manager xem xét
+      // Enqueue requests crawler processing; it does not create a Java quality-review snapshot.
       reviewPendingCandidates.forEach((cand) => {
         const u = cand.username.replace(/^@/, '');
         crawlerService.enqueueCandidate(cand.platform as any, u, false).catch(() => {});
@@ -270,7 +300,7 @@ export default function AutoHunterTab() {
         setDiscoveredList(mappedList);
 
         const newLogs = [
-          `[${now()}] Hoàn tất! Đã tìm thấy ${mappedList.length} KOC đạt chuẩn Tier-0 và tự động lưu vào DB.`,
+          `[${now()}] Đã xử lý ${res.results?.length ?? 0}/${totalReq} kênh yêu cầu; ${mappedList.length} KOC đạt chuẩn Tier-0. ${(res.results?.length ?? 0) < totalReq ? "Nguồn tìm kiếm chưa trả đủ kênh phù hợp." : ""}`,
         ];
         if (shopFilteredCount > 0) {
           newLogs.push(`[${now()}] Đã loại bỏ ${shopFilteredCount} tài khoản Shop/Kho hàng: ${shopRemovedNames.join(', ')}`);
@@ -279,7 +309,7 @@ export default function AutoHunterTab() {
           newLogs.push(`[${now()}] Đã loại bỏ ${lowFollowersCount} tài khoản có lượng theo dõi dưới 7.000.`);
         }
         if (totalExcluded > 0) {
-          newLogs.push(`[${now()}] Đã chuyển ${totalExcluded} tài khoản chưa đạt vào hàng đợi Kiểm định chất lượng.`);
+          newLogs.push(`[${now()}] Có ${totalExcluded} kênh cào lỗi hoặc bị lọc Tier-0. Chưa xác nhận có hồ sơ chờ kiểm định trên hệ thống.`);
         }
         setLogLines(newLogs);
         message.success(`Đã săn và tự động lưu ${mappedList.length} KOC đạt chuẩn vào hệ thống!`);
@@ -293,7 +323,7 @@ export default function AutoHunterTab() {
                   onClick={handleNavigateQuality}
                   style={{ color: '#4F46E5', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
                 >
-                  Chuyển qua duyệt chất lượng →
+                  Mở danh sách kiểm định trên hệ thống →
                 </a>
               </span>
             ),
@@ -313,18 +343,18 @@ export default function AutoHunterTab() {
         setLogLines([
           `[${now()}] ${reason}`,
           totalExcluded > 0
-            ? `[${now()}] Đã chuyển ${totalExcluded} kênh vào hàng đợi Kiểm định chất lượng để xem xét thủ công.`
+            ? `[${now()}] Có ${totalExcluded} kênh cào lỗi hoặc bị lọc Tier-0; số này không phải số hồ sơ chờ kiểm định.`
             : `[${now()}] Gợi ý: Hãy thử chọn danh mục khác hoặc tăng số lượng mục tiêu cào.`,
         ]);
         message.warning({
           content: (
             <span>
-              Không có KOC nào đạt chuẩn tự động (đã lọc ${totalExcluded} tài khoản).{' '}
+              Không có KOC nào đạt chuẩn tự động (cào lỗi hoặc bị lọc {totalExcluded} kênh).{' '}
               <a
                 onClick={handleNavigateQuality}
                 style={{ color: '#4F46E5', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
               >
-                Chuyển qua duyệt chất lượng →
+                Mở danh sách kiểm định trên hệ thống →
               </a>
             </span>
           ),
@@ -339,6 +369,10 @@ export default function AutoHunterTab() {
       message.error(err.message || 'Lỗi khi gọi API cào dữ liệu');
     } finally {
       setLoading(false);
+      setPendingReviewCount(null);
+      dataQualityService.pending(0, 1)
+        .then(result => setPendingReviewCount(result.totalElements))
+        .catch(() => setPendingReviewCount(null));
     }
   };
 
@@ -378,7 +412,13 @@ export default function AutoHunterTab() {
 
   return (
     <div>
+      {topicsError && <Alert type="error" showIcon title={topicsError} style={{ marginBottom: 16 }} />}
       <HunterSetupCard
+        topics={topics}
+        topicsLoading={topicsLoading}
+        topicsError={topicsError}
+        topicsManagementPath={`${location.pathname.startsWith('/data-manager') ? '/data-manager' : '/admin'}/data-sources?tab=niches`}
+        onReloadTopics={reloadTopics}
         mode={mode}
         onModeChange={setMode}
         platform={platform}
@@ -401,6 +441,7 @@ export default function AutoHunterTab() {
           progressPercent={progressPercent}
           scannedCount={scannedCount}
           filteredOutCount={filteredOutCount}
+          pendingReviewCount={pendingReviewCount}
           matchedCount={matchedCount}
           logLines={logLines}
           onNavigateQuality={handleNavigateQuality}

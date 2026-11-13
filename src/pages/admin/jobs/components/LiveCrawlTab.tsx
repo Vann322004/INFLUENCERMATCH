@@ -75,10 +75,10 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '' }: Liv
 
   const handleSendToQuality = async () => {
     if (!result) return;
-    message.loading({ content: `Đang gửi @${result.username} sang kiểm định...`, key: 'send_quality' });
+    message.loading({ content: `Đang gửi @${result.username} vào hàng đợi xử lý...`, key: 'send_quality' });
     try {
       await crawlerService.enqueueCandidate(platform, result.username, false);
-      message.success({ content: `Đã đưa @${result.username} vào danh sách kiểm định chất lượng!`, key: 'send_quality' });
+      message.success({ content: `Đã gửi yêu cầu xử lý @${result.username}. Hồ sơ chỉ vào danh sách kiểm định sau khi đồng bộ dữ liệu và đủ điều kiện.`, key: 'send_quality' });
     } catch (err: any) {
       message.error({ content: err.message || 'Lỗi khi đưa vào kiểm định', key: 'send_quality' });
     }
@@ -173,7 +173,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '' }: Liv
                 onClick={handleSendToQuality}
                 style={{ borderColor: '#F59E0B', color: '#D97706', fontWeight: 600 }}
               >
-                Gửi sang Kiểm định
+                Gửi vào hàng đợi xử lý
               </Button>
               <Button
                 type="primary"

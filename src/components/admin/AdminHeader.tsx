@@ -10,6 +10,7 @@ import {
   WarningOutlined,
   InfoCircleOutlined,
   CheckCircleOutlined,
+  MenuOutlined,
 } from '@ant-design/icons';
 import { adminAuthService } from '../../services/api/adminAuthService';
 import type { AdminNotification } from '../../types/api/admin.types';
@@ -28,9 +29,10 @@ const NOTIF_ICON: Record<string, React.ReactNode> = {
 
 interface AdminHeaderProps {
   title?: string;
+  onMenuClick?: () => void;
 }
 
-export default function AdminHeader({ title }: AdminHeaderProps) {
+export default function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [notifOpen, setNotifOpen] = useState(false);
@@ -86,8 +88,9 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
 
   return (
     <>
-      <Header className="app-header">
+      <Header className="app-header admin-header">
         <div className="app-header-inner" style={{ maxWidth: '100%' }}>
+          {onMenuClick && <Button type="text" icon={<MenuOutlined />} onClick={onMenuClick} aria-label="Mở menu điều hướng" />}
           {/* Left: Breadcrumbs matching Brand layout */}
           <div className="header-breadcrumbs">
             <span

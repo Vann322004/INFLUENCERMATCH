@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, Tabs, Row, Col, Button, Modal, Form, Input, InputNumber, Select, ConfigProvider, message } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 import {
@@ -16,7 +17,16 @@ import NicheManagementPanel from './components/NicheManagementPanel';
 
 export default function DataSourcesPage() {
   const [connectors, setConnectors] = useState<DataConnector[]>([]);
-  const [activeTab, setActiveTab] = useState('connectors');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const activeTab = ['niches', 'connectors', 'rate-limit', 'priority'].includes(requestedTab || '') ? requestedTab! : 'connectors';
+  const setActiveTab = (tab: string) => {
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous);
+      next.set('tab', tab);
+      return next;
+    }, { replace: true });
+  };
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [form] = Form.useForm();
 
@@ -56,7 +66,7 @@ export default function DataSourcesPage() {
         <div>
           <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>Quản lý dữ liệu</div>
           <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
-            Quản lý kết nối API, đồng bộ dữ liệu và danh mục ngành hàng trong hệ thống
+            Quản lý kết nối API, đồng bộ dữ liệu và danh mục lĩnh vực trong hệ thống
           </div>
         </div>
 
@@ -91,7 +101,7 @@ export default function DataSourcesPage() {
               key: 'niches',
               label: (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
-                  <AppstoreOutlined /> Quản lý ngành hàng
+                  <AppstoreOutlined /> Quản lý lĩnh vực
                 </span>
               ),
               children: (

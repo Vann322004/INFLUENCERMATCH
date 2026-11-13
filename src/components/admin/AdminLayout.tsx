@@ -1,8 +1,9 @@
-import React from 'react';
-import { Layout } from 'antd';
+import React, { useState } from 'react';
+import { Drawer, Grid, Layout } from 'antd';
 import { Outlet } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import AdminHeader from './AdminHeader';
+import './AdminLayout.css';
 
 const { Content } = Layout;
 
@@ -11,9 +12,14 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ pageTitle }: AdminLayoutProps) {
+  const screens = Grid.useBreakpoint();
+  const mobile = !screens.md;
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <Layout hasSider style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden', width: '100vw' }}>
-      <AdminSidebar />
+      {mobile ? <Drawer title="Điều hướng" placement="left" open={menuOpen} onClose={() => setMenuOpen(false)} size={280} styles={{ body: { padding: 0 } }} className="admin-mobile-navigation">
+        <AdminSidebar mobile onNavigate={() => setMenuOpen(false)} />
+      </Drawer> : <AdminSidebar />}
       <Layout
         style={{
           background: '#F5F6FA',
@@ -26,8 +32,9 @@ export default function AdminLayout({ pageTitle }: AdminLayoutProps) {
           boxSizing: 'border-box',
         }}
       >
-        <AdminHeader title={pageTitle} />
+        <AdminHeader title={pageTitle} onMenuClick={mobile ? () => setMenuOpen(true) : undefined} />
         <Content
+          className="admin-content"
           style={{
             background: '#F5F6FA',
             padding: '16px 24px 32px 24px',

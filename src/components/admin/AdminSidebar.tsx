@@ -10,19 +10,20 @@ import AdminSidebarUserSection from './sidebar/AdminSidebarUserSection';
 
 const { Sider } = Layout;
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
   const navigate = useNavigate();
   const location = useLocation();
 
   // Persist collapsed state
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
+  const [desktopCollapsed, setCollapsed] = useState<boolean>(() => {
     const saved = localStorage.getItem('influencer_admin_sidebar_collapsed');
     return saved !== null ? saved === 'true' : false;
   });
+  const collapsed = mobile ? false : desktopCollapsed;
 
   useEffect(() => {
-    localStorage.setItem('influencer_admin_sidebar_collapsed', String(collapsed));
-  }, [collapsed]);
+    localStorage.setItem('influencer_admin_sidebar_collapsed', String(desktopCollapsed));
+  }, [desktopCollapsed]);
 
   // Global Keyboard Shortcut: Ctrl+Shift+S (or Cmd+Shift+S) to toggle sidebar
   useEffect(() => {
@@ -77,7 +78,7 @@ export default function AdminSidebar() {
         {/* Top Header: Logo & Toggle */}
         <AdminSidebarHeader
           collapsed={collapsed}
-          onToggle={() => setCollapsed((prev) => !prev)}
+          onToggle={() => mobile ? onNavigate?.() : setCollapsed((prev) => !prev)}
         />
 
         {/* Main Navigation: Categories & Rail Items */}
@@ -85,7 +86,7 @@ export default function AdminSidebar() {
           collapsed={collapsed}
           activeKey={activeKey}
           isManager={isManager}
-          onNavigate={(path) => navigate(isManager ? path.replace(/^\/admin(?=\/)/, '/data-manager') : path)}
+          onNavigate={(path) => { navigate(isManager ? path.replace(/^\/admin(?=\/)/, '/data-manager') : path); onNavigate?.(); }}
         />
 
         {/* Bottom Section: User Profile & Quick Action */}
@@ -94,7 +95,6 @@ export default function AdminSidebar() {
           currentUser={currentUser}
           isManager={isManager}
           onLogout={handleLogout}
-          onActionClick={(path) => navigate(path)}
         />
       </div>
     </Sider>

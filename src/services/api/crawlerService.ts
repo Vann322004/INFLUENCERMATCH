@@ -2,19 +2,8 @@ import type {
   CrawlPlatform,
   LiveCrawlResult,
   BatchCrawlResponse,
-  CrawlCategory,
   CrawlMonitorOverview,
 } from '../../types/api/crawler.types';
-
-export const DEFAULT_CRAWL_CATEGORIES: CrawlCategory[] = [
-  { id: 'BEAUTY', name: '💄 Làm đẹp & Mỹ phẩm', description: 'Skincare, Makeup, Mỹ phẩm' },
-  { id: 'TECH', name: '💻 Công nghệ & Thiết bị', description: 'Điện thoại, PC, Setup công nghệ' },
-  { id: 'FOOD', name: '🍲 Ẩm thực & Nhà hàng', description: 'Quán ăn, Món ngon, Nấu ăn' },
-  { id: 'FASHION', name: '👗 Thời trang & Phụ kiện', description: 'OOTD, Phối đồ thời thượng' },
-  { id: 'ENTERTAINMENT', name: '🎬 Truyền thông & Giải trí', description: 'Hài hước, Kịch bản' },
-  { id: 'TRAVEL', name: '✈️ Du lịch & Trải nghiệm', description: 'Check-in, Khám phá vùng miền' },
-  { id: 'LIFESTYLE', name: '🏡 Đời sống & Sức khỏe', description: 'Gia đình, Decor nhà cửa' },
-];
 
 class CrawlerService {
   /**
@@ -34,10 +23,10 @@ class CrawlerService {
     let lastError: any = null;
 
     for (const url of urls) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      let responseReceived = false;
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
         const res = await fetch(url, {
           ...options,
           signal: controller.signal,
@@ -46,7 +35,7 @@ class CrawlerService {
             ...(options.headers || {}),
           },
         });
-        clearTimeout(timeoutId);
+        responseReceived = true;
 
         if (res.ok) {
           return await res.json();
@@ -55,7 +44,11 @@ class CrawlerService {
           throw new Error(errBody.detail || errBody.error || `Lỗi máy chủ HTTP ${res.status}`);
         }
       } catch (err: any) {
+        // A server rejection must be shown immediately, not replayed as another crawl.
+        if (responseReceived) throw err;
         lastError = err;
+      } finally {
+        clearTimeout(timeoutId);
       }
     }
 
@@ -63,26 +56,6 @@ class CrawlerService {
       lastError?.message ||
         'Không thể kết nối đến máy chủ thu thập dữ liệu (cổng 8000). Vui lòng kiểm tra dịch vụ uvicorn.'
     );
-  }
-
-  /**
-   * Lấy danh mục ngành hàng Taxonomy thực tế (GET /api/v1/crawl/categories)
-   */
-  async getCategories(): Promise<CrawlCategory[]> {
-    try {
-      const data = await this.requestCrawler<any[]>('/api/v1/crawl/categories', {}, 8000);
-      if (Array.isArray(data) && data.length > 0) {
-        return data.map((item) => ({
-          id: item.code || item.id,
-          name: `${item.icon || '🏷️'} ${item.label || item.name || item.code}`,
-          description: item.description,
-          defaultCandidates: item.candidates || [],
-        }));
-      }
-    } catch {
-      // Fallback về danh mục chuẩn
-    }
-    return DEFAULT_CRAWL_CATEGORIES;
   }
 
   /**
@@ -113,6 +86,7 @@ class CrawlerService {
   async batchCrawl(payload: {
     platform?: CrawlPlatform;
     category?: string;
+    keywords?: string[];
     usernames?: string[];
     maxChannels?: number;
   }): Promise<BatchCrawlResponse> {
@@ -126,6 +100,7 @@ class CrawlerService {
         body: JSON.stringify({
           platform: plat,
           category: payload.category,
+          keywords: payload.keywords,
           usernames: payload.usernames || [],
           max_channels: maxChannels,
         }),
@@ -164,28 +139,6 @@ class CrawlerService {
         }),
       },
       10000
-    );
-  }
-
-  /**
-   * Kích hoạt quét tìm KOC mới (POST /api/v1/crawl/trigger-weekly-discovery)
-   */
-  async triggerWeeklyDiscovery(payload?: {
-    maxNewKocs?: number;
-    keywords?: string[];
-    platform?: string;
-  }): Promise<any> {
-    return await this.requestCrawler<any>(
-      '/api/v1/crawl/trigger-weekly-discovery',
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          max_new_kocs: payload?.maxNewKocs || 30,
-          keywords: payload?.keywords,
-          platform: payload?.platform || 'ALL',
-        }),
-      },
-      15000
     );
   }
 

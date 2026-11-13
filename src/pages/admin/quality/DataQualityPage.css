@@ -1,0 +1,32 @@
+.data-quality-page { min-width: 0; width: 100%; }
+.quality-page-heading, .quality-list-heading { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
+.quality-page-heading h3, .quality-list-heading h4 { margin: 0 0 6px !important; }
+.quality-page-heading .ant-typography { margin-bottom: 0; }
+.quality-workflow { margin-bottom: 20px; }
+.quality-review-list > .ant-card-body { min-width: 0; }
+.quality-list-heading > div { flex: 1; min-width: 180px; }
+.quality-creator { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.quality-creator > div { min-width: 0; }
+.quality-creator strong { display: block; overflow-wrap: anywhere; line-height: 1.5; }
+.quality-creator .ant-avatar { flex-shrink: 0; }
+.quality-creator-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 12px; color: #64748b; }
+.quality-creator-meta > span { overflow-wrap: anywhere; }
+.quality-profile-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.quality-profile-card { min-width: 0; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; }
+.quality-profile-card p { color: #475569; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.quality-card-facts, .quality-card-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; }
+.quality-card-facts > span { overflow-wrap: anywhere; }
+.quality-card-footer .ant-typography { font-size: 12px; }
+.quality-pagination { display: flex; justify-content: flex-end; flex-wrap: wrap; margin-top: 20px; }
+.quality-review-detail { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.quality-review-detail > .ant-btn { align-self: flex-start; max-width: 100%; }
+.quality-evidence { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
+.quality-review-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 767px) {
+  .quality-page-heading h3 { font-size: 22px; }
+  .quality-workflow > .ant-card-body, .quality-review-list > .ant-card-body { padding: 16px; }
+  .quality-profile-cards { grid-template-columns: minmax(0, 1fr); }
+  .quality-page-heading > .ant-btn { width: 100%; }
+  .quality-review-actions > .ant-btn { flex: 1 1 100%; }
+  .quality-pagination { justify-content: center; }
+}

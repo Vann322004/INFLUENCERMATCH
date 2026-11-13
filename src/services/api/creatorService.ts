@@ -282,7 +282,8 @@ export const creatorService = {
   },
 
   /**
-   * Lấy danh mục các niches/ngành hàng chuẩn (GET /taxonomies/niches)
+   * Lấy ngành hàng từ dữ liệu creator đã crawl/AI phân loại (GET /taxonomies/niches).
+   * Danh mục cấu hình lĩnh vực cào của manager dùng /data/crawl-fields riêng.
    */
   async getNiches(): Promise<string[]> {
     try {
