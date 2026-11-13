@@ -2,6 +2,9 @@ import { apiClient, cookieAuthClient, getCsrfRequestConfig, setAuthSession, clea
 import { claimRefreshCookie, ownsRefreshCookie, hasRefreshCookieOwner, withAuthCookieLock, publishAccountLogout } from '../authSession';
 import type { ApiResponse } from '../../types/api/common.types';
 import type {
+  GoogleChallenge,
+  GoogleLoginResult,
+  GoogleRegistrationRequest,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
@@ -20,6 +23,37 @@ async function requestLogin(path: string, payload: unknown, sessionId: string) {
     if (getAuthSessionId() !== sessionId) throw new Error('Yêu cầu đăng nhập đã được thay thế.');
     claimRefreshCookie();
     return response;
+  });
+}
+
+function requireSession(sessionId: string) {
+  if (getAuthSessionId() !== sessionId) throw new Error('Yêu cầu đăng nhập đã được thay thế.');
+}
+
+async function googleRequest<T>(path: string, payload: unknown, sessionId: string, signal?: AbortSignal): Promise<T> {
+  requireSession(sessionId);
+  signal?.throwIfAborted();
+  const csrfConfig = await getCsrfRequestConfig();
+  requireSession(sessionId);
+  signal?.throwIfAborted();
+  const response = await apiClient.post<ApiResponse<T>>('/auth/google/' + path, payload, { ...csrfConfig, signal });
+  requireSession(sessionId);
+  return response.data.data;
+}
+
+function googleAuthentication(path: string, payload: unknown, sessionId: string): Promise<GoogleLoginResult> {
+  return withAuthCookieLock(async () => {
+    const result = await googleRequest<GoogleLoginResult>(path, payload, sessionId);
+    if (result?.status === 'REGISTRATION_REQUIRED' && path === 'login') return result;
+    if (result?.status !== 'AUTHENTICATED' || !result.accessToken || result.user?.role !== 'BRAND') {
+      throw new Error('Không nhận được phiên đăng nhập Google hợp lệ.');
+    }
+    clearAuthSession();
+    clearBrandCache();
+    brandService.clearBrandCache();
+    setAuthSession(result.accessToken, undefined, result.user);
+    claimRefreshCookie();
+    return result;
   });
 }
 
@@ -85,21 +119,24 @@ export const authService = {
     }
   },
 
-  /**
-   * Đổi mã Google OAuth code lấy token đăng nhập
-   */
-  async googleExchange(code: string): Promise<LoginResponse> {
-    clearAuthSession();
-    clearBrandCache();
-    brandService.clearBrandCache();
-    const sessionId = getAuthSessionId();
-    const response = await requestLogin('/auth/google/exchange', {
-      code,
-    }, sessionId);
-    if (getAuthSessionId() !== sessionId) throw new Error('Yêu cầu đăng nhập đã được thay thế.');
-    const loginData = (response.data as any)?.data ?? response.data;
-    setAuthSession(loginData.accessToken, loginData.refreshToken, loginData.user);
-    return loginData;
+  startGoogleLogin(sessionId: string, signal?: AbortSignal) {
+    return withAuthCookieLock(() => googleRequest<GoogleChallenge>('start', undefined, sessionId, signal));
+  },
+
+  loginWithGoogle(challengeId: string, credential: string, sessionId: string) {
+    return googleAuthentication('login', { sessionId: challengeId, credential }, sessionId);
+  },
+
+  completeGoogleRegistration(payload: GoogleRegistrationRequest, sessionId: string) {
+    return googleAuthentication('registration/complete', payload, sessionId);
+  },
+
+  startGoogleLink(password: string, sessionId: string) {
+    return withAuthCookieLock(() => googleRequest<GoogleChallenge>('link/start', { password }, sessionId));
+  },
+
+  confirmGoogleLink(challengeId: string, credential: string, sessionId: string) {
+    return withAuthCookieLock(() => googleRequest<null>('link/confirm', { sessionId: challengeId, credential }, sessionId));
   },
 
   /**

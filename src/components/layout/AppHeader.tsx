@@ -1,12 +1,12 @@
 import React from 'react';
-import { Layout } from 'antd';
-import { HomeOutlined, RightOutlined } from '@ant-design/icons';
+import { Button, Layout } from 'antd';
+import { HomeOutlined, MenuOutlined, RightOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 
 const { Header } = Layout;
 
-export default function AppHeader() {
+export default function AppHeader({ onOpenNavigation }: { onOpenNavigation?: () => void }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -48,7 +48,24 @@ export default function AppHeader() {
     }
     if (p.includes('/creators')) return { root: 'Trang chủ', current: 'Khám phá Nhà sáng tạo' };
     if (p.includes('/crm')) return { root: 'Trang chủ', current: 'Tiếp cận & Kết nối' };
+    if (p.startsWith('/collaboration/')) {
+      const returnTo = location.state?.returnTo;
+      return {
+        root: 'Trang chủ', sub: 'Hợp tác & Vận hành',
+        subLink: typeof returnTo === 'string' && returnTo.startsWith('/collaboration?') ? returnTo : '/collaboration',
+        current: 'Chi tiết',
+      };
+    }
     if (p.includes('/collaboration')) return { root: 'Trang chủ', current: 'Hợp tác & Vận hành' };
+    if (p.startsWith('/campaign-history/')) {
+      return {
+        root: 'Trang chủ', sub: 'Lịch sử chiến dịch', subLink: '/campaign-history' + location.search,
+        current: 'Chi tiết chiến dịch',
+      };
+    }
+    if (p === '/campaign-history' || p === '/history') {
+      return { root: 'Trang chủ', sub: 'Báo cáo & Hiệu suất', subLink: '/performance', current: 'Lịch sử chiến dịch' };
+    }
     if (p.includes('/performance')) return { root: 'Trang chủ', current: 'Báo cáo & Hiệu suất' };
     if (p.includes('/subscription') || p.includes('/billing') || p.includes('/plans')) return { root: 'Trang chủ', current: 'Quản lý gói & Hạn mức' };
     if (p.includes('/brand-profile')) return { root: 'Trang chủ', current: 'Hồ sơ thương hiệu' };
@@ -62,6 +79,8 @@ export default function AppHeader() {
       <div className="app-header-inner">
         {/* Left: Breadcrumbs */}
         <div className="header-breadcrumbs">
+          {onOpenNavigation && <Button type="text" icon={<MenuOutlined />}
+            aria-label="Mở menu điều hướng" onClick={onOpenNavigation} />}
           <span className="header-bc-root" onClick={() => navigate('/dashboard')}>
             <HomeOutlined style={{ marginRight: 4, fontSize: 12 }} />
             {pageInfo.root}

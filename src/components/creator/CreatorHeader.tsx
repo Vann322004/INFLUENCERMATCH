@@ -138,7 +138,7 @@ export default function CreatorHeader({ title }: CreatorHeaderProps) {
             { key: 'dashboard', label: 'Tổng quan', path: '/creator/dashboard', icon: <LineChartOutlined /> },
             { key: 'rate-card', label: 'Bảng giá Rate Card', path: '/creator/rate-card', icon: <DollarOutlined /> },
             { key: 'social-accounts', label: 'Kênh liên kết & Claim', path: '/creator/social-accounts', icon: <ApiOutlined /> },
-            { key: 'bookings', label: 'Lời mời hợp tác', path: '/creator/bookings', icon: <CalendarOutlined /> },
+            { key: 'bookings', label: 'Hợp tác', path: '/creator/bookings', icon: <CalendarOutlined /> },
           ].map((item) => (
             <div
               key={item.key}

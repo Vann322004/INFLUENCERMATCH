@@ -122,25 +122,28 @@ function ChatGptTooltip({
 
 interface AppSiderProps {
   collapsed?: boolean;
+  inDrawer?: boolean;
 }
 
-export default function AppSider({ collapsed: initialCollapsed = false }: AppSiderProps) {
+export default function AppSider({ collapsed: initialCollapsed = false, inDrawer = false }: AppSiderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const currentUser = authService.getCurrentUser();
 
   // Persist collapsed preference in localStorage
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
+  const [desktopCollapsed, setCollapsed] = useState<boolean>(() => {
     const saved = localStorage.getItem('influencer_sidebar_collapsed');
     return saved !== null ? saved === 'true' : initialCollapsed;
   });
 
+  const collapsed = !inDrawer && desktopCollapsed;
   useEffect(() => {
-    localStorage.setItem('influencer_sidebar_collapsed', String(collapsed));
-  }, [collapsed]);
+    if (!inDrawer) localStorage.setItem('influencer_sidebar_collapsed', String(desktopCollapsed));
+  }, [desktopCollapsed, inDrawer]);
 
   // Global Keyboard Shortcut: Ctrl+Shift+S (or Cmd+Shift+S) to toggle sidebar
   useEffect(() => {
+    if (inDrawer) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'S' || e.key === 's')) {
         e.preventDefault();
@@ -149,7 +152,7 @@ export default function AppSider({ collapsed: initialCollapsed = false }: AppSid
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [inDrawer]);
 
   // Compute initials (e.g. "AM" or "VN") for avatar circle matching reference image
   const getInitials = () => {
@@ -173,7 +176,8 @@ export default function AppSider({ collapsed: initialCollapsed = false }: AppSid
     if (path.includes('subscription') || path.includes('billing') || path.includes('plans')) return 'subscription';
     if (path.includes('collaboration') || path.includes('collab') || path.includes('operations')) return 'collaboration';
     if (path.includes('crm') || path.includes('outreach') || path.includes('relationship')) return 'crm';
-    if (path.includes('performance') || path.includes('reports') || path.includes('analytics')) return 'performance';
+    if (path.startsWith('/campaign-history') || path === '/history'
+      || path.includes('performance') || path.includes('reports') || path.includes('analytics')) return 'performance';
     if (
       path.includes('campaign') ||
       path.includes('creator') ||
@@ -235,10 +239,10 @@ export default function AppSider({ collapsed: initialCollapsed = false }: AppSid
 
   return (
     <Sider
-      width={240}
+      width={inDrawer ? '100%' : 240}
       collapsedWidth={62}
       collapsed={collapsed}
-      className="app-sider"
+      className={'app-sider' + (inDrawer ? ' app-sider-in-drawer' : '')}
     >
       {/* ──────────────────────────────────────────────────────────────────
           COLLAPSED MODE: Clean 5-Domain Rail with Tooltip

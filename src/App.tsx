@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { ConfigProvider, Layout, App as AntdApp } from 'antd';
-import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { ConfigProvider, Drawer, Grid, Layout, App as AntdApp } from 'antd';
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useParams, useLocation } from 'react-router-dom';
 import { themeConfig } from './theme/themeConfig';
 import AppSider from './components/layout/AppSider';
 import AppHeader from './components/layout/AppHeader';
@@ -22,6 +22,7 @@ import SubscriptionPage from './pages/subscription/SubscriptionPage';
 import BrandProfilePage from './pages/brand/BrandProfilePage';
 import OutreachCrmPage from './pages/crm/OutreachCrmPage';
 import CollaborationPage from './pages/collaboration/CollaborationPage';
+import CollaborationDetailPage from './pages/collaboration/CollaborationDetailPage';
 import PerformancePage from './pages/performance/PerformancePage';
 import CampaignHistoryPage from './pages/history/CampaignHistoryPage';
 import LandingPage from './pages/landing/hero/HeroLanding';
@@ -102,11 +103,21 @@ function CampaignManagementIdRedirect() {
 }
 
 // Main App Layout Wrapper with Light Linear Sidebar & Top Header
-function MainLayout({ children }: { children: React.ReactNode }) {
+function MainLayout({ children, collaborationNavigation = false }: {
+  children: React.ReactNode;
+  collaborationNavigation?: boolean;
+}) {
+  const mobile = Grid.useBreakpoint().md === false && collaborationNavigation;
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => { setMenuOpen(false); }, [location.key, mobile]);
   return (
-    <Layout hasSider style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden', width: '100vw' }}>
+    <Layout hasSider={!mobile} style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden', width: '100vw' }}>
       {/* Light Linear Gradient Sidebar */}
-      <AppSider />
+      {mobile ? <Drawer title="Điều hướng" placement="left" size="min(280px, 88vw)"
+        open={menuOpen} onClose={() => setMenuOpen(false)} styles={{ body: { padding: 0 } }} destroyOnHidden>
+        <AppSider inDrawer />
+      </Drawer> : <AppSider />}
 
       {/* Main Content Area - Scrollbar runs from top of screen */}
       <Layout
@@ -121,12 +132,12 @@ function MainLayout({ children }: { children: React.ReactNode }) {
           boxSizing: 'border-box',
         }}
       >
-        <AppHeader />
+        <AppHeader onOpenNavigation={mobile ? () => setMenuOpen(true) : undefined} />
 
         <Content
           style={{
             background: '#F5F6FA',
-            padding: '12px 24px 32px 24px',
+            padding: mobile ? '12px 12px 24px' : '12px 24px 32px',
             overflow: 'visible',
             boxSizing: 'border-box',
             minWidth: 0,
@@ -434,15 +445,23 @@ export default function App() {
           <Route
             path="/collaboration"
             element={
-              <MainLayout>
+              <MainLayout collaborationNavigation>
                 <CollaborationPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/collaboration/:collaborationId"
+            element={
+              <MainLayout collaborationNavigation>
+                <CollaborationDetailPage brand />
               </MainLayout>
             }
           />
           <Route
             path="/collab"
             element={
-              <MainLayout>
+              <MainLayout collaborationNavigation>
                 <CollaborationPage />
               </MainLayout>
             }
@@ -450,7 +469,7 @@ export default function App() {
           <Route
             path="/operations"
             element={
-              <MainLayout>
+              <MainLayout collaborationNavigation>
                 <CollaborationPage />
               </MainLayout>
             }
@@ -518,7 +537,15 @@ export default function App() {
           <Route
             path="/campaign-history"
             element={
-              <MainLayout>
+              <MainLayout collaborationNavigation>
+                <CampaignHistoryPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/campaign-history/:campaignId"
+            element={
+              <MainLayout collaborationNavigation>
                 <CampaignHistoryPage />
               </MainLayout>
             }
@@ -526,7 +553,7 @@ export default function App() {
           <Route
             path="/history"
             element={
-              <MainLayout>
+              <MainLayout collaborationNavigation>
                 <CampaignHistoryPage />
               </MainLayout>
             }
@@ -653,6 +680,7 @@ export default function App() {
             <Route path="social-accounts" element={<CreatorPortalPage />} />
             <Route path="rate-card" element={<CreatorPortalPage />} />
             <Route path="bookings" element={<CreatorPortalPage />} />
+            <Route path="bookings/:collaborationId" element={<CollaborationDetailPage brand={false} />} />
           </Route>
 
           {/* Admin root redirect */}
