@@ -12,7 +12,7 @@ export default function RecommendationConfigState({ hasAccess, config, loading, 
         <Result
           status="403"
           title="403 - Quyền truy cập bị từ chối"
-          subTitle="Chỉ tài khoản Quản trị viên (ADMIN) hoặc Quản lý Dữ liệu (DATA_MANAGER) có quyền hạn MANAGE_RECOMMENDATION_CONFIG mới được tra cứu cấu hình thuật toán."
+          subTitle="Chỉ tài khoản DATA_MANAGER có quyền MANAGE_RECOMMENDATION_CONFIG được tra cứu cấu hình này."
         />
       </div>
     );

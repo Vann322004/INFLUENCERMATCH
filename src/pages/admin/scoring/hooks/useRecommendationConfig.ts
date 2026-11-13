@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { adminService } from '../../../../services/api/adminService';
 import type { RecommendationConfigResponseDto } from '../../../../types/api/recommendationConfig.types';
 
-export function useRecommendationConfig() {
+export function useRecommendationConfig(enabled = true) {
   const [config, setConfig] = useState<RecommendationConfigResponseDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +29,7 @@ export function useRecommendationConfig() {
   }, []);
 
   useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
+    if (enabled) void fetchConfig();
+  }, [fetchConfig, enabled]);
   return { config, loading, error, fetchConfig };
 }

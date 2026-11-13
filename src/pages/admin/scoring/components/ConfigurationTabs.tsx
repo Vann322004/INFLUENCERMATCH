@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
 import { Card, Tabs, Grid } from 'antd';
 import type { RecommendationConfigResponseDto } from '../../../../types/api/recommendationConfig.types';
 import WeightingTab from './WeightingTab';
 import CalibrationTab from './CalibrationTab';
 import RerankingTab from './RerankingTab';
 
-interface Props { config: RecommendationConfigResponseDto; activeTab: string; setActiveTab: (key: string) => void; }
+interface Props { config: RecommendationConfigResponseDto; activeTab: string; setActiveTab: (key: string) => void; lookup: ReactNode; }
 
-export default function ConfigurationTabs({ config: currentConfig, activeTab, setActiveTab }: Props) {
+export default function ConfigurationTabs({ config: currentConfig, activeTab, setActiveTab, lookup }: Props) {
   const screens = Grid.useBreakpoint();
   const inspectorRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -39,21 +40,21 @@ export default function ConfigurationTabs({ config: currentConfig, activeTab, se
           // TAB 1: TRỌNG SỐ VÀ CRITIC
           {
             key: 'weighting',
-            label: <span style={{ fontWeight: 600 }}>Trọng số và CRITIC</span>,
-            children: <WeightingTab config={currentConfig} />,
+            label: <span style={{ fontWeight: 600 }}>Trọng số & tra cứu</span>,
+            children: <><WeightingTab config={currentConfig} />{lookup}</>,
           },
 
           // TAB 2: CHUẨN HÓA VÀ KIỂM SOÁT DỮ LIỆU
           {
             key: 'calibration',
-            label: <span style={{ fontWeight: 600 }}>Chuẩn hóa và kiểm soát dữ liệu</span>,
+            label: <span style={{ fontWeight: 600 }}>Chuẩn hóa dữ liệu</span>,
             children: <CalibrationTab config={currentConfig} />,
           },
 
           // TAB 3: MMR VÀ PHẠM VI TRIỂN KHAI
           {
             key: 'reranking',
-            label: <span style={{ fontWeight: 600 }}>MMR và phạm vi triển khai</span>,
+            label: <span style={{ fontWeight: 600 }}>Đa dạng hóa MMR</span>,
             children: <RerankingTab config={currentConfig} />,
           },
         ]}

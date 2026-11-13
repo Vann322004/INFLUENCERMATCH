@@ -1,113 +1,50 @@
-import { Card, Tag, Button, Empty, Table } from 'antd';
-import { ArrowRightOutlined } from '@ant-design/icons';
+import { Card, Tag, Empty, Table } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { DATA_MANAGER_ROUTES } from '../../../../constants/adminRoutes';
 import type { DataManagerDashboardData } from '../hooks/useDataManagerDashboard';
 
 type Props = Pick<DataManagerDashboardData, 'realActivities' | 'loading' | 'unavailable'>;
+type Activity = DataManagerDashboardData['realActivities'][number];
+
+const columns: TableColumnsType<Activity> = [
+  {
+    title: 'Kênh / Ứng viên', dataIndex: 'username', key: 'username',
+    render: (username: string, activity) => <div>
+      <div className="dm-record-title">{username || activity.displayName || '—'}</div>
+      <Tag className="dm-status-tag">{activity.platform || '—'}</Tag>
+    </div>,
+  },
+  {
+    title: 'Thu thập', dataIndex: 'status', key: 'status',
+    render: (status: string) => <Tag className="dm-status-tag">
+      {status === 'COMPLETED' || status === 'SUCCESS' ? 'Thành công' : status === 'QUEUED' ? 'Đang đợi' : status || '—'}
+    </Tag>,
+  },
+  {
+    title: 'Kiểm định', dataIndex: 'decision', key: 'decision',
+    render: (decision: string) => {
+      const labels: Record<string, string> = { ACCEPTED: 'Đạt (KOC)', REJECTED: 'Loại', REVIEW: 'Chờ duyệt' };
+      return <Tag className="dm-status-tag">{labels[decision] || decision || '—'}</Tag>;
+    },
+  },
+  {
+    title: 'Cập nhật', dataIndex: 'updatedAt', key: 'updatedAt',
+    render: (time: string) => <span className="dm-secondary">{time || '—'}</span>,
+  },
+];
 
 export default function CrawlerActivityTable({ realActivities, loading, unavailable }: Props) {
-  const navigate = useNavigate();
-  const activityColumns: TableColumnsType<DataManagerDashboardData['realActivities'][number]> = [
-    {
-      title: 'Kênh / Ứng viên',
-      dataIndex: 'username',
-      key: 'username',
-      render: (u: string, r: DataManagerDashboardData['realActivities'][number]) => (
-        <div>
-          <div style={{ fontWeight: 700, color: '#0F172A' }}>{u || r.displayName || '—'}</div>
-          <Tag color="geekblue" style={{ fontSize: 11, padding: '0 6px', marginTop: 2 }}>
-            {r.platform || 'TIKTOK'}
-          </Tag>
-        </div>
-      ),
-    },
-    {
-      title: 'Thu thập (Crawler)',
-      dataIndex: 'status',
-      key: 'status',
-      render: (st: string) => {
-        const isSuccess = st === 'COMPLETED' || st === 'SUCCESS';
-        const isQueued = st === 'QUEUED';
-        return (
-          <Tag color={isSuccess ? 'success' : isQueued ? 'processing' : 'error'} style={{ fontWeight: 600 }}>
-            {isSuccess ? 'Thành công' : isQueued ? 'Đang đợi' : st || 'Thất bại'}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: 'Kiểm định (Quality Decision)',
-      dataIndex: 'decision',
-      key: 'decision',
-      render: (dec: string, r: any) => {
-        const d = dec || (r.status === 'FILTERED' ? 'REJECTED' : 'REVIEW');
-        const color = d === 'ACCEPTED' ? 'green' : d === 'REJECTED' ? 'red' : 'gold';
-        const label = d === 'ACCEPTED' ? 'ACCEPTED (KOC)' : d === 'REJECTED' ? 'REJECTED (Loại)' : 'REVIEW (Chờ)';
-        return (
-          <Tag color={color} style={{ fontWeight: 600 }}>
-            {label}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: 'Cập nhật',
-      dataIndex: 'updatedAt',
-      key: 'updatedAt',
-      render: (t: string) => <span style={{ color: '#64748B', fontSize: 12 }}>{t || 'Vừa xong'}</span>,
-    },
-  ];
   return (
-    <Card
-      bordered={false}
-      style={{ borderRadius: 14, border: '1px solid #E2E8F0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}
-      title={
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>
-            Nhật ký thu thập &amp; Thẩm định gần đây (DM-05 / DM-03)
-          </span>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => navigate(DATA_MANAGER_ROUTES.JOBS)}
-            style={{ fontSize: 12, padding: 0 }}
-          >
-            Xem toàn bộ log <ArrowRightOutlined />
-          </Button>
-        </div>
-      }
-    >
+    <Card variant="borderless" className="im-dashboard-card dm-panel"
+      title="Hoạt động thu thập gần đây"
+      extra={<Link className="dm-section-link" to={DATA_MANAGER_ROUTES.JOBS}>Xem tất cả</Link>}>
       {realActivities.length > 0 ? (
-        <Table
-          dataSource={realActivities}
-          columns={activityColumns}
-          scroll={{ x: 720 }}
-          loading={loading}
-          rowKey="id"
-          pagination={false}
-          size="small"
-        />
+        <Table dataSource={realActivities} columns={columns} scroll={{ x: 720 }}
+          loading={loading} rowKey="id" pagination={false} size="small" />
       ) : (
-        <div style={{ padding: '24px 0', textAlign: 'center' }}>
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={
-              <span>
-                {loading ? 'Đang tải nhật ký…' : unavailable.includes(0) ? 'Không tải được nhật ký. Làm mới để thử lại.' : 'Chưa có nhật ký hoạt động thu thập nào được ghi nhận từ Crawler Service trong phiên này.'}
-              </span>
-            }
-          />
-          <Button
-            type="dashed"
-            size="small"
-            onClick={() => navigate(`${DATA_MANAGER_ROUTES.JOBS}?tab=test-scrape`)}
-            style={{ marginTop: 8 }}
-          >
-            Cào thử nghiệm 1 KOC ngay
-          </Button>
-        </div>
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={loading ? 'Đang tải nhật ký…' :
+          unavailable.includes(0) ? 'Chưa tải được nhật ký thu thập' : 'Chưa có hoạt động thu thập'} />
       )}
     </Card>
   );

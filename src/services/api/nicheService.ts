@@ -12,6 +12,7 @@ export type NicheInput = Omit<Niche, 'id'>;
 export const nicheService = {
   async list(): Promise<Niche[]> {
     const { data } = await apiClient.get('/data/niches');
+    if (!Array.isArray(data?.data)) throw new Error('Danh mục ngành hàng trả về không hợp lệ.');
     return data.data;
   },
   async create(input: NicheInput): Promise<Niche> {

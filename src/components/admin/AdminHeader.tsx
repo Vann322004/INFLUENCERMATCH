@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Layout, Badge, Tooltip, Drawer, List, Typography, Tag, Empty, Button } from 'antd';
 import {
   BellOutlined,
@@ -35,7 +35,6 @@ interface AdminHeaderProps {
 }
 
 export default function AdminHeader({ title, mobile, menuOpen, onOpenMenu }: AdminHeaderProps) {
-  const navigate = useNavigate();
   const location = useLocation();
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
@@ -49,41 +48,40 @@ export default function AdminHeader({ title, mobile, menuOpen, onOpenMenu }: Adm
   // Dynamic Breadcrumb Computation matching Brand Header
   const getPageInfo = () => {
     const p = location.pathname;
-    const isDataPipeline = p.includes('/jobs') || p.includes('/data-quality') || p.includes('/data-sources') || p.includes('/scoring');
     if (title) {
-      return { sub: isDataPipeline || isManager ? 'Quản lý Dữ liệu' : 'Quản trị hệ thống', current: title };
+      return { current: title };
     }
     if (p.includes('/data-sources')) {
-      return { sub: 'Quản lý Dữ liệu', current: 'Quản lý dữ liệu' };
+      return { current: 'Quản lý dữ liệu' };
     }
     if (p.includes('/jobs')) {
-      return { sub: 'Quản lý Dữ liệu', current: 'Tiến trình thu thập & Săn KOC' };
+      return { current: 'Tiến trình thu thập & Săn KOC' };
     }
     if (p.includes('/data-quality')) {
-      return { sub: 'Kiểm định Dữ liệu', current: 'Kiểm định chất lượng KOC' };
+      return { current: 'Kiểm định chất lượng KOC' };
     }
     if (p.includes('/scoring')) {
-      return { sub: 'Quản lý Dữ liệu', current: 'Cấu hình tính điểm' };
+      return { current: 'Cấu hình gợi ý' };
     }
     if (p.includes('/creator-claims')) {
-      return { sub: 'Danh mục & Xác thực', current: 'Duyệt hồ sơ xác minh' };
+      return { current: 'Duyệt hồ sơ xác minh' };
     }
     if (p.includes('/creators')) {
-      return { sub: 'Danh mục & Xác thực', current: 'Danh mục Nhà sáng tạo' };
+      return { current: 'Danh mục Nhà sáng tạo' };
     }
     if (p.includes('/accounts')) {
-      return { sub: 'Quản trị hệ thống', current: 'Tài khoản người dùng' };
+      return { current: 'Tài khoản người dùng' };
     }
     if (p.includes('/subscriptions')) {
-      return { sub: 'Quản trị hệ thống', current: 'Gói đăng ký dịch vụ' };
+      return { current: 'Gói đăng ký dịch vụ' };
     }
     if (p.includes('/payments')) {
-      return { sub: 'Quản trị hệ thống', current: 'Giao dịch & Thanh toán' };
+      return { current: 'Giao dịch & Thanh toán' };
     }
     if (p.includes('/audit')) {
-      return { sub: 'Quản trị hệ thống', current: 'Nhật ký hoạt động' };
+      return { current: 'Nhật ký hoạt động' };
     }
-    return { sub: undefined, current: isManager ? 'Tổng quan vận hành dữ liệu' : 'Tổng quan hệ thống' };
+    return { current: isManager ? 'Tổng quan vận hành dữ liệu' : 'Tổng quan hệ thống' };
   };
 
   const pageInfo = getPageInfo();
@@ -95,25 +93,18 @@ export default function AdminHeader({ title, mobile, menuOpen, onOpenMenu }: Adm
           {mobile && <Button className="admin-menu-trigger" aria-label="Mở menu điều hướng" aria-expanded={menuOpen}
             aria-controls="admin-navigation" icon={<MenuOutlined />} onClick={onOpenMenu} />}
           {/* Left: Breadcrumbs matching Brand layout */}
-          <div className="header-breadcrumbs">
-            <span
+          <nav className="header-breadcrumbs" aria-label="Đường dẫn">
+            <Link
               className="header-bc-root"
-              onClick={() => navigate(isManager ? DATA_MANAGER_ROUTES.DASHBOARD : ADMIN_ROUTES.DASHBOARD)}
+              to={isManager ? DATA_MANAGER_ROUTES.DASHBOARD : ADMIN_ROUTES.DASHBOARD}
             >
               <HomeOutlined style={{ marginRight: 4, fontSize: 12 }} />
               Trang chủ
-            </span>
+            </Link>
             <RightOutlined style={{ fontSize: 9, color: '#94A3B8' }} />
 
-            {pageInfo.sub && (
-              <>
-                <span className="header-bc-root">{pageInfo.sub}</span>
-                <RightOutlined style={{ fontSize: 9, color: '#94A3B8' }} />
-              </>
-            )}
-
-            <span className="header-bc-current">{pageInfo.current}</span>
-          </div>
+            <span className="header-bc-current" aria-current="page">{pageInfo.current}</span>
+          </nav>
 
           {/* Right: Standalone Notification Action Bell */}
           <Tooltip title="Thông báo hệ thống">

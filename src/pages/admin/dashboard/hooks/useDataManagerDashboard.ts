@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { crawlerService } from '../../../../services/api/crawlerService';
 import { claimService } from '../../../../services/api/claimService';
 import { adminService } from '../../../../services/api/adminService';
-import { nicheService, type Niche } from '../../../../services/api/nicheService';
 import type { CrawlMonitorOverview } from '../../../../types/api/crawler.types';
 import type { ClaimResponse } from '../../../../types/api/claim.types';
 
@@ -10,37 +9,36 @@ export function useDataManagerDashboard() {
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState<CrawlMonitorOverview | null>(null);
   const [pendingClaims, setPendingClaims] = useState<ClaimResponse[]>([]);
+  const [pendingClaimsCount, setPendingClaimsCount] = useState(0);
   const [pendingQualityCount, setPendingQualityCount] = useState<number>(0);
   const [pendingConflictsCount, setPendingConflictsCount] = useState<number>(0);
-  const [masterCreatorsCount, setMasterCreatorsCount] = useState<number>(0);
-  const [claimedChannelsCount, setClaimedChannelsCount] = useState<number>(0);
-  const [niches, setNiches] = useState<Niche[]>([]);
-  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [unavailable, setUnavailable] = useState<number[]>([]);
-  const [apiError, setApiError] = useState<string | null>(null);
 
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
-    setApiError(null);
     try {
       const results = await Promise.allSettled([
-        crawlerService.getOverview(15),
+        crawlerService.getOverview(15).then(data => {
+          if (!Array.isArray(data?.activities?.items)) throw new Error('Nhật ký thu thập không hợp lệ.');
+          return data;
+        }),
         claimService.getClaims({ status: 'PENDING', size: 10 }, { requireBackend: true }),
         adminService.getPendingClaims({ size: 100 }, { requireBackend: true }),
-        adminService.getIdentityConflicts({ status: 'PENDING_MANAGER' }),
-        adminService.getCreatorMasters({ size: 1 }),
-        nicheService.list(),
+        adminService.getIdentityConflicts({ status: 'PENDING_MANAGER' }).then(page => {
+          if (typeof page?.totalElements === 'number' && Number.isSafeInteger(page.totalElements) && page.totalElements >= 0) return page.totalElements;
+          if (Array.isArray(page?.items)) return page.items.length;
+          throw new Error('Hàng đợi xung đột định danh không hợp lệ.');
+        }),
       ]);
 
       const failed = results.flatMap((result, index) => result.status === 'rejected' ? [index] : []);
       setUnavailable(failed);
-      if (failed.length) setApiError('Không tải được ' + failed.length + '/6 nguồn dữ liệu. Các mục tương ứng chưa có dữ liệu mới; hãy làm mới để thử lại.');
 
       // 1. Crawler Overview (DM-05, DM-03)
       if (results[0].status === 'fulfilled') {
         setOverview(results[0].value);
       } else {
-        console.warn('Crawler overview API offline:', results[0].reason);
+        setOverview(null);
       }
 
       // 2. Pending Claims (DM-02)
@@ -48,6 +46,10 @@ export function useDataManagerDashboard() {
         const clRes = results[1].value;
         const clList = clRes?.items || clRes?.content || (Array.isArray(clRes) ? clRes : []);
         setPendingClaims(clList);
+        setPendingClaimsCount(clRes.totalElements);
+      } else {
+        setPendingClaims([]);
+        setPendingClaimsCount(0);
       }
 
       // 3. Pending Quality Snapshots (DM-03)
@@ -58,36 +60,13 @@ export function useDataManagerDashboard() {
 
       // 4. Pending Identity Conflicts (DM-01/DM-02)
       if (results[3].status === 'fulfilled') {
-        const confRes = results[3].value;
-        const confCount = confRes?.totalElements ?? (Array.isArray(confRes?.items) ? confRes.items.length : 0);
-        setPendingConflictsCount(confCount);
+        setPendingConflictsCount(results[3].value);
       }
 
-      // 5. Master Creators Count (DM-01)
-      if (results[4].status === 'fulfilled') {
-        const mRes = results[4].value;
-        const mTotal = mRes?.totalElements ?? 0;
-        setMasterCreatorsCount(mTotal);
-      }
-
-      // 6. Niches List (DM-06)
-      if (results[5].status === 'fulfilled') {
-        setNiches(Array.isArray(results[5].value) ? results[5].value : []);
-      }
-
-      // Read linked channel count from the backend
-      const approvedClaimsRes = await claimService.getClaims({ status: 'APPROVED', size: 1 }, { requireBackend: true }).catch(() => {
-        setUnavailable((previous) => [...previous, 6]);
-        setApiError('Một số nguồn dữ liệu chưa tải được. Làm mới để thử lại.');
-        return null;
-      });
-      if (approvedClaimsRes?.totalElements !== undefined) {
-        setClaimedChannelsCount(approvedClaimsRes.totalElements);
-      }
-
-      setLastRefreshed(new Date());
-    } catch (err: any) {
-      setApiError(err?.message || 'Có lỗi kết nối đến một số dịch vụ backend.');
+    } catch {
+      setUnavailable([0, 1, 2, 3]);
+      setOverview(null);
+      setPendingClaims([]);
     } finally {
       setLoading(false);
     }
@@ -97,27 +76,16 @@ export function useDataManagerDashboard() {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  // ── Computed Metrics directly from Real API Data (NO HARDCODED NUMBERS) ──
-  const stats = overview?.stats || {};
-  const totalCandidates = stats.total_candidates ?? 0;
-  const ingestedCount = stats.ingested_count ?? 0;
-  const uningestedCount = Math.max(0, totalCandidates - ingestedCount);
-  const acceptedKolKoc = stats.accepted_kol_koc ?? 0;
-  const rejectedCount = stats.rejected_count ?? 0;
-  const reviewPending = stats.review_pending ?? pendingQualityCount;
-  const rateLimit429 = stats.rate_limit_429_count ?? 0;
-
-  const pendingClaimsCount = pendingClaims.length;
-
   // Real recent activities from Crawler Overview (NO FAKE USERNAMES)
   const realActivities = overview?.activities?.items || [];
 
   // Calculate oldest pending claim wait time
   const getOldestWaitTime = () => {
     if (!pendingClaims.length) return null;
-    const sorted = [...pendingClaims].sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
-    const oldest = sorted[0];
-    const diffHours = Math.round((Date.now() - new Date(oldest.submittedAt).getTime()) / (1000 * 60 * 60));
+    const dates = pendingClaims.map(claim => claim.submittedAt ? new Date(claim.submittedAt).getTime() : NaN)
+      .filter(time => Number.isFinite(time) && time <= Date.now());
+    if (!dates.length) return null;
+    const diffHours = Math.round((Date.now() - Math.min(...dates)) / (1000 * 60 * 60));
     if (diffHours < 24) return `${diffHours} giờ`;
     return `${Math.round(diffHours / 24)} ngày`;
   };
@@ -126,10 +94,7 @@ export function useDataManagerDashboard() {
 
   return {
     loading, pendingClaims, pendingQualityCount, pendingConflictsCount,
-    masterCreatorsCount, claimedChannelsCount, niches, lastRefreshed,
-    unavailable, apiError, fetchDashboardData, totalCandidates, ingestedCount,
-    uningestedCount, acceptedKolKoc, rejectedCount, reviewPending,
-    rateLimit429, pendingClaimsCount, realActivities, oldestWaitTime,
+    unavailable, fetchDashboardData, pendingClaimsCount, realActivities, oldestWaitTime,
   };
 }
 
