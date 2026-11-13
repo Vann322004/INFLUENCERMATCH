@@ -5,8 +5,8 @@ import { nicheService, type Niche, type NicheInput } from '../../../../services/
 
 function errorText(error: any): string {
   if (error?.response?.status === 401) return 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại bằng tài khoản manager.';
-  if (error?.response?.status === 403) return 'Tài khoản chưa được cấp quyền quản lý lĩnh vực.';
-  return error?.response?.data?.detail || error?.response?.data?.message || 'Không thể cập nhật lĩnh vực. Vui lòng thử lại.';
+  if (error?.response?.status === 403) return 'Tài khoản chưa được cấp quyền quản lý danh mục ngành hàng.';
+  return error?.response?.data?.detail || error?.response?.data?.message || 'Không thể cập nhật ngành hàng. Vui lòng thử lại.';
 }
 
 export default function NicheManagementPanel() {
@@ -47,14 +47,14 @@ export default function NicheManagementPanel() {
     const input = { ...values, name: values.name.trim(), description: values.description?.trim() || '', keywords: [...new Set((values.keywords || []).map(word => word.trim().replace(/^#+/, '').trim()).filter(Boolean))] };
     if (!input.keywords.length) {
       setSaving(false);
-      message.warning('Nhập ít nhất một từ khóa cho lĩnh vực.');
+      message.warning('Nhập ít nhất một từ khóa cho ngành hàng.');
       return;
     }
     try {
       const saved = editing ? await nicheService.update(editing.id, input) : await nicheService.create(input);
       setItems(prev => editing ? prev.map(item => item.id === saved.id ? saved : item) : [...prev, saved]);
       setOpen(false);
-      message.success(editing ? 'Đã cập nhật lĩnh vực.' : 'Đã thêm lĩnh vực.');
+      message.success(editing ? 'Đã cập nhật ngành hàng.' : 'Đã thêm ngành hàng.');
     } catch (err) { message.error(errorText(err)); }
     finally { setSaving(false); }
   };
@@ -63,7 +63,7 @@ export default function NicheManagementPanel() {
     try {
       await nicheService.remove(item.id);
       setItems(prev => prev.filter(row => row.id !== item.id));
-      message.success('Đã xóa lĩnh vực khỏi danh mục.');
+      message.success('Đã xóa ngành hàng khỏi danh mục.');
     } catch (err) { message.error(errorText(err)); }
     finally { setDeletingId(null); }
   };
@@ -71,18 +71,18 @@ export default function NicheManagementPanel() {
   const search = query.trim().toLocaleLowerCase('vi-VN');
   return (
     <>
-      <Space orientation="vertical" size={20} style={{ width: '100%' }}>
+      <Space direction="vertical" size={20} style={{ width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <Typography.Title level={4} style={{ margin: '0 0 4px' }}>Quản lý lĩnh vực</Typography.Title>
-            <Typography.Text type="secondary">Thiết lập lĩnh vực và bộ từ khóa gợi ý cho Săn KOC tự động. Chọn lĩnh vực để nạp bộ từ khóa; bạn vẫn có thể điều chỉnh từ khóa cho từng đợt săn.</Typography.Text>
+            <Typography.Title level={4} style={{ margin: '0 0 4px' }}>Danh mục ngành hàng</Typography.Title>
+            <Typography.Text type="secondary">Thiết lập danh mục ngành hàng và bộ từ khóa gợi ý phục vụ tìm kiếm, phân loại và Săn KOC tự động.</Typography.Text>
           </div>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => showEditor(null)}>Thêm lĩnh vực</Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => showEditor(null)}>Thêm ngành hàng</Button>
         </div>
-        {error && <Alert type="error" showIcon title="Không tải được danh mục lĩnh vực" description={error} action={<Button onClick={load}>Thử lại</Button>} />}
+        {error && <Alert type="error" showIcon title="Không tải được danh mục ngành hàng" description={error} action={<Button onClick={load}>Thử lại</Button>} />}
         <Card>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 20 }}>
-            <Input.Search allowClear placeholder="Tìm tên hoặc mô tả lĩnh vực" value={query} onChange={event => setQuery(event.target.value)} style={{ maxWidth: 420 }} />
+            <Input.Search allowClear placeholder="Tìm tên hoặc mô tả ngành hàng" value={query} onChange={event => setQuery(event.target.value)} style={{ maxWidth: 420 }} />
             <Button icon={<ReloadOutlined />} loading={loading} onClick={load}>Làm mới</Button>
           </div>
           <Table<Niche>
@@ -92,33 +92,33 @@ export default function NicheManagementPanel() {
             pagination={{ pageSize: 10, hideOnSinglePage: true }}
             scroll={{ x: 650 }}
             columns={[
-              { title: 'Tên lĩnh vực', dataIndex: 'name', sorter: (a, b) => a.name.localeCompare(b.name, 'vi'), render: name => <strong>{name}</strong> },
+              { title: 'Tên ngành hàng', dataIndex: 'name', sorter: (a, b) => a.name.localeCompare(b.name, 'vi'), render: name => <strong>{name}</strong> },
               { title: 'Mô tả', dataIndex: 'description', render: description => description || '—' },
               { title: 'Từ khóa gợi ý', dataIndex: 'keywords', render: (keywords: string[] = []) => <Space size={[4, 4]} wrap>{keywords.map(keyword => <Tag key={keyword}>#{keyword}</Tag>)}</Space> },
               { title: 'Trạng thái', dataIndex: 'active', render: active => <Tag color={active ? 'green' : 'default'}>{active ? 'Đang sử dụng' : 'Ngừng sử dụng'}</Tag> },
               { title: 'Thao tác', key: 'actions', render: (_, item) => <Space>
                 <Button onClick={() => showEditor(item)}>Sửa</Button>
-                <Popconfirm title={`Xóa lĩnh vực “${item.name}”?`} description="Hồ sơ và dữ liệu đã lưu vẫn được giữ nguyên." okText="Xóa" cancelText="Hủy" onConfirm={() => remove(item)}>
+                <Popconfirm title={`Xóa ngành hàng “${item.name}”?`} description="Hồ sơ và dữ liệu đã lưu vẫn được giữ nguyên." okText="Xóa" cancelText="Hủy" onConfirm={() => remove(item)}>
                   <Button danger loading={deletingId === item.id} disabled={deletingId !== null}>Xóa</Button>
                 </Popconfirm>
               </Space> },
             ]}
-            locale={{ emptyText: error ? 'Danh mục chưa tải được' : search ? 'Không tìm thấy lĩnh vực phù hợp' : 'Chưa có lĩnh vực. Hãy thêm lĩnh vực đầu tiên.' }}
+            locale={{ emptyText: error ? 'Danh mục chưa tải được' : search ? 'Không tìm thấy ngành hàng phù hợp' : 'Chưa có ngành hàng. Hãy thêm ngành hàng đầu tiên.' }}
           />
         </Card>
       </Space>
-      <Modal title={editing ? 'Sửa lĩnh vực' : 'Thêm lĩnh vực'} open={open} onCancel={() => { if (!saving) setOpen(false); }} onOk={() => form.submit()} confirmLoading={saving} okText="Lưu lĩnh vực" cancelText="Hủy" closable={!saving} maskClosable={!saving} cancelButtonProps={{ disabled: saving }}>
+      <Modal title={editing ? 'Sửa ngành hàng' : 'Thêm ngành hàng'} open={open} onCancel={() => { if (!saving) setOpen(false); }} onOk={() => form.submit()} confirmLoading={saving} okText="Lưu ngành hàng" cancelText="Hủy" closable={!saving} maskClosable={!saving} cancelButtonProps={{ disabled: saving }}>
         <Form form={form} layout="vertical" onFinish={save} style={{ marginTop: 20 }}>
-          <Form.Item name="name" label="Tên lĩnh vực" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập tên lĩnh vực.' }, { max: 100, message: 'Tên lĩnh vực tối đa 100 ký tự.' }]}>
+          <Form.Item name="name" label="Tên ngành hàng" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập tên ngành hàng.' }, { max: 100, message: 'Tên ngành hàng tối đa 100 ký tự.' }]}>
             <Input maxLength={100} placeholder="Ví dụ: Làm đẹp và mỹ phẩm" />
           </Form.Item>
           <Form.Item name="description" label="Mô tả" rules={[{ max: 500, message: 'Mô tả tối đa 500 ký tự.' }]}>
             <Input.TextArea rows={3} maxLength={500} showCount />
           </Form.Item>
-          <Form.Item name="keywords" label="Từ khóa & hashtag gợi ý" extra="Nhập từ khóa rồi nhấn Enter. Bộ từ khóa này được nạp khi chọn lĩnh vực để săn KOC." rules={[{ required: true, type: 'array', min: 1, message: 'Nhập ít nhất một từ khóa.' }, { type: 'array', max: 30, message: 'Tối đa 30 từ khóa.' }, { validator: (_, values: string[] = []) => values.some(value => value.trim().replace(/^#+/, '').trim().length === 0 || value.length > 100) ? Promise.reject(new Error('Mỗi từ khóa phải có nội dung và tối đa 100 ký tự.')) : Promise.resolve() }]}>
+          <Form.Item name="keywords" label="Từ khóa & hashtag gợi ý" extra="Nhập từ khóa rồi nhấn Enter. Bộ từ khóa này được nạp khi chọn ngành hàng để săn KOC." rules={[{ required: true, type: 'array', min: 1, message: 'Nhập ít nhất một từ khóa.' }, { type: 'array', max: 30, message: 'Tối đa 30 từ khóa.' }, { validator: (_, values: string[] = []) => values.some(value => value.trim().replace(/^#+/, '').trim().length === 0 || value.length > 100) ? Promise.reject(new Error('Mỗi từ khóa phải có nội dung và tối đa 100 ký tự.')) : Promise.resolve() }]}>
             <Select mode="tags" open={false} placeholder="Ví dụ: review mỹ phẩm, skincare review" tokenSeparators={[',']} />
           </Form.Item>
-          <Form.Item name="active" label="Hiển thị lĩnh vực trong Săn KOC tự động" valuePropName="checked"><Switch checkedChildren="Bật" unCheckedChildren="Tắt" /></Form.Item>
+          <Form.Item name="active" label="Hiển thị ngành hàng trong Săn KOC tự động" valuePropName="checked"><Switch checkedChildren="Bật" unCheckedChildren="Tắt" /></Form.Item>
         </Form>
       </Modal>
     </>

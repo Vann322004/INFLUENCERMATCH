@@ -51,8 +51,11 @@ export default function AdminHeader({ title, onMenuClick }: AdminHeaderProps) {
     if (title) {
       return { sub: isDataPipeline || isManager ? 'Quản lý Dữ liệu' : 'Quản trị hệ thống', current: title };
     }
+    if (p.includes('/taxonomy')) {
+      return { sub: 'Quản lý Dữ liệu', current: 'Danh mục ngành hàng' };
+    }
     if (p.includes('/data-sources')) {
-      return { sub: 'Quản lý Dữ liệu', current: 'Quản lý dữ liệu' };
+      return { sub: 'Quản lý Dữ liệu', current: 'Danh mục ngành hàng' };
     }
     if (p.includes('/jobs')) {
       return { sub: 'Quản lý Dữ liệu', current: 'Tiến trình thu thập & Săn KOC' };
