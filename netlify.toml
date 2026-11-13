@@ -4,7 +4,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://api.influencermatch.site/api/:splat"
+  to = "http://221.121.3.226:8080/api/:splat"
   status = 200
   force = true
 

@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://api.influencermatch.site/api/:path*"
+      "destination": "http://221.121.3.226:8080/api/:path*"
     },
     {
       "source": "/(.*)",
