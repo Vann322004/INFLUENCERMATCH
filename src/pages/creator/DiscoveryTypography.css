@@ -1,0 +1,38 @@
+/* Match CampaignDetailPage's system font. Scope portal content explicitly,
+   since drawers and modals are rendered outside the discovery container. */
+:is(.cdiscovery-container, .cdiscovery-drawer, .shortlist-modal) {
+  --discovery-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--discovery-font);
+  font-weight: 400;
+  font-synthesis: none;
+}
+:is(.cdiscovery-container, .cdiscovery-drawer, .shortlist-modal) :is(h1, h2, h3, h4, p, span, strong, b, button, input, textarea, label, .ant-select, .ant-typography) {
+  font-family: var(--discovery-font) !important;
+}
+.cdiscovery-container .cdiscovery-header-title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -.3px;
+}
+.cdiscovery-container :is(.cdiscovery-filter-card-title, .cdiscovery-results-heading, .cdiscovery-campaign-summary h2) {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+.cdiscovery-container :is(.cdiscovery-card-name-title, .cdiscovery-metric-number) {
+  font-size: 14px;
+  font-weight: 500;
+}
+.cdiscovery-container :is(.cdiscovery-header-sub, .cdiscovery-card-bio-text, .cdiscovery-card-username-text, .cdiscovery-metric-caption, .cdiscovery-sort-label, .cdiscovery-select-all-label) {
+  font-weight: 400;
+}
+.cdiscovery-container :is(.cdiscovery-step-title, .cdiscovery-breadcrumb-current, strong, b),
+.cdiscovery-drawer :is(strong, b), .shortlist-modal :is(strong, b) {
+  font-weight: 500;
+}
+.cdiscovery-container .ant-btn,
+.cdiscovery-drawer .ant-btn,
+.shortlist-modal .ant-btn { font-weight: 500 !important; }
+@media (max-width: 640px) {
+  .cdiscovery-container .cdiscovery-header-title { font-size: 22px; }
+}

@@ -1,3 +1,4 @@
+import CrawlerReviewList from './CrawlerReviewList';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, App, AutoComplete, Avatar, Button, Card, Descriptions, Drawer, Empty, Form, Grid, Input, Modal, Pagination, Select, Skeleton, Steps, Table, Tag, Typography } from 'antd';
 import type { TableColumnsType } from 'antd';
@@ -147,6 +148,7 @@ export default function DataQualityPage() {
         <Typography.Paragraph type="secondary">Xem dữ liệu thu thập, kiểm tra phân loại AI và ghi nhận quyết định cho từng hồ sơ.</Typography.Paragraph></div>
       <Button icon={<ReloadOutlined />} loading={loading} disabled={saving} onClick={() => setRefreshKey(current => current + 1)}>Làm mới</Button>
     </div>
+    <CrawlerReviewList refreshKey={refreshKey} />
     <Card className="quality-workflow">
       <Steps size="small" responsive items={[{ title: 'Chọn hồ sơ' }, { title: 'Đối chiếu nội dung kênh' }, { title: 'Duyệt hoặc từ chối' }]} />
     </Card>

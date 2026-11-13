@@ -18,7 +18,7 @@ export interface DiscoveredKocItem {
   decision?: string;
   bio?: string;
   latencyMs?: number;
-  status: 'DISCOVERED' | 'INGESTED' | 'REJECTED';
+  status: 'DISCOVERED' | 'QUEUED' | 'INGESTED' | 'REJECTED';
 }
 
 interface DiscoveredFeedCardProps {
@@ -58,7 +58,7 @@ export default function DiscoveredFeedCard({
       `"${r.topicKeyword}"`,
       r.primaryType || 'KOC',
       r.decision || 'Đạt chuẩn',
-      r.status === 'INGESTED' ? 'Đã lưu vào DB' : 'Chờ lưu',
+      r.status === 'INGESTED' ? 'Đã lưu vào DB' : r.status === 'QUEUED' ? 'Đã vào hàng đợi' : 'Chờ gửi',
     ]);
 
     const csvContent =
@@ -208,7 +208,7 @@ export default function DiscoveredFeedCard({
           color={st === 'INGESTED' ? 'success' : 'processing'}
           style={{ borderRadius: 6, fontWeight: 600 }}
         >
-          {st === 'INGESTED' ? 'Đã lưu vào DB' : 'Chờ đồng bộ'}
+          {st === 'INGESTED' ? 'Đã lưu vào DB' : st === 'QUEUED' ? 'Đã vào hàng đợi' : 'Chờ gửi'}
         </Tag>
       ),
     },

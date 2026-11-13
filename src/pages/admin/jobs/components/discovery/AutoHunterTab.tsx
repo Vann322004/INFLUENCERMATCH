@@ -1,3 +1,6 @@
+import { saveCollectionResults } from '../../../../../services/collectionResults';
+import { useCollectionState } from '../../../../../hooks/useCollectionState';
+import type { LiveCrawlResult } from '../../../../../types/api/crawler.types';
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Alert, message } from 'antd';
@@ -60,32 +63,33 @@ function isShopAccount(username: string, displayName?: string, bio?: string): bo
 }
 
 export default function AutoHunterTab() {
-  const [mode, setMode] = useState<'category' | 'custom'>('category');
-  const [platform, setPlatform] = useState<string>('ALL');
+  const [mode, setMode] = useCollectionState<'category' | 'custom'>('hunter.mode', 'category');
+  const [platform, setPlatform] = useCollectionState<string>('hunter.platform', 'ALL');
   const [topics, setTopics] = useState<Niche[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
   const [topicsError, setTopicsError] = useState('');
   const [topicsVersion, setTopicsVersion] = useState(0);
-  const [selectedTopic, setSelectedTopic] = useState<string>('');
-  const [activeKeywords, setActiveKeywords] = useState<string[]>([]);
-  const [customUsernames, setCustomUsernames] = useState<string>('');
-  const [maxKocs, setMaxKocs] = useState<number>(5);
+  const [selectedTopic, setSelectedTopic] = useCollectionState<string>('hunter.selectedTopic', '');
+  const [activeKeywords, setActiveKeywords] = useCollectionState<string[]>('hunter.activeKeywords', []);
+  const [customUsernames, setCustomUsernames] = useCollectionState<string>('hunter.customUsernames', '');
+  const [maxKocs, setMaxKocs] = useCollectionState<number>('hunter.maxKocs', 5);
   const [loading, setLoading] = useState<boolean>(false);
 
   // Radar state — driven bởi response thực từ API
-  const [currentKeyword, setCurrentKeyword] = useState<string>('');
-  const [progressPercent, setProgressPercent] = useState<number>(0);
-  const [scannedCount, setScannedCount] = useState<number>(0);
-  const [filteredOutCount, setFilteredOutCount] = useState<number>(0);
-  const [pendingReviewCount, setPendingReviewCount] = useState<number | null>(null);
-  const [matchedCount, setMatchedCount] = useState<number>(0);
-  const [logLines, setLogLines] = useState<string[]>([]);
+  const [currentKeyword, setCurrentKeyword] = useCollectionState<string>('hunter.currentKeyword', '');
+  const [progressPercent, setProgressPercent] = useCollectionState<number>('hunter.progressPercent', 0);
+  const [scannedCount, setScannedCount] = useCollectionState<number>('hunter.scannedCount', 0);
+  const [filteredOutCount, setFilteredOutCount] = useCollectionState<number>('hunter.filteredOutCount', 0);
+  const [pendingReviewCount, setPendingReviewCount] = useCollectionState<number | null>('hunter.pendingReviewCount', null);
+  const [matchedCount, setMatchedCount] = useCollectionState<number>('hunter.matchedCount', 0);
+  const [logLines, setLogLines] = useCollectionState<string[]>('hunter.logLines', []);
 
   // Discovered Feed
-  const [discoveredList, setDiscoveredList] = useState<DiscoveredKocItem[]>([]);
+  const [discoveredList, setDiscoveredList] = useCollectionState<DiscoveredKocItem[]>('hunter.discoveredList', []);
   const [inspectModalOpen, setInspectModalOpen] = useState<boolean>(false);
   const [inspectUsername, setInspectUsername] = useState<string>('');
 
+  const [rawResults, setRawResults] = useCollectionState<LiveCrawlResult[]>('hunter.results', []);
   const feedRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -96,8 +100,10 @@ export default function AutoHunterTab() {
       if (!active) return;
       const enabled = rows.filter(row => row.active);
       setTopics(enabled);
-      setSelectedTopic(enabled[0]?.id || '');
-      setActiveKeywords(enabled[0]?.keywords || []);
+      if (!enabled.some(topic => topic.id === selectedTopic)) {
+        setSelectedTopic(enabled[0]?.id || '');
+        setActiveKeywords(enabled[0]?.keywords || []);
+      }
     }).catch((error) => {
       if (!active) return;
       setTopics([]);
@@ -211,6 +217,8 @@ export default function AutoHunterTab() {
       const totalReq = summary?.total_requested ?? (res.results?.length ?? maxKocs);
       const failedCnt = summary?.failed_count ?? 0;
 
+      setRawResults(res.results || []);
+      saveCollectionResults(res.results || [], mode === 'custom' ? 'manual' : 'automatic');
       const rawResults = (res.results || []).filter((r) => r.status === 'success' && !!r.username);
 
       // Áp dụng bộ lọc Tier-0 Guards
@@ -285,16 +293,21 @@ export default function AutoHunterTab() {
             decision: isKol ? 'AUTO_ACCEPT_KOL' : 'AUTO_ACCEPT_KOC',
             bio: r.bio,
             latencyMs: r.latency_ms,
-            status: 'INGESTED', // Đã tự động kích hoạt lưu vào Database
+            status: 'DISCOVERED',
           };
         });
 
         // Tự động lưu tất cả KOC đạt chuẩn vào Database hệ thống
-        passedResults.forEach((koc) => {
+        const submissions = await Promise.allSettled(passedResults.map((koc) => {
           const uname = koc.username.replace(/^@/, '');
           const kocPlat = (koc.platform || 'TIKTOK') as any;
-          crawlerService.enqueueCandidate(kocPlat, uname, false).catch(() => {});
+          return crawlerService.enqueueCandidate(kocPlat, uname, false);
+        }));
+        const queuedCount = submissions.filter(result => result.status === 'fulfilled').length;
+        mappedList.forEach((item, index) => {
+          if (submissions[index].status === 'fulfilled') item.status = 'QUEUED';
         });
+        if (queuedCount < mappedList.length) message.warning(`Có ${mappedList.length - queuedCount} hồ sơ chưa gửi được vào hàng đợi. Bạn có thể gửi lại từng hồ sơ.`);
 
         setProgressPercent(100);
         setDiscoveredList(mappedList);
@@ -312,7 +325,7 @@ export default function AutoHunterTab() {
           newLogs.push(`[${now()}] Có ${totalExcluded} kênh cào lỗi hoặc bị lọc Tier-0. Chưa xác nhận có hồ sơ chờ kiểm định trên hệ thống.`);
         }
         setLogLines(newLogs);
-        message.success(`Đã săn và tự động lưu ${mappedList.length} KOC đạt chuẩn vào hệ thống!`);
+        message.success(`Đã thu thập ${mappedList.length} KOC; ${queuedCount} hồ sơ đã vào hàng đợi đồng bộ.`);
 
         if (totalExcluded > 0) {
           message.info({
@@ -381,9 +394,9 @@ export default function AutoHunterTab() {
     try {
       await crawlerService.enqueueCandidate(item.platform as any, item.username, true);
       setDiscoveredList((prev) =>
-        prev.map((k) => (k.id === item.id ? { ...k, status: 'INGESTED' } : k))
+        prev.map((k) => (k.id === item.id ? { ...k, status: 'QUEUED' } : k))
       );
-      message.success({ content: `Đã lưu @${item.username} vào Database!`, key: 'imp_single' });
+      message.success({ content: `Đã đưa @${item.username} vào hàng đợi đồng bộ.`, key: 'imp_single' });
     } catch {
       message.error({ content: 'Lỗi khi lưu KOC', key: 'imp_single' });
     }
@@ -393,13 +406,15 @@ export default function AutoHunterTab() {
     if (discoveredList.length === 0) return;
     message.loading({ content: `Đang đồng bộ ${discoveredList.length} KOC vào Database...`, key: 'imp_all' });
     try {
-      await Promise.all(
+      const submissions = await Promise.allSettled(
         discoveredList.map((k) =>
-          crawlerService.enqueueCandidate(k.platform as any, k.username, false).catch(() => {})
+          crawlerService.enqueueCandidate(k.platform as any, k.username, false)
         )
       );
-      setDiscoveredList((prev) => prev.map((k) => ({ ...k, status: 'INGESTED' })));
-      message.success({ content: `Đã lưu thành công ${discoveredList.length} KOC vào hệ thống!`, key: 'imp_all' });
+      const queuedIds = new Set(discoveredList.filter((_, index) => submissions[index].status === 'fulfilled').map(item => item.id));
+      setDiscoveredList(prev => prev.map(item => queuedIds.has(item.id) ? { ...item, status: 'QUEUED' } : item));
+      const failedCount = submissions.length - queuedIds.size;
+      message[failedCount ? 'warning' : 'success']({ content: `Đã gửi ${queuedIds.size} hồ sơ vào hàng đợi.${failedCount ? ` ${failedCount} hồ sơ gửi thất bại, hãy thử lại.` : ''}`, key: 'imp_all' });
     } catch {
       message.error({ content: 'Lỗi khi lưu danh sách KOC', key: 'imp_all' });
     }
@@ -417,7 +432,7 @@ export default function AutoHunterTab() {
         topics={topics}
         topicsLoading={topicsLoading}
         topicsError={topicsError}
-        topicsManagementPath={`${location.pathname.startsWith('/data-manager') ? '/data-manager' : '/admin'}/data-sources?tab=niches`}
+        topicsManagementPath={`${location.pathname.startsWith('/data-manager') ? '/data-manager' : '/admin'}/data-sources`}
         onReloadTopics={reloadTopics}
         mode={mode}
         onModeChange={setMode}
@@ -463,6 +478,7 @@ export default function AutoHunterTab() {
         open={inspectModalOpen}
         onClose={() => setInspectModalOpen(false)}
         defaultInput={inspectUsername}
+        initialResult={rawResults.find(result => result.username.replace(/^@/, '') === inspectUsername)}
       />
     </div>
   );

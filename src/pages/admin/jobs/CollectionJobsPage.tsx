@@ -1,3 +1,4 @@
+import { useCollectionState } from '../../../hooks/useCollectionState';
 import React, { useState } from 'react';
 import { Card, Button, Space, Tag, Modal, Form, Tabs, Select, Input, message } from 'antd';
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -8,7 +9,7 @@ import { crawlerService } from '../../../services/api/crawlerService';
 import type { CrawlPlatform } from '../../../types/api/crawler.types';
 
 export default function CollectionJobsPage() {
-  const [activeTab, setActiveTab] = useState<'hunter' | 'live' | 'jobs'>('hunter');
+  const [activeTab, setActiveTab] = useCollectionState<'hunter' | 'live' | 'jobs'>('activeTab', 'hunter');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [triggerLoading, setTriggerLoading] = useState(false);
   const [form] = Form.useForm();

@@ -1,3 +1,4 @@
+import { requestCrawler } from './crawlerTransport';
 import type {
   CrawlPlatform,
   LiveCrawlResult,
@@ -14,48 +15,7 @@ class CrawlerService {
     options: RequestInit = {},
     timeoutMs = 25000
   ): Promise<T> {
-    const urls = [
-      `/crawler-api${endpoint}`,
-      `http://127.0.0.1:8000${endpoint}`,
-      `http://localhost:8000${endpoint}`,
-    ];
-
-    let lastError: any = null;
-
-    for (const url of urls) {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-      let responseReceived = false;
-      try {
-        const res = await fetch(url, {
-          ...options,
-          signal: controller.signal,
-          headers: {
-            'Content-Type': 'application/json',
-            ...(options.headers || {}),
-          },
-        });
-        responseReceived = true;
-
-        if (res.ok) {
-          return await res.json();
-        } else {
-          const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody.detail || errBody.error || `Lỗi máy chủ HTTP ${res.status}`);
-        }
-      } catch (err: any) {
-        // A server rejection must be shown immediately, not replayed as another crawl.
-        if (responseReceived) throw err;
-        lastError = err;
-      } finally {
-        clearTimeout(timeoutId);
-      }
-    }
-
-    throw new Error(
-      lastError?.message ||
-        'Không thể kết nối đến máy chủ thu thập dữ liệu (cổng 8000). Vui lòng kiểm tra dịch vụ uvicorn.'
-    );
+    return requestCrawler<T>(import.meta.env.VITE_CRAWLER_API_BASE_URL || '/crawler-api', endpoint, options, timeoutMs);
   }
 
   /**
@@ -113,11 +73,26 @@ class CrawlerService {
    * Lấy Overview giám sát Crawler thời gian thực (GET /api/v1/monitor/overview)
    */
   async getOverview(limit = 30): Promise<CrawlMonitorOverview> {
-    return await this.requestCrawler<CrawlMonitorOverview>(
-      `/api/v1/monitor/overview?limit=${limit}`,
+    const overview = await this.requestCrawler<CrawlMonitorOverview>(
+      `/api/v1/monitor/overview?limit=${Math.max(1, Math.min(100, Math.trunc(limit) || 30))}`,
       {},
       10000
     );
+    // The crawler persists flat Creator payloads; older deployments wrap creator.
+    const rawItems = overview.crawled_data?.items || [];
+    return {
+      ...overview,
+      crawled_data: {
+        ...overview.crawled_data,
+        items: rawItems.map(item => {
+          if (item.creator) return item;
+          const flat = item as unknown as CrawlMonitorOverview['crawled_data']['items'][number]['creator'] & {
+            recentPosts?: LiveCrawlResult['recent_posts']; collectedAt?: string;
+          };
+          return { creator: flat, recentPosts: flat.recentPosts, collectedAt: flat.collectedAt };
+        }),
+      },
+    };
   }
 
   /**

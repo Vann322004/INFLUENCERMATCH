@@ -1,3 +1,4 @@
+import { campaignRecommendationPool } from '../components/discovery/recommendationLimit';
 import { useState, useMemo } from 'react';
 import { message } from 'antd';
 import type { Creator, BrandCampaignItem } from '../components/discovery/types';
@@ -59,7 +60,7 @@ export function useDiscoveryFilters({
 
   const filteredCreators = useMemo(
     () =>
-      filterDiscoveryCreators(creators, {
+      filterDiscoveryCreators(campaignRecommendationPool(creators, !!matchedCampaign), {
         search: matchedCampaign ? '' : submittedSearch,
         platform: selectedPlatform,
         category: selectedCategory,

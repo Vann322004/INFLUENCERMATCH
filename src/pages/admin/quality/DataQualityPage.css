@@ -1,4 +1,12 @@
 .data-quality-page { min-width: 0; width: 100%; }
+.data-quality-page { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; font-weight: 400; }
+.quality-collection-list { margin-bottom: 24px; }
+.quality-collection-list h4 { margin: 0 0 8px; font-size: 18px; font-weight: 500; }
+.quality-collection-list .ant-typography-secondary { font-size: 14px; line-height: 1.7; }
+.quality-source-filter { margin: 8px 0 20px; }
+.quality-collection-list strong { font-weight: 500; }
+.quality-collection-list .ant-alert { border-radius: 12px; }
+.quality-collection-list .ant-table { font-size: 14px; }
 .quality-page-heading, .quality-list-heading { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
 .quality-page-heading h3, .quality-list-heading h4 { margin: 0 0 6px !important; }
 .quality-page-heading .ant-typography { margin-bottom: 0; }
@@ -24,7 +32,7 @@
 .quality-review-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
 @media (max-width: 767px) {
   .quality-page-heading h3 { font-size: 22px; }
-  .quality-workflow > .ant-card-body, .quality-review-list > .ant-card-body { padding: 16px; }
+  .quality-workflow > .ant-card-body, .quality-review-list > .ant-card-body, .quality-collection-list > .ant-card-body { padding: 16px; }
   .quality-profile-cards { grid-template-columns: minmax(0, 1fr); }
   .quality-page-heading > .ant-btn { width: 100%; }
   .quality-review-actions > .ant-btn { flex: 1 1 100%; }

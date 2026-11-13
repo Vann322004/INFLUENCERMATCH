@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Table, Tag, Input, Select, Button, Row, Col, Space, Tooltip, message, Alert } from 'antd';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Card, Table, Tag, Input, Select, Button, Row, Col, Space, Tooltip, message, Alert, DatePicker } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   SearchOutlined,
@@ -15,6 +15,9 @@ import type { Transaction, TxnStatus } from '../../../types/api/admin.types';
 import { adminService, type PaymentStats } from '../../../services/api/adminService';
 import TransactionDetailModal from './components/TransactionDetailModal';
 import RefundModal from './components/RefundModal';
+import RevenueReportCard from './components/RevenueReportCard';
+import dayjs, { type Dayjs } from 'dayjs';
+import type { RevenueReport } from '../../../services/api/adminService';
 
 const STATUS_CFG: Record<TxnStatus, { label: string; color: string; icon: React.ReactNode }> = {
   paid:     { label: 'Thành công',   color: 'success',    icon: <CheckCircleOutlined /> },
@@ -24,6 +27,14 @@ const STATUS_CFG: Record<TxnStatus, { label: string; color: string; icon: React.
 };
 
 export default function PaymentsPage() {
+  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([dayjs().subtract(29, 'day'), dayjs()]);
+  const from = dateRange[0].startOf('day').format('YYYY-MM-DDTHH:mm:ss.SSS');
+  const to = `${dateRange[1].format('YYYY-MM-DD')}T23:59:59.999999`;
+  const [groupBy, setGroupBy] = useState<'day' | 'month'>('day');
+  const [report, setReport] = useState<RevenueReport | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState('');
+  const [reportVersion, setReportVersion] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -49,26 +60,29 @@ export default function PaymentsPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
 
-  // Fetch transactions and stats from backend API
+  const tableRequest = useRef(0);
+
+  // Fetch transactions independently from reports.
   const fetchData = useCallback(async () => {
+    const request = ++tableRequest.current;
     setLoading(true);
     setAuthError(null);
     try {
-      const [txnRes, statsRes] = await Promise.all([
-        adminService.getTransactions({
+      const txnRes = await adminService.getTransactions({
           search,
           status: statusFilter,
           gateway: gatewayFilter,
           page,
           size: pageSize,
-        }),
-        adminService.getTransactionStats(),
-      ]);
+          from, to,
+        });
 
+      if (request !== tableRequest.current) return;
       setTransactions(txnRes.items || []);
       setTotalElements(txnRes.totalElements || 0);
-      setStats(statsRes);
+
     } catch (err: any) {
+      if (request !== tableRequest.current) return;
       console.error('[PaymentsPage] Error fetching data:', err);
       if (err?.response?.status === 401) {
         setAuthError('Yêu cầu xác thực (401 Unauthorized): Cần có token Admin hợp lệ để xem và đối soát dữ liệu giao dịch. Vui lòng đăng nhập lại tài khoản Admin.');
@@ -79,13 +93,30 @@ export default function PaymentsPage() {
       setTransactions([]);
       setTotalElements(0);
     } finally {
-      setLoading(false);
+      if (request === tableRequest.current) setLoading(false);
     }
-  }, [search, statusFilter, gatewayFilter, page, pageSize]);
+  }, [search, statusFilter, gatewayFilter, page, pageSize, from, to]);
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
+    return () => { tableRequest.current += 1; };
   }, [fetchData]);
+
+  useEffect(() => {
+    let active = true;
+    setReportLoading(true);
+    setReportError('');
+    Promise.all([
+      adminService.getTransactionStats({ from, to }),
+      adminService.getRevenueReport({ from: from.slice(0, 10), to: to.slice(0, 10), groupBy }),
+    ]).then(([financialStats, revenue]) => {
+      if (!active) return;
+      setStats(financialStats); setReport(revenue);
+    }).catch(error => {
+      if (active) setReportError(error?.response?.data?.message || 'Không tải được báo cáo doanh thu.');
+    }).finally(() => { if (active) setReportLoading(false); });
+    return () => { active = false; };
+  }, [from, to, groupBy, reportVersion]);
 
   const handleOpenDetail = (txn: Transaction) => {
     setSelectedTxn(txn);
@@ -105,7 +136,8 @@ export default function PaymentsPage() {
         message.success(`Đã xử lý hoàn tiền thành công cho giao dịch #${txn.ref}!`);
       }
       setRefundOpen(false);
-      fetchData();
+      void fetchData();
+      setReportVersion(value => value + 1);
     } catch {
       message.error('Có lỗi khi xử lý hoàn tiền');
     }
@@ -259,7 +291,7 @@ export default function PaymentsPage() {
         <Space>
           <Button
             icon={<ReloadOutlined spin={loading} />}
-            onClick={() => fetchData()}
+            onClick={() => { void fetchData(); setReportVersion(value => value + 1); }}
             style={{ borderRadius: 8 }}
           >
             Làm mới
@@ -291,10 +323,21 @@ export default function PaymentsPage() {
         />
       )}
 
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+        <strong>Khoảng thời gian</strong>
+        <DatePicker.RangePicker value={dateRange} allowClear={false} format="DD/MM/YYYY"
+          onChange={range => {
+            if (range?.[0] && range?.[1]) {
+              if (range[1].diff(range[0], 'day') > 366) { message.warning('Vui lòng chọn khoảng thời gian tối đa một năm.'); return; }
+              setDateRange([range[0], range[1]]); setPage(0);
+            }
+          }} />
+        <span style={{ color: '#64748b', fontSize: 12 }}>Báo cáo VNĐ theo khoảng đã chọn; bộ lọc bên dưới áp dụng cho danh sách giao dịch.</span>
+      </div>
       {/* Financial KPI Cards */}
       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
+          <Card bordered={false} loading={reportLoading} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>DOANH THU THỰC NHẬN</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#10B981', marginTop: 4 }}>
               {stats.totalRevenue >= 1e6 ? `${(stats.totalRevenue / 1e6).toFixed(2)} tr` : `${stats.totalRevenue.toLocaleString('vi-VN')} đ`}
@@ -304,7 +347,7 @@ export default function PaymentsPage() {
         </Col>
 
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
+          <Card bordered={false} loading={reportLoading} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>ĐANG CHỜ THANH TOÁN</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#3B82F6', marginTop: 4 }}>
               {stats.totalPending >= 1e6 ? `${(stats.totalPending / 1e6).toFixed(2)} tr` : `${stats.totalPending.toLocaleString('vi-VN')} đ`}
@@ -314,7 +357,7 @@ export default function PaymentsPage() {
         </Col>
 
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
+          <Card bordered={false} loading={reportLoading} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>TIỀN ĐÃ HOÀN TRẢ</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#EF4444', marginTop: 4 }}>
               {stats.totalRefunded >= 1e6 ? `${(stats.totalRefunded / 1e6).toFixed(2)} tr` : `${stats.totalRefunded.toLocaleString('vi-VN')} đ`}
@@ -324,16 +367,18 @@ export default function PaymentsPage() {
         </Col>
 
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
+          <Card bordered={false} loading={reportLoading} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>TỔNG GIAO DỊCH</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#6366F1', marginTop: 4 }}>
-              {stats.totalCount || totalElements} đơn
+              {stats.totalCount} đơn
             </div>
-            <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Ghi nhận trong toàn hệ thống</div>
+            <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Trong khoảng thời gian đã chọn</div>
           </Card>
         </Col>
       </Row>
 
+      <RevenueReportCard report={report} loading={reportLoading} error={reportError} groupBy={groupBy}
+        onGroupChange={setGroupBy} onRetry={() => setReportVersion(value => value + 1)} />
       {/* Main Table Card */}
       <Card
         bordered={false}

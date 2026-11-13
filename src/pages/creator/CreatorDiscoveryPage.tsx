@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Alert, Button, message } from 'antd';
+import { Alert, Button, ConfigProvider, message } from 'antd';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 
 import type { Creator, BrandCampaignItem } from './components/discovery/types';
@@ -19,6 +19,15 @@ import { useDiscoveryCreators } from './hooks/useDiscoveryCreators';
 import { useDiscoveryFilters } from './hooks/useDiscoveryFilters';
 
 import './CreatorDiscoveryPage.css';
+import './DiscoveryTypography.css';
+
+const discoveryTheme = {
+  token: {
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    fontWeightStrong: 500,
+  },
+  components: { Button: { fontWeight: 500 } },
+};
 
 export type { Creator, BrandCampaignItem };
 
@@ -189,6 +198,7 @@ export default function CreatorDiscoveryPage() {
   };
 
   return (
+    <ConfigProvider theme={discoveryTheme}>
     <div className="cdiscovery-container">
       {/* 1. Header & Breadcrumb */}
       <DiscoveryHeader matchedCampaign={matchedCampaign} />
@@ -375,5 +385,6 @@ export default function CreatorDiscoveryPage() {
         }}
       />
     </div>
+    </ConfigProvider>
   );
 }

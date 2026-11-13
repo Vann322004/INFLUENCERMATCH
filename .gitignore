@@ -34,3 +34,10 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 .cache/
+
+# Local temporary scripts and generated artifacts
+/*.py
+__pycache__/
+*.pyc
+/swagger.json
+/swagger_latest.json

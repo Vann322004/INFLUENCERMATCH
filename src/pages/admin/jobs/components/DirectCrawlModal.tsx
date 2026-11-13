@@ -7,6 +7,7 @@ interface DirectCrawlModalProps {
   open: boolean;
   onClose: () => void;
   defaultInput?: string;
+  initialResult?: LiveCrawlResult;
   onImportSuccess?: (result: LiveCrawlResult) => void;
 }
 
@@ -14,6 +15,7 @@ export default function DirectCrawlModal({
   open,
   onClose,
   defaultInput = '',
+  initialResult,
   onImportSuccess,
 }: DirectCrawlModalProps) {
   return (
@@ -28,7 +30,9 @@ export default function DirectCrawlModal({
     >
       <div style={{ maxHeight: '80vh', overflowY: 'auto', paddingRight: 4 }}>
         <LiveCrawlTab
+          key={defaultInput}
           defaultInput={defaultInput}
+          initialResult={initialResult}
           onImportSuccess={(res) => {
             if (onImportSuccess) onImportSuccess(res);
             onClose();

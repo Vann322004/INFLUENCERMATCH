@@ -96,6 +96,7 @@ export function useDiscoveryCampaigns({
                 if (storedCampaign && storedCampaign.id === targetId) {
                   matched = {
                     id: targetId,
+                    targetCreatorCount: Number(storedCampaign.targetCreatorCount) || 1,
                     name: storedCampaign.name || passedCampaign?.name || 'Chiến dịch mới',
                     tag: storedCampaign.category || 'Mới khởi tạo',
                     target: storedCampaign.target || storedCampaign.targetAudience || 'Khán giả mục tiêu',
@@ -114,6 +115,8 @@ export function useDiscoveryCampaigns({
           }
 
           if (matched) {
+            matched.targetCreatorCount = Number(passedCampaign?.targetCreatorCount
+              || storedCampaign?.targetCreatorCount || matched.targetCreatorCount) || 1;
             if (!matched.followerMin && passedCampaign?.followerMin) {
               matched.followerMin = Number(passedCampaign.followerMin);
             }

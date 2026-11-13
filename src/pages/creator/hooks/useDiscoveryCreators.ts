@@ -1,3 +1,4 @@
+import { CAMPAIGN_RECOMMENDATION_LIMIT } from '../components/discovery/recommendationLimit';
 import { useState, useEffect, useRef } from 'react';
 import { message } from 'antd';
 import type { Creator, BrandCampaignItem } from '../components/discovery/types';
@@ -69,94 +70,30 @@ export function useDiscoveryCreators({
         let result: Creator[];
         if (matchedCampaign) {
           const requestedRange = followerRange(followerTier);
-          let rows: any[] = [];
-          try {
-            const response = await creatorService.discoverCreators(matchedCampaign.id, {
-              keyword: submittedSearch || undefined,
-              niche: selectedCategory !== 'all' ? selectedCategory : undefined,
-              minFollowers: requestedRange?.minFollowers ?? matchedCampaign.followerMin,
-              maxFollowers: requestedRange ? requestedRange.maxFollowers : matchedCampaign.followerMax,
-              page: 0,
-              size: 30,
-            });
-            const raw: any = response;
-            const content = Array.isArray(raw) ? raw : raw?.content ?? raw?.items ?? raw?.candidates;
-            if (Array.isArray(content) && content.length > 0) {
-              rows = content;
-            }
-          } catch (discoverErr) {
-            console.warn('[useDiscoveryCreators] discoverCreators API error, falling back:', discoverErr);
-            rows = [];
-          }
-
-          if (rows.length > 0) {
-            result = rows.map((item) => {
-              const base = mapApiCreatorToUi(item);
-              const rawScore = item.matchScore ?? item.finalScore ?? item.score ?? item.hybridScore;
-              const score =
-                typeof rawScore === 'number' && Number.isFinite(rawScore)
-                  ? Math.round(rawScore >= 0 && rawScore <= 1 ? rawScore * 100 : rawScore)
-                  : 85;
-              return {
-                ...base,
-                matchRate: score,
-                matchLevel: (score >= 80 ? 'high' : score >= 65 ? 'medium' : 'low') as 'high' | 'medium' | 'low',
-                matchReason: item.reason || item.summary || item.matchReason || 'Phù hợp mục tiêu chiến dịch',
-              };
-            });
-          } else {
-            // Khi API discovery trả về rỗng, tự động lấy danh sách KOC từ Catalog hệ thống
-            const allRows = await creatorService.getCreators({ strict: false });
-            // Lấy tất cả thông tin ngành của chiến dịch để so sánh
-            const campCategory = (
-              matchedCampaign.category ||
-              matchedCampaign.suggestedCategory ||
-              matchedCampaign.tag ||
-              ''
-            ).toLowerCase();
-            // Map các từ khóa ngành hàng phổ biến sang nhóm
-            const beautyKeywords = ['beauty', 'làm đẹp', 'mỹ phẩm', 'skincare', 'makeup', 'chăm sóc da', 'dưỡng da', 'son', 'nước hoa'];
-            const campIsBeauty = beautyKeywords.some((kw) => campCategory.includes(kw));
-
-            result = allRows.map((item) => {
-              const base = mapApiCreatorToUi(item);
-              const creatorNiche = (item.niche || (item as any).category || '').toLowerCase();
-              const creatorBio = (item.contentSummary || '').toLowerCase();
-              const creatorIsBeauty = beautyKeywords.some((kw) => creatorNiche.includes(kw) || creatorBio.includes(kw));
-
-              let score = 72;
-              let reason = 'Đề xuất dựa trên dữ liệu hiệu suất và tương tác thực tế';
-
-              const hasDirectMatch =
-                campCategory &&
-                (creatorNiche.includes(campCategory) ||
-                  creatorBio.includes(campCategory) ||
-                  campCategory.includes(creatorNiche.substring(0, 5)));
-
-              if (hasDirectMatch) {
-                score = 92;
-                reason = `Rất phù hợp với ngành hàng "${matchedCampaign.suggestedCategory || matchedCampaign.category || matchedCampaign.tag}"`;
-              } else if (campIsBeauty && creatorIsBeauty) {
-                score = 92;
-                reason = 'Chuyên gia làm đẹp & mỹ phẩm – phù hợp cao với chiến dịch';
-              } else if (
-                creatorNiche.includes('làm đẹp') ||
-                creatorNiche.includes('beauty') ||
-                creatorNiche.includes('chăm sóc da') ||
-                creatorNiche.includes('mỹ phẩm') ||
-                creatorNiche.includes('tiêu dùng')
-              ) {
-                score = 86;
-                reason = 'Phong cách review và tệp khán giả phù hợp với thông điệp chiến dịch';
-              }
-              return {
-                ...base,
-                matchRate: score,
-                matchLevel: (score >= 80 ? 'high' : score >= 65 ? 'medium' : 'low') as 'high' | 'medium' | 'low',
-                matchReason: reason,
-              };
-            });
-          }
+          const limit = CAMPAIGN_RECOMMENDATION_LIMIT;
+          const response = await creatorService.discoverCreators(matchedCampaign.id, {
+            keyword: submittedSearch || undefined,
+            niche: selectedCategory !== 'all' ? selectedCategory : undefined,
+            minFollowers: requestedRange?.minFollowers ?? matchedCampaign.followerMin,
+            maxFollowers: requestedRange ? requestedRange.maxFollowers : matchedCampaign.followerMax,
+            page: 0,
+            size: limit,
+          });
+          const raw: any = response;
+          const rows = Array.isArray(raw) ? raw : raw?.content ?? raw?.items ?? raw?.candidates;
+          if (!Array.isArray(rows)) throw new Error('Dữ liệu gợi ý Creator không đúng định dạng.');
+          result = rows.slice(0, limit).map((item) => {
+            const base = mapApiCreatorToUi(item);
+            const rawScore = item.matchScore ?? item.finalScore ?? item.score ?? item.hybridScore;
+            const score = typeof rawScore === 'number' && Number.isFinite(rawScore)
+              ? Math.max(0, Math.min(100, Math.round(rawScore <= 1 ? rawScore * 100 : rawScore))) : 0;
+            return {
+              ...base,
+              matchRate: score,
+              matchLevel: (score >= 80 ? 'high' : score >= 65 ? 'medium' : 'low') as 'high' | 'medium' | 'low',
+              matchReason: item.reason || item.summary || item.matchReason || '',
+            };
+          });
         } else {
           const rows = await creatorService.getCreators({ strict: false });
           result = rows.map(mapApiCreatorToUi);

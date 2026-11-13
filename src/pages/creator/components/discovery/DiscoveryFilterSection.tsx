@@ -68,7 +68,9 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
 
   return (
     <div className="cdiscovery-search-filter-card">
-      <div
+      <button
+        type="button"
+        aria-expanded={isFilterExpanded}
         className="cdiscovery-filter-card-header"
         onClick={() => setIsFilterExpanded(!isFilterExpanded)}
       >
@@ -78,7 +80,7 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
         <span className="cdiscovery-filter-toggle-icon">
           {isFilterExpanded ? 'Thu gọn' : 'Mở rộng'}
         </span>
-      </div>
+      </button>
 
       {isFilterExpanded && (
         <>

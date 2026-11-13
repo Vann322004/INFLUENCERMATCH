@@ -27,6 +27,7 @@ export interface Creator {
 }
 
 export interface BrandCampaignItem {
+  targetCreatorCount?: number;
   id: string;
   name: string;
   tag: string;

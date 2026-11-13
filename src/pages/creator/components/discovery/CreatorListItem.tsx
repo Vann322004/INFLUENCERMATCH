@@ -25,7 +25,7 @@ export const CreatorListItem: React.FC<CreatorListItemProps> = ({
   return (
     <Card
       bordered={false}
-      className="cdiscovery-card"
+      className={`cdiscovery-card${isSelected ? ' is-selected' : ''}`}
       styles={{ body: { padding: '16px 20px' } }}
     >
       <Row align="middle" gutter={[16, 16]}>
@@ -47,14 +47,14 @@ export const CreatorListItem: React.FC<CreatorListItemProps> = ({
               <CreatorAvatar src={creator.avatar} name={creator.name} size={46} />
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontWeight: 800, fontSize: 14.5, color: '#0F172A' }}>
+                  <span style={{ fontWeight: 500, fontSize: 14.5, color: '#0F172A' }}>
                     {creator.name}
                   </span>
                   {creator.isVerified && (
                     <CheckCircleFilled style={{ color: '#3B82F6', fontSize: 13 }} />
                   )}
                   {creator.isSimilarFallback && (
-                    <Tag color="orange" style={{ borderRadius: 999, fontSize: 10, padding: '0 6px', margin: '0 0 0 4px', lineHeight: '18px', fontWeight: 600 }}>
+                    <Tag color="orange" style={{ borderRadius: 999, fontSize: 10, padding: '0 6px', margin: '0 0 0 4px', lineHeight: '18px', fontWeight: 500 }}>
                       Expanded
                     </Tag>
                   )}
@@ -68,7 +68,7 @@ export const CreatorListItem: React.FC<CreatorListItemProps> = ({
                       style={{
                         borderRadius: 12,
                         margin: 0,
-                        fontWeight: 600,
+                        fontWeight: 500,
                         fontSize: 11,
                         border: '1px solid #E2E8F0',
                         background: '#F8FAFC',
@@ -91,19 +91,19 @@ export const CreatorListItem: React.FC<CreatorListItemProps> = ({
         <Col xs={24} sm={7} md={7}>
           <div style={{ display: 'flex', gap: 20 }}>
             <div>
-              <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
+              <div style={{ fontWeight: 500, fontSize: 14, color: '#0F172A' }}>
                 {creator.followers}
               </div>
               <div style={{ fontSize: 11, color: '#94A3B8' }}>Người theo dõi</div>
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
+              <div style={{ fontWeight: 500, fontSize: 14, color: '#0F172A' }}>
                 {creator.engagementRate}
               </div>
               <div style={{ fontSize: 11, color: '#94A3B8' }}>Tương tác</div>
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A' }}>
+              <div style={{ fontWeight: 500, fontSize: 14, color: '#0F172A' }}>
                 {creator.avgPrice}
               </div>
               <div style={{ fontSize: 11, color: '#94A3B8' }}>Báo giá tham khảo</div>

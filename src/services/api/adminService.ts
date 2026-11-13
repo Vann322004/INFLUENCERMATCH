@@ -42,6 +42,8 @@ export interface PaymentStats {
 }
 
 export interface GetTransactionsParams {
+  from?: string;
+  to?: string;
   search?: string;
   status?: string;
   gateway?: string;
@@ -346,6 +348,8 @@ const getTransactions = async (params?: GetTransactionsParams): Promise<Transact
   if (params?.status && params.status !== 'all') apiParams.status = params.status.toUpperCase();
   if (params?.gateway && params.gateway !== 'all') apiParams.gateway = params.gateway;
 
+  if (params?.from) apiParams.from = params.from;
+  if (params?.to) apiParams.to = params.to;
   const response = await apiClient.get<any>('/admin/payments', { params: apiParams });
   const payload = response.data;
   const pageData = payload?.data ?? payload;
@@ -377,8 +381,8 @@ const getTransactions = async (params?: GetTransactionsParams): Promise<Transact
 };
 
 /** GET /admin/payments/stats — Financial metrics */
-const getTransactionStats = async (): Promise<PaymentStats> => {
-  const response = await apiClient.get<any>('/admin/payments/stats');
+const getTransactionStats = async (range?: { from?: string; to?: string }): Promise<PaymentStats> => {
+  const response = await apiClient.get<any>('/admin/payments/stats', { params: range });
   const d = response.data?.data ?? response.data;
   return {
     totalRevenue: Number(d?.totalRevenue) || 0,
@@ -430,7 +434,21 @@ const getSystemStatus = async (): Promise<any> => {
   return response.data?.data ?? response.data;
 };
 
+export interface RevenueReport {
+  from: string;
+  to: string;
+  groupBy: 'day' | 'month';
+  currency: string;
+  items: { period: string; revenue: number; paidCount: number }[];
+}
+const getRevenueReport = async (range: { from: string; to: string; groupBy: 'day' | 'month' }): Promise<RevenueReport> => {
+  const response = await apiClient.get('/admin/payments/revenue', { params: range });
+  const result = response.data.data;
+  return { ...result, items: result.items.map((point: any) => ({ ...point, revenue: Number(point.revenue) })) };
+};
+
 export const adminService = {
+  getRevenueReport,
   getUsers,
   getUserById,
   updateUserStatus,

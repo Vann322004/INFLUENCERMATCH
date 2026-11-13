@@ -74,7 +74,7 @@ export default function NicheManagementPanel() {
       <Space direction="vertical" size={20} style={{ width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <Typography.Title level={4} style={{ margin: '0 0 4px' }}>Danh mục ngành hàng</Typography.Title>
+            <Typography.Title level={4} style={{ margin: '0 0 4px' }}>Quản lý lĩnh vực</Typography.Title>
             <Typography.Text type="secondary">Thiết lập danh mục ngành hàng và bộ từ khóa gợi ý phục vụ tìm kiếm, phân loại và Săn KOC tự động.</Typography.Text>
           </div>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => showEditor(null)}>Thêm ngành hàng</Button>

@@ -29,7 +29,7 @@ export const DiscoveryHeader: React.FC<DiscoveryHeaderProps> = ({ matchedCampaig
       </div>
 
       {/* 2. Tiêu đề trang */}
-      <div className="cdiscovery-header-section" style={{ marginBottom: 16 }}>
+      <div className="cdiscovery-header-section">
         <h1 className="cdiscovery-header-title">Khám phá KOC</h1>
         <p className="cdiscovery-header-sub">
           Tìm kiếm KOC phù hợp theo tên, ngành hàng, tương tác và phong cách nội dung.

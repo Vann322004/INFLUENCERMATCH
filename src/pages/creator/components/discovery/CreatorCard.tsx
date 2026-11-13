@@ -45,7 +45,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
     .slice(0, 3);
 
   return (
-    <div className="cdiscovery-card">
+    <div className={`cdiscovery-card${isSelected ? ' is-selected' : ''}`}>
       {/* Hàng 1: Checkbox + Avatar + Tên + Badge Phù hợp + Menu ⋮ */}
       <div className="cdiscovery-card-top-row">
         <div className="cdiscovery-card-left-group">
@@ -74,7 +74,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
                 <CheckCircleFilled style={{ color: '#3B82F6', fontSize: 13 }} />
               )}
               {creator.isSimilarFallback && (
-                <Tag color="orange" style={{ borderRadius: 999, fontSize: 10, padding: '0 6px', margin: '0 0 0 4px', lineHeight: '18px', fontWeight: 600 }}>
+                <Tag color="orange" style={{ borderRadius: 999, fontSize: 10, padding: '0 6px', margin: '0 0 0 4px', lineHeight: '18px', fontWeight: 500 }}>
                   Expanded
                 </Tag>
               )}
@@ -90,7 +90,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
             <span style={{
               background: '#FEF9C3',
               color: '#854D0E',
-              fontWeight: 800,
+              fontWeight: 500,
               fontSize: 10.5,
               padding: '2px 8px',
               borderRadius: 999,
@@ -107,7 +107,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
             <span style={{
               background: '#F1F5F9',
               color: '#475569',
-              fontWeight: 800,
+              fontWeight: 500,
               fontSize: 10.5,
               padding: '2px 8px',
               borderRadius: 999,
@@ -123,7 +123,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
             <span style={{
               background: '#FFF7ED',
               color: '#9A3412',
-              fontWeight: 800,
+              fontWeight: 500,
               fontSize: 10.5,
               padding: '2px 8px',
               borderRadius: 999,
@@ -145,7 +145,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
               style={{
                 borderRadius: 12,
                 margin: 0,
-                fontWeight: 600,
+                fontWeight: 500,
                 fontSize: 11,
                 border: '1px solid #E2E8F0',
                 background: '#F8FAFC',

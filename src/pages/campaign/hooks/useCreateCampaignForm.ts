@@ -659,6 +659,7 @@ export function useCreateCampaignForm({
         try {
           localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', targetCampaignId);
           localStorage.setItem('IM_MATCHED_CAMPAIGN', JSON.stringify({
+            targetCreatorCount: creatorQuantity,
             id: targetCampaignId,
             name: createdCampaign?.name || campaignName.trim() || 'Chiến dịch mới',
             budget: budgetTotal ? `${(budgetTotal / 1_000_000).toFixed(0)} Triệu VND` : '25.0M VND',

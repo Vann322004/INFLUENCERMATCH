@@ -300,6 +300,7 @@ export const mapApiCampaignToItem = (c: CampaignResponse | any): BrandCampaignIt
 
   return {
     id: c.id,
+    targetCreatorCount: Number(c.targetCreatorCount || c.creatorQuantity) || 1,
     name: c.name,
     tag,
     target,

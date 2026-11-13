@@ -34,7 +34,7 @@ export const DiscoveryResultsToolbar: React.FC<DiscoveryResultsToolbarProps> = (
           {loading || isMatching
             ? 'Đang tải danh sách KOC...'
             : matchedCampaign
-            ? `Đề xuất AI cho "${matchedCampaign.name}" (Top ${filteredCount} KOC phù hợp nhất)`
+            ? `Top 50 Creator (${filteredCount} hồ sơ)`
             : `Tất cả KOC hệ thống (${filteredCount.toLocaleString('vi-VN')} KOC)`}
         </span>
         <label className="cdiscovery-select-all-label">
@@ -44,7 +44,7 @@ export const DiscoveryResultsToolbar: React.FC<DiscoveryResultsToolbarProps> = (
             onChange={onToggleSelectAll}
             className="cdiscovery-checkbox"
           />
-          <span>Chọn tất cả</span>
+          <span>Chọn trang này</span>
         </label>
       </div>
 
@@ -58,7 +58,7 @@ export const DiscoveryResultsToolbar: React.FC<DiscoveryResultsToolbarProps> = (
           onClick={onBulkAddToShortlist}
           className="cdiscovery-btn-bulk-shortlist"
         >
-          + Lưu vào danh sách
+          + Đưa vào shortlist
         </Button>
       </div>
     </div>
