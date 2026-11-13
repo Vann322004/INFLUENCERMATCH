@@ -31,6 +31,7 @@ import './styles/custom.css';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
 import AdminDashboardPage from './pages/admin/dashboard/AdminDashboardPage';
+import DataManagerDashboardPage from './pages/admin/dashboard/DataManagerDashboardPage';
 import AccountManagementPage from './pages/admin/accounts/AccountManagementPage';
 import AccountDetailPage from './pages/admin/accounts/AccountDetailPage';
 import CreatorCatalogPage from './pages/admin/creators/CreatorCatalogPage';
@@ -601,6 +602,7 @@ export default function App() {
             <Route path="creators" element={<CreatorCatalogPage />} />
             {/* Phase 5 — Data Sources (Admin & Manager) */}
             <Route path="data-sources" element={<DataSourcesPage />} />
+            <Route path="taxonomy" element={<DataSourcesPage />} />
             {/* Phase 6 — Collection Jobs, Data Quality & Scoring Config */}
             <Route path="jobs" element={<CollectionJobsPage />} />
             <Route path="data-quality" element={<DataQualityPage />} />
@@ -623,14 +625,15 @@ export default function App() {
               </AdminProtectedRoute>
             }
           >
-            <Route index element={<Navigate to="/data-manager/jobs" replace />} />
+            <Route index element={<Navigate to="/data-manager/dashboard" replace />} />
             <Route path="jobs" element={<CollectionJobsPage />} />
             <Route path="data-quality" element={<DataQualityPage />} />
             <Route path="data-sources" element={<DataSourcesPage />} />
+            <Route path="taxonomy" element={<DataSourcesPage />} />
             <Route path="scoring" element={<ScoringConfigPage />} />
             <Route path="creators" element={<CreatorCatalogPage />} />
             <Route path="creator-claims" element={<CreatorClaimReviewPage />} />
-            <Route path="dashboard" element={<AdminDashboardPage />} />
+            <Route path="dashboard" element={<DataManagerDashboardPage />} />
           </Route>
 
           {/* ── Creator Actor Routes (/creator/*) ──────────── */}

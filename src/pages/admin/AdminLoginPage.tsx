@@ -10,7 +10,7 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { adminAuthService } from '../../services/api/adminAuthService';
-import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import { ADMIN_ROUTES, DATA_MANAGER_ROUTES } from '../../constants/adminRoutes';
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
@@ -23,7 +23,9 @@ export default function AdminLoginPage() {
       const result = await adminAuthService.login(values.email, values.password);
       if (result.success) {
         message.success('Đăng nhập thành công!');
-        navigate(ADMIN_ROUTES.DASHBOARD);
+        const user = result.user;
+        const isManager = user?.role === 'DATA_MANAGER' || user?.role === 'MANAGER' || user?.role === 'manager';
+        navigate(isManager ? DATA_MANAGER_ROUTES.DASHBOARD : ADMIN_ROUTES.DASHBOARD);
       } else {
         message.error(result.message);
       }

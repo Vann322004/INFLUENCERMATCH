@@ -66,8 +66,10 @@ export default function LoginPage() {
 
   const redirectByRole = async (user) => {
     const sessionId = getAuthSessionId();
-    if (user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'DATA_MANAGER')) {
+    if (user && (user.role === 'ADMIN' || user.role === 'admin')) {
       navigate('/admin/dashboard');
+    } else if (user && (user.role === 'MANAGER' || user.role === 'DATA_MANAGER' || user.role === 'manager')) {
+      navigate('/data-manager/dashboard');
     } else if (user && (user.role === 'CREATOR' || user.role === 'creator')) {
       navigate('/creator/dashboard');
     } else {

@@ -40,7 +40,7 @@ export default function AdminSidebar() {
   const isManager = authService.isManager() || currentUser?.role === 'DATA_MANAGER' || currentUser?.role === 'manager';
 
   const activeKey = Object.entries(ROUTE_KEY_MAP).find(([path]) =>
-    location.pathname.replace(/^\/data-manager(?=\/)/, '/admin').startsWith(path)
+    location.pathname.startsWith(path)
   )?.[1] ?? 'dashboard';
 
   const handleLogout = () => {
@@ -54,6 +54,15 @@ export default function AdminSidebar() {
       collapsedWidth={62}
       collapsed={collapsed}
       className="app-sider"
+      style={{
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        maxHeight: '100vh',
+        overflow: 'hidden',
+        flexShrink: 0,
+        zIndex: 100,
+      }}
     >
       <div
         style={{

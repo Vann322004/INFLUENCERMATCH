@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { adminAuthService } from '../../services/api/adminAuthService';
-import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import { ADMIN_ROUTES, DATA_MANAGER_ROUTES } from '../../constants/adminRoutes';
 import { authService } from '../../services/api/authService';
 
 interface AdminProtectedRouteProps {
@@ -14,7 +14,7 @@ export default function AdminProtectedRoute({ children, requireAdmin = false }: 
     return <Navigate to={ADMIN_ROUTES.LOGIN} replace />;
   }
   if (requireAdmin && !authService.isAdmin()) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to={DATA_MANAGER_ROUTES.DASHBOARD} replace />;
   }
   return <>{children}</>;
 }

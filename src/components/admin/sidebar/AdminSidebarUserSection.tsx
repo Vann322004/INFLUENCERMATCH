@@ -5,18 +5,14 @@ import {
   UserOutlined,
   SettingOutlined,
   LogoutOutlined,
-  CheckCircleOutlined,
-  FileTextOutlined,
 } from '@ant-design/icons';
 import { ChatGptTooltip } from './AdminSidebarTooltip';
-import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 
 interface AdminSidebarUserSectionProps {
   collapsed: boolean;
   currentUser: any;
   isManager: boolean;
   onLogout: () => void;
-  onActionClick: (path: string) => void;
 }
 
 export default function AdminSidebarUserSection({
@@ -24,7 +20,6 @@ export default function AdminSidebarUserSection({
   currentUser,
   isManager,
   onLogout,
-  onActionClick,
 }: AdminSidebarUserSectionProps) {
   const getInitials = () => {
     const name = currentUser?.name || currentUser?.fullName;
@@ -122,25 +117,6 @@ export default function AdminSidebarUserSection({
           <SettingOutlined style={{ fontSize: 14, color: '#94A3B8', marginLeft: 'auto', flexShrink: 0 }} />
         </div>
       </Dropdown>
-
-      {/* Quick Action Pill Button matching brand */}
-      <button
-        type="button"
-        onClick={() => onActionClick(isManager ? ADMIN_ROUTES.DATA_QUALITY : ADMIN_ROUTES.AUDIT)}
-        className="sidebar-claim-pill-btn"
-      >
-        {isManager ? (
-          <>
-            <CheckCircleOutlined style={{ fontSize: 13, color: '#0EA5E9' }} />
-            <span>Kiểm định chất lượng</span>
-          </>
-        ) : (
-          <>
-            <FileTextOutlined style={{ fontSize: 13, color: '#7C3AED' }} />
-            <span>Xem nhật ký hoạt động</span>
-          </>
-        )}
-      </button>
     </div>
   );
 }

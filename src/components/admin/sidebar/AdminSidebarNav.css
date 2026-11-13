@@ -1,0 +1,103 @@
+/* ==========================================================================
+   AdminSidebarNav.css - Chuẩn hóa giao diện Sidebar Admin 100% Menu Phẳng
+   Đồng bộ hoàn toàn với Layout & Format của Brand Workspace (Stripe/Attio Style)
+   Tối giản: KHÔNG CÓ TIÊU ĐỀ CHỮ CỒNG KỀNH, NGĂN CÁCH BẰNG DIVIDER TINH TẾ
+   ========================================================================== */
+
+.admin-nav-fixed-wrapper {
+  flex: 1;
+  overflow: hidden; /* Cố định cứng, không cuộn */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 6px 12px 6px;
+  user-select: none;
+}
+
+/* ── Group Divider (Đường phân cách mảnh giữa các nhóm chức năng) ── */
+.admin-nav-divider {
+  height: 1px;
+  background-color: #E2E8F0;
+  margin: 8px 8px;
+}
+
+/* ── Menu Items Stack ── */
+.admin-nav-items-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* ── Level 1 Item (Menu trực tiếp phẳng) ── */
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  position: relative;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.admin-nav-item:hover {
+  background-color: #F8FAFC;
+  color: #0F172A;
+}
+
+/* Level 1 Active State (Pill xanh dịu giống hệt Brand Workspace) */
+.admin-nav-item.active {
+  background-color: #EFF6FF !important;
+  color: #2563EB !important;
+  font-weight: 600 !important;
+  border: 1px solid #BFDBFE;
+}
+
+.admin-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  color: #64748B;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.admin-nav-item:hover .admin-nav-icon {
+  color: #0F172A;
+}
+
+.admin-nav-item.active .admin-nav-icon {
+  color: #2563EB !important;
+}
+
+.admin-nav-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+/* ── Chế độ Rail (Thu gọn 62px) ── */
+.admin-nav-rail-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+  padding: 0 4px;
+}
+
+.admin-rail-divider {
+  width: 24px;
+  height: 1px;
+  background-color: rgba(148, 163, 184, 0.2);
+  margin: 6px auto;
+}

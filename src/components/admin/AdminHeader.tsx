@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons';
 import { adminAuthService } from '../../services/api/adminAuthService';
 import type { AdminNotification } from '../../types/api/admin.types';
-import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import { ADMIN_ROUTES, DATA_MANAGER_ROUTES } from '../../constants/adminRoutes';
 import { authService } from '../../services/api/authService';
 
 const { Header } = Layout;
@@ -92,7 +92,7 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
           <div className="header-breadcrumbs">
             <span
               className="header-bc-root"
-              onClick={() => navigate(ADMIN_ROUTES.DASHBOARD)}
+              onClick={() => navigate(isManager ? DATA_MANAGER_ROUTES.DASHBOARD : ADMIN_ROUTES.DASHBOARD)}
             >
               <HomeOutlined style={{ marginRight: 4, fontSize: 12 }} />
               Trang chủ

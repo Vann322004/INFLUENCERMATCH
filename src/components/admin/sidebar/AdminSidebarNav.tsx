@@ -1,8 +1,13 @@
 import React from 'react';
-import { AppstoreOutlined } from '@ant-design/icons';
+import { useLocation } from 'react-router-dom';
 import { ChatGptTooltip } from './AdminSidebarTooltip';
-import { PIPELINE_ITEMS, CATALOG_ITEMS, SYSTEM_ITEMS } from './adminSidebarItems';
-import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
+import {
+  ADMIN_MENU_GROUPS,
+  DATA_MANAGER_MENU_GROUPS,
+  AdminMenuGroup,
+  AdminMenuItem,
+} from './adminSidebarItems';
+import './AdminSidebarNav.css';
 
 interface AdminSidebarNavProps {
   collapsed: boolean;
@@ -17,197 +22,95 @@ export default function AdminSidebarNav({
   isManager,
   onNavigate,
 }: AdminSidebarNavProps) {
+  const location = useLocation();
+  const currentPath = location.pathname;
+  const currentSearch = location.search;
+
+  // Chọn bộ Menu phẳng (Level 1 duy nhất, không có sub-menu)
+  const menuGroups: AdminMenuGroup[] = isManager
+    ? DATA_MANAGER_MENU_GROUPS
+    : ADMIN_MENU_GROUPS;
+
+  const isItemActive = (item: AdminMenuItem) => {
+    if (item.key === 'dashboard') {
+      return currentPath === item.path || activeKey === 'dashboard';
+    }
+    if (item.key === 'roles-permissions') {
+      return currentPath.includes('/admin/accounts') && currentSearch.includes('permissions');
+    }
+    if (item.key === 'user-management') {
+      return (
+        (currentPath.includes('/admin/accounts') && !currentSearch.includes('permissions')) ||
+        activeKey === 'user-management'
+      );
+    }
+    return (
+      item.key === activeKey ||
+      currentPath.startsWith(item.path.split('?')[0])
+    );
+  };
+
+  /* ──────────────────────────────────────────────────────────────────
+     1. CHẾ ĐỘ THU GỌN (COLLAPSED RAIL MODE - Rộng 62px)
+     ────────────────────────────────────────────────────────────────── */
   if (collapsed) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
-        {/* Dashboard Button */}
-        <ChatGptTooltip title={isManager ? 'Tổng quan vận hành' : 'Tổng quan hệ thống'}>
-          <button
-            type="button"
-            className={`sidebar-rail-btn ${activeKey === 'dashboard' ? 'active' : ''}`}
-            onClick={() => onNavigate(ADMIN_ROUTES.DASHBOARD)}
-            aria-label="Tổng quan"
-          >
-            <AppstoreOutlined style={{ fontSize: 18 }} />
-          </button>
-        </ChatGptTooltip>
-
-        <div
-          style={{
-            width: 24,
-            height: 1,
-            backgroundColor: 'rgba(124, 58, 237, 0.1)',
-            margin: '2px auto',
-          }}
-        />
-
-        {/* Pipeline rail items */}
-        {PIPELINE_ITEMS.map((item) => (
-          <ChatGptTooltip key={item.key} title={item.label}>
-            <button
-              type="button"
-              className={`sidebar-rail-btn ${activeKey === item.key ? 'active' : ''}`}
-              onClick={() => onNavigate(item.path)}
-              aria-label={item.label}
-            >
-              {item.icon}
-            </button>
-          </ChatGptTooltip>
+      <div className="admin-nav-rail-container">
+        {menuGroups.map((group, gIdx) => (
+          <React.Fragment key={group.groupKey}>
+            {gIdx > 0 && <div className="admin-rail-divider" />}
+            {group.items.map((item) => {
+              const active = isItemActive(item);
+              return (
+                <ChatGptTooltip key={item.key} title={item.label}>
+                  <button
+                    type="button"
+                    className={`sidebar-rail-btn ${active ? 'active' : ''}`}
+                    onClick={() => onNavigate(item.path)}
+                    aria-label={item.label}
+                  >
+                    {item.icon}
+                  </button>
+                </ChatGptTooltip>
+              );
+            })}
+          </React.Fragment>
         ))}
-
-        <div
-          style={{
-            width: 24,
-            height: 1,
-            backgroundColor: 'rgba(124, 58, 237, 0.1)',
-            margin: '2px auto',
-          }}
-        />
-
-        {/* Catalog rail items */}
-        {CATALOG_ITEMS.map((item) => (
-          <ChatGptTooltip key={item.key} title={item.label}>
-            <button
-              type="button"
-              className={`sidebar-rail-btn ${activeKey === item.key ? 'active' : ''}`}
-              onClick={() => onNavigate(item.path)}
-              aria-label={item.label}
-            >
-              {item.icon}
-            </button>
-          </ChatGptTooltip>
-        ))}
-
-        {/* System rail items (Super Admin only) */}
-        {!isManager && (
-          <>
-            <div
-              style={{
-                width: 24,
-                height: 1,
-                backgroundColor: 'rgba(124, 58, 237, 0.1)',
-                margin: '2px auto',
-              }}
-            />
-            {SYSTEM_ITEMS.map((item) => (
-              <ChatGptTooltip key={item.key} title={item.label}>
-                <button
-                  type="button"
-                  className={`sidebar-rail-btn ${activeKey === item.key ? 'active' : ''}`}
-                  onClick={() => onNavigate(item.path)}
-                  aria-label={item.label}
-                >
-                  {item.icon}
-                </button>
-              </ChatGptTooltip>
-            ))}
-          </>
-        )}
       </div>
     );
   }
 
+  /* ──────────────────────────────────────────────────────────────────
+     2. CHẾ ĐỘ MỞ RỘNG (EXPANDED MODE - 100% MENU PHẲNG, CÓ DIVIDER NGĂN CÁCH)
+     ────────────────────────────────────────────────────────────────── */
   return (
-    <div
-      className="sidebar-menu-wrapper"
-      style={{
-        flex: 1,
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
-        paddingRight: 2,
-      }}
-    >
-      {/* Dashboard Item */}
-      <div
-        onClick={() => onNavigate(ADMIN_ROUTES.DASHBOARD)}
-        className={`sidebar-nav-item ${activeKey === 'dashboard' ? 'active' : ''}`}
-      >
-        <span className="sidebar-nav-icon">
-          <AppstoreOutlined style={{ fontSize: 18 }} />
-        </span>
-        <span className="sidebar-nav-label">
-          {isManager ? 'Tổng quan vận hành' : 'Tổng quan hệ thống'}
-        </span>
-      </div>
+    <div className="admin-nav-fixed-wrapper">
+      {menuGroups.map((group, groupIdx) => (
+        <div key={group.groupKey} className="admin-menu-group-block">
+          {/* Danh sách các Menu cấp 1 trực tiếp (Không có sub-menu) */}
+          <div className="admin-nav-items-stack">
+            {group.items.map((item: AdminMenuItem) => {
+              const active = isItemActive(item);
 
-      {/* Group: Thu thập & Xử lý dữ liệu */}
-      <div
-        style={{
-          fontSize: 10,
-          fontWeight: 800,
-          color: '#94A3B8',
-          letterSpacing: 0.8,
-          padding: '12px 14px 4px 14px',
-          userSelect: 'none',
-        }}
-      >
-        THU THẬP & XỬ LÝ DỮ LIỆU
-      </div>
-      {PIPELINE_ITEMS.map((item) => (
-        <div
-          key={item.key}
-          onClick={() => onNavigate(item.path)}
-          className={`sidebar-nav-item ${activeKey === item.key ? 'active' : ''}`}
-        >
-          <span className="sidebar-nav-icon">{item.icon}</span>
-          <span className="sidebar-nav-label">{item.label}</span>
-        </div>
-      ))}
-
-      {/* Group: Danh mục & Xác thực */}
-      <div
-        style={{
-          fontSize: 10,
-          fontWeight: 800,
-          color: '#94A3B8',
-          letterSpacing: 0.8,
-          padding: '12px 14px 4px 14px',
-          userSelect: 'none',
-        }}
-      >
-        DANH MỤC & XÁC THỰC
-      </div>
-      {CATALOG_ITEMS.map((item) => (
-        <div
-          key={item.key}
-          onClick={() => onNavigate(item.path)}
-          className={`sidebar-nav-item ${activeKey === item.key ? 'active' : ''}`}
-        >
-          <span className="sidebar-nav-icon">{item.icon}</span>
-          <span className="sidebar-nav-label">{item.label}</span>
-        </div>
-      ))}
-
-      {/* Group: Quản trị hệ thống (Super Admin only) */}
-      {!isManager && (
-        <>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 800,
-              color: '#94A3B8',
-              letterSpacing: 0.8,
-              padding: '12px 14px 4px 14px',
-              userSelect: 'none',
-            }}
-          >
-            QUẢN TRỊ HỆ THỐNG
+              return (
+                <div
+                  key={item.key}
+                  className={`admin-nav-item ${active ? 'active' : ''}`}
+                  onClick={() => onNavigate(item.path)}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <span className="admin-nav-icon">{item.icon}</span>
+                  <span className="admin-nav-label">{item.label}</span>
+                </div>
+              );
+            })}
           </div>
-          {SYSTEM_ITEMS.map((item) => (
-            <div
-              key={item.key}
-              onClick={() => onNavigate(item.path)}
-              className={`sidebar-nav-item ${activeKey === item.key ? 'active' : ''}`}
-            >
-              <span className="sidebar-nav-icon">{item.icon}</span>
-              <span className="sidebar-nav-label">{item.label}</span>
-            </div>
-          ))}
-        </>
-      )}
+
+          {/* Đường kẻ phân cách giữa các nhóm (Thay cho tiêu đề chữ) */}
+          {groupIdx < menuGroups.length - 1 && <div className="admin-nav-divider" />}
+        </div>
+      ))}
     </div>
   );
 }
