@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Drawer, Grid, Layout } from 'antd';
+import React, { useCallback, useState } from 'react';
+import { Grid, Layout } from 'antd';
 import { Outlet } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 import AdminHeader from './AdminHeader';
-import './AdminLayout.css';
+import './AdminResponsive.css';
 
 const { Content } = Layout;
 
@@ -15,15 +15,14 @@ export default function AdminLayout({ pageTitle }: AdminLayoutProps) {
   const screens = Grid.useBreakpoint();
   const mobile = !screens.md;
   const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
   return (
-    <Layout hasSider style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden', width: '100vw' }}>
-      {mobile ? <Drawer title="Điều hướng" placement="left" open={menuOpen} onClose={() => setMenuOpen(false)} size={280} styles={{ body: { padding: 0 } }} className="admin-mobile-navigation">
-        <AdminSidebar mobile onNavigate={() => setMenuOpen(false)} />
-      </Drawer> : <AdminSidebar />}
+    <Layout className={`admin-workspace ${mobile ? 'admin-mobile' : ''}`} hasSider={!mobile} style={{ minHeight: '100dvh', maxHeight: '100dvh', overflow: 'hidden', width: '100%' }}>
+      <AdminSidebar mobile={mobile} compact={!screens.lg} open={menuOpen} onClose={closeMenu} />
       <Layout
         style={{
           background: '#F5F6FA',
-          height: '100vh',
+          height: '100dvh',
           overflowY: 'auto',
           overflowX: 'hidden',
           minWidth: 0,
@@ -32,7 +31,7 @@ export default function AdminLayout({ pageTitle }: AdminLayoutProps) {
           boxSizing: 'border-box',
         }}
       >
-        <AdminHeader title={pageTitle} onMenuClick={mobile ? () => setMenuOpen(true) : undefined} />
+        <AdminHeader title={pageTitle} mobile={mobile} menuOpen={menuOpen} onOpenMenu={() => setMenuOpen(true)} />
         <Content
           className="admin-content"
           style={{

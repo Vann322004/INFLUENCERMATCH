@@ -12,12 +12,12 @@ import ExternalDiscoveredTab from './components/ExternalDiscoveredTab';
 import RefreshRequestTab    from './components/RefreshRequestTab';
 
 const TABS = [
-  { key: 'list',       label: 'Creator List',       icon: <UnorderedListOutlined />, component: <CreatorListTab /> },
-  { key: 'import',     label: 'Add / Import',        icon: <PlusCircleOutlined />,   component: <AddImportTab /> },
-  { key: 'detail',     label: 'Creator Detail',      icon: <IdcardOutlined />,       component: <CreatorDetailTab /> },
-  { key: 'duplicates', label: 'Duplicates / Merge',  icon: <CopyOutlined />,         component: <DuplicatesMergeTab /> },
-  { key: 'external',   label: 'External Discovered', icon: <GlobalOutlined />,       component: <ExternalDiscoveredTab /> },
-  { key: 'refresh',    label: 'Refresh Request',      icon: <SyncOutlined />,         component: <RefreshRequestTab /> },
+  { key: 'list',       label: 'Danh sách Master KOC',        icon: <UnorderedListOutlined />, component: <CreatorListTab /> },
+  { key: 'import',     label: 'Thêm mới / Nhập dữ liệu',      icon: <PlusCircleOutlined />,   component: <AddImportTab /> },
+  { key: 'detail',     label: 'Hồ sơ chi tiết & Kênh',       icon: <IdcardOutlined />,       component: <CreatorDetailTab /> },
+  { key: 'duplicates', label: 'Trùng lặp & Gộp định danh',   icon: <CopyOutlined />,         component: <DuplicatesMergeTab /> },
+  { key: 'external',   label: 'Khám phá dữ liệu ngoại vi',    icon: <GlobalOutlined />,       component: <ExternalDiscoveredTab /> },
+  { key: 'refresh',    label: 'Yêu cầu làm mới',              icon: <SyncOutlined />,         component: <RefreshRequestTab /> },
 ];
 
 export default function CreatorCatalogPage() {
@@ -27,9 +27,11 @@ export default function CreatorCatalogPage() {
     <div>
       {/* Page Header */}
       <div style={{ marginBottom: 20 }}>
-        <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>Creator Catalog</div>
+        <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>
+          Quản trị Định danh Master KOC (Luồng DM-01)
+        </div>
         <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
-          Quản lý toàn bộ creator trong hệ thống — 6 phân hệ
+          Hồ sơ định danh duy nhất (Master Identity), hợp nhất tài khoản đa nền tảng và kiểm soát trùng lặp
         </div>
       </div>
 

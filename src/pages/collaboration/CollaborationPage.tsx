@@ -749,7 +749,7 @@ export default function CollaborationPage() {
       const newKpi: KpiEntryItem = {
         id: `kpi-${Date.now()}`,
         creatorName: targetPartner?.creatorName || values.creatorName || 'Đối tác Creator',
-        creatorAvatar: targetPartner?.creatorAvatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=partner',
+        creatorAvatar: targetPartner?.creatorAvatar || REALISTIC_PORTRAITS[0],
         platform: values.platform || 'tiktok',
         postLink: values.postLink || 'https://tiktok.com/@post',
         postDate: 'Hôm nay',

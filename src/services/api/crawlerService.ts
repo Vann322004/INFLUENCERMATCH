@@ -1,3 +1,4 @@
+import { invalidateDataManagerCacheForMutation } from '../requestCache';
 import { requestCrawler } from './crawlerTransport';
 import type {
   CrawlPlatform,
@@ -15,7 +16,9 @@ class CrawlerService {
     options: RequestInit = {},
     timeoutMs = 25000
   ): Promise<T> {
-    return requestCrawler<T>(import.meta.env.VITE_CRAWLER_API_BASE_URL || '/crawler-api', endpoint, options, timeoutMs);
+    const result = await requestCrawler<T>(import.meta.env.VITE_CRAWLER_API_BASE_URL || '/crawler-api', endpoint, options, timeoutMs);
+    invalidateDataManagerCacheForMutation(options.method, endpoint);
+    return result;
   }
 
   /**

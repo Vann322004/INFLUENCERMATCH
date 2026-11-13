@@ -7,7 +7,6 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "test:auth": "node --experimental-vm-modules --test tests/authSession.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -25,6 +24,7 @@
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "oxlint": "^1.81.0",
+    "playwright": "1.65.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.0"
   }

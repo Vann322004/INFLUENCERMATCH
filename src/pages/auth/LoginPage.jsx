@@ -66,7 +66,7 @@ export default function LoginPage() {
 
   const redirectByRole = async (user) => {
     const sessionId = getAuthSessionId();
-    if (user && (user.role === 'ADMIN' || user.role === 'admin')) {
+    if (user && (user.role === 'ADMIN' || user.role === 'admin' || user.role === 'super_admin')) {
       navigate('/admin/dashboard');
     } else if (user && (user.role === 'MANAGER' || user.role === 'DATA_MANAGER' || user.role === 'manager')) {
       navigate('/data-manager/dashboard');

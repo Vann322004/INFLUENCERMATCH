@@ -59,7 +59,7 @@ export default defineConfig(({ mode }) => {
         timeout: 120000,
       },
       '/api': {
-        target: 'https://api.influencermatch.site',
+        target: 'http://221.121.3.226:8080',
         changeOrigin: true,
         secure: false,
         agent: keepAliveAgent,

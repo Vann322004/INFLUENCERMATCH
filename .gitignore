@@ -41,3 +41,5 @@ __pycache__/
 *.pyc
 /swagger.json
 /swagger_latest.json
+# Local responsive QA screenshots and reports
+/artifacts/admin-responsive/

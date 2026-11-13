@@ -95,7 +95,7 @@ export function useDiscoveryCreators({
             };
           });
         } else {
-          const rows = await creatorService.getCreators({ strict: false });
+          const rows = await creatorService.getCreators();
           result = rows.map(mapApiCreatorToUi);
         }
 
@@ -129,7 +129,7 @@ export function useDiscoveryCreators({
     setIsRefreshingCreator(true);
     message.loading({ content: `Đang đồng bộ số liệu mới nhất cho @${target.username}...`, key: 'refresh_creator' });
     try {
-      const freshList = await creatorService.getCreators({ strict: true });
+      const freshList = await creatorService.getCreators();
       const freshData = freshList.find((c) => c.userName === target.username || c.id === target.id);
       if (freshData) {
         const freshMapped = mapApiCreatorToUi(freshData);

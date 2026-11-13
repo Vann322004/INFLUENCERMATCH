@@ -63,10 +63,16 @@ export interface ApproveClaimPayload {
 }
 
 // -- Audit Log ------------------------------
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT';
+export type AuditAction = string;
 
 export interface AuditLogItem {
   id: string;
+  actorId: string | null;
+  entityType: string;
+  entityId: string | null;
+  createdAt: string | null;
+  description: string | null;
+  /** Compatibility aliases for existing account/dashboard consumers. */
   timestamp: string;
   actor: string;
   actorEmail: string;
@@ -74,8 +80,8 @@ export interface AuditLogItem {
   resource: string;
   resourceId: string;
   ip: string;
-  oldValue?: Record<string, unknown>;
-  newValue?: Record<string, unknown>;
+  oldValue?: unknown;
+  newValue?: unknown;
 }
 
 export interface AuditLogsResponse {
@@ -127,9 +133,10 @@ export interface AdminUsersParams {
 export interface AuditLogsParams {
   page?: number;
   size?: number;
-  search?: string;
   action?: AuditAction | 'all';
-  resource?: string;
+  entityType?: string;
+  entityId?: string;
+  keyword?: string;
   actorId?: string;
   from?: string;
   to?: string;

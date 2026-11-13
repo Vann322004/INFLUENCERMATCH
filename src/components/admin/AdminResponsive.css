@@ -1,0 +1,100 @@
+/* Uses the Brand Workspace shell and Ant Design's grid, tokens and controls. */
+.admin-workspace .admin-content,
+.admin-workspace .app-page-wrapper,
+.dm-dashboard,
+.dm-config {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dm-dashboard,
+.dm-config {
+  width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+.admin-workspace .app-header-inner { gap: 12px; }
+.admin-workspace .header-breadcrumbs { min-width: 0; flex-wrap: wrap; }
+.admin-workspace .app-header {
+  height: auto !important;
+  min-height: 56px !important;
+  padding-block: 6px !important;
+}
+.admin-workspace .header-bc-root { flex-shrink: 0; }
+.admin-workspace .header-bc-current { overflow-wrap: anywhere; }
+.admin-workspace .standalone-action-btn,
+.admin-menu-trigger { min-width: 44px; min-height: 44px; flex-shrink: 0; }
+
+.admin-nav-fixed-wrapper,
+.admin-nav-rail-container {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.admin-nav-item {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+}
+.admin-nav-label { white-space: normal; overflow: visible; }
+.admin-navigation-drawer .admin-nav-item { min-height: 44px; }
+.admin-navigation-drawer .sidebar-brand-btn { min-height: 44px; }
+.admin-workspace :is(button, a, input, [tabindex]):focus-visible,
+.admin-navigation-drawer :is(button, a, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--im-primary, #2563eb);
+  outline-offset: 3px;
+}
+.dm-title-row { flex-wrap: wrap; }
+.dm-dashboard .ant-card-head-title { white-space: normal; overflow: visible; }
+.dm-dashboard .ant-card-head-title > div { flex-wrap: wrap; gap: 8px; }
+.dm-priority-queue .ant-col > div { height: 100%; }
+.dm-priority-queue .ant-col > div > div:first-child { flex-wrap: wrap; gap: 8px; }
+.dm-dashboard .ant-table-wrapper,
+.dm-config .ant-table-wrapper { min-width: 0; max-width: 100%; }
+.dm-dashboard .ant-table-cell,
+.dm-config .ant-table-cell { overflow-wrap: anywhere; }
+.dm-config .ant-tabs-content-holder,
+.dm-config .ant-tabs-tabpane { min-width: 0; }
+.dm-config .ant-tag,
+.dm-dashboard .ant-tag { white-space: normal; height: auto; overflow-wrap: anywhere; }
+.dm-formula {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  overscroll-behavior-inline: contain;
+}
+.dm-config .ant-statistic-content { white-space: normal; }
+.dm-config .ant-statistic-content-suffix { display: inline-block; }
+
+/* Grid.useBreakpoint supplies this class using the theme's md breakpoint. */
+.admin-mobile .admin-content { padding: 16px 12px 24px !important; }
+.admin-mobile .app-header { padding-inline: 12px !important; }
+.admin-mobile .header-breadcrumbs { flex: 1; font-size: 12px; }
+.admin-mobile .dm-config-tab-panel { padding: 16px 12px !important; }
+.admin-mobile :is(.dm-dashboard, .dm-config) .ant-card-body { padding: 16px 12px !important; }
+.admin-mobile .dm-config .ant-card:has(> .ant-card-body > .ant-tabs) > .ant-card-body { padding: 0 !important; }
+.admin-mobile :is(.dm-dashboard, .dm-config) .ant-btn {
+  min-height: 44px;
+  height: auto;
+  white-space: normal;
+  max-width: 100%;
+}
+.admin-mobile .dm-dashboard .ant-space { max-width: 100%; flex-wrap: wrap; }
+.admin-mobile .dm-config .ant-select,
+.admin-mobile .dm-config .ant-input-number { min-height: 44px; }
+.admin-mobile .dm-config .ant-input-number-input { min-height: 42px; }
+.admin-mobile .dm-config .ant-tabs-tab { min-height: 44px; }
+.admin-mobile .dm-config .ant-tabs-nav-wrap { min-width: 0; overflow-x: auto; }
+.admin-mobile .dm-config .ant-tabs-nav-list { touch-action: pan-x; transform: none !important; }
+.admin-mobile .dm-config .ant-tabs-nav-operations { display: none; }
+.dm-config-state { min-width: 0; overflow-wrap: anywhere; }
+.admin-mobile .dm-config-state { padding: 16px 0 !important; }
+.admin-mobile .dm-config-state .ant-result { padding: 24px 12px; }
+.admin-mobile .dm-config-state .ant-btn { min-height: 44px; height: auto; white-space: normal; }
+.admin-navigation-drawer .ant-drawer-close { min-width: 44px; min-height: 44px; }

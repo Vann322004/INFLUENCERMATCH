@@ -1,4 +1,6 @@
 import { apiClient, getAuthSessionId } from '../apiClient';
+import { readPage } from './pageResponse';
+import type { PageResponse } from '../../types/api/common.types';
 import type { ApiResponse } from '../../types/api/common.types';
 import type {
   PlanResponse,
@@ -53,6 +55,11 @@ export const subscriptionService = {
     const response = await apiClient.get<ApiResponse<BrandPayment>>(
       `/billing/payments/${encodeURIComponent(reference)}`, { signal });
     return response.data.data;
+  },
+  /** Paginated catalog with authoritative totals, separate from the storefront list cache. */
+  async getPlansPage(page = 0, size = 1): Promise<PageResponse<PlanResponse>> {
+    const response = await apiClient.get('/plans', { params: { page, size } });
+    return readPage<PlanResponse>(response.data);
   },
   /**
    * Get all active subscription plans (with memory & sessionStorage cache & deduplication).

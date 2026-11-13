@@ -11,8 +11,8 @@ function errorText(error: any): string {
 
 export default function NicheManagementPanel() {
   const { message } = App.useApp();
-  const [items, setItems] = useState<Niche[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<Niche[]>(() => nicheService.list.peek()?.value ?? []);
+  const [loading, setLoading] = useState(() => !nicheService.list.peek());
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<Niche | null>(null);
@@ -22,6 +22,7 @@ export default function NicheManagementPanel() {
   const [form] = Form.useForm<NicheInput>();
 
   const load = async () => {
+    nicheService.list.invalidate();
     setLoading(true);
     setError('');
     try { setItems(await nicheService.list()); }

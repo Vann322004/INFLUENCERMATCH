@@ -1,139 +1,84 @@
 import { apiClient, getAccessToken } from '../apiClient';
+import { readPage } from './pageResponse';
+import type { PageResponse } from '../../types/api/common.types';
 
 export interface NotificationDto {
-  id: string;
-  userId: string;
-  type: string;
-  title: string;
-  message: string;
-  entityType?: string;
-  entityId?: string;
-  readAt?: string;
-  createdAt: string;
-  read: boolean;
+  id: string; userId: string; type: string; title: string; message: string;
+  entityType: string | null; entityId: string | null; readAt: string | null; createdAt: string; read: boolean;
+}
+const dataOf = (value: any): any => {
+  if (value?.success === false) throw new Error('Không thể tải thông báo.');
+  return value?.data ?? value;
+};
+export function readNotification(raw: any): NotificationDto {
+  const read = raw?.read ?? raw?.isRead;
+  if (!raw || !['id', 'userId', 'type', 'title', 'message', 'createdAt'].every(key => typeof raw[key] === 'string')
+    || !raw.id || !raw.userId || typeof read !== 'boolean') throw new Error('Dữ liệu thông báo không hợp lệ.');
+  return { id: raw.id, userId: raw.userId, type: raw.type, title: raw.title, message: raw.message,
+    createdAt: raw.createdAt, read, readAt: raw.readAt ?? null, entityType: raw.entityType ?? null, entityId: raw.entityId ?? null };
+}
+function count(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) throw new Error('Số lượng thông báo không hợp lệ.');
+  return value;
 }
 
-export interface NotificationPageResponse {
-  content?: NotificationDto[];
-  items?: NotificationDto[];
-  totalElements?: number;
-  page?: number;
-  size?: number;
+/** Parses Spring SSE frames across UTF-8 chunks, including CRLF, comments and multiline data. */
+export function createNotificationParser(emit: (event: string, data: unknown) => void) {
+  let buffer = '';
+  return (text: string) => {
+    buffer += text;
+    let match: RegExpExecArray | null;
+    while ((match = /\r\n\r\n|\n\n|\r\r/.exec(buffer))) {
+      const frame = buffer.slice(0, match.index); buffer = buffer.slice(match.index + match[0].length);
+      let event = 'message'; const lines: string[] = [];
+      for (const line of frame.split(/\r\n|\n|\r/)) {
+        if (line.startsWith('event:')) event = line.slice(6).trim();
+        if (line.startsWith('data:')) lines.push(line.slice(5).replace(/^ /, ''));
+      }
+      if (!lines.length || !['CONNECTED', 'NOTIFICATION'].includes(event)) continue;
+      let data: unknown;
+      try { data = JSON.parse(lines.join('\n')); } catch { throw new Error('Sự kiện thông báo không hợp lệ.'); }
+      emit(event, data);
+    }
+    if (buffer.length > 1_000_000) throw new Error('Sự kiện thông báo quá lớn.');
+  };
 }
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 export const notificationService = {
-  /**
-   * Lấy danh sách thông báo của người dùng hiện tại
-   * GET /notifications?page=0&size=20
-   */
-  async getNotifications(page = 0, size = 20): Promise<NotificationDto[]> {
-    const response = await apiClient.get<any>('/notifications', {
-      params: { page, size },
-    });
-    const data = response.data?.data ?? response.data;
-    const list = data?.content || data?.items || (Array.isArray(data) ? data : []);
-    return list;
+  async getNotifications(page = 0, size = 20, signal?: AbortSignal): Promise<PageResponse<NotificationDto>> {
+    const response = await apiClient.get('/notifications', { params: { page, size }, signal });
+    const result = readPage<unknown>(response.data);
+    return { ...result, items: result.items.map(readNotification) };
   },
-
-  /**
-   * Lấy số lượng thông báo chưa đọc
-   * GET /notifications/unread-count
-   */
-  async getUnreadCount(): Promise<number> {
-    const response = await apiClient.get<any>('/notifications/unread-count');
-    const data = response.data?.data ?? response.data;
-    if (typeof data === 'number') return data;
-    return Number(data?.unreadCount ?? data?.count ?? 0);
+  async getUnreadCount(signal?: AbortSignal): Promise<number> {
+    const response = await apiClient.get('/notifications/unread-count', { signal });
+    return count(dataOf(response.data)?.unreadCount);
   },
-
-  /**
-   * Đánh dấu 1 thông báo là đã đọc
-   * PATCH /notifications/{id}/read
-   */
-  async markAsRead(id: string): Promise<NotificationDto | null> {
-    const response = await apiClient.patch<any>(`/notifications/${id}/read`);
-    return response.data?.data ?? response.data ?? null;
+  async markAsRead(id: string, signal?: AbortSignal): Promise<NotificationDto> {
+    const response = await apiClient.patch(`/notifications/${encodeURIComponent(id)}/read`, undefined, { signal });
+    return readNotification(dataOf(response.data));
   },
-
-  /**
-   * Đánh dấu tất cả thông báo là đã đọc
-   * PATCH /notifications/read-all
-   */
-  async markAllAsRead(): Promise<void> {
-    await apiClient.patch('/notifications/read-all');
+  async markAllAsRead(signal?: AbortSignal): Promise<number> {
+    const response = await apiClient.patch('/notifications/read-all', undefined, { signal });
+    return count(dataOf(response.data)?.markedCount);
   },
-
-  /**
-   * Đăng ký nhận luồng thông báo realtime qua Server-Sent Events (SSE)
-   * GET /notifications/stream
-   */
-  subscribeToStream(onNotification: (notif: NotificationDto) => void): () => void {
-    const controller = new AbortController();
+  async stream(signal: AbortSignal, emit: (event: string, data: unknown) => void): Promise<void> {
+    const base = String(apiClient.defaults.baseURL ?? '/api/v1').replace(/\/$/, '');
     const token = getAccessToken();
-
-    if (!token) {
-      return () => {};
+    if (!token) throw new Error('Chưa đăng nhập.');
+    const response = await fetch(`${base}/notifications/stream`, { headers: { Accept: 'text/event-stream', Authorization: `Bearer ${token}` }, credentials: 'include', signal });
+    if (!response.ok || !response.body || !response.headers.get('content-type')?.includes('text/event-stream')) {
+      await response.body?.cancel();
+      throw Object.assign(new Error('Không thể kết nối thông báo realtime.'), { status: response.status });
     }
-
-    const startStream = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/notifications/stream`, {
-          method: 'GET',
-          headers: {
-            Accept: 'text/event-stream',
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: 'include',
-          signal: controller.signal,
-        });
-
-        if (!response.ok || !response.body) return;
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const events = buffer.split('\n\n');
-          buffer = events.pop() || '';
-
-          for (const eventText of events) {
-            const dataLines = eventText
-              .split('\n')
-              .filter((line) => line.startsWith('data:'))
-              .map((line) => line.slice(5).trim());
-
-            if (dataLines.length > 0) {
-              const payload = dataLines.join('\n');
-              try {
-                const parsed = JSON.parse(payload);
-                if (parsed && parsed.id) {
-                  onNotification(parsed as NotificationDto);
-                }
-              } catch {
-                // ignore heartbeat / non-JSON ping
-              }
-            }
-          }
-        }
-      } catch (err: any) {
-        if (err?.name !== 'AbortError') {
-          console.warn('[notificationService] SSE stream disconnected:', err?.message);
-        }
+    const parser = createNotificationParser(emit), reader = response.body.getReader(), decoder = new TextDecoder();
+    try {
+      while (!signal.aborted) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        parser(decoder.decode(value, { stream: true }));
       }
-    };
-
-    startStream();
-
-    return () => {
-      controller.abort();
-    };
+    } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
+    if (!signal.aborted) throw new Error('Kết nối thông báo đã ngắt.');
   },
 };
-

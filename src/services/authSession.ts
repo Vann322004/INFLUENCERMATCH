@@ -1,5 +1,6 @@
 // Credentials belong to a tab; localStorage carries cookie ownership and
 // account-specific logout signals, never another tab's active identity.
+import { dataManagerRequestCache } from './requestCache';
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
@@ -9,6 +10,8 @@ const SESSION_KEY = 'im_tab_auth_session';
 const COOKIE_OWNER_KEY = 'im_refresh_cookie_owner';
 export const ACCOUNT_LOGOUT_PREFIX = 'im_account_logout:';
 const identity = (user: any): string | null => user?.id || user?.userId || user?.email?.toLowerCase() || null;
+const cacheIdentity = (user: any) => JSON.stringify([identity(user), user?.role,
+  [...(user?.permissions ?? [])].sort(), user?.authVersion, user?.status]);
 const logoutKey = (userId: string) => `${ACCOUNT_LOGOUT_PREFIX}${encodeURIComponent(userId)}`;
 
 interface Session {
@@ -49,6 +52,12 @@ let session: Session = (() => {
 })();
 
 const persist = () => sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+const sessionListeners = new Set<() => void>();
+export const subscribeAuthSession = (listener: () => void) => {
+  sessionListeners.add(listener);
+  return () => { sessionListeners.delete(listener); };
+};
+const notifySession = () => sessionListeners.forEach(listener => listener());
 export const getAuthSessionId = () => session.id;
 export const getAccessToken = () => session.accessToken;
 export const getRefreshToken = () => session.refreshToken;
@@ -65,6 +74,7 @@ export const setAuthSession = (accessToken: string, refreshToken?: string, user?
   if (!accessToken || accessToken.startsWith('mock_')) {
     throw new Error('Không nhận được phiên đăng nhập hợp lệ từ máy chủ. Vui lòng đăng nhập lại.');
   }
+  if (user !== undefined && cacheIdentity(user) !== cacheIdentity(session.user)) dataManagerRequestCache.clear();
   const userId = identity(user);
   if (userId && userId !== identity(session.user)) {
     session.logoutMarker = localStorage.getItem(logoutKey(userId));
@@ -73,15 +83,18 @@ export const setAuthSession = (accessToken: string, refreshToken?: string, user?
   if (refreshToken !== undefined) session.refreshToken = refreshToken || null;
   if (user !== undefined) session.user = user;
   persist();
+  notifySession();
 };
 
 export const clearAuthSession = () => {
+  dataManagerRequestCache.clear();
   if (ownsRefreshCookie()) localStorage.removeItem(COOKIE_OWNER_KEY);
   session = emptySession();
   // Keep unrelated tab state; login/logout must not clear all sessionStorage.
   Object.values(STORAGE_KEYS).forEach(key => sessionStorage.removeItem(key));
   sessionStorage.removeItem('im_cached_brand_profile');
   persist();
+  notifySession();
 };
 
 export const publishAccountLogout = () => {

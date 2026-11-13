@@ -17,6 +17,7 @@ function load(file, exports, globals = {}) {
 test('monitor clamps limit and normalizes flat crawler evidence', async () => {
   let endpoint;
   const { crawlerService } = load('src/services/api/crawlerService.ts', 'crawlerService', {
+    invalidateDataManagerCacheForMutation() {},
     requestCrawler: async (_, path) => {
       endpoint = path;
       return { stats: {}, activities: { items: [] }, crawled_data: { total: 1, items: [
@@ -55,4 +56,13 @@ test('502 never replays a crawl mutation against another host', async () => {
   });
   await assert.rejects(requestCrawler('/crawler-api', '/crawl', { method: 'POST' }), /HTTP 502/);
   assert.equal(calls, 1);
+});
+
+test('taxonomy mutations invalidate cached crawl fields after merging Develop', async () => {
+  const { dataManagerRequestCache, invalidateDataManagerCacheForMutation } = load(
+    'src/services/requestCache.ts', 'dataManagerRequestCache, invalidateDataManagerCacheForMutation', { structuredClone });
+  await dataManagerRequestCache.get('fields', async () => ['old'], Infinity, ['taxonomy']);
+  assert.ok(dataManagerRequestCache.peek('fields'));
+  invalidateDataManagerCacheForMutation('put', '/data/crawl-fields/field-id');
+  assert.equal(dataManagerRequestCache.peek('fields'), undefined);
 });

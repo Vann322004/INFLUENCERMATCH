@@ -1,4 +1,5 @@
 import apiClient from '../apiClient';
+import { createDataManagerQuery } from '../dataManagerCache';
 
 export interface Niche {
   id: string;
@@ -11,13 +12,11 @@ export interface Niche {
 export type NicheInput = Omit<Niche, 'id'>;
 
 export const nicheService = {
-  async list(): Promise<Niche[]> {
+  list: createDataManagerQuery('niches', async (): Promise<Niche[]> => {
     const { data } = await apiClient.get('/data/crawl-fields');
-    if (!Array.isArray(data?.data)) {
-      throw new Error('INVALID_CRAWL_FIELDS_RESPONSE');
-    }
+    if (!Array.isArray(data?.data)) throw new Error('Danh mục ngành hàng trả về không hợp lệ.');
     return data.data;
-  },
+  }, { tags: ['taxonomy'] }),
   async create(input: NicheInput): Promise<Niche> {
     const { data } = await apiClient.post('/data/crawl-fields', input);
     return data.data;

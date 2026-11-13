@@ -87,7 +87,7 @@ const DEFAULT_CLAIMS: ClaimResponse[] = [
 let memoryClaims: ClaimResponse[] = [...DEFAULT_CLAIMS];
 
 /** GET /data/creator-claims — paginated list with optional filters */
-const getClaims = async (params?: ClaimListParams): Promise<PageResponse<ClaimResponse>> => {
+const getClaims = async (params?: ClaimListParams, options?: { requireBackend?: boolean }): Promise<PageResponse<ClaimResponse>> => {
   const cleaned: Record<string, unknown> = {};
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
@@ -99,7 +99,7 @@ const getClaims = async (params?: ClaimListParams): Promise<PageResponse<ClaimRe
     const response = await apiClient.get<any>('/data/creator-claims', { params: cleaned });
     const payload = response.data?.data ?? response.data;
     const rawList = payload?.items ?? payload?.content ?? (Array.isArray(payload) ? payload : null);
-    if (rawList && rawList.length > 0) {
+    if (Array.isArray(rawList) && (options?.requireBackend || rawList.length > 0)) {
       return {
         items: rawList,
         content: rawList,
@@ -109,7 +109,9 @@ const getClaims = async (params?: ClaimListParams): Promise<PageResponse<ClaimRe
         size: payload?.size ?? rawList.length,
       };
     }
+    if (options?.requireBackend) throw new Error('Dữ liệu hàng đợi nhận kênh không hợp lệ.');
   } catch (err) {
+    if (options?.requireBackend) throw err;
     console.warn('[claimService.getClaims] API error, falling back:', err);
   }
 

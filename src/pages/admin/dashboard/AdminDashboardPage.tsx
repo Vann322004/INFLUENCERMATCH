@@ -1,542 +1,186 @@
-import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Row, Col, Card, Typography, Tag, List, Avatar, Button, Spin, Empty, Tooltip } from 'antd';
-import {
-  TeamOutlined, UserOutlined, DollarOutlined, ThunderboltOutlined,
-  ArrowUpOutlined, ArrowDownOutlined, RiseOutlined, ReloadOutlined,
-  CheckCircleOutlined, SafetyCertificateOutlined,
-} from '@ant-design/icons';
-import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
-} from 'recharts';
+import { Empty, Table, Tag } from 'antd';
+import type { TableColumnsType } from 'antd';
 import { adminService } from '../../../services/api/adminService';
+import { adminDashboardService } from '../../../services/api/adminDashboardService';
+import type { CampaignSummary, SubscriptionSummary } from '../../../services/api/adminDashboardService';
+import ResourceState from './components/AdminDashboardState';
+import { RevenueMetric, UserGrowthPanel, RevenuePanel } from './components/AdminAnalyticsPanels';
 import { creatorService } from '../../../services/api/creatorService';
-import { campaignService } from '../../../services/api/campaignService';
 import { subscriptionService } from '../../../services/api/subscriptionService';
 import { authService } from '../../../services/api/authService';
+import { useAsyncResource } from '../../../hooks/useAsyncResource';
+import type { AsyncResource } from '../../../hooks/useAsyncResource';
+import type { AuditLogItem } from '../../../types/api/admin.types';
 import { DATA_MANAGER_ROUTES } from '../../../constants/adminRoutes';
-import type { AdminUser, AuditLogItem, AuditAction, AdminSubscription } from '../../../types/api/admin.types';
-import type { CreatorItem } from '../../../types/api/creator.types';
-import type { CampaignResponse } from '../../../types/api/campaign.types';
-import type { PlanResponse } from '../../../types/api/subscription.types';
+import './AdminDashboard.css';
 
-const { Title, Text } = Typography;
+const getUsersTotal = async () => (await adminService.getUsers({ page: 0, size: 1 })).totalElements;
+const getPlansTotal = async () => (await subscriptionService.getPlansPage()).totalElements;
+// /creators is an unpaginated list of ingested metric records, not unique Creator identities.
+const getCreatorRecords = async () => (await creatorService.getCreators()).length;
+const getRecentLogs = () => adminService.getAuditLogs({ page: 0, size: 8 });
 
-// ── KPI Card ─────────────────────────────────────────
-interface KpiCardProps {
-  icon: React.ReactNode;
-  title: string;
-  value: React.ReactNode;
-  unit?: string;
-  badge?: React.ReactNode;
-  trend?: number;
-  subText?: React.ReactNode;
-  color: string;
-  bg: string;
+function Metric({ title, note, resource, allowed }: {
+  title: string; note: string; resource: AsyncResource<number>; allowed: boolean;
+}) {
+  return <section className="ad-panel ad-kpi" aria-label={title}>
+    <h2>{title}</h2>
+    {allowed && resource.status === 'success'
+      ? <p className="ad-kpi-value">{resource.data === null ? 'Chưa có dữ liệu' : resource.data.toLocaleString('vi-VN')}</p>
+      : <ResourceState resource={resource} allowed={allowed} />}
+    <p className="ad-note">{note}</p>
+  </section>;
 }
 
-function KpiCard({ icon, title, value, unit, badge, trend, subText, color, bg }: KpiCardProps) {
-  const isUp = (trend ?? 0) >= 0;
-  return (
-    <Card
-      bordered={false}
-      style={{
-        borderRadius: 16,
-        boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-        border: '1px solid #EEF2F6',
-        height: '100%',
-        transition: 'all 0.2s ease-in-out',
-        background: '#FFFFFF',
-      }}
-      styles={{ body: { padding: '18px 20px' } }}
-      onMouseEnter={e => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)';
-        e.currentTarget.style.borderColor = '#CBD5E1';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.03)';
-        e.currentTarget.style.borderColor = '#EEF2F6';
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ color: '#475569', fontSize: 13.5, fontWeight: 700 }}>
-          {title}
-        </span>
-        <div style={{
-          width: 38, height: 38, background: bg, borderRadius: 10,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color, fontSize: 18, flexShrink: 0,
-        }}>
-          {icon}
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'nowrap' }}>
-        <div style={{
-          color: '#0F172A',
-          fontSize: 28,
-          fontWeight: 800,
-          lineHeight: 1.15,
-          letterSpacing: '-0.02em',
-          whiteSpace: 'nowrap',
-        }}>
-          {value}
-        </div>
-        {unit && (
-          <span style={{ color: '#64748B', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>
-            {unit}
-          </span>
-        )}
-        {badge && (
-          <div style={{ marginLeft: 'auto' }}>
-            {badge}
-          </div>
-        )}
-      </div>
-
-      <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-        {trend !== undefined ? (
-          <>
-            {isUp
-              ? <ArrowUpOutlined style={{ color: '#10B981', fontSize: 11 }} />
-              : <ArrowDownOutlined style={{ color: '#EF4444', fontSize: 11 }} />}
-            <Text style={{ color: isUp ? '#10B981' : '#EF4444', fontSize: 12, fontWeight: 700 }}>
-              {Math.abs(trend)}%
-            </Text>
-            <Text style={{ color: '#94A3B8', fontSize: 11 }}>so với tháng trước</Text>
-          </>
-        ) : (
-          <div style={{ color: '#64748B', fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {subText || 'Số liệu cập nhật thời gian thực'}
-          </div>
-        )}
-      </div>
-    </Card>
-  );
+function StatusMetric<T extends CampaignSummary | SubscriptionSummary>({ title, resource, allowed, main, labels }: {
+  title: string; resource: AsyncResource<T>; allowed: boolean; main: keyof T; labels: [keyof T, string][];
+}) {
+  return <section className="ad-panel ad-kpi" aria-label={title}>
+    <h2>{title}</h2>
+    {allowed && resource.status === 'success' && resource.data
+      ? <><p className="ad-kpi-value">{(resource.data[main] as number).toLocaleString('vi-VN')}</p>
+          <dl className="ad-status-list">{labels.map(([key, label]) => <div key={String(key)}><dt>{label}</dt><dd>{(resource.data![key] as number).toLocaleString('vi-VN')}</dd></div>)}</dl></>
+      : <ResourceState resource={resource} allowed={allowed} />}
+  </section>;
 }
 
-// ── Custom Tooltips ────────────────────────────────────
-function ChartTip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div style={{ background: '#fff', border: '1px solid #EEF0F6', borderRadius: 10, padding: '10px 14px', fontSize: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
-      <div style={{ color: '#64748B', fontWeight: 700, marginBottom: 6 }}>{label}</div>
-      {payload.map((p: any) => (
-        <div key={p.dataKey} style={{ color: p.color, fontWeight: 600, marginBottom: 2 }}>
-          {p.name}: {p.value.toLocaleString('vi-VN')}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function RevenueTip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  const rev = payload.find((p: any) => p.dataKey === 'revenue')?.value || 0;
-  const users = payload.find((p: any) => p.dataKey === 'users')?.value || 0;
-  return (
-    <div style={{ background: '#fff', border: '1px solid #EEF0F6', borderRadius: 10, padding: '10px 14px', fontSize: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
-      <div style={{ color: '#64748B', fontWeight: 700, marginBottom: 6 }}>{label}</div>
-      <div style={{ color: '#5B5BF0', fontWeight: 700 }}>
-        {(rev / 1_000_000).toFixed(1)}M ₫
-      </div>
-      <div style={{ color: '#94A3B8', fontSize: 11 }}>{users} người dùng</div>
-    </div>
-  );
-}
-
-// ── Activity Action Map ─────────────────────────────────
-const ACTION_MAP: Record<AuditAction, { label: string; color: string; icon: React.ReactNode }> = {
-  CREATE: { label: 'Tạo mới', color: '#10B981', icon: <ThunderboltOutlined /> },
-  UPDATE: { label: 'Cập nhật', color: '#6366F1', icon: <RiseOutlined /> },
-  DELETE: { label: 'Xóa', color: '#EF4444', icon: <ThunderboltOutlined /> },
-  LOGIN:  { label: 'Đăng nhập', color: '#0EA5E9', icon: <UserOutlined /> },
-  LOGOUT: { label: 'Đăng xuất', color: '#94A3B8', icon: <UserOutlined /> },
+const ACTION_COLORS: Record<string, string> = {
+  CREATE: 'blue',
+  UPDATE: 'orange',
+  DELETE: 'red',
+  LOGIN: 'green',
+  LOGOUT: 'default',
 };
 
-export default function AdminDashboardPage() {
-  if (authService.isManager()) {
-    return <Navigate to={DATA_MANAGER_ROUTES.DASHBOARD} replace />;
-  }
-
-  const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [creators, setCreators] = useState<CreatorItem[]>([]);
-  const [campaigns, setCampaigns] = useState<CampaignResponse[]>([]);
-  const [subscriptions, setSubscriptions] = useState<AdminSubscription[]>([]);
-  const [plans, setPlans] = useState<PlanResponse[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
-  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
-
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    try {
-      const results = await Promise.allSettled([
-        adminService.getUsers({ size: 100 }),
-        creatorService.getCreators(),
-        campaignService.getCampaigns(0, 100),
-        adminService.getAdminSubscriptions(),
-        subscriptionService.getPlans(0, 20),
-        adminService.getAuditLogs({ size: 8 }),
-      ]);
-
-      // 1. Users
-      if (results[0].status === 'fulfilled') {
-        const uRes = results[0].value;
-        const uList = uRes?.items ?? uRes?.content ?? (Array.isArray(uRes) ? uRes : []);
-        setUsers(uList);
-      }
-
-      // 2. Creators
-      if (results[1].status === 'fulfilled') {
-        const cRes = results[1].value;
-        setCreators(Array.isArray(cRes) ? cRes : []);
-      }
-
-      // 3. Campaigns
-      if (results[2].status === 'fulfilled') {
-        const campRes = results[2].value;
-        setCampaigns(Array.isArray(campRes) ? campRes : []);
-      }
-
-      // 4. Subscriptions
-      if (results[3].status === 'fulfilled') {
-        const subRes = results[3].value;
-        setSubscriptions(Array.isArray(subRes) ? subRes : []);
-      }
-
-      // 5. Plans
-      if (results[4].status === 'fulfilled') {
-        const planRes = results[4].value;
-        setPlans(Array.isArray(planRes) ? planRes : []);
-      }
-
-      // 6. Audit logs
-      if (results[5].status === 'fulfilled') {
-        const logRes = results[5].value;
-        const logList = logRes?.items ?? logRes?.content ?? (Array.isArray(logRes) ? logRes : []);
-        setAuditLogs(logList);
-      }
-
-      setLastRefreshed(new Date());
-    } catch {
-      // Error handled by apiClient
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  // ── Computed Statistics ─────────────────────────────────
-  const totalUsers = users.length;
-  const brandUsers = users.filter(u => u.role?.toLowerCase() === 'brand').length;
-  const creatorUsers = users.filter(u => u.role?.toLowerCase() === 'creator').length;
-
-  const totalCreators = creators.length;
-  const activeCreators = creators.filter(c => ((c as any).status || '').toLowerCase() !== 'inactive').length;
-
-  const activeCampaigns = campaigns.filter(c => c.status === 'ACTIVE').length;
-  const totalCampaigns = campaigns.length;
-
-  const activeSubscriptions = subscriptions.filter(s => s.status === 'active').length;
-  const totalRevenue = subscriptions.reduce((sum, s) => sum + (s.amount || 0), 0) || (activeSubscriptions > 0 ? activeSubscriptions * 1_490_000 : 42_500_000);
-
-  // ── Growth Chart Data ──────────────────────────────────
-  // Compute monthly user growth based on real user registration data
-  const buildGrowthData = () => {
-    const months = ['T5', 'T6', 'T7', 'T8', 'T9', 'T10'];
-    const baseBrands = Math.max(1, brandUsers);
-    const baseCreators = Math.max(1, creatorUsers || totalCreators);
-
-    return months.map((m, idx) => {
-      const factor = (idx + 5) / 10;
-      const bCount = Math.round(baseBrands * factor);
-      const cCount = Math.round(baseCreators * factor);
-      return {
-        month: m,
-        brands: idx === months.length - 1 ? baseBrands : bCount,
-        creators: idx === months.length - 1 ? baseCreators : cCount,
-        users: (idx === months.length - 1 ? baseBrands : bCount) + (idx === months.length - 1 ? baseCreators : cCount),
-      };
-    });
-  };
-  const growthData = buildGrowthData();
-
-  // ── Revenue by Plan Data ────────────────────────────────
-  const buildRevenueData = () => {
-    if (plans.length > 0) {
-      return plans.map(p => {
-        const planSubs = subscriptions.filter(s => 
-          s.planId === p.id || s.planName?.toLowerCase().includes((p.planName || '').toLowerCase())
-        );
-        const count = planSubs.length || Math.max(1, Math.round(totalUsers * 0.2));
-        const rev = planSubs.reduce((sum, s) => sum + (s.amount || 0), 0) || (count * (p.price || 990_000));
-        return {
-          plan: p.planName,
-          revenue: rev,
-          users: count,
-        };
-      });
-    }
-
-    return [
-      { plan: 'Starter', revenue: 42_000_000, users: Math.max(10, Math.round(totalUsers * 0.5)) },
-      { plan: 'Pro', revenue: 148_000_000, users: Math.max(5, Math.round(totalUsers * 0.35)) },
-      { plan: 'Enterprise', revenue: 94_500_000, users: Math.max(2, Math.round(totalUsers * 0.15)) },
-    ];
-  };
-  const revenueData = buildRevenueData();
-
-  const kpiCards: KpiCardProps[] = [
-    {
-      icon: <TeamOutlined />,
-      title: 'Tổng người dùng',
-      value: totalUsers > 0 ? totalUsers.toLocaleString('vi-VN') : '—',
-      unit: 'tài khoản',
-      subText: (
-        <span>
-          <strong style={{ color: '#0F172A' }}>{brandUsers}</strong> Doanh nghiệp • <strong style={{ color: '#0F172A' }}>{creatorUsers}</strong> Nhà sáng tạo
+const columns: TableColumnsType<AuditLogItem> = [
+  {
+    title: 'Thời gian',
+    dataIndex: 'timestamp',
+    width: '18%',
+    render: (value: string) =>
+      value ? (
+        <span style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>
+          {value.replace('T', ' ')}
         </span>
+      ) : (
+        '—'
       ),
-      color: '#5B5BF0',
-      bg: '#EEF2FF',
-    },
-    {
-      icon: <UserOutlined />,
-      title: 'Nhà sáng tạo hệ thống',
-      value: (totalCreators || creatorUsers).toLocaleString('vi-VN'),
-      unit: 'hồ sơ',
-      subText: (
-        <span>
-          <strong style={{ color: '#10B981' }}>{activeCreators || totalCreators}</strong> hồ sơ đang hoạt động
+  },
+  {
+    title: 'Người thực hiện',
+    dataIndex: 'actor',
+    width: '24%',
+    ellipsis: true,
+    render: (value: string, r) => (
+      <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <span style={{ fontWeight: 600, color: '#0F172A' }} title={value || r.actorEmail || ''}>
+          {value || '—'}
         </span>
-      ),
-      color: '#10B981',
-      bg: '#ECFDF5',
-    },
-    {
-      icon: <ThunderboltOutlined />,
-      title: 'Chiến dịch',
-      value: activeCampaigns,
-      unit: `/ ${totalCampaigns} chiến dịch`,
-      subText: (
-        <span>
-          <strong style={{ color: '#0EA5E9' }}>{activeCampaigns}</strong> chiến dịch đang chạy
-        </span>
-      ),
-      color: '#0EA5E9',
-      bg: '#F0F9FF',
-    },
-    {
-      icon: <DollarOutlined />,
-      title: 'Gói dịch vụ',
-      value: plans.length || 3,
-      unit: 'gói kích hoạt',
-      badge: (
-        <Tag style={{
-          margin: 0,
-          borderRadius: 20,
-          fontSize: 11,
-          fontWeight: 700,
-          border: 'none',
-          background: '#FEF3C7',
-          color: '#B45309',
-          padding: '1px 8px',
-        }}>
-          Đang mở
-        </Tag>
-      ),
-      subText: (
-        <span>
-          Doanh thu: <strong style={{ color: '#0F172A' }}>{(totalRevenue / 1_000_000).toFixed(1)}M ₫</strong>
-        </span>
-      ),
-      color: '#F59E0B',
-      bg: '#FFFBEB',
-    },
-  ];
-
-  const sectionTitle = (text: string, sub?: string) => (
-    <div style={{ marginBottom: 16 }}>
-      <Title level={5} style={{ color: '#0F172A', margin: 0, fontWeight: 700, fontSize: 15 }}>{text}</Title>
-      {sub && <Text style={{ color: '#94A3B8', fontSize: 12 }}>{sub}</Text>}
-    </div>
-  );
-
-  return (
-    <div>
-      {/* Page Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <Title level={3} style={{ color: '#0F172A', margin: 0, fontWeight: 800 }}>
-            Bảng điều khiển Quản trị Hệ thống
-          </Title>
-          <Text style={{ color: '#64748B', fontSize: 13 }}>
-            Tổng quan người dùng, gói dịch vụ, doanh thu và kiểm toán hệ thống •{' '}
-            {lastRefreshed.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </Text>
-        </div>
-        <Button
-          type="default"
-          icon={<ReloadOutlined spin={loading} />}
-          onClick={fetchDashboardData}
-          loading={loading}
-          style={{ borderRadius: 8, fontWeight: 600 }}
-        >
-          Làm mới số liệu
-        </Button>
+        {r.actorEmail && r.actorEmail !== value && (
+          <div style={{ fontSize: 11, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {r.actorEmail}
+          </div>
+        )}
       </div>
+    ),
+  },
+  {
+    title: 'Hành động',
+    dataIndex: 'action',
+    width: '16%',
+    render: (value: string) =>
+      value ? (
+        <Tag color={ACTION_COLORS[value] || 'default'} style={{ fontWeight: 600, borderRadius: 6, margin: 0 }}>
+          {value}
+        </Tag>
+      ) : (
+        '—'
+      ),
+  },
+  {
+    title: 'Đối tượng',
+    dataIndex: 'resource',
+    width: '22%',
+    ellipsis: true,
+    render: (value: string, r) => (
+      <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <Tag color="purple" style={{ borderRadius: 6, fontWeight: 500, margin: 0 }} title={value || ''}>
+          {value || '—'}
+        </Tag>
+        {r.resourceId && (
+          <span style={{ fontSize: 11, color: '#64748B', marginLeft: 6 }}>
+            ID: {String(r.resourceId).slice(0, 8)}...
+          </span>
+        )}
+      </div>
+    ),
+  },
+  {
+    title: 'Địa chỉ IP',
+    dataIndex: 'ip',
+    width: '20%',
+    ellipsis: true,
+    render: (value: string) =>
+      value ? (
+        <code style={{ fontSize: 12, color: '#475569', background: '#F1F5F9', padding: '2px 6px', borderRadius: 4 }}>
+          {value}
+        </code>
+      ) : (
+        '—'
+      ),
+  },
+];
 
-      {/* KPI Cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
-        {kpiCards.map((card, i) => (
-          <Col xs={24} sm={12} xl={6} key={i}>
-            <KpiCard {...card} />
-          </Col>
-        ))}
-      </Row>
+function DashboardContent() {
+  const permissions = authService.getCurrentUser()?.permissions ?? [];
+  const canViewUsers = permissions.includes('VIEW_USER');
+  const canViewPlans = permissions.includes('VIEW_PLAN') || permissions.includes('MANAGE_PLAN');
+  const canViewAudit = permissions.includes('VIEW_AUDIT_LOG');
+  const canViewMonitoring = permissions.includes('VIEW_DATA_MONITORING');
+  const canManageSubscriptions = permissions.includes('MANAGE_SUBSCRIPTION');
+  const users = useAsyncResource(getUsersTotal, canViewUsers);
+  const creators = useAsyncResource(getCreatorRecords);
+  const plans = useAsyncResource(getPlansTotal, canViewPlans);
+  const logs = useAsyncResource(getRecentLogs, canViewAudit);
+  const campaigns = useAsyncResource(adminDashboardService.getCampaignSummary, canViewMonitoring);
+  const subscriptions = useAsyncResource(adminDashboardService.getSubscriptionSummary, canManageSubscriptions);
+  const growth = useAsyncResource(adminDashboardService.getUserGrowth, canViewMonitoring);
+  const revenue = useAsyncResource(adminDashboardService.getRevenueByPlan, canManageSubscriptions);
 
-      {/* Charts */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
-        {/* User Growth Line Chart */}
-        <Col xs={24} xl={14}>
-          <Card
-            bordered={false}
-            style={{ borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', height: '100%' }}
-            styles={{ body: { padding: '20px 22px' } }}
-          >
-            {sectionTitle('Tăng trưởng người dùng', 'Thực tế theo nhóm Doanh nghiệp & Nhà sáng tạo')}
-            <ResponsiveContainer width="100%" height={240}>
-              <LineChart data={growthData} margin={{ top: 4, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                <XAxis dataKey="month" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <RechartsTooltip content={<ChartTip />} />
-                <Legend wrapperStyle={{ paddingTop: 12 }} formatter={v => <span style={{ color: '#64748B', fontSize: 12 }}>{v}</span>} />
-                <Line type="monotone" dataKey="brands" name="Doanh nghiệp" stroke="#5B5BF0" strokeWidth={2.5} dot={false} />
-                <Line type="monotone" dataKey="creators" name="Nhà sáng tạo" stroke="#10B981" strokeWidth={2.5} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-
-        {/* Revenue by Plan Bar Chart */}
-        <Col xs={24} xl={10}>
-          <Card
-            bordered={false}
-            style={{ borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', height: '100%' }}
-            styles={{ body: { padding: '20px 22px' } }}
-          >
-            {sectionTitle('Doanh thu theo gói cước', 'Dựa trên gói dịch vụ đang hoạt động')}
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={revenueData} margin={{ top: 4, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-                <XAxis dataKey="plan" tick={{ fill: '#94A3B8', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <RechartsTooltip content={<RevenueTip />} />
-                <Bar dataKey="revenue" name="Doanh thu" fill="#5B5BF0" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="users" name="Người dùng" fill="#DDD6FE" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Recent Activity from Audit Logs */}
-      <Row>
-        <Col span={24}>
-          <Card
-            bordered={false}
-            style={{ borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}
-            styles={{ body: { padding: '20px 22px' } }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div>
-                <Title level={5} style={{ color: '#0F172A', margin: 0, fontWeight: 700, fontSize: 15 }}>
-                  Nhật ký hoạt động hệ thống
-                </Title>
-                <Text style={{ color: '#94A3B8', fontSize: 12 }}>
-                  Sự kiện và thay đổi dữ liệu thời gian thực được ghi lại bởi hệ thống kiểm toán
-                </Text>
-              </div>
-              <Tag color="processing" icon={<SafetyCertificateOutlined />}>Ghi nhận trực tiếp</Tag>
-            </div>
-
-            {loading ? (
-              <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                <Spin description="Đang tải sự kiện hệ thống..." />
-              </div>
-            ) : auditLogs.length === 0 ? (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="Hệ thống đã sẵn sàng ghi nhận sự kiện kiểm toán. Chưa có thao tác nào gần đây."
-              />
-            ) : (
-              <List
-                dataSource={auditLogs}
-                renderItem={(item) => {
-                  const actionMeta = ACTION_MAP[item.action] || { label: item.action, color: '#6366F1', icon: <ThunderboltOutlined /> };
-                  return (
-                    <List.Item style={{ borderBottom: '1px solid #F1F5F9', padding: '12px 0' }}>
-                      <List.Item.Meta
-                        avatar={
-                          <Avatar
-                            icon={actionMeta.icon}
-                            style={{
-                              background: actionMeta.color + '18',
-                              color: actionMeta.color,
-                              border: `1px solid ${actionMeta.color}33`,
-                            }}
-                            size={38}
-                          />
-                        }
-                        title={
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Tag style={{
-                              background: actionMeta.color + '15',
-                              border: `1px solid ${actionMeta.color}40`,
-                              color: actionMeta.color,
-                              fontSize: 11,
-                              fontWeight: 700,
-                              borderRadius: 4,
-                            }}>
-                              {actionMeta.label}
-                            </Tag>
-                            <Text style={{ color: '#0F172A', fontSize: 13, fontWeight: 600 }}>
-                              {item.resource} {item.resourceId ? `(#${item.resourceId})` : ''}
-                            </Text>
-                          </div>
-                        }
-                        description={
-                          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 4 }}>
-                            <Tag style={{ background: '#EEF2FF', border: '1px solid #DDD6FE', color: '#5B5BF0', fontSize: 11, padding: '0 6px', lineHeight: '18px' }}>
-                              {item.actor || item.actorEmail || 'Hệ thống'}
-                            </Tag>
-                            <Text style={{ color: '#94A3B8', fontSize: 11 }}>
-                              {item.timestamp ? new Date(item.timestamp).toLocaleString('vi-VN') : 'Vừa xong'}
-                            </Text>
-                            {item.ip && (
-                              <Text style={{ color: '#CBD5E1', fontSize: 11 }}>
-                                IP: {item.ip}
-                              </Text>
-                            )}
-                          </div>
-                        }
-                      />
-                    </List.Item>
-                  );
-                }}
-              />
-            )}
-          </Card>
-        </Col>
-      </Row>
+  return <div className="ad-dashboard">
+    <header className="ad-header">
+      <h1>Tổng quan hệ thống</h1>
+      <p>Theo dõi tài khoản, dữ liệu nhà sáng tạo, danh mục gói dịch vụ và hoạt động quản trị.</p>
+    </header>
+    <div className="ad-kpis">
+      <Metric title="Tổng tài khoản" note="Tổng tài khoản trên hệ thống." resource={users} allowed={canViewUsers} />
+      <Metric title="Bản ghi Creator" note="Các bản ghi có dữ liệu thu thập; một Creator có thể có nhiều bản ghi." resource={creators} allowed />
+      <Metric title="Gói dịch vụ" note="Tổng số gói trong danh mục, bao gồm các trạng thái." resource={plans} allowed={canViewPlans} />
+      <StatusMetric title="Chiến dịch" resource={campaigns} allowed={canViewMonitoring} main="total"
+        labels={[["draft", 'Bản nháp'], ['readyForDiscovery', 'Sẵn sàng khám phá'], ['active', 'Đang hoạt động'], ['completed', 'Hoàn thành'], ['archived', 'Lưu trữ']]} />
+      <StatusMetric title="Gói đăng ký đang hoạt động" resource={subscriptions} allowed={canManageSubscriptions} main="active"
+        labels={[["total", 'Tổng đăng ký'], ['pending', 'Chờ thanh toán'], ['expired', 'Hết hạn'], ['cancelled', 'Đã hủy']]} />
+      <RevenueMetric resource={revenue} allowed={canManageSubscriptions} />
     </div>
-  );
+    <div className="ad-charts">
+      <UserGrowthPanel resource={growth} allowed={canViewMonitoring} />
+      <RevenuePanel resource={revenue} allowed={canManageSubscriptions} />
+    </div>
+    <section className="ad-panel ad-audit" aria-label="Nhật ký hoạt động gần đây">
+      <h2>Nhật ký hoạt động gần đây</h2>
+      <p className="ad-note">8 hoạt động mới nhất được ghi nhận trên hệ thống.</p>
+      {canViewAudit && logs.status === 'success'
+        ? <Table<AuditLogItem> rowKey="id" columns={columns} dataSource={logs.data?.items ?? []}
+            pagination={false} size="middle"
+            locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có dữ liệu" /> }} />
+        : <ResourceState resource={logs} allowed={canViewAudit} />}
+    </section>
+  </div>;
+}
+
+export default function AdminDashboardPage() {
+  if (authService.isManager()) return <Navigate to={DATA_MANAGER_ROUTES.DASHBOARD} replace />;
+  if (!authService.isAdmin()) return <Navigate to="/admin/login" replace />;
+  return <DashboardContent />;
 }

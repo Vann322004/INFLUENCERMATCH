@@ -1,271 +1,111 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Input, Select, Button, Space, Typography, Tooltip, message, Spin, Row, Col, Statistic } from 'antd';
+import { useCallback, useState } from 'react';
+import { Button, Empty, Form, Input, Table, Tag, Tooltip } from 'antd';
 import type { TableColumnsType } from 'antd';
-import {
-  SearchOutlined,
-  FilterOutlined,
-  AuditOutlined,
-  EyeOutlined,
-  DownloadOutlined,
-  CheckCircleOutlined,
-  DatabaseOutlined,
-  DashboardOutlined,
-  CloudServerOutlined,
-} from '@ant-design/icons';
 import { adminService } from '../../../services/api/adminService';
-import type { AuditLogItem, AuditAction } from '../../../types/api/admin.types';
+import { authService } from '../../../services/api/authService';
+import { useAsyncResource } from '../../../hooks/useAsyncResource';
+import type { AuditLogItem, AuditLogsParams } from '../../../types/api/admin.types';
+import ResourceState from '../dashboard/components/AdminDashboardState';
 import AuditDetailDrawer from './components/AuditDetailDrawer';
+import SystemMonitoringPanel from './components/SystemMonitoringPanel';
+import { auditTimestamp } from './auditDisplay';
+import '../dashboard/AdminDashboard.css';
+import './AuditLogPage.css';
 
-const { Text } = Typography;
-
-const ACTION_COLORS: Record<AuditAction, string> = {
-  CREATE: 'blue',
-  UPDATE: 'orange',
-  DELETE: 'red',
-  LOGIN:  'green',
-  LOGOUT: 'default',
-};
+const uuidRule = { validator: (_: unknown, value: string) => !value?.trim() || /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(value.trim())
+  ? Promise.resolve() : Promise.reject(new Error('Nhập UUID hợp lệ.')) };
 
 export default function AuditLogPage() {
-  const [logs, setLogs] = useState<AuditLogItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [actionFilter, setActionFilter] = useState('all');
-  const [resourceFilter, setResourceFilter] = useState('all');
-  const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [systemStatus, setSystemStatus] = useState<any>(null);
+  const [form] = Form.useForm();
+  const [params, setParams] = useState<AuditLogsParams>({ page: 0, size: 10 });
+  const [selected, setSelected] = useState<AuditLogItem | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const user = authService.getCurrentUser();
+  const canAudit = authService.isAdmin() && !!user?.permissions?.includes('VIEW_AUDIT_LOG');
+  const canMonitor = authService.isAdmin() && !!user?.permissions?.includes('VIEW_SYSTEM_STATUS');
+  const fetchLogs = useCallback(() => adminService.getAuditLogs(params), [params]);
+  const resource = useAsyncResource(fetchLogs, canAudit);
 
-  useEffect(() => {
-    adminService.getSystemStatus().then(setSystemStatus).catch(() => {});
-  }, []);
-
-  const fetchLogs = async (p = page) => {
-    try {
-      setLoading(true);
-      const res = await adminService.getAuditLogs({
-        page: p - 1,
-        size: 10,
-        search: search || undefined,
-        action: actionFilter !== 'all' ? (actionFilter as AuditAction) : undefined,
-        resource: resourceFilter !== 'all' ? resourceFilter : undefined,
-      });
-      const list = res.items ?? res.content ?? (Array.isArray(res) ? res : []);
-      setLogs(list);
-      setTotal(res.totalElements ?? list.length);
-    } catch {
-      // handled by apiClient interceptor
-    } finally {
-      setLoading(false);
+  const applyFilters = (values: Record<string, string>) => {
+    const cleaned = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value?.trim() || undefined]));
+    if (cleaned.from && cleaned.to && cleaned.from > cleaned.to) {
+      form.setFields([{ name: 'to', errors: ['Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.'] }]); return;
     }
+    setSelected(null);
+    setExportError(null);
+    setParams(previous => ({ ...cleaned, page: 0, size: previous.size }));
   };
 
-  useEffect(() => { fetchLogs(1); setPage(1); }, [search, actionFilter, resourceFilter]);
-  useEffect(() => { fetchLogs(page); }, [page]);
-
-  const handleOpenDetail = (log: AuditLogItem) => {
-    setSelectedLog(log);
-    setDrawerOpen(true);
+  const downloadCsv = async () => {
+    setExporting(true); setExportError(null);
+    try {
+      const blob = await adminService.exportAuditLogs(params);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url; link.download = 'audit-logs.csv'; document.body.append(link);
+      try { link.click(); } finally { link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+    } catch {
+      setExportError('Không thể xuất CSV. Vui lòng thử lại.');
+    } finally { setExporting(false); }
   };
 
   const columns: TableColumnsType<AuditLogItem> = [
-    {
-      title: 'Thời gian',
-      dataIndex: 'timestamp',
-      key: 'timestamp',
-      render: (t: string) => <span style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>{t}</span>,
-    },
-    {
-      title: 'Người thực hiện',
-      key: 'actor',
-      render: (_, r) => (
-        <div>
-          <div style={{ fontWeight: 700, color: '#0F172A' }}>{r.actor}</div>
-          <div style={{ fontSize: 11, color: '#64748B' }}>{r.actorEmail}</div>
-        </div>
-      ),
-    },
-    {
-      title: 'Hành động',
-      dataIndex: 'action',
-      key: 'action',
-      render: (act: AuditAction) => (
-        <Tag color={ACTION_COLORS[act] || 'default'} style={{ fontWeight: 700, borderRadius: 6 }}>
-          {act}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Tài nguyên / Đối tượng',
-      key: 'resource',
-      render: (_, r) => (
-        <div>
-          <Tag color="purple" style={{ borderRadius: 6 }}>{r.resource}</Tag>
-          <span style={{ fontSize: 11, color: '#64748B' }}>ID: {r.resourceId}</span>
-        </div>
-      ),
-    },
-    {
-      title: 'Địa chỉ IP',
-      dataIndex: 'ip',
-      key: 'ip',
-      render: (ip: string) => <code style={{ fontSize: 12, color: '#475569' }}>{ip}</code>,
-    },
-    {
-      title: 'Chi tiết',
-      key: 'actions',
-      render: (_, r) => (
-        <Tooltip title="Xem biến động dữ liệu">
-          <Button
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => handleOpenDetail(r)}
-            style={{ borderRadius: 6 }}
-          >
-            So sánh
-          </Button>
-        </Tooltip>
-      ),
-    },
+    { title: 'Thời gian', dataIndex: 'createdAt', render: value => <><span className="audit-cell-label" aria-hidden="true">Thời gian Backend</span><time>{auditTimestamp(value)}</time></> },
+    { title: 'Người thực hiện', dataIndex: 'actorId', render: (value, log) => <>
+      <span className="audit-cell-label" aria-hidden="true">Actor UUID</span><code>{value ?? '—'}</code>
+      <span className="audit-cell-secondary">IP: {log.ip || '—'}</span>
+    </> },
+    { title: 'Hành động', dataIndex: 'action', render: value => <>
+      <span className="audit-cell-label" aria-hidden="true">Action</span>{value ? <Tag>{value}</Tag> : '—'}
+    </> },
+    { title: 'Đối tượng', dataIndex: 'entityType', render: (value, log) => <>
+      <span className="audit-cell-label" aria-hidden="true">Entity type / UUID</span><span className="audit-entity-type">{value || '—'}</span>
+      <code className="audit-cell-secondary">{log.entityId ?? '—'}</code>
+    </> },
+    { title: '', width: 96, className: 'audit-record-action', render: (_, log) => <Button onClick={() => setSelected(log)}>Chi tiết</Button> },
   ];
 
-  return (
-    <div>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-        <div>
-          <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>Audit Log & Security Trail</div>
-          <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
-            Nhật ký kiểm toán hệ thống, lưu vết toàn bộ thay đổi cấu hình, dữ liệu và hành động quản trị
-          </div>
-        </div>
-
-        <Button
-          icon={<DownloadOutlined />}
-          onClick={() => message.success('Đã xuất toàn bộ Audit Log ra file CSV!')}
-          style={{ borderRadius: 8, fontWeight: 600 }}
-        >
-          Xuất CSV
-        </Button>
+  return <div className="ad-dashboard audit-page">
+    <header className="ad-header"><h1>Nhật ký & giám sát hệ thống</h1>
+      <p>Tra cứu sự kiện được Backend ghi nhận và các chỉ số vận hành hiện có.</p></header>
+    <SystemMonitoringPanel allowed={canMonitor} />
+    <section className="ad-panel audit-logs" aria-label="Nhật ký kiểm toán">
+      <div className="audit-section-header audit-logs-header">
+        <div><h2>Nhật ký kiểm toán</h2><p className="ad-note">Tra cứu sự kiện và xem metadata được ghi nhận.</p></div>
+        {canAudit && <Tooltip title="Tải tối đa 10.000 bản ghi theo bộ lọc đã áp dụng. CSV chỉ chứa mã sự kiện, actor UUID, action, entity và thời gian.">
+          <Button loading={exporting} disabled={resource.status !== 'success'} onClick={() => void downloadCsv()}>Xuất CSV</Button>
+        </Tooltip>}
       </div>
-
-      {/* System Health Metrics (GET /admin/system-status - Luồng AD-02) */}
-      {systemStatus && (
-        <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
-          <Col xs={12} sm={6}>
-            <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }} bodyStyle={{ padding: '14px 16px' }}>
-              <Statistic
-                title={<span style={{ fontSize: 12, color: '#64748B' }}>Trạng thái hệ thống</span>}
-                value={systemStatus.overallStatus || 'UP'}
-                prefix={<CheckCircleOutlined style={{ color: '#10B981' }} />}
-                valueStyle={{ fontSize: 18, fontWeight: 700, color: systemStatus.overallStatus === 'DOWN' ? '#EF4444' : '#10B981' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={12} sm={6}>
-            <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }} bodyStyle={{ padding: '14px 16px' }}>
-              <Statistic
-                title={<span style={{ fontSize: 12, color: '#64748B' }}>Database</span>}
-                value={systemStatus.database?.status || 'UP'}
-                prefix={<DatabaseOutlined style={{ color: '#4F46E5' }} />}
-                valueStyle={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={12} sm={6}>
-            <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }} bodyStyle={{ padding: '14px 16px' }}>
-              <Statistic
-                title={<span style={{ fontSize: 12, color: '#64748B' }}>JVM Heap Used</span>}
-                value={systemStatus.jvm?.usedMemoryMb ?? systemStatus.jvm?.heapUsedMb ?? '—'}
-                suffix={systemStatus.jvm?.maxMemoryMb ? `/ ${systemStatus.jvm.maxMemoryMb} MB` : 'MB'}
-                prefix={<CloudServerOutlined style={{ color: '#7C3AED' }} />}
-                valueStyle={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={12} sm={6}>
-            <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }} bodyStyle={{ padding: '14px 16px' }}>
-              <Statistic
-                title={<span style={{ fontSize: 12, color: '#64748B' }}>DB Pool (Active/Max)</span>}
-                value={`${systemStatus.connectionPool?.activeConnections ?? 0} / ${systemStatus.connectionPool?.maxPoolSize ?? 10}`}
-                prefix={<DashboardOutlined style={{ color: '#0EA5E9' }} />}
-                valueStyle={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}
-              />
-            </Card>
-          </Col>
-        </Row>
-      )}
-
-      {/* Main Table Card */}
-      <Card
-        bordered={false}
-        style={{ borderRadius: 14, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', overflow: 'hidden' }}
-        bodyStyle={{ padding: 20 }}
-      >
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-          <Input
-            placeholder="Tìm theo Actor, Resource, IP..."
-            prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ width: 280, borderRadius: 8 }}
-            allowClear
-          />
-
-          <Select
-            value={actionFilter}
-            onChange={setActionFilter}
-            style={{ width: 160 }}
-          >
-            <Select.Option value="all">Tất cả hành động</Select.Option>
-            <Select.Option value="CREATE">CREATE</Select.Option>
-            <Select.Option value="UPDATE">UPDATE</Select.Option>
-            <Select.Option value="DELETE">DELETE</Select.Option>
-            <Select.Option value="LOGIN">LOGIN</Select.Option>
-          </Select>
-
-          <Select
-            value={resourceFilter}
-            onChange={setResourceFilter}
-            style={{ width: 180 }}
-          >
-            <Select.Option value="all">Tất cả tài nguyên</Select.Option>
-            <Select.Option value="Auth">Auth (Xác thực)</Select.Option>
-            <Select.Option value="Account">Account (Tài khoản)</Select.Option>
-            <Select.Option value="ScoringConfig">ScoringConfig (Thuật toán)</Select.Option>
-            <Select.Option value="SubscriptionPlan">SubscriptionPlan (Gói)</Select.Option>
-            <Select.Option value="Creator">Creator (Hồ sơ)</Select.Option>
-            <Select.Option value="DataConnector">DataConnector (Kết nối)</Select.Option>
-          </Select>
+      {canAudit && <Form form={form} layout="vertical" onFinish={applyFilters} className="audit-filter-form">
+        <div className="audit-filter-primary">
+          <Form.Item name="keyword" label="Từ khóa" rules={[{ max: 200, message: 'Từ khóa tối đa 200 ký tự.' }]}><Input maxLength={200} placeholder="Action, entity type, mô tả, IP hoặc UUID" /></Form.Item>
+          <Form.Item name="from" label="Từ thời gian"><Input type="datetime-local" step={1} /></Form.Item>
+          <Form.Item name="to" label="Đến thời gian"><Input type="datetime-local" step={1} /></Form.Item>
         </div>
-
-        {/* Table */}
-        <Spin spinning={loading}>
-          <Table
-            columns={columns}
-            dataSource={logs}
-            rowKey="id"
-            pagination={{
-              current: page,
-              pageSize: 10,
-              total,
-              onChange: setPage,
-              showTotal: (t) => `Tổng số ${t} bản ghi audit`,
-            }}
-            size="middle"
-          />
-        </Spin>
-      </Card>
-
-      {/* Detail Diff Drawer */}
-      <AuditDetailDrawer
-        log={selectedLog}
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-      />
-    </div>
-  );
+        <details className="audit-advanced-filters"><summary>Bộ lọc chi tiết</summary>
+        <div className="audit-filters">
+          <Form.Item name="actorId" label="Actor UUID" rules={[uuidRule]}><Input placeholder="UUID người thực hiện" /></Form.Item>
+          <Form.Item name="entityId" label="Entity UUID" rules={[uuidRule]}><Input placeholder="UUID đối tượng" /></Form.Item>
+          <Form.Item name="action" label="Action"><Input maxLength={100} placeholder="Ví dụ: ASSIGN_USER_ROLE" /></Form.Item>
+          <Form.Item name="entityType" label="Entity type"><Input maxLength={100} placeholder="Ví dụ: User, Plan, Payment" /></Form.Item>
+        </div>
+        <p className="ad-note">UUID, action và entity type khớp chính xác. Thời gian theo Backend, chưa kèm múi giờ.</p>
+        </details>
+        <div className="audit-filter-actions"><Button type="primary" htmlType="submit">Áp dụng bộ lọc</Button>
+          <Button onClick={() => { form.resetFields(); setSelected(null); setExportError(null); setParams(previous => ({ page: 0, size: previous.size })); }}>Xóa bộ lọc</Button>
+        </div>
+      </Form>}
+      {exportError && <p className="ad-state" role="alert">{exportError}</p>}
+      {canAudit && resource.status === 'success' && resource.data
+        ? <Table<AuditLogItem> rowKey="id" columns={columns} dataSource={resource.data.items ?? []} tableLayout="fixed" size="middle"
+            locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có dữ liệu" /> }}
+            pagination={{ current: (resource.data.page ?? 0) + 1, pageSize: resource.data.size, total: resource.data.totalElements,
+              showSizeChanger: true, pageSizeOptions: [10, 20, 50, 100],
+              showTotal: total => `Tổng ${total.toLocaleString('vi-VN')} bản ghi`,
+              onChange: (page, size) => { setSelected(null); setParams(previous => ({ ...previous, page: size !== previous.size ? 0 : page - 1, size })); } }} />
+        : <ResourceState resource={resource} allowed={canAudit} />}
+    </section>
+    <AuditDetailDrawer log={selected} open={selected !== null} onClose={() => setSelected(null)} />
+  </div>;
 }
