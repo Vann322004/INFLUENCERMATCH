@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Table, Tag, Avatar, Button, Input, Select, Space,
-  Tooltip, Dropdown, Typography, Row, Col, Card, Spin, Badge,
+  Tooltip, Dropdown, Typography, Row, Col, Card, Spin, Badge, Tabs,
 } from 'antd';
 import type { MenuProps, TableColumnsType } from 'antd';
 import {
@@ -16,6 +16,7 @@ import { adminService } from '../../../services/api/adminService';
 import type { AdminUser, AdminUserRole, AdminUserStatus } from '../../../types/api/admin.types';
 import CreateAdminModal from './components/CreateAdminModal';
 import LockUnlockModal from './components/LockUnlockModal';
+import RbacMatrixTab from './components/RbacMatrixTab';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -38,6 +39,7 @@ const ROLE_CONFIG: Record<AdminUserRole, { label: string; color: string; icon: R
 
 export default function AccountManagementPage() {
   const navigate = useNavigate();
+  const [activeMainTab, setActiveMainTab] = useState<'accounts' | 'rbac'>('accounts');
   const [data, setData] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -216,30 +218,65 @@ export default function AccountManagementPage() {
   return (
     <div>
       {/* Page Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>Quản lý Tài khoản</div>
-          <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>Quản lý toàn bộ tài khoản Quản trị, Quản lý, Doanh nghiệp và Nhà sáng tạo</div>
+          <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>
+            Quản trị Tài khoản & Phân quyền RBAC (Luồng AD-01 & AD-05)
+          </div>
+          <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
+            Quản lý tài khoản toàn hệ thống, khóa/mở khóa tức thì và phân bổ ma trận quyền hạn cho từng nhóm vai trò
+          </div>
         </div>
-        <Space>
-          <Button
-            icon={<ExportOutlined />}
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#94A3B8' }}
-          >
-            Xuất file CSV
-          </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setCreateOpen(true)}
-            style={{ background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)', border: 'none', fontWeight: 700 }}
-          >
-            Tạo Quản trị / Quản lý
-          </Button>
-        </Space>
+        {activeMainTab === 'accounts' && (
+          <Space>
+            <Button
+              icon={<ExportOutlined />}
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #CBD5E1', color: '#475569' }}
+            >
+              Xuất file CSV
+            </Button>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setCreateOpen(true)}
+              style={{ background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)', border: 'none', fontWeight: 700 }}
+            >
+              Tạo Quản trị / Quản lý
+            </Button>
+          </Space>
+        )}
       </div>
 
-      {/* KPI Stats */}
+      {/* Main Tabs: Danh sách tài khoản (AD-01) vs Phân bổ quyền hạn RBAC (AD-05) */}
+      <Tabs
+        activeKey={activeMainTab}
+        onChange={(k) => setActiveMainTab(k as 'accounts' | 'rbac')}
+        style={{ marginBottom: 16 }}
+        items={[
+          {
+            key: 'accounts',
+            label: (
+              <span style={{ fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <TeamOutlined /> Danh sách tài khoản & Khóa tức thì (AD-01)
+              </span>
+            ),
+          },
+          {
+            key: 'rbac',
+            label: (
+              <span style={{ fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <SafetyCertificateOutlined /> Phân bổ Quyền hạn & Ma trận RBAC (AD-05)
+              </span>
+            ),
+          },
+        ]}
+      />
+
+      {activeMainTab === 'rbac' ? (
+        <RbacMatrixTab />
+      ) : (
+        <>
+          {/* KPI Stats */}
       <Row gutter={[12, 12]} style={{ marginBottom: 20 }}>
         {statCards.map(card => (
           <Col xs={12} sm={6} key={card.label}>
@@ -357,6 +394,8 @@ export default function AccountManagementPage() {
           onClose={() => setLockTarget(null)}
           onDone={handleLockDone}
         />
+      )}
+        </>
       )}
     </div>
   );

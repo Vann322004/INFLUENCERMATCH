@@ -56,7 +56,7 @@ function ClaimDetailDrawer({
       open={open} onClose={onClose} width={600}
       title={
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <FileSearchOutlined style={{ color: "#6366F1", fontSize: 18 }} />
+          <FileSearchOutlined style={{ color: "#2563EB", fontSize: 18 }} />
           <span style={{ fontWeight: 700 }}>Chi tiết hồ sơ xác minh</span>
           <Tag icon={st.icon} style={{ background: st.color + "18", border: `1px solid ${st.color}40`, color: st.color, borderRadius: 20, fontWeight: 700, fontSize: 11 }}>
             {st.label}
@@ -94,12 +94,12 @@ function ClaimDetailDrawer({
             style={{ background: "linear-gradient(135deg,#EEF2FF,#F0FDF4)", border: "1px solid #C7D2FE", borderRadius: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <Avatar src={d.creatorAvatar} size={48} icon={<UserOutlined />}
-                style={{ border: "2px solid #818CF8", flexShrink: 0 }} />
+                style={{ border: "2px solid #3B82F6", flexShrink: 0 }} />
               <div>
                 <div style={{ fontWeight: 700, fontSize: 15, color: "#0F172A" }}>
                   {d.creatorName || d.creatorHandle || "Creator"}
                 </div>
-                <div style={{ color: "#6366F1", fontSize: 12, fontWeight: 600 }}>{d.creatorHandle}</div>
+                <div style={{ color: "#2563EB", fontSize: 12, fontWeight: 600 }}>{d.creatorHandle}</div>
                 {d.creatorFollowers && (
                   <div style={{ color: "#64748B", fontSize: 11 }}>{d.creatorFollowers.toLocaleString()} followers</div>
                 )}
@@ -128,14 +128,14 @@ function ClaimDetailDrawer({
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {d.evidenceType && (
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <IdcardOutlined style={{ color: "#6366F1" }} />
+                    <IdcardOutlined style={{ color: "#2563EB" }} />
                     <Text style={{ fontSize: 13 }}>Loại: <strong>{d.evidenceType}</strong></Text>
                   </div>
                 )}
                 {d.evidenceUrl && (
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <LinkOutlined style={{ color: "#6366F1" }} />
-                    <a href={d.evidenceUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: "#6366F1" }}>
+                    <LinkOutlined style={{ color: "#2563EB" }} />
+                    <a href={d.evidenceUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: "#2563EB" }}>
                       {d.evidenceUrl}
                     </a>
                   </div>
@@ -317,10 +317,10 @@ export default function CreatorClaimReviewPage() {
       title: "Creator", key: "creator", width: 200,
       render: (_, r) => (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Avatar src={r.creatorAvatar} icon={<UserOutlined />} size={36} style={{ border: "1.5px solid rgba(99,102,241,0.3)", flexShrink: 0 }} />
+          <Avatar src={r.creatorAvatar} icon={<UserOutlined />} size={36} style={{ border: "1.5px solid rgba(37,99,235,0.3)", flexShrink: 0 }} />
           <div>
             <div style={{ fontWeight: 700, fontSize: 13, color: "#0F172A", lineHeight: 1.2 }}>{r.creatorName || r.creatorHandle || "Creator"}</div>
-            <div style={{ fontSize: 11, color: "#6366F1" }}>{r.creatorHandle}</div>
+            <div style={{ fontSize: 11, color: "#2563EB" }}>{r.creatorHandle}</div>
           </div>
         </div>
       ),
@@ -421,8 +421,8 @@ export default function CreatorClaimReviewPage() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
           <div style={{ color: "#0F172A", fontWeight: 800, fontSize: 20, display: "flex", alignItems: "center", gap: 10 }}>
-            <SafetyCertificateOutlined style={{ color: "#6366F1" }} />
-            Duyệt yêu cầu xác minh
+            <SafetyCertificateOutlined style={{ color: "#2563EB" }} />
+            Kiểm duyệt đơn nhận kênh KOC & Cấp Tích Xanh (DM-02)
           </div>
           <div style={{ color: "#64748B", fontSize: 13, marginTop: 2 }}>
             Xét duyệt yêu cầu xác minh quyền sở hữu kênh nhà sáng tạo
