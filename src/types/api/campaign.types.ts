@@ -83,6 +83,7 @@ export interface CampaignResponse extends CampaignPlanningFields {
   followerMax?: number;
   budgetMin?: number;
   budgetMax?: number;
+  campaignRevision?: number;
   createdAt?: string;
   updatedAt?: string;
 }

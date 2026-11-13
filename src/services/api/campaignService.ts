@@ -180,13 +180,26 @@ export const campaignService = {
   },
 
   /**
-   * Lấy thông tin chi tiết + ETag header của một chiến dịch
-   * Dùng trước khi PUT/PATCH để lấy If-Match header
+   * Tạo chuẩn ETag revision theo contract của backend: "campaign:<uuid>:r<revision>"
    */
-  async getCampaignWithETag(id: string): Promise<{ data: CampaignResponse; etag: string | null }> {
+  formatCampaignRevisionTag(id: string, revision?: number | null): string {
+    const rev = revision != null && !isNaN(Number(revision)) ? Number(revision) : 0;
+    return `"campaign:${id}:r${rev}"`;
+  },
+
+  /**
+   * Lấy thông tin chi tiết + ETag của một chiến dịch
+   * Ưu tiên header ETag trả về, nếu trình duyệt che giấu header do CORS thì tự tính từ campaignRevision trong payload
+   */
+  async getCampaignWithETag(id: string): Promise<{ data: CampaignResponse; etag: string }> {
     const response = await apiClient.get<ApiResponse<CampaignResponse>>(`/campaigns/${id}`);
-    const etag = response.headers?.['etag'] || null;
-    return { data: response.data.data, etag };
+    const data = response.data?.data || (response.data as unknown as CampaignResponse);
+    const rawHeader =
+      response.headers?.['etag'] ??
+      (typeof response.headers?.get === 'function' ? response.headers.get('etag') : null);
+    const headerEtag = typeof rawHeader === 'string' ? rawHeader : null;
+    const etag = headerEtag || this.formatCampaignRevisionTag(id, data.campaignRevision);
+    return { data, etag };
   },
 
   /**
@@ -203,44 +216,66 @@ export const campaignService = {
 
   /**
    * Cập nhật thông tin chiến dịch
-   * Tự động lấy ETag trước khi PUT để gửi If-Match header (optimistic locking)
+   * Đảm bảo luôn gửi header If-Match hợp lệ (bắt buộc bởi backend optimistic locking)
    */
-  async updateCampaign(id: string, payload: Partial<CampaignRequest>, etag?: string | null): Promise<CampaignResponse> {
-    // Nếu không có etag, fetch GET trước để lấy ETag header
-    let ifMatchValue = etag;
-    if (!ifMatchValue) {
+  async updateCampaign(
+    id: string,
+    payload: Partial<CampaignRequest>,
+    revisionOrEtag?: number | string | null
+  ): Promise<CampaignResponse> {
+    let ifMatchValue: string;
+    if (typeof revisionOrEtag === 'number') {
+      ifMatchValue = this.formatCampaignRevisionTag(id, revisionOrEtag);
+    } else if (typeof revisionOrEtag === 'string' && revisionOrEtag.trim()) {
+      const clean = revisionOrEtag.trim();
+      ifMatchValue = clean.startsWith('"') ? clean : `"${clean}"`;
+    } else {
       try {
-        const { etag: fetchedEtag } = await this.getCampaignWithETag(id);
-        ifMatchValue = fetchedEtag;
-      } catch {
-        // Nếu không lấy được ETag, vẫn thử gửi request (backend có required=false)
+        const { etag } = await this.getCampaignWithETag(id);
+        ifMatchValue = etag;
+      } catch (err) {
+        console.warn(`[campaignService] Không fetch được ETag của ${id}, fallback r0:`, err);
+        ifMatchValue = this.formatCampaignRevisionTag(id, 0);
       }
     }
-    const headers: Record<string, string> = {};
-    if (ifMatchValue) headers['If-Match'] = ifMatchValue;
+
     const response = await apiClient.put<ApiResponse<CampaignResponse>>(
       `/campaigns/${id}`,
       campaignWritePayload(payload),
-      { headers }
+      {
+        headers: {
+          'If-Match': ifMatchValue,
+        },
+      }
     );
     return response.data?.data || (response.data as unknown as CampaignResponse);
   },
 
   /**
    * Lưu trữ chiến dịch
-   * PATCH /campaigns/{id}/archive — tự động gửi If-Match header
+   * PATCH /campaigns/{id}/archive — luôn gửi kèm If-Match header
    */
-  async archiveCampaign(id: string): Promise<CampaignResponse> {
+  async archiveCampaign(id: string, revisionOrEtag?: number | string | null): Promise<CampaignResponse> {
     try {
-      let etag: string | null = null;
-      try { const r = await this.getCampaignWithETag(id); etag = r.etag; } catch {}
-      const headers: Record<string, string> = {};
-      if (etag) headers['If-Match'] = etag;
-      const response = await apiClient.patch<ApiResponse<CampaignResponse>>(`/campaigns/${id}/archive`, undefined, { headers });
+      let ifMatchValue: string;
+      if (typeof revisionOrEtag === 'number') {
+        ifMatchValue = this.formatCampaignRevisionTag(id, revisionOrEtag);
+      } else if (typeof revisionOrEtag === 'string' && revisionOrEtag.trim()) {
+        const clean = revisionOrEtag.trim();
+        ifMatchValue = clean.startsWith('"') ? clean : `"${clean}"`;
+      } else {
+        const { etag } = await this.getCampaignWithETag(id);
+        ifMatchValue = etag;
+      }
+      const response = await apiClient.patch<ApiResponse<CampaignResponse>>(
+        `/campaigns/${id}/archive`,
+        undefined,
+        { headers: { 'If-Match': ifMatchValue } }
+      );
       return response.data?.data || (response.data as unknown as CampaignResponse);
     } catch {
       // Fallback: cập nhật trạng thái ARCHIVED
-      return this.updateStatus(id, 'ARCHIVED');
+      return this.updateStatus(id, 'ARCHIVED', revisionOrEtag);
     }
   },
 
@@ -373,12 +408,30 @@ export const campaignService = {
   /**
    * Cập nhật trạng thái chiến dịch (DRAFT, ACTIVE, COMPLETED, ARCHIVED)
    */
-  async updateStatus(id: string, status: CampaignStatus): Promise<CampaignResponse> {
-    let etag: string | null = null;
-    try { const r = await this.getCampaignWithETag(id); etag = r.etag; } catch {}
-    const headers: Record<string, string> = {};
-    if (etag) headers['If-Match'] = etag;
-    const response = await apiClient.patch<ApiResponse<CampaignResponse>>(`/campaigns/${id}/status`, { status }, { headers });
+  async updateStatus(
+    id: string,
+    status: CampaignStatus,
+    revisionOrEtag?: number | string | null
+  ): Promise<CampaignResponse> {
+    let ifMatchValue: string;
+    if (typeof revisionOrEtag === 'number') {
+      ifMatchValue = this.formatCampaignRevisionTag(id, revisionOrEtag);
+    } else if (typeof revisionOrEtag === 'string' && revisionOrEtag.trim()) {
+      const clean = revisionOrEtag.trim();
+      ifMatchValue = clean.startsWith('"') ? clean : `"${clean}"`;
+    } else {
+      try {
+        const { etag } = await this.getCampaignWithETag(id);
+        ifMatchValue = etag;
+      } catch {
+        ifMatchValue = this.formatCampaignRevisionTag(id, 0);
+      }
+    }
+    const response = await apiClient.patch<ApiResponse<CampaignResponse>>(
+      `/campaigns/${id}/status`,
+      { status },
+      { headers: { 'If-Match': ifMatchValue } }
+    );
     return response.data?.data || (response.data as unknown as CampaignResponse);
   },
 
