@@ -214,7 +214,7 @@ const createAdmin = async (payload: { name: string; email: string; password?: st
 // ── Data Quality / Claims -------------------------------
 
 /** GET /admin/data-quality/pending — list pending claims */
-const getPendingClaims = async (params?: { page?: number; size?: number }): Promise<PendingQualityClaim[]> => {
+const getPendingClaims = async (params?: { page?: number; size?: number }, options?: { requireBackend?: boolean }): Promise<PendingQualityClaim[]> => {
   try {
     const response = await apiClient.get<any>('/admin/data-quality/pending', { params });
     const payload = response.data;
@@ -231,7 +231,9 @@ const getPendingClaims = async (params?: { page?: number; size?: number }): Prom
         notes: q.notes || q.reason || 'KOC snapshot confidence below 0.7',
       }));
     }
+    if (options?.requireBackend) throw new Error('Dữ liệu hàng đợi kiểm định không hợp lệ.');
   } catch (err) {
+    if (options?.requireBackend) throw err;
     console.warn('[adminService.getPendingClaims] Backend API error:', err);
   }
   return [];
@@ -418,8 +420,10 @@ const getTransactionById = async (id: string): Promise<any> => {
   return response.data?.data ?? response.data;
 };
 
+import type { RecommendationConfigResponseDto } from '../../types/api/recommendationConfig.types';
+
 /** GET /admin/recommendation-config — Get active Four-Memory engine config (Luồng DM-04) */
-const getRecommendationConfig = async (): Promise<any> => {
+const getRecommendationConfig = async (): Promise<RecommendationConfigResponseDto> => {
   const response = await apiClient.get<any>('/admin/recommendation-config');
   return response.data?.data ?? response.data;
 };
@@ -427,6 +431,18 @@ const getRecommendationConfig = async (): Promise<any> => {
 /** GET /admin/system-status — Get system health and runtime metrics (Luồng AD-02) */
 const getSystemStatus = async (): Promise<any> => {
   const response = await apiClient.get<any>('/admin/system-status');
+  return response.data?.data ?? response.data;
+};
+
+/** GET /data/creator-masters — Get paginated Master identities (Luồng DM-01) */
+const getCreatorMasters = async (params?: { page?: number; size?: number; q?: string; status?: string }): Promise<any> => {
+  const response = await apiClient.get<any>('/data/creator-masters', { params });
+  return response.data?.data ?? response.data;
+};
+
+/** GET /data/creator-conflicts — Get identity conflicts and duplicate disputes (Luồng DM-01/DM-02) */
+const getIdentityConflicts = async (params?: { page?: number; size?: number; status?: string }): Promise<any> => {
+  const response = await apiClient.get<any>('/data/creator-conflicts', { params });
   return response.data?.data ?? response.data;
 };
 
@@ -448,4 +464,6 @@ export const adminService = {
   refundTransaction,
   getRecommendationConfig,
   getSystemStatus,
+  getCreatorMasters,
+  getIdentityConflicts,
 };

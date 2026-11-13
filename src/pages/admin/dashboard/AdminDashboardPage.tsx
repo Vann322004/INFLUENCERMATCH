@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Row, Col, Card, Typography, Tag, List, Avatar, Button, Spin, Empty, Tooltip } from 'antd';
 import {
   TeamOutlined, UserOutlined, DollarOutlined, ThunderboltOutlined,
@@ -13,6 +14,8 @@ import { adminService } from '../../../services/api/adminService';
 import { creatorService } from '../../../services/api/creatorService';
 import { campaignService } from '../../../services/api/campaignService';
 import { subscriptionService } from '../../../services/api/subscriptionService';
+import { authService } from '../../../services/api/authService';
+import { DATA_MANAGER_ROUTES } from '../../../constants/adminRoutes';
 import type { AdminUser, AuditLogItem, AuditAction, AdminSubscription } from '../../../types/api/admin.types';
 import type { CreatorItem } from '../../../types/api/creator.types';
 import type { CampaignResponse } from '../../../types/api/campaign.types';
@@ -155,6 +158,10 @@ const ACTION_MAP: Record<AuditAction, { label: string; color: string; icon: Reac
 };
 
 export default function AdminDashboardPage() {
+  if (authService.isManager()) {
+    return <Navigate to={DATA_MANAGER_ROUTES.DASHBOARD} replace />;
+  }
+
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [creators, setCreators] = useState<CreatorItem[]>([]);
@@ -368,10 +375,10 @@ export default function AdminDashboardPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <Title level={3} style={{ color: '#0F172A', margin: 0, fontWeight: 800 }}>
-            Bảng điều khiển Quản trị
+            Bảng điều khiển Quản trị Hệ thống
           </Title>
           <Text style={{ color: '#64748B', fontSize: 13 }}>
-            Tổng quan dữ liệu thời gian thực InfluencerMatch •{' '}
+            Tổng quan người dùng, gói dịch vụ, doanh thu và kiểm toán hệ thống •{' '}
             {lastRefreshed.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </Text>
         </div>

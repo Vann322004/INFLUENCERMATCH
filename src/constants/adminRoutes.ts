@@ -23,6 +23,7 @@ export const DATA_MANAGER_ROUTES = {
   JOBS: '/data-manager/jobs',
   DATA_QUALITY: '/data-manager/data-quality',
   DATA_SOURCES: '/data-manager/data-sources',
+  TAXONOMY: '/data-manager/taxonomy',
   SCORING: '/data-manager/scoring',
   CREATORS: '/data-manager/creators',
   CREATOR_CLAIMS: '/data-manager/creator-claims',
