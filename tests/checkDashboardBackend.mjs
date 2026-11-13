@@ -28,9 +28,13 @@ try {
   // Execute the same mapper used by the application with a real HTTP client.
   const context = vm.createContext({ console, Date });
   const client = new vm.SyntheticModule(['default'], function () { this.setExport('default', { get }); }, { context });
+  const uncachedQueries = new vm.SyntheticModule(['createDataManagerQuery'], function () {
+    this.setExport('createDataManagerQuery', (_key, load) => load);
+  }, { context });
   const source = stripTypeScriptTypes(await readFile(new URL('../src/services/api/dataManagerDashboardService.ts', import.meta.url), 'utf8'));
   const module = new vm.SourceTextModule(source, { context });
   await module.link(specifier => {
+    if (specifier === '../dataManagerCache') return uncachedQueries;
     if (specifier !== '../apiClient') throw new Error('Unexpected dependency');
     return client;
   });

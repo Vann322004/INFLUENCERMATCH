@@ -10,6 +10,7 @@
 // =============================================
 
 import apiClient from '../apiClient';
+import { createDataManagerQuery } from '../dataManagerCache';
 import type {
   AdminUser,
   AdminUsersResponse,
@@ -423,10 +424,14 @@ const getTransactionById = async (id: string): Promise<any> => {
 import type { RecommendationConfigResponseDto } from '../../types/api/recommendationConfig.types';
 
 /** GET /admin/recommendation-config — Get active Four-Memory engine config (Luồng DM-04) */
-const getRecommendationConfig = async (): Promise<RecommendationConfigResponseDto> => {
+const getRecommendationConfig = createDataManagerQuery('recommendation-config', async (): Promise<RecommendationConfigResponseDto> => {
   const response = await apiClient.get<any>('/admin/recommendation-config');
-  return response.data?.data ?? response.data;
-};
+  const config = response.data?.data ?? response.data;
+  if (!config || typeof config.engineVersion !== 'string' || !config.engineVersion) {
+    throw new Error('Cấu hình gợi ý trả về không hợp lệ.');
+  }
+  return config;
+}, { tags: ['recommendation-config'] });
 
 /** GET /admin/system-status — Get system health and runtime metrics (Luồng AD-02) */
 const getSystemStatus = async (): Promise<any> => {

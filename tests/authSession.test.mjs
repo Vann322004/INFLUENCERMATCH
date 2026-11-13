@@ -16,7 +16,7 @@ async function tab(shared = new Storage(), existing = new Storage()) {
   const redirects = [];
   const context = vm.createContext({
     localStorage: shared, sessionStorage: existing, crypto: globalThis.crypto,
-    navigator: {}, window: { location: { assign: url => redirects.push(url) } },
+    navigator: {}, structuredClone: globalThis.structuredClone, window: { location: { assign: url => redirects.push(url) } },
   });
   const modules = new Map();
   const stub = (name, values) => new vm.SyntheticModule(Object.keys(values), function () {
@@ -26,6 +26,8 @@ async function tab(shared = new Storage(), existing = new Storage()) {
   modules.set('./campaignService', stub('campaigns', { clearBrandCache() {} }));
   modules.set('./brandService', stub('brands', { brandService: { clearBrandCache() {} } }));
   for (const [key, file] of [
+    ['./requestCache', 'src/services/requestCache.ts'],
+    ['cacheFacade', 'src/services/dataManagerCache.ts'],
     ['../authSession', 'src/services/authSession.ts'],
     ['../apiClient', 'src/services/apiClient.ts'],
     ['authService', 'src/services/api/authService.ts'],
@@ -37,9 +39,14 @@ async function tab(shared = new Storage(), existing = new Storage()) {
   const serviceModule = modules.get('authService');
   await serviceModule.link(resolve);
   await serviceModule.evaluate();
+  const cacheFacade = modules.get('cacheFacade');
+  await cacheFacade.link(resolve);
+  await cacheFacade.evaluate();
   return {
     session: modules.get('../authSession').namespace,
     client: modules.get('../apiClient').namespace,
+    cache: modules.get('./requestCache').namespace.dataManagerRequestCache,
+    cacheApi: cacheFacade.namespace,
     auth: serviceModule.namespace.authService,
     shared, storage: existing, redirects,
   };
@@ -53,6 +60,55 @@ const response = (config, data) => ({ config,
   status: 200, statusText: 'OK', headers: {},
 });
 const unauthorized = config => Promise.reject(new axios.AxiosError('Expired', 'ERR_BAD_REQUEST', config, {}, { status: 401, data: {} }));
+
+test('manager cache survives token rotation, but clears on permission changes and logout', async () => {
+  const a = await tab();
+  const user = { ...manager, permissions: ['MANAGE_RECOMMENDATION_CONFIG'] };
+  a.session.setAuthSession('token-1', undefined, user);
+  let calls = 0;
+  const query = a.cacheApi.createDataManagerQuery('configuration', async () => { calls++; return { version: '1' }; });
+  await Promise.all([query(), query()]);
+  assert.equal(calls, 1);
+  a.session.setAuthSession('token-2', undefined, user);
+  await query();
+  assert.equal(calls, 1);
+  a.session.setAuthSession('token-3', undefined, { ...user, permissions: [] });
+  assert.equal(query.peek(), undefined);
+  await query();
+  assert.equal(calls, 2);
+  a.session.clearAuthSession();
+  assert.equal(query.peek(), undefined);
+});
+
+test('a previous account request cannot populate or return cached data to a new account', async () => {
+  const a = await tab();
+  a.session.setAuthSession('token-a', undefined, manager);
+  let resolve;
+  const query = a.cacheApi.createDataManagerQuery('summary', () => new Promise(done => { resolve = done; }));
+  const pending = query();
+  await Promise.resolve();
+  a.session.setAuthSession('token-b', undefined, { id: 'other-manager', role: 'DATA_MANAGER' });
+  resolve({ private: 'old-account' });
+  await assert.rejects(pending, /Dữ liệu đã thay đổi|Phiên đăng nhập đã thay đổi/);
+  assert.equal(query.peek(), undefined);
+});
+
+test('API writes invalidate related cache and non-manager sessions bypass it', async () => {
+  const a = await tab();
+  a.session.setAuthSession('manager-token', undefined, manager);
+  let calls = 0;
+  const query = a.cacheApi.createDataManagerQuery('niches', async () => { calls++; return []; }, { tags: ['taxonomy'] });
+  await query();
+  a.client.apiClient.defaults.adapter = async config => response(config, {});
+  await a.client.apiClient.patch('/data/niches/123', { name: 'Updated' });
+  assert.equal(query.peek(), undefined);
+  await query();
+  assert.equal(calls, 2);
+  a.session.setAuthSession('brand-token', undefined, brand);
+  await query(); await query();
+  assert.equal(calls, 4);
+  assert.equal(query.peek(), undefined);
+});
 
 test('tabs retain separate identities and logout does not remove another tab session', async () => {
   const a = await tab();

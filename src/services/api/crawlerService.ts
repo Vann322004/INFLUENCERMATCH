@@ -1,3 +1,5 @@
+import { invalidateDataManagerCacheForMutation } from '../requestCache';
+import { createDataManagerQuery } from '../dataManagerCache';
 import type {
   CrawlPlatform,
   LiveCrawlResult,
@@ -49,7 +51,9 @@ class CrawlerService {
         clearTimeout(timeoutId);
 
         if (res.ok) {
-          return await res.json();
+          const data = await res.json();
+          invalidateDataManagerCacheForMutation(options.method, endpoint);
+          return data;
         } else {
           const errBody = await res.json().catch(() => ({}));
           throw new Error(errBody.detail || errBody.error || `Lỗi máy chủ HTTP ${res.status}`);
@@ -68,19 +72,26 @@ class CrawlerService {
   /**
    * Lấy danh mục ngành hàng Taxonomy thực tế (GET /api/v1/crawl/categories)
    */
+  private readonly categoriesQuery = createDataManagerQuery('crawler-categories', async (): Promise<CrawlCategory[]> => {
+    const data = await this.requestCrawler<any[]>('/api/v1/crawl/categories', {}, 8000);
+    if (!Array.isArray(data)) throw new Error('Danh mục crawler không hợp lệ.');
+    return data.map(item => {
+      const id = item.code || item.id;
+      if (typeof id !== 'string' || !id.trim()) throw new Error('Ngành hàng crawler không hợp lệ.');
+      return {
+        id,
+        name: `${item.icon || '🏷️'} ${item.label || item.name || id}`,
+        description: item.description,
+        defaultCandidates: item.candidates || [],
+      };
+    });
+  }, { tags: ['taxonomy'] });
+
   async getCategories(): Promise<CrawlCategory[]> {
     try {
-      const data = await this.requestCrawler<any[]>('/api/v1/crawl/categories', {}, 8000);
-      if (Array.isArray(data) && data.length > 0) {
-        return data.map((item) => ({
-          id: item.code || item.id,
-          name: `${item.icon || '🏷️'} ${item.label || item.name || item.code}`,
-          description: item.description,
-          defaultCandidates: item.candidates || [],
-        }));
-      }
+      return await this.categoriesQuery();
     } catch {
-      // Fallback về danh mục chuẩn
+      // Existing offline fallback is deliberately outside the cache.
     }
     return DEFAULT_CRAWL_CATEGORIES;
   }

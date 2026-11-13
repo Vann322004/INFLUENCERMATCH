@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, Empty, Segmented, Skeleton } from 'antd';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { dataManagerDashboardService } from '../../../../services/api/dataManagerDashboardService';
@@ -7,7 +7,7 @@ import DashboardResourceError from './DashboardResourceError';
 
 export default function CrawlerTrendsPanel() {
   const [days, setDays] = useState<7 | 30>(7);
-  const fetchTrends = useCallback(() => dataManagerDashboardService.getCrawlerTrends(days), [days]);
+  const fetchTrends = useMemo(() => dataManagerDashboardService.getCrawlerTrendsQuery(days), [days]);
   const trends = useDashboardResource(fetchTrends);
   const points = trends.data?.items ?? [];
   const noActivity = points.length > 0 && points.every(point => point.ingestedCount === 0 && point.successCount === 0 && point.failedCount === 0);

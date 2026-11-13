@@ -189,17 +189,15 @@ try {
   await page.goto(`${baseURL}/data-manager/dashboard`);
   const trendPanel = page.locator('.dm-trends-panel');
   await trendPanel.getByText('Nguồn trực tiếp / dự phòng chưa được xác nhận', { exact: false }).waitFor();
-  await trendPanel.getByText('30 ngày', { exact: true }).tap();
-  await page.waitForFunction(() => document.querySelectorAll('.dm-trends-panel tbody tr').length === 30);
-  assert(trendRequests.includes(30));
-  await trendPanel.getByText('7 ngày', { exact: true }).tap();
-  await page.waitForFunction(() => document.querySelectorAll('.dm-trends-panel tbody tr').length === 7);
   delayThirtyDays = true;
   await trendPanel.getByText('30 ngày', { exact: true }).tap();
   await trendPanel.getByText('7 ngày', { exact: true }).tap();
   await page.waitForTimeout(900);
   assert.equal(await trendPanel.locator('tbody tr').count(), 7, 'late 30-day response must not overwrite 7-day data');
   delayThirtyDays = false;
+  await trendPanel.getByText('30 ngày', { exact: true }).tap();
+  await page.waitForFunction(() => document.querySelectorAll('.dm-trends-panel tbody tr').length === 30);
+  assert(trendRequests.includes(30));
   results.push({ trends: '7/30 day requests, unknown source, and late-response protection passed' });
   for (const state of ['zero', 'fallback', 'malformed']) {
     scenario = state;

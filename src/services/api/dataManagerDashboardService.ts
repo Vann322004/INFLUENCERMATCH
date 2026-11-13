@@ -1,4 +1,5 @@
 import apiClient from '../apiClient';
+import { createDataManagerQuery } from '../dataManagerCache';
 import type { CreatorMasterSummary, CrawlerTrends, NicheStatistic } from '../../types/api/dataManagerDashboard.types';
 
 type RecordValue = Record<string, unknown>;
@@ -29,7 +30,7 @@ function list(value: unknown): unknown[] {
 }
 
 export const dataManagerDashboardService = {
-  async getCreatorMasterSummary(): Promise<CreatorMasterSummary> {
+  getCreatorMasterSummary: createDataManagerQuery('creator-master-summary', async (): Promise<CreatorMasterSummary> => {
     const { data } = await apiClient.get('/data/creator-masters/summary');
     const summary = record(payload(data));
     return {
@@ -38,9 +39,9 @@ export const dataManagerDashboardService = {
       unclaimedChannelsCount: count(summary.unclaimedChannelsCount ?? summary.unclaimed_channels_count, 'unclaimedChannelsCount'),
       duplicateCandidatesCount: count(summary.duplicateCandidatesCount ?? summary.duplicate_candidates_count, 'duplicateCandidatesCount'),
     };
-  },
+  }, { ttl: 60000, tags: ['creator-data'] }),
 
-  async getNicheStatistics(): Promise<NicheStatistic[]> {
+  getNicheStatistics: createDataManagerQuery('niche-statistics', async (): Promise<NicheStatistic[]> => {
     const { data } = await apiClient.get('/data/niches/stats');
     return list(payload(data)).map(value => {
       const item = record(value);
@@ -55,9 +56,13 @@ export const dataManagerDashboardService = {
         percentage,
       };
     });
-  },
+  }, { ttl: 60000, tags: ['creator-data'] }),
 
-  async getCrawlerTrends(days: 7 | 30): Promise<CrawlerTrends> {
+  getCrawlerTrends(days: 7 | 30): Promise<CrawlerTrends> { return trendQueries[days](); },
+  getCrawlerTrendsQuery(days: 7 | 30) { return trendQueries[days]; },
+};
+
+async function fetchCrawlerTrends(days: 7 | 30): Promise<CrawlerTrends> {
     const { data: body } = await apiClient.get('/data/crawler/trends', { params: { days } });
     const data = payload(body);
     const detail = record(data);
@@ -88,5 +93,9 @@ export const dataManagerDashboardService = {
       source: typeof declaredSource === 'string' && declaredSource.trim() ? declaredSource : rowSources.join(', ') || null,
       isFallback: typeof declaredFallback === 'boolean' ? declaredFallback : rowFallbacks.length ? rowFallbacks.some(Boolean) : null,
     };
-  },
+}
+
+const trendQueries = {
+  7: createDataManagerQuery('crawler-trends:7', () => fetchCrawlerTrends(7), { ttl: 60000, tags: ['crawler-data'] }),
+  30: createDataManagerQuery('crawler-trends:30', () => fetchCrawlerTrends(30), { ttl: 60000, tags: ['crawler-data'] }),
 };

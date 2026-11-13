@@ -9,9 +9,13 @@ async function service(file, name, get) {
   const client = new vm.SyntheticModule(['default'], function () {
     this.setExport('default', { get });
   }, { context });
+  const uncachedQueries = new vm.SyntheticModule(['createDataManagerQuery'], function () {
+    this.setExport('createDataManagerQuery', (_key, load) => load);
+  }, { context });
   const source = stripTypeScriptTypes(await readFile(new URL(`../src/services/api/${file}.ts`, import.meta.url), 'utf8'));
   const module = new vm.SourceTextModule(source, { context });
   await module.link(specifier => {
+    if (specifier === '../dataManagerCache') return uncachedQueries;
     assert.equal(specifier, '../apiClient');
     return client;
   });
