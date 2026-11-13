@@ -72,45 +72,6 @@
   margin: 0;
 }
 
-/* ── Mode Navigation Tabs (Khám phá hệ thống / Quét kênh ngoài) ── */
-.cdiscovery-mode-tabs {
-  display: inline-flex;
-  align-items: center;
-  background: #F1F5F9;
-  padding: 4px;
-  border-radius: 12px;
-  border: 1px solid #E2E8F0;
-  gap: 4px;
-}
-
-.cdiscovery-tab-btn {
-  border: none;
-  background: transparent;
-  color: #64748B;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: inherit;
-  white-space: nowrap;
-}
-
-.cdiscovery-tab-btn:hover {
-  color: #1E293B;
-}
-
-.cdiscovery-tab-btn.active {
-  background: #FFFFFF;
-  color: #4F46E5;
-  font-weight: 700;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
-}
-
 /* ── 2. Top Stepper 5 bước (Top Stepper Bar) ── */
 .cdiscovery-top-stepper {
   background: #FFFFFF;
@@ -766,16 +727,6 @@
   }
   .cdiscovery-header-sub {
     font-size: 12.5px;
-  }
-  .cdiscovery-mode-tabs {
-    width: 100%;
-    display: flex;
-  }
-  .cdiscovery-tab-btn {
-    flex: 1;
-    justify-content: center;
-    padding: 7px 10px;
-    font-size: 12px;
   }
   .cdiscovery-cards-grid {
     grid-template-columns: 1fr;

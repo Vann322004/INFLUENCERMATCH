@@ -29,6 +29,17 @@ export default defineConfig({
         changeOrigin: true,
         timeout: 120000,
       },
+      '/api/v1/ai/campaign-autofill': {
+        target: 'https://api.influencermatch.site',
+        changeOrigin: true,
+        secure: false,
+        agent: keepAliveAgent,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Origin', 'http://localhost:5173');
+          });
+        },
+      },
       '/api/v1/ai': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,

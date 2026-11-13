@@ -31,6 +31,7 @@ interface DiscoveryFilterSectionProps {
   audienceGender: string;
   onAudienceGenderChange: (value: string) => void;
   priceTier: string;
+  priceFilterAvailable?: boolean;
   onPriceTierChange: (value: string) => void;
   activeFiltersCount: number;
   onResetFilters: () => void;
@@ -58,6 +59,7 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
   audienceGender,
   onAudienceGenderChange,
   priceTier,
+  priceFilterAvailable = false,
   onPriceTierChange,
   activeFiltersCount,
   onResetFilters,
@@ -203,6 +205,8 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
             {/* 5. Độ tuổi khán giả */}
             <Select
               value={audienceAge}
+              disabled
+              title="API chưa cung cấp dữ liệu độ tuổi khán giả để lọc."
               onChange={onAudienceAgeChange}
               className={`cdiscovery-pill-select ${audienceAge !== 'all' ? 'has-value' : ''}`}
               popupMatchSelectWidth={false}
@@ -218,6 +222,8 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
             {/* 6. Giới tính khán giả */}
             <Select
               value={audienceGender}
+              disabled
+              title="API chưa cung cấp tỷ lệ giới tính khán giả để lọc."
               onChange={onAudienceGenderChange}
               className={`cdiscovery-pill-select ${audienceGender !== 'all' ? 'has-value' : ''}`}
               popupMatchSelectWidth={false}
@@ -233,6 +239,8 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
             {/* 7. Mức ngân sách / Báo giá */}
             <Select
               value={priceTier}
+              disabled={!priceFilterAvailable}
+              title={priceFilterAvailable ? undefined : 'Chưa có dữ liệu báo giá để lọc.'}
               onChange={onPriceTierChange}
               className={`cdiscovery-pill-select ${priceTier !== 'all' ? 'has-value' : ''}`}
               popupMatchSelectWidth={false}

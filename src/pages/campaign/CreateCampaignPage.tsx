@@ -92,12 +92,6 @@ const InstagramBrandIcon: React.FC<{ size?: number; color?: string }> = ({ size 
   </svg>
 );
 
-const YouTubeBrandIcon: React.FC<{ size?: number; color?: string }> = ({ size = 16, color }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill={color || 'currentColor'} style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
-    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-  </svg>
-);
-
 const FacebookBrandIcon: React.FC<{ size?: number; color?: string }> = ({ size = 16, color }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color || 'currentColor'} style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}>
     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -127,6 +121,7 @@ export default function CreateCampaignPage() {
 
   // Trạng thái chiến dịch (DRAFT, READY_FOR_DISCOVERY, ACTIVE, COMPLETED, ARCHIVED)
   const [campaignStatus, setCampaignStatus] = useState<string>('DRAFT');
+  const [savedStartDate, setSavedStartDate] = useState<string>('');
   const [isLoadingCampaign, setIsLoadingCampaign] = useState<boolean>(false);
 
   // ================= Step 1 State =================
@@ -134,17 +129,15 @@ export default function CreateCampaignPage() {
   const [campaignName, setCampaignName] = useState('');
   const [product, setProduct] = useState('');
   const [selectedObjectives, setSelectedObjectives] = useState<string[]>([]);
-  const [draftDeadline, setDraftDeadline] = useState<string>('');
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
   const [isAiAutofilled, setIsAiAutofilled] = useState<boolean>(false);
 
   // ================= Step 2 State =================
-  const [creatorQuantity, setCreatorQuantity] = useState<number>(0);
+  const [creatorQuantity, setCreatorQuantity] = useState<number>(1);
   const [creatorTier, setCreatorTier] = useState<string>('');
   const [minFollowers, setMinFollowers] = useState<string>('');
-  const [minEngagement, setMinEngagement] = useState<string>('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedAges, setSelectedAges] = useState<string[]>([]);
   const [selectedGender, setSelectedGender] = useState<string>('');
@@ -154,10 +147,6 @@ export default function CreateCampaignPage() {
 
   // ================= Step 3 State =================
   const [budgetTotal, setBudgetTotal] = useState<number>(0);
-  const [paymentModel, setPaymentModel] = useState<string>('cash');
-  const [targetReach, setTargetReach] = useState<string>('');
-  const [targetEngagementRate, setTargetEngagementRate] = useState<string>('');
-  const [targetConversions, setTargetConversions] = useState<number>(0);
   const [campaignDuration, setCampaignDuration] = useState<string>('');
 
   // Provinces API State
@@ -213,9 +202,17 @@ export default function CreateCampaignPage() {
         const applyCampaignData = (camp: any) => {
           if (!camp) return;
           if (camp.status) setCampaignStatus(camp.status);
+          if (camp.targetCreatorCount) setCreatorQuantity(camp.targetCreatorCount);
+          if (camp.startDate) setSavedStartDate(camp.startDate);
+          if (camp.startDate && camp.endDate) {
+            const days = Math.round((Date.parse(camp.endDate) - Date.parse(camp.startDate)) / 86400000);
+            if (days === 14) setCampaignDuration('2_weeks');
+            else if (days === 28) setCampaignDuration('4_weeks');
+            else if (days === 56) setCampaignDuration('8_weeks');
+          }
           if (camp.name) setCampaignName(camp.name);
           if (camp.productService) setProduct(camp.productService);
-          if (camp.description) setCreatorBrief(camp.description);
+          if (camp.brief || camp.description) setCreatorBrief(camp.brief || camp.description);
 
           // Mục tiêu chiến dịch
           if (camp.objective) {
@@ -235,7 +232,8 @@ export default function CreateCampaignPage() {
           }
 
           // Ngân sách
-          if (camp.budgetMax) setBudgetTotal(camp.budgetMax);
+          if (camp.totalBudget != null) setBudgetTotal(Number(camp.totalBudget));
+          else if (camp.budgetMax) setBudgetTotal(camp.budgetMax);
           else if (camp.budgetMin) setBudgetTotal(camp.budgetMin);
 
           // Ngành hàng / Niches
@@ -348,12 +346,6 @@ export default function CreateCampaignPage() {
       subtitle: 'Tăng thích, bình luận, chia sẻ',
       icon: <MessageOutlined style={{ fontSize: 18 }} />,
     },
-    {
-      id: 'launch',
-      title: 'Ra mắt sản phẩm mới',
-      subtitle: 'Giới thiệu sản phẩm/dịch vụ',
-      icon: <ThunderboltOutlined style={{ fontSize: 18 }} />,
-    },
   ];
 
   // Age Groups
@@ -368,9 +360,7 @@ export default function CreateCampaignPage() {
   ];
 
   const toggleObjective = (id: string) => {
-    setSelectedObjectives((prev) =>
-      prev.includes(id) ? (prev.length > 1 ? prev.filter((item) => item !== id) : prev) : [...prev, id]
-    );
+    setSelectedObjectives([id]);
   };
 
   const toggleAge = (age: string) => {
@@ -385,27 +375,14 @@ export default function CreateCampaignPage() {
     );
   };
 
-  // Đồng bộ 2 chiều chặt chẽ giữa Phân khúc Creator, Lượng Follower tối thiểu và Tỷ lệ tương tác ER
-  const handleTierChange = (tier: string) => {
-    setCreatorTier(tier);
-    if (tier === 'nano') setMinFollowers('10k');
-    else if (tier === 'micro') setMinFollowers('50k');
-    else if (tier === 'macro') setMinFollowers('100k');
-    else if (tier === 'mega') setMinFollowers('500k');
-    if (!minEngagement) {
-      setMinEngagement(tier === 'macro' || tier === 'mega' ? '3%' : '5%');
-    }
-  };
-
+  // Đồng bộ khoảng follower từ lựa chọn tối thiểu.
   const handleMinFollowersChange = (val: string) => {
     setMinFollowers(val);
     if (val === '10k') setCreatorTier('nano');
     else if (val === '50k') setCreatorTier('micro');
     else if (val === '100k') setCreatorTier('macro');
     else if (val === '500k') setCreatorTier('mega');
-    if (!minEngagement) {
-      setMinEngagement(val === '100k' || val === '500k' ? '3%' : '5%');
-    }
+
   };
 
   const handleAiSuggest = async (overridePrompt?: string) => {
@@ -431,22 +408,18 @@ export default function CreateCampaignPage() {
           else if (objLower.includes('traffic')) setSelectedObjectives(['traffic']);
           else setSelectedObjectives(['awareness']);
         } else {
-          setSelectedObjectives(['sales', 'awareness']);
+          setSelectedObjectives(['awareness']);
         }
 
         // 3. Thời hạn gửi bản nháp
-        if (result.draftDeadline) {
-          setDraftDeadline(result.draftDeadline);
-        } else {
-          setDraftDeadline('5 ngày sau khi Creator nhận sản phẩm');
-        }
+
 
         // 4. Kênh truyền thông đề xuất
         const platformSource = result.platforms || result.preferredPlatforms || [];
         if (Array.isArray(platformSource) && platformSource.length > 0) {
           const cleanP = platformSource
             .map((p) => p.toLowerCase())
-            .filter((p) => ['tiktok', 'instagram', 'youtube', 'facebook'].includes(p));
+            .filter((p) => ['tiktok', 'instagram', 'facebook'].includes(p));
           if (cleanP.length > 0) setSelectedPlatforms(cleanP);
         } else {
           setSelectedPlatforms(['tiktok', 'instagram']);
@@ -475,10 +448,12 @@ export default function CreateCampaignPage() {
         setSelectedGender('all');
 
         // 8. Số lượng creator & Phân khúc
-        if (result.creatorQuantity) {
+        if (result.targetCreatorCount) {
+          setCreatorQuantity(result.targetCreatorCount);
+        } else if (result.creatorQuantity) {
           setCreatorQuantity(result.creatorQuantity);
         } else {
-          setCreatorQuantity(10);
+          setCreatorQuantity(1);
         }
 
         if (result.followerMin || result.followerMax) {
@@ -502,27 +477,18 @@ export default function CreateCampaignPage() {
         }
 
         // Tự động thiết lập tỷ lệ tương tác tối thiểu (ER) khuyên dùng theo phân khúc Creator
-        if ((result as any).minEngagement || (result as any).engagementRate) {
-          const erVal = String((result as any).minEngagement || (result as any).engagementRate);
-          if (erVal.includes('8')) setMinEngagement('8%');
-          else if (erVal.includes('3')) setMinEngagement('3%');
-          else setMinEngagement('5%');
-        } else {
-          const fMin = result.followerMin ? Number(result.followerMin) : 50000;
-          setMinEngagement(fMin >= 200000 ? '3%' : '5%');
-        }
 
-        // 9. Ngân sách & KPI
-        if (result.budgetMax) {
+
+        // 9. Ngân sách & Thời gian
+        if (result.totalBudget != null) {
+          setBudgetTotal(Number(result.totalBudget));
+        } else if (result.budgetMax) {
           setBudgetTotal(result.budgetMax);
         } else if (result.budgetMin) {
           setBudgetTotal(result.budgetMin);
         } else {
           setBudgetTotal(18000000);
         }
-        setTargetReach('250,000 lượt xem');
-        setTargetEngagementRate('5.0%');
-        setTargetConversions(50);
 
         if (result.campaignDuration) {
           setCampaignDuration(result.campaignDuration);
@@ -531,7 +497,9 @@ export default function CreateCampaignPage() {
         }
 
         // 10. Bản Brief: Thông điệp chính & Do's and Don'ts (Chuẩn luồng 3.2)
-        if (result.creatorBrief) {
+        if (result.brief) {
+          setCreatorBrief(result.brief);
+        } else if (result.creatorBrief) {
           setCreatorBrief(result.creatorBrief);
         } else if (result.keyMessage || result.dosAndDonts || (result as any).contentType) {
           const parts: string[] = [];
@@ -561,20 +529,6 @@ export default function CreateCampaignPage() {
     }
   };
 
-  // Tính toán chỉ số KPI đề xuất từ AI theo quy mô ngân sách
-  const effectiveBudget = budgetTotal && budgetTotal > 0 ? budgetTotal : 25000000;
-  const aiEstimatedReach = `${Math.round(effectiveBudget / 100).toLocaleString('vi-VN')} lượt xem`;
-  const aiEstimatedER = '5.0%';
-  const aiEstimatedConv = Math.max(20, Math.round(effectiveBudget / 500000));
-
-  // Tính toán lại / Áp dụng chỉ số KPI đề xuất từ AI
-  const handleGenerateAiKpi = () => {
-    setTargetReach(aiEstimatedReach);
-    setTargetEngagementRate(aiEstimatedER);
-    setTargetConversions(aiEstimatedConv);
-    message.success('Đã áp dụng các chỉ số KPI theo ngân sách!');
-  };
-
   const scrollToTop = () => {
     const mainContent = document.querySelector('main.ant-layout-content') || document.querySelector('.ant-layout-content');
     if (mainContent) {
@@ -596,11 +550,10 @@ export default function CreateCampaignPage() {
       tiktok: 'TIKTOK',
       instagram: 'INSTAGRAM',
       facebook: 'FACEBOOK',
-      youtube: 'YOUTUBE',
     };
     const mappedPlatforms = selectedPlatforms
       .map((p) => platformMap[p.toLowerCase()])
-      .filter((p) => p === 'TIKTOK' || p === 'INSTAGRAM' || p === 'YOUTUBE') as CampaignPlatform[];
+      .filter((p) => p === 'TIKTOK' || p === 'INSTAGRAM') as CampaignPlatform[];
 
     // Map phân khúc creator sang followerMin / followerMax cho backend
     const minFollowersMap: Record<string, number> = {
@@ -642,19 +595,22 @@ export default function CreateCampaignPage() {
     if (selectedGender === 'female') audiences.push('Khán giả: Nữ');
     else if (selectedGender === 'male') audiences.push('Khán giả: Nam');
 
-    const today = new Date().toISOString().slice(0, 10);
-    const endDefault = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const today = savedStartDate || new Date().toISOString().slice(0, 10);
+    const durationDays = campaignDuration === '2_weeks' ? 14 : campaignDuration === '8_weeks' ? 56 : 28;
+    const endDefault = new Date(Date.parse(today) + durationDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
     return {
       name: campaignName.trim(),
       productService: product.trim() || 'Sản phẩm mới',
-      description: creatorBrief.trim() || undefined,
+      brief: creatorBrief.trim() || undefined,
       objective: objectiveMap[primaryObj] || 'AWARENESS',
       platforms: mappedPlatforms.length > 0 ? mappedPlatforms : ['TIKTOK', 'INSTAGRAM'],
       startDate: today,
-      endDate: draftDeadline && draftDeadline.length >= 10 ? draftDeadline.slice(0, 10) : endDefault,
-      budgetMin: budgetTotal ? Math.round(budgetTotal * 0.8) : 10000000,
-      budgetMax: budgetTotal || 25000000,
+      endDate: endDefault,
+      totalBudget: budgetTotal > 0 ? budgetTotal : undefined,
+      currency: 'VND',
+      targetCreatorCount: creatorQuantity > 0 ? creatorQuantity : undefined,
+      creatorMode: creatorQuantity > 0 ? (creatorQuantity === 1 ? 'SINGLE' : 'MULTI') : undefined,
       followerMin: finalFollowerMin,
       followerMax: finalFollowerMax,
       niches,
@@ -710,14 +666,7 @@ export default function CreateCampaignPage() {
       message.warning('Vui lòng nhập số lượng Creator cần tuyển (tối thiểu 1)!');
       return;
     }
-    if (!creatorTier) {
-      message.warning('Vui lòng chọn phân khúc Creator ưu tiên!');
-      return;
-    }
-    if (!minEngagement) {
-      message.warning('Vui lòng chọn tỷ lệ tương tác tối thiểu (ER)!');
-      return;
-    }
+
     if (!minFollowers) {
       message.warning('Vui lòng chọn lượng Follower tối thiểu!');
       return;
@@ -738,28 +687,15 @@ export default function CreateCampaignPage() {
       message.warning('Vui lòng nhập tổng ngân sách hợp lệ cho chiến dịch!');
       return;
     }
-    if (!paymentModel) {
-      message.warning('Vui lòng chọn hình thức thù lao cho Creator!');
-      return;
-    }
+
     if (!campaignDuration) {
       message.warning('Vui lòng chọn thời lượng chiến dịch!');
       return;
     }
-    if (!draftDeadline.trim()) {
-      message.warning('Vui lòng nhập hạn chót duyệt kịch bản (Draft Deadline)!');
-      return;
-    }
-    // Nếu chỉ số KPI để trống, tự động áp dụng ước tính gợi ý từ AI
-    if (!targetReach.trim()) {
-      setTargetReach(aiEstimatedReach);
-    }
-    if (!targetEngagementRate.trim()) {
-      setTargetEngagementRate(aiEstimatedER);
-    }
-    if (targetConversions === undefined || targetConversions === null || Number(targetConversions) <= 0) {
-      setTargetConversions(aiEstimatedConv);
-    }
+
+
+
+
 
     setIsSubmitting(true);
     try {
@@ -807,20 +743,9 @@ export default function CreateCampaignPage() {
       message.loading({ content: 'Đang lưu chiến dịch vào danh sách bản nháp...', key: 'save_draft' });
       const payload = buildCampaignPayload();
 
-      let createdCampaign: any = null;
-      try {
-        createdCampaign = await campaignService.createCampaign(payload);
-      } catch (apiErr) {
-        console.warn('API createCampaign error, falling back locally:', apiErr);
-        createdCampaign = {
-          id: `camp-draft-${Date.now()}`,
-          ...payload,
-          status: 'DRAFT',
-          createdAt: new Date().toISOString(),
-        };
-      }
-
-      const targetCampaignId = createdCampaign?.id || `camp-draft-${Date.now()}`;
+      const createdCampaign = await campaignService.createCampaign(payload);
+      if (!createdCampaign?.id) throw new Error('Server did not return a saved campaign ID.');
+      const targetCampaignId = createdCampaign.id;
       try {
         localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', targetCampaignId);
       } catch {}
@@ -836,7 +761,7 @@ export default function CreateCampaignPage() {
     }
   };
 
-  // Next step handler with validation and automatic READY_FOR_DISCOVERY transition
+  // Persist the draft before opening creator recommendations.
   const handleNextStep = async () => {
     if (currentStep === 1) {
       if (!campaignName.trim()) {
@@ -867,14 +792,7 @@ export default function CreateCampaignPage() {
         message.warning('Vui lòng nhập số lượng Creator cần tuyển (tối thiểu 1)!');
         return;
       }
-      if (!creatorTier) {
-        message.warning('Vui lòng chọn phân khúc Creator ưu tiên!');
-        return;
-      }
-      if (!minEngagement) {
-        message.warning('Vui lòng chọn tỷ lệ tương tác tối thiểu (ER)!');
-        return;
-      }
+
       if (!minFollowers) {
         message.warning('Vui lòng chọn lượng Follower tối thiểu!');
         return;
@@ -903,55 +821,24 @@ export default function CreateCampaignPage() {
         message.warning('Vui lòng nhập tổng ngân sách hợp lệ cho chiến dịch!');
         return;
       }
-      if (!paymentModel) {
-        message.warning('Vui lòng chọn hình thức thù lao cho Creator!');
-        return;
-      }
+
       if (!campaignDuration) {
         message.warning('Vui lòng chọn thời lượng chiến dịch!');
         return;
       }
-      if (!draftDeadline.trim()) {
-        message.warning('Vui lòng nhập hạn chót duyệt kịch bản (Draft Deadline)!');
-        return;
-      }
-      // Nếu các chỉ số KPI để trống, tự động áp dụng ước tính gợi ý từ AI theo ngân sách
-      if (!targetReach.trim()) {
-        setTargetReach(aiEstimatedReach);
-      }
-      if (!targetEngagementRate.trim()) {
-        setTargetEngagementRate(aiEstimatedER);
-      }
-      if (targetConversions === undefined || targetConversions === null || Number(targetConversions) <= 0) {
-        setTargetConversions(aiEstimatedConv);
-      }
+
+
+
+
 
       setIsSubmitting(true);
       try {
         message.loading({ content: 'Đang khởi tạo chiến dịch & chuẩn bị đề xuất...', key: 'create_camp' });
         const payload = buildCampaignPayload();
 
-        let createdCampaign: any = null;
-        try {
-          createdCampaign = await campaignService.createCampaign(payload);
-        } catch (apiErr) {
-          console.warn('API createCampaign error, continuing with fallback object:', apiErr);
-          createdCampaign = {
-            id: `camp-${Date.now()}`,
-            ...payload,
-            name: payload.name || campaignName.trim() || 'Chiến dịch mới',
-            status: 'READY_FOR_DISCOVERY',
-          };
-        }
-
-        const targetCampaignId = createdCampaign?.id || `camp-${Date.now()}`;
-
-        // Chuyển tiếp trạng thái chiến dịch sang READY_FOR_DISCOVERY theo quy chuẩn backend
-        try {
-          await campaignService.updateStatus(targetCampaignId, 'READY_FOR_DISCOVERY');
-        } catch (statusErr) {
-          console.warn('Backend updateStatus READY_FOR_DISCOVERY notice:', statusErr);
-        }
+        const createdCampaign = await campaignService.createCampaign(payload);
+        if (!createdCampaign?.id) throw new Error('Server did not return a saved campaign ID.');
+        const targetCampaignId = createdCampaign.id;
 
         // Cache campaign details to localStorage so discovery page immediately selects and matches creators
         try {
@@ -963,7 +850,7 @@ export default function CreateCampaignPage() {
             targetAudience: payload.targetAudiences?.join(', '),
             category: payload.niches?.[0] || 'Làm đẹp & Mỹ phẩm',
             channels: payload.platforms?.map((p: string) => p.toLowerCase()) || ['tiktok'],
-            status: 'READY_FOR_DISCOVERY',
+            status: createdCampaign.status || 'DRAFT',
             requirements: creatorBrief || product,
             followerMin: payload.followerMin,
             followerMax: payload.followerMax,
@@ -1121,7 +1008,7 @@ export default function CreateCampaignPage() {
             <div className="ccreate-step-num">3</div>
             <div className="ccreate-step-info">
               <span className="ccreate-step-title">Chỉ số & Ngân sách</span>
-              <span className="ccreate-step-desc">KPI, ngân sách, thời gian</span>
+              <span className="ccreate-step-desc">Ngân sách, thời gian</span>
             </div>
           </div>
         </div>
@@ -1275,7 +1162,7 @@ export default function CreateCampaignPage() {
                           ✓ Bước 2: Nền tảng, Niche & Độ tuổi
                         </Tag>
                         <Tag style={{ background: '#FFFFFF', borderColor: '#DDD6FE', color: '#6D28D9', fontSize: 11, borderRadius: 6, fontWeight: 600 }}>
-                          ✓ Bước 3: Ngân sách & KPI
+                          ✓ Bước 3: Ngân sách & Thời gian
                         </Tag>
                       </div>
                     </div>
@@ -1437,11 +1324,6 @@ export default function CreateCampaignPage() {
                         icon: <InstagramBrandIcon size={16} color={selectedPlatforms.includes('instagram') ? '#E1306C' : '#64748B'} />,
                       },
                       {
-                        key: 'youtube',
-                        name: 'YouTube',
-                        icon: <YouTubeBrandIcon size={16} color={selectedPlatforms.includes('youtube') ? '#FF0000' : '#64748B'} />,
-                      },
-                      {
                         key: 'facebook',
                         name: 'Facebook',
                         icon: <FacebookBrandIcon size={16} color={selectedPlatforms.includes('facebook') ? '#1877F2' : '#64748B'} />,
@@ -1463,9 +1345,9 @@ export default function CreateCampaignPage() {
                   </div>
                 </div>
 
-                {/* Phần 2: Tiêu chí số lượng & phân khúc */}
+                {/* Phần 2: Tiêu chí Creator */}
                 <Row gutter={[16, 16]}>
-                  <Col xs={24} sm={8}>
+                  <Col xs={24} sm={12}>
                     <div className="ccreate-field-label">
                       <span>Số lượng Creator cần tuyển <span className="req">*</span></span>
                     </div>
@@ -1479,40 +1361,7 @@ export default function CreateCampaignPage() {
                     />
                   </Col>
 
-                  <Col xs={24} sm={8}>
-                    <div className="ccreate-field-label">
-                      <span>Phân khúc Creator ưu tiên <span className="req">*</span></span>
-                    </div>
-                    <Select
-                      value={creatorTier}
-                      onChange={handleTierChange}
-                      placeholder="Chọn phân khúc Creator"
-                      style={{ width: '100%', height: 40 }}
-                      options={[
-                        { value: 'nano', label: 'Nano Creator (5K - 50K)' },
-                        { value: 'micro', label: 'Micro Creator (50K - 200K)' },
-                        { value: 'macro', label: 'Macro Creator (200K - 500K)' },
-                        { value: 'mega', label: 'Mega / Celeb (500K+)' },
-                      ]}
-                    />
-                  </Col>
 
-                  <Col xs={24} sm={8}>
-                    <div className="ccreate-field-label">
-                      <span>Tỷ lệ tương tác tối thiểu (ER) <span className="req">*</span></span>
-                    </div>
-                    <Select
-                      value={minEngagement || undefined}
-                      onChange={setMinEngagement}
-                      placeholder="Chọn tỷ lệ tương tác (ER)"
-                      style={{ width: '100%', height: 40 }}
-                      options={[
-                        { value: '3%', label: 'Từ 3% trở lên (Trung bình)' },
-                        { value: '5%', label: 'Từ 5% trở lên (Khuyên dùng)' },
-                        { value: '8%', label: 'Từ 8% trở lên (Tương tác cao)' },
-                      ]}
-                    />
-                  </Col>
 
                   <Col xs={24} sm={12}>
                     <div className="ccreate-field-label">
@@ -1625,14 +1474,14 @@ export default function CreateCampaignPage() {
                 <div className="ccreate-card-header">
                   <div className="ccreate-card-badge">3</div>
                   <div>
-                    <div className="ccreate-card-title">Ngân sách, KPI & Thời gian thực thi</div>
+                    <div className="ccreate-card-title">Ngân sách & Thời gian thực thi</div>
                     <div className="ccreate-card-subtitle">
                       Xác định hạn mức tài chính, kỳ vọng chuyển đổi và lịch trình triển khai của chiến dịch.
                     </div>
                   </div>
                 </div>
 
-                {/* Phần 1: Ngân sách & Hình thức chi trả */}
+                {/* Phần 1: Ngân sách & Thời gian */}
                 <Row gutter={[16, 16]}>
                   <Col xs={24} md={12}>
                     <div className="ccreate-field-label">
@@ -1651,21 +1500,6 @@ export default function CreateCampaignPage() {
                     />
                   </Col>
 
-                  <Col xs={24} md={12}>
-                    <div className="ccreate-field-label">
-                      <span>Hình thức thù lao cho Creator <span className="req">*</span></span>
-                    </div>
-                    <Select
-                      value={paymentModel}
-                      onChange={setPaymentModel}
-                      style={{ width: '100%', height: 42 }}
-                      options={[
-                        { value: 'cash', label: 'Trả phí cố định (Fixed Fee / Video)' },
-                        { value: 'product', label: 'Đổi sản phẩm dùng thử (Gifting / Barter)' },
-                        { value: 'hybrid', label: 'Kết hợp: Phí cố định + Tặng quà + Affiliate' },
-                      ]}
-                    />
-                  </Col>
 
                   <Col xs={24} md={12}>
                     <div className="ccreate-field-label">
@@ -1683,215 +1517,7 @@ export default function CreateCampaignPage() {
                     />
                   </Col>
 
-                  <Col xs={24} md={12}>
-                    <div className="ccreate-field-label">
-                      <span>Hạn chót duyệt kịch bản (Draft Deadline) <span className="req">*</span></span>
-                    </div>
-                    <Input
-                      value={draftDeadline}
-                      onChange={(e) => setDraftDeadline(e.target.value)}
-                      placeholder="Ví dụ: 7 ngày sau khi Creator nhận sản phẩm"
-                      style={{ borderRadius: 10, height: 40, fontSize: 13 }}
-                    />
-                  </Col>
                 </Row>
-
-                {/* Phần 2: KPI Kỳ vọng (AI Gợi ý) */}
-                <div className="ccreate-sub-section">
-                  <div className="ccreate-sub-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
-                    <div>
-                      <span>Chỉ số KPI kỳ vọng</span>
-                      <span style={{ fontSize: 12, color: '#64748B', fontWeight: 400, marginLeft: 8 }}>
-                        Ước tính theo quy mô ngân sách • Bạn có thể tùy chỉnh
-                      </span>
-                    </div>
-                    <Button
-                      size="small"
-                      onClick={handleGenerateAiKpi}
-                      style={{
-                        borderRadius: 6,
-                        fontSize: 12,
-                        borderColor: '#E2E8F0',
-                        color: '#475569',
-                        background: '#F8FAFC',
-                        fontWeight: 500,
-                      }}
-                    >
-                      AI tính theo ngân sách
-                    </Button>
-                  </div>
-
-                  <Row gutter={[14, 14]}>
-                    <Col xs={24} sm={8}>
-                      <div className="ccreate-kpi-card">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                          <span className="ccreate-kpi-label" style={{ margin: 0 }}>Lượt tiếp cận mục tiêu</span>
-                          <Tag style={{ margin: 0, borderRadius: 4, fontSize: 11, fontWeight: 500, border: 'none', background: '#F1F5F9', color: '#475569' }}>
-                            AI gợi ý
-                          </Tag>
-                        </div>
-                        <Input
-                          value={targetReach}
-                          onChange={(e) => setTargetReach(e.target.value)}
-                          placeholder={`Gợi ý: ${aiEstimatedReach}`}
-                          style={{ borderRadius: 8, height: 38, fontWeight: 600, fontSize: 13 }}
-                        />
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
-                          {targetReach.trim() === aiEstimatedReach ? (
-                            <>
-                              <span style={{ color: '#059669', fontWeight: 500 }}>
-                                Đang dùng gợi ý AI
-                              </span>
-                              <span
-                                style={{ color: '#94A3B8', cursor: 'pointer', textDecoration: 'underline' }}
-                                onClick={() => setTargetReach('')}
-                              >
-                                Nhập khác
-                              </span>
-                            </>
-                          ) : targetReach.trim() ? (
-                            <>
-                              <span style={{ color: '#64748B' }}>
-                                Gợi ý: {aiEstimatedReach}
-                              </span>
-                              <span
-                                style={{ color: '#4F46E5', fontWeight: 500, cursor: 'pointer' }}
-                                onClick={() => setTargetReach(aiEstimatedReach)}
-                              >
-                                Dùng gợi ý
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <span style={{ color: '#64748B' }}>
-                                Gợi ý: {aiEstimatedReach}
-                              </span>
-                              <span
-                                style={{ color: '#4F46E5', fontWeight: 500, cursor: 'pointer' }}
-                                onClick={() => setTargetReach(aiEstimatedReach)}
-                              >
-                                Áp dụng
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </Col>
-
-                    <Col xs={24} sm={8}>
-                      <div className="ccreate-kpi-card">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                          <span className="ccreate-kpi-label" style={{ margin: 0 }}>Tỷ lệ tương tác kỳ vọng</span>
-                          <Tag style={{ margin: 0, borderRadius: 4, fontSize: 11, fontWeight: 500, border: 'none', background: '#F1F5F9', color: '#475569' }}>
-                            AI gợi ý
-                          </Tag>
-                        </div>
-                        <Input
-                          value={targetEngagementRate}
-                          onChange={(e) => setTargetEngagementRate(e.target.value)}
-                          placeholder={`Gợi ý: ${aiEstimatedER}`}
-                          style={{ borderRadius: 8, height: 38, fontWeight: 600, fontSize: 13 }}
-                        />
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
-                          {targetEngagementRate.trim() === aiEstimatedER ? (
-                            <>
-                              <span style={{ color: '#059669', fontWeight: 500 }}>
-                                Đang dùng gợi ý AI
-                              </span>
-                              <span
-                                style={{ color: '#94A3B8', cursor: 'pointer', textDecoration: 'underline' }}
-                                onClick={() => setTargetEngagementRate('')}
-                              >
-                                Nhập khác
-                              </span>
-                            </>
-                          ) : targetEngagementRate.trim() ? (
-                            <>
-                              <span style={{ color: '#64748B' }}>
-                                Gợi ý: {aiEstimatedER}
-                              </span>
-                              <span
-                                style={{ color: '#4F46E5', fontWeight: 500, cursor: 'pointer' }}
-                                onClick={() => setTargetEngagementRate(aiEstimatedER)}
-                              >
-                                Dùng gợi ý
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <span style={{ color: '#64748B' }}>
-                                Gợi ý: {aiEstimatedER}
-                              </span>
-                              <span
-                                style={{ color: '#4F46E5', fontWeight: 500, cursor: 'pointer' }}
-                                onClick={() => setTargetEngagementRate(aiEstimatedER)}
-                              >
-                                Áp dụng
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </Col>
-
-                    <Col xs={24} sm={8}>
-                      <div className="ccreate-kpi-card">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                          <span className="ccreate-kpi-label" style={{ margin: 0 }}>Chuyển đổi đơn hàng ước tính</span>
-                          <Tag style={{ margin: 0, borderRadius: 4, fontSize: 11, fontWeight: 500, border: 'none', background: '#F1F5F9', color: '#475569' }}>
-                            AI gợi ý
-                          </Tag>
-                        </div>
-                        <InputNumber
-                          value={targetConversions > 0 ? targetConversions : undefined}
-                          onChange={(val) => setTargetConversions(val || 0)}
-                          placeholder={String(aiEstimatedConv)}
-                          style={{ width: '100%', borderRadius: 8, height: 38, lineHeight: '36px', fontWeight: 600, fontSize: 13 }}
-                          suffix="đơn"
-                        />
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, fontSize: 11 }}>
-                          {targetConversions === aiEstimatedConv ? (
-                            <>
-                              <span style={{ color: '#059669', fontWeight: 500 }}>
-                                Đang dùng gợi ý AI
-                              </span>
-                              <span
-                                style={{ color: '#94A3B8', cursor: 'pointer', textDecoration: 'underline' }}
-                                onClick={() => setTargetConversions(0)}
-                              >
-                                Nhập khác
-                              </span>
-                            </>
-                          ) : targetConversions > 0 ? (
-                            <>
-                              <span style={{ color: '#64748B' }}>
-                                Gợi ý: {aiEstimatedConv} đơn
-                              </span>
-                              <span
-                                style={{ color: '#4F46E5', fontWeight: 500, cursor: 'pointer' }}
-                                onClick={() => setTargetConversions(aiEstimatedConv)}
-                              >
-                                Dùng gợi ý
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <span style={{ color: '#64748B' }}>
-                                Gợi ý: {aiEstimatedConv} đơn
-                              </span>
-                              <span
-                                style={{ color: '#4F46E5', fontWeight: 500, cursor: 'pointer' }}
-                                onClick={() => setTargetConversions(aiEstimatedConv)}
-                              >
-                                Áp dụng
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </Col>
-                  </Row>
-                </div>
 
                 {/* Phần 3: Executive Overview Card */}
                 <div className="ccreate-sub-section">
@@ -2120,34 +1746,6 @@ export default function CreateCampaignPage() {
                   <RightOutlined style={{ fontSize: 10, color: '#94A3B8' }} />
                 </div>
 
-                {/* Suggestion 3 */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                  <div
-                    style={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: 8,
-                      background: '#EFF6FF',
-                      color: '#3B82F6',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 13,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <BarChartOutlined />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 12, color: '#0F172A' }}>
-                      KPI gợi ý
-                    </div>
-                    <div style={{ fontSize: 11, color: '#64748B', lineHeight: 1.3 }}>
-                      Lượt tiếp cận: {targetReach || aiEstimatedReach} | Tương tác: {targetEngagementRate || aiEstimatedER}
-                    </div>
-                  </div>
-                  <RightOutlined style={{ fontSize: 10, color: '#94A3B8' }} />
-                </div>
               </div>
             </Card>
 
@@ -2200,30 +1798,6 @@ export default function CreateCampaignPage() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 6,
-                      background: '#FEE2E2',
-                      color: '#EF4444',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 12,
-                    }}
-                  >
-                    <AimOutlined />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 10.5, color: '#94A3B8' }}>Ước tính lượt tiếp cận</div>
-                    <div style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A' }}>
-                      {targetReach || aiEstimatedReach}
-                    </div>
-                  </div>
-                </div>
-
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div
                     style={{

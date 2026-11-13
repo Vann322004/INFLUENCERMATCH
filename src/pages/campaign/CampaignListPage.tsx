@@ -114,7 +114,7 @@ export default function CampaignListPage() {
               statusText = 'Hoàn thành';
             }
 
-            const budgetMax = c.budgetMax || 0;
+            const budgetMax = c.totalBudget ?? c.budgetMax ?? 0;
             const spentNum = budgetMax ? Math.round(budgetMax * 0.45) : 0;
             const reachNum = c.followerMin ? c.followerMin * 8 : 120000;
 

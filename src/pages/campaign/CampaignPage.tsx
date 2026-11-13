@@ -163,7 +163,7 @@ export default function CampaignPage() {
         const filtered = apiData.filter((c) => c.status !== 'ARCHIVED' && !deletedIds.includes(c.id));
 
         const mapped: CampaignItemUI[] = filtered.map((c, idx) => {
-          const budgetNum = c.budgetMax || c.budgetMin || 0;
+          const budgetNum = c.totalBudget ?? c.budgetMax ?? c.budgetMin ?? 0;
           const budgetText = budgetNum > 0 ? `${budgetNum.toLocaleString('vi-VN')} ₫` : 'Thỏa thuận';
 
           let statusType: 'running' | 'draft' | 'ready' | 'completed' = 'running';
@@ -236,11 +236,9 @@ export default function CampaignPage() {
   };
 
   useEffect(() => {
-    // Chỉ nạp nếu cache chưa có hoặc đã quá hạn TTL, không làm giật lag khi chuyển qua lại giữa các trang
-    const isCacheValid = campaignPageCache.items && (Date.now() - campaignPageCache.lastLoaded < CACHE_TTL);
-    if (!isCacheValid) {
-      fetchCampaigns();
-    }
+    // Revalidate on entry so new drafts appear and empty caches never leave loading stuck.
+    // Existing cached campaigns remain visible while the request runs.
+    void fetchCampaigns(true);
   }, []);
 
   // Filter & Search Logic

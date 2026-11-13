@@ -200,10 +200,13 @@ export const creatorService = {
   /**
    * Lấy danh sách toàn bộ creator công khai
    */
-  async getCreators(): Promise<CreatorItem[]> {
+  async getCreators(options: { strict?: boolean } = {}): Promise<CreatorItem[]> {
     try {
       const response = await apiClient.get<ApiResponse<CreatorItem[]>>('/creators');
-      const items = response.data?.data || (response.data as unknown as CreatorItem[]) || [];
+      const payload: any = response.data?.data ?? response.data;
+      const items = Array.isArray(payload) ? payload : payload?.items ?? payload?.content;
+      if (options.strict && !Array.isArray(items)) throw new Error('Invalid creator list response');
+      if (options.strict && items.length === 0) return [];
       if (Array.isArray(items) && items.length > 0) {
         try {
           const withAvatars = items.filter((c) => c.avatarUrl && c.avatarUrl.trim().startsWith('http'));
@@ -216,6 +219,7 @@ export const creatorService = {
         return items;
       }
     } catch (err) {
+      if (options.strict) throw err;
       console.warn('[creatorService.getCreators] Backend API /creators error or unauthorized. Falling back to default creators:', err);
     }
     return DEFAULT_CREATORS;

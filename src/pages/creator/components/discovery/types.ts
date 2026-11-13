@@ -10,6 +10,9 @@ export interface Creator {
   matchReason?: string;
   platforms: ('tiktok' | 'instagram' | 'youtube' | 'facebook' | 'x')[];
   categories: string[];
+  sourceCategories?: string[];
+  hasReportedEngagement?: boolean;
+  hasReportedPrice?: boolean;
   bio: string;
   followers: string;
   followersCount: number;

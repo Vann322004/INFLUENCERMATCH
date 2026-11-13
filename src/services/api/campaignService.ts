@@ -34,6 +34,16 @@ export const clearBrandCache = () => {
   userBrandCache.clear();
 };
 
+// Keep legacy response aliases out of every campaign write request.
+function campaignWritePayload(payload: Partial<CampaignRequest>) {
+  const { budgetMin, budgetMax, description, ...current } = payload;
+  return {
+    ...current,
+    totalBudget: current.totalBudget ?? budgetMax ?? budgetMin,
+    brief: current.brief ?? description,
+  };
+}
+
 export const campaignService = {
   /**
    * Lấy ID brand của user hiện tại, tự động cache theo userId và tạo profile nếu chưa có
@@ -170,42 +180,63 @@ export const campaignService = {
   },
 
   /**
+   * Lấy thông tin chi tiết + ETag header của một chiến dịch
+   * Dùng trước khi PUT/PATCH để lấy If-Match header
+   */
+  async getCampaignWithETag(id: string): Promise<{ data: CampaignResponse; etag: string | null }> {
+    const response = await apiClient.get<ApiResponse<CampaignResponse>>(`/campaigns/${id}`);
+    const etag = response.headers?.['etag'] || null;
+    return { data: response.data.data, etag };
+  },
+
+  /**
    * Tạo chiến dịch mới gắn với Brand Profile
    */
   async createCampaign(payload: CampaignRequest, brandId?: string): Promise<CampaignResponse> {
     const targetBrandId = brandId || await this.resolveCurrentBrandId();
     const response = await apiClient.post<ApiResponse<CampaignResponse>>(
       `/brands/${targetBrandId}/campaigns`,
-      payload
+      campaignWritePayload(payload)
     );
     return response.data?.data || (response.data as unknown as CampaignResponse);
   },
 
   /**
    * Cập nhật thông tin chiến dịch
+   * Tự động lấy ETag trước khi PUT để gửi If-Match header (optimistic locking)
    */
-  async updateCampaign(id: string, payload: Partial<CampaignRequest>): Promise<CampaignResponse> {
-    try {
-      const response = await apiClient.put<ApiResponse<CampaignResponse>>(`/campaigns/${id}`, payload);
-      return response.data?.data || (response.data as unknown as CampaignResponse);
-    } catch {
+  async updateCampaign(id: string, payload: Partial<CampaignRequest>, etag?: string | null): Promise<CampaignResponse> {
+    // Nếu không có etag, fetch GET trước để lấy ETag header
+    let ifMatchValue = etag;
+    if (!ifMatchValue) {
       try {
-        const response = await apiClient.patch<ApiResponse<CampaignResponse>>(`/campaigns/${id}`, payload);
-        return response.data?.data || (response.data as unknown as CampaignResponse);
-      } catch (err) {
-        console.warn('[campaignService] Không thể gọi API updateCampaign:', err);
-        return { id, ...payload } as unknown as CampaignResponse;
+        const { etag: fetchedEtag } = await this.getCampaignWithETag(id);
+        ifMatchValue = fetchedEtag;
+      } catch {
+        // Nếu không lấy được ETag, vẫn thử gửi request (backend có required=false)
       }
     }
+    const headers: Record<string, string> = {};
+    if (ifMatchValue) headers['If-Match'] = ifMatchValue;
+    const response = await apiClient.put<ApiResponse<CampaignResponse>>(
+      `/campaigns/${id}`,
+      campaignWritePayload(payload),
+      { headers }
+    );
+    return response.data?.data || (response.data as unknown as CampaignResponse);
   },
 
   /**
    * Lưu trữ chiến dịch
-   * PATCH /campaigns/{id}/archive
+   * PATCH /campaigns/{id}/archive — tự động gửi If-Match header
    */
   async archiveCampaign(id: string): Promise<CampaignResponse> {
     try {
-      const response = await apiClient.patch<ApiResponse<CampaignResponse>>(`/campaigns/${id}/archive`);
+      let etag: string | null = null;
+      try { const r = await this.getCampaignWithETag(id); etag = r.etag; } catch {}
+      const headers: Record<string, string> = {};
+      if (etag) headers['If-Match'] = etag;
+      const response = await apiClient.patch<ApiResponse<CampaignResponse>>(`/campaigns/${id}/archive`, undefined, { headers });
       return response.data?.data || (response.data as unknown as CampaignResponse);
     } catch {
       // Fallback: cập nhật trạng thái ARCHIVED
@@ -329,7 +360,7 @@ export const campaignService = {
         keyMessage,
         dosAndDonts,
         creatorBrief: keyMessage && dosAndDonts ? `Thông điệp chính:\n${keyMessage}\n\n${dosAndDonts}` : undefined,
-        creatorQuantity: 10,
+        creatorQuantity: 1,
         draftDeadline: '5 ngày sau khi Creator nhận sản phẩm',
         campaignDuration: '4_weeks',
         aiExplanation: `Trợ lý AI đã phân tích mô tả: "${prompt}". Đề xuất chiến dịch tập trung vào tệp ${audiences.join(', ')} tuổi, kênh ${platforms.join(' & ')}, định hướng thông điệp kiềm dầu và giá thành tiết kiệm dưới 200k.`,
@@ -343,9 +374,11 @@ export const campaignService = {
    * Cập nhật trạng thái chiến dịch (DRAFT, ACTIVE, COMPLETED, ARCHIVED)
    */
   async updateStatus(id: string, status: CampaignStatus): Promise<CampaignResponse> {
-    const response = await apiClient.patch<ApiResponse<CampaignResponse>>(`/campaigns/${id}/status`, {
-      status,
-    });
+    let etag: string | null = null;
+    try { const r = await this.getCampaignWithETag(id); etag = r.etag; } catch {}
+    const headers: Record<string, string> = {};
+    if (etag) headers['If-Match'] = etag;
+    const response = await apiClient.patch<ApiResponse<CampaignResponse>>(`/campaigns/${id}/status`, { status }, { headers });
     return response.data?.data || (response.data as unknown as CampaignResponse);
   },
 
