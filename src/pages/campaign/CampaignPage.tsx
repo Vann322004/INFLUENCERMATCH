@@ -581,20 +581,20 @@ export default function CampaignPage() {
                   <FolderOutlined />
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div className="campaign-stat-label" style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>
                     Tổng chiến dịch
                   </div>
                   <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', lineHeight: 1.15 }}>
                     {countAll < 10 ? `0${countAll}` : countAll}
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#10B981', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#10B981' }}>
                     ↑ 2 so với tháng trước
                   </div>
                 </div>
               </div>
 
               {/* Purple Sparkline SVG */}
-              <div style={{ width: 55, height: 26, flexShrink: 0 }}>
+              <div className="campaign-stat-sparkline" style={{ width: 55, height: 26, flexShrink: 0 }}>
                 <svg width="55" height="26" viewBox="0 0 55 26" fill="none">
                   <defs>
                     <linearGradient id="purpleAreaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -637,20 +637,20 @@ export default function CampaignPage() {
                   <CaretRightOutlined />
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div className="campaign-stat-label" style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>
                     Đang triển khai
                   </div>
                   <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', lineHeight: 1.15 }}>
                     {countRunning < 10 ? `0${countRunning}` : countRunning}
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#10B981', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#10B981' }}>
                     ↑ 1 so với tháng trước
                   </div>
                 </div>
               </div>
 
               {/* Green Sparkline SVG */}
-              <div style={{ width: 55, height: 26, flexShrink: 0 }}>
+              <div className="campaign-stat-sparkline" style={{ width: 55, height: 26, flexShrink: 0 }}>
                 <svg width="55" height="26" viewBox="0 0 55 26" fill="none">
                   <defs>
                     <linearGradient id="greenAreaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -693,20 +693,20 @@ export default function CampaignPage() {
                   <TeamOutlined />
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div className="campaign-stat-label" style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>
                     Lời mời chờ phản hồi
                   </div>
                   <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', lineHeight: 1.15 }}>
                     04
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#EF4444', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#EF4444' }}>
                     ↓ 2 so với tháng trước
                   </div>
                 </div>
               </div>
 
               {/* Orange Sparkline SVG */}
-              <div style={{ width: 55, height: 26, flexShrink: 0 }}>
+              <div className="campaign-stat-sparkline" style={{ width: 55, height: 26, flexShrink: 0 }}>
                 <svg width="55" height="26" viewBox="0 0 55 26" fill="none">
                   <defs>
                     <linearGradient id="orangeAreaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -875,7 +875,7 @@ export default function CampaignPage() {
                     onClick={() => handleOpenDetail(item)}
                   >
                     {/* Left: Thumbnail & Info */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 220, flex: 2 }}>
+                    <div className="campaign-row-identity" style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 2 }}>
                       <img
                         src={item.thumbnail}
                         alt={item.name}
@@ -897,9 +897,7 @@ export default function CampaignPage() {
                             color: '#0F172A',
                             lineHeight: 1.25,
                             marginBottom: 2,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
+                            overflowWrap: 'break-word',
                           }}
                         >
                           {item.name}
@@ -931,7 +929,7 @@ export default function CampaignPage() {
                     </div>
 
                     {/* Column 2: Status & Platforms */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 105 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 0 }}>
                       <span className={`status-pill ${item.statusType}`}>
                         <span className="status-pill-dot" />
                         {item.statusText}
@@ -948,7 +946,7 @@ export default function CampaignPage() {
                     </div>
 
                     {/* Column 3: Influencers Avatars */}
-                    <div style={{ display: 'flex', alignItems: 'center', minWidth: 70 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
                       <div style={{ display: 'flex', marginRight: 4 }}>
                         {item.creatorAvatars.slice(0, 3).map((av, idx) => (
                           <img
@@ -972,7 +970,7 @@ export default function CampaignPage() {
                     </div>
 
                     {/* Column 4: Budget & Progress */}
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 120, flex: 1 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: 10, color: '#94A3B8', marginBottom: 1 }}>
                         Ngân sách dự kiến
                       </div>
@@ -1005,7 +1003,7 @@ export default function CampaignPage() {
                     </div>
 
                     {/* Column 5: Last Updated */}
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 95 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                       <div style={{ fontSize: 10, color: '#94A3B8', marginBottom: 1 }}>
                         Cập nhật
                       </div>

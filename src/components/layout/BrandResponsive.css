@@ -1,0 +1,98 @@
+/* Breakpoints use the space left after the sidebar, including browser zoom. */
+.brand-content { container: brand / inline-size; }
+.brand-workspace .app-page-wrapper,
+.brand-workspace .app-page-wrapper > * { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.brand-workspace .app-header-inner { min-width: 0; gap: 16px; }
+.brand-workspace .header-breadcrumbs { min-width: 0; flex: 1; }
+.brand-workspace .header-breadcrumbs > .ant-btn,
+.brand-workspace .header-breadcrumbs > .anticon { flex-shrink: 0; }
+.brand-workspace .header-bc-root { white-space: nowrap; min-width: 0; max-width: 35%; overflow: hidden; text-overflow: ellipsis; }
+.brand-workspace .header-bc-current { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.brand-workspace :is(.campaign-page-wrapper, .pipeline-page-container, .clist-page, .perf-page,
+  .outreach-crm-container, .subscription-container, .brand-profile-container, .collab-page) {
+  min-width: 0; box-sizing: border-box;
+}
+.brand-workspace :is(.crm-header-row, .crm-header-actions, .perf-header, .perf-header-right,
+  .pipeline-mode-tabs, .campaign-title-row, .pipeline-breadcrumb, .crm-breadcrumb) { flex-wrap: wrap; }
+.brand-workspace :is(.ant-card, .ant-card-body, .ant-form-item-control, .ant-col) { min-width: 0; }
+.brand-workspace :is(h1, h2, h3, .ant-card-head-title) { word-break: normal; overflow-wrap: break-word; }
+.brand-workspace .ant-pagination { flex-wrap: wrap; gap: 8px 0; }
+.brand-workspace :is(.ant-table-wrapper, .ant-tabs, .ant-tabs-content-holder) { min-width: 0; max-width: 100%; }
+.brand-workspace .ant-table-content { overflow-x: auto; }
+.brand-workspace .ant-table-cell { word-break: normal; overflow-wrap: break-word; }
+.brand-workspace .ant-form-item .ant-select { max-width: 100%; }
+.brand-workspace :is(.crm-stats-banner, .perf-kpi-grid-primary, .perf-kpi-grid-secondary, .clist-stats-row) > * { min-width: 0; }
+.brand-workspace .review-cards-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+.brand-workspace .creator-ratecard-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.brand-workspace .creator-content-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
+.brand-workspace .outreach-email-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+.brand-workspace :is(.email-composer-card, .email-tracker-card, .crm-header-actions, .crm-campaign-selector) { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.brand-workspace .crm-campaign-selector { width: min(100%, 360px); }
+.brand-workspace .crm-campaign-selector .ant-select { flex: 1; min-width: 0; width: 0 !important; }
+.brand-workspace :is(.tracker-header, .composer-header, .perf-tabs-bar, .ccreate-bottom-actions) { flex-wrap: wrap; gap: 12px; }
+.brand-workspace .tracker-header .ant-input-affix-wrapper { min-width: 0; max-width: 100%; }
+.brand-workspace .ccreate-bottom-actions > .ant-space { min-width: 0; max-width: 100%; }
+.brand-workspace .perf-campaign-summary,
+.brand-workspace .perf-campaign-summary > div { min-width: 0; display: flex; flex-wrap: wrap; gap: 12px; }
+
+@container brand (max-width: 1100px) {
+  .campaign-main-layout { flex-direction: column; }
+  .campaign-sidebar-col { width: 100%; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .crm-stats-banner, .perf-kpi-grid-primary, .clist-stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .brand-workspace .outreach-email-grid, .collab-review-grid { grid-template-columns: minmax(0, 1fr); }
+  .brand-workspace .cdiscovery-cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .brand-workspace .history-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .brand-workspace .ccreate-formats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .brand-workspace :is(.cdetail-metrics-grid, .cdetail-finance-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .brand-workspace :is(.cdetail-overview-row, .cdetail-brief-grid) { grid-template-columns: minmax(0, 1fr); }
+  .brand-workspace .creator-metrics-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+
+@container brand (max-width: 900px) {
+  .brand-workspace .ant-col:is(.ant-col-lg-12, .ant-col-xl-12) { flex: 0 0 100%; max-width: 100%; }
+  .brand-workspace .ant-col.ant-col-md-8 { flex: 0 0 50%; max-width: 50%; }
+  .campaign-row-card { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .campaign-row-card > :first-child { grid-column: 1 / -1; }
+  .campaign-row-card > :last-child { justify-self: end; }
+  .campaign-sidebar-col, .perf-kpi-grid-secondary { grid-template-columns: minmax(0, 1fr); }
+  .brand-workspace .im-kpi-title { white-space: normal; overflow: visible; text-overflow: clip; }
+  .brand-workspace .ccreate-overview-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .brand-workspace .ccreate-stepper-grid { flex-direction: column; align-items: stretch; }
+  .brand-workspace .ccreate-stepper-connector { display: none; }
+  .brand-workspace .cdiscovery-campaign-summary { flex-wrap: wrap; }
+  .brand-workspace .cdiscovery-campaign-summary-actions { width: 100%; flex-wrap: wrap; }
+  .brand-workspace .cdiscovery-top-stepper { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .brand-workspace .cdiscovery-step-line { display: none; }
+  .brand-workspace .cdiscovery-step-item { min-width: 0; }
+  .brand-workspace .cdiscovery-step-title { white-space: normal; }
+  .brand-workspace :is(.creator-demographics-grid, .cdetail-creator-cards-grid) { grid-template-columns: minmax(0, 1fr); }
+}
+
+@container brand (max-width: 560px) {
+  .brand-workspace .ant-col:is(.ant-col-sm-12, .ant-col-md-8, .ant-col-md-10, .ant-col-md-14) { flex: 0 0 100%; max-width: 100%; }
+  .crm-stats-banner, .perf-kpi-grid-primary, .clist-stats-row { grid-template-columns: minmax(0, 1fr); }
+  .brand-workspace :is(.crm-campaign-selector, .crm-title-wrap, .perf-header-right) { width: 100%; min-width: 0; }
+  .brand-workspace :is(.crm-campaign-selector .ant-select, .crm-header-actions .ant-select) { width: 100% !important; min-width: 0; }
+  .brand-workspace :is(.sub-current-card, .brand-header-card) { padding: 16px; }
+  .brand-workspace .pipeline-page-container { padding-inline: 0; }
+  .brand-workspace .billing-switcher-pill { flex-wrap: wrap; border-radius: 16px; justify-content: center; }
+  .brand-workspace :is(.ant-btn, .pipeline-tab-btn) { max-width: 100%; }
+  .brand-workspace .ant-btn > span:not(.ant-btn-icon) { min-width: 0; }
+  .brand-workspace :is(.cdiscovery-cards-grid, .ccreate-obj-grid, .ccreate-overview-card,
+    .history-filters, .history-facts) { grid-template-columns: minmax(0, 1fr); }
+  .brand-workspace .ccreate-formats-grid, .brand-workspace .history-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .brand-workspace .cdiscovery-campaign-summary-actions .ant-select { width: 100% !important; }
+  .brand-workspace .cdiscovery-top-stepper { grid-template-columns: minmax(0, 1fr); }
+  .brand-workspace .crm-campaign-selector { flex-direction: column; align-items: stretch; }
+  .brand-workspace .crm-campaign-selector .ant-select { flex: auto; }
+  .brand-workspace :is(.cdetail-metrics-grid, .cdetail-finance-grid) { grid-template-columns: minmax(0, 1fr); }
+  .brand-workspace .creator-metrics-grid { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+@media (max-width: 767px) {
+  .brand-workspace .app-header { padding-inline: 12px !important; }
+  .brand-workspace .app-header-inner { gap: 8px; }
+  .brand-workspace .header-breadcrumbs > .header-bc-root,
+  .brand-workspace .header-breadcrumbs > .anticon { display: none; }
+  .brand-workspace .header-breadcrumbs { gap: 8px; font-size: 12px; }
+}

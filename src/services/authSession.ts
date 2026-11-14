@@ -1,6 +1,6 @@
 // Credentials belong to a tab; localStorage carries cookie ownership and
 // account-specific logout signals, never another tab's active identity.
-import { dataManagerRequestCache } from './requestCache';
+import { dataManagerRequestCache, adminRequestCache } from './requestCache';
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
@@ -74,7 +74,9 @@ export const setAuthSession = (accessToken: string, refreshToken?: string, user?
   if (!accessToken || accessToken.startsWith('mock_')) {
     throw new Error('Không nhận được phiên đăng nhập hợp lệ từ máy chủ. Vui lòng đăng nhập lại.');
   }
-  if (user !== undefined && cacheIdentity(user) !== cacheIdentity(session.user)) dataManagerRequestCache.clear();
+  if (user !== undefined && cacheIdentity(user) !== cacheIdentity(session.user)) {
+    dataManagerRequestCache.clear(); adminRequestCache.clear();
+  }
   const userId = identity(user);
   if (userId && userId !== identity(session.user)) {
     session.logoutMarker = localStorage.getItem(logoutKey(userId));
@@ -88,6 +90,7 @@ export const setAuthSession = (accessToken: string, refreshToken?: string, user?
 
 export const clearAuthSession = () => {
   dataManagerRequestCache.clear();
+  adminRequestCache.clear();
   if (ownsRefreshCookie()) localStorage.removeItem(COOKIE_OWNER_KEY);
   session = emptySession();
   // Keep unrelated tab state; login/logout must not clear all sessionStorage.

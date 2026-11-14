@@ -1,20 +1,25 @@
 // Types for AI Recommendation (Four-Memory) and Historical Runs based on OpenAPI Swagger spec
 
+export type DisplayMode = 'BEST_MATCH' | 'BUDGET_READY_FIRST' | 'DIVERSIFIED_MATCH';
+export type CandidateSource = 'SHORTLIST' | 'DISCOVERY';
+
 export interface ScoreBreakdownDto {
-  m1Score: number;            // Khớp hồ sơ & ngành hàng
-  m2Score: number;            // Hiệu suất & tương tác thực tế
-  m4Score: number;            // Khớp lịch sử feedback & context
-  followerScore: number;
-  engagementScore: number;
-  semanticMatchScore: number;
-  nicheMatchScore: number;
-  finalScore: number;         // Match Score tổng hợp (0.0 -> 1.0)
+  m1Score: number;            // M1: Historical Creator Reputation
+  m2Score: number;            // M2: Public Performance Metrics
+  m3Score: number;            // M3: Semantic Fit (PGVector Embedding & Content Relevance)
+  m4Score: number;            // M4: Brand Taste/Affinity (Feedback Loop & Brand Prioritization)
+  followerScore?: number;
+  engagementScore?: number;
+  semanticMatchScore?: number;
+  nicheMatchScore?: number;
+  finalScore?: number;        // Match Score tổng hợp (0.0 -> 1.0)
 }
 
 export interface ReasoningCardDto {
   summary: string;            // Đoạn tóm tắt lý do
   reasons: string[];          // Danh sách gạch đầu dòng lý do
   explanationAvailable: boolean;
+  evidenceWarnings?: string[]; // Cảnh báo dữ liệu (thiếu metric, provisional...)
 }
 
 export type PriceStatus =
@@ -60,7 +65,11 @@ export interface RecommendationResponseDto {
 
 export interface RecommendationRun {
   id: string;
+  campaignId?: string;
+  brandProfileId?: string;
   contextVersion: number;
+  candidateSource?: string;
+  scoringPolicyVersion?: string;
   status: string;
   candidatesCount: number;
   queryBrief?: string;

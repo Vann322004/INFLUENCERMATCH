@@ -38,8 +38,9 @@ export default function CreatorListTab() {
   const [platform, setPlatform] = useState('all');
   const [status, setStatus]   = useState('all');
 
-  const loadCreators = useCallback(async () => {
+  const loadCreators = useCallback(async (force = false) => {
     try {
+      if (force) creatorService.getCreators.invalidate();
       setLoading(true);
       const raw = await creatorService.getCreators();
       const mapped: AdminCreator[] = (raw || []).map((c, idx) => {
@@ -214,7 +215,7 @@ export default function CreatorListTab() {
           <Option value="inactive">Không HĐ</Option>
           <Option value="pending">Chờ duyệt</Option>
         </Select>
-        <Button icon={<ReloadOutlined />} onClick={loadCreators} loading={loading}>
+        <Button icon={<ReloadOutlined />} onClick={() => void loadCreators(true)} loading={loading}>
           Làm mới
         </Button>
         <Text style={{ color: '#94A3B8', fontSize: 12 }}>{filtered.length} creator</Text>

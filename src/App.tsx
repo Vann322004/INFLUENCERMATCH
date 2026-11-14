@@ -27,6 +27,7 @@ import PerformancePage from './pages/performance/PerformancePage';
 import CampaignHistoryPage from './pages/history/CampaignHistoryPage';
 import LandingPage from './pages/landing/hero/HeroLanding';
 import './styles/custom.css';
+import './components/layout/BrandResponsive.css';
 
 // ── Admin Imports ────────────────────────────────────
 import AdminLayout from './components/admin/AdminLayout';
@@ -103,16 +104,16 @@ function CampaignManagementIdRedirect() {
 }
 
 // Main App Layout Wrapper with Light Linear Sidebar & Top Header
-function MainLayout({ children, collaborationNavigation = false }: {
+function MainLayout({ children }: {
   children: React.ReactNode;
   collaborationNavigation?: boolean;
 }) {
-  const mobile = Grid.useBreakpoint().md === false && collaborationNavigation;
+  const mobile = Grid.useBreakpoint().md === false;
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => { setMenuOpen(false); }, [location.key, mobile]);
   return (
-    <Layout hasSider={!mobile} style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden', width: '100vw' }}>
+    <Layout className="brand-workspace" hasSider={!mobile} style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden', width: '100%' }}>
       {/* Light Linear Gradient Sidebar */}
       {mobile ? <Drawer title="Điều hướng" placement="left" size="min(280px, 88vw)"
         open={menuOpen} onClose={() => setMenuOpen(false)} styles={{ body: { padding: 0 } }} destroyOnHidden>
@@ -121,6 +122,7 @@ function MainLayout({ children, collaborationNavigation = false }: {
 
       {/* Main Content Area - Scrollbar runs from top of screen */}
       <Layout
+        className="brand-main"
         style={{
           background: '#F5F6FA',
           height: '100vh',
@@ -135,6 +137,7 @@ function MainLayout({ children, collaborationNavigation = false }: {
         <AppHeader onOpenNavigation={mobile ? () => setMenuOpen(true) : undefined} />
 
         <Content
+          className="brand-content"
           style={{
             background: '#F5F6FA',
             padding: mobile ? '12px 12px 24px' : '12px 24px 32px',

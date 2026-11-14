@@ -443,17 +443,6 @@ export default function DashboardPage() {
     });
   }, [rawCreators]);
 
-  // Avatars for Welcome Hero Banner
-  const showcaseAvatars = useMemo(() => {
-    const validWithAvatars = rawCreators.filter((c) => c.avatarUrl && c.avatarUrl.startsWith('http'));
-    return [
-      validWithAvatars[0]?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-      validWithAvatars[1]?.avatarUrl || 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
-      validWithAvatars[2]?.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-      validWithAvatars[3]?.avatarUrl || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=200&auto=format&fit=crop&q=80',
-    ];
-  }, [rawCreators]);
-
   // Platform Breakdown for Donut Chart (Chỉ bao gồm TikTok, Instagram, Facebook - Không có YouTube)
   const platformStats = useMemo(() => {
     const counts = { TIKTOK: 0, INSTAGRAM: 0, FACEBOOK: 0 };
@@ -540,59 +529,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Creator Cards Graphic with Social Stickers */}
-          <div className="im-welcome-graphic-col">
-            <div className="im-doodle-hint">
-              <span>Tìm đúng KOC phù hợp</span>
-              <span style={{ fontSize: 11 }}>⤴</span>
-            </div>
-
-            <div className="im-creator-card-stack">
-              <div className="im-stacked-photo-card card-1">
-                <img
-                  src={showcaseAvatars[0]}
-                  alt="Creator 1"
-                  className="im-stacked-photo-img"
-                />
-                <div className="im-photo-sticker">
-                  <span style={{ fontWeight: 800, fontSize: 9, color: '#0F172A' }}>♫</span>
-                </div>
-              </div>
-
-              <div className="im-stacked-photo-card card-2">
-                <img
-                  src={showcaseAvatars[1]}
-                  alt="Creator 2"
-                  className="im-stacked-photo-img"
-                />
-                <div className="im-photo-sticker">
-                  <span style={{ fontWeight: 800, fontSize: 9, color: '#E11D48' }}>▶</span>
-                </div>
-              </div>
-
-              <div className="im-stacked-photo-card card-3">
-                <img
-                  src={showcaseAvatars[2]}
-                  alt="Creator 3"
-                  className="im-stacked-photo-img"
-                />
-                <div className="im-photo-sticker">
-                  <span style={{ fontWeight: 800, fontSize: 9, color: '#9333EA' }}>📷</span>
-                </div>
-              </div>
-
-              <div className="im-stacked-photo-card card-4">
-                <img
-                  src={showcaseAvatars[3]}
-                  alt="Creator 4"
-                  className="im-stacked-photo-img"
-                />
-                <div className="im-photo-sticker">
-                  <span style={{ fontWeight: 800, fontSize: 9, color: '#059669' }}>🛍️</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* ROW 2: 3 KPI Metrics Cards (Full Width 3 Columns) */}
