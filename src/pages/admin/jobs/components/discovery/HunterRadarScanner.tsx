@@ -7,6 +7,7 @@ interface HunterRadarScannerProps {
   progressPercent: number;
   scannedCount: number;
   filteredOutCount: number;
+  pendingReviewCount: number | null;
   matchedCount: number;
   logLines: string[];
   onNavigateQuality?: () => void;
@@ -17,6 +18,7 @@ export default function HunterRadarScanner({
   progressPercent,
   scannedCount,
   filteredOutCount,
+  pendingReviewCount,
   matchedCount,
   logLines,
   onNavigateQuality,
@@ -63,13 +65,10 @@ export default function HunterRadarScanner({
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         <StatBadge label="Tổng số yêu cầu" value={scannedCount} unit="kênh" color="#6366F1" />
         <StatBadge
-          label="Cần xem xét / Chưa đạt"
+          label="Cào lỗi / Bị lọc Tier-0"
           value={filteredOutCount}
           unit="kênh"
           color="#F59E0B"
-          clickable={filteredOutCount > 0 && !!onNavigateQuality}
-          onClick={filteredOutCount > 0 ? onNavigateQuality : undefined}
-          actionHint={filteredOutCount > 0 && !!onNavigateQuality ? 'Xem & duyệt →' : undefined}
         />
         <StatBadge label="Cào thành công" value={matchedCount} unit="tài khoản" color="#10B981" />
       </div>
@@ -91,10 +90,10 @@ export default function HunterRadarScanner({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 13.5, color: '#92400E' }}>
-                  Có {filteredOutCount} tài khoản chưa đạt tự động hoặc cần kiểm định chất lượng & ngách
+                  Có {filteredOutCount} kênh cào lỗi hoặc chưa đạt bộ lọc Tier-0
                 </div>
                 <div style={{ fontSize: 12, color: '#B45309', marginTop: 2 }}>
-                  Các kênh này có thể bị nghi vấn Shop hoặc cần chuẩn hóa lại ngách ngành hàng thủ công.
+                  Số kênh bị lọc không phải số hồ sơ chờ kiểm định. Chỉ hồ sơ đã có dữ liệu trên hệ thống và đủ điều kiện mới xuất hiện ở trang kiểm định.
                 </div>
               </div>
               {onNavigateQuality && (
@@ -112,7 +111,7 @@ export default function HunterRadarScanner({
                     boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
                   }}
                 >
-                  Chuyển qua phần Kiểm định chất lượng ({filteredOutCount})
+                  {pendingReviewCount === null ? 'Mở danh sách kiểm định' : `Kiểm định chất lượng (${pendingReviewCount})`}
                 </Button>
               )}
             </div>

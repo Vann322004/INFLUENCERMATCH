@@ -1,4 +1,6 @@
 import apiClient from '../apiClient';
+import { createAdminQuery } from '../adminCache';
+import type { CachedQuery } from '../dataManagerCache';
 
 export interface SubscriptionSummary { total: number; pending: number; active: number; expired: number; cancelled: number }
 export interface CampaignSummary { total: number; draft: number; readyForDiscovery: number; active: number; completed: number; archived: number }
@@ -18,7 +20,7 @@ function counts<T>(data: any, fields: readonly string[]): T {
   return result as T;
 }
 
-export const adminDashboardService = {
+const requests = {
   async getSubscriptionSummary(): Promise<SubscriptionSummary> {
     const response = await apiClient.get('/admin/subscriptions/summary');
     return counts(payload(response.data), ['total', 'pending', 'active', 'expired', 'cancelled']);
@@ -63,4 +65,22 @@ export const adminDashboardService = {
         paymentCount: count(row.paymentCount), revenue: row.revenue };
     });
   },
+};
+
+const growthQueries = new Map<number, CachedQuery<UserGrowth>>();
+function getUserGrowthQuery(months = 6): CachedQuery<UserGrowth> {
+  if (!Number.isInteger(months) || months < 1 || months > 60) throw new Error('Số tháng phải từ 1 đến 60.');
+  let query = growthQueries.get(months);
+  if (!query) {
+    query = createAdminQuery(`dashboard:user-growth:${months}`, () => requests.getUserGrowth(months), { tags: ['admin-users'] });
+    growthQueries.set(months, query);
+  }
+  return query;
+}
+export const adminDashboardService = {
+  getSubscriptionSummary: createAdminQuery('dashboard:subscriptions', requests.getSubscriptionSummary, { tags: ['admin-billing'] }),
+  getCampaignSummary: createAdminQuery('dashboard:campaigns', requests.getCampaignSummary, { tags: ['admin-campaigns'] }),
+  getRevenueByPlan: createAdminQuery('dashboard:revenue-by-plan', requests.getRevenueByPlan, { tags: ['admin-billing'] }),
+  getUserGrowth: (months = 6) => getUserGrowthQuery(months)(),
+  getUserGrowthQuery,
 };

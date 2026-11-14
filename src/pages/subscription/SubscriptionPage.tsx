@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Typography, Card, Tabs, message } from 'antd';
+import { Typography, Card, Tabs, message, Alert, Button } from 'antd';
 import { CrownOutlined, PieChartOutlined, HistoryOutlined } from '@ant-design/icons';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import type { SubscriptionPlan, QuotaMetric, PaymentInvoice } from '../../data/mockData';
 import { subscriptionService } from '../../services/api/subscriptionService';
@@ -17,6 +17,7 @@ import HistoryTab from './components/HistoryTab';
 import UpgradeModal from './components/UpgradeModal';
 import InvoiceModal from './components/InvoiceModal';
 
+import { quotaTotal, reconcilePayment, subscriptionIsActive } from './billingState';
 import './SubscriptionPage.css';
 
 const { Title, Paragraph } = Typography;
@@ -67,7 +68,6 @@ export default function SubscriptionPage() {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [paying, setPaying] = useState<boolean>(false);
 
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isMountedRef = useRef(true);
 
@@ -87,6 +87,12 @@ export default function SubscriptionPage() {
   const [quotas, setQuotas] = useState<QuotaMetric[]>([]);
 
   // Invoice state from API / Active Subscription
+  const [historyPage, setHistoryPage] = useState(0);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyVersion, setHistoryVersion] = useState(0);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState('');
+  const [subscriptionError, setSubscriptionError] = useState('');
   const [invoices, setInvoices] = useState<PaymentInvoice[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<PaymentInvoice | null>(null);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
@@ -106,8 +112,9 @@ export default function SubscriptionPage() {
   // 2. Fetch brand & active subscription info concurrently
   const loadSubscriptionData = useCallback(async (forceRefresh = false) => {
     try {
+      setSubscriptionError('');
       // 1. Luôn truy vấn profile brand chính chủ của token hiện tại từ /brands/me
-      let brand = await brandService.getMyBrand(true).catch(() => null);
+      let brand = await brandService.getMyBrand(true);
 
       // 2. Nếu tài khoản Brand mới chưa có hồ sơ profile (404), tự động tạo hồ sơ brand để có ID riêng
       if (!brand?.id) {
@@ -148,36 +155,14 @@ export default function SubscriptionPage() {
       if (effectiveBrandId) {
         if (isMountedRef.current) setCurrentBrandId(effectiveBrandId);
 
-        const subs = await subscriptionService.getBrandSubscriptions(effectiveBrandId, forceRefresh).catch(() => []);
+        const subs = await subscriptionService.getBrandSubscriptions(effectiveBrandId, forceRefresh);
 
-        activeSub = (subs || []).find((s) => s.status === 'ACTIVE') || null;
+        activeSub = (subs || []).find((s) => subscriptionIsActive(s.status, s.expirationDate)) || null;
         hadTrial = (subs || []).some((s) => {
           const p = s.plan;
-          return p?.planName?.toLowerCase().includes('trial');
+          return p?.price === 0 || p?.planName?.toLowerCase().includes('trial') || p?.planName?.toLowerCase() === 'free';
         });
 
-        // Chuẩn hóa danh sách hóa đơn theo đúng các subscription của brand hiện tại
-        const brandInvoices: PaymentInvoice[] = (subs || []).map((s) => {
-          const pName = s.plan?.planName?.replace(/-[0-9]+$/, '').trim() || 'Gói dịch vụ';
-          const sDate = s.startDate ? new Date(s.startDate).toLocaleDateString('vi-VN') : '';
-          const eDate = s.expirationDate ? new Date(s.expirationDate).toLocaleDateString('vi-VN') : '';
-          const isZeroPrice = !s.plan?.price || s.plan.price <= 0;
-          return {
-            id: s.id,
-            code: `INV-${s.id.slice(0, 8).toUpperCase()}`,
-            planName: `Gói ${pName}`,
-            billingPeriod: sDate && eDate ? `${sDate} – ${eDate}` : 'Theo chu kỳ',
-            date: sDate || 'Gần đây',
-            amount: s.plan?.price || 0,
-            method: isZeroPrice ? 'Kích hoạt hệ thống (Miễn phí / Dùng thử)' : 'Cổng VNPAY (QR / ATM / Visa)',
-            status: s.status === 'ACTIVE' ? 'success' : s.status === 'EXPIRED' ? 'failed' : 'pending',
-            statusText: s.status === 'ACTIVE' ? 'Đã kích hoạt' : s.status === 'EXPIRED' ? 'Đã hết hạn' : s.status,
-          };
-        });
-
-        if (isMountedRef.current) setInvoices(brandInvoices);
-      } else {
-        if (isMountedRef.current) setInvoices([]);
       }
 
       if (!isMountedRef.current) return;
@@ -210,11 +195,11 @@ export default function SubscriptionPage() {
           month: '2-digit',
           year: 'numeric',
         });
-        const totalCamp = activeSub.plan?.campaignQuota || (activeSub as any).campaignQuota || 15;
+        const totalCamp = quotaTotal(activeSub.plan?.campaignQuota, (activeSub as any).campaignQuota);
         const usedCamp = activeSub.usedCampaignQuota || 0;
-        const totalReco = activeSub.plan?.recommendationQuota || (activeSub as any).recommendationQuota || 500;
+        const totalReco = quotaTotal(activeSub.plan?.recommendationQuota, (activeSub as any).recommendationQuota);
         const usedReco = activeSub.usedRecommendationQuota || 0;
-        const totalRef = activeSub.plan?.refreshQuota || (activeSub as any).refreshQuota || 50;
+        const totalRef = quotaTotal(activeSub.plan?.refreshQuota, (activeSub as any).refreshQuota);
         const usedRef = activeSub.usedRefreshQuota || 0;
 
         setSubInfo({
@@ -258,6 +243,8 @@ export default function SubscriptionPage() {
           },
         ]);
       } else {
+        activePlanIdRef.current = null;
+        setPlans(previous => previous.map(plan => ({ ...plan, isCurrent: false })));
         // Chưa có subscription hoạt động
         const usedCamp = 0;
         setSubInfo({
@@ -303,6 +290,7 @@ export default function SubscriptionPage() {
       }
     } catch (err) {
       console.error('Failed to load subscription data:', err);
+      if (isMountedRef.current) setSubscriptionError(getErrorMessage(err, 'Không tải được gói hiện tại. Vui lòng thử lại.'));
     } finally {
       if (isMountedRef.current) setLoadingSubInfo(false);
     }
@@ -333,58 +321,68 @@ export default function SubscriptionPage() {
     };
   }, [loadSubscriptionData]);
 
-  // Lắng nghe kết quả redirect từ cổng thanh toán VNPAY (bắt cả payment=success/failed và vnp_ResponseCode / vnp_TransactionStatus / status)
+  // History comes from actual payment records, not subscription state or current plan price.
+  useEffect(() => {
+    if (activeTab !== 'history') return;
+    const controller = new AbortController();
+    setHistoryLoading(true);
+    setHistoryError('');
+    subscriptionService.getPaymentHistory(historyPage, 10, controller.signal).then(page => {
+      if (controller.signal.aborted) return;
+      const labels: Record<string, string> = { PAID: 'Đã thanh toán', PENDING: 'Đang chờ thanh toán', FAILED: 'Thanh toán thất bại', REFUNDED: 'Đã hoàn tiền' };
+      setHistoryTotal(page.totalElements);
+      setInvoices(page.items.map(payment => ({
+        id: payment.id,
+        code: payment.transactionCode || payment.id,
+        planName: payment.planName,
+        date: new Date(payment.paidAt || payment.createdAt).toLocaleString('vi-VN'),
+        billingPeriod: payment.startDate && payment.expirationDate
+          ? `${payment.startDate} – ${payment.expirationDate}` : '—',
+        amount: Number(payment.amount), currency: payment.currency,
+        method: payment.gateway,
+        status: payment.status === 'PAID' ? 'success' : payment.status === 'PENDING' ? 'pending' : 'failed',
+        statusText: labels[payment.status] || payment.status,
+      })));
+    }).catch(error => {
+      if (!controller.signal.aborted) setHistoryError(getErrorMessage(error, 'Không tải được lịch sử thanh toán.'));
+    }).finally(() => { if (!controller.signal.aborted) setHistoryLoading(false); });
+    return () => controller.abort();
+  }, [activeTab, historyPage, historyVersion]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const payment = params.get('payment');
-    const vnpResponse = params.get('vnp_ResponseCode');
-    const vnpTxnStatus = params.get('vnp_TransactionStatus');
-    const statusParam = (params.get('status') || '').toUpperCase();
-
-    const isSuccess =
-      payment === 'success' ||
-      vnpResponse === '00' ||
-      vnpTxnStatus === '00' ||
-      statusParam === 'PAID' ||
-      statusParam === 'SUCCESS';
-
-    const isFailed =
-      payment === 'failed' ||
-      payment === 'cancel' ||
-      (Boolean(vnpResponse) && vnpResponse !== '00') ||
-      (Boolean(vnpTxnStatus) && vnpTxnStatus !== '00') ||
-      statusParam === 'FAILED' ||
-      statusParam === 'CANCELLED';
-
-    if (isSuccess) {
-      message.success({
-        content: 'Chúc mừng! Thanh toán nâng cấp gói dịch vụ qua VNPAY thành công. Hạn mức đã được kích hoạt!',
-        duration: 6,
-        key: 'vnpay_payment_toast',
-      });
-      setActiveTab('quota');
-      window.history.replaceState({}, '', window.location.pathname);
-
-      // Xóa cache và nạp lại dữ liệu subscription & quota mới nhất từ backend
-      subscriptionService.clearBrandSubsCache();
-      loadSubscriptionData(true);
-
-      // Dự phòng độ trễ xử lý IPN từ phía ngân hàng: nạp lại sau 2s
-      const timer = setTimeout(() => {
-        loadSubscriptionData(true);
-      }, 2000);
-      return () => clearTimeout(timer);
-    } else if (isFailed) {
-      const isUserCancel = vnpResponse === '24' || payment === 'cancel';
-      message.error({
-        content: isUserCancel
-          ? 'Giao dịch thanh toán VNPAY đã bị hủy bởi người dùng.'
-          : `Giao dịch thanh toán VNPAY không thành công hoặc đã bị hủy${vnpResponse ? ` (Mã: ${vnpResponse})` : ''}.`,
-        duration: 5,
-        key: 'vnpay_payment_toast',
-      });
-      window.history.replaceState({}, '', window.location.pathname);
+    if (!['payment', 'vnp_ResponseCode', 'vnp_TransactionStatus', 'status'].some(key => params.has(key))) return;
+    const reference = params.get('txnRef') || params.get('vnp_TxnRef');
+    if (!reference) {
+      message.warning('Chưa có mã giao dịch để xác minh thanh toán. Vui lòng kiểm tra lịch sử thanh toán.');
+      return;
     }
+    const controller = new AbortController();
+    message.loading({ content: 'Đang xác minh thanh toán với máy chủ...', key: 'vnpay_payment_toast', duration: 0 });
+    reconcilePayment(reference, (ref, signal) => subscriptionService.getPaymentStatus(ref, signal), controller.signal)
+      .then(async payment => {
+        if (controller.signal.aborted) return;
+        if (payment.status === 'PAID') {
+          message.success({ content: 'Máy chủ đã xác nhận thanh toán thành công.', key: 'vnpay_payment_toast' });
+          subscriptionService.clearBrandSubsCache();
+          await loadSubscriptionData(true);
+          if (controller.signal.aborted) return;
+          setActiveTab('quota');
+        } else if (payment.status === 'PENDING') {
+          message.info({ content: 'Giao dịch đang chờ xác nhận. Bạn có thể kiểm tra lại trong lịch sử thanh toán.', key: 'vnpay_payment_toast', duration: 6 });
+          setActiveTab('history');
+        } else {
+          message.error({ content: payment.status === 'REFUNDED' ? 'Giao dịch đã được đánh dấu hoàn tiền.' : 'Máy chủ xác nhận giao dịch không thành công.', key: 'vnpay_payment_toast' });
+          setActiveTab('history');
+        }
+        setHistoryVersion(value => value + 1);
+        params.delete('payment'); params.delete('txnRef'); params.delete('vnp_TxnRef');
+        params.delete('status'); params.delete('vnp_ResponseCode'); params.delete('vnp_TransactionStatus');
+        window.history.replaceState({}, '', window.location.pathname + (params.size ? `?${params}` : ''));
+      }).catch(error => {
+        if (!controller.signal.aborted) message.error({ content: getErrorMessage(error, 'Chưa xác minh được giao dịch. Vui lòng kiểm tra lịch sử thanh toán.'), key: 'vnpay_payment_toast' });
+      });
+    return () => { controller.abort(); message.destroy('vnpay_payment_toast'); };
   }, [loadSubscriptionData]);
 
   // Handle plan upgrade click
@@ -416,7 +414,7 @@ export default function SubscriptionPage() {
       try {
         let validBrandId = currentBrandId;
         if (!validBrandId) {
-          const fresh = await brandService.getMyBrand(true).catch(() => null);
+          const fresh = await brandService.getMyBrand(true);
           validBrandId = fresh?.id || null;
         }
         if (!validBrandId) {
@@ -453,6 +451,8 @@ export default function SubscriptionPage() {
 
   return (
     <div className="subscription-container">
+      {subscriptionError && <Alert type="error" showIcon title="Không tải được gói hiện tại" description={subscriptionError}
+        action={<Button onClick={() => loadSubscriptionData(true)}>Thử lại</Button>} style={{ marginBottom: 16 }} />}
       {/* 1. Header Section */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
@@ -529,7 +529,12 @@ export default function SubscriptionPage() {
               children: (
                 <HistoryTab
                   invoices={invoices}
-                  loading={loadingSubInfo}
+                  loading={historyLoading}
+                  page={historyPage}
+                  total={historyTotal}
+                  error={historyError}
+                  onRetry={() => setHistoryVersion(value => value + 1)}
+                  onPageChange={setHistoryPage}
                   onViewInvoice={(invoice) => {
                     setSelectedInvoice(invoice);
                     setIsInvoiceModalOpen(true);

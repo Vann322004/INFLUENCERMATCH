@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { Empty, Table, Tag } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { adminService } from '../../../services/api/adminService';
+import { createAdminQuery, mapCachedQuery } from '../../../services/adminCache';
 import { adminDashboardService } from '../../../services/api/adminDashboardService';
 import type { CampaignSummary, SubscriptionSummary } from '../../../services/api/adminDashboardService';
 import ResourceState from './components/AdminDashboardState';
@@ -15,10 +16,11 @@ import type { AuditLogItem } from '../../../types/api/admin.types';
 import { DATA_MANAGER_ROUTES } from '../../../constants/adminRoutes';
 import './AdminDashboard.css';
 
-const getUsersTotal = async () => (await adminService.getUsers({ page: 0, size: 1 })).totalElements;
-const getPlansTotal = async () => (await subscriptionService.getPlansPage()).totalElements;
+const getUsersTotal = createAdminQuery('dashboard:user-count', async () => (await adminService.getUsers({ page: 0, size: 1 })).totalElements, { tags: ['admin-users'] });
+const getPlansTotal = mapCachedQuery(subscriptionService.getPlansPageQuery(), page => page.totalElements);
 // /creators is an unpaginated list of ingested metric records, not unique Creator identities.
-const getCreatorRecords = async () => (await creatorService.getCreators()).length;
+const getCreatorRecords = mapCachedQuery(creatorService.getCreators, items => items.length);
+const getUserGrowth = adminDashboardService.getUserGrowthQuery(6);
 const getRecentLogs = () => adminService.getAuditLogs({ page: 0, size: 8 });
 
 function Metric({ title, note, resource, allowed }: {
@@ -145,7 +147,7 @@ function DashboardContent() {
   const logs = useAsyncResource(getRecentLogs, canViewAudit);
   const campaigns = useAsyncResource(adminDashboardService.getCampaignSummary, canViewMonitoring);
   const subscriptions = useAsyncResource(adminDashboardService.getSubscriptionSummary, canManageSubscriptions);
-  const growth = useAsyncResource(adminDashboardService.getUserGrowth, canViewMonitoring);
+  const growth = useAsyncResource(getUserGrowth, canViewMonitoring);
   const revenue = useAsyncResource(adminDashboardService.getRevenueByPlan, canManageSubscriptions);
 
   return <div className="ad-dashboard">
@@ -172,7 +174,7 @@ function DashboardContent() {
       <p className="ad-note">8 hoạt động mới nhất được ghi nhận trên hệ thống.</p>
       {canViewAudit && logs.status === 'success'
         ? <Table<AuditLogItem> rowKey="id" columns={columns} dataSource={logs.data?.items ?? []}
-            pagination={false} size="middle"
+            tableLayout="fixed" pagination={false} size="middle"
             locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có dữ liệu" /> }} />
         : <ResourceState resource={logs} allowed={canViewAudit} />}
     </section>

@@ -1,12 +1,16 @@
-import React, { useState, useRef } from 'react';
+import { saveCollectionResults } from '../../../../../services/collectionResults';
+import { useCollectionState } from '../../../../../hooks/useCollectionState';
+import type { LiveCrawlResult } from '../../../../../types/api/crawler.types';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { message } from 'antd';
+import { Alert, message } from 'antd';
 import HunterSetupCard from './HunterSetupCard';
-import { TOPIC_PRESETS } from './hunterConstants';
+import { nicheService, type Niche } from '../../../../../services/api/nicheService';
 import HunterRadarScanner from './HunterRadarScanner';
 import DiscoveredFeedCard, { type DiscoveredKocItem } from './DiscoveredFeedCard';
 import DirectCrawlModal from '../DirectCrawlModal';
 import { crawlerService } from '../../../../../services/api/crawlerService';
+import { dataQualityService } from '../../../../../services/api/dataQualityService';
 import type { CrawlPlatform } from '../../../../../types/api/crawler.types';
 
 // Kiểm tra tài khoản shop, bán sỉ, kho hàng
@@ -59,30 +63,69 @@ function isShopAccount(username: string, displayName?: string, bio?: string): bo
 }
 
 export default function AutoHunterTab() {
-  const [mode, setMode] = useState<'category' | 'custom'>('category');
-  const [platform, setPlatform] = useState<string>('ALL');
-  const [selectedTopic, setSelectedTopic] = useState<string>('beauty');
-  const [activeKeywords, setActiveKeywords] = useState<string[]>(TOPIC_PRESETS[0].keywords);
-  const [customUsernames, setCustomUsernames] = useState<string>('');
-  const [maxKocs, setMaxKocs] = useState<number>(5);
+  const [mode, setMode] = useCollectionState<'category' | 'custom'>('hunter.mode', 'category');
+  const [platform, setPlatform] = useCollectionState<string>('hunter.platform', 'ALL');
+  const [topics, setTopics] = useState<Niche[]>([]);
+  const [topicsLoading, setTopicsLoading] = useState(true);
+  const [topicsError, setTopicsError] = useState('');
+  const [topicsVersion, setTopicsVersion] = useState(0);
+  const [selectedTopic, setSelectedTopic] = useCollectionState<string>('hunter.selectedTopic', '');
+  const [activeKeywords, setActiveKeywords] = useCollectionState<string[]>('hunter.activeKeywords', []);
+  const [customUsernames, setCustomUsernames] = useCollectionState<string>('hunter.customUsernames', '');
+  const [maxKocs, setMaxKocs] = useCollectionState<number>('hunter.maxKocs', 5);
   const [loading, setLoading] = useState<boolean>(false);
 
   // Radar state — driven bởi response thực từ API
-  const [currentKeyword, setCurrentKeyword] = useState<string>('');
-  const [progressPercent, setProgressPercent] = useState<number>(0);
-  const [scannedCount, setScannedCount] = useState<number>(0);
-  const [filteredOutCount, setFilteredOutCount] = useState<number>(0);
-  const [matchedCount, setMatchedCount] = useState<number>(0);
-  const [logLines, setLogLines] = useState<string[]>([]);
+  const [currentKeyword, setCurrentKeyword] = useCollectionState<string>('hunter.currentKeyword', '');
+  const [progressPercent, setProgressPercent] = useCollectionState<number>('hunter.progressPercent', 0);
+  const [scannedCount, setScannedCount] = useCollectionState<number>('hunter.scannedCount', 0);
+  const [filteredOutCount, setFilteredOutCount] = useCollectionState<number>('hunter.filteredOutCount', 0);
+  const [pendingReviewCount, setPendingReviewCount] = useCollectionState<number | null>('hunter.pendingReviewCount', null);
+  const [matchedCount, setMatchedCount] = useCollectionState<number>('hunter.matchedCount', 0);
+  const [logLines, setLogLines] = useCollectionState<string[]>('hunter.logLines', []);
 
   // Discovered Feed
-  const [discoveredList, setDiscoveredList] = useState<DiscoveredKocItem[]>([]);
+  const [discoveredList, setDiscoveredList] = useCollectionState<DiscoveredKocItem[]>('hunter.discoveredList', []);
   const [inspectModalOpen, setInspectModalOpen] = useState<boolean>(false);
   const [inspectUsername, setInspectUsername] = useState<string>('');
 
+  const [rawResults, setRawResults] = useCollectionState<LiveCrawlResult[]>('hunter.results', []);
   const feedRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    let active = true;
+    nicheService.list().then(rows => {
+      if (!active) return;
+      const enabled = rows.filter(row => row.active);
+      setTopics(enabled);
+      if (!enabled.some(topic => topic.id === selectedTopic)) {
+        setSelectedTopic(enabled[0]?.id || '');
+        setActiveKeywords(enabled[0]?.keywords || []);
+      }
+    }).catch((error) => {
+      if (!active) return;
+      setTopics([]);
+      setSelectedTopic('');
+      setActiveKeywords([]);
+      const status = error?.response?.status;
+      const detail = status === 401 ? 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.'
+        : status === 403 ? 'Yêu cầu bị từ chối. Kiểm tra quyền tài khoản hoặc cấu hình máy chủ.'
+        : status === 404 ? 'Máy chủ chưa có API quản lý lĩnh vực. Cần cập nhật backend.'
+        : status >= 500 ? 'Máy chủ gặp lỗi khi tải lĩnh vực. Vui lòng thử lại sau.'
+        : error?.message === 'INVALID_CRAWL_FIELDS_RESPONSE' ? 'Dữ liệu lĩnh vực trả về không đúng định dạng.'
+        : 'Không kết nối được API lĩnh vực. Vui lòng kiểm tra kết nối và thử lại.';
+      setTopicsError(`Không tải được lĩnh vực săn KOC${status ? ` (HTTP ${status})` : ''}. ${detail}`);
+    }).finally(() => { if (active) setTopicsLoading(false); });
+    return () => { active = false; };
+  }, [topicsVersion]);
+
+  const reloadTopics = () => {
+    setTopicsLoading(true);
+    setTopicsError('');
+    setTopicsVersion(value => value + 1);
+  };
 
   const handleNavigateQuality = () => {
     const target = location.pathname.startsWith('/data-manager')
@@ -93,20 +136,8 @@ export default function AutoHunterTab() {
 
   const handleSelectTopic = (topicId: string) => {
     setSelectedTopic(topicId);
-    const found = TOPIC_PRESETS.find((t) => t.id === topicId);
-    if (found) setActiveKeywords(found.keywords);
-  };
-
-  const topicToCategoryCode = (topicId: string): string => {
-    const map: Record<string, string> = {
-      beauty: 'BEAUTY',
-      food: 'FOOD',
-      tech: 'TECH',
-      fashion: 'FASHION',
-      travel: 'TRAVEL',
-      lifestyle: 'LIFESTYLE',
-    };
-    return map[topicId] || 'BEAUTY';
+    const found = topics.find((t) => t.id === topicId);
+    if (found) setActiveKeywords(found.keywords || []);
   };
 
   const handleStartHunting = async () => {
@@ -123,6 +154,10 @@ export default function AutoHunterTab() {
         return;
       }
     } else {
+      if (topicsLoading || topicsError || !topics.some(topic => topic.id === selectedTopic)) {
+        message.warning('Vui lòng chọn một lĩnh vực đang bật.');
+        return;
+      }
       if (activeKeywords.length === 0) {
         message.warning('Vui lòng chọn hoặc nhập ít nhất 1 từ khóa để săn KOC!');
         return;
@@ -137,8 +172,8 @@ export default function AutoHunterTab() {
     setDiscoveredList([]);
 
     const now = () => new Date().toLocaleTimeString('vi-VN');
-    const topicObj = TOPIC_PRESETS.find((t) => t.id === selectedTopic) || TOPIC_PRESETS[0];
-    const categoryCode = topicToCategoryCode(selectedTopic);
+    const topicObj = topics.find((t) => t.id === selectedTopic);
+    const categoryCode = topicObj?.name || '';
     const crawlPlatform = platform as CrawlPlatform;
 
     if (mode === 'custom') {
@@ -149,10 +184,10 @@ export default function AutoHunterTab() {
       setCurrentKeyword(usernamesToCrawl[0] || 'custom');
     } else {
       setLogLines([
-        `[${now()}] Bắt đầu cào ${maxKocs} kênh thuộc ngành ${topicObj.label}...`,
+        `[${now()}] Bắt đầu cào ${maxKocs} kênh thuộc lĩnh vực ${topicObj?.name}...`,
         `[${now()}] Nền tảng: ${platform === 'ALL' ? 'Tất cả nền tảng (TikTok + Facebook)' : platform} | Từ khóa: ${activeKeywords.join(', ')}`,
       ]);
-      setCurrentKeyword(activeKeywords[0] || categoryCode);
+      setCurrentKeyword(activeKeywords[0] || categoryCode || '');
     }
 
     // Dynamic progress feedback
@@ -170,6 +205,7 @@ export default function AutoHunterTab() {
       const res = await crawlerService.batchCrawl({
         platform: crawlPlatform,
         category: mode === 'category' ? categoryCode : undefined,
+        keywords: mode === 'category' ? activeKeywords : undefined,
         usernames: mode === 'custom' ? usernamesToCrawl : undefined,
         maxChannels: maxKocs,
       });
@@ -181,7 +217,9 @@ export default function AutoHunterTab() {
       const totalReq = summary?.total_requested ?? (res.results?.length ?? maxKocs);
       const failedCnt = summary?.failed_count ?? 0;
 
-      const rawResults = (res.results || []).filter((r) => !!r.username);
+      setRawResults(res.results || []);
+      saveCollectionResults(res.results || [], mode === 'custom' ? 'manual' : 'automatic');
+      const rawResults = (res.results || []).filter((r) => r.status === 'success' && !!r.username);
 
       // Áp dụng bộ lọc Tier-0 Guards
       let shopFilteredCount = 0;
@@ -227,7 +265,7 @@ export default function AutoHunterTab() {
       setFilteredOutCount(totalExcluded);
       setMatchedCount(passedResults.length);
 
-      // Đưa các tài khoản chưa đạt tự động vào hàng đợi kiểm định chất lượng (Staging) để Manager xem xét
+      // Enqueue requests crawler processing; it does not create a Java quality-review snapshot.
       reviewPendingCandidates.forEach((cand) => {
         const u = cand.username.replace(/^@/, '');
         crawlerService.enqueueCandidate(cand.platform as any, u, false).catch(() => {});
@@ -255,22 +293,27 @@ export default function AutoHunterTab() {
             decision: isKol ? 'AUTO_ACCEPT_KOL' : 'AUTO_ACCEPT_KOC',
             bio: r.bio,
             latencyMs: r.latency_ms,
-            status: 'INGESTED', // Đã tự động kích hoạt lưu vào Database
+            status: 'DISCOVERED',
           };
         });
 
         // Tự động lưu tất cả KOC đạt chuẩn vào Database hệ thống
-        passedResults.forEach((koc) => {
+        const submissions = await Promise.allSettled(passedResults.map((koc) => {
           const uname = koc.username.replace(/^@/, '');
           const kocPlat = (koc.platform || 'TIKTOK') as any;
-          crawlerService.enqueueCandidate(kocPlat, uname, false).catch(() => {});
+          return crawlerService.enqueueCandidate(kocPlat, uname, false);
+        }));
+        const queuedCount = submissions.filter(result => result.status === 'fulfilled').length;
+        mappedList.forEach((item, index) => {
+          if (submissions[index].status === 'fulfilled') item.status = 'QUEUED';
         });
+        if (queuedCount < mappedList.length) message.warning(`Có ${mappedList.length - queuedCount} hồ sơ chưa gửi được vào hàng đợi. Bạn có thể gửi lại từng hồ sơ.`);
 
         setProgressPercent(100);
         setDiscoveredList(mappedList);
 
         const newLogs = [
-          `[${now()}] Hoàn tất! Đã tìm thấy ${mappedList.length} KOC đạt chuẩn Tier-0 và tự động lưu vào DB.`,
+          `[${now()}] Đã xử lý ${res.results?.length ?? 0}/${totalReq} kênh yêu cầu; ${mappedList.length} KOC đạt chuẩn Tier-0. ${(res.results?.length ?? 0) < totalReq ? "Nguồn tìm kiếm chưa trả đủ kênh phù hợp." : ""}`,
         ];
         if (shopFilteredCount > 0) {
           newLogs.push(`[${now()}] Đã loại bỏ ${shopFilteredCount} tài khoản Shop/Kho hàng: ${shopRemovedNames.join(', ')}`);
@@ -279,10 +322,10 @@ export default function AutoHunterTab() {
           newLogs.push(`[${now()}] Đã loại bỏ ${lowFollowersCount} tài khoản có lượng theo dõi dưới 7.000.`);
         }
         if (totalExcluded > 0) {
-          newLogs.push(`[${now()}] Đã chuyển ${totalExcluded} tài khoản chưa đạt vào hàng đợi Kiểm định chất lượng.`);
+          newLogs.push(`[${now()}] Có ${totalExcluded} kênh cào lỗi hoặc bị lọc Tier-0. Chưa xác nhận có hồ sơ chờ kiểm định trên hệ thống.`);
         }
         setLogLines(newLogs);
-        message.success(`Đã săn và tự động lưu ${mappedList.length} KOC đạt chuẩn vào hệ thống!`);
+        message.success(`Đã thu thập ${mappedList.length} KOC; ${queuedCount} hồ sơ đã vào hàng đợi đồng bộ.`);
 
         if (totalExcluded > 0) {
           message.info({
@@ -293,7 +336,7 @@ export default function AutoHunterTab() {
                   onClick={handleNavigateQuality}
                   style={{ color: '#4F46E5', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
                 >
-                  Chuyển qua duyệt chất lượng →
+                  Mở danh sách kiểm định trên hệ thống →
                 </a>
               </span>
             ),
@@ -313,18 +356,18 @@ export default function AutoHunterTab() {
         setLogLines([
           `[${now()}] ${reason}`,
           totalExcluded > 0
-            ? `[${now()}] Đã chuyển ${totalExcluded} kênh vào hàng đợi Kiểm định chất lượng để xem xét thủ công.`
+            ? `[${now()}] Có ${totalExcluded} kênh cào lỗi hoặc bị lọc Tier-0; số này không phải số hồ sơ chờ kiểm định.`
             : `[${now()}] Gợi ý: Hãy thử chọn danh mục khác hoặc tăng số lượng mục tiêu cào.`,
         ]);
         message.warning({
           content: (
             <span>
-              Không có KOC nào đạt chuẩn tự động (đã lọc ${totalExcluded} tài khoản).{' '}
+              Không có KOC nào đạt chuẩn tự động (cào lỗi hoặc bị lọc {totalExcluded} kênh).{' '}
               <a
                 onClick={handleNavigateQuality}
                 style={{ color: '#4F46E5', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
               >
-                Chuyển qua duyệt chất lượng →
+                Mở danh sách kiểm định trên hệ thống →
               </a>
             </span>
           ),
@@ -339,6 +382,10 @@ export default function AutoHunterTab() {
       message.error(err.message || 'Lỗi khi gọi API cào dữ liệu');
     } finally {
       setLoading(false);
+      setPendingReviewCount(null);
+      dataQualityService.pending(0, 1)
+        .then(result => setPendingReviewCount(result.totalElements))
+        .catch(() => setPendingReviewCount(null));
     }
   };
 
@@ -347,9 +394,9 @@ export default function AutoHunterTab() {
     try {
       await crawlerService.enqueueCandidate(item.platform as any, item.username, true);
       setDiscoveredList((prev) =>
-        prev.map((k) => (k.id === item.id ? { ...k, status: 'INGESTED' } : k))
+        prev.map((k) => (k.id === item.id ? { ...k, status: 'QUEUED' } : k))
       );
-      message.success({ content: `Đã lưu @${item.username} vào Database!`, key: 'imp_single' });
+      message.success({ content: `Đã đưa @${item.username} vào hàng đợi đồng bộ.`, key: 'imp_single' });
     } catch {
       message.error({ content: 'Lỗi khi lưu KOC', key: 'imp_single' });
     }
@@ -359,13 +406,15 @@ export default function AutoHunterTab() {
     if (discoveredList.length === 0) return;
     message.loading({ content: `Đang đồng bộ ${discoveredList.length} KOC vào Database...`, key: 'imp_all' });
     try {
-      await Promise.all(
+      const submissions = await Promise.allSettled(
         discoveredList.map((k) =>
-          crawlerService.enqueueCandidate(k.platform as any, k.username, false).catch(() => {})
+          crawlerService.enqueueCandidate(k.platform as any, k.username, false)
         )
       );
-      setDiscoveredList((prev) => prev.map((k) => ({ ...k, status: 'INGESTED' })));
-      message.success({ content: `Đã lưu thành công ${discoveredList.length} KOC vào hệ thống!`, key: 'imp_all' });
+      const queuedIds = new Set(discoveredList.filter((_, index) => submissions[index].status === 'fulfilled').map(item => item.id));
+      setDiscoveredList(prev => prev.map(item => queuedIds.has(item.id) ? { ...item, status: 'QUEUED' } : item));
+      const failedCount = submissions.length - queuedIds.size;
+      message[failedCount ? 'warning' : 'success']({ content: `Đã gửi ${queuedIds.size} hồ sơ vào hàng đợi.${failedCount ? ` ${failedCount} hồ sơ gửi thất bại, hãy thử lại.` : ''}`, key: 'imp_all' });
     } catch {
       message.error({ content: 'Lỗi khi lưu danh sách KOC', key: 'imp_all' });
     }
@@ -378,7 +427,13 @@ export default function AutoHunterTab() {
 
   return (
     <div>
+      {topicsError && <Alert type="error" showIcon title={topicsError} style={{ marginBottom: 16 }} />}
       <HunterSetupCard
+        topics={topics}
+        topicsLoading={topicsLoading}
+        topicsError={topicsError}
+        topicsManagementPath={`${location.pathname.startsWith('/data-manager') ? '/data-manager' : '/admin'}/data-sources`}
+        onReloadTopics={reloadTopics}
         mode={mode}
         onModeChange={setMode}
         platform={platform}
@@ -401,6 +456,7 @@ export default function AutoHunterTab() {
           progressPercent={progressPercent}
           scannedCount={scannedCount}
           filteredOutCount={filteredOutCount}
+          pendingReviewCount={pendingReviewCount}
           matchedCount={matchedCount}
           logLines={logLines}
           onNavigateQuality={handleNavigateQuality}
@@ -422,6 +478,7 @@ export default function AutoHunterTab() {
         open={inspectModalOpen}
         onClose={() => setInspectModalOpen(false)}
         defaultInput={inspectUsername}
+        initialResult={rawResults.find(result => result.username.replace(/^@/, '') === inspectUsername)}
       />
     </div>
   );

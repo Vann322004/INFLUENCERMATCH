@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Tag, Button, Space, Typography, message } from 'antd';
+import { Table, Tag, Button, Space, Typography, message, Alert } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { HistoryOutlined, DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
 import type { PaymentInvoice } from '../../../data/mockData';
@@ -14,13 +14,18 @@ export const formatVND = (val: number) => {
 interface HistoryTabProps {
   invoices: PaymentInvoice[];
   loading: boolean;
+  page: number;
+  total: number;
+  error: string;
+  onRetry: () => void;
+  onPageChange: (page: number) => void;
   onViewInvoice: (invoice: PaymentInvoice) => void;
 }
 
-export default function HistoryTab({ invoices, loading, onViewInvoice }: HistoryTabProps) {
+export default function HistoryTab({ invoices, loading, onViewInvoice, page, total, error, onRetry, onPageChange }: HistoryTabProps) {
   const invoiceColumns: ColumnsType<PaymentInvoice> = [
     {
-      title: 'Mã hóa đơn',
+      title: 'Mã giao dịch',
       dataIndex: 'code',
       key: 'code',
       render: (code: string) => (
@@ -109,16 +114,17 @@ export default function HistoryTab({ invoices, loading, onViewInvoice }: History
     <div style={{ marginTop: 16 }}>
       <div style={{ marginBottom: 16 }}>
         <Text type="secondary" style={{ fontSize: 13 }}>
-          Hiển thị danh sách hóa đơn các kỳ gia hạn và nâng cấp gói dịch vụ của bạn.
+          Lịch sử giao dịch được lấy từ máy chủ, gồm cả thanh toán đang chờ và thất bại.
         </Text>
       </div>
 
+      {error && <Alert type="error" showIcon title={error} action={<Button onClick={onRetry}>Thử lại</Button>} style={{ marginBottom: 16 }} />}
       <Table
         columns={invoiceColumns}
         dataSource={invoices}
         rowKey="id"
         loading={loading}
-        pagination={false}
+        pagination={{ current: page + 1, pageSize: 10, total, showSizeChanger: false, onChange: value => onPageChange(value - 1) }}
         className="styled-table"
         locale={{
           emptyText: (
@@ -126,7 +132,7 @@ export default function HistoryTab({ invoices, loading, onViewInvoice }: History
               <HistoryOutlined style={{ fontSize: 32, color: '#CBD5E1', marginBottom: 8 }} />
               <div style={{ fontWeight: 600, color: '#334155' }}>Chưa có giao dịch thanh toán nào phát sinh</div>
               <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>
-                Hóa đơn điện tử sẽ tự động tạo và lưu trữ tại đây ngay khi bạn thanh toán gói qua cổng VNPAY.
+                Các giao dịch qua VNPay sẽ hiển thị tại đây sau khi tạo thanh toán.
               </div>
             </div>
           ),

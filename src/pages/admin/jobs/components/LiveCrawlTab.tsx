@@ -1,3 +1,5 @@
+import { saveCollectionResults } from '../../../../services/collectionResults';
+import { useCollectionState } from '../../../../hooks/useCollectionState';
 import React, { useState } from 'react';
 import { Card, Button, Space, Tag, Typography, Spin, message } from 'antd';
 import { crawlerService } from '../../../../services/api/crawlerService';
@@ -11,13 +13,14 @@ const { Text } = Typography;
 interface LiveCrawlTabProps {
   onImportSuccess?: (result: LiveCrawlResult) => void;
   defaultInput?: string;
+  initialResult?: LiveCrawlResult;
 }
 
-export default function LiveCrawlTab({ onImportSuccess, defaultInput = '' }: LiveCrawlTabProps) {
-  const [inputUrl, setInputUrl] = useState(defaultInput);
-  const [platform, setPlatform] = useState<CrawlPlatform>('TIKTOK');
+export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initialResult }: LiveCrawlTabProps) {
+  const [inputUrl, setInputUrl] = useCollectionState(`live.${defaultInput}.input`, defaultInput);
+  const [platform, setPlatform] = useCollectionState<CrawlPlatform>(`live.${defaultInput}.platform`, (initialResult?.platform as CrawlPlatform) || 'TIKTOK');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<LiveCrawlResult | null>(null);
+  const [result, setResult] = useCollectionState<LiveCrawlResult | null>(`live.${defaultInput}.result`, initialResult || null);
   const [currentStep, setCurrentStep] = useState<string>('');
 
   const handleInputChange = (val: string) => {
@@ -36,7 +39,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '' }: Liv
     }
 
     setLoading(true);
-    setResult(null);
+
     setCurrentStep('Đang kết nối tới máy chủ cào dữ liệu...');
 
     try {
@@ -45,6 +48,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '' }: Liv
 
       const res = await crawlerService.testScrape(inputUrl, platform);
       setResult(res);
+      saveCollectionResults([res], 'manual');
       const latencySec = res.latency_ms ? (res.latency_ms / 1000).toFixed(1) : '0.5';
       message.success(`Cào thành công @${res.username}! (${latencySec} giây)`);
     } catch (err: any) {
@@ -65,8 +69,8 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '' }: Liv
     if (!result) return;
     message.loading({ content: `Đang lưu hồ sơ @${result.username} vào hệ thống...`, key: 'import_catalog' });
     try {
-      await crawlerService.enqueueCandidate(platform, result.username, true);
-      message.success({ content: `Đã lưu @${result.username} vào hệ thống thành công!`, key: 'import_catalog' });
+      await crawlerService.enqueueCandidate(result.platform as CrawlPlatform, result.username, true);
+      message.success({ content: `Đã đưa @${result.username} vào hàng đợi đồng bộ. Kiểm tra tiến trình để xác nhận kết quả lưu.`, key: 'import_catalog' });
       if (onImportSuccess) onImportSuccess(result);
     } catch (err: any) {
       message.error({ content: err.message || 'Lỗi khi lưu vào hệ thống', key: 'import_catalog' });
@@ -75,10 +79,10 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '' }: Liv
 
   const handleSendToQuality = async () => {
     if (!result) return;
-    message.loading({ content: `Đang gửi @${result.username} sang kiểm định...`, key: 'send_quality' });
+    message.loading({ content: `Đang gửi @${result.username} vào hàng đợi xử lý...`, key: 'send_quality' });
     try {
-      await crawlerService.enqueueCandidate(platform, result.username, false);
-      message.success({ content: `Đã đưa @${result.username} vào danh sách kiểm định chất lượng!`, key: 'send_quality' });
+      await crawlerService.enqueueCandidate(result.platform as CrawlPlatform, result.username, false);
+      message.success({ content: `Đã gửi yêu cầu xử lý @${result.username}. Hồ sơ chỉ vào danh sách kiểm định sau khi đồng bộ dữ liệu và đủ điều kiện.`, key: 'send_quality' });
     } catch (err: any) {
       message.error({ content: err.message || 'Lỗi khi đưa vào kiểm định', key: 'send_quality' });
     }
@@ -173,7 +177,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '' }: Liv
                 onClick={handleSendToQuality}
                 style={{ borderColor: '#F59E0B', color: '#D97706', fontWeight: 600 }}
               >
-                Gửi sang Kiểm định
+                Gửi vào hàng đợi xử lý
               </Button>
               <Button
                 type="primary"

@@ -41,75 +41,23 @@ const ROLE_OPTIONS = [
 ];
 
 export default function RbacMatrixTab() {
-  const [roleViews, setRoleViews] = useState<RoleView[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [roleViews, setRoleViews] = useState<RoleView[]>(() => adminService.getRolePermissions.peek()?.value ?? []);
+  const [loading, setLoading] = useState(() => !adminService.getRolePermissions.peek());
   const [saving, setSaving] = useState(false);
   const [selectedRole, setSelectedRole] = useState<string>('BRAND');
   const [search, setSearch] = useState<string>('');
   const [moduleFilter, setModuleFilter] = useState<string>('all');
   const [pendingChanges, setPendingChanges] = useState<Record<string, boolean>>({});
 
-  const loadPermissions = async () => {
+  const loadPermissions = async (force = false) => {
     try {
-      setLoading(true);
+      if (force) adminService.getRolePermissions.invalidate();
+      setLoading(!adminService.getRolePermissions.peek());
       const data = await adminService.getRolePermissions();
-      if (Array.isArray(data) && data.length > 0) {
-        setRoleViews(data);
-      } else {
-        // Fallback default structure if backend empty
-        const fallback: RoleView[] = [
-          {
-            role: 'BRAND',
-            version: 1,
-            permissions: [
-              { name: 'CREATE_CAMPAIGN', enabled: true, description: 'Tạo chiến dịch mới' },
-              { name: 'VIEW_OWN_CAMPAIGN', enabled: true, description: 'Xem chiến dịch của mình' },
-              { name: 'UPDATE_CAMPAIGN', enabled: true, description: 'Chỉnh sửa chiến dịch' },
-              { name: 'SEARCH_CREATOR', enabled: true, description: 'Tìm kiếm creator' },
-              { name: 'MANAGE_OWN_SHORTLIST', enabled: true, description: 'Quản lý giỏ shortlist creator' },
-              { name: 'MANAGE_OWN_RELATIONSHIP', enabled: true, description: 'Quản lý CRM và lời mời hợp tác' },
-              { name: 'MANAGE_OWN_COLLABORATION', enabled: true, description: 'Điều phối và nghiệm thu hợp tác' },
-              { name: 'MANAGE_OWN_SUBSCRIPTION', enabled: true, description: 'Quản lý gói dịch vụ và hóa đơn' },
-            ],
-          },
-          {
-            role: 'CREATOR',
-            version: 1,
-            permissions: [
-              { name: 'CLAIM_CREATOR_PROFILE', enabled: true, description: 'Nộp yêu cầu claim tích xanh hồ sơ' },
-              { name: 'VIEW_OWN_CREATOR_CLAIM', enabled: true, description: 'Xem trạng thái đơn claim' },
-              { name: 'MANAGE_OWN_CREATOR_PROFILE', enabled: true, description: 'Cập nhật bảng giá Rate Card & Bio' },
-              { name: 'RESPOND_OWN_COOPERATION', enabled: true, description: 'Phản hồi lời mời hợp tác từ Brand' },
-              { name: 'VIEW_OWN_NOTIFICATION', enabled: true, description: 'Nhận thông báo hệ thống' },
-            ],
-          },
-          {
-            role: 'DATA_MANAGER',
-            version: 1,
-            permissions: [
-              { name: 'VIEW_CREATOR_MASTER_CATALOG', enabled: true, description: 'Xem danh mục Master KOC' },
-              { name: 'REVIEW_CREATOR_CLAIM', enabled: true, description: 'Kiểm duyệt đơn nhận kênh & cấp tích xanh' },
-              { name: 'RESOLVE_CREATOR_DUPLICATE', enabled: true, description: 'Hợp nhất và gộp trùng lặp KOC' },
-              { name: 'REFRESH_CREATOR_DATA', enabled: true, description: 'Kích hoạt cào làm mới số liệu mạng xã hội' },
-              { name: 'VIEW_DATA_MONITORING', enabled: true, description: 'Giám sát pipeline thu thập dữ liệu' },
-            ],
-          },
-          {
-            role: 'ADMIN',
-            version: 1,
-            permissions: [
-              { name: 'VIEW_USER', enabled: true, description: 'Xem danh sách toàn bộ người dùng' },
-              { name: 'CHANGE_USER_STATUS', enabled: true, description: 'Khóa / Mở khóa tài khoản tức thì' },
-              { name: 'ASSIGN_USER_ROLE', enabled: true, description: 'Phân bổ vai trò & cấu hình RBAC' },
-              { name: 'VIEW_SYSTEM_STATUS', enabled: true, description: 'Xem trạng thái sức khỏe hạ tầng' },
-              { name: 'VIEW_AUDIT_LOG', enabled: true, description: 'Truy vết nhật ký kiểm toán hệ thống' },
-            ],
-          },
-        ];
-        setRoleViews(fallback);
-      }
+      setRoleViews(data);
       setPendingChanges({});
     } catch {
+      setRoleViews([]);
       message.error('Không thể tải ma trận phân quyền RBAC');
     } finally {
       setLoading(false);
@@ -344,7 +292,7 @@ export default function RbacMatrixTab() {
             />
             <Button
               icon={<ReloadOutlined />}
-              onClick={loadPermissions}
+              onClick={() => void loadPermissions(true)}
               loading={loading}
               style={{ borderRadius: 8 }}
             >

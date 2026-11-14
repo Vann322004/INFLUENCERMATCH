@@ -18,7 +18,7 @@ export const mapApiCreatorToUi = (item: any): Creator => {
   
   // Chuẩn hóa engagementRate: Backend/crawler lưu dạng số thập phân tỷ lệ (ví dụ 0.0489 = 4.89%)
   const rawEng = item.engagementRate ?? item.engagement_rate ?? item.engagementValue;
-  let engVal = 3.5;
+  let engVal = 0;
   if (typeof rawEng === 'number' && !isNaN(rawEng)) {
     if (rawEng > 0 && rawEng <= 1) {
       engVal = Number((rawEng * 100).toFixed(2));
@@ -30,14 +30,10 @@ export const mapApiCreatorToUi = (item: any): Creator => {
   }
 
   // Tính ước lượng giá dựa theo quy mô follower thực tế thay vì mock $800
-  const calcPrice = (followers: number) => {
-    if (followers < 20000) return 150;
-    if (followers < 100000) return 400;
-    if (followers < 500000) return 850;
-    if (followers < 1000000) return 1600;
-    return 3200;
-  };
-  const priceVal = item.avgPriceValue || item.price || item.estimatedFee || item.estimated_fee || calcPrice(followersNum);
+  const rawPrice = item.avgPriceValue ?? item.price ?? item.estimatedFee ?? item.estimated_fee;
+  const hasReportedPrice = typeof rawPrice === 'number' && Number.isFinite(rawPrice) && rawPrice >= 0;
+  const priceVal = hasReportedPrice ? rawPrice : 0;
+  const hasReportedEngagement = typeof rawEng === 'number' && Number.isFinite(rawEng);
 
   const cleanUsername = (item.userName || item.user_name || item.username || '').replace(/^@+/, '');
   const cleanName = item.displayName || item.display_name || item.name || cleanUsername || 'Creator';
@@ -92,12 +88,15 @@ export const mapApiCreatorToUi = (item: any): Creator => {
     matchReason: '',
     platforms: [platformLower],
     categories: categoriesList.slice(0, 3),
+    sourceCategories: String(item.niche || item.category || '').split(/[,;]/).map(value => value.trim()).filter(Boolean),
+    hasReportedEngagement,
+    hasReportedPrice,
     bio: cleanBio,
     followers: followersText,
     followersCount: followersNum,
-    engagementRate: `${engVal}%`,
+    engagementRate: hasReportedEngagement ? `${engVal}%` : 'Chưa có',
     engagementValue: engVal,
-    avgPrice: `$${priceVal.toLocaleString()}`,
+    avgPrice: hasReportedPrice ? `$${priceVal.toLocaleString()}` : 'Chưa có',
     avgPriceValue: priceVal,
     priceSource,
     location: item.location || 'Việt Nam',
@@ -296,13 +295,18 @@ export const mapApiCampaignToItem = (c: CampaignResponse | any): BrandCampaignIt
     ? c.niches[0]
     : c.productService;
 
+  // Normalize category: ưu tiên niches[0], rồi đến productService, rồi tag
+  const category = suggestedCategory || tag || undefined;
+
   return {
     id: c.id,
+    targetCreatorCount: Number(c.targetCreatorCount || c.creatorQuantity) || 1,
     name: c.name,
     tag,
     target,
     suggestedCategory,
-    budget: c.budgetMax ? `${(c.budgetMax / 1000000).toFixed(1)}M VND` : undefined,
+    category,
+    budget: (c.totalBudget ?? c.budgetMax) != null ? `${((c.totalBudget ?? c.budgetMax)! / 1000000).toFixed(1)}M VND` : undefined,
     followerMin: c.followerMin !== undefined && c.followerMin !== null ? Number(c.followerMin) : undefined,
     followerMax: c.followerMax !== undefined && c.followerMax !== null ? Number(c.followerMax) : undefined,
   };

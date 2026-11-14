@@ -14,6 +14,7 @@ import { readPage } from './pageResponse';
 import { readSystemStatus } from './systemStatusMapping';
 import type { SystemStatus } from './systemStatusMapping';
 import { createDataManagerQuery } from '../dataManagerCache';
+import { createAdminQuery } from '../adminCache';
 import type {
   AdminUser,
   AdminUsersResponse,
@@ -46,6 +47,8 @@ export interface PaymentStats {
 }
 
 export interface GetTransactionsParams {
+  from?: string;
+  to?: string;
   search?: string;
   status?: string;
   gateway?: string;
@@ -275,16 +278,12 @@ const exportAuditLogs = async (params?: AuditLogsParams): Promise<Blob> => {
 // ── Role Permissions ------------------------------------
 
 /** GET /admin/role-permissions — View default and effective permissions for all roles */
-const getRolePermissions = async (): Promise<RoleView[]> => {
-  try {
-    const response = await apiClient.get<any>('/admin/role-permissions');
-    const data = response.data?.data ?? response.data;
-    if (Array.isArray(data)) return data;
-  } catch (err) {
-    console.warn('[adminService.getRolePermissions] API error:', err);
-  }
-  return [];
-};
+const getRolePermissions = createAdminQuery('role-permissions', async (): Promise<RoleView[]> => {
+  const response = await apiClient.get('/admin/role-permissions');
+  const data = response.data?.data ?? response.data;
+  if (response.data?.success === false || !Array.isArray(data)) throw new Error('Ma trận phân quyền không hợp lệ.');
+  return data;
+}, { ttl: 5 * 60_000, tags: ['admin-permissions'] });
 
 /** PATCH /admin/role-permissions/{role} — Enable or disable role capabilities */
 const updateRolePermissions = async (role: string, payload: any): Promise<void> => {
@@ -344,6 +343,8 @@ const getTransactions = async (params?: GetTransactionsParams): Promise<Transact
   if (params?.status && params.status !== 'all') apiParams.status = params.status.toUpperCase();
   if (params?.gateway && params.gateway !== 'all') apiParams.gateway = params.gateway;
 
+  if (params?.from) apiParams.from = params.from;
+  if (params?.to) apiParams.to = params.to;
   const response = await apiClient.get<any>('/admin/payments', { params: apiParams });
   const payload = response.data;
   const pageData = payload?.data ?? payload;
@@ -375,19 +376,13 @@ const getTransactions = async (params?: GetTransactionsParams): Promise<Transact
 };
 
 /** GET /admin/payments/stats — Financial metrics */
-const getTransactionStats = async (): Promise<PaymentStats> => {
-  const response = await apiClient.get<any>('/admin/payments/stats');
+const getTransactionStats = async (range?: { from?: string; to?: string }): Promise<PaymentStats> => {
+  const response = await apiClient.get<any>('/admin/payments/stats', { params: range });
   const d = response.data?.data ?? response.data;
-  return {
-    totalRevenue: Number(d?.totalRevenue) || 0,
-    totalRefunded: Number(d?.totalRefunded) || 0,
-    totalPending: Number(d?.totalPending) || 0,
-    paidCount: Number(d?.paidCount) || 0,
-    pendingCount: Number(d?.pendingCount) || 0,
-    refundedCount: Number(d?.refundedCount) || 0,
-    failedCount: Number(d?.failedCount) || 0,
-    totalCount: Number(d?.totalCount) || 0,
-  };
+  const fields = ['totalRevenue', 'totalRefunded', 'totalPending', 'paidCount', 'pendingCount', 'refundedCount', 'failedCount', 'totalCount'] as const;
+  if (response.data?.success === false || fields.some(key => typeof d?.[key] !== 'number' || !Number.isFinite(d[key]) || d[key] < 0
+    || (key.endsWith('Count') && !Number.isSafeInteger(d[key])))) throw new Error('Thống kê thanh toán không hợp lệ.');
+  return Object.fromEntries(fields.map(key => [key, d[key]])) as unknown as PaymentStats;
 };
 
 /** POST /admin/payments/{id}/refund — Refund transaction */
@@ -446,7 +441,21 @@ const getIdentityConflicts = async (params?: { page?: number; size?: number; sta
   return response.data?.data ?? response.data;
 };
 
+export interface RevenueReport {
+  from: string;
+  to: string;
+  groupBy: 'day' | 'month';
+  currency: string;
+  items: { period: string; revenue: number; paidCount: number }[];
+}
+const getRevenueReport = async (range: { from: string; to: string; groupBy: 'day' | 'month' }): Promise<RevenueReport> => {
+  const response = await apiClient.get('/admin/payments/revenue', { params: range });
+  const result = response.data.data;
+  return { ...result, items: result.items.map((point: any) => ({ ...point, revenue: Number(point.revenue) })) };
+};
+
 export const adminService = {
+  getRevenueReport,
   getUsers,
   getUserById,
   updateUserStatus,

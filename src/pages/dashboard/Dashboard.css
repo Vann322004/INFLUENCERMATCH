@@ -141,121 +141,6 @@
   transform: translateY(-2px) !important;
 }
 
-/* ── Creator Cards Graphic (Right Side of Welcome Banner) ── */
-.im-welcome-graphic-col {
-  position: relative;
-  width: 320px;
-  height: 185px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@media (max-width: 991px) {
-  .im-welcome-graphic-col {
-    display: none !important;
-  }
-}
-
-.im-creator-card-stack {
-  position: relative;
-  width: 300px;
-  height: 175px;
-}
-
-.im-stacked-photo-card {
-  position: absolute;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-  border: 2.5px solid #FFFFFF;
-  background: #FFFFFF;
-  transition: transform 0.3s ease;
-}
-
-.im-stacked-photo-card:hover {
-  transform: translateY(-3px) scale(1.04) !important;
-  z-index: 10 !important;
-}
-
-.im-stacked-photo-card.card-1 {
-  width: 105px;
-  height: 138px;
-  left: 0;
-  top: 14px;
-  transform: rotate(-6deg);
-  z-index: 1;
-}
-
-.im-stacked-photo-card.card-2 {
-  width: 112px;
-  height: 148px;
-  left: 80px;
-  top: 0;
-  transform: rotate(3deg);
-  z-index: 3;
-}
-
-.im-stacked-photo-card.card-3 {
-  width: 102px;
-  height: 135px;
-  left: 165px;
-  top: 18px;
-  transform: rotate(8deg);
-  z-index: 2;
-}
-
-.im-stacked-photo-card.card-4 {
-  width: 68px;
-  height: 68px;
-  left: 118px;
-  top: 96px;
-  transform: rotate(-3deg);
-  z-index: 4;
-}
-
-.im-stacked-photo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.im-photo-sticker {
-  position: absolute;
-  bottom: 6px;
-  left: 6px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #FFFFFF;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-  font-size: 11px;
-}
-
-.im-doodle-hint {
-  position: absolute;
-  top: -12px;
-  right: 10px;
-  background: #FFFFFF;
-  border: 1px dashed #818CF8;
-  padding: 3px 9px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #4F46E5;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
-  transform: rotate(4deg);
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
 /* ── ROW 1: Active Campaign Spotlight Card (Right) ── */
 .im-active-campaign-card {
   background: #FFFFFF;
@@ -677,9 +562,6 @@
   .im-welcome-hero {
     padding: 24px 24px !important;
     min-height: auto !important;
-  }
-  .im-welcome-graphic-col {
-    display: none !important;
   }
   .im-dashboard-card {
     height: auto !important;

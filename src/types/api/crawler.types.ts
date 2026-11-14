@@ -50,13 +50,6 @@ export interface BatchCrawlResponse {
   metrics?: Record<string, unknown>;
 }
 
-export interface CrawlCategory {
-  id: string;
-  name: string;
-  description?: string;
-  defaultCandidates?: string[];
-}
-
 export interface CrawlerOverviewStats {
   total_candidates?: number;
   ingested_count?: number;

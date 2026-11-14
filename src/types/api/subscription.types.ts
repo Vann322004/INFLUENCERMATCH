@@ -55,3 +55,25 @@ export interface PaymentResponse {
   paymentUrl: string;
   transactionCode: string;
 }
+
+export interface BrandPayment {
+  id: string;
+  transactionCode: string;
+  planName: string;
+  amount: number;
+  currency: string;
+  gateway: string;
+  status: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+  createdAt: string;
+  paidAt?: string;
+  startDate?: string;
+  expirationDate?: string;
+  failureReason?: string;
+}
+export interface BrandPaymentPage {
+  items: BrandPayment[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}

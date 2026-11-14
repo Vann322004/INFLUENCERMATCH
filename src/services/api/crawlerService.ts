@@ -1,22 +1,11 @@
-import { invalidateDataManagerCacheForMutation } from '../requestCache';
-import { createDataManagerQuery } from '../dataManagerCache';
+import { invalidateDataManagerCacheForMutation, invalidateAdminCacheForMutation } from '../requestCache';
+import { requestCrawler } from './crawlerTransport';
 import type {
   CrawlPlatform,
   LiveCrawlResult,
   BatchCrawlResponse,
-  CrawlCategory,
   CrawlMonitorOverview,
 } from '../../types/api/crawler.types';
-
-export const DEFAULT_CRAWL_CATEGORIES: CrawlCategory[] = [
-  { id: 'BEAUTY', name: '💄 Làm đẹp & Mỹ phẩm', description: 'Skincare, Makeup, Mỹ phẩm' },
-  { id: 'TECH', name: '💻 Công nghệ & Thiết bị', description: 'Điện thoại, PC, Setup công nghệ' },
-  { id: 'FOOD', name: '🍲 Ẩm thực & Nhà hàng', description: 'Quán ăn, Món ngon, Nấu ăn' },
-  { id: 'FASHION', name: '👗 Thời trang & Phụ kiện', description: 'OOTD, Phối đồ thời thượng' },
-  { id: 'ENTERTAINMENT', name: '🎬 Truyền thông & Giải trí', description: 'Hài hước, Kịch bản' },
-  { id: 'TRAVEL', name: '✈️ Du lịch & Trải nghiệm', description: 'Check-in, Khám phá vùng miền' },
-  { id: 'LIFESTYLE', name: '🏡 Đời sống & Sức khỏe', description: 'Gia đình, Decor nhà cửa' },
-];
 
 class CrawlerService {
   /**
@@ -27,73 +16,10 @@ class CrawlerService {
     options: RequestInit = {},
     timeoutMs = 25000
   ): Promise<T> {
-    const urls = [
-      `/crawler-api${endpoint}`,
-      `http://127.0.0.1:8000${endpoint}`,
-      `http://localhost:8000${endpoint}`,
-    ];
-
-    let lastError: any = null;
-
-    for (const url of urls) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-        const res = await fetch(url, {
-          ...options,
-          signal: controller.signal,
-          headers: {
-            'Content-Type': 'application/json',
-            ...(options.headers || {}),
-          },
-        });
-        clearTimeout(timeoutId);
-
-        if (res.ok) {
-          const data = await res.json();
-          invalidateDataManagerCacheForMutation(options.method, endpoint);
-          return data;
-        } else {
-          const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody.detail || errBody.error || `Lỗi máy chủ HTTP ${res.status}`);
-        }
-      } catch (err: any) {
-        lastError = err;
-      }
-    }
-
-    throw new Error(
-      lastError?.message ||
-        'Không thể kết nối đến máy chủ thu thập dữ liệu (cổng 8000). Vui lòng kiểm tra dịch vụ uvicorn.'
-    );
-  }
-
-  /**
-   * Lấy danh mục ngành hàng Taxonomy thực tế (GET /api/v1/crawl/categories)
-   */
-  private readonly categoriesQuery = createDataManagerQuery('crawler-categories', async (): Promise<CrawlCategory[]> => {
-    const data = await this.requestCrawler<any[]>('/api/v1/crawl/categories', {}, 8000);
-    if (!Array.isArray(data)) throw new Error('Danh mục crawler không hợp lệ.');
-    return data.map(item => {
-      const id = item.code || item.id;
-      if (typeof id !== 'string' || !id.trim()) throw new Error('Ngành hàng crawler không hợp lệ.');
-      return {
-        id,
-        name: `${item.icon || '🏷️'} ${item.label || item.name || id}`,
-        description: item.description,
-        defaultCandidates: item.candidates || [],
-      };
-    });
-  }, { tags: ['taxonomy'] });
-
-  async getCategories(): Promise<CrawlCategory[]> {
-    try {
-      return await this.categoriesQuery();
-    } catch {
-      // Existing offline fallback is deliberately outside the cache.
-    }
-    return DEFAULT_CRAWL_CATEGORIES;
+    const result = await requestCrawler<T>(import.meta.env.VITE_CRAWLER_API_BASE_URL || '/crawler-api', endpoint, options, timeoutMs);
+    invalidateDataManagerCacheForMutation(options.method, endpoint);
+    invalidateAdminCacheForMutation(options.method, endpoint);
+    return result;
   }
 
   /**
@@ -124,6 +50,7 @@ class CrawlerService {
   async batchCrawl(payload: {
     platform?: CrawlPlatform;
     category?: string;
+    keywords?: string[];
     usernames?: string[];
     maxChannels?: number;
   }): Promise<BatchCrawlResponse> {
@@ -137,6 +64,7 @@ class CrawlerService {
         body: JSON.stringify({
           platform: plat,
           category: payload.category,
+          keywords: payload.keywords,
           usernames: payload.usernames || [],
           max_channels: maxChannels,
         }),
@@ -149,11 +77,26 @@ class CrawlerService {
    * Lấy Overview giám sát Crawler thời gian thực (GET /api/v1/monitor/overview)
    */
   async getOverview(limit = 30): Promise<CrawlMonitorOverview> {
-    return await this.requestCrawler<CrawlMonitorOverview>(
-      `/api/v1/monitor/overview?limit=${limit}`,
+    const overview = await this.requestCrawler<CrawlMonitorOverview>(
+      `/api/v1/monitor/overview?limit=${Math.max(1, Math.min(100, Math.trunc(limit) || 30))}`,
       {},
       10000
     );
+    // The crawler persists flat Creator payloads; older deployments wrap creator.
+    const rawItems = overview.crawled_data?.items || [];
+    return {
+      ...overview,
+      crawled_data: {
+        ...overview.crawled_data,
+        items: rawItems.map(item => {
+          if (item.creator) return item;
+          const flat = item as unknown as CrawlMonitorOverview['crawled_data']['items'][number]['creator'] & {
+            recentPosts?: LiveCrawlResult['recent_posts']; collectedAt?: string;
+          };
+          return { creator: flat, recentPosts: flat.recentPosts, collectedAt: flat.collectedAt };
+        }),
+      },
+    };
   }
 
   /**
@@ -175,28 +118,6 @@ class CrawlerService {
         }),
       },
       10000
-    );
-  }
-
-  /**
-   * Kích hoạt quét tìm KOC mới (POST /api/v1/crawl/trigger-weekly-discovery)
-   */
-  async triggerWeeklyDiscovery(payload?: {
-    maxNewKocs?: number;
-    keywords?: string[];
-    platform?: string;
-  }): Promise<any> {
-    return await this.requestCrawler<any>(
-      '/api/v1/crawl/trigger-weekly-discovery',
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          max_new_kocs: payload?.maxNewKocs || 30,
-          keywords: payload?.keywords,
-          platform: payload?.platform || 'ALL',
-        }),
-      },
-      15000
     );
   }
 

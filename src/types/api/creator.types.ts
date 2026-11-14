@@ -141,6 +141,7 @@ export interface CreatorDiscoveryCandidate {
   recentPosts?: any[];
   matchScore?: number;
   finalScore?: number;
+  hybridScore?: number;
   score?: number;
   reason?: string;
   summary?: string;
