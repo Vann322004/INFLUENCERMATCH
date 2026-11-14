@@ -170,28 +170,10 @@
 }
 
 /* ── Google Sign-in Button ── */
-.luxe-google-btn {
-  width: 100%;
-  height: clamp(36px, 4vh, 42px);
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #1E293B;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-}
-
-.luxe-google-btn:hover:not(:disabled) {
-  background: #F8FAFC;
-  border-color: #CBD5E1;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+.google-login-control {
+  display: grid;
+  justify-items: stretch;
+  min-width: 0;
 }
 
 /* ── Register Banner Box (Grey capsule matching mockup) ── */

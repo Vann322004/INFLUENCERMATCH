@@ -1,6 +1,6 @@
 import React from 'react';
 import { Layout } from 'antd';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useMatch } from 'react-router-dom';
 import CreatorSidebar from './CreatorSidebar';
 import CreatorHeader from './CreatorHeader';
 
@@ -11,11 +11,12 @@ interface CreatorLayoutProps {
 }
 
 export default function CreatorLayout({ pageTitle }: CreatorLayoutProps) {
+  const collaborationDetail = useMatch('/creator/bookings/:collaborationId');
   return (
     <Layout style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden' }}>
       <CreatorSidebar />
       <Layout style={{ background: '#F8FAFC', height: '100vh', overflow: 'hidden' }}>
-        <CreatorHeader title={pageTitle} />
+        <CreatorHeader title={pageTitle ?? (collaborationDetail ? 'Creator Portal' : undefined)} />
         <Content
           className="creator-content-layout"
           style={{

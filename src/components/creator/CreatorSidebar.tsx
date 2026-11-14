@@ -22,7 +22,7 @@ export const CREATOR_MENU_ITEMS = [
   { key: 'dashboard', icon: <LineChartOutlined />, label: 'Tổng quan' },
   { key: 'rate-card', icon: <DollarOutlined />, label: 'Bảng giá Rate Card' },
   { key: 'social-accounts', icon: <ApiOutlined />, label: 'Kênh liên kết' },
-  { key: 'bookings', icon: <CalendarOutlined />, label: 'Lời mời hợp tác' },
+  { key: 'bookings', icon: <CalendarOutlined />, label: 'Hợp tác' },
 ];
 
 export default function CreatorSidebar() {

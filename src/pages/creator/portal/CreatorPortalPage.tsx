@@ -6,7 +6,6 @@ import {
   Tag,
   Button,
   Avatar,
-  Table,
   Badge,
   Tabs,
   Modal,
@@ -23,14 +22,12 @@ import {
   Alert,
   Tooltip,
 } from 'antd';
-import type { TableColumnsType } from 'antd';
 import {
   LineChartOutlined,
   SafetyCertificateOutlined,
   ApiOutlined,
   DollarOutlined,
   CalendarOutlined,
-  CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
   PlusOutlined,
@@ -56,10 +53,11 @@ import {
   CreatorSocialChannel,
   CreatorRateCardPackage,
   CreatorReachMetrics,
-  CreatorBookingItem,
   CreatorClaimItem,
 } from '../../../services/api/creatorPortalService';
 import './CreatorPortalPage.css';
+
+import { CreatorCollaborations } from '../../collaboration/CollaborationPage';
 
 export default function CreatorPortalPage() {
   const location = useLocation();
@@ -102,7 +100,6 @@ export default function CreatorPortalPage() {
   const [channels, setChannels] = useState<CreatorSocialChannel[]>(creatorPortalService.getChannels());
   const [rateCards, setRateCards] = useState<CreatorRateCardPackage[]>(creatorPortalService.getRateCards());
   const [metrics, setMetrics] = useState<CreatorReachMetrics>(creatorPortalService.getReachMetrics());
-  const [bookings, setBookings] = useState<CreatorBookingItem[]>(creatorPortalService.getBookings());
   const [claims, setClaims] = useState<CreatorClaimItem[]>(creatorPortalService.getClaims());
 
   // Modal Rate Card
@@ -230,17 +227,6 @@ export default function CreatorPortalPage() {
     }
   };
 
-  // 3. Handlers cho Booking
-  const handleRespondBooking = (bookingId: string, status: 'ACCEPTED' | 'DECLINED') => {
-    const updated = creatorPortalService.respondBooking(bookingId, status);
-    setBookings(updated);
-    if (status === 'ACCEPTED') {
-      message.success('Đã chấp nhận lời mời hợp tác! Nhãn hàng đã được thông báo để bắt đầu gửi sản phẩm.');
-    } else {
-      message.info('Đã từ chối lời mời hợp tác.');
-    }
-  };
-
   // 4. Handlers cho Claim Kênh & Mã bảo mật Bio
   const handleOpenClaimModal = () => {
     claimForm.resetFields();
@@ -318,100 +304,6 @@ export default function CreatorPortalPage() {
       setVerifyModalOpen(false);
     } catch {}
   };
-
-  // Columns cho Bảng Booking
-  const columnsBookings: TableColumnsType<CreatorBookingItem> = [
-    {
-      title: 'Chiến dịch & Nhãn hàng',
-      key: 'campaign',
-      render: (_, r) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Avatar src={r.brandLogo} size={42} style={{ border: '1px solid #E2E8F0', flexShrink: 0 }}>
-            {r.brandName.charAt(0)}
-          </Avatar>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>{r.campaignName}</div>
-            <div style={{ fontSize: 12, color: '#64748B' }}>
-              Nhãn hàng: <strong>{r.brandName}</strong>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: 'Nền tảng & Hạng mục',
-      key: 'deliverables',
-      width: 220,
-      render: (_, r) => (
-        <div>
-          <Tag color={r.platform === 'TIKTOK' ? 'default' : r.platform === 'INSTAGRAM' ? 'magenta' : 'red'}>
-            {r.platform}
-          </Tag>
-          <div style={{ fontSize: 12, color: '#475569', marginTop: 4 }}>{r.deliverableType}</div>
-        </div>
-      ),
-    },
-    {
-      title: 'Ngân sách đề xuất',
-      key: 'budget',
-      width: 170,
-      render: (_, r) => (
-        <div>
-          <div style={{ fontWeight: 800, fontSize: 14.5, color: '#059669', fontVariantNumeric: 'tabular-nums' }}>
-            {r.proposedBudget.toLocaleString('vi-VN')} ₫
-          </div>
-          <div style={{ fontSize: 11, color: '#94A3B8' }}>Hạn chót: {new Date(r.deadline).toLocaleDateString('vi-VN')}</div>
-        </div>
-      ),
-    },
-    {
-      title: 'Trạng thái',
-      key: 'status',
-      width: 150,
-      render: (_, r) => {
-        if (r.status === 'PENDING') return <Tag color="warning" icon={<ClockCircleOutlined />}>Chờ phản hồi</Tag>;
-        if (r.status === 'ACCEPTED') return <Tag color="processing" icon={<CheckCircleOutlined />}>Đã nhận job</Tag>;
-        if (r.status === 'COMPLETED') return <Tag color="success" icon={<CheckCircleFilled />}>Hoàn thành</Tag>;
-        return <Tag color="default">Đã từ chối</Tag>;
-      },
-    },
-    {
-      title: 'Thao tác',
-      key: 'action',
-      width: 190,
-      align: 'right',
-      render: (_, r) => {
-        if (r.status === 'PENDING') {
-          return (
-            <Space size={8}>
-              <Button
-                type="primary"
-                size="small"
-                icon={<CheckOutlined />}
-                onClick={() => handleRespondBooking(r.id, 'ACCEPTED')}
-                style={{ background: '#10B981', borderColor: '#10B981', fontWeight: 600 }}
-              >
-                Nhận job
-              </Button>
-              <Button
-                size="small"
-                danger
-                icon={<CloseOutlined />}
-                onClick={() => handleRespondBooking(r.id, 'DECLINED')}
-              >
-                Từ chối
-              </Button>
-            </Space>
-          );
-        }
-        return (
-          <span style={{ fontSize: 12, color: '#94A3B8' }}>
-            {r.status === 'ACCEPTED' ? 'Đang triển khai video' : r.status === 'COMPLETED' ? 'Đã tất toán' : 'Đã đóng'}
-          </span>
-        );
-      },
-    },
-  ];
 
   return (
     <div className="creator-portal-container" style={{ maxWidth: 1280, margin: '0 auto', paddingBottom: 40 }}>
@@ -522,8 +414,7 @@ export default function CreatorPortalPage() {
             label: (
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
                 <CalendarOutlined />
-                <span>Lời mời hợp tác</span>
-                <Badge count={bookings.filter((b) => b.status === 'PENDING').length} overflowCount={9} style={{ backgroundColor: '#EF4444' }} />
+                <span>Hợp tác</span>
               </span>
             ),
           },
@@ -989,33 +880,7 @@ export default function CreatorPortalPage() {
       {/* ========================================================================= */}
       {/* TAB 5: TRẠNG THÁI BOOKING & HỢP TÁC                                       */}
       {/* ========================================================================= */}
-      {activeTab === 'bookings' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h2 style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                Yêu cầu Hợp tác & Booking từ Nhãn hàng
-              </h2>
-              <p style={{ color: '#64748B', fontSize: 13, margin: '2px 0 0' }}>
-                Quản lý lời mời chiến dịch, ngân sách đề xuất và phản hồi trực tiếp cho Brand.
-              </p>
-            </div>
-            <Tag color="red" style={{ fontSize: 12, padding: '4px 10px', borderRadius: 6, fontWeight: 700 }}>
-              {bookings.filter((b) => b.status === 'PENDING').length} Booking chờ bạn phản hồi
-            </Tag>
-          </div>
-
-          <Card bordered={false} style={{ borderRadius: 12, border: '1px solid #E2E8F0' }} bodyStyle={{ padding: 0 }}>
-            <Table
-              dataSource={bookings}
-              columns={columnsBookings}
-              rowKey="id"
-              pagination={false}
-              scroll={{ x: 750 }}
-            />
-          </Card>
-        </div>
-      )}
+      {activeTab === 'bookings' && <CreatorCollaborations />}
 
       {/* MODAL 1: ADD / EDIT RATE CARD */}
       <Modal

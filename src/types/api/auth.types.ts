@@ -10,6 +10,7 @@ export interface UserProfile {
   role: UserRole;
   status: UserStatus;
   permissions?: string[];
+  onboardingStatus?: 'PENDING' | 'COMPLETED';
   lastLoginAt?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -38,13 +39,29 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
-export interface GoogleCodeExchangeRequest {
-  code: string;
+export interface GoogleChallenge {
+  sessionId: string;
+  clientId: string;
+  nonce: string;
+  expiresAt: string;
 }
+
+export interface GoogleRegistration {
+  status: 'REGISTRATION_REQUIRED';
+  sessionId: string;
+  email: string;
+  fullName: string;
+  expiresAt: string;
+}
+
+export type GoogleRegistrationRequest = Pick<RegisterRequest,
+  'fullName' | 'businessName' | 'phoneNumber' | 'policyAcceptance'> & { sessionId: string };
+
+export type GoogleLoginResult = GoogleRegistration | (LoginResponse & { status: 'AUTHENTICATED' });
 
 export interface LoginResponse {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
   tokenType: string;
   expiresIn: number;
   user: UserProfile;

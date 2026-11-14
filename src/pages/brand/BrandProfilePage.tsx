@@ -32,8 +32,10 @@ import {
   ShareAltOutlined,
 } from '@ant-design/icons';
 import { brandService } from '../../services/api/brandService';
+import { authService } from '../../services/api/authService';
 import type { BrandRequest, BrandResponse } from '../../types/api/brand.types';
 import { getErrorMessage } from '../../services/apiClient';
+import GoogleLinkModal from './GoogleLinkModal';
 import './BrandProfilePage.css';
 
 const { Title, Paragraph } = Typography;
@@ -77,6 +79,7 @@ export default function BrandProfilePage() {
   const [activeTab, setActiveTab] = useState('general');
   const navigate = useNavigate();
   const [isFirstTime, setIsFirstTime] = useState(false);
+  const [linkGoogleOpen, setLinkGoogleOpen] = useState(false);
 
   // New tag inputs
   const [inputSubCat, setInputSubCat] = useState('');
@@ -201,6 +204,7 @@ export default function BrandProfilePage() {
 
   return (
     <div className="brand-profile-container">
+      {linkGoogleOpen && <GoogleLinkModal onClose={() => setLinkGoogleOpen(false)} />}
       {/* 1. Header Section */}
       <div>
         <div
@@ -221,7 +225,9 @@ export default function BrandProfilePage() {
             </Paragraph>
           </div>
 
-          <Space>
+          <Space wrap>
+            {authService.getCurrentUser()?.role === 'BRAND' &&
+              <Button onClick={() => setLinkGoogleOpen(true)}>Liên kết Google</Button>}
             <Button
               type="primary"
               icon={<SaveOutlined />}
