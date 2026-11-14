@@ -39,7 +39,7 @@ export default defineConfig(({ mode }) => {
         agent: keepAliveAgent,
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Origin', 'http://localhost:5173');
+            proxyReq.setHeader('Origin', 'https://api.influencermatch.site');
           });
         },
       },
@@ -59,14 +59,13 @@ export default defineConfig(({ mode }) => {
         timeout: 120000,
       },
       '/api': {
-        target: 'http://221.121.3.226:8080',
+        target: 'https://api.influencermatch.site',
         changeOrigin: true,
         secure: false,
-        agent: keepAliveAgent,
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq) => {
-            // Chuẩn hóa Origin về http://localhost:5173 để khớp chính xác với whitelist CORS của Backend Spring Boot
-            proxyReq.setHeader('Origin', 'http://localhost:5173');
+            // Match the upstream origin for requests forwarded by the local dev proxy.
+            proxyReq.setHeader('Origin', 'https://api.influencermatch.site');
           });
         },
       },
