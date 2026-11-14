@@ -1,4 +1,6 @@
 import { apiClient, getAuthSessionId } from '../apiClient';
+import { createAdminQuery, usesAdminCache } from '../adminCache';
+import { adminRequestCache } from '../requestCache';
 import { readPage } from './pageResponse';
 import type { PageResponse } from '../../types/api/common.types';
 import type { ApiResponse } from '../../types/api/common.types';
@@ -44,6 +46,11 @@ let inFlightPlansScope = '';
 const brandSubsCache = new Map<string, { data: SubscriptionResponse[]; timestamp: number }>();
 const subsInFlight = new Map<string, Promise<SubscriptionResponse[]>>();
 
+const getPlansPageQuery = (page = 0, size = 1) => createAdminQuery(`plans:${page}:${size}`, async (): Promise<PageResponse<PlanResponse>> => {
+  const response = await apiClient.get('/plans', { params: { page, size } });
+  return readPage<PlanResponse>(response.data);
+}, { ttl: 5 * 60_000, tags: ['admin-plans'] });
+
 export const subscriptionService = {
   async getPaymentHistory(page = 0, size = 10, signal?: AbortSignal): Promise<BrandPaymentPage> {
     const response = await apiClient.get<ApiResponse<BrandPaymentPage>>('/billing/payments', {
@@ -58,13 +65,18 @@ export const subscriptionService = {
   },
   /** Paginated catalog with authoritative totals, separate from the storefront list cache. */
   async getPlansPage(page = 0, size = 1): Promise<PageResponse<PlanResponse>> {
-    const response = await apiClient.get('/plans', { params: { page, size } });
-    return readPage<PlanResponse>(response.data);
+    return getPlansPageQuery(page, size)();
   },
+  getPlansPageQuery,
   /**
    * Get all active subscription plans (with memory & sessionStorage cache & deduplication).
    */
   async getPlans(page = 0, size = 20, forceRefresh = false): Promise<PlanResponse[]> {
+    if (usesAdminCache()) {
+      const query = getPlansPageQuery(page, size);
+      if (forceRefresh) query.invalidate();
+      return (await query()).items;
+    }
     const scope = `${getAuthSessionId()}:${page}:${size}`;
     if (!forceRefresh && cachedPlans?.scope === scope && Date.now() - cachedPlans.timestamp < PLANS_CACHE_TTL) {
       return cachedPlans.data;
@@ -107,6 +119,7 @@ export const subscriptionService = {
    * Clear in-memory and storage plans cache when plans are updated or refreshed.
    */
   clearPlansCache() {
+    adminRequestCache.invalidateTags(['admin-plans']);
     cachedPlans = null;
     try {
       sessionStorage.removeItem(STORAGE_KEY_PLANS);

@@ -18,6 +18,7 @@ test('monitor clamps limit and normalizes flat crawler evidence', async () => {
   let endpoint;
   const { crawlerService } = load('src/services/api/crawlerService.ts', 'crawlerService', {
     invalidateDataManagerCacheForMutation() {},
+    invalidateAdminCacheForMutation() {},
     requestCrawler: async (_, path) => {
       endpoint = path;
       return { stats: {}, activities: { items: [] }, crawled_data: { total: 1, items: [

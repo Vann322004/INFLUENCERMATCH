@@ -6,20 +6,22 @@ import {
   RecommendationFeedbackRequest,
   RecommendationFeedbackResponse,
   CreatorRecommendationItemDto,
+  DisplayMode,
+  CandidateSource,
 } from '../../types/api/aiRecommendation.types';
 
 export const aiRecommendationService = {
   /**
    * Kích hoạt thuật toán Đề xuất AI Four-Memory cho chiến dịch
-   * POST /campaigns/{campaignId}/ai-recommendations?limit=10
+   * POST /campaigns/{campaignId}/ai-recommendations?limit=30
    * Swagger Tag: "AI Recommendation"
    * OperationId: runRecommendation
    * Quyền yêu cầu: hasAuthority('RUN_RECOMMENDATION')
    */
   async runRecommendation(
     campaignId: string,
-    limit = 10,
-    options?: { displayMode?: string; candidateSource?: string }
+    limit = 30,
+    options?: { displayMode?: DisplayMode; candidateSource?: CandidateSource }
   ): Promise<RecommendationResponseDto> {
     try {
       const params: Record<string, any> = { limit };
@@ -44,21 +46,31 @@ export const aiRecommendationService = {
         displayName: item.displayName || item.fullName || item.name || 'Creator',
         userName: item.userName || item.username || item.handle || '',
         avatarUrl: item.avatarUrl || item.avatar || item.profileImageUrl,
-        followers: Number(item.followers || item.followerCount || 0),
-        avgViews: Number(item.avgViews || item.averageViews || 0),
-        avgLikes: Number(item.avgLikes || item.averageLikes || 0),
-        engagementRate: Number(item.engagementRate ?? item.er ?? 0),
+        followers: Number(item.followers ?? item.followerCount ?? 0),
+        avgViews: item.avgViews != null ? Number(item.avgViews) : undefined,
+        avgLikes: item.avgLikes != null ? Number(item.avgLikes) : undefined,
+        engagementRate: item.engagementRate != null ? Number(item.engagementRate) : undefined,
         niche: item.niche || item.category || 'Lifestyle',
         category: item.category || item.niche,
         creatorType: item.creatorType,
         shortlistStatus: item.shortlistStatus,
-        finalScore: typeof item.finalScore === 'number' ? item.finalScore : Number(item.matchScore ?? 0.85),
-        scoreBreakdown: item.scoreBreakdown,
+        finalScore: typeof item.finalScore === 'number' ? item.finalScore : 0,
+        scoreBreakdown: item.scoreBreakdown ? {
+          m1Score: Number(item.scoreBreakdown.m1Score ?? 0),
+          m2Score: Number(item.scoreBreakdown.m2Score ?? 0),
+          m3Score: Number(item.scoreBreakdown.m3Score ?? item.scoreBreakdown.semanticMatchScore ?? 0),
+          m4Score: Number(item.scoreBreakdown.m4Score ?? 0),
+          followerScore: item.scoreBreakdown.followerScore != null ? Number(item.scoreBreakdown.followerScore) : undefined,
+          engagementScore: item.scoreBreakdown.engagementScore != null ? Number(item.scoreBreakdown.engagementScore) : undefined,
+          semanticMatchScore: item.scoreBreakdown.semanticMatchScore != null ? Number(item.scoreBreakdown.semanticMatchScore) : undefined,
+          nicheMatchScore: item.scoreBreakdown.nicheMatchScore != null ? Number(item.scoreBreakdown.nicheMatchScore) : undefined,
+          finalScore: item.scoreBreakdown.finalScore != null ? Number(item.scoreBreakdown.finalScore) : undefined,
+        } : undefined,
         reasoning: item.reasoning,
         priceStatus: item.priceStatus,
-        isScoreReady: item.isScoreReady,
-        isProvisional: item.isProvisional,
-        claimed: item.claimed,
+        isScoreReady: Boolean(item.isScoreReady ?? !item.isProvisional),
+        isProvisional: Boolean(item.isProvisional),
+        claimed: Boolean(item.claimed || item.isClaimed),
         inShortlist: Boolean(item.inShortlist || item.isInShortlist),
       });
 

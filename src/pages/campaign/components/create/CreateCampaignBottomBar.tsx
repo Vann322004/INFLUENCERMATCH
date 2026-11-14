@@ -43,7 +43,7 @@ export const CreateCampaignBottomBar: React.FC<CreateCampaignBottomBarProps> = (
         {isEditMode ? '✕ Hủy & Quay lại' : '✕ Hủy'}
       </Button>
 
-      <Space size={12}>
+      <Space size={12} wrap>
         {/* Ở Edit Mode: Luôn có nút Lưu thay đổi tức thì */}
         {isEditMode ? (
           <>

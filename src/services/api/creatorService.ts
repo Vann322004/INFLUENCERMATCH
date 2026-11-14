@@ -1,4 +1,6 @@
 import { apiClient } from '../apiClient';
+import { shortlistService } from './shortlistService';
+import { createAdminQuery } from '../adminCache';
 import type { ApiResponse } from '../../types/api/common.types';
 import type {
   CreatorItem,
@@ -6,12 +8,25 @@ import type {
   CreatorVectorSearchItem,
   RateCardResponse,
   ShortlistItem,
-  AddShortlistItemPayload,
   SendInvitationRequest,
   InvitationResponse,
   DiscoverCreatorsParams,
   CreatorDiscoveryPageResponse,
 } from '../../types/api/creator.types';
+
+const getCreators = createAdminQuery('creators:list', async (): Promise<CreatorItem[]> => {
+    const response = await apiClient.get<ApiResponse<CreatorItem[]>>('/creators');
+    const payload = response.data;
+    const items = payload?.data ?? payload;
+    if (payload?.success === false || !Array.isArray(items) || items.some(item => !item || typeof item.id !== 'string')) {
+      throw new Error('Invalid creator list response.');
+    }
+    try {
+      const withAvatars = items.filter(c => typeof c.avatarUrl === 'string' && c.avatarUrl.startsWith('http'));
+      localStorage.setItem('IM_SHOWCASE_CREATORS', JSON.stringify(withAvatars.slice(0, 6)));
+    } catch { /* Storage is optional. */ }
+    return items;
+  }, { tags: ['admin-creators'] });
 
 export const creatorService = {
   /**
@@ -36,19 +51,7 @@ export const creatorService = {
   /**
    * Lấy danh sách toàn bộ creator công khai
    */
-  async getCreators(): Promise<CreatorItem[]> {
-    const response = await apiClient.get<ApiResponse<CreatorItem[]>>('/creators');
-    const payload = response.data;
-    const items = payload?.data ?? payload;
-    if (payload?.success === false || !Array.isArray(items) || items.some(item => !item || typeof item.id !== 'string')) {
-      throw new Error('Invalid creator list response.');
-    }
-    try {
-      const withAvatars = items.filter(c => typeof c.avatarUrl === 'string' && c.avatarUrl.startsWith('http'));
-      localStorage.setItem('IM_SHOWCASE_CREATORS', JSON.stringify(withAvatars.slice(0, 6)));
-    } catch { /* Storage is optional. */ }
-    return items;
-  },
+  getCreators,
 
   /**
    * Lấy thông tin chi tiết của creator theo ID (GET /creators/{id})
@@ -120,330 +123,20 @@ export const creatorService = {
   },
 
   /**
-   * Dọn dẹp cache cục bộ cũ để đảm bảo Database là nguồn dữ liệu duy nhất
-   */
-  clearLegacyLocalShortlist(): void {
-    try {
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.startsWith('IM_LOCAL_SHORTLIST_') || key.startsWith('IM_SHORTLIST_'))) {
-          keysToRemove.push(key);
-        }
-      }
-      keysToRemove.forEach((k) => localStorage.removeItem(k));
-    } catch {}
-  },
-
-  /**
-   * Lấy danh sách shortlist lưu cục bộ (Persistent fallback cache)
-   */
-  getLocalShortlist(campaignId: string): ShortlistItem[] {
-    try {
-      if (!campaignId || campaignId === 'all') {
-        const allKeys = Object.keys(localStorage).filter((k) => k.startsWith('IM_SHORTLIST_'));
-        const merged: ShortlistItem[] = [];
-        const seen = new Set<string>();
-        for (const k of allKeys) {
-          try {
-            const parsed = JSON.parse(localStorage.getItem(k) || '[]');
-            if (Array.isArray(parsed)) {
-              for (const it of parsed) {
-                const uid = it.creatorId || it.id;
-                if (uid && !seen.has(uid)) {
-                  seen.add(uid);
-                  merged.push(it);
-                }
-              }
-            }
-          } catch {}
-        }
-        return merged;
-      }
-      const raw = localStorage.getItem(`IM_SHORTLIST_${campaignId}`);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch {}
-    return [];
-  },
-
-  /**
-   * Lưu danh sách shortlist cục bộ để đảm bảo dữ liệu không bị mất khi chuyển trang
-   */
-  saveLocalShortlist(campaignId: string, items: ShortlistItem[]): void {
-    try {
-      if (!campaignId || campaignId === 'all') return;
-      localStorage.setItem(`IM_SHORTLIST_${campaignId}`, JSON.stringify(items));
-    } catch {}
-  },
-
-  /**
-   * Lấy danh sách shortlist creator của một chiến dịch từ Backend Database + Fallback LocalStorage
-   * Swagger: GET /campaigns/{campaignId}/shortlist
+   * Read every backend page for existing consumers of the array contract.
    */
   async getShortlist(campaignId: string): Promise<ShortlistItem[]> {
-    if (!campaignId) {
-      return [];
-    }
-
-    const localItems = this.getLocalShortlist(campaignId);
-
-    if (campaignId === 'all') {
-      return localItems;
-    }
-
-    let backendItems: ShortlistItem[] = [];
-    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(campaignId);
-
-    if (isUuid) {
-      try {
-        const response = await apiClient.get<ApiResponse<any>>(
-          `/campaigns/${campaignId}/shortlist`,
-          { params: { page: 0, size: 100 }, timeout: 4000 }
-        );
-        const raw = response.data;
-        const d = (raw as any)?.data ?? raw;
-        const list = Array.isArray(d) ? d : (d?.content || d?.items || []);
-
-        backendItems = (list || []).map((it: any) => ({
-          id: it.id || it.shortlistItemId || it.creatorId,
-          campaignId: it.campaignId || campaignId,
-          creatorId: it.creatorId || it.id,
-          creatorName: it.creatorName || it.displayName || it.name || 'Creator',
-          avatarUrl: it.avatarUrl || it.avatar,
-          platform: it.platform || 'tiktok',
-          followers: it.followers || 0,
-          engagementRate: it.engagementRate || 0,
-          niche: it.niche,
-          priority: it.priority || 'HIGH',
-          note: it.note || '',
-          addedAt: it.addedAt || new Date().toISOString(),
-          status: it.status || 'SAVED',
-        }));
-      } catch (err: any) {
-        // Backend shortlist trả lỗi hoặc timeout, dùng localItems để trải nghiệm mượt mà
-        console.warn(`[creatorService] getShortlist từ DB không phản hồi hoặc rỗng (${campaignId}):`, err?.message);
-        backendItems = [];
-      }
-    }
-
-    // Hợp nhất backend + local (Ưu tiên backend nhưng không làm mất local)
-    const seen = new Set<string>();
-    const merged: ShortlistItem[] = [];
-
-    backendItems.forEach((b) => {
-      const key = b.creatorId || b.id;
-      if (key && !seen.has(key)) {
-        seen.add(key);
-        merged.push(b);
-      }
-    });
-
-    localItems.forEach((l) => {
-      const key = l.creatorId || l.id;
-      if (key && !seen.has(key)) {
-        seen.add(key);
-        merged.push(l);
-      }
-    });
-
-    // Cập nhật lại local cache để luôn đồng bộ
-    if (merged.length > 0) {
-      this.saveLocalShortlist(campaignId, merged);
-    }
-
-    return merged;
+    return (await shortlistService.all(campaignId)).map(item => ({ ...item,
+      creatorName: item.creatorName ?? '', addedAt: item.addedAt ?? '', note: item.note ?? undefined,
+      platform: item.platform ?? undefined, avatarUrl: item.avatarUrl ?? undefined,
+      followers: item.followers ?? undefined, engagementRate: item.engagementRate ?? undefined, niche: item.niche ?? undefined,
+    }));
   },
+  addToShortlist: shortlistService.add,
+  updateShortlist: shortlistService.update,
+  removeFromShortlist: shortlistService.remove,
+  compareShortlist: shortlistService.compare,
 
-  /**
-   * Thêm creator vào danh sách shortlist của chiến dịch và lưu trực tiếp xuống Database + LocalStorage
-   * Swagger: POST /campaigns/{campaignId}/shortlist
-   */
-  async addToShortlist(campaignId: string, payload: AddShortlistItemPayload): Promise<ShortlistItem> {
-    const requestBody = {
-      creatorId: payload.creatorId,
-      priority: (payload.priority || 'HIGH').toUpperCase(),
-      note: payload.note || '',
-    };
-
-    let serverData: any = null;
-    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(campaignId);
-
-    if (isUuid) {
-      try {
-        const response = await apiClient.post<ApiResponse<any>>(
-          `/campaigns/${campaignId}/shortlist`,
-          requestBody,
-          { timeout: 5000 }
-        );
-        serverData = response.data?.data || response.data;
-      } catch (err: any) {
-        try {
-          const response2 = await apiClient.post<ApiResponse<any>>(
-            `/campaigns/${campaignId}/shortlist/items`,
-            requestBody,
-            { timeout: 5000 }
-          );
-          serverData = response2.data?.data || response2.data;
-        } catch (innerErr: any) {
-          console.warn(`[creatorService] Backend DB shortlist không khả dụng cho chiến dịch ${campaignId}, lưu vào bộ nhớ dự phòng:`, innerErr?.message || err?.message);
-        }
-      }
-    }
-
-    const item: ShortlistItem = {
-      id: serverData?.id || `shortlist_${Date.now()}_${payload.creatorId}`,
-      campaignId: serverData?.campaignId || campaignId,
-      creatorId: serverData?.creatorId || payload.creatorId,
-      creatorName: serverData?.creatorName || payload.creatorName || 'Creator',
-      avatarUrl: serverData?.avatarUrl || payload.avatarUrl,
-      platform: serverData?.platform || payload.platform || 'tiktok',
-      followers: serverData?.followers ?? payload.followers ?? 0,
-      engagementRate: serverData?.engagementRate ?? payload.engagementRate ?? 0,
-      niche: serverData?.niche || payload.niche,
-      priority: serverData?.priority || payload.priority || 'HIGH',
-      note: serverData?.note || payload.note || '',
-      addedAt: serverData?.addedAt || new Date().toISOString(),
-      status: serverData?.status || 'SAVED',
-    };
-
-    // Luôn lưu trữ bền vững vào LocalStorage theo campaignId hiện tại
-    const currentList = this.getLocalShortlist(campaignId);
-    const existingIndex = currentList.findIndex((i) => (i.creatorId || i.id) === item.creatorId);
-    if (existingIndex >= 0) {
-      currentList[existingIndex] = { ...currentList[existingIndex], ...item };
-    } else {
-      currentList.unshift(item);
-    }
-    this.saveLocalShortlist(campaignId, currentList);
-
-    // Đồng thời cập nhật vào danh sách tổng hợp IM_SHORTLIST_ALL
-    try {
-      const allRaw = localStorage.getItem('IM_SHORTLIST_ALL');
-      const allList: ShortlistItem[] = allRaw ? JSON.parse(allRaw) : [];
-      const idx = allList.findIndex((i) => (i.creatorId || i.id) === item.creatorId && i.campaignId === campaignId);
-      if (idx >= 0) allList[idx] = item;
-      else allList.unshift(item);
-      localStorage.setItem('IM_SHORTLIST_ALL', JSON.stringify(allList));
-    } catch {}
-
-    // Tự động kích hoạt cào dữ liệu mới nhất khi Creator được thêm vào Shortlist (POST /crawl/shortlist-trigger)
-    const rawUsername =
-      payload.username ||
-      (payload as any).userName ||
-      (payload as any).handle ||
-      payload.creatorName;
-    if (rawUsername) {
-      this.triggerShortlistCrawl({
-        platform: payload.platform || 'TIKTOK',
-        username: rawUsername,
-        creatorId: payload.creatorId,
-        campaignId,
-      }).catch(() => null);
-    }
-
-    return item;
-  },
-
-  /**
-   * Kích hoạt cào dữ liệu khi Creator được thêm vào Shortlist
-   * POST /api/v1/crawl/shortlist-trigger (FastAPI / Crawler worker)
-   */
-  async triggerShortlistCrawl(payload: {
-    platform: string;
-    username: string;
-    creatorId?: string;
-    campaignId?: string;
-  }): Promise<unknown> {
-    const cleanPlatform = (payload.platform || 'TIKTOK').toUpperCase();
-    const cleanUsername = (payload.username || '').replace(/^@+/, '').trim();
-    if (!cleanUsername) return null;
-
-    const body = {
-      platform: cleanPlatform,
-      username: cleanUsername,
-      creatorId: payload.creatorId || null,
-      campaignId: payload.campaignId || null,
-    };
-
-    // 1. Khi đang chạy local (localhost / 127.0.0.1), ưu tiên gọi trực tiếp tới FastAPI / uvicorn crawler (port 8000)
-    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-      try {
-        const resLocal = await fetch('http://localhost:8000/api/v1/crawl/shortlist-trigger', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        if (resLocal.ok) {
-          const data = await resLocal.json();
-          console.log('[creatorService] Đã kích hoạt cào dữ liệu qua local crawler (port 8000):', data);
-          return data;
-        }
-      } catch {
-        // Local crawler không phản hồi, fallback qua apiClient bên dưới
-      }
-    }
-
-    // 2. Fallback qua API Gateway / Spring Boot (/api/v1/crawl/shortlist-trigger)
-    try {
-      const res = await apiClient.post('/crawl/shortlist-trigger', body, { timeout: 5000 });
-      console.log('[creatorService] Đã kích hoạt cào dữ liệu qua backend API:', res.data);
-      return res.data;
-    } catch (err: any) {
-      console.warn('[creatorService] Không thể gửi yêu cầu cào dữ liệu /crawl/shortlist-trigger:', err?.message);
-      return null;
-    }
-  },
-
-  /**
-   * Xóa creator khỏi shortlist của chiến dịch trong Database + LocalStorage
-   * Swagger: DELETE /campaigns/{campaignId}/shortlist/{shortlistItemId}
-   */
-  async removeFromShortlist(campaignId: string, shortlistItemId: string): Promise<void> {
-    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(campaignId);
-    if (isUuid) {
-      try {
-        await apiClient.delete(`/campaigns/${campaignId}/shortlist/${shortlistItemId}`, { timeout: 4000 });
-      } catch (err: any) {
-        try {
-          await apiClient.delete(`/campaigns/${campaignId}/shortlist/items/${shortlistItemId}`, { timeout: 4000 });
-        } catch (innerErr: any) {
-          console.warn('[creatorService] Backend delete API không khả dụng, xóa khỏi local storage.');
-        }
-      }
-    }
-
-    // Xóa khỏi LocalStorage
-    const currentList = this.getLocalShortlist(campaignId);
-    const updated = currentList.filter((it) => it.id !== shortlistItemId && it.creatorId !== shortlistItemId);
-    this.saveLocalShortlist(campaignId, updated);
-
-    try {
-      const allRaw = localStorage.getItem('IM_SHORTLIST_ALL');
-      if (allRaw) {
-        const allList: ShortlistItem[] = JSON.parse(allRaw);
-        const filteredAll = allList.filter((it) => it.id !== shortlistItemId && it.creatorId !== shortlistItemId);
-        localStorage.setItem('IM_SHORTLIST_ALL', JSON.stringify(filteredAll));
-      }
-    } catch {}
-  },
-
-  /**
-   * So sánh danh sách creator trong shortlist của chiến dịch
-   */
-  async compareShortlist(campaignId: string, creatorIds: string[]): Promise<unknown> {
-    const response = await apiClient.post(
-      `/campaigns/${campaignId}/shortlist/compare`,
-      { creatorIds }
-    );
-    return response.data;
-  },
-
-  /**
-   * Gửi lời mời tham gia chiến dịch tới Creator (POST /creators/{id}/invite)
-   */
   async sendInvitation(creatorId: string, payload: SendInvitationRequest): Promise<InvitationResponse> {
     const response = await apiClient.post<ApiResponse<InvitationResponse>>(
       `/creators/${creatorId}/invite`,
@@ -452,9 +145,3 @@ export const creatorService = {
     return response.data?.data || (response.data as unknown as InvitationResponse);
   },
 };
-
-// Tự động dọn dẹp các key cache cục bộ cũ để đảm bảo 100% dữ liệu đồng bộ từ Database
-try {
-  creatorService.clearLegacyLocalShortlist();
-} catch {}
-

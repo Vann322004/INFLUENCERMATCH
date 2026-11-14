@@ -56,6 +56,18 @@ export function createRequestCache(now: () => number = Date.now) {
 }
 
 export const dataManagerRequestCache = createRequestCache();
+export const adminRequestCache = createRequestCache();
+
+export function invalidateAdminCacheForMutation(method: string | undefined, url: string | undefined) {
+  if (!method || ['get', 'head', 'options'].includes(method.toLowerCase())) return;
+  const path = (url ?? '').replace(/^https?:\/\/[^/]+/, '').replace(/^\/api\/v1(?=\/)/, '').split('?')[0];
+  if (/\/(?:auth\/(?:register|creator)|admin\/users)(?:\/|$)/.test(path)) adminRequestCache.invalidateTags(['admin-users', 'admin-permissions']);
+  if (/\/admin\/role-permissions(?:\/|$)/.test(path)) adminRequestCache.invalidateTags(['admin-permissions']);
+  if (/\/plans(?:\/|$)/.test(path)) adminRequestCache.invalidateTags(['admin-plans', 'admin-billing']);
+  if (/\/(?:payments?|subscriptions?)(?:\/|$)/.test(path)) adminRequestCache.invalidateTags(['admin-billing']);
+  if (/\/campaigns(?:\/|$)/.test(path)) adminRequestCache.invalidateTags(['admin-campaigns']);
+  if (/\/(?:creators?|creator-[^/]+|data-quality|quality|crawl|crawler)(?:\/|$)/.test(path)) adminRequestCache.invalidateTags(['admin-creators']);
+}
 
 export function invalidateDataManagerCacheForMutation(method: string | undefined, url: string | undefined) {
   if (!method || ['get', 'head', 'options'].includes(method.toLowerCase())) return;

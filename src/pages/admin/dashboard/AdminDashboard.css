@@ -22,6 +22,7 @@
 .ad-audit > .ad-note { margin-bottom: 16px; }
 .ad-audit .ant-table-wrapper { min-width: 0; max-width: 100%; width: 100%; overflow-x: hidden; }
 .ad-audit .ant-table { width: 100%; table-layout: fixed; }
+.ad-audit .ant-table-container,
 .ad-audit .ant-table-content { overflow-x: hidden; }
 .ad-audit .ant-table-cell { overflow-wrap: anywhere; word-break: break-word; }
 .ad-audit .ant-tag { white-space: normal; max-width: 100%; color: #475569; background: #f8fafc; border-color: #e2e8f0; }

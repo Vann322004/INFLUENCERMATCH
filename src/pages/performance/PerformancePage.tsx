@@ -760,7 +760,7 @@ const PerformancePage: React.FC = () => {
 
                       return (
                         <div key={c.id} className="perf-campaign-item">
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div className="perf-campaign-summary" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                               <span style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A' }}>{c.name}</span>
                               {c.selfReported && (

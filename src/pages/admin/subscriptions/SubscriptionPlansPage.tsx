@@ -15,11 +15,14 @@ import {
 } from '@ant-design/icons';
 import { subscriptionService } from '../../../services/api/subscriptionService';
 import { adminService } from '../../../services/api/adminService';
+import { createAdminQuery } from '../../../services/adminCache';
 import type { PlanResponse, PlanCreateRequest, PlanUpdateRequest } from '../../../types/api/subscription.types';
 import CreateEditPlanForm from './components/CreateEditPlanForm';
 import ActivateStopToggle from './components/ActivateStopToggle';
 
 const { Text, Title } = Typography;
+const planCatalogQuery = subscriptionService.getPlansPageQuery(0, 50);
+const planStatsQuery = createAdminQuery('plans:payment-stats', () => adminService.getTransactionStats(), { ttl: 30_000, tags: ['admin-billing'] });
 
 interface PaymentStats {
   totalRevenue: number;
@@ -30,21 +33,22 @@ interface PaymentStats {
 }
 
 export default function SubscriptionPlansPage() {
-  const [plans, setPlans] = useState<PlanResponse[]>([]);
-  const [stats, setStats] = useState<PaymentStats | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [plans, setPlans] = useState<PlanResponse[]>(() => planCatalogQuery.peek()?.value.items ?? []);
+  const [stats, setStats] = useState<PaymentStats | null>(() => planStatsQuery.peek()?.value ?? null);
+  const [loading, setLoading] = useState<boolean>(() => !planCatalogQuery.peek() || !planStatsQuery.peek());
   const [saving, setSaving] = useState<boolean>(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<PlanResponse | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const fetchPlansAndStats = useCallback(async () => {
-    setLoading(true);
+  const fetchPlansAndStats = useCallback(async (force = false) => {
+    if (force) { subscriptionService.clearPlansCache(); planStatsQuery.invalidate(); }
+    setLoading(!planCatalogQuery.peek() || !planStatsQuery.peek());
     setAuthError(null);
     try {
       const [plansData, statsData] = await Promise.all([
-        subscriptionService.getPlans(0, 50, true),
-        adminService.getTransactionStats().catch((err: unknown) => {
+        subscriptionService.getPlans(0, 50),
+        planStatsQuery().catch((err: unknown) => {
           console.warn('[SubscriptionPlansPage] API /admin/payments/stats:', err);
           return null;
         }),
@@ -56,15 +60,7 @@ export default function SubscriptionPlansPage() {
         setPlans([]);
       }
 
-      if (statsData) {
-        setStats({
-          totalRevenue: Number(statsData.totalRevenue) || 0,
-          paidCount: Number(statsData.paidCount) || 0,
-          totalCount: Number(statsData.totalCount) || 0,
-          totalPending: Number(statsData.totalPending) || 0,
-          totalRefunded: Number(statsData.totalRefunded) || 0,
-        });
-      }
+      setStats(statsData);
     } catch (err: any) {
       console.error('[SubscriptionPlansPage] Lỗi gọi API backend:', err);
       if (err?.response?.status === 401) {
@@ -74,6 +70,7 @@ export default function SubscriptionPlansPage() {
         message.error(err?.response?.data?.message || err?.message || 'Không thể tải danh sách gói dịch vụ từ máy chủ.');
       }
       setPlans([]);
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -187,7 +184,7 @@ export default function SubscriptionPlansPage() {
         <div style={{ display: 'flex', gap: 8 }}>
           <Button
             icon={<ReloadOutlined />}
-            onClick={() => fetchPlansAndStats()}
+            onClick={() => fetchPlansAndStats(true)}
             loading={loading}
             style={{ borderRadius: 8 }}
           >
@@ -269,7 +266,7 @@ export default function SubscriptionPlansPage() {
               <DollarCircleOutlined style={{ color: '#10B981', fontSize: 16 }} />
             </div>
             <div style={{ fontSize: 26, fontWeight: 800, color: '#10B981', marginTop: 6 }}>
-              {stats ? formatCurrency(stats.totalRevenue) : '0 đ'}
+              {stats ? formatCurrency(stats.totalRevenue) : '—'}
             </div>
             <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
               Thu từ giao dịch thanh toán VNPAY thực tế
@@ -294,10 +291,10 @@ export default function SubscriptionPlansPage() {
               <CheckCircleOutlined style={{ color: '#6366F1', fontSize: 16 }} />
             </div>
             <div style={{ fontSize: 26, fontWeight: 800, color: '#6366F1', marginTop: 6 }}>
-              {stats ? `${stats.paidCount} giao dịch` : '0 giao dịch'}
+              {stats ? `${stats.paidCount} giao dịch` : '—'}
             </div>
             <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
-              {stats?.totalCount ? `Trên tổng số ${stats.totalCount} lượt giao dịch phát sinh` : 'Chưa có giao dịch phát sinh'}
+              {stats ? stats.totalCount ? `Trên tổng số ${stats.totalCount} lượt giao dịch phát sinh` : 'Chưa có giao dịch phát sinh' : 'Chưa tải được thống kê'}
             </div>
           </Card>
         </Col>
