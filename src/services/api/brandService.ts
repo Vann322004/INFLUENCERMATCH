@@ -90,13 +90,37 @@ export const brandService = {
     return data;
   },
 
-  /**
-   * Update an existing brand profile by ID.
-   */
-  async updateBrand(id: string, payload: BrandRequest): Promise<BrandResponse> {
-    cachedBrand = null;
-    const response = await apiClient.put<ApiResponse<BrandResponse>>(`/brands/${id}`, payload);
-    return response.data.data;
+  async getMyBrandForEdit(): Promise<{ brand: BrandResponse; etag: string } | null> {
+    try {
+      const response = await apiClient.get<ApiResponse<BrandResponse>>('/brands/me');
+      const etag = response.headers.etag;
+      if (!etag) throw new Error('Không lấy được phiên bản hồ sơ. Vui lòng tải lại trang.');
+      return { brand: response.data.data, etag };
+    } catch (err: any) {
+      if (err.response?.status === 404) return null;
+      throw err;
+    }
+  },
+
+  async saveMyBrand(
+    payload: BrandRequest,
+    etag: string | null,
+  ): Promise<{ brand: BrandResponse; etag: string | null }> {
+    const response = etag
+      ? await apiClient.patch<ApiResponse<BrandResponse>>('/brands/me', payload, {
+          headers: { 'If-Match': etag },
+        })
+      : await apiClient.post<ApiResponse<BrandResponse>>('/brands', payload);
+    this.clearBrandCache();
+    return { brand: response.data.data, etag: response.headers.etag || null };
+  },
+
+  async completeOnboarding(etag: string): Promise<{ brand: BrandResponse; etag: string | null }> {
+    const response = await apiClient.post<ApiResponse<BrandResponse>>('/brands/me/onboarding/complete', undefined, {
+      headers: { 'If-Match': etag },
+    });
+    this.clearBrandCache();
+    return { brand: response.data.data, etag: response.headers.etag || null };
   },
 
   /**

@@ -1,9 +1,15 @@
 .history-page {
+  width: 100%;
   max-width: 1240px;
+  box-sizing: border-box;
   margin: 0 auto;
   padding: 12px 0 24px;
   min-width: 0;
   color: #0f172a;
+}
+
+.ant-layout:has(> .ant-layout-content > .app-page-wrapper > .history-page) {
+  scrollbar-gutter: stable;
 }
 
 .history-page h1 { margin: 0 0 5px; font-size: clamp(1.35rem, 3vw, 1.85rem); }

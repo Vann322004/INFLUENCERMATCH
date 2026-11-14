@@ -10,6 +10,9 @@ export interface BrandRequest {
   brandTone?: string;
   preferredPlatforms?: string[];
   description?: string;
+  phoneNumber?: string | null;
+  positioning?: string;
+  guidelines?: string;
 }
 
 export interface BrandResponse {
@@ -25,7 +28,17 @@ export interface BrandResponse {
   brandTone?: string;
   preferredPlatforms?: string[];
   description?: string;
+  phoneNumber?: string | null;
+  positioning?: string;
+  guidelines?: string;
+  onboardingStatus?: 'PENDING' | 'COMPLETED';
+  onboardingCompletedAt?: string;
+  profileRevision?: number;
   m4Version?: number;
+  embeddingStatus?: 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED';
+  embeddingModel?: string;
+  embeddingModelVersion?: string;
+  embeddingReadyAt?: string;
   createdAt?: string;
   updatedAt?: string;
 }

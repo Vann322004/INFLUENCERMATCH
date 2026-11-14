@@ -25,7 +25,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   fullName: string;
-  businessName: string;
+  businessName?: string;
   phoneNumber: string;
   policyAcceptance: {
     acceptedTerms: boolean;
@@ -55,7 +55,7 @@ export interface GoogleRegistration {
 }
 
 export type GoogleRegistrationRequest = Pick<RegisterRequest,
-  'fullName' | 'businessName' | 'phoneNumber' | 'policyAcceptance'> & { sessionId: string };
+  'fullName' | 'phoneNumber' | 'policyAcceptance'> & { sessionId: string; businessName: string };
 
 export type GoogleLoginResult = GoogleRegistration | (LoginResponse & { status: 'AUTHENTICATED' });
 
@@ -74,6 +74,7 @@ export interface UserProfileResponse {
   role: UserRole;
   status: UserStatus;
   permissions?: string[];
+  onboardingStatus?: 'PENDING' | 'COMPLETED';
   createdAt?: string;
   updatedAt?: string;
   lastLoginAt?: string;
