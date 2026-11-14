@@ -60,7 +60,7 @@ export const dataManagerRequestCache = createRequestCache();
 export function invalidateDataManagerCacheForMutation(method: string | undefined, url: string | undefined) {
   if (!method || ['get', 'head', 'options'].includes(method.toLowerCase())) return;
   const path = (url ?? '').replace(/^https?:\/\/[^/]+/, '').replace(/^\/api\/v1(?=\/)/, '').split('?')[0];
-  if (/\/data\/niches(?:\/|$)/.test(path)) {
+  if (/\/data\/(?:niches|crawl-fields)(?:\/|$)/.test(path)) {
     dataManagerRequestCache.invalidateTags(['taxonomy', 'creator-data']);
   } else if (/\/recommendation-config(?:\/|$)/.test(path)) {
     dataManagerRequestCache.invalidateTags(['recommendation-config']);

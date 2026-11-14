@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Tag, Select } from 'antd';
+import { Button, Select } from 'antd';
 import { RobotOutlined, CompassOutlined } from '@ant-design/icons';
 import type { BrandCampaignItem } from './types';
 
@@ -22,66 +22,22 @@ export const CampaignMatchBanner: React.FC<CampaignMatchBannerProps> = ({
 }) => {
   if (matchedCampaign) {
     return (
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 100%)',
-          border: '1.5px solid #C7D2FE',
-          borderRadius: 14,
-          padding: '14px 18px',
-          marginBottom: 16,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 12,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              background: '#4F46E5',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 18,
-            }}
-          >
-            <RobotOutlined />
-          </div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 14, color: '#1E1B4B', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>Đang gợi ý KOC cho chiến dịch: <strong>{matchedCampaign.name}</strong></span>
-              <Tag color="purple" style={{ borderRadius: 12, fontWeight: 700, margin: 0 }}>Đề xuất AI</Tag>
-            </div>
-            <div style={{ fontSize: 12.5, color: '#4338CA', marginTop: 2 }}>
-              AI đã chọn lọc <strong>Top {filteredCount} KOC phù hợp nhất</strong> với ngành hàng & mục tiêu. Bấm <strong>"+ Lưu vào danh sách"</strong> để đưa KOC vào bước 3 (Danh sách chọn).
-            </div>
-          </div>
+      <section className="cdiscovery-campaign-summary">
+        <div className="cdiscovery-campaign-summary-icon"><RobotOutlined /></div>
+        <div className="cdiscovery-campaign-summary-copy">
+          <span className="cdiscovery-campaign-eyebrow">GỢI Ý CREATOR · BƯỚC 2</span>
+          <h2>{matchedCampaign.name}</h2>
+          <p>Cần tuyển <strong>{matchedCampaign.targetCreatorCount || 1} Creator</strong>
+            <span className="cdiscovery-summary-dot">·</span>
+            Top 50 gợi ý ({filteredCount} hồ sơ hiện có). Chọn Creator phù hợp để đưa vào shortlist.</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {campaignsList.length > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 12.5, color: '#4338CA', fontWeight: 600 }}>Đổi chiến dịch:</span>
-              <Select
-                placeholder="Chọn chiến dịch khác..."
-                style={{ width: 200 }}
-                value={selectedCampaignId || undefined}
-                onChange={onSelectCampaign}
-                options={campaignsList.map((c) => ({ value: c.id, label: c.name }))}
-              />
-            </div>
-          )}
-          {onClearMatch && (
-            <Button size="small" onClick={onClearMatch} style={{ borderRadius: 6, fontSize: 12 }}>
-              Xóa lọc chiến dịch
-            </Button>
-          )}
+        <div className="cdiscovery-campaign-summary-actions">
+          {campaignsList.length > 1 && <Select aria-label="Đổi chiến dịch" style={{ width: 200 }}
+            value={selectedCampaignId || undefined} onChange={onSelectCampaign}
+            options={campaignsList.map(c => ({ value: c.id, label: c.name }))} />}
+          {onClearMatch && <Button onClick={onClearMatch}>Bỏ chọn chiến dịch</Button>}
         </div>
-      </div>
+      </section>
     );
   }
 
@@ -108,7 +64,7 @@ export const CampaignMatchBanner: React.FC<CampaignMatchBannerProps> = ({
       </div>
       {campaignsList.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12.5, color: '#64748B', fontWeight: 600 }}>Chiến dịch mục tiêu:</span>
+          <span style={{ fontSize: 12.5, color: '#64748B', fontWeight: 500 }}>Chiến dịch mục tiêu:</span>
           <Select
             placeholder="Chọn chiến dịch..."
             style={{ width: 230 }}

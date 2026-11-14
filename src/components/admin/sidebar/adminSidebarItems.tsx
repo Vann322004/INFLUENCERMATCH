@@ -188,7 +188,7 @@ export const DATA_MANAGER_MENU_GROUPS: AdminMenuGroup[] = [
       },
       {
         key: 'taxonomy',
-        label: 'Danh mục ngành hàng',
+        label: 'Quản lý lĩnh vực',
         icon: <TagOutlined style={{ fontSize: 18 }} />,
         path: DATA_MANAGER_ROUTES.TAXONOMY,
         code: 'DM-06',

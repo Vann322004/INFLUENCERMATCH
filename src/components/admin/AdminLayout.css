@@ -1,0 +1,11 @@
+.admin-header .app-header-inner { min-width: 0; gap: 12px; }
+.admin-header .header-breadcrumbs { min-width: 0; flex: 1; }
+.admin-header .header-bc-current { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-mobile-navigation .app-sider { height: 100% !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; }
+.admin-mobile-navigation .app-sider .ant-layout-sider-children { height: 100% !important; }
+@media (max-width: 767px) {
+  .admin-content { padding: 16px 12px 24px !important; }
+  .admin-header { padding: 0 12px !important; }
+  .admin-header .header-breadcrumbs > :not(.header-bc-current) { display: none; }
+  .admin-header .header-breadcrumbs { font-size: 13px; }
+}

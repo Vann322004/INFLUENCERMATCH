@@ -34,6 +34,16 @@ export const clearBrandCache = () => {
   userBrandCache.clear();
 };
 
+// Keep legacy response aliases out of every campaign write request.
+function campaignWritePayload(payload: Partial<CampaignRequest>) {
+  const { budgetMin, budgetMax, description, ...current } = payload;
+  return {
+    ...current,
+    totalBudget: current.totalBudget ?? budgetMax ?? budgetMin,
+    brief: current.brief ?? description,
+  };
+}
+
 export const campaignService = {
   /**
    * Lấy ID brand của user hiện tại, tự động cache theo userId và tạo profile nếu chưa có
@@ -170,46 +180,102 @@ export const campaignService = {
   },
 
   /**
+   * Tạo chuẩn ETag revision theo contract của backend: "campaign:<uuid>:r<revision>"
+   */
+  formatCampaignRevisionTag(id: string, revision?: number | null): string {
+    const rev = revision != null && !isNaN(Number(revision)) ? Number(revision) : 0;
+    return `"campaign:${id}:r${rev}"`;
+  },
+
+  /**
+   * Lấy thông tin chi tiết + ETag của một chiến dịch
+   * Ưu tiên header ETag trả về, nếu trình duyệt che giấu header do CORS thì tự tính từ campaignRevision trong payload
+   */
+  async getCampaignWithETag(id: string): Promise<{ data: CampaignResponse; etag: string }> {
+    const response = await apiClient.get<ApiResponse<CampaignResponse>>(`/campaigns/${id}`);
+    const data = response.data?.data || (response.data as unknown as CampaignResponse);
+    const rawHeader =
+      response.headers?.['etag'] ??
+      (typeof response.headers?.get === 'function' ? response.headers.get('etag') : null);
+    const headerEtag = typeof rawHeader === 'string' ? rawHeader : null;
+    const etag = headerEtag || this.formatCampaignRevisionTag(id, data.campaignRevision);
+    return { data, etag };
+  },
+
+  /**
    * Tạo chiến dịch mới gắn với Brand Profile
    */
   async createCampaign(payload: CampaignRequest, brandId?: string): Promise<CampaignResponse> {
     const targetBrandId = brandId || await this.resolveCurrentBrandId();
     const response = await apiClient.post<ApiResponse<CampaignResponse>>(
       `/brands/${targetBrandId}/campaigns`,
-      payload
+      campaignWritePayload(payload)
     );
     return response.data?.data || (response.data as unknown as CampaignResponse);
   },
 
   /**
    * Cập nhật thông tin chiến dịch
+   * Đảm bảo luôn gửi header If-Match hợp lệ (bắt buộc bởi backend optimistic locking)
    */
-  async updateCampaign(id: string, payload: Partial<CampaignRequest>): Promise<CampaignResponse> {
-    try {
-      const response = await apiClient.put<ApiResponse<CampaignResponse>>(`/campaigns/${id}`, payload);
-      return response.data?.data || (response.data as unknown as CampaignResponse);
-    } catch {
+  async updateCampaign(
+    id: string,
+    payload: Partial<CampaignRequest>,
+    revisionOrEtag?: number | string | null
+  ): Promise<CampaignResponse> {
+    let ifMatchValue: string;
+    if (typeof revisionOrEtag === 'number') {
+      ifMatchValue = this.formatCampaignRevisionTag(id, revisionOrEtag);
+    } else if (typeof revisionOrEtag === 'string' && revisionOrEtag.trim()) {
+      const clean = revisionOrEtag.trim();
+      ifMatchValue = clean.startsWith('"') ? clean : `"${clean}"`;
+    } else {
       try {
-        const response = await apiClient.patch<ApiResponse<CampaignResponse>>(`/campaigns/${id}`, payload);
-        return response.data?.data || (response.data as unknown as CampaignResponse);
+        const { etag } = await this.getCampaignWithETag(id);
+        ifMatchValue = etag;
       } catch (err) {
-        console.warn('[campaignService] Không thể gọi API updateCampaign:', err);
-        return { id, ...payload } as unknown as CampaignResponse;
+        console.warn(`[campaignService] Không fetch được ETag của ${id}, fallback r0:`, err);
+        ifMatchValue = this.formatCampaignRevisionTag(id, 0);
       }
     }
+
+    const response = await apiClient.put<ApiResponse<CampaignResponse>>(
+      `/campaigns/${id}`,
+      campaignWritePayload(payload),
+      {
+        headers: {
+          'If-Match': ifMatchValue,
+        },
+      }
+    );
+    return response.data?.data || (response.data as unknown as CampaignResponse);
   },
 
   /**
    * Lưu trữ chiến dịch
-   * PATCH /campaigns/{id}/archive
+   * PATCH /campaigns/{id}/archive — luôn gửi kèm If-Match header
    */
-  async archiveCampaign(id: string): Promise<CampaignResponse> {
+  async archiveCampaign(id: string, revisionOrEtag?: number | string | null): Promise<CampaignResponse> {
     try {
-      const response = await apiClient.patch<ApiResponse<CampaignResponse>>(`/campaigns/${id}/archive`);
+      let ifMatchValue: string;
+      if (typeof revisionOrEtag === 'number') {
+        ifMatchValue = this.formatCampaignRevisionTag(id, revisionOrEtag);
+      } else if (typeof revisionOrEtag === 'string' && revisionOrEtag.trim()) {
+        const clean = revisionOrEtag.trim();
+        ifMatchValue = clean.startsWith('"') ? clean : `"${clean}"`;
+      } else {
+        const { etag } = await this.getCampaignWithETag(id);
+        ifMatchValue = etag;
+      }
+      const response = await apiClient.patch<ApiResponse<CampaignResponse>>(
+        `/campaigns/${id}/archive`,
+        undefined,
+        { headers: { 'If-Match': ifMatchValue } }
+      );
       return response.data?.data || (response.data as unknown as CampaignResponse);
     } catch {
       // Fallback: cập nhật trạng thái ARCHIVED
-      return this.updateStatus(id, 'ARCHIVED');
+      return this.updateStatus(id, 'ARCHIVED', revisionOrEtag);
     }
   },
 
@@ -329,7 +395,7 @@ export const campaignService = {
         keyMessage,
         dosAndDonts,
         creatorBrief: keyMessage && dosAndDonts ? `Thông điệp chính:\n${keyMessage}\n\n${dosAndDonts}` : undefined,
-        creatorQuantity: 10,
+        creatorQuantity: 1,
         draftDeadline: '5 ngày sau khi Creator nhận sản phẩm',
         campaignDuration: '4_weeks',
         aiExplanation: `Trợ lý AI đã phân tích mô tả: "${prompt}". Đề xuất chiến dịch tập trung vào tệp ${audiences.join(', ')} tuổi, kênh ${platforms.join(' & ')}, định hướng thông điệp kiềm dầu và giá thành tiết kiệm dưới 200k.`,
@@ -342,10 +408,30 @@ export const campaignService = {
   /**
    * Cập nhật trạng thái chiến dịch (DRAFT, ACTIVE, COMPLETED, ARCHIVED)
    */
-  async updateStatus(id: string, status: CampaignStatus): Promise<CampaignResponse> {
-    const response = await apiClient.patch<ApiResponse<CampaignResponse>>(`/campaigns/${id}/status`, {
-      status,
-    });
+  async updateStatus(
+    id: string,
+    status: CampaignStatus,
+    revisionOrEtag?: number | string | null
+  ): Promise<CampaignResponse> {
+    let ifMatchValue: string;
+    if (typeof revisionOrEtag === 'number') {
+      ifMatchValue = this.formatCampaignRevisionTag(id, revisionOrEtag);
+    } else if (typeof revisionOrEtag === 'string' && revisionOrEtag.trim()) {
+      const clean = revisionOrEtag.trim();
+      ifMatchValue = clean.startsWith('"') ? clean : `"${clean}"`;
+    } else {
+      try {
+        const { etag } = await this.getCampaignWithETag(id);
+        ifMatchValue = etag;
+      } catch {
+        ifMatchValue = this.formatCampaignRevisionTag(id, 0);
+      }
+    }
+    const response = await apiClient.patch<ApiResponse<CampaignResponse>>(
+      `/campaigns/${id}/status`,
+      { status },
+      { headers: { 'If-Match': ifMatchValue } }
+    );
     return response.data?.data || (response.data as unknown as CampaignResponse);
   },
 

@@ -1,4 +1,4 @@
-import { apiClient } from '../apiClient';
+import { apiClient, getAuthSessionId } from '../apiClient';
 import { readPage } from './pageResponse';
 import type { PageResponse } from '../../types/api/common.types';
 import type { ApiResponse } from '../../types/api/common.types';
@@ -8,6 +8,8 @@ import type {
   PlanUpdateRequest,
   SubscriptionResponse,
   PaymentResponse,
+  BrandPayment,
+  BrandPaymentPage,
 } from '../../types/api/subscription.types';
 
 interface PageResponsePlan {
@@ -25,7 +27,7 @@ const SUBS_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 const STORAGE_KEY_PLANS = 'im_cached_plans_v1';
 const STORAGE_PREFIX_SUBS = 'im_cached_subs_';
 
-let cachedPlans: { data: PlanResponse[]; timestamp: number } | null = (() => {
+let cachedPlans: { data: PlanResponse[]; timestamp: number; scope: string } | null = (() => {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY_PLANS);
     if (!raw) return null;
@@ -37,11 +39,23 @@ let cachedPlans: { data: PlanResponse[]; timestamp: number } | null = (() => {
   return null;
 })();
 let inFlightPlansPromise: Promise<PlanResponse[]> | null = null;
+let inFlightPlansScope = '';
 
 const brandSubsCache = new Map<string, { data: SubscriptionResponse[]; timestamp: number }>();
 const subsInFlight = new Map<string, Promise<SubscriptionResponse[]>>();
 
 export const subscriptionService = {
+  async getPaymentHistory(page = 0, size = 10, signal?: AbortSignal): Promise<BrandPaymentPage> {
+    const response = await apiClient.get<ApiResponse<BrandPaymentPage>>('/billing/payments', {
+      params: { page, size }, signal,
+    });
+    return response.data.data;
+  },
+  async getPaymentStatus(reference: string, signal?: AbortSignal): Promise<BrandPayment> {
+    const response = await apiClient.get<ApiResponse<BrandPayment>>(
+      `/billing/payments/${encodeURIComponent(reference)}`, { signal });
+    return response.data.data;
+  },
   /** Paginated catalog with authoritative totals, separate from the storefront list cache. */
   async getPlansPage(page = 0, size = 1): Promise<PageResponse<PlanResponse>> {
     const response = await apiClient.get('/plans', { params: { page, size } });
@@ -51,14 +65,15 @@ export const subscriptionService = {
    * Get all active subscription plans (with memory & sessionStorage cache & deduplication).
    */
   async getPlans(page = 0, size = 20, forceRefresh = false): Promise<PlanResponse[]> {
-    if (!forceRefresh && cachedPlans && Date.now() - cachedPlans.timestamp < PLANS_CACHE_TTL) {
+    const scope = `${getAuthSessionId()}:${page}:${size}`;
+    if (!forceRefresh && cachedPlans?.scope === scope && Date.now() - cachedPlans.timestamp < PLANS_CACHE_TTL) {
       return cachedPlans.data;
     }
 
-    if (inFlightPlansPromise) {
+    if (inFlightPlansPromise && inFlightPlansScope === scope) {
       return inFlightPlansPromise;
     }
-
+    inFlightPlansScope = scope;
     inFlightPlansPromise = (async () => {
       try {
         const response = await apiClient.get<ApiResponse<PageResponsePlan>>('/plans', {
@@ -74,14 +89,14 @@ export const subscriptionService = {
           list = (response.data as any).content;
         }
         if (list.length > 0) {
-          cachedPlans = { data: list, timestamp: Date.now() };
+          cachedPlans = { data: list, timestamp: Date.now(), scope };
           try {
             sessionStorage.setItem(STORAGE_KEY_PLANS, JSON.stringify(cachedPlans));
           } catch {}
         }
         return list;
       } finally {
-        inFlightPlansPromise = null;
+        if (inFlightPlansScope === scope) inFlightPlansPromise = null;
       }
     })();
 
@@ -110,7 +125,7 @@ export const subscriptionService = {
    * Create a new plan (Admin).
    */
   async createPlan(payload: PlanCreateRequest): Promise<PlanResponse> {
-    cachedPlans = null;
+    subscriptionService.clearPlansCache();
     const response = await apiClient.post<ApiResponse<PlanResponse>>('/plans', payload);
     return response.data.data;
   },
@@ -119,7 +134,7 @@ export const subscriptionService = {
    * Update an existing plan (Admin).
    */
   async updatePlan(id: string, payload: PlanUpdateRequest): Promise<PlanResponse> {
-    cachedPlans = null;
+    subscriptionService.clearPlansCache();
     const response = await apiClient.put<ApiResponse<PlanResponse>>(`/plans/${id}`, payload);
     return response.data.data;
   },
@@ -128,7 +143,7 @@ export const subscriptionService = {
    * Delete a plan by ID (Admin).
    */
   async deletePlan(id: string): Promise<void> {
-    cachedPlans = null;
+    subscriptionService.clearPlansCache();
     await apiClient.delete(`/plans/${id}`);
   },
 
@@ -196,8 +211,6 @@ export const subscriptionService = {
           sessionStorage.setItem(`${STORAGE_PREFIX_SUBS}${brandId}`, JSON.stringify(entry));
         } catch {}
         return list;
-      } catch {
-        return [];
       } finally {
         subsInFlight.delete(brandId);
       }

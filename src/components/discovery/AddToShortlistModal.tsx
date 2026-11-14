@@ -1,5 +1,6 @@
+import './AddToShortlistModal.css';
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Select, Input, Button, message, Alert, Avatar } from 'antd';
+import { Modal, Form, Select, Input, Button, message, Alert, Avatar, Radio } from 'antd';
 import { RocketOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
@@ -82,11 +83,11 @@ export default function AddToShortlistModal({
       const values = await form.validateFields();
       setSubmitting(true);
 
-      const savedItem = await creatorService.addToShortlist(values.campaignId, {
+      await creatorService.addToShortlist(values.campaignId, {
         creatorId: creator.id,
         creatorName: creator.name,
         username: creator.username || (creator as any).userName || (creator as any).handle || creator.name,
-        platform: creator.platform || (creator as any).platform || 'tiktok',
+        platform: creator.platform || 'tiktok',
         avatarUrl: creator.avatar,
         followers: creator.followers,
         engagementRate: creator.engagementRate,
@@ -136,215 +137,45 @@ export default function AddToShortlistModal({
 
   return (
     <Modal
-      title={
-        <div style={{ paddingBottom: 4 }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.3px' }}>
-            Thêm vào Danh sách chọn (Shortlist)
-          </div>
-          <div style={{ fontSize: 13, color: '#64748B', marginTop: 2, fontWeight: 400 }}>
-            Lưu creator vào shortlist để dễ dàng quản lý và so sánh sau này.
-          </div>
-        </div>
-      }
+      className="shortlist-modal"
+      title={<div className="shortlist-modal-heading"><h2>Lưu vào danh sách chọn</h2><p>Chọn chiến dịch và mức độ ưu tiên cho KOC.</p></div>}
       open={open}
-      onCancel={onClose}
+      onCancel={() => { if (!submitting) onClose(); }}
       footer={null}
-      destroyOnClose
-      width={520}
+      destroyOnHidden
+      width={560}
       centered
-      styles={{
-        body: {
-          paddingTop: 8,
-        },
-      }}
+      maskClosable={!submitting}
+      closable={!submitting}
     >
-      {creator && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14,
-            padding: '12px 16px',
-            background: '#F8FAFC',
-            border: '1px solid #E2E8F0',
-            borderRadius: 14,
-            margin: '14px 0 18px',
-          }}
-        >
-          <Avatar size={48} src={creator.avatar} style={{ border: '2px solid #C7D2FE', flexShrink: 0 }}>
-            {creator.name?.charAt(0)}
-          </Avatar>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontWeight: 800, fontSize: 14.5, color: '#0F172A' }}>{creator.name}</div>
-            <div style={{ fontSize: 12.5, color: '#64748B', marginTop: 1 }}>
-              {creator.username ? `@${creator.username.replace(/^@+/, '')}` : ''}
-            </div>
-            {creator.niche && (
-              <div style={{ fontSize: 12, color: '#475569', marginTop: 2 }}>
-                {creator.niche}
-              </div>
-            )}
-          </div>
+      {creator && <div className="shortlist-modal-creator">
+        <Avatar size={48} src={creator.avatar}>{creator.name?.charAt(0)}</Avatar>
+        <div><strong>{creator.name}</strong><p>{creator.username ? `@${creator.username.replace(/^@+/, '')}` : 'KOC'}{creator.niche && ` · ${creator.niche}`}</p></div>
+      </div>}
+      {campaignOptions.length === 0 && !loadingCampaigns ? <>
+        <Alert type="info" showIcon title="Chưa có chiến dịch" description="Tạo chiến dịch để lưu và quản lý danh sách KOC phù hợp." />
+        <div className="shortlist-modal-actions"><Button onClick={onClose}>Đóng</Button><Button type="primary" icon={<RocketOutlined />} onClick={() => { onClose(); navigate('/campaigns/create'); }}>Tạo chiến dịch</Button></div>
+      </> : <Form form={form} layout="vertical" initialValues={{ priority: 'HIGH' }} disabled={submitting}>
+        <Form.Item name="campaignId" label="Chiến dịch" rules={[{ required: true, message: 'Vui lòng chọn chiến dịch' }]}>
+          <Select loading={loadingCampaigns} placeholder="Chọn chiến dịch" options={campaignOptions} size="large" />
+        </Form.Item>
+        <Form.Item label="Mức độ ưu tiên">
+          <Radio.Group className="shortlist-priority" value={priorityVal} onChange={event => { setPriorityVal(event.target.value); form.setFieldsValue({ priority: event.target.value }); }}>
+            {[
+              { value: 'HIGH', title: 'Ưu tiên cao', description: 'Liên hệ sớm' },
+              { value: 'MEDIUM', title: 'Trung bình', description: 'Cân nhắc thêm' },
+              { value: 'LOW', title: 'Dự phòng', description: 'Lưu tham khảo' },
+            ].map(option => <Radio key={option.value} value={option.value} className="shortlist-priority-option"><strong>{option.title}</strong><span>{option.description}</span></Radio>)}
+          </Radio.Group>
+        </Form.Item>
+        <Form.Item name="note" label="Ghi chú nội bộ" extra="Tùy chọn · Chỉ dùng để quản lý danh sách của bạn.">
+          <TextArea rows={3} placeholder="Ví dụ: Nội dung phù hợp, ưu tiên liên hệ trong tuần này…" maxLength={250} showCount />
+        </Form.Item>
+        <div className="shortlist-modal-actions">
+          <Button onClick={onClose} disabled={submitting}>Hủy</Button>
+          <Button type="primary" loading={submitting} disabled={loadingCampaigns} onClick={handleSubmit}>Lưu vào danh sách</Button>
         </div>
-      )}
-
-      {campaignOptions.length === 0 && !loadingCampaigns ? (
-        <div>
-          <Alert
-            type="warning"
-            showIcon
-            message="Chưa có chiến dịch nào"
-            description="Bạn cần có ít nhất một chiến dịch đang hoạt động để lưu danh sách Creator vào phễu tuyển chọn."
-            style={{ borderRadius: 10, marginBottom: 16 }}
-          />
-          <Button
-            type="primary"
-            block
-            icon={<RocketOutlined />}
-            style={{ background: '#4F46E5', borderRadius: 10, height: 40, fontWeight: 700 }}
-            onClick={() => {
-              onClose();
-              navigate('/campaigns/create');
-            }}
-          >
-            Tạo chiến dịch mới ngay
-          </Button>
-        </div>
-      ) : (
-        <Form form={form} layout="vertical" initialValues={{ priority: 'HIGH' }}>
-          {/* 1. Chọn chiến dịch mục tiêu */}
-          <Form.Item
-            name="campaignId"
-            label={
-              <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
-                <span style={{ color: '#EF4444', marginRight: 4 }}>*</span>Chọn chiến dịch mục tiêu
-              </span>
-            }
-            rules={[{ required: true, message: 'Vui lòng chọn một chiến dịch' }]}
-            style={{ marginBottom: 16 }}
-          >
-            <Select
-              loading={loadingCampaigns}
-              placeholder="Chọn chiến dịch mục tiêu"
-              options={campaignOptions}
-              size="large"
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-
-          {/* 2. Mức độ ưu tiên (3 Card Radio) */}
-          <Form.Item
-            label={<span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>Mức độ ưu tiên</span>}
-            style={{ marginBottom: 16 }}
-          >
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-              {[
-                { value: 'HIGH', title: 'Ưu tiên cao', sub: 'Nên liên hệ sớm' },
-                { value: 'MEDIUM', title: 'Trung bình', sub: 'Có thể liên hệ sau' },
-                { value: 'LOW', title: 'Dự phòng', sub: 'Lưu để tham khảo' },
-              ].map((opt) => {
-                const checked = priorityVal === opt.value;
-                return (
-                  <div
-                    key={opt.value}
-                    onClick={() => {
-                      setPriorityVal(opt.value as any);
-                      form.setFieldsValue({ priority: opt.value });
-                    }}
-                    style={{
-                      border: `1.5px solid ${checked ? '#6366F1' : '#E2E8F0'}`,
-                      background: checked ? '#F5F3FF' : '#FFFFFF',
-                      borderRadius: 12,
-                      padding: '12px 14px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      transition: 'all 0.15s ease',
-                      boxShadow: checked ? '0 2px 8px rgba(99, 102, 241, 0.12)' : 'none',
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: 13, color: checked ? '#4F46E5' : '#0F172A' }}>
-                        {opt.title}
-                      </div>
-                      <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
-                        {opt.sub}
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        width: 18,
-                        height: 18,
-                        borderRadius: '50%',
-                        border: `2px solid ${checked ? '#6366F1' : '#CBD5E1'}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        marginTop: 1,
-                        background: '#FFFFFF',
-                      }}
-                    >
-                      {checked && (
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#6366F1' }} />
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </Form.Item>
-
-          {/* 3. Ghi chú nội bộ (Tùy chọn) */}
-          <Form.Item
-            name="note"
-            label={<span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>Ghi chú nội bộ (Tùy chọn)</span>}
-            style={{ marginBottom: 20 }}
-          >
-            <TextArea
-              rows={3}
-              placeholder="Ví dụ: Phù hợp chiến dịch summer, nội dung unboxing kem chống nắng, giá dự kiến 15M, ưu tiên liên hệ trước thứ 6..."
-              maxLength={250}
-              showCount
-              style={{ borderRadius: 10, fontSize: 13 }}
-            />
-          </Form.Item>
-
-          {/* 4. Action Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-            <Button
-              onClick={onClose}
-              style={{
-                borderRadius: 10,
-                height: 38,
-                fontWeight: 600,
-                padding: '0 20px',
-                borderColor: '#E2E8F0',
-                color: '#334155',
-              }}
-            >
-              Hủy
-            </Button>
-            <Button
-              type="primary"
-              loading={submitting}
-              onClick={handleSubmit}
-              style={{
-                background: '#4F46E5',
-                border: 'none',
-                borderRadius: 10,
-                height: 38,
-                padding: '0 24px',
-                fontWeight: 700,
-                boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
-              }}
-            >
-              Thêm vào Shortlist
-            </Button>
-          </div>
-        </Form>
-      )}
+      </Form>}
     </Modal>
   );
 }

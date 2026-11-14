@@ -62,7 +62,7 @@ export const CreatorGridList: React.FC<CreatorGridListProps> = ({
         }}
       >
         <Spin size="large" />
-        <div style={{ marginTop: 16, color: '#64748B', fontWeight: 600, fontSize: 14 }}>
+        <div style={{ marginTop: 16, color: '#64748B', fontWeight: 500, fontSize: 14 }}>
           Đang tải danh sách KOC từ hệ thống...
         </div>
       </Card>
@@ -91,7 +91,7 @@ export const CreatorGridList: React.FC<CreatorGridListProps> = ({
         <Button
           type="primary"
           onClick={onResetFilters}
-          style={{ background: '#4F46E5', borderRadius: 10, height: 40, fontWeight: 700 }}
+          style={{ background: '#4F46E5', borderRadius: 10, height: 40, fontWeight: 500 }}
         >
           Đặt lại bộ lọc
         </Button>

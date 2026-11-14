@@ -23,7 +23,8 @@ export default function AdminLoginPage() {
       const result = await adminAuthService.login(values.email, values.password);
       if (result.success) {
         message.success('Đăng nhập thành công!');
-        const role = result.user?.role.toUpperCase();
+        const user = result.user;
+        const role = user?.role?.toUpperCase();
         const isManager = role === 'DATA_MANAGER' || role === 'MANAGER';
         navigate(isManager ? DATA_MANAGER_ROUTES.DASHBOARD : ADMIN_ROUTES.DASHBOARD);
       } else {

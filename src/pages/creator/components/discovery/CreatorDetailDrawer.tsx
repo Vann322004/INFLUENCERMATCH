@@ -48,7 +48,7 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: 11,
-                fontWeight: 800,
+                fontWeight: 500,
               }}
             >
               🎵
@@ -142,13 +142,14 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
 
   return (
     <Drawer
+      rootClassName="cdiscovery-drawer"
       title={
         creator ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingRight: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <CreatorAvatar src={creator.avatar} name={creator.name} size={38} />
               <div>
-                <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A' }}>
+                <div style={{ fontWeight: 500, fontSize: 15, color: '#0F172A' }}>
                   {creator.name}
                 </div>
                 <div style={{ fontSize: 11.5, color: '#94A3B8' }}>
@@ -165,7 +166,7 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
               style={{
                 borderRadius: 8,
                 fontSize: 11.5,
-                fontWeight: 600,
+                fontWeight: 500,
                 borderColor: '#818CF8',
                 color: '#4F46E5',
                 background: '#EEF2FF',
@@ -179,7 +180,7 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
         )
       }
       placement="right"
-      width={480}
+      width="min(520px, 100vw)"
       onClose={onClose}
       open={visible}
     >
@@ -195,11 +196,11 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontWeight: 700, fontSize: 13, color: '#1E40AF' }}>
+              <span style={{ fontWeight: 500, fontSize: 13, color: '#1E40AF' }}>
                 Độ tương thích AI
               </span>
               {matchedCampaign ? (
-                <Tag color="green" style={{ fontWeight: 800, borderRadius: 6 }}>
+                <Tag color="green" style={{ fontWeight: 500, borderRadius: 6 }}>
                   {creator.matchRate}% Độ phù hợp ({matchedCampaign.name})
                 </Tag>
               ) : (
@@ -217,13 +218,13 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
 
           {/* Quick Stats Grid */}
           <div>
-            <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A', marginBottom: 10 }}>
+            <div style={{ fontWeight: 500, fontSize: 13, color: '#0F172A', marginBottom: 10 }}>
               Chỉ số hiệu quả chính
             </div>
             <Row gutter={[12, 12]}>
               <Col span={8}>
                 <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 10, textAlign: 'center' }}>
-                  <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A' }}>
+                  <div style={{ fontWeight: 500, fontSize: 16, color: '#0F172A' }}>
                     {creator.followers}
                   </div>
                   <div style={{ fontSize: 11, color: '#64748B' }}>Người theo dõi</div>
@@ -231,7 +232,7 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
               </Col>
               <Col span={8}>
                 <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 10, textAlign: 'center' }}>
-                  <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A' }}>
+                  <div style={{ fontWeight: 500, fontSize: 16, color: '#0F172A' }}>
                     {creator.engagementRate}
                   </div>
                   <div style={{ fontSize: 11, color: '#64748B' }}>Tương tác</div>
@@ -239,7 +240,7 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
               </Col>
               <Col span={8}>
                 <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 10, textAlign: 'center' }}>
-                  <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A' }}>
+                  <div style={{ fontWeight: 500, fontSize: 16, color: '#0F172A' }}>
                     {creator.avgPrice}
                   </div>
                   <div style={{ fontSize: 11, color: '#64748B' }}>Giá TB/Bài</div>
@@ -250,7 +251,7 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
 
           {/* Bio & Categories */}
           <div>
-            <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A', marginBottom: 6 }}>
+            <div style={{ fontWeight: 500, fontSize: 13, color: '#0F172A', marginBottom: 6 }}>
               Giới thiệu & Lĩnh vực
             </div>
             <p style={{ fontSize: 12.5, color: '#475569', lineHeight: 1.5, marginBottom: 10 }}>
@@ -267,7 +268,7 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
 
           {/* Location & Platforms */}
           <div>
-            <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A', marginBottom: 8 }}>
+            <div style={{ fontWeight: 500, fontSize: 13, color: '#0F172A', marginBottom: 8 }}>
               Kênh hoạt động & Địa điểm
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -287,8 +288,8 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
               icon={<ThunderboltOutlined />}
               onClick={() => onOpenShortlist(creator)}
               style={{
-                background: '#4F46E5',
-                fontWeight: 700,
+                background: '#5B5BF0',
+                fontWeight: 500,
                 height: 40,
                 borderRadius: 10,
               }}
@@ -300,7 +301,7 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
               style={{
                 height: 40,
                 borderRadius: 10,
-                fontWeight: 600,
+                fontWeight: 500,
                 borderColor: creator.saved ? '#FECDD3' : '#E2E8F0',
                 color: creator.saved ? '#EF4444' : '#334155',
               }}

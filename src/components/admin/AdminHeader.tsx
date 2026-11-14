@@ -24,8 +24,8 @@ export default function AdminHeader({ title, mobile, menuOpen, onOpenMenu }: Adm
     if (title) {
       return { current: title };
     }
-    if (p.includes('/data-sources')) {
-      return { current: 'Quản lý dữ liệu' };
+    if (p.includes('/data-sources') || p.includes('/taxonomy')) {
+      return { current: 'Quản lý lĩnh vực' };
     }
     if (p.includes('/jobs')) {
       return { current: 'Tiến trình thu thập & Săn KOC' };

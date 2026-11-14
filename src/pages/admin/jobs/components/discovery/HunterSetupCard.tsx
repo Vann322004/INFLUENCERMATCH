@@ -1,13 +1,19 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Card, Row, Col, Select, Tag, Input, Slider, Button, Typography, Radio } from 'antd';
 import { AppstoreOutlined, UnorderedListOutlined } from '@ant-design/icons';
-import { TOPIC_PRESETS } from './hunterConstants';
+import type { Niche } from '../../../../../services/api/nicheService';
 
 const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
 export interface HunterSetupCardProps {
+  topics: Niche[];
+  topicsLoading: boolean;
+  topicsError: string;
+  topicsManagementPath: string;
+  onReloadTopics: () => void;
   mode: 'category' | 'custom';
   onModeChange: (m: 'category' | 'custom') => void;
   platform: string;
@@ -31,6 +37,11 @@ const TIER0_RULES = [
 ];
 
 export default function HunterSetupCard({
+  topics,
+  topicsLoading,
+  topicsError,
+  topicsManagementPath,
+  onReloadTopics,
   mode,
   onModeChange,
   platform,
@@ -128,15 +139,21 @@ export default function HunterSetupCard({
             {/* 2. Lĩnh vực */}
             <Col xs={24} sm={15}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-                Lĩnh vực
+                Lĩnh vực săn KOC
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                <Button size="small" onClick={onReloadTopics} loading={topicsLoading} disabled={loading}>Làm mới</Button>
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {TOPIC_PRESETS.map((t) => {
+                {topicsLoading && <Text type="secondary">Đang tải lĩnh vực...</Text>}
+                {!topicsLoading && topicsError && <Text type="secondary">Không tải được danh sách lĩnh vực. Nhấn “Làm mới” để thử lại.</Text>}
+                {!topicsLoading && !topicsError && topics.length === 0 && <Text type="secondary">Chưa có lĩnh vực đang bật. <Link to={topicsManagementPath}>Đến trang quản lý lĩnh vực</Link> để thêm hoặc bật lĩnh vực và cấu hình từ khóa.</Text>}
+                {!topicsLoading && topics.map((t) => {
                   const isSelected = selectedTopic === t.id;
                   return (
                     <Tag
                       key={t.id}
-                      onClick={() => onSelectTopic(t.id)}
+                      onClick={() => { if (!loading) onSelectTopic(t.id); }}
                       style={{
                         cursor: 'pointer',
                         padding: '5px 12px',
@@ -148,11 +165,12 @@ export default function HunterSetupCard({
                         border: isSelected ? '1.5px solid #6366F1' : '1px solid #E2E8F0',
                       }}
                     >
-                      {t.label}
+                      {t.name}
                     </Tag>
                   );
                 })}
               </div>
+              {!topicsLoading && !topicsError && topics.length > 0 && <Text type="secondary" style={{ fontSize: 12 }}>Chọn lĩnh vực để nạp bộ từ khóa gợi ý đã lưu.</Text>}
             </Col>
 
             {/* 3. Từ khóa */}
@@ -160,6 +178,7 @@ export default function HunterSetupCard({
               <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
                 Từ khóa & Hashtag đang săn
               </div>
+              <Text type="secondary" style={{ fontSize: 12 }}>Thay đổi tại đây chỉ áp dụng cho đợt săn này. Bộ từ khóa mặc định được cấu hình tại trang quản lý lĩnh vực.</Text>
               <div
                 style={{
                   padding: '10px 12px',
@@ -237,7 +256,7 @@ export default function HunterSetupCard({
         {/* 5. Số lượng mục tiêu + nút chạy */}
         <Col xs={24} md={10}>
           <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-            Mục tiêu đợt này
+              Số kênh thử tối đa
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <span style={{ fontSize: 24, fontWeight: 800, color: '#4F46E5' }}>{maxKocs}</span>
@@ -245,11 +264,11 @@ export default function HunterSetupCard({
           </div>
           <Slider
             min={3}
-            max={30}
+            max={20}
             step={mode === 'custom' ? 1 : 5}
             value={maxKocs}
             onChange={onMaxKocsChange}
-            marks={{ 3: '3', 5: '5', 10: '10', 20: '20', 30: '30' }}
+            marks={{ 3: '3', 5: '5', 10: '10', 20: '20' }}
             style={{ marginBottom: 24 }}
           />
           <Button
@@ -257,6 +276,7 @@ export default function HunterSetupCard({
             size="large"
             onClick={onStartHunting}
             loading={loading}
+            disabled={mode === 'category' && (topicsLoading || !topics.some(topic => topic.id === selectedTopic) || activeKeywords.length === 0)}
             block
             style={{
               height: 44,

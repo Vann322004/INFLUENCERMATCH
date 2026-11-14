@@ -43,46 +43,6 @@
   line-height: 1.5;
 }
 
-/* Executive Readiness Pill in Header */
-.ccreate-readiness-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  background: #FFFFFF;
-  border: 1.5px solid #E0E7FF;
-  border-radius: 999px;
-  padding: 6px 16px 6px 12px;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  user-select: none;
-}
-
-.ccreate-readiness-pill:hover {
-  border-color: #6366F1;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.16);
-  transform: translateY(-1px);
-}
-
-.ccreate-readiness-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.ccreate-readiness-label {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #0F172A;
-  line-height: 1.3;
-}
-
-.ccreate-readiness-sub {
-  font-size: 11px;
-  color: #6366F1;
-  font-weight: 600;
-  line-height: 1.2;
-}
-
 /* 2. Interactive Stepper Card */
 .ccreate-stepper-card {
   background: #FFFFFF;
@@ -409,20 +369,14 @@
   justify-content: space-between;
 }
 
-/* 5. Objective Cards (Grid 4 cột thoáng) */
+/* 5. Objective Cards */
 .ccreate-obj-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
 @media (max-width: 992px) {
-  .ccreate-obj-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 520px) {
   .ccreate-obj-grid {
     grid-template-columns: 1fr;
   }
@@ -771,51 +725,6 @@
 .ccreate-btn-next:hover {
   transform: translateY(-1px);
   box-shadow: 0 5px 16px rgba(79, 70, 229, 0.35) !important;
-}
-
-/* 11. AI Assessment Drawer / Slide-Over Modal */
-.ccreate-ai-drawer-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(4px);
-  z-index: 1040;
-  display: flex;
-  justify-content: flex-end;
-  animation: fadeIn 0.2s ease;
-}
-
-.ccreate-ai-drawer {
-  width: 440px;
-  max-width: 90vw;
-  height: 100vh;
-  background: #FFFFFF;
-  box-shadow: -8px 0 32px rgba(15, 23, 42, 0.15);
-  display: flex;
-  flex-direction: column;
-  animation: slideInRight 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1050;
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 /* ==========================================================================

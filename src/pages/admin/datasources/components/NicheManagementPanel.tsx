@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Alert, App, Button, Card, Form, Input, Modal, Popconfirm, Space, Switch, Table, Tag, Typography } from 'antd';
+import { Alert, App, Button, Card, Form, Input, Modal, Popconfirm, Select, Space, Switch, Table, Tag, Typography } from 'antd';
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { nicheService, type Niche, type NicheInput } from '../../../../services/api/nicheService';
 
 function errorText(error: any): string {
   if (error?.response?.status === 401) return 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại bằng tài khoản manager.';
-  if (error?.response?.status === 403) return 'Tài khoản chưa được cấp quyền quản lý ngành hàng.';
+  if (error?.response?.status === 403) return 'Tài khoản chưa được cấp quyền quản lý danh mục ngành hàng.';
   return error?.response?.data?.detail || error?.response?.data?.message || 'Không thể cập nhật ngành hàng. Vui lòng thử lại.';
 }
 
@@ -40,12 +40,17 @@ export default function NicheManagementPanel() {
 
   const showEditor = (item: Niche | null) => {
     setEditing(item);
-    form.setFieldsValue(item || { name: '', description: '', active: true });
+    form.setFieldsValue(item ? { ...item, keywords: item.keywords || [] } : { name: '', description: '', active: true, keywords: [] });
     setOpen(true);
   };
   const save = async (values: NicheInput) => {
     setSaving(true);
-    const input = { ...values, name: values.name.trim(), description: values.description?.trim() || '' };
+    const input = { ...values, name: values.name.trim(), description: values.description?.trim() || '', keywords: [...new Set((values.keywords || []).map(word => word.trim().replace(/^#+/, '').trim()).filter(Boolean))] };
+    if (!input.keywords.length) {
+      setSaving(false);
+      message.warning('Nhập ít nhất một từ khóa cho ngành hàng.');
+      return;
+    }
     try {
       const saved = editing ? await nicheService.update(editing.id, input) : await nicheService.create(input);
       setItems(prev => editing ? prev.map(item => item.id === saved.id ? saved : item) : [...prev, saved]);
@@ -67,11 +72,11 @@ export default function NicheManagementPanel() {
   const search = query.trim().toLocaleLowerCase('vi-VN');
   return (
     <>
-      <Space orientation="vertical" size={20} style={{ width: '100%' }}>
+      <Space direction="vertical" size={20} style={{ width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <Typography.Title level={4} style={{ margin: '0 0 4px' }}>Quản lý ngành hàng</Typography.Title>
-            <Typography.Text type="secondary">Quản lý danh mục ngành hàng và trạng thái sử dụng trong hệ thống.</Typography.Text>
+            <Typography.Title level={4} style={{ margin: '0 0 4px' }}>Quản lý lĩnh vực</Typography.Title>
+            <Typography.Text type="secondary">Thiết lập danh mục ngành hàng và bộ từ khóa gợi ý phục vụ tìm kiếm, phân loại và Săn KOC tự động.</Typography.Text>
           </div>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => showEditor(null)}>Thêm ngành hàng</Button>
         </div>
@@ -90,6 +95,7 @@ export default function NicheManagementPanel() {
             columns={[
               { title: 'Tên ngành hàng', dataIndex: 'name', sorter: (a, b) => a.name.localeCompare(b.name, 'vi'), render: name => <strong>{name}</strong> },
               { title: 'Mô tả', dataIndex: 'description', render: description => description || '—' },
+              { title: 'Từ khóa gợi ý', dataIndex: 'keywords', render: (keywords: string[] = []) => <Space size={[4, 4]} wrap>{keywords.map(keyword => <Tag key={keyword}>#{keyword}</Tag>)}</Space> },
               { title: 'Trạng thái', dataIndex: 'active', render: active => <Tag color={active ? 'green' : 'default'}>{active ? 'Đang sử dụng' : 'Ngừng sử dụng'}</Tag> },
               { title: 'Thao tác', key: 'actions', render: (_, item) => <Space>
                 <Button onClick={() => showEditor(item)}>Sửa</Button>
@@ -110,7 +116,10 @@ export default function NicheManagementPanel() {
           <Form.Item name="description" label="Mô tả" rules={[{ max: 500, message: 'Mô tả tối đa 500 ký tự.' }]}>
             <Input.TextArea rows={3} maxLength={500} showCount />
           </Form.Item>
-          <Form.Item name="active" label="Sử dụng trong danh sách lựa chọn" valuePropName="checked"><Switch checkedChildren="Bật" unCheckedChildren="Tắt" /></Form.Item>
+          <Form.Item name="keywords" label="Từ khóa & hashtag gợi ý" extra="Nhập từ khóa rồi nhấn Enter. Bộ từ khóa này được nạp khi chọn ngành hàng để săn KOC." rules={[{ required: true, type: 'array', min: 1, message: 'Nhập ít nhất một từ khóa.' }, { type: 'array', max: 30, message: 'Tối đa 30 từ khóa.' }, { validator: (_, values: string[] = []) => values.some(value => value.trim().replace(/^#+/, '').trim().length === 0 || value.length > 100) ? Promise.reject(new Error('Mỗi từ khóa phải có nội dung và tối đa 100 ký tự.')) : Promise.resolve() }]}>
+            <Select mode="tags" open={false} placeholder="Ví dụ: review mỹ phẩm, skincare review" tokenSeparators={[',']} />
+          </Form.Item>
+          <Form.Item name="active" label="Hiển thị ngành hàng trong Săn KOC tự động" valuePropName="checked"><Switch checkedChildren="Bật" unCheckedChildren="Tắt" /></Form.Item>
         </Form>
       </Modal>
     </>

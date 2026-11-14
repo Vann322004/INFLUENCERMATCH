@@ -521,7 +521,7 @@ export default function CampaignManagementPage() {
               <div className="campaign-stat-item">
                 <span className="campaign-stat-label">Ngân sách chiến dịch</span>
                 <div className="campaign-stat-value-row">
-                  <span className="campaign-stat-number">{campaign?.budgetMax ? `${(campaign.budgetMax / 1_000_000).toFixed(0)}M ₫` : 'Thỏa thuận'}</span>
+                  <span className="campaign-stat-number">{(campaign?.totalBudget ?? campaign?.budgetMax) != null ? `${((campaign?.totalBudget ?? campaign?.budgetMax)! / 1_000_000).toFixed(0)}M ₫` : 'Thỏa thuận'}</span>
                   <span className="campaign-stat-badge-green">VND</span>
                 </div>
               </div>

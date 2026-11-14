@@ -4,7 +4,17 @@ export type CampaignObjective = 'AWARENESS' | 'ENGAGEMENT' | 'TRAFFIC' | 'CONVER
 export type CampaignStatus = 'DRAFT' | 'READY_FOR_DISCOVERY' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
 export type CampaignPlatform = 'TIKTOK' | 'INSTAGRAM' | 'FACEBOOK' | 'YOUTUBE';
 
-export interface CampaignRequest {
+export interface CampaignPlanningFields {
+  totalBudget?: number;
+  currency?: 'VND';
+  brief?: string;
+  creatorMode?: 'SINGLE' | 'MULTI';
+  targetCreatorCount?: number;
+  creatorFeeMin?: number;
+  creatorFeeMax?: number;
+}
+
+export interface CampaignRequest extends CampaignPlanningFields {
   name: string;
   productService: string;
   description?: string;
@@ -26,7 +36,7 @@ export interface CampaignAutofillRequest {
   prompt: string;
 }
 
-export interface CampaignAutofillResponse {
+export interface CampaignAutofillResponse extends CampaignPlanningFields {
   name?: string;
   campaignName?: string;
   productService?: string;
@@ -54,7 +64,7 @@ export interface CampaignAutofillResponse {
   aiExplanation?: string;
 }
 
-export interface CampaignResponse {
+export interface CampaignResponse extends CampaignPlanningFields {
   id: string;
   brandId: string;
   name: string;
@@ -73,6 +83,7 @@ export interface CampaignResponse {
   followerMax?: number;
   budgetMin?: number;
   budgetMax?: number;
+  campaignRevision?: number;
   createdAt?: string;
   updatedAt?: string;
 }

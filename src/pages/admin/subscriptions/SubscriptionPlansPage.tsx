@@ -149,6 +149,7 @@ export default function SubscriptionPlansPage() {
       fetchPlansAndStats();
     } catch (err: any) {
       message.error(err?.response?.data?.message || 'Không thể lưu gói dịch vụ. Vui lòng thử lại.');
+      throw err;
     } finally {
       setSaving(false);
     }
