@@ -19,7 +19,7 @@ import CampaignManagementPage from './pages/campaign/CampaignManagementPage';
 import CampaignListPage from './pages/campaign/CampaignListPage';
 import CampaignDetailPage from './pages/campaign/CampaignDetailPage';
 import SubscriptionPage from './pages/subscription/SubscriptionPage';
-import BrandProfilePage from './pages/brand/BrandProfilePage';
+import BrandProfilePage, { BrandOnboardingPage } from './pages/brand/BrandProfilePage';
 import OutreachCrmPage from './pages/crm/OutreachCrmPage';
 import CollaborationPage from './pages/collaboration/CollaborationPage';
 import CollaborationDetailPage from './pages/collaboration/CollaborationDetailPage';
@@ -568,10 +568,11 @@ export default function App() {
           />
 
           {/* Brand Profile Routes */}
+          <Route path="/brand-onboarding" element={<BrandOnboardingPage />} />
           <Route
             path="/brand-profile"
             element={
-              <MainLayout>
+              <MainLayout collaborationNavigation>
                 <BrandProfilePage />
               </MainLayout>
             }
@@ -579,7 +580,7 @@ export default function App() {
           <Route
             path="/profile"
             element={
-              <MainLayout>
+              <MainLayout collaborationNavigation>
                 <BrandProfilePage />
               </MainLayout>
             }

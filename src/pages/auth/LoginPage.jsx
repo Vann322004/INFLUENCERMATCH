@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 import { authService } from '../../services/api/authService';
 import { brandService } from '../../services/api/brandService';
+import { hasDeferredBrandOnboarding } from '../../services/brandOnboarding';
 import { getErrorMessage, getAuthSessionId } from '../../services/apiClient';
 import GoogleIdentityButton, { googleErrorMessage } from './GoogleIdentityButton';
 import GoogleRegistrationModal from './GoogleRegistrationModal';
@@ -33,24 +34,23 @@ export default function LoginPage() {
       navigate('/data-manager/dashboard');
     } else if (user && (user.role === 'CREATOR' || user.role === 'creator')) {
       navigate('/creator/dashboard');
-    } else {
-      // Role BRAND / SME: Kiểm tra xem thương hiệu đã cập nhật hồ sơ lần đầu chưa
-      try {
-        const brand = await brandService.getMyBrand(true);
-        if (getAuthSessionId() !== sessionId) return;
-        // Nếu chưa có hồ sơ (null/404) hoặc chưa hoàn thiện thông tin (chưa có tên thương hiệu hoặc ngành hàng)
-        const hasCompletedProfile = Boolean(brand && (brand.businessName?.trim() || brand.industry?.trim()));
-        if (!hasCompletedProfile) {
-          message.info('Chào mừng bạn! Vui lòng hoàn thiện thông tin hồ sơ thương hiệu để bắt đầu.');
-          navigate('/brand-profile');
-          return;
-        }
-      } catch (err) {
-        if (getAuthSessionId() !== sessionId) return;
-        console.warn('Lỗi kiểm tra hồ sơ brand, chuyển hướng trang tạo hồ sơ:', err);
-        navigate('/brand-profile');
+    } else if (user?.role === 'BRAND') {
+      const dashboard = ROUTES.DASHBOARD || '/dashboard';
+      if (user.onboardingStatus === 'COMPLETED' || (user.id && hasDeferredBrandOnboarding(user.id))) {
+        navigate(dashboard, { replace: true });
         return;
       }
+      let status = user.onboardingStatus;
+      if (!status) {
+        try {
+          status = (await brandService.getMyBrand(true))?.onboardingStatus;
+        } catch {
+          // The setup page shows the load error and offers a retry.
+        }
+        if (getAuthSessionId() !== sessionId) return;
+      }
+      navigate(status === 'COMPLETED' ? dashboard : '/brand-onboarding', { replace: true });
+    } else {
       navigate(ROUTES.DASHBOARD || '/dashboard');
     }
   };
@@ -78,7 +78,7 @@ export default function LoginPage() {
 
   const finishGoogleLogin = (result) => {
     message.success('Đăng nhập bằng Google thành công.');
-    navigate(result.user.onboardingStatus === 'COMPLETED' ? ROUTES.DASHBOARD || '/dashboard' : '/brand-profile');
+    void redirectByRole(result.user);
   };
 
   const onGoogleCredential = async (challenge, credential, sessionId) => {

@@ -52,3 +52,14 @@
   border-radius: 12px;
   padding: 16px;
 }
+
+.brand-onboarding {
+  max-width: 960px;
+  padding: clamp(16px, 4vw, 48px) 16px;
+  min-height: 100dvh;
+}
+
+.brand-onboarding .ant-alert,
+.brand-onboarding .ant-card {
+  min-width: 0;
+}
