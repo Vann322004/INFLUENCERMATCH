@@ -1,6 +1,6 @@
 import ShortlistQuickPicker from './ShortlistQuickPicker';
 import { getErrorMessage } from '../../services/apiClient';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Alert, Avatar, Button, Dropdown, Empty, Form, Input, Modal, Select, Skeleton, Space, Tabs, Tag, message } from 'antd';
 import {
   MoreOutlined,
@@ -14,8 +14,7 @@ import {
 } from '@ant-design/icons';
 import { aiRecommendationService } from '../../services/api/aiRecommendationService';
 import { creatorService } from '../../services/api/creatorService';
-import { campaignService } from '../../services/api/campaignService';
-import { getStoredUser } from '../../services/authSession';
+import { getStoredUser, getAuthSessionId, subscribeAuthSession } from '../../services/authSession';
 import { useAsyncResource } from '../../hooks/useAsyncResource';
 import type { CampaignResponse } from '../../types/api/campaign.types';
 import type { CandidateSource, CreatorRecommendationItemDto, DisplayMode, PriceStatus, RecommendationResponseDto, RecommendationRun } from '../../types/api/aiRecommendation.types';
@@ -51,11 +50,11 @@ const formatPrice = (status?: PriceStatus | null) => {
 };
 
 export default function AiRecommendationTab({
-  campaign,
-  initialCandidateSource = 'DISCOVERY',
+  campaign: providedCampaign,
   initialSelectedCreatorIds = [],
   invalidSelection = false,
   onAddedToShortlist,
+  onCampaignUpdated,
 }: {
   campaign: CampaignResponse | null;
   initialCandidateSource?: CandidateSource;
@@ -64,7 +63,11 @@ export default function AiRecommendationTab({
   availableCampaigns?: CampaignResponse[];
   onSelectCampaign?: (id: string) => void;
   onAddedToShortlist?: (id: string) => void;
+  onCampaignUpdated?: (campaign: CampaignResponse) => void;
 }) {
+  const sessionId = useSyncExternalStore(subscribeAuthSession, getAuthSessionId);
+  const [serverCampaign, setServerCampaign] = useState<CampaignResponse | null>(null);
+  const campaign = serverCampaign?.id === providedCampaign?.id ? serverCampaign : providedCampaign;
   const navigate = useNavigate();
   const [, setParams] = useSearchParams();
   const [quickOpen, setQuickOpen] = useState(false);
@@ -72,59 +75,60 @@ export default function AiRecommendationTab({
   const canView = permissions.includes('VIEW_OWN_RECOMMENDATION');
   const canRun = permissions.includes('RUN_RECOMMENDATION') && !!campaign && campaign.status !== 'ARCHIVED';
   const canSave = permissions.includes('MANAGE_OWN_SHORTLIST');
-  const [source, setSource] = useState<CandidateSource>(initialCandidateSource);
+  const [source, setSource] = useState<CandidateSource>('SHORTLIST');
   const [selectedCreatorIds, setSelectedCreatorIds] = useState<string[]>(initialSelectedCreatorIds);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [mode, setMode] = useState<DisplayMode>('BEST_MATCH');
   const [tab, setTab] = useState('history');
   const [running, setRunning] = useState(false);
   const runningLock = useRef(false);
+  const activeRun = useRef<AbortController | null>(null);
+  const savedRequest = useRef<{ fingerprint: string; key: string } | null>(null);
+  const [phase, setPhase] = useState<'idle' | 'preparing' | 'running'>('idle');
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [statusWarning, setStatusWarning] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RecommendationResponseDto | null>(null);
   const [viewedRun, setViewedRun] = useState<RecommendationRun | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [reject, setReject] = useState<CreatorRecommendationItemDto | null>(null);
 
-  useEffect(() => {
-    setSelectedCreatorIds(initialSelectedCreatorIds);
-  }, [initialSelectedCreatorIds]);
+  const initialSelectionKey = JSON.stringify(initialSelectedCreatorIds);
+  useEffect(() => { setSelectedCreatorIds(JSON.parse(initialSelectionKey)); }, [initialSelectionKey]);
 
-  const campaignId = campaign?.id ?? '';
+  const campaignId = providedCampaign?.id ?? '';
+  const selectedKey = JSON.stringify(initialSelectedCreatorIds);
+  useEffect(() => {
+    setRunning(false); setPhase('idle'); setResult(null); setViewedRun(null); setError(null); setMissingFields([]); setServerCampaign(null); setStatusWarning(null);
+    return () => { activeRun.current?.abort(); activeRun.current = null; runningLock.current = false; savedRequest.current = null; };
+  }, [campaignId, sessionId, selectedKey]);
   const historyQuery = useCallback(() => aiRecommendationService.getRecommendationRuns(campaignId), [campaignId]);
   const history = useAsyncResource(historyQuery, canView && !!campaign);
 
   const run = async () => {
     if (!campaign || !canRun || invalidSelection || runningLock.current) return;
     runningLock.current = true;
-    setRunning(true);
-    setError(null);
+    const controller = new AbortController(); activeRun.current = controller;
+    const fingerprint = JSON.stringify([sessionId, campaign.id, mode, selectedCreatorIds]);
+    if (savedRequest.current?.fingerprint !== fingerprint) savedRequest.current = { fingerprint, key: crypto.randomUUID() };
+    const request = { limit: 50, displayMode: mode, creatorIds: [...selectedCreatorIds], idempotencyKey: savedRequest.current.key };
+    setRunning(true); setPhase('preparing'); setError(null); setMissingFields([]); setStatusWarning(null);
     try {
-      if (campaign.status === 'DRAFT' && permissions.includes('CHANGE_CAMPAIGN_STATUS')) {
-        try {
-          await campaignService.updateStatus(campaign.id, 'READY_FOR_DISCOVERY', campaign.campaignRevision);
-          campaign.status = 'READY_FOR_DISCOVERY';
-        } catch {
-          // If auto-transition fails due to brief validation, proceed and let backend report detailed message
-        }
-      }
-      const data = await aiRecommendationService.runRecommendation(
-        campaign.id,
-        source === 'SHORTLIST' ? 50 : 30,
-        {
-          candidateSource: source,
-          displayMode: mode,
-          creatorIds: source === 'SHORTLIST' && selectedCreatorIds.length ? selectedCreatorIds : undefined,
-        }
-      );
-      setResult(data);
-      setViewedRun(null);
-      setTab('results');
-      await history.reload();
-    } catch (cause) {
-      setError(getErrorMessage(cause, 'Chưa chạy được gợi ý. Kiểm tra trạng thái, quyền và hạn mức rồi thử lại.'));
+      const data = await aiRecommendationService.runWhenReady(campaign.id, request, controller.signal, (next, snapshot, warning) => {
+        if (controller.signal.aborted) return;
+        setPhase(next); if (snapshot) { setServerCampaign(snapshot); onCampaignUpdated?.(snapshot); } if (warning) setStatusWarning(warning);
+      });
+      if (controller.signal.aborted) return;
+      savedRequest.current = null; setResult(data); setViewedRun(null); setTab('results'); await history.reload();
+    } catch (cause: any) {
+      if (controller.signal.aborted) return;
+      const fields = cause?.response?.data?.fieldErrors;
+      const labels: Record<string, string> = { name: 'Tên chiến dịch', productService: 'Sản phẩm/dịch vụ', brief: 'Yêu cầu sáng tạo', objective: 'Mục tiêu', platforms: 'Nền tảng', startDate: 'Ngày bắt đầu', endDate: 'Ngày kết thúc', totalBudget: 'Ngân sách', creatorMode: 'Hình thức tuyển nhà sáng tạo', targetCreatorCount: 'Số nhà sáng tạo', deliverables: 'Ấn phẩm yêu cầu' };
+      const missing = fields && typeof fields === 'object' ? Object.keys(fields).map(field => labels[field] || field) : [];
+      setMissingFields(missing);
+      setError(missing.length ? 'Chiến dịch chưa đủ thông tin. Bổ sung các trường bên dưới rồi thử lại.' : getErrorMessage(cause, 'Chưa chạy được gợi ý. Vui lòng thử lại.'));
     } finally {
-      runningLock.current = false;
-      setRunning(false);
+      if (activeRun.current === controller) { activeRun.current = null; runningLock.current = false; setRunning(false); setPhase('idle'); }
     }
   };
 
@@ -178,7 +182,7 @@ export default function AiRecommendationTab({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
           <Space wrap>
             <Select
-              aria-label="Nguồn gợi ý"
+              disabled={running} aria-label="Nguồn gợi ý"
               value={source}
               onChange={value => {
                 setSource(value);
@@ -190,12 +194,11 @@ export default function AiRecommendationTab({
                 }, { replace: true });
               }}
               options={[
-                { value: 'DISCOVERY', label: 'Nguồn khám phá (Toàn bộ kho)' },
                 { value: 'SHORTLIST', label: 'Danh sách đã chọn (Shortlist)' },
               ]}
             />
             <Select
-              aria-label="Cách hiển thị"
+              disabled={running} aria-label="Cách hiển thị"
               value={mode}
               onChange={setMode}
               options={[
@@ -206,7 +209,7 @@ export default function AiRecommendationTab({
             />
             <Button
               type={source === 'SHORTLIST' && selectedCreatorIds.length > 0 ? 'primary' : 'default'}
-              icon={<UsergroupAddOutlined />}
+              disabled={running} icon={<UsergroupAddOutlined />}
               onClick={() => {
                 if (source !== 'SHORTLIST') setSource('SHORTLIST');
                 setQuickOpen(true);
@@ -218,12 +221,12 @@ export default function AiRecommendationTab({
             </Button>
             <Button
               type="primary"
-              disabled={!canRun || invalidSelection}
+              disabled={!canRun || invalidSelection || running}
               loading={running}
               icon={<ThunderboltOutlined />}
               onClick={() => void run()}
             >
-              Chạy gợi ý mới
+              {running ? phase === 'preparing' ? 'Đang chuẩn bị dữ liệu' : 'Đang chạy gợi ý' : error ? 'Thử lại yêu cầu' : 'Chạy gợi ý mới'}
             </Button>
           </Space>
 
@@ -264,12 +267,13 @@ export default function AiRecommendationTab({
               )}
             </div>
             <Space size="small">
-              <Button size="small" onClick={() => setQuickOpen(true)}>
+              <Button disabled={running} size="small" onClick={() => setQuickOpen(true)}>
                 {selectedCreatorIds.length > 0 ? 'Thay đổi danh sách' : 'Chọn creator cụ thể'}
               </Button>
               {selectedCreatorIds.length > 0 && (
                 <Button
                   size="small"
+                  disabled={running}
                   onClick={() => {
                     setSelectedCreatorIds([]);
                     setParams(previous => {
@@ -290,32 +294,13 @@ export default function AiRecommendationTab({
           Chỉ chạy mới khi bạn bấm nút. Xem lịch sử và tải lại trang không tạo lượt gợi ý hay sử dụng hạn mức chạy.
         </p>
         {invalidSelection && <Alert type="error" title="Danh sách kênh trên liên kết không hợp lệ. Vui lòng chọn lại." />}
-        {campaign.status === 'DRAFT' && (
-          <div style={{ marginTop: 8, padding: '8px 12px', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 8, color: '#92400E', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-            <span>⚠️ Chiến dịch đang ở trạng thái <strong>Bản nháp (DRAFT)</strong>. Hệ thống sẽ tự kích hoạt sang Sẵn sàng khám phá khi bạn bấm "Chạy gợi ý mới".</span>
-            {permissions.includes('CHANGE_CAMPAIGN_STATUS') && (
-              <Button
-                size="small"
-                type="primary"
-                onClick={async () => {
-                  try {
-                    await campaignService.updateStatus(campaign.id, 'READY_FOR_DISCOVERY', campaign.campaignRevision);
-                    campaign.status = 'READY_FOR_DISCOVERY';
-                    message.success('Đã kích hoạt chiến dịch sẵn sàng khám phá!');
-                  } catch (err) {
-                    message.error(getErrorMessage(err, 'Chưa thể kích hoạt. Vui lòng kiểm tra lại brief của chiến dịch.'));
-                  }
-                }}
-              >
-                Kích hoạt ngay
-              </Button>
-            )}
-          </div>
-        )}
+        {running && <Alert type="info" showIcon title={phase === 'preparing' ? 'Đang chuẩn bị dữ liệu' : 'Đang chạy gợi ý'} description="Giữ nguyên chiến dịch và các kênh đã chọn. Hệ thống sẽ tự tiếp tục một lần khi dữ liệu sẵn sàng." />}
+        {campaign.status === 'DRAFT' && !running && !result && <Alert type="info" title="Chiến dịch đang là bản nháp" description="Bấm Chạy để kiểm tra thông tin và chuẩn bị dữ liệu. Nếu brief chưa đủ, hệ thống sẽ báo rõ và dừng." />}
         {!canRun && <p className="ad-note">Cần quyền chạy gợi ý và chiến dịch chưa bị lưu trữ.</p>}
       </div>
 
-      {error && <Alert type="error" title={error} />}
+      {statusWarning && <Alert type="warning" title={statusWarning} />}
+      {error && <Alert type="error" title={error} description={missingFields.length ? <><ul>{missingFields.map(field => <li key={field}>{field}</li>)}</ul><Button onClick={() => navigate('/campaigns/' + campaign.id + '/edit')}>Bổ sung thông tin</Button></> : undefined} />}
 
       <Tabs
         activeKey={tab}

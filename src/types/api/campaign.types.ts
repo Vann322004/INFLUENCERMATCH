@@ -66,6 +66,8 @@ export interface CampaignAutofillResponse extends CampaignPlanningFields {
 }
 
 export interface CampaignResponse extends CampaignPlanningFields {
+  embeddingStatus?: 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED';
+  embeddingContextId?: string | null;
   id: string;
   brandId: string;
   name: string;
