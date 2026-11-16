@@ -22,18 +22,32 @@ export interface DiscoveredKocItem {
 }
 
 interface DiscoveredFeedCardProps {
-  discoveredList: DiscoveredKocItem[];
-  onImportSingle: (item: DiscoveredKocItem) => void;
-  onImportAll: () => void;
-  onInspectDetail: (item: DiscoveredKocItem) => void;
+  discoveredList?: DiscoveredKocItem[];
+  items?: DiscoveredKocItem[];
+  onImportSingle?: (item: DiscoveredKocItem) => void;
+  onImportAll?: () => void;
+  onInspectDetail?: (item: DiscoveredKocItem) => void;
+  onInspect?: (item: DiscoveredKocItem) => void;
+  onItemsChange?: (items: DiscoveredKocItem[]) => void;
 }
 
 export default function DiscoveredFeedCard({
-  discoveredList,
+  discoveredList: propList,
+  items,
   onImportSingle,
   onImportAll,
   onInspectDetail,
+  onInspect,
 }: DiscoveredFeedCardProps) {
+  const discoveredList = propList || items || [];
+  const handleInspect = onInspectDetail || onInspect || (() => {});
+  const handleImport = onImportSingle || (() => {});
+  const handleImportAll = onImportAll || (() => {});
+
+  if (!discoveredList || discoveredList.length === 0) {
+    return null;
+  }
+
   const handleExportCsv = () => {
     if (discoveredList.length === 0) return;
     const headers = [
@@ -222,7 +236,7 @@ export default function DiscoveredFeedCard({
             <Button
               size="small"
               type="primary"
-              onClick={() => onImportSingle(r)}
+              onClick={() => handleImport(r)}
               style={{
                 background: '#10B981',
                 border: 'none',
@@ -235,7 +249,7 @@ export default function DiscoveredFeedCard({
           ) : (
             <Button
               size="small"
-              onClick={() => onInspectDetail(r)}
+              onClick={() => handleInspect(r)}
               style={{ borderRadius: 6 }}
             >
               Cào sâu
@@ -254,7 +268,7 @@ export default function DiscoveredFeedCard({
         boxShadow: '0 1px 6px rgba(0,0,0,0.03)',
         marginTop: 20,
       }}
-      bodyStyle={{ padding: 20 }}
+      styles={{ body: { padding: 20 } }}
     >
       {/* Header bar */}
       <div
@@ -286,7 +300,7 @@ export default function DiscoveredFeedCard({
           </Button>
           <Button
             type="primary"
-            onClick={onImportAll}
+            onClick={handleImportAll}
             style={{
               background: '#16A34A',
               border: 'none',

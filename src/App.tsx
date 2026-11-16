@@ -51,6 +51,7 @@ import CreatorLayout from './components/creator/CreatorLayout';
 import CreatorProtectedRoute from './components/creator/CreatorProtectedRoute';
 import CreatorPortalPage from './pages/creator/portal/CreatorPortalPage';
 import { useAccountLogoutSync } from './hooks/useAccountLogoutSync';
+import { getAccessToken, getStoredUser } from './services/authSession';
 
 
 const { Content } = Layout;
@@ -91,6 +92,13 @@ function MainLayout({ children }: {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => { setMenuOpen(false); }, [location.key, mobile]);
+  // Reject a stale Brand URL before mounting its pages or issuing Brand APIs.
+  if (!getAccessToken()) return <Navigate to="/login" replace />;
+  const role = getStoredUser()?.role?.toUpperCase();
+  if (['ADMIN', 'SUPER_ADMIN'].includes(role)) return <Navigate to="/admin/dashboard" replace />;
+  if (['MANAGER', 'DATA_MANAGER'].includes(role)) return <Navigate to="/data-manager/dashboard" replace />;
+  if (['CREATOR', 'INFLUENCER'].includes(role)) return <Navigate to="/creator/dashboard" replace />;
+  if (role !== 'BRAND') return <Navigate to="/login" replace />;
   return (
     <Layout className="brand-workspace" hasSider={!mobile} style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden', width: '100%' }}>
       {/* Light Linear Gradient Sidebar */}

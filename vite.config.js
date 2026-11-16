@@ -24,18 +24,18 @@ export default defineConfig(({ mode }) => {
       '/crawler-api': {
         target: crawlerTarget,
         changeOrigin: true,
-        timeout: 120000,
+        timeout: 240000,
         rewrite: (path) => path.replace(/^\/crawler-api/, ''),
       },
       '/api/v1/crawl': {
         target: crawlerTarget,
         changeOrigin: true,
-        timeout: 120000,
+        timeout: 240000,
       },
       '/api/v1/monitor': {
         target: crawlerTarget,
         changeOrigin: true,
-        timeout: 120000,
+        timeout: 240000,
       },
       '/api/v1/ai/campaign-autofill': {
         target: 'https://api.influencermatch.site',

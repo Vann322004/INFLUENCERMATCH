@@ -108,9 +108,16 @@ export default function HeroLanding() {
       {/* Hero copy */}
       <div className="hv-hero">
         <h1 className="hv-title">
-          Kết nối đúng Creator <span className="hv-title-accent">cho mọi<br className="hv-br" /> chiến dịch thương hiệu</span>
+          <span className="hv-title-row">
+            <span className="hv-title-main">Kết nối đúng Creator</span> <span className="hv-title-accent hv-no-wrap">cho mọi</span>
+          </span>
+          <span className="hv-title-row hv-title-accent">
+            chiến dịch thương hiệu
+          </span>
         </h1>
-        <p className="hv-sub">Hệ thống ghép đôi KOC/KOL bằng AI Four-Memory: Khám phá thông minh, quản lý phễu CRM và đo lường hiệu quả tập trung.</p>
+        <p className="hv-sub">
+          Hệ thống kết nối KOC/KOL bằng AI Four-Memory: Khám phá thông minh, quản lý phễu CRM và đo lường hiệu quả tập trung.
+        </p>
       </div>
 
       {/* Bottom-left CTA */}

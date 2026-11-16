@@ -69,7 +69,7 @@ class CrawlerService {
           max_channels: maxChannels,
         }),
       },
-      90000 // 90s cho cào hàng loạt
+      180000 // 180s cho cào hàng loạt (đặc biệt khi chọn 10 - 20 kênh)
     );
   }
 
