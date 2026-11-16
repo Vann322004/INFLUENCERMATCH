@@ -152,7 +152,7 @@ export default function AddToShortlistModal({
       destroyOnHidden
       width={560}
       centered
-      maskClosable={!submitting}
+      mask={{ closable: !submitting }}
       closable={!submitting}
     >
       {creator && <div className="shortlist-modal-creator">

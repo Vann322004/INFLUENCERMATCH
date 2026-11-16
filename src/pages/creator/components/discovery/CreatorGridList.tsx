@@ -52,7 +52,7 @@ export const CreatorGridList: React.FC<CreatorGridListProps> = ({
   if (loading || isMatching) {
     return (
       <Card
-        bordered={false}
+        variant="borderless"
         style={{
           borderRadius: 16,
           border: '1px solid #E2E8F0',
@@ -72,7 +72,7 @@ export const CreatorGridList: React.FC<CreatorGridListProps> = ({
   if (totalCount === 0) {
     return (
       <Card
-        bordered={false}
+        variant="borderless"
         style={{
           borderRadius: 16,
           border: '1px solid #E2E8F0',

@@ -1,319 +1,65 @@
 import React from 'react';
-import { Drawer, Button, Tag, Row, Col, Tooltip } from 'antd';
-import {
-  SyncOutlined,
-  ThunderboltOutlined,
-  EnvironmentOutlined,
-  InstagramOutlined,
-  YoutubeOutlined,
-  FacebookOutlined,
-  TwitterOutlined,
-} from '@ant-design/icons';
+import { Drawer, Button, Tag } from 'antd';
+import { SyncOutlined } from '@ant-design/icons';
 import type { Creator, BrandCampaignItem } from './types';
 import CreatorAvatar from './CreatorAvatar';
-
 
 interface CreatorDetailDrawerProps {
   visible: boolean;
   creator: Creator | null;
   matchedCampaign: BrandCampaignItem | null;
-  isRefreshing: boolean;
+  isRefreshing?: boolean;
   onClose: () => void;
-  onRefreshStats: () => void;
+  onRefreshStats?: () => void;
   onOpenShortlist: (creator: Creator) => void;
+  showMatch?: boolean;
+  actionLabel?: string;
+  actionDisabled?: boolean;
 }
 
 export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
-  visible,
-  creator,
-  matchedCampaign,
-  isRefreshing,
-  onClose,
-  onRefreshStats,
-  onOpenShortlist,
+  visible, creator, matchedCampaign, isRefreshing = false, onClose, onRefreshStats,
+  onOpenShortlist, showMatch = true, actionLabel, actionDisabled,
 }) => {
-  const renderPlatformIcon = (platform: string) => {
-    switch (platform) {
-      case 'tiktok':
-        return (
-          <Tooltip title="TikTok" key={platform}>
-            <span
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: '50%',
-                background: '#0F172A',
-                color: '#fff',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 11,
-                fontWeight: 500,
-              }}
-            >
-              🎵
-            </span>
-          </Tooltip>
-        );
-      case 'instagram':
-        return (
-          <Tooltip title="Instagram" key={platform}>
-            <span
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: '50%',
-                background: 'linear-gradient(45deg, #F58529, #DD2A7B, #8134AF)',
-                color: '#fff',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 12,
-              }}
-            >
-              <InstagramOutlined />
-            </span>
-          </Tooltip>
-        );
-      case 'youtube':
-        return (
-          <Tooltip title="YouTube" key={platform}>
-            <span
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: '50%',
-                background: '#EF4444',
-                color: '#fff',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 12,
-              }}
-            >
-              <YoutubeOutlined />
-            </span>
-          </Tooltip>
-        );
-      case 'facebook':
-        return (
-          <Tooltip title="Facebook" key={platform}>
-            <span
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: '50%',
-                background: '#2563EB',
-                color: '#fff',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 12,
-              }}
-            >
-              <FacebookOutlined />
-            </span>
-          </Tooltip>
-        );
-      case 'x':
-        return (
-          <Tooltip title="X (Twitter)" key={platform}>
-            <span
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: '50%',
-                background: '#000000',
-                color: '#fff',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 11,
-              }}
-            >
-              <TwitterOutlined />
-            </span>
-          </Tooltip>
-        );
-      default:
-        return null;
-    }
-  };
+  const hasMatch = showMatch && matchedCampaign && creator && Number.isFinite(creator.matchRate)
+    && (creator.matchRate > 0 || !!creator.matchReason?.trim());
+  const bio = creator?.bio?.trim();
+  const hasBio = !!bio && !/^(creator|koc|kol)$/i.test(bio);
+  const categories = [...new Set(creator?.categories.filter(Boolean) ?? [])];
+  const platformNames: Record<string, string> = { tiktok: 'TikTok', instagram: 'Instagram', youtube: 'YouTube', facebook: 'Facebook', x: 'X' };
 
   return (
-    <Drawer
-      rootClassName="cdiscovery-drawer"
-      title={
-        creator ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingRight: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <CreatorAvatar src={creator.avatar} name={creator.name} size={38} />
-              <div>
-                <div style={{ fontWeight: 500, fontSize: 15, color: '#0F172A' }}>
-                  {creator.name}
-                </div>
-                <div style={{ fontSize: 11.5, color: '#94A3B8' }}>
-                  @{creator.username}
-                </div>
-              </div>
-            </div>
-
-            <Button
-              size="small"
-              icon={<SyncOutlined spin={isRefreshing} />}
-              loading={isRefreshing}
-              onClick={onRefreshStats}
-              style={{
-                borderRadius: 8,
-                fontSize: 11.5,
-                fontWeight: 500,
-                borderColor: '#818CF8',
-                color: '#4F46E5',
-                background: '#EEF2FF',
-              }}
-            >
-              Làm mới số liệu
-            </Button>
-          </div>
-        ) : (
-          'Chi tiết KOC'
-        )
-      }
-      placement="right"
-      width="min(520px, 100vw)"
-      onClose={onClose}
-      open={visible}
+    <Drawer rootClassName="cdiscovery-drawer creator-profile-drawer" title="Hồ sơ nhà sáng tạo"
+      placement="right" size="min(560px, 100vw)" onClose={onClose} open={visible}
+      extra={onRefreshStats && <Button type="text" size="small" icon={<SyncOutlined />} loading={isRefreshing} onClick={onRefreshStats}>Tải lại hồ sơ</Button>}
+      footer={creator && <div className="creator-profile-footer"><Button onClick={onClose}>Đóng</Button><Button type="primary"
+        disabled={actionDisabled ?? (!actionLabel && creator.saved === true)}
+        onClick={() => onOpenShortlist(creator)}>{actionLabel || (creator.saved ? 'Đã trong danh sách chọn' : 'Lưu vào danh sách')}</Button></div>}
     >
-      {creator && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Header Banner */}
-          <div
-            style={{
-              background: 'linear-gradient(135deg, #EFF6FF 0%, #EEF2FF 100%)',
-              padding: '16px',
-              borderRadius: 12,
-              border: '1px solid #DBEAFE',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontWeight: 500, fontSize: 13, color: '#1E40AF' }}>
-                Độ tương thích AI
-              </span>
-              {matchedCampaign ? (
-                <Tag color="green" style={{ fontWeight: 500, borderRadius: 6 }}>
-                  {creator.matchRate}% Độ phù hợp ({matchedCampaign.name})
-                </Tag>
-              ) : (
-                <Tag color="default" style={{ borderRadius: 6, color: '#64748B' }}>
-                  Chưa chọn dự án đối soát
-                </Tag>
-              )}
-            </div>
-            <p style={{ fontSize: 12, color: '#475569', margin: 0 }}>
-              {matchedCampaign
-                ? (creator.matchReason || 'Chưa có giải thích từ hệ thống.')
-                : 'Vui lòng chọn một Dự án / Chiến dịch ở đầu trang và bấm "Tìm KOC phù hợp" để AI tính toán tỷ lệ tương thích chi tiết.'}
-            </p>
+      {creator && <div className="creator-profile-content">
+        <header className="creator-profile-identity">
+          <CreatorAvatar src={creator.avatar} name={creator.name} size={60} />
+          <div><h2>{creator.name || 'Kênh chưa có tên'}</h2><p>{creator.username ? '@' + creator.username.replace(/^@+/, '') : 'Chưa có tên tài khoản'}</p>
+            <div className="creator-profile-tags">{creator.platforms.map(platform => <Tag key={platform}>{platformNames[platform] || platform}</Tag>)}{creator.isVerified && <Tag>Đã xác minh</Tag>}</div>
           </div>
+        </header>
 
-          {/* Quick Stats Grid */}
-          <div>
-            <div style={{ fontWeight: 500, fontSize: 13, color: '#0F172A', marginBottom: 10 }}>
-              Chỉ số hiệu quả chính
-            </div>
-            <Row gutter={[12, 12]}>
-              <Col span={8}>
-                <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 10, textAlign: 'center' }}>
-                  <div style={{ fontWeight: 500, fontSize: 16, color: '#0F172A' }}>
-                    {creator.followers}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#64748B' }}>Người theo dõi</div>
-                </div>
-              </Col>
-              <Col span={8}>
-                <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 10, textAlign: 'center' }}>
-                  <div style={{ fontWeight: 500, fontSize: 16, color: '#0F172A' }}>
-                    {creator.engagementRate}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#64748B' }}>Tương tác</div>
-                </div>
-              </Col>
-              <Col span={8}>
-                <div style={{ background: '#F8FAFC', padding: 12, borderRadius: 10, textAlign: 'center' }}>
-                  <div style={{ fontWeight: 500, fontSize: 16, color: '#0F172A' }}>
-                    {creator.avgPrice}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#64748B' }}>Giá TB/Bài</div>
-                </div>
-              </Col>
-            </Row>
-          </div>
+        <section className="creator-profile-section"><h3>Thông tin kênh</h3>
+          <dl className="creator-profile-metrics">
+            <div><dt>Người theo dõi</dt><dd>{creator.followers || 'Chưa có dữ liệu'}</dd></div>
+            <div><dt>Tỷ lệ tương tác</dt><dd>{creator.engagementRate || 'Chưa có dữ liệu'}</dd></div>
+          </dl>
+          <div className="creator-profile-fee"><span>Báo giá tham khảo</span><strong>{creator.avgPrice || 'Chưa có báo giá'}</strong>{creator.priceSource && <small>{creator.priceSource}</small>}</div>
+        </section>
 
-          {/* Bio & Categories */}
-          <div>
-            <div style={{ fontWeight: 500, fontSize: 13, color: '#0F172A', marginBottom: 6 }}>
-              Giới thiệu & Lĩnh vực
-            </div>
-            <p style={{ fontSize: 12.5, color: '#475569', lineHeight: 1.5, marginBottom: 10 }}>
-              {creator.bio}
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {creator.categories.map((cat) => (
-                <Tag key={cat} color="blue" style={{ borderRadius: 6 }}>
-                  {cat}
-                </Tag>
-              ))}
-            </div>
-          </div>
+        <section className="creator-profile-section"><h3>Giới thiệu</h3><p>{hasBio ? bio : 'Chưa có giới thiệu về kênh.'}</p></section>
+        <section className="creator-profile-section"><h3>Lĩnh vực nội dung</h3>{categories.length ? <div className="creator-profile-categories">{categories.map(category => <Tag key={category}>{category}</Tag>)}</div> : <p>Chưa có thông tin lĩnh vực.</p>}</section>
+        <section className="creator-profile-section"><h3>Địa điểm</h3><p>{creator.location || 'Chưa có thông tin địa điểm.'}</p></section>
 
-          {/* Location & Platforms */}
-          <div>
-            <div style={{ fontWeight: 500, fontSize: 13, color: '#0F172A', marginBottom: 8 }}>
-              Kênh hoạt động & Địa điểm
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <EnvironmentOutlined style={{ color: '#4F46E5' }} />
-              <span style={{ fontSize: 12.5, color: '#334155' }}>{creator.location}</span>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {creator.platforms.map(renderPlatformIcon)}
-            </div>
-          </div>
-
-          {/* Action Buttons inside drawer */}
-          <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-            <Button
-              type="primary"
-              block
-              icon={<ThunderboltOutlined />}
-              onClick={() => onOpenShortlist(creator)}
-              style={{
-                background: '#5B5BF0',
-                fontWeight: 500,
-                height: 40,
-                borderRadius: 10,
-              }}
-            >
-              Mời hợp tác
-            </Button>
-            <Button
-              onClick={() => onOpenShortlist(creator)}
-              style={{
-                height: 40,
-                borderRadius: 10,
-                fontWeight: 500,
-                borderColor: creator.saved ? '#FECDD3' : '#E2E8F0',
-                color: creator.saved ? '#EF4444' : '#334155',
-              }}
-            >
-              {creator.saved ? 'Đã lưu danh sách' : 'Lưu vào danh sách'}
-            </Button>
-          </div>
-        </div>
-      )}
+        {hasMatch && <section className="creator-profile-section creator-profile-match"><h3>Đánh giá với chiến dịch</h3><p className="creator-profile-campaign">{matchedCampaign.name}</p><div><span>Điểm phù hợp</span><strong>{creator.matchRate.toLocaleString('vi-VN', { maximumFractionDigits: 2 })} / 100</strong></div>{creator.matchReason && <p>{creator.matchReason}</p>}</section>}
+      </div>}
     </Drawer>
   );
 };
 
 export default CreatorDetailDrawer;
-

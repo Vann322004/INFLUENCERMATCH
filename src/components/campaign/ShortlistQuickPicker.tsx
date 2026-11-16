@@ -9,12 +9,14 @@ export default function ShortlistQuickPicker({
   selectedIds,
   onClose,
   onApply,
+  confirmLabel = 'Áp dụng',
 }: {
   open: boolean;
   campaignId: string;
   selectedIds: string[];
   onClose: () => void;
   onApply: (ids: string[]) => void;
+  confirmLabel?: string;
 }) {
   const fetcher = useCallback(() => shortlistService.all(campaignId), [campaignId]);
   const resource = useAsyncResource(fetcher, open && !!campaignId);
@@ -29,7 +31,7 @@ export default function ShortlistQuickPicker({
 
   return (
     <Modal
-      title="Chọn nhanh creator từ danh sách đã lưu (Shortlist)"
+      title="Chọn kênh đã lưu"
       open={open}
       onCancel={onClose}
       footer={null}
@@ -37,7 +39,7 @@ export default function ShortlistQuickPicker({
       destroyOnHidden
     >
       <p style={{ color: '#64748B', fontSize: 13, marginBottom: 12 }}>
-        Chọn các creator bạn muốn đưa vào lượt gợi ý AI. Nếu để trống, hệ thống sẽ tự động đánh giá <strong>toàn bộ creator</strong> đã có sẵn trong danh sách lưu.
+        Chọn kênh cho lượt gợi ý. Không chọn riêng sẽ dùng <strong>toàn bộ danh sách đã lưu</strong>.
       </p>
       {resource.status === 'loading' ? (
         <Skeleton active />
@@ -96,7 +98,7 @@ export default function ShortlistQuickPicker({
               disabled={stale}
               onClick={() => onApply(ids)}
             >
-              Áp dụng ({ids.length > 0 ? `${ids.length} kênh` : 'Toàn bộ danh sách'})
+              {confirmLabel} ({ids.length > 0 ? `${ids.length} kênh` : 'Toàn bộ danh sách'})
             </Button>
           </div>
         </>

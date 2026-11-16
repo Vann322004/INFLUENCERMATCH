@@ -1,5 +1,5 @@
 import { activeCampaignId, rememberCampaign } from '../../services/campaignContext';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
 import {
   Button,
   Input,
@@ -11,14 +11,13 @@ import {
   Popover,
   Radio,
 } from 'antd';
-import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, useLocation, useNavigationType } from 'react-router-dom';
 import {
   SearchOutlined,
   FilterOutlined,
   CalendarOutlined,
   ExportOutlined,
   DownOutlined,
-  CheckOutlined,
   CheckCircleFilled,
   RocketOutlined,
   BarChartOutlined,
@@ -26,10 +25,10 @@ import {
   HomeOutlined,
 } from '@ant-design/icons';
 import { campaignService } from '../../services/api/campaignService';
-import { creatorService } from '../../services/api/creatorService';
 import type { CampaignResponse, RelationshipDto, RelationshipStage } from '../../types/api/campaign.types';
 import AiRecommendationTab from '../../components/campaign/AiRecommendationTab';
 import './CampaignManagementPage.css';
+import { getAuthSessionId, subscribeAuthSession } from '../../services/authSession';
 
 export interface PipelineCreator {
   id: string;
@@ -66,6 +65,8 @@ const stageUiToBackend: Record<PipelineCreator['stage'], RelationshipStage> = {
 export default function CampaignManagementPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const navigationType = useNavigationType();
+  const sessionId = useSyncExternalStore(subscribeAuthSession, getAuthSessionId);
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
 
@@ -91,10 +92,29 @@ export default function CampaignManagementPage() {
   const isUuid = (val?: string) =>
     !val || /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(val);
 
-  const campaignIdParam = searchParams.get('campaignId');
-  const selectedIdsParam = searchParams.get('creatorIds') || '';
+  const routeContext = location.state?.recommendationContext?.sessionId === sessionId ? location.state.recommendationContext : null;
+  const campaignIdParam = searchParams.get('campaignId') || (typeof routeContext?.campaignId === 'string' ? routeContext.campaignId : null);
+  const contextIdsValid = routeContext == null || (Array.isArray(routeContext.creatorIds) && routeContext.creatorIds.every((value: unknown) => typeof value === 'string'));
+  const selectedIdsParam: string = searchParams.get('creatorIds') ?? (contextIdsValid ? routeContext?.creatorIds?.join(',') : '') ?? '';
   const selectedIdsForRun = useMemo(() => selectedIdsParam ? selectedIdsParam.split(',') : [], [selectedIdsParam]);
-  const invalidSelection = selectedIdsForRun.length > 100 || new Set(selectedIdsForRun).size !== selectedIdsForRun.length || selectedIdsForRun.some(value => !/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(value));
+  const invalidSelection = !contextIdsValid || selectedIdsForRun.length > 100 || new Set(selectedIdsForRun).size !== selectedIdsForRun.length || selectedIdsForRun.some(value => !/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(value));
+  // Only an explicit shortlist click can start a run; reload/back and shared URLs only open the page.
+  const runIntent = location.state?.recommendationRunIntent;
+  const autoRunToken = navigationType === 'PUSH'
+    && campaign?.id === campaignIdParam
+    && typeof runIntent?.token === 'string'
+    && runIntent.sessionId === sessionId
+    && runIntent.campaignId === campaignIdParam
+    && JSON.stringify(runIntent.creatorIds) === JSON.stringify(selectedIdsForRun)
+    ? runIntent.token : null;
+  // Migrate legacy links into this history entry; IDs never need to remain in the address bar.
+  useEffect(() => {
+    if (!isRecView || (!searchParams.has('campaignId') && !searchParams.has('creatorIds') && !id)) return;
+    const next = new URLSearchParams(searchParams); next.delete('campaignId'); next.delete('creatorIds'); next.delete('candidateSource'); next.set('tab', 'recommendation');
+    navigate({ pathname: '/campaign-management', search: next.toString() }, { replace: true, state: {
+      ...location.state, recommendationContext: { sessionId, campaignId: id || campaignIdParam || activeCampaignId(), creatorIds: selectedIdsForRun },
+    } });
+  }, [isRecView, searchParams, id, campaignIdParam, selectedIdsForRun, sessionId, location.state, navigate]);
   // Đồng bộ tab từ searchParams
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -105,12 +125,11 @@ export default function CampaignManagementPage() {
     }
   }, [searchParams, location.pathname]);
 
-  const [shortlistCount, setShortlistCount] = useState<number>(0);
-
   useEffect(() => {
     let isMounted = true;
     const loadData = async () => {
       setLoading(true);
+      setCampaign(null);
       try {
         const allCamps = await campaignService.getCampaigns(0, 50).catch(() => []);
         if (isMounted) {
@@ -119,10 +138,9 @@ export default function CampaignManagementPage() {
 
         const currentCampId = id || campaignIdParam || activeCampaignId() || undefined;
         if (currentCampId) {
-          const [campDetail, rels, sList] = await Promise.all([
+          const [campDetail, rels] = await Promise.all([
             campaignService.getCampaignById(currentCampId).catch(() => null),
             campaignService.getRelationships(currentCampId).catch(() => [] as RelationshipDto[]),
-            creatorService.getShortlist(currentCampId).catch(() => []),
           ]);
 
           if (isMounted) {
@@ -133,7 +151,6 @@ export default function CampaignManagementPage() {
               sessionStorage.setItem('current_campaign_name', campDetail.name);
               localStorage.setItem('IM_SELECTED_CAMPAIGN_NAME', campDetail.name);
             }
-            setShortlistCount(Array.isArray(sList) ? sList.length : 0);
             const mapped: PipelineCreator[] = rels.map((r: RelationshipDto) => {
               const feeNum = r.agreedFee || r.quotedFee || 0;
               const feeText = feeNum > 0 ? `${(feeNum / 1_000_000).toFixed(1)}M ₫` : 'Thỏa thuận';
@@ -165,7 +182,7 @@ export default function CampaignManagementPage() {
     return () => {
       isMounted = false;
     };
-  }, [id, campaignIdParam]);
+  }, [id, campaignIdParam, sessionId]);
 
   // Filter and sort creators based on platform, search, sort and minimum score
   const filteredCreators = useMemo(() => {
@@ -346,88 +363,7 @@ export default function CampaignManagementPage() {
   };
 
   return (
-    <div className="pipeline-page-container">
-
-      {/* 1. Top Stepper 7 bước toàn diện từ Lập brief đến Đo lường ROI */}
-      <div className="cdiscovery-top-stepper">
-        <div
-          className="cdiscovery-step-item"
-          onClick={() => navigate(`/campaigns/create${campaign?.id ? `?id=${campaign.id}` : ''}`)}
-        >
-          <div className="cdiscovery-step-badge done">
-            <CheckOutlined />
-          </div>
-          <span className="cdiscovery-step-title">1. Tạo brief</span>
-        </div>
-        <div className="cdiscovery-step-line done" />
-
-        <div
-          className="cdiscovery-step-item"
-          onClick={() => {
-            if (campaign?.id) {
-              sessionStorage.setItem('current_campaign_id', campaign.id);
-              localStorage.setItem('last_active_campaign_id', campaign.id);
-            }
-            navigate('/creators');
-          }}
-        >
-          <div className="cdiscovery-step-badge done">
-            <CheckOutlined />
-          </div>
-          <span className="cdiscovery-step-title">2. Khám phá</span>
-        </div>
-        <div className="cdiscovery-step-line done" />
-
-        <div
-          className="cdiscovery-step-item"
-          onClick={() => {
-            if (campaign?.id) {
-              sessionStorage.setItem('current_campaign_id', campaign.id);
-              localStorage.setItem('last_active_campaign_id', campaign.id);
-            }
-            navigate('/creators/shortlist');
-          }}
-        >
-          <div className="cdiscovery-step-badge done">
-            <CheckOutlined />
-          </div>
-          <span className="cdiscovery-step-title">
-            3. Danh sách chọn {shortlistCount > 0 ? `(${shortlistCount})` : ''}
-          </span>
-        </div>
-        <div className="cdiscovery-step-line done" />
-
-        <div
-          className="cdiscovery-step-item"
-          onClick={() => {
-            setActiveViewTab('recommendation');
-            navigate('/campaign-management?tab=recommendation');
-          }}
-        >
-          <div className={`cdiscovery-step-badge ${activeViewTab === 'recommendation' ? 'active' : 'done'}`}>
-            {activeViewTab === 'recommendation' ? '4' : <CheckOutlined />}
-          </div>
-          <span className={`cdiscovery-step-title ${activeViewTab === 'recommendation' ? 'active' : ''}`}>
-            4. Gợi ý AI
-          </span>
-        </div>
-        <div className={`cdiscovery-step-line ${activeViewTab === 'kanban' ? 'done' : ''}`} />
-
-        <div
-          className="cdiscovery-step-item"
-          onClick={() => {
-            setActiveViewTab('kanban');
-            navigate('/campaign-management?tab=crm');
-          }}
-        >
-          <div className={`cdiscovery-step-badge ${activeViewTab === 'kanban' ? 'active' : 'upcoming'}`}>
-            5
-          </div>
-          <span className={`cdiscovery-step-title ${activeViewTab === 'kanban' ? 'active' : ''}`}>
-            5. Hợp tác (CRM)
-          </span>
-        </div>
-      </div>
+    <div className={'pipeline-page-container' + (activeViewTab === 'recommendation' ? ' recommendation-container' : '')}>
 
       {activeViewTab === 'recommendation' ? (
         <AiRecommendationTab
@@ -436,11 +372,16 @@ export default function CampaignManagementPage() {
           initialCandidateSource="SHORTLIST"
           initialSelectedCreatorIds={selectedIdsForRun}
           invalidSelection={invalidSelection}
+          autoRunToken={autoRunToken}
+          onAutoRunConsumed={() => {
+            const { recommendationRunIntent: _consumed, ...state } = location.state ?? {};
+            navigate({ pathname: location.pathname, search: location.search }, { replace: true, state });
+          }}
           onCampaignUpdated={setCampaign}
           availableCampaigns={availableCampaigns}
           onSelectCampaign={(newCampId) => {
             rememberCampaign(newCampId);
-            const next = new URLSearchParams(searchParams); next.set('campaignId', newCampId); next.delete('creatorIds'); navigate({ pathname: location.pathname, search: next.toString() }, { replace: true });
+            const next = new URLSearchParams(searchParams); next.delete('campaignId'); next.delete('creatorIds'); navigate({ pathname: location.pathname, search: next.toString() }, { replace: true, state: { ...location.state, recommendationRunIntent: undefined, recommendationContext: { sessionId, campaignId: newCampId, creatorIds: [] } } });
             localStorage.setItem('last_active_campaign_id', newCampId);
             const targetCamp = availableCampaigns.find((c) => c.id === newCampId);
             if (targetCamp) {
@@ -448,11 +389,6 @@ export default function CampaignManagementPage() {
               sessionStorage.setItem('current_campaign_name', targetCamp.name);
               localStorage.setItem('IM_SELECTED_CAMPAIGN_NAME', targetCamp.name);
             }
-            creatorService.getShortlist(newCampId).then((l: any[]) => setShortlistCount(l.length)).catch(() => {});
-          }}
-          onAddedToShortlist={() => {
-            setShortlistCount((prev) => prev + 1);
-            message.info('Đã cập nhật KOC vào Shortlist chiến dịch.');
           }}
         />
       ) : (

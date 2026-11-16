@@ -103,7 +103,7 @@ export const CreateCampaignAiHero: React.FC<CreateCampaignAiHeroProps> = ({
             background: 'linear-gradient(135deg, #FDF4FF 0%, #F5F3FF 50%, #EDE9FE 100%)',
             padding: '10px 16px',
           }}
-          message={
+          title={
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
               <span style={{ fontWeight: 700, color: '#5B21B6', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
                 <RobotOutlined style={{ fontSize: 15, color: '#7C3AED' }} /> Chiến lược phân tích từ AI

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { rememberCampaign } from '../../../services/campaignContext';
-import { message } from 'antd';
+import { App } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../../services/api/campaignService';
 import { getErrorMessage } from '../../../services/apiClient';
@@ -17,6 +17,7 @@ export function useCreateCampaignForm({
   isEditMode,
   locationState,
 }: UseCreateCampaignFormProps) {
+  const { message } = App.useApp();
   const navigate = useNavigate();
 
   // Wizard Step State (1: Thông tin chiến dịch, 2: Yêu cầu creator, 3: Chỉ số & ngân sách)
