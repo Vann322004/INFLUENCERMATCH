@@ -2,10 +2,10 @@ import ShortlistCreatorCard, { formatFollowers, formatEngagement, formatFee } fr
 import ShortlistQuickPicker from '../../components/campaign/ShortlistQuickPicker';
 import { CreatorDetailDrawer } from './components/discovery/CreatorDetailDrawer';
 import type { Creator } from './components/discovery/types';
-import { useCallback, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Alert, Button, ConfigProvider, Dropdown, Empty, Form, Input, Modal, Pagination, Popconfirm, Select, Skeleton, message } from 'antd';
 import viVN from 'antd/locale/vi_VN';
-import { ArrowRightOutlined, MoreOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined, MoreOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { activeCampaignId, rememberCampaign, campaignPath } from '../../services/campaignContext';
 import { shortlistService } from '../../services/api/shortlistService';
@@ -48,16 +48,17 @@ function shortlistRecordToCreator(item: ShortlistRecord): Creator {
     isVerified: !!item.verifiedByInfluencerMatch,
     matchRate: 0,
     matchLevel: 'medium',
-    platforms: [(item.platform?.toLowerCase() || 'tiktok') as any],
-    categories: categories.length ? categories : ['Chung'],
-    bio: item.contentSummary || 'Chưa có mô tả nội dung kênh.',
+    platforms: item.platform ? [item.platform.toLowerCase() as Creator['platforms'][number]] : [],
+    categories,
+    bio: item.contentSummary || '',
     followers: formatFollowers(item.followers),
     followersCount: item.followers || 0,
     engagementRate: formatEngagement(item.engagementRate),
     engagementValue: item.engagementRate || 0,
     avgPrice: fee,
+    priceSource: item.actualFee != null ? 'Báo giá đã ghi nhận' : item.estimatedFeeMin != null || item.estimatedFeeMax != null ? 'Khoảng giá ước tính' : undefined,
     avgPriceValue: item.actualFee || item.estimatedFeeMin || 0,
-    location: (item as { location?: string | null }).location || 'Việt Nam',
+    location: (item as { location?: string | null }).location || '',
     saved: item.status !== 'REMOVED',
   };
 }
@@ -65,12 +66,23 @@ function shortlistRecordToCreator(item: ShortlistRecord): Creator {
 export default function CreatorShortlistPage() {
   const location = useLocation(), navigate = useNavigate();
   const session = useSyncExternalStore(subscribeAuthSession, authScope);
+  const sessionId = getAuthSessionId();
   const canManage = !!getStoredUser()?.permissions?.includes('MANAGE_OWN_SHORTLIST');
   const canPrepareCrm = canManage && !!getStoredUser()?.permissions?.includes('MANAGE_OWN_RELATIONSHIP');
-  const [campaignChoice, setCampaignChoice] = useState(() => new URLSearchParams(location.search).get('campaignId') || location.state?.campaignId || activeCampaignId() || '');
   const campaignQuery = useCallback(() => shortlistService.campaigns(), [session]);
   const campaigns = useAsyncResource(campaignQuery, canManage);
-  const campaignId = new URLSearchParams(location.search).get('campaignId') || campaignChoice;
+  const searchParams = new URLSearchParams(location.search);
+  const routeContext = location.state?.shortlistContext?.sessionId === sessionId ? location.state.shortlistContext : null;
+  const campaignId: string = searchParams.get('campaignId') || location.state?.campaignId || routeContext?.campaignId || activeCampaignId() || '';
+  useEffect(() => {
+    if (!campaignId || (!new URLSearchParams(location.search).has('campaignId') && !location.state?.campaignId && routeContext?.campaignId === campaignId)) return;
+    rememberCampaign(campaignId);
+    const next = new URLSearchParams(location.search); next.delete('campaignId'); next.delete('creatorIds');
+    const { campaignId: _legacyId, ...state } = location.state ?? {};
+    navigate({ pathname: location.pathname, search: next.toString() }, { replace: true, state: {
+      ...state, shortlistContext: { sessionId, campaignId },
+    } });
+  }, [campaignId, sessionId, location.search, location.state, location.pathname, routeContext?.campaignId, navigate]);
   const campaign = campaigns.data?.find(item => item.id === campaignId);
   const isDraft = campaign?.status === 'DRAFT';
   const canChangeStatus = !!getStoredUser()?.permissions?.includes('CHANGE_CAMPAIGN_STATUS');
@@ -100,9 +112,13 @@ export default function CreatorShortlistPage() {
   const openRecommendations = (ids: string[] = selected.map(item => item.creatorId)) => {
     if (!campaign || busy) return;
     rememberCampaign(campaign.id);
-    const query = new URLSearchParams({ tab: 'recommendation', candidateSource: 'SHORTLIST', campaignId: campaign.id });
-    if (ids.length) query.set('creatorIds', ids.join(','));
-    navigate('/campaign-management?' + query);
+    const sessionId = getAuthSessionId();
+    navigate('/campaign-management?tab=recommendation', {
+      state: {
+        recommendationContext: { sessionId, campaignId: campaign.id, creatorIds: ids },
+        recommendationRunIntent: { token: crypto.randomUUID(), sessionId, campaignId: campaign.id, creatorIds: ids },
+      },
+    });
   };
 
   const activateDiscovery = async () => {
@@ -120,10 +136,10 @@ export default function CreatorShortlistPage() {
   };
 
   const changeCampaign = (value: string) => {
-    setCampaignChoice(value); setParams({ page: 0, size: 20 }); setSelection({ context: '', items: [] }); setCompareOpen(false);
+    setParams({ page: 0, size: 20 }); setSelection({ context: '', items: [] }); setCompareOpen(false);
     setEdit(null); setContactOpen(false); setOutreach(null); setBusy(null);
     // A navigation pointer is allowed; no shortlist results or metrics are stored locally.
-    rememberCampaign(value); navigate(campaignPath('/creators/shortlist', value), { replace: true });
+    rememberCampaign(value); navigate('/creators/shortlist', { replace: true, state: { shortlistContext: { sessionId, campaignId: value } } });
   };
 
   const toggle = (item: ShortlistRecord, checked: boolean) => {
@@ -187,6 +203,7 @@ export default function CreatorShortlistPage() {
               estimatedFeeMin: detail.estimatedFeeMin,
               estimatedFeeMax: detail.estimatedFeeMax,
             }),
+            priceSource: detail.actualFee != null ? 'Báo giá đã ghi nhận' : detail.estimatedFeeMin != null || detail.estimatedFeeMax != null ? 'Khoảng giá ước tính' : undefined,
             location: detail.location || prev.location,
             isVerified: detail.verifiedByInfluencerMatch ?? prev.isVerified,
             categories: cat.length ? cat : prev.categories,
@@ -194,7 +211,7 @@ export default function CreatorShortlistPage() {
         });
       }
     } catch {
-      // Giữ thông tin cơ bản từ shortlist nếu API chi tiết không phản hồi
+      message.warning('Chưa tải được hồ sơ chi tiết. Đang hiển thị thông tin đã lưu trong danh sách.');
     }
   };
 
@@ -231,12 +248,12 @@ export default function CreatorShortlistPage() {
             <div className="sl-list-header">
               <div>
                 <h2>Kênh đã lưu {list.status === 'success' && <span>{list.data?.totalElements.toLocaleString('vi-VN')}</span>}</h2>
-                <p className="sl-muted">So sánh từ 2 đến 5 kênh hoặc chuẩn bị thông tin liên hệ.</p>
+                <p className="sl-muted">Chọn kênh để so sánh, chạy gợi ý hoặc chuẩn bị liên hệ.</p>
               </div>
               <div className="sl-list-tools">
-                <Button icon={<ThunderboltOutlined />} disabled={!campaign} onClick={() => setQuickOpen(true)}>Chọn nhanh để gợi ý AI</Button>
-                <Select aria-label="Lọc ưu tiên" allowClear placeholder="Mọi ưu tiên" value={params.priority} options={priorities} onChange={value => setParams(previous => ({ ...previous, page: 0, priority: value }))} />
-                <Select aria-label="Lọc trạng thái" allowClear placeholder="Kênh đang lưu" value={params.status} options={Object.entries(statuses).map(([value, label]) => ({ value, label }))} onChange={value => setParams(previous => ({ ...previous, page: 0, status: value }))} />
+                <Button disabled={!campaign} onClick={() => setQuickOpen(true)}>Chọn kênh</Button>
+                <Select aria-label="Lọc ưu tiên" value={params.priority ?? 'ALL'} options={[{ value: 'ALL', label: 'Mọi ưu tiên' }, ...priorities]} onChange={value => setParams(previous => ({ ...previous, page: 0, priority: value === 'ALL' ? undefined : value as ShortlistPriority }))} />
+                <Select aria-label="Lọc trạng thái" value={params.status ?? 'ALL'} options={[{ value: 'ALL', label: 'Kênh đang lưu' }, ...Object.entries(statuses).map(([value, label]) => ({ value, label }))]} onChange={value => setParams(previous => ({ ...previous, page: 0, status: value === 'ALL' ? undefined : value as ShortlistStatus }))} />
               </div>
             </div>
             {!campaignId ? (
@@ -250,7 +267,7 @@ export default function CreatorShortlistPage() {
                 <Button onClick={() => navigate('/creators')}>Khám phá nhà sáng tạo</Button>
               </Empty>
             ) : (
-              <div className="cdiscovery-cards-grid">
+              <div className="sl-channel-grid">
                 {list.data.items.map(item => (
                   <ShortlistCreatorCard
                     key={item.id}
@@ -279,6 +296,7 @@ export default function CreatorShortlistPage() {
             )}
             {list.status === 'success' && list.data && (
               <Pagination
+                hideOnSinglePage
                 current={list.data.page + 1}
                 pageSize={list.data.size}
                 total={list.data.totalElements}
@@ -363,7 +381,7 @@ export default function CreatorShortlistPage() {
                   disabled={!campaign || !!busy}
                   onClick={() => openRecommendations()}
                 >
-                  {selected.length > 0 ? `Gợi ý AI (${selected.length} kênh đã chọn)` : 'Gợi ý AI (Toàn bộ danh sách)'} <ArrowRightOutlined />
+                  {selected.length > 0 ? `Chạy gợi ý (${selected.length} kênh đã chọn)` : 'Chạy gợi ý toàn bộ danh sách'} <ArrowRightOutlined />
                 </Button>
               </div>
             </footer>
@@ -375,6 +393,7 @@ export default function CreatorShortlistPage() {
             open={quickOpen}
             campaignId={campaignId}
             selectedIds={selected.map(item => item.creatorId)}
+            confirmLabel="Chạy gợi ý"
             onClose={() => setQuickOpen(false)}
             onApply={ids => {
               setQuickOpen(false);
@@ -453,37 +472,17 @@ export default function CreatorShortlistPage() {
         <CreatorDetailDrawer
           visible={!!previewCreator}
           creator={previewCreator}
-          matchedCampaign={campaign ? ({ id: campaign.id, name: campaign.name, budget: '' } as any) : null}
-          isRefreshing={false}
+          matchedCampaign={null}
+          showMatch={false}
+          actionLabel={selected.some(item => item.creatorId === previewCreator?.id) ? 'Bỏ chọn kênh' : 'Chọn để chạy gợi ý'}
+          actionDisabled={!!busy || !list.data?.items.some(item => item.creatorId === previewCreator?.id && item.status !== 'REMOVED')}
           onClose={() => setPreviewCreator(null)}
-          onRefreshStats={async () => {
-            if (previewCreator) {
-              try {
-                const detail = await creatorService.getCreatorById(previewCreator.id);
-                if (detail) {
-                  setPreviewCreator(prev => prev ? {
-                    ...prev,
-                    followers: formatFollowers(detail.followers),
-                    engagementRate: formatEngagement(detail.engagementRate),
-                    avgPrice: formatFee({
-                      actualFee: detail.actualFee,
-                      estimatedFeeMin: detail.estimatedFeeMin,
-                      estimatedFeeMax: detail.estimatedFeeMax,
-                    }),
-                  } : null);
-                  message.success('Đã cập nhật số liệu mới nhất.');
-                }
-              } catch {
-                message.warning('Không thể làm mới số liệu lúc này.');
-              }
-            }
-          }}
           onOpenShortlist={(c) => {
             const rec = list.data?.items.find(r => r.creatorId === c.id);
             if (rec) {
               const isSel = selected.some(r => r.creatorId === c.id);
               toggle(rec, !isSel);
-              message.info(!isSel ? `Đã chọn ${c.name} để gợi ý AI.` : `Đã bỏ chọn ${c.name}.`);
+
             }
           }}
         />

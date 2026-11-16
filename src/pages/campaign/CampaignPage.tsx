@@ -803,7 +803,7 @@ export default function CampaignPage() {
                   onChange={setSortBy}
                   size="small"
                   popupMatchSelectWidth={false}
-                  dropdownStyle={{ minWidth: 140 }}
+                  styles={{ popup: { root: { minWidth: 140 } } }}
                   className="campaign-sort-select"
                   options={[
                     { value: 'latest', label: 'Mới nhất' },
@@ -1321,7 +1321,7 @@ export default function CampaignPage() {
                       percent={campaigns[0].progressPercent}
                       showInfo={false}
                       strokeColor="#4F46E5"
-                      trailColor="#E2E8F0"
+                      railColor="#E2E8F0"
                       size="small"
                       style={{ margin: 0 }}
                     />
@@ -1411,7 +1411,7 @@ export default function CampaignPage() {
         okText="Lưu thay đổi"
         cancelText="Hủy"
         width={560}
-        destroyOnClose
+        destroyOnHidden
         okButtonProps={{
           style: {
             background: '#4F46E5',

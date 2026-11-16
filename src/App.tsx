@@ -51,7 +51,7 @@ import CreatorLayout from './components/creator/CreatorLayout';
 import CreatorProtectedRoute from './components/creator/CreatorProtectedRoute';
 import CreatorPortalPage from './pages/creator/portal/CreatorPortalPage';
 import { useAccountLogoutSync } from './hooks/useAccountLogoutSync';
-import { getAccessToken, getStoredUser } from './services/authSession';
+import { getAccessToken, getStoredUser, getAuthSessionId } from './services/authSession';
 
 
 const { Content } = Layout;
@@ -80,6 +80,12 @@ function CampaignManagementIdRedirect() {
   const next = new URLSearchParams(searchParams);
   if (id) next.set('campaignId', id);
   if (!next.has('tab')) next.set('tab', 'recommendation');
+  if (next.get('tab') === 'recommendation') {
+    const creatorIds = next.get('creatorIds')?.split(',') ?? [];
+    const campaignId = id || next.get('campaignId') || '';
+    next.delete('campaignId'); next.delete('creatorIds'); next.delete('candidateSource');
+    return <Navigate to={'/campaign-management?' + next} replace state={{ recommendationContext: { sessionId: getAuthSessionId(), campaignId, creatorIds } }} />;
+  }
   return <Navigate to={'/campaign-management?' + next} replace />;
 }
 

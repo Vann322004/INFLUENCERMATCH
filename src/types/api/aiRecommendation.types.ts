@@ -4,15 +4,15 @@ export type DisplayMode = 'BEST_MATCH' | 'BUDGET_READY_FIRST' | 'DIVERSIFIED_MAT
 export type CandidateSource = 'SHORTLIST' | 'DISCOVERY';
 
 export interface ScoreBreakdownDto {
-  m1Score: number;            // M1: Historical Creator Reputation
-  m2Score: number;            // M2: Public Performance Metrics
-  m3Score: number;            // M3: Semantic Fit (PGVector Embedding & Content Relevance)
-  m4Score: number;            // M4: Brand Taste/Affinity (Feedback Loop & Brand Prioritization)
-  followerScore?: number;
-  engagementScore?: number;
-  semanticMatchScore?: number;
-  nicheMatchScore?: number;
-  finalScore?: number;        // Match Score tổng hợp (0.0 -> 1.0)
+  m1Score: number | null;            // M1: Historical Creator Reputation
+  m2Score: number | null;            // M2: Public Performance Metrics
+  m3Score: number | null;            // M3: Semantic Fit (PGVector Embedding & Content Relevance)
+  m4Score: number | null;            // M4: Brand Taste/Affinity (Feedback Loop & Brand Prioritization)
+  followerScore?: number | null;
+  engagementScore?: number | null;
+  semanticMatchScore?: number | null;
+  nicheMatchScore?: number | null;
+  finalScore?: number | null;        // Điểm tổng hợp theo thang 0–100
 }
 
 export interface ReasoningCardDto {
@@ -36,15 +36,15 @@ export interface CreatorRecommendationItemDto {
   displayName: string;
   userName: string;
   avatarUrl?: string;
-  followers: number;
-  avgViews?: number;
-  avgLikes?: number;
-  engagementRate?: number;
+  followers: number | null;
+  avgViews?: number | null;
+  avgLikes?: number | null;
+  engagementRate?: number | null;
   niche: string;
   category?: string;
   creatorType?: string;
   shortlistStatus?: 'SAVED' | 'READY_TO_CONTACT' | 'CONTACTED' | 'REMOVED';
-  finalScore: number;
+  finalScore: number | null;
   scoreBreakdown?: ScoreBreakdownDto;
   reasoning?: ReasoningCardDto;
   priceStatus?: PriceStatus;
