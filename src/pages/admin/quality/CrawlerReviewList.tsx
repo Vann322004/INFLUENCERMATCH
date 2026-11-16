@@ -54,6 +54,11 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
   }
   const rows = [...records.values()].filter(row => source === 'all' || row.sources.includes(source as 'manual' | 'automatic'))
     .sort((a, b) => b.savedAt.localeCompare(a.savedAt));
+
+  if (!rows.length) {
+    return null;
+  }
+
   return <Card className="quality-collection-list">
     <Typography.Title level={4}>Dữ liệu cào thủ công và tự động</Typography.Title>
     <Typography.Paragraph type="secondary">Tổng hợp kết quả thu thập từ hai nguồn và tài khoản cần xác minh. Hồ sơ đã đồng bộ và đủ điều kiện duyệt KOC nằm trong danh sách bên dưới.</Typography.Paragraph>

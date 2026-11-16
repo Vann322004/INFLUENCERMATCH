@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import type { ApiProblemDetails } from '../types/api/common.types';
 import { invalidateDataManagerCacheForMutation, invalidateAdminCacheForMutation } from './requestCache';
-import { getAccessToken, getStoredUser, getAuthSessionId, setAuthSession, clearAuthSession, ownsRefreshCookie, withAuthCookieLock, consumeAccountLogout } from './authSession';
+import { getAccessToken, getStoredUser, getAuthSessionId, setAuthSession, clearAuthSession, ownsRefreshCookie, withAuthCookieLock, consumeAccountLogout, redirectToCurrentAccount } from './authSession';
 export { STORAGE_KEYS, getAccessToken, getRefreshToken, getStoredUser, getAuthSessionId, setAuthSession, clearAuthSession } from './authSession';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
@@ -35,12 +35,15 @@ const refreshes = new Map<string, Promise<string>>();
 const refreshSession = (sessionId: string): Promise<string> => {
   const pending = refreshes.get(sessionId);
   if (pending) return pending;
+  const previousToken = getAccessToken();
   const user = getStoredUser();
   const expectedUserId = user?.id || user?.userId || user?.email;
   const promise = withAuthCookieLock(async () => {
     if (getAuthSessionId() !== sessionId) throw staleSession();
-    // The refresh cookie is shared by the browser. Never use another tab's
-    // cookie to replace this tab's identity.
+    // Another tab may have rotated the shared cookie while this one waited.
+    if (consumeAccountLogout()) throw staleSession();
+    if (getAccessToken() && getAccessToken() !== previousToken) return getAccessToken()!;
+    // All tabs share the same session and serialize cookie rotation.
     if (!ownsRefreshCookie()) throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại tài khoản của tab này.');
     const csrfConfig = await getCsrfRequestConfig();
     if (getAuthSessionId() !== sessionId) throw staleSession();
@@ -56,7 +59,7 @@ const refreshSession = (sessionId: string): Promise<string> => {
   }).catch(error => {
     if (getAuthSessionId() === sessionId) {
       clearAuthSession();
-      window.location.assign('/login');
+      redirectToCurrentAccount();
     }
     throw error;
   }).finally(() => { refreshes.delete(sessionId); });
@@ -68,7 +71,7 @@ const refreshSession = (sessionId: string): Promise<string> => {
 apiClient.interceptors.request.use(
   (config: SessionRequest) => {
     if (consumeAccountLogout()) {
-      window.location.assign('/login');
+      redirectToCurrentAccount();
       throw staleSession();
     }
     if (config._sessionId && config._sessionId !== getAuthSessionId()) throw staleSession();
@@ -86,7 +89,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => {
     if (consumeAccountLogout()) {
-      window.location.assign('/login');
+      redirectToCurrentAccount();
       throw staleSession();
     }
     const config = response.config as SessionRequest;

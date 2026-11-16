@@ -212,8 +212,8 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
         message.success('Đã lưu hồ sơ thương hiệu.');
         return;
       }
-      if (!saved.etag) throw new Error('Hãy tải lại hồ sơ để lấy phiên bản vừa lưu.');
-      const completed = await brandService.completeOnboarding(saved.etag);
+      const etagForComplete = saved.etag || (saved.brand?.id ? brandService.formatBrandRevisionTag(saved.brand.id, saved.brand.profileRevision) : '');
+      const completed = await brandService.completeOnboarding(etagForComplete || saved.brand);
       setBrand(completed.brand);
       setEtag(completed.etag);
       if (completed.brand.onboardingStatus !== 'COMPLETED') throw new Error('Hệ thống chưa xác nhận hoàn tất hồ sơ.');

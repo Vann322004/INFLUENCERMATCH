@@ -90,12 +90,54 @@ export const brandService = {
     return data;
   },
 
+  /**
+   * Tạo chuẩn ETag revision theo contract của backend: "brand:<uuid>:r<revision>"
+   */
+  formatBrandRevisionTag(id: string, revision?: number | null): string {
+    const rev = revision != null && !isNaN(Number(revision)) ? Number(revision) : 0;
+    return `"brand:${id}:r${rev}"`;
+  },
+
+  /**
+   * Chuẩn hóa bất kỳ chuỗi ETag nào từ header hoặc payload:
+   * - Bỏ tiền tố weak ETag 'W/' (thường bị Cloudflare / Nginx / Proxy tự động chèn vào)
+   * - Bọc ngoặc kép đúng contract \"brand:<uuid>:r<revision>\"
+   * - Nếu header bị thiếu (do CORS che giấu), tự tính từ brand.id và brand.profileRevision
+   */
+  resolveBrandETag(rawEtag?: string | null, brand?: BrandResponse | null): string | null {
+    if (rawEtag && typeof rawEtag === 'string' && rawEtag.trim()) {
+      let clean = rawEtag.trim();
+      if (clean.startsWith('W/')) {
+        clean = clean.slice(2).trim();
+      }
+      if (!clean.startsWith('"')) {
+        clean = `"${clean}`;
+      }
+      if (!clean.endsWith('"')) {
+        clean = `${clean}"`;
+      }
+      if (/^"brand:[0-9a-fA-F-]{36}:r\d+"$/.test(clean)) {
+        return clean;
+      }
+    }
+    if (brand?.id) {
+      return this.formatBrandRevisionTag(brand.id, brand.profileRevision);
+    }
+    return null;
+  },
+
   async getMyBrandForEdit(): Promise<{ brand: BrandResponse; etag: string } | null> {
     try {
       const response = await apiClient.get<ApiResponse<BrandResponse>>('/brands/me');
-      const etag = response.headers.etag;
+      const data = response.data?.data;
+      if (!data) return null;
+      const rawHeader =
+        response.headers?.['etag'] ??
+        response.headers?.etag ??
+        (typeof response.headers?.get === 'function' ? response.headers.get('etag') : null);
+      const etag = this.resolveBrandETag(rawHeader, data);
       if (!etag) throw new Error('Không lấy được phiên bản hồ sơ. Vui lòng tải lại trang.');
-      return { brand: response.data.data, etag };
+      return { brand: data, etag };
     } catch (err: any) {
       if (err.response?.status === 404) return null;
       throw err;
@@ -105,22 +147,47 @@ export const brandService = {
   async saveMyBrand(
     payload: BrandRequest,
     etag: string | null,
-  ): Promise<{ brand: BrandResponse; etag: string | null }> {
-    const response = etag
+  ): Promise<{ brand: BrandResponse; etag: string }> {
+    let cleanEtag: string | null = null;
+    if (etag) {
+      cleanEtag = this.resolveBrandETag(etag);
+    }
+    const response = cleanEtag
       ? await apiClient.patch<ApiResponse<BrandResponse>>('/brands/me', payload, {
-          headers: { 'If-Match': etag },
+          headers: { 'If-Match': cleanEtag },
         })
       : await apiClient.post<ApiResponse<BrandResponse>>('/brands', payload);
     this.clearBrandCache();
-    return { brand: response.data.data, etag: response.headers.etag || null };
+    const savedBrand = response.data.data;
+    const rawHeader =
+      response.headers?.['etag'] ??
+      response.headers?.etag ??
+      (typeof response.headers?.get === 'function' ? response.headers.get('etag') : null);
+    const finalEtag = this.resolveBrandETag(rawHeader, savedBrand) || (savedBrand?.id ? this.formatBrandRevisionTag(savedBrand.id, savedBrand.profileRevision) : '');
+    return { brand: savedBrand, etag: finalEtag };
   },
 
-  async completeOnboarding(etag: string): Promise<{ brand: BrandResponse; etag: string | null }> {
+  async completeOnboarding(etagOrBrand: string | BrandResponse): Promise<{ brand: BrandResponse; etag: string }> {
+    let finalEtag: string;
+    if (typeof etagOrBrand === 'string') {
+      finalEtag = this.resolveBrandETag(etagOrBrand) || etagOrBrand.trim();
+    } else {
+      finalEtag = this.resolveBrandETag(null, etagOrBrand) || '';
+    }
+    if (finalEtag.startsWith('W/')) finalEtag = finalEtag.slice(2).trim();
+    if (!finalEtag.startsWith('"')) finalEtag = `"${finalEtag}"`;
+
     const response = await apiClient.post<ApiResponse<BrandResponse>>('/brands/me/onboarding/complete', undefined, {
-      headers: { 'If-Match': etag },
+      headers: { 'If-Match': finalEtag },
     });
     this.clearBrandCache();
-    return { brand: response.data.data, etag: response.headers.etag || null };
+    const completedBrand = response.data.data;
+    const rawHeader =
+      response.headers?.['etag'] ??
+      response.headers?.etag ??
+      (typeof response.headers?.get === 'function' ? response.headers.get('etag') : null);
+    const finalReturnEtag = this.resolveBrandETag(rawHeader, completedBrand) || (completedBrand?.id ? this.formatBrandRevisionTag(completedBrand.id, completedBrand.profileRevision) : '');
+    return { brand: completedBrand, etag: finalReturnEtag };
   },
 
   /**

@@ -1,5 +1,4 @@
-// Credentials belong to a tab; localStorage carries cookie ownership and
-// account-specific logout signals, never another tab's active identity.
+// Every tab on this origin uses one browser-wide login.
 import { dataManagerRequestCache, adminRequestCache } from './requestCache';
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'access_token',
@@ -22,43 +21,36 @@ interface Session {
   logoutMarker: string | null;
 }
 
+// A single atomic record is authoritative for every tab on this origin.
+// Never restore old per-tab credentials: they may belong to another account.
+export const BROWSER_SESSION_KEY = 'im_browser_auth_session';
+export const SESSION_NOTICE_KEY = 'im_session_change_notice';
 const emptySession = (): Session => ({ id: crypto.randomUUID(), accessToken: null, refreshToken: null, user: null, logoutMarker: null });
+const readBrowserSession = (): Session | null => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(BROWSER_SESSION_KEY) || 'null');
+    return saved?.id && (!saved.accessToken || (typeof saved.accessToken === 'string' && !saved.accessToken.startsWith('mock_'))) ? saved : null;
+  } catch { return null; }
+};
 let session: Session = (() => {
-  const saved = sessionStorage.getItem(SESSION_KEY);
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved) as Session;
-      if (parsed?.id && !parsed.accessToken?.startsWith('mock_')) return parsed;
-      const clean = emptySession();
-      if (localStorage.getItem(COOKIE_OWNER_KEY) === parsed?.id) localStorage.removeItem(COOKIE_OWNER_KEY);
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(clean));
-      return clean;
-    } catch { /* Replace invalid data. */ }
-  }
-  const initial = emptySession();
-  // Migrate the existing login once, then stop sharing credentials across tabs.
-  const legacyToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-  if (legacyToken && !legacyToken.startsWith('mock_')) {
-    initial.accessToken = legacyToken;
-    initial.refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-    try { initial.user = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || 'null'); } catch { /* No profile. */ }
-  }
-  const userId = identity(initial.user);
-  if (userId) initial.logoutMarker = localStorage.getItem(logoutKey(userId));
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(initial));
-  if (initial.accessToken) localStorage.setItem(COOKIE_OWNER_KEY, initial.id);
+  sessionStorage.removeItem(SESSION_KEY);
   Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+  const saved = readBrowserSession();
+  if (saved) return saved;
+  const initial = emptySession();
+  localStorage.setItem(BROWSER_SESSION_KEY, JSON.stringify(initial));
+  localStorage.removeItem(COOKIE_OWNER_KEY);
   return initial;
 })();
-
-const persist = () => sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+let requiresNavigation = false;
+const persist = () => localStorage.setItem(BROWSER_SESSION_KEY, JSON.stringify(session));
 const sessionListeners = new Set<() => void>();
 export const subscribeAuthSession = (listener: () => void) => {
   sessionListeners.add(listener);
   return () => { sessionListeners.delete(listener); };
 };
 const notifySession = () => sessionListeners.forEach(listener => listener());
-export const getAuthSessionId = () => session.id;
+export const getAuthSessionId = () => readBrowserSession()?.id ?? session.id;
 export const getAccessToken = () => session.accessToken;
 export const getRefreshToken = () => session.refreshToken;
 export const getStoredUser = () => session.user;
@@ -71,6 +63,7 @@ export const withAuthCookieLock = <T>(action: () => Promise<T>): Promise<T> =>
     : action();
 
 export const setAuthSession = (accessToken: string, refreshToken?: string, user?: unknown) => {
+  if (readBrowserSession()?.id !== session.id) throw new Error('Session changed in another tab.');
   if (!accessToken || accessToken.startsWith('mock_')) {
     throw new Error('Không nhận được phiên đăng nhập hợp lệ từ máy chủ. Vui lòng đăng nhập lại.');
   }
@@ -80,6 +73,10 @@ export const setAuthSession = (accessToken: string, refreshToken?: string, user?
   const userId = identity(user);
   if (userId && userId !== identity(session.user)) {
     session.logoutMarker = localStorage.getItem(logoutKey(userId));
+  }
+  if (!session.accessToken || (userId && userId !== identity(session.user))) {
+    session.id = crypto.randomUUID();
+    claimRefreshCookie();
   }
   if (accessToken) session.accessToken = accessToken;
   if (refreshToken !== undefined) session.refreshToken = refreshToken || null;
@@ -105,13 +102,43 @@ export const publishAccountLogout = () => {
   if (userId) localStorage.setItem(logoutKey(userId), crypto.randomUUID());
 };
 
-// Compare the current marker rather than a queued StorageEvent's value. A new
-// login acknowledges old logout events, even if those events arrive late.
+// Return true when the mounted UI belongs to an obsolete login. Callers must
+// discard pending responses and navigate before rendering another account's data.
+export const redirectToCurrentAccount = () => {
+  const role = session.user?.role?.toUpperCase();
+  const destination = !session.accessToken ? '/login'
+    : ['ADMIN', 'SUPER_ADMIN'].includes(role) ? '/admin/dashboard'
+    : ['MANAGER', 'DATA_MANAGER'].includes(role) ? '/data-manager/dashboard'
+    : ['CREATOR', 'INFLUENCER'].includes(role) ? '/creator/dashboard'
+    : '/dashboard';
+  if (typeof window !== 'undefined') window.location.replace(destination);
+};
+
 export const consumeAccountLogout = (): boolean => {
-  const userId = identity(session.user);
-  if (!session.accessToken || !userId) return false;
-  const marker = localStorage.getItem(logoutKey(userId));
-  if (!marker || marker === (session.logoutMarker ?? null)) return false;
-  clearAuthSession();
-  return true;
+  const shared = readBrowserSession();
+  if (!shared) return false;
+  const changed = shared.id !== session.id;
+  if (changed || shared.accessToken !== session.accessToken || cacheIdentity(shared.user) !== cacheIdentity(session.user)) {
+    if (changed || cacheIdentity(shared.user) !== cacheIdentity(session.user)) {
+      dataManagerRequestCache.clear();
+      adminRequestCache.clear();
+    }
+    session = shared;
+    if (changed) {
+      sessionStorage.removeItem('im_cached_brand_profile');
+      sessionStorage.removeItem('current_campaign_id');
+      const account = shared.user?.displayName || shared.user?.fullName || shared.user?.email;
+      const role = shared.user?.role?.toUpperCase();
+      const roleName = ['MANAGER', 'DATA_MANAGER'].includes(role) ? 'Quản lý'
+        : ['ADMIN', 'SUPER_ADMIN'].includes(role) ? 'Quản trị viên'
+        : ['CREATOR', 'INFLUENCER'].includes(role) ? 'Nhà sáng tạo' : 'Thương hiệu';
+      sessionStorage.setItem(SESSION_NOTICE_KEY, shared.accessToken
+        ? `Tài khoản đã được thay đổi ở tab khác. Tab này đã chuyển sang tài khoản ${account || roleName} (${roleName}).`
+        : 'Bạn đã đăng xuất ở tab khác. Phiên đăng nhập trên tab này đã kết thúc. Vui lòng đăng nhập lại.');
+      requiresNavigation = true;
+      redirectToCurrentAccount();
+    }
+    notifySession();
+  }
+  return requiresNavigation;
 };
