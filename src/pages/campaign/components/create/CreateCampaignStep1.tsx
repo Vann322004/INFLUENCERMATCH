@@ -114,7 +114,7 @@ export const CreateCampaignStep1: React.FC<CreateCampaignStep1Props> = ({
 
         <Col xs={24}>
           <div className="ccreate-field-label">
-            <span>Ngành hàng & Sở thích liên quan <span className="req">*</span></span>
+            <span>Ngành hàng & Sở thích liên quan (tùy chọn)</span>
           </div>
           <Input
             value={interests}

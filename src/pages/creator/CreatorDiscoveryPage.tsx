@@ -13,6 +13,8 @@ import DiscoveryResultsToolbar from './components/discovery/DiscoveryResultsTool
 import CreatorGridList from './components/discovery/CreatorGridList';
 import CreatorDetailDrawer from './components/discovery/CreatorDetailDrawer';
 import AddToShortlistModal from '../../components/discovery/AddToShortlistModal';
+import ShortlistBatchAdd from './components/ShortlistBatchAdd';
+import { activeCampaignId } from '../../services/campaignContext';
 
 import { useDiscoveryCampaigns } from './hooks/useDiscoveryCampaigns';
 import { useDiscoveryCreators } from './hooks/useDiscoveryCreators';
@@ -37,9 +39,7 @@ export default function CreatorDiscoveryPage() {
   const [searchParams] = useSearchParams();
 
   // 1. Initial Campaign ID Resolution
-  const [storedInitialCampId] = useState(() =>
-    sessionStorage.getItem('current_campaign_id') || localStorage.getItem('IM_SELECTED_CAMPAIGN_ID') || null
-  );
+  const storedInitialCampId = activeCampaignId() || null;
   const initialCampId =
     searchParams.get('campaignId') ||
     (location.state as any)?.campaignId ||
@@ -54,6 +54,7 @@ export default function CreatorDiscoveryPage() {
     loadingCampaigns,
     selectedCampaignId,
     matchedCampaign,
+    loadCampaignError,
     setCampaignRequestKey,
     handleTriggerMatch: rawTriggerMatch,
     handleClearMatch: rawClearMatch,
@@ -68,6 +69,7 @@ export default function CreatorDiscoveryPage() {
   const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [shortlistModalCreator, setShortlistModalCreator] = useState<Creator | null>(null);
+  const [batchSelection, setBatchSelection] = useState<{ campaignId: string; creators: { id: string; name: string }[] } | null>(null);
 
   // 4. Creators Fetching Hook
   const {
@@ -171,7 +173,7 @@ export default function CreatorDiscoveryPage() {
 
   // Navigations & Modals
   const handleOpenCreator = (creator: Creator) => {
-    navigate(`/creators/${creator.id}`, { state: { creator, campaign: matchedCampaign } });
+    navigate(`/creators/${creator.id}${selectedCampaignId ? '?campaignId=' + encodeURIComponent(selectedCampaignId) : ''}`, { state: { creator, campaign: matchedCampaign } });
   };
 
   const handleOpenShortlist = (creator: Creator, e?: React.MouseEvent) => {
@@ -181,20 +183,18 @@ export default function CreatorDiscoveryPage() {
 
   const handleBulkAddToShortlist = () => {
     if (selectedCreatorIds.size === 0) return;
-    const targetCampId = selectedCampaignId || matchedCampaign?.id || campaignsList[0]?.id;
+    const targetCampId = selectedCampaignId || matchedCampaign?.id;
     if (!targetCampId) {
       message.warning('Vui lòng tạo hoặc chọn một chiến dịch trước khi thêm KOC vào danh sách chọn!');
       return;
     }
-    const firstSelected = creators.find((c) => selectedCreatorIds.has(c.id));
-    if (firstSelected) {
-      setShortlistModalCreator(firstSelected);
-    }
+    if (selectedCreatorIds.size > 100) { message.warning('Mỗi lần chỉ lưu tối đa 100 kênh. Vui lòng bỏ bớt kênh đã chọn.'); return; }
+    setBatchSelection({ campaignId: targetCampId, creators: [...selectedCreatorIds].map(id => ({ id, name: creators.find(item => item.id === id)?.name || 'Kênh đã chọn' })) });
   };
 
-  const handleShareCreator = (creator: Creator) => {
-    navigator.clipboard?.writeText(window.location.origin + '/creators/' + creator.id);
-    message.success('Đã sao chép liên kết KOC!');
+  const handleShareCreator = async (creator: Creator) => {
+    try { if (!navigator.clipboard) throw new Error('Clipboard unavailable'); await navigator.clipboard.writeText(window.location.origin + '/creators/' + creator.id);
+    message.success('Đã sao chép liên kết KOC!'); } catch { message.error('Không thể sao chép liên kết.'); }
   };
 
   return (
@@ -202,6 +202,7 @@ export default function CreatorDiscoveryPage() {
     <div className="cdiscovery-container">
       {/* 1. Header & Breadcrumb */}
       <DiscoveryHeader matchedCampaign={matchedCampaign} />
+      {loadCampaignError && <Alert type="error" title={loadCampaignError} action={<Button onClick={() => setCampaignRequestKey(v => v + 1)}>Thử lại</Button>} />}
 
       {/* 2. Stepper 5 bước */}
       <WorkflowStepBar selectedCampaignId={selectedCampaignId} />
@@ -343,6 +344,13 @@ export default function CreatorDiscoveryPage() {
       </div>
 
       {/* Quick Preview Drawer */}
+      {batchSelection && <ShortlistBatchAdd campaignId={batchSelection.campaignId} creators={batchSelection.creators}
+        onClose={() => setBatchSelection(null)} onChanged={result => {
+          const saved = new Set(result.results.filter(item => ['ADDED', 'ALREADY_EXISTS', 'RESTORED'].includes(item.action)).map(item => item.creatorId));
+          setCreators(previous => previous.map(item => saved.has(item.id) ? { ...item, saved: true } : item));
+          setSelectedCreatorIds(previous => new Set([...previous].filter(id => !saved.has(id))));
+          sessionStorage.setItem('current_campaign_id', batchSelection.campaignId);
+        }} />}
       <CreatorDetailDrawer
         visible={drawerVisible}
         creator={selectedCreator}

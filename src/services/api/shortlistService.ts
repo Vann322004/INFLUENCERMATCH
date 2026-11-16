@@ -1,6 +1,8 @@
 import apiClient from '../apiClient';
+import { campaignService } from './campaignService';
 import { readPage } from './pageResponse';
 import type { PageResponse } from '../../types/api/common.types';
+import type { CampaignResponse } from '../../types/api/campaign.types';
 import type { AddShortlistItemPayload, ShortlistPriority } from '../../types/api/creator.types';
 import type { ShortlistRecord, ShortlistStatus, Comparison, CompareItem, BatchAddResult, ContactReadiness, OutreachResult } from '../../types/api/shortlist.types';
 
@@ -16,6 +18,7 @@ function record(raw: any, campaignId: string): ShortlistRecord {
   if (!raw || !uuid.test(raw.id) || !uuid.test(raw.creatorId) || raw.campaignId !== campaignId
     || !['LOW','MEDIUM','HIGH'].includes(raw.priority) || !['SAVED','READY_TO_CONTACT','CONTACTED','REMOVED'].includes(raw.status)) throw new Error('Dữ liệu shortlist không hợp lệ.');
   return { ...raw, masterId: raw.masterId ?? null, note: raw.note ?? null, addedAt: raw.addedAt ?? null,
+    estimatedFeeMin: number(raw.estimatedFeeMin), estimatedFeeMax: number(raw.estimatedFeeMax), actualFee: number(raw.actualFee),
     followers: number(raw.followers), engagementRate: number(raw.engagementRate), dataConfidence: number(raw.dataConfidence),
     verification: raw.verification ?? null, declaredProfile: raw.declaredProfile ?? null };
 }
@@ -26,21 +29,7 @@ const orderedDistinct = (values: string[], min: number, max: number) => {
 };
 
 export const shortlistService = {
-  async campaigns(): Promise<{ id: string; name: string; status: string }[]> {
-    // Reading a shortlist never creates a placeholder Brand profile.
-    const brand = dataOf((await apiClient.get('/brands/me')).data);
-    if (!brand?.id || !uuid.test(brand.id)) throw new Error('Cần hồ sơ thương hiệu hợp lệ để xem chiến dịch.');
-    const rows: { id: string; name: string; status: string }[] = [];
-    let page = 0;
-    while (true) {
-      const response = await apiClient.get(`/brands/${brand.id}/campaigns`, { params: { page, size: 50 } });
-      const result = readPage<any>(response.data);
-      if (result.items.some(item => !uuid.test(item?.id) || typeof item.name !== 'string')) throw new Error('Danh sách chiến dịch không hợp lệ.');
-      rows.push(...result.items);
-      if (++page >= result.totalPages) break;
-    }
-    return rows;
-  },
+  async campaigns(): Promise<CampaignResponse[]> { return campaignService.getAllCampaigns(); },
   async list(campaignId: string, params: { page?: number; size?: number; priority?: ShortlistPriority; status?: ShortlistStatus; platform?: string } = {}, signal?: AbortSignal): Promise<PageResponse<ShortlistRecord>> {
     const response = await apiClient.get(path(campaignId), { params: { page: 0, size: 20, ...params }, signal });
     const result = readPage<any>(response.data);
@@ -89,7 +78,12 @@ export const shortlistService = {
     const rows = new Map<string, any>();
     for (const row of result.results) {
       if (!creatorIds.includes(row.creatorId) || rows.has(row.creatorId) || !['ADDED','ALREADY_EXISTS','RESTORED','INVALID','FAILED'].includes(row.action)) throw new Error('Kết quả từng kênh không hợp lệ.');
-      if (row.item) record(row.item, campaignId); rows.set(row.creatorId, row);
+      if (['ADDED','ALREADY_EXISTS','RESTORED'].includes(row.action) && !row.item) throw new Error('Máy chủ chưa xác nhận kênh đã được lưu.');
+      if (row.item) {
+        const item = record(row.item, campaignId);
+        if (item.creatorId !== row.creatorId) throw new Error('Máy chủ trả về sai kênh đã chọn.');
+        rows.set(row.creatorId, { ...row, item });
+      } else rows.set(row.creatorId, row);
     }
     return { ...result, results: creatorIds.map(value => rows.get(value)) };
   },

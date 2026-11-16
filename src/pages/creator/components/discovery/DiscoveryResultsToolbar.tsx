@@ -34,7 +34,7 @@ export const DiscoveryResultsToolbar: React.FC<DiscoveryResultsToolbarProps> = (
           {loading || isMatching
             ? 'Đang tải danh sách KOC...'
             : matchedCampaign
-            ? `Top 50 Creator (${filteredCount} hồ sơ)`
+            ? `Nhà sáng tạo phù hợp (${filteredCount} hồ sơ)`
             : `Tất cả KOC hệ thống (${filteredCount.toLocaleString('vi-VN')} KOC)`}
         </span>
         <label className="cdiscovery-select-all-label">
@@ -58,7 +58,7 @@ export const DiscoveryResultsToolbar: React.FC<DiscoveryResultsToolbarProps> = (
           onClick={onBulkAddToShortlist}
           className="cdiscovery-btn-bulk-shortlist"
         >
-          + Đưa vào shortlist
+          + Lưu các kênh đã chọn
         </Button>
       </div>
     </div>

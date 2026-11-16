@@ -5,6 +5,7 @@ export type CampaignStatus = 'DRAFT' | 'READY_FOR_DISCOVERY' | 'ACTIVE' | 'COMPL
 export type CampaignPlatform = 'TIKTOK' | 'INSTAGRAM' | 'FACEBOOK' | 'YOUTUBE';
 
 export interface CampaignPlanningFields {
+  deliverables?: { platform: CampaignPlatform; contentType: string; quantity: number }[];
   totalBudget?: number;
   currency?: 'VND';
   brief?: string;
@@ -65,6 +66,8 @@ export interface CampaignAutofillResponse extends CampaignPlanningFields {
 }
 
 export interface CampaignResponse extends CampaignPlanningFields {
+  embeddingStatus?: 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED';
+  embeddingContextId?: string | null;
   id: string;
   brandId: string;
   name: string;

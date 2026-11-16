@@ -18,6 +18,10 @@ interface CampaignMetricCardsProps {
   progressPercent: number;
   rawCampaign: CampaignResponse | null;
   participatingCreators: CampaignCreatorRow[];
+  confirmedCreatorCount?: number;
+  targetCreatorCount?: number;
+  shortlistCount?: number;
+  isOverTarget?: boolean;
   setActiveTab: (tab: CampaignDetailTabKey) => void;
 }
 
@@ -27,6 +31,10 @@ export const CampaignMetricCards: React.FC<CampaignMetricCardsProps> = ({
   progressPercent,
   rawCampaign,
   participatingCreators,
+  confirmedCreatorCount = 0,
+  targetCreatorCount = 1,
+  shortlistCount = 0,
+  isOverTarget = false,
   setActiveTab,
 }) => {
   return (
@@ -53,70 +61,50 @@ export const CampaignMetricCards: React.FC<CampaignMetricCardsProps> = ({
       {/* Card 2: Lượng người theo dõi mục tiêu */}
       <div className="cdetail-metric-card">
         <div className="cdetail-metric-top">
-          <span className="cdetail-metric-title">Người theo dõi mục tiêu</span>
+          <span className="cdetail-metric-title">Người theo dõi tối thiểu</span>
         </div>
         <div className="cdetail-metric-mid-row">
           <div className="cdetail-metric-value">
-            {rawCampaign?.followerMin ? `${(rawCampaign.followerMin / 1000).toFixed(0)}K+` : '50K+'}
+            {rawCampaign?.followerMin ? `${(rawCampaign.followerMin / 1000).toFixed(0)}K+` : 'Chưa thiết lập'}
           </div>
         </div>
         <div className="cdetail-metric-footer">
-          <span>Tệp khán giả chất lượng</span>
+          <span>{rawCampaign?.followerMax ? `Tối đa: ${(rawCampaign.followerMax / 1000).toFixed(0)}K` : 'Không giới hạn trần'}</span>
         </div>
       </div>
 
-      {/* Card 3: Tỷ lệ tương tác mục tiêu */}
+      {/* Card 3: Kênh Shortlist & Mô hình */}
       <div className="cdetail-metric-card">
         <div className="cdetail-metric-top">
-          <span className="cdetail-metric-title">Tỷ lệ tương tác mục tiêu</span>
+          <span className="cdetail-metric-title">Kênh trong Shortlist</span>
         </div>
         <div className="cdetail-metric-mid-row">
-          <div className="cdetail-metric-value">4.5% – 8.0%</div>
+          <div className="cdetail-metric-value">{shortlistCount} kênh</div>
         </div>
         <div className="cdetail-metric-footer">
-          <span>Tiêu chuẩn tương tác ngành</span>
+          <span>{rawCampaign?.creatorMode === 'MULTI' ? 'Mô hình: Đa Creator (MULTI)' : 'Mô hình: Đơn Creator (SINGLE)'}</span>
         </div>
       </div>
 
-      {/* Card 4: Nhà sáng tạo trong quy trình */}
+      {/* Card 4: Creator đã chốt / Mục tiêu */}
       <div
         className="cdetail-metric-card"
         style={{ cursor: 'pointer' }}
         onClick={() => setActiveTab('creators')}
       >
         <div className="cdetail-metric-top">
-          <span className="cdetail-metric-title">Nhà sáng tạo tham gia</span>
+          <span className="cdetail-metric-title">Creator đã chốt / Mục tiêu</span>
         </div>
         <div className="cdetail-metric-mid-row">
           <div className="cdetail-metric-value">
-            {participatingCreators.length} KOC
+            {confirmedCreatorCount} / {targetCreatorCount} Creator
           </div>
         </div>
         <div className="cdetail-metric-footer">
-          {participatingCreators.length > 0 ? (
-            <div className="cdetail-avatar-stack">
-              {participatingCreators.slice(0, 3).map((c, i) => {
-                const safeAvatar = (c.avatar && c.avatar.startsWith('http') && !c.avatar.includes('NaN'))
-                  ? c.avatar
-                  : VERIFIED_CREATOR_AVATARS[i % VERIFIED_CREATOR_AVATARS.length];
-                return (
-                  <img
-                    key={c.id || i}
-                    src={safeAvatar}
-                    alt={c.name}
-                    title={c.name}
-                    onError={(e) => {
-                      (e.currentTarget as HTMLElement).style.display = 'none';
-                    }}
-                  />
-                );
-              })}
-              {participatingCreators.length > 3 && (
-                <div className="avatar-more">+{participatingCreators.length - 3}</div>
-              )}
-            </div>
+          {isOverTarget ? (
+            <span style={{ color: '#D97706', fontWeight: 600 }}>⚠️ Vượt mục tiêu ({confirmedCreatorCount} &gt; {targetCreatorCount})</span>
           ) : (
-            <span style={{ fontSize: 12, color: '#64748B' }}>Chưa có KOC</span>
+            <span>{participatingCreators.length} hợp tác đã xác nhận</span>
           )}
         </div>
       </div>

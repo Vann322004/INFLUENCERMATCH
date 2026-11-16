@@ -12,7 +12,12 @@ const keepAliveAgent = new https.Agent({
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const crawlerTarget = env.CRAWLER_PROXY_TARGET || 'http://127.0.0.1:8000';
+  const portIndex = process.argv.indexOf('--port');
+  const requestedPort = process.argv.find(arg => arg.startsWith('--port='))?.split('=')[1]
+    || (portIndex >= 0 ? process.argv[portIndex + 1] : '5173');
+  const cachePort = /^\d+$/.test(requestedPort || '') ? requestedPort : '5173';
   return {
+  cacheDir: `node_modules/.vite_cache/dev-${cachePort}`,
   plugins: [react()],
   server: {
     proxy: {

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { rememberCampaign } from '../../../services/campaignContext';
 import { message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../../services/api/campaignService';
 import { getErrorMessage } from '../../../services/apiClient';
-import type { CampaignObjective, CampaignPlatform } from '../../../types/api/campaign.types';
+import type { CampaignObjective, CampaignPlatform, CampaignPlanningFields, CampaignResponse } from '../../../types/api/campaign.types';
 
 interface UseCreateCampaignFormProps {
   resolvedCampaignId: string | null;
@@ -19,7 +20,16 @@ export function useCreateCampaignForm({
   const navigate = useNavigate();
 
   // Wizard Step State (1: Thông tin chiến dịch, 2: Yêu cầu creator, 3: Chỉ số & ngân sách)
-  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [currentStep, setCurrentStep] = useState<number>(() => Math.max(1, Math.min(3, Number(new URLSearchParams(window.location.search).get('step')) || 1)));
+  const savedId = useRef(resolvedCampaignId);
+  const original = useRef<CampaignResponse | null>(null);
+  const draftRequest = useRef<Promise<any> | null>(null);
+  const saving = useRef(false);
+  const savedFollowerRange = useRef<{ min?: number; max?: number; tier: string; selection: string } | null>(null);
+  const [deliverables, setDeliverables] = useState<NonNullable<CampaignPlanningFields['deliverables']>>([]);
+  const [savedEndDate, setSavedEndDate] = useState('');
+  const [creatorFeeMin, setCreatorFeeMin] = useState<number>();
+  const [creatorFeeMax, setCreatorFeeMax] = useState<number>();
   const [isSavingDraft, setIsSavingDraft] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -27,6 +37,7 @@ export function useCreateCampaignForm({
   const [campaignStatus, setCampaignStatus] = useState<string>('DRAFT');
   const [campaignRevision, setCampaignRevision] = useState<number | null>(null);
   const [savedStartDate, setSavedStartDate] = useState<string>('');
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoadingCampaign, setIsLoadingCampaign] = useState<boolean>(false);
 
   // ================= Step 1 State =================
@@ -39,6 +50,7 @@ export function useCreateCampaignForm({
   const [isAiAutofilled, setIsAiAutofilled] = useState<boolean>(false);
 
   // ================= Step 2 State =================
+  const [creatorMode, setCreatorMode] = useState<'SINGLE' | 'MULTI'>('SINGLE');
   const [creatorQuantity, setCreatorQuantity] = useState<number>(1);
   const [creatorTier, setCreatorTier] = useState<string>('');
   const [minFollowers, setMinFollowers] = useState<string>('');
@@ -101,12 +113,23 @@ export function useCreateCampaignForm({
 
     let isMounted = true;
     const loadCampaignDetail = async () => {
-      setIsLoadingCampaign(true);
+      setIsLoadingCampaign(true); setLoadError(null);
+      setCampaignName(''); setProduct(''); setSelectedObjectives([]); setSelectedPlatforms([]); setSelectedAges([]); setSelectedGender(''); setFormLocation(''); setInterests(''); setCreatorBrief(''); setBudgetTotal(0); setCampaignDuration(''); setSavedStartDate(''); setCampaignRevision(null);
       try {
         const applyCampaignData = (camp: any) => {
           if (!camp) return;
           if (camp.status) setCampaignStatus(camp.status);
+          setDeliverables(camp.deliverables ?? []);
+          setCreatorFeeMin(camp.creatorFeeMin ?? undefined); setCreatorFeeMax(camp.creatorFeeMax ?? undefined);
+          setSavedEndDate(camp.endDate ?? '');
           if (camp.campaignRevision != null) setCampaignRevision(Number(camp.campaignRevision));
+          if (camp.creatorMode === 'SINGLE' || camp.creatorMode === 'MULTI') {
+            setCreatorMode(camp.creatorMode);
+          } else if (camp.targetCreatorCount && camp.targetCreatorCount >= 2) {
+            setCreatorMode('MULTI');
+          } else {
+            setCreatorMode('SINGLE');
+          }
           if (camp.targetCreatorCount) setCreatorQuantity(camp.targetCreatorCount);
           if (camp.startDate) setSavedStartDate(camp.startDate);
           if (camp.startDate && camp.endDate) {
@@ -132,7 +155,7 @@ export function useCreateCampaignForm({
           if (camp.platforms && Array.isArray(camp.platforms) && camp.platforms.length > 0) {
             const cleanP = camp.platforms
               .map((p: string) => String(p).toLowerCase())
-              .filter((p: string) => ['tiktok', 'instagram', 'facebook'].includes(p));
+              .filter((p: string) => ['tiktok', 'instagram', 'youtube'].includes(p));
             if (cleanP.length > 0) setSelectedPlatforms(cleanP);
           }
 
@@ -206,17 +229,17 @@ export function useCreateCampaignForm({
           }
         };
 
-        const passedCamp =
-          locationState?.campaign || locationState?.campaignData;
-        if (passedCamp) {
-          applyCampaignData(passedCamp);
-        }
-
         const remoteData = await campaignService.getCampaignById(resolvedCampaignId);
         if (isMounted && remoteData) {
+          original.current = remoteData;
           applyCampaignData(remoteData);
+          const min = remoteData.followerMin, max = remoteData.followerMax;
+          const tier = min != null && min >= 500000 ? 'mega' : min != null && min >= 100000 ? 'macro' : min != null && min >= 50000 ? 'micro' : min != null && min >= 10000 ? 'nano' : '';
+          const selection = ({ mega: '500k', macro: '100k', micro: '50k', nano: '10k' } as Record<string, string>)[tier] || '';
+          setCreatorTier(tier); setMinFollowers(selection); savedFollowerRange.current = { min, max, tier, selection };
         }
       } catch (err) {
+        if (isMounted) setLoadError(getErrorMessage(err));
         console.warn('Lỗi khi tải thông tin chiến dịch để chỉnh sửa:', err);
       } finally {
         if (isMounted) setIsLoadingCampaign(false);
@@ -230,16 +253,19 @@ export function useCreateCampaignForm({
   }, [isEditMode, resolvedCampaignId, locationState]);
 
   const toggleObjective = (id: string) => {
+    if (isEditMode && campaignStatus !== 'DRAFT') return;
     setSelectedObjectives([id]);
   };
 
   const toggleAge = (age: string) => {
+    if (isEditMode && campaignStatus !== 'DRAFT') return;
     setSelectedAges((prev) =>
       prev.includes(age) ? prev.filter((a) => a !== age) : [...prev, age]
     );
   };
 
   const togglePlatform = (p: string) => {
+    if (isEditMode && campaignStatus !== 'DRAFT') return;
     setSelectedPlatforms((prev) =>
       prev.includes(p) ? (prev.length > 1 ? prev.filter((x) => x !== p) : prev) : [...prev, p]
     );
@@ -263,131 +289,38 @@ export function useCreateCampaignForm({
   };
 
   const handleAiSuggest = async (overridePrompt?: string) => {
-    const promptToUse = (typeof overridePrompt === 'string' ? overridePrompt : aiPrompt).trim();
-    if (!promptToUse || promptToUse.length < 10) {
-      message.warning('Vui lòng nhập mô tả mục tiêu chi tiết hơn (tối thiểu 10 ký tự) để AI gợi ý!');
-      return;
-    }
+    if (isAiLoading || isLoadingCampaign || loadError || (isEditMode && campaignStatus !== 'DRAFT')) return;
+    const prompt = (typeof overridePrompt === 'string' ? overridePrompt : aiPrompt).trim();
+    if (prompt.length < 10) { message.warning('Nhập mô tả tối thiểu 10 ký tự.'); return; }
     setIsAiLoading(true);
     try {
-      message.loading({ content: 'Trợ lý AI đang phân tích và tạo cấu trúc brief chiến dịch...', key: 'ai_suggest' });
-      const result = await campaignService.autofillCampaign(promptToUse);
-      if (result) {
-        if (result.name || result.campaignName) setCampaignName(result.name || result.campaignName || '');
-        if (result.productService) setProduct(result.productService);
-
-        if (result.objective) {
-          const objLower = String(result.objective).toLowerCase();
-          if (objLower.includes('conversion') || objLower.includes('sales')) setSelectedObjectives(['sales']);
-          else if (objLower.includes('engagement')) setSelectedObjectives(['engagement']);
-          else if (objLower.includes('traffic')) setSelectedObjectives(['traffic']);
-          else setSelectedObjectives(['awareness']);
-        } else {
-          setSelectedObjectives(['awareness']);
-        }
-
-        const platformSource = result.platforms || result.preferredPlatforms || [];
-        if (Array.isArray(platformSource) && platformSource.length > 0) {
-          const cleanP = platformSource
-            .map((p) => p.toLowerCase())
-            .filter((p) => ['tiktok', 'instagram', 'facebook'].includes(p));
-          if (cleanP.length > 0) setSelectedPlatforms(cleanP);
-        } else {
-          setSelectedPlatforms(['tiktok', 'instagram']);
-        }
-
-        if (result.targetAudiences && Array.isArray(result.targetAudiences) && result.targetAudiences.length > 0) {
-          setSelectedAges(result.targetAudiences);
-        } else {
-          setSelectedAges(['18-24']);
-        }
-
-        if (result.niches && Array.isArray(result.niches) && result.niches.length > 0) {
-          setInterests(result.niches.join(', '));
-        } else if (result.niche) {
-          setInterests(result.niche);
-        }
-
-        if (result.locations && Array.isArray(result.locations) && result.locations.length > 0) {
-          setFormLocation(result.locations[0]);
-        } else {
-          setFormLocation('nationwide');
-        }
-        setSelectedGender('all');
-
-        if (result.targetCreatorCount) {
-          setCreatorQuantity(result.targetCreatorCount);
-        } else if (result.creatorQuantity) {
-          setCreatorQuantity(result.creatorQuantity);
-        } else {
-          setCreatorQuantity(1);
-        }
-
-        if (result.followerMin || result.followerMax) {
-          const fMin = result.followerMin ? Number(result.followerMin) : undefined;
-          if (fMin && fMin >= 500000) {
-            setCreatorTier('mega');
-            setMinFollowers('500k');
-          } else if (fMin && fMin >= 100000) {
-            setCreatorTier('macro');
-            setMinFollowers('100k');
-          } else if (fMin && fMin >= 50000) {
-            setCreatorTier('micro');
-            setMinFollowers('50k');
-          } else if (fMin && fMin >= 10000) {
-            setCreatorTier('nano');
-            setMinFollowers('10k');
-          }
-        } else {
-          setCreatorTier('micro');
-          setMinFollowers('50k');
-        }
-
-        if (result.totalBudget != null) {
-          setBudgetTotal(Number(result.totalBudget));
-        } else if (result.budgetMax) {
-          setBudgetTotal(result.budgetMax);
-        } else if (result.budgetMin) {
-          setBudgetTotal(result.budgetMin);
-        } else {
-          setBudgetTotal(18000000);
-        }
-
-        if (result.campaignDuration) {
-          setCampaignDuration(result.campaignDuration);
-        } else {
-          setCampaignDuration('4_weeks');
-        }
-
-        if (result.brief) {
-          setCreatorBrief(result.brief);
-        } else if (result.creatorBrief) {
-          setCreatorBrief(result.creatorBrief);
-        } else if (result.keyMessage || result.dosAndDonts || (result as any).contentType) {
-          const parts: string[] = [];
-          if (result.keyMessage) parts.push(`Thông điệp chính:\n${result.keyMessage}`);
-          if ((result as any).contentType) parts.push(`Định dạng nội dung:\n${(result as any).contentType}`);
-          if (result.dosAndDonts) parts.push(result.dosAndDonts);
-          setCreatorBrief(parts.join('\n\n'));
-        } else {
-          setCreatorBrief(`Thông điệp chính: Quảng bá ${result.productService || product || 'sản phẩm'} với góc nhìn trải nghiệm thực tế, nâng cao nhận diện và thúc đẩy chuyển đổi.\n\nDo's:\n- Quay video cận cảnh chất lượng, trải nghiệm sử dụng thực tế.\n- Kèm hashtag chiến dịch và đường link mua hàng.\n\nDon'ts:\n- Không phóng đại hoặc quảng cáo sai công dụng.\n- Tránh so sánh ác ý hoặc nhắc tên nhãn hàng đối thủ.`);
-        }
-
-        if (result.aiExplanation) {
-          setAiExplanation(result.aiExplanation);
-        } else {
-          setAiExplanation(`Trợ lý AI InfluencerMatch đã phân tích mô tả của bạn và tự động điền các thông tin gợi ý về mục tiêu, nền tảng, đối tượng khán giả, ngân sách và cấu trúc Brief. Hãy rà soát và điều chỉnh các trường trước khi tiến hành lưu chiến dịch.`);
-        }
-
-        setIsAiAutofilled(true);
-        message.success({ content: 'Trợ lý AI đã tự động điền cấu trúc Brief chiến dịch thành công!', key: 'ai_suggest', duration: 3 });
+      const result = await campaignService.autofillCampaign(prompt);
+      if (result.name != null) setCampaignName(result.name);
+      if (result.productService != null) setProduct(result.productService);
+      if (result.objective) setSelectedObjectives([({ CONVERSION: 'sales', ENGAGEMENT: 'engagement', TRAFFIC: 'traffic', AWARENESS: 'awareness' } as Record<string, string>)[result.objective]]);
+      if (result.platforms) setSelectedPlatforms(result.platforms.map(value => value.toLowerCase()).filter(value => ['tiktok', 'instagram', 'youtube'].includes(value)));
+      if (result.targetAudiences) { setSelectedAges(result.targetAudiences.filter(value => ['13-17','18-24','25-34','35-44','45+'].includes(value))); }
+      if (result.niches) setInterests(result.niches.join(', '));
+      if (result.locations) setFormLocation(result.locations[0] ?? '');
+      if (result.targetCreatorCount != null) setCreatorQuantity(result.targetCreatorCount);
+      if (result.followerMin != null || result.followerMax != null) {
+        const min = result.followerMin, max = result.followerMax;
+        const tier = min != null && min >= 500000 ? 'mega' : min != null && min >= 100000 ? 'macro' : min != null && min >= 50000 ? 'micro' : min != null && min >= 10000 ? 'nano' : '';
+        const selection = ({ mega: '500k', macro: '100k', micro: '50k', nano: '10k' } as Record<string, string>)[tier] || '';
+        setCreatorTier(tier); setMinFollowers(selection); savedFollowerRange.current = { min, max, tier, selection };
       }
-    } catch (error) {
-      console.error('Error autofilling campaign with AI:', error);
-      message.error({ content: getErrorMessage(error) || 'Không thể kết nối đến Trợ lý AI lúc này.', key: 'ai_suggest' });
-    } finally {
-      setIsAiLoading(false);
-    }
+      const budget = result.totalBudget ?? result.budgetMax ?? result.budgetMin;
+      if (budget != null) setBudgetTotal(budget);
+      if (result.startDate) setSavedStartDate(result.startDate);
+      if (result.endDate) { setSavedEndDate(result.endDate); setCampaignDuration(''); }
+      if (result.brief != null) setCreatorBrief(result.brief);
+      if (result.deliverables) setDeliverables(result.deliverables);
+      if (result.creatorFeeMin != null) setCreatorFeeMin(result.creatorFeeMin);
+      if (result.creatorFeeMax != null) setCreatorFeeMax(result.creatorFeeMax);
+      setAiExplanation(result.aiExplanation ?? null); setIsAiAutofilled(true);
+      message.info('Đã nhận gợi ý. Rà soát nội dung và lưu bản nháp để ghi nhận thay đổi.');
+    } catch (error) { message.error(getErrorMessage(error)); }
+    finally { setIsAiLoading(false); }
   };
 
   const buildCampaignPayload = (): any => {
@@ -400,11 +333,11 @@ export function useCreateCampaignForm({
     const platformMap: Record<string, CampaignPlatform> = {
       tiktok: 'TIKTOK',
       instagram: 'INSTAGRAM',
-      facebook: 'FACEBOOK',
+      youtube: 'YOUTUBE',
     };
     const mappedPlatforms = selectedPlatforms
       .map((p) => platformMap[p.toLowerCase()])
-      .filter((p) => p === 'TIKTOK' || p === 'INSTAGRAM') as CampaignPlatform[];
+      .filter(Boolean) as CampaignPlatform[];
 
     const minFollowersMap: Record<string, number> = {
       '10k': 10000,
@@ -414,8 +347,8 @@ export function useCreateCampaignForm({
     };
     const parsedMinFollowers = minFollowers ? minFollowersMap[minFollowers.toLowerCase()] : undefined;
 
-    let finalFollowerMin: number = 50000;
-    let finalFollowerMax: number | undefined = 200000;
+    let finalFollowerMin: number | undefined;
+    let finalFollowerMax: number | undefined;
 
     if (minFollowers === '500k' || creatorTier === 'mega') {
       finalFollowerMin = 500000;
@@ -434,13 +367,15 @@ export function useCreateCampaignForm({
       finalFollowerMax = parsedMinFollowers >= 500000 ? undefined : parsedMinFollowers * 5;
     }
 
-    const primaryObj = selectedObjectives[0] || 'awareness';
+    if (savedFollowerRange.current && savedFollowerRange.current.tier === creatorTier && savedFollowerRange.current.selection === minFollowers) { finalFollowerMin = savedFollowerRange.current.min; finalFollowerMax = savedFollowerRange.current.max; }
+    const primaryObj = selectedObjectives[0];
     const niches = interests
       ? interests.split(',').map((s) => s.trim()).filter(Boolean)
-      : ['Làm đẹp & Mỹ phẩm', 'Chăm sóc da'];
-    const locations = formLocation && formLocation !== 'nationwide' ? [formLocation] : ['Toàn quốc'];
+      : [];
+    const locations = original.current?.locations?.[0] === formLocation ? original.current.locations : formLocation ? [formLocation === 'nationwide' ? 'Toàn quốc' : formLocation] : [];
 
-    const audiences = [...selectedAges];
+    const extraAudiences = original.current?.targetAudiences?.filter(value => !['13-17','18-24','25-34','35-44','45+'].includes(value) && !/^(Khán giả:\s*)?(Nữ|Nam|Female|Male|Tất cả|All)$/i.test(value)) ?? [];
+    const audiences = [...extraAudiences, ...selectedAges];
     if (selectedGender === 'female') audiences.push('Khán giả: Nữ');
     else if (selectedGender === 'male') audiences.push('Khán giả: Nam');
 
@@ -450,141 +385,51 @@ export function useCreateCampaignForm({
 
     return {
       name: campaignName.trim(),
-      productService: product.trim() || 'Sản phẩm mới',
+      productService: product.trim() || undefined,
       brief: creatorBrief.trim() || undefined,
-      objective: objectiveMap[primaryObj] || 'AWARENESS',
-      platforms: mappedPlatforms.length > 0 ? mappedPlatforms : ['TIKTOK', 'INSTAGRAM'],
+      objective: objectiveMap[primaryObj],
+      platforms: mappedPlatforms,
       startDate: today,
-      endDate: endDefault,
+      endDate: savedEndDate || (campaignDuration ? endDefault : undefined),
+      deliverables, creatorFeeMin, creatorFeeMax, contentType: original.current?.contentType,
       totalBudget: budgetTotal > 0 ? budgetTotal : undefined,
       currency: 'VND',
-      targetCreatorCount: creatorQuantity > 0 ? creatorQuantity : undefined,
-      creatorMode: creatorQuantity > 0 ? (creatorQuantity === 1 ? 'SINGLE' : 'MULTI') : undefined,
+      targetCreatorCount: creatorMode === 'SINGLE' ? 1 : Math.max(2, creatorQuantity),
+      creatorMode: creatorMode,
       followerMin: finalFollowerMin,
       followerMax: finalFollowerMax,
       niches,
       locations,
-      targetAudiences: audiences.length > 0 ? audiences : ['18-24', '25-34'],
+      targetAudiences: audiences,
     };
   };
 
   const isProductLocked = isEditMode && campaignStatus !== 'DRAFT';
-  const isPlatformLocked = isEditMode && (campaignStatus === 'ACTIVE' || campaignStatus === 'COMPLETED');
+  const isPlatformLocked = isEditMode && campaignStatus !== 'DRAFT';
 
-  const handleUpdateCampaign = async () => {
-    if (!campaignName.trim()) {
-      message.warning('Vui lòng nhập tên chiến dịch!');
-      return;
-    }
-    if (!product.trim()) {
-      message.warning('Vui lòng nhập sản phẩm / dịch vụ quảng bá!');
-      return;
-    }
-    if (!interests.trim()) {
-      message.warning('Vui lòng nhập ngành hàng & sở thích liên quan!');
-      return;
-    }
-    if (selectedObjectives.length === 0) {
-      message.warning('Vui lòng chọn ít nhất 1 mục tiêu chiến dịch!');
-      return;
-    }
-    if (selectedPlatforms.length === 0) {
-      message.warning('Vui lòng chọn ít nhất 1 nền tảng quảng bá!');
-      return;
-    }
-    if (!creatorQuantity || creatorQuantity < 1) {
-      message.warning('Vui lòng nhập số lượng Creator cần tuyển (tối thiểu 1)!');
-      return;
-    }
-    if (!minFollowers) {
-      message.warning('Vui lòng chọn lượng Follower tối thiểu!');
-      return;
-    }
-    if (!formLocation) {
-      message.warning('Vui lòng chọn khu vực / tỉnh thành ưu tiên!');
-      return;
-    }
-    if (selectedAges.length === 0) {
-      message.warning('Vui lòng chọn ít nhất 1 nhóm độ tuổi người theo dõi mục tiêu!');
-      return;
-    }
-    if (!creatorBrief.trim()) {
-      message.warning('Vui lòng nhập tóm tắt yêu cầu sáng tạo (Creator Brief)!');
-      return;
-    }
-    if (!budgetTotal || budgetTotal <= 0) {
-      message.warning('Vui lòng nhập tổng ngân sách hợp lệ cho chiến dịch!');
-      return;
-    }
-    if (!campaignDuration) {
-      message.warning('Vui lòng chọn thời lượng chiến dịch!');
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      message.loading({ content: 'Đang lưu cập nhật thông tin chiến dịch...', key: 'update_camp' });
-      const payload = buildCampaignPayload();
-
-      const updated = await campaignService.updateCampaign(resolvedCampaignId!, payload, campaignRevision);
-      if (updated?.campaignRevision != null) {
-        setCampaignRevision(updated.campaignRevision);
-      }
-
-      try {
-        const cachedRaw = sessionStorage.getItem('current_campaign_data');
-        if (cachedRaw) {
-          const parsed = JSON.parse(cachedRaw);
-          sessionStorage.setItem(
-            'current_campaign_data',
-            JSON.stringify({
-              ...parsed,
-              ...payload,
-              id: resolvedCampaignId,
-            })
-          );
-        }
-      } catch {}
-
-      message.success({ content: 'Cập nhật thông tin chiến dịch thành công!', key: 'update_camp', duration: 2 });
-      navigate(`/campaigns/${resolvedCampaignId}`);
-    } catch (err) {
-      console.error('Lỗi cập nhật chiến dịch:', err);
-      message.error({ content: getErrorMessage(err, 'Không thể cập nhật chiến dịch lúc này.'), key: 'update_camp' });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const writeDraft = async () => {
+    if (loadError || isLoadingCampaign) throw new Error('Please reload campaign data before saving.');
+    if (campaignStatus !== 'DRAFT') throw new Error('Chỉ có thể sửa bản nháp.');
+    if (!campaignName.trim()) throw new Error('Vui lòng nhập tên chiến dịch.');
+    const payload = buildCampaignPayload();
+    if (payload.deliverables.some((item: any) => !item.contentType.trim() || !item.platform || !Number.isInteger(item.quantity) || item.quantity < 1 || !payload.platforms.includes(item.platform))) throw new Error('Kiểm tra nền tảng, loại nội dung và số lượng ấn phẩm.');
+    const result = savedId.current ? await campaignService.updateCampaign(savedId.current, payload, campaignRevision) : await campaignService.createCampaign(payload);
+    if (!result?.id) throw new Error('Máy chủ chưa xác nhận lưu chiến dịch.');
+    rememberCampaign(result.id); savedId.current = result.id; setCampaignRevision(result.campaignRevision ?? null); setCampaignStatus(result.status);
+    return result;
   };
-
-  const handleSaveDraft = async () => {
-    if (!campaignName.trim()) {
-      message.warning('Vui lòng nhập tên chiến dịch trước khi lưu bản nháp!');
-      return;
-    }
-
-    setIsSavingDraft(true);
-    try {
-      message.loading({ content: 'Đang lưu chiến dịch vào danh sách bản nháp...', key: 'save_draft' });
-      const payload = buildCampaignPayload();
-
-      const createdCampaign = await campaignService.createCampaign(payload);
-      if (!createdCampaign?.id) throw new Error('Server did not return a saved campaign ID.');
-      const targetCampaignId = createdCampaign.id;
-      try {
-        localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', targetCampaignId);
-      } catch {}
-
-      message.success({ content: 'Chiến dịch đã được lưu bản nháp thành công!', key: 'save_draft', duration: 2 });
-      navigate('/campaign-management?tab=draft');
-    } catch (err) {
-      console.error('Lỗi khi lưu bản nháp:', err);
-      message.error({ content: getErrorMessage(err, 'Không thể lưu bản nháp lúc này.'), key: 'save_draft' });
-    } finally {
-      setIsSavingDraft(false);
-    }
+  const persistDraft = () => { if (!draftRequest.current) { setIsSavingDraft(true); draftRequest.current = writeDraft().finally(() => { draftRequest.current = null; setIsSavingDraft(false); }); } return draftRequest.current; };
+  const saveDraft = async () => {
+    if (saving.current) return; saving.current = true; setIsSavingDraft(true);
+    try { const result = await persistDraft(); message.success('Đã lưu bản nháp.'); navigate('/campaigns/' + result.id + '/edit?step=' + currentStep, { replace: true }); }
+    catch (error) { message.error(getErrorMessage(error, 'Không thể lưu bản nháp.')); }
+    finally { saving.current = false; setIsSavingDraft(false); }
   };
+  const handleUpdateCampaign = saveDraft;
+  const handleSaveDraft = saveDraft;
 
   const handleNextStep = async () => {
+    if (isLoadingCampaign || loadError || draftRequest.current || saving.current) return;
     if (currentStep === 1) {
       if (!campaignName.trim()) {
         message.warning('Vui lòng nhập tên chiến dịch!');
@@ -594,47 +439,36 @@ export function useCreateCampaignForm({
         message.warning('Vui lòng nhập sản phẩm / dịch vụ quảng bá!');
         return;
       }
-      if (!interests.trim()) {
-        message.warning('Vui lòng nhập ngành hàng & sở thích liên quan!');
-        return;
-      }
+
       if (selectedObjectives.length === 0) {
         message.warning('Vui lòng chọn ít nhất 1 mục tiêu chiến dịch!');
         return;
       }
-      setCurrentStep(2);
+      try { const result = await persistDraft(); navigate('/campaigns/' + result.id + '/edit?step=2', { replace: true }); setCurrentStep(2); } catch (error) { message.error(getErrorMessage(error, 'Không thể lưu bước này.')); return; }
       scrollToTop();
       message.success('Đã chuyển sang Bước 2: Yêu cầu creator!');
     } else if (currentStep === 2) {
       if (selectedPlatforms.length === 0) {
-        message.warning('Vui lòng chọn ít nhất 1 nền tảng quảng bá (TikTok, Instagram hoặc Facebook)!');
+        message.warning('Vui lòng chọn ít nhất 1 nền tảng quảng bá (TikTok, Instagram hoặc YouTube)!');
         return;
       }
       if (!creatorQuantity || creatorQuantity < 1) {
         message.warning('Vui lòng nhập số lượng Creator cần tuyển (tối thiểu 1)!');
         return;
       }
-      if (!minFollowers) {
-        message.warning('Vui lòng chọn lượng Follower tối thiểu!');
+      if (creatorMode === 'MULTI' && creatorQuantity < 2) {
+        message.warning('Chiến dịch Đa Creator (MULTI) yêu cầu tuyển tối thiểu 2 Creator!');
         return;
       }
-      if (!formLocation) {
-        message.warning('Vui lòng chọn khu vực / tỉnh thành ưu tiên!');
-        return;
-      }
-      if (selectedAges.length === 0) {
-        message.warning('Vui lòng chọn ít nhất 1 nhóm độ tuổi người theo dõi mục tiêu!');
-        return;
-      }
-      if (!selectedGender) {
-        message.warning('Vui lòng chọn giới tính khán giả!');
-        return;
-      }
+
+
+
+
       if (!creatorBrief.trim()) {
         message.warning('Vui lòng nhập tóm tắt yêu cầu sáng tạo (Creator Brief)!');
         return;
       }
-      setCurrentStep(3);
+      try { const result = await persistDraft(); navigate('/campaigns/' + result.id + '/edit?step=3', { replace: true }); setCurrentStep(3); } catch (error) { message.error(getErrorMessage(error, 'Không thể lưu bước này.')); return; }
       scrollToTop();
       message.success('Đã chuyển sang Bước 3: Chỉ số & ngân sách!');
     } else if (currentStep === 3) {
@@ -642,61 +476,28 @@ export function useCreateCampaignForm({
         message.warning('Vui lòng nhập tổng ngân sách hợp lệ cho chiến dịch!');
         return;
       }
-      if (!campaignDuration) {
+      if (!campaignDuration && !savedEndDate) {
         message.warning('Vui lòng chọn thời lượng chiến dịch!');
         return;
       }
 
-      setIsSubmitting(true);
+      if (!deliverables.length) { message.warning('Thêm ít nhất một ấn phẩm ở bước 2.'); return; }
+      if (saving.current) return; saving.current = true; setIsSubmitting(true);
       try {
-        message.loading({ content: 'Đang khởi tạo chiến dịch & chuẩn bị đề xuất...', key: 'create_camp' });
-        const payload = buildCampaignPayload();
-
-        const createdCampaign = await campaignService.createCampaign(payload);
-        if (!createdCampaign?.id) throw new Error('Server did not return a saved campaign ID.');
-        const targetCampaignId = createdCampaign.id;
-
-        try {
-          localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', targetCampaignId);
-          localStorage.setItem('IM_MATCHED_CAMPAIGN', JSON.stringify({
-            targetCreatorCount: creatorQuantity,
-            id: targetCampaignId,
-            name: createdCampaign?.name || campaignName.trim() || 'Chiến dịch mới',
-            budget: budgetTotal ? `${(budgetTotal / 1_000_000).toFixed(0)} Triệu VND` : '25.0M VND',
-            targetAudience: payload.targetAudiences?.join(', '),
-            category: payload.niches?.[0] || 'Làm đẹp & Mỹ phẩm',
-            channels: payload.platforms?.map((p: string) => p.toLowerCase()) || ['tiktok'],
-            status: createdCampaign.status || 'DRAFT',
-            requirements: creatorBrief || product,
-            followerMin: payload.followerMin,
-            followerMax: payload.followerMax,
-          }));
-        } catch (storageErr) {
-          console.warn('Cannot write to localStorage:', storageErr);
-        }
-
-        message.success({ content: 'Chiến dịch đã khởi tạo thành công! Đang kích hoạt Trợ lý Đề xuất Creator...', key: 'create_camp', duration: 2 });
-        navigate('/creators?autoRun=true', {
-          state: {
-            campaignId: targetCampaignId,
-            createdCampaign: {
-              ...(createdCampaign || {}),
-              followerMin: payload.followerMin,
-              followerMax: payload.followerMax,
-            },
-          },
-        });
-      } catch (err) {
-        message.error({ content: getErrorMessage(err, 'Không thể tạo chiến dịch.'), key: 'create_camp' });
-      } finally {
-        setIsSubmitting(false);
-      }
+        const saved = await persistDraft();
+        const ready = await campaignService.updateStatus(saved.id, 'READY_FOR_DISCOVERY', saved.campaignRevision);
+        setCampaignStatus(ready.status); setCampaignRevision(ready.campaignRevision ?? null);
+        message.success('Đã chuyển chiến dịch sang sẵn sàng khám phá.');
+        navigate('/creators?campaignId=' + saved.id);
+      } catch (error) { message.error(getErrorMessage(error, 'Không thể chuẩn bị chiến dịch. Vui lòng kiểm tra các trường bắt buộc.')); }
+      finally { saving.current = false; setIsSubmitting(false); }
     }
   };
 
   const handlePrevStep = () => {
     if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1);
+      setCurrentStep(currentStep - 1);
+      if (savedId.current) navigate('/campaigns/' + savedId.current + '/edit?step=' + (currentStep - 1), { replace: true });
       scrollToTop();
     }
   };
@@ -704,6 +505,7 @@ export function useCreateCampaignForm({
   return {
     currentStep,
     setCurrentStep,
+    loadError, deliverables, setDeliverables, savedEndDate, setSavedEndDate, setSavedStartDate, creatorFeeMin, setCreatorFeeMin, creatorFeeMax, setCreatorFeeMax,
     isSavingDraft,
     isSubmitting,
     campaignStatus,
@@ -722,6 +524,8 @@ export function useCreateCampaignForm({
     aiExplanation,
     setAiExplanation,
     isAiAutofilled,
+    creatorMode,
+    setCreatorMode,
     creatorQuantity,
     setCreatorQuantity,
     creatorTier,
@@ -743,7 +547,7 @@ export function useCreateCampaignForm({
     budgetTotal,
     setBudgetTotal,
     campaignDuration,
-    setCampaignDuration,
+    setCampaignDuration: (value: string) => { setCampaignDuration(value); setSavedEndDate(''); },
     provinceOptions,
     loadingProvinces,
     isProductLocked,

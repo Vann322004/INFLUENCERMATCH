@@ -29,6 +29,9 @@ export interface CreatorVectorSearchItem {
 }
 
 export interface CreatorDetail {
+  estimatedFeeMin?: number | null;
+  estimatedFeeMax?: number | null;
+  actualFee?: number | null;
   id: string;
   platform: string;
   externalId?: string;

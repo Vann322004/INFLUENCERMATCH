@@ -1,3 +1,4 @@
+import { rememberCampaign } from '../../services/campaignContext';
 import './AddToShortlistModal.css';
 import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import { Modal, Form, Select, Input, Button, message, Alert, Avatar, Radio } from 'antd';
@@ -61,11 +62,9 @@ export default function AddToShortlistModal({
           }));
           setCampaignOptions(opts);
 
-          // Chọn defaultCampaignId nếu có, hoặc chọn chiến dịch đầu tiên
+          // A missing/unauthorized context requires an explicit selection.
           const selectedId = (defaultCampaignId && opts.some((o) => o.value === defaultCampaignId))
             ? defaultCampaignId
-            : opts.length > 0
-            ? opts[0].value
             : undefined;
 
           form.setFieldsValue({ campaignId: selectedId, priority: 'HIGH' });
@@ -106,9 +105,7 @@ export default function AddToShortlistModal({
       if (scope() !== active) return;
 
       // Đồng bộ đồng nhất tất cả các key lưu trữ giữa Discovery và Shortlist
-      sessionStorage.setItem('current_campaign_id', values.campaignId);
-      localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', values.campaignId);
-      localStorage.setItem('last_active_campaign_id', values.campaignId);
+      rememberCampaign(values.campaignId);
 
       // Kích hoạt custom event để các trang khác đang mở tự động cập nhật
       window.dispatchEvent(new CustomEvent('im_shortlist_updated', {
@@ -123,8 +120,7 @@ export default function AddToShortlistModal({
             <a
               style={{ fontWeight: 700, marginLeft: 8, color: '#4F46E5', textDecoration: 'underline' }}
               onClick={() => {
-                sessionStorage.setItem('current_campaign_id', values.campaignId);
-                localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', values.campaignId);
+                rememberCampaign(values.campaignId);
                 navigate('/creators/shortlist', { state: { campaignId: values.campaignId } });
               }}
             >
@@ -140,7 +136,7 @@ export default function AddToShortlistModal({
     } catch (err: any) {
       if (scope() !== active) return;
       if (err?.errorFields) return; // Form validation error
-      message.error(err?.response?.data?.message || 'Không thể thêm vào shortlist. Vui lòng thử lại!');
+      message.error('Không thể lưu kênh vào danh sách. Vui lòng thử lại.');
     } finally {
       if (scope() === active) setSubmitting(false);
     }

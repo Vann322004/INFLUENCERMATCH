@@ -84,9 +84,7 @@ export const CreateCampaignStep3: React.FC<CreateCampaignStep3Props> = ({
       <div className="ccreate-sub-section">
         <div className="ccreate-sub-title">
           <span>Tóm tắt tổng quan chiến dịch</span>
-          <span style={{ fontSize: 12, color: '#10B981', fontWeight: 600 }}>
-            ✓ Sẵn sàng khởi chạy
-          </span>
+
         </div>
 
         <div className="ccreate-overview-card">
@@ -97,7 +95,7 @@ export const CreateCampaignStep3: React.FC<CreateCampaignStep3Props> = ({
           <div className="ccreate-overview-item">
             <span className="ccreate-overview-item-label">Ngân sách & Thời lượng</span>
             <span className="ccreate-overview-item-val" style={{ color: '#4F46E5' }}>
-              {(budgetTotal / 1000000).toFixed(1)} Triệu VNĐ • {campaignDuration === '2_weeks' ? '2 tuần' : campaignDuration === '4_weeks' ? '4 tuần' : '8 tuần'}
+              {(budgetTotal / 1000000).toFixed(1)} Triệu VNĐ • {campaignDuration === '2_weeks' ? '2 tuần' : campaignDuration === '4_weeks' ? '4 tuần' : campaignDuration === '8_weeks' ? '8 tuần' : 'Theo ngày đã chọn'}
             </span>
           </div>
           <div className="ccreate-overview-item">
@@ -109,7 +107,7 @@ export const CreateCampaignStep3: React.FC<CreateCampaignStep3Props> = ({
           <div className="ccreate-overview-item">
             <span className="ccreate-overview-item-label">Khán giả & Khu vực</span>
             <span className="ccreate-overview-item-val">
-              {selectedAges.join(', ')} • {selectedGender === 'all' ? 'Tất cả' : selectedGender === 'female' ? 'Nữ' : 'Nam'} • {locationState}
+              {selectedAges.join(', ')} • {selectedGender === 'all' ? 'Tất cả' : selectedGender === 'female' ? 'Nữ' : selectedGender === 'male' ? 'Nam' : 'Chưa chọn'} • {locationState}
             </span>
           </div>
         </div>

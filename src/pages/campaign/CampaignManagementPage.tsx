@@ -1,3 +1,4 @@
+import { activeCampaignId, rememberCampaign } from '../../services/campaignContext';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Button,
@@ -90,29 +91,10 @@ export default function CampaignManagementPage() {
   const isUuid = (val?: string) =>
     !val || /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(val);
 
-  // Ẩn hoàn toàn chuỗi UUID trên thanh URL để URL luôn gọn gàng (/creators/recommendations hoặc /campaign-management?tab=recommendation)
-  useEffect(() => {
-    const rawCampId = id || searchParams.get('campaignId');
-    if (rawCampId) {
-      sessionStorage.setItem('current_campaign_id', rawCampId);
-      localStorage.setItem('last_active_campaign_id', rawCampId);
-    }
-
-    if (id || searchParams.has('campaignId')) {
-      if (location.pathname.includes('/creators/recommendations')) {
-        window.history.replaceState({}, '', '/creators/recommendations');
-        navigate('/creators/recommendations', { replace: true });
-      } else {
-        const tabParam =
-          searchParams.get('tab') ||
-          (location.pathname.includes('recommendation') ? 'recommendation' : activeViewTab);
-        const cleanPath = `/campaign-management?tab=${tabParam}`;
-        window.history.replaceState({}, '', cleanPath);
-        navigate(cleanPath, { replace: true });
-      }
-    }
-  }, [id, searchParams, location.pathname, activeViewTab, navigate]);
-
+  const campaignIdParam = searchParams.get('campaignId');
+  const selectedIdsParam = searchParams.get('creatorIds') || '';
+  const selectedIdsForRun = useMemo(() => selectedIdsParam ? selectedIdsParam.split(',') : [], [selectedIdsParam]);
+  const invalidSelection = selectedIdsForRun.length > 100 || new Set(selectedIdsForRun).size !== selectedIdsForRun.length || selectedIdsForRun.some(value => !/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(value));
   // Đồng bộ tab từ searchParams
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -135,19 +117,7 @@ export default function CampaignManagementPage() {
           setAvailableCampaigns(allCamps);
         }
 
-        let currentCampId =
-          id ||
-          searchParams.get('campaignId') ||
-          sessionStorage.getItem('current_campaign_id') ||
-          localStorage.getItem('last_active_campaign_id') ||
-          undefined;
-
-        if (!currentCampId || !allCamps.some((c) => c.id === currentCampId)) {
-          if (allCamps.length > 0) {
-            currentCampId = allCamps[0].id;
-          }
-        }
-
+        const currentCampId = id || campaignIdParam || activeCampaignId() || undefined;
         if (currentCampId) {
           const [campDetail, rels, sList] = await Promise.all([
             campaignService.getCampaignById(currentCampId).catch(() => null),
@@ -195,7 +165,7 @@ export default function CampaignManagementPage() {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, campaignIdParam]);
 
   // Filter and sort creators based on platform, search, sort and minimum score
   const filteredCreators = useMemo(() => {
@@ -461,10 +431,16 @@ export default function CampaignManagementPage() {
 
       {activeViewTab === 'recommendation' ? (
         <AiRecommendationTab
+          key={campaign?.id}
           campaign={campaign}
+          initialCandidateSource="SHORTLIST"
+          initialSelectedCreatorIds={selectedIdsForRun}
+          invalidSelection={invalidSelection}
+          onCampaignUpdated={setCampaign}
           availableCampaigns={availableCampaigns}
           onSelectCampaign={(newCampId) => {
-            sessionStorage.setItem('current_campaign_id', newCampId);
+            rememberCampaign(newCampId);
+            const next = new URLSearchParams(searchParams); next.set('campaignId', newCampId); next.delete('creatorIds'); navigate({ pathname: location.pathname, search: next.toString() }, { replace: true });
             localStorage.setItem('last_active_campaign_id', newCampId);
             const targetCamp = availableCampaigns.find((c) => c.id === newCampId);
             if (targetCamp) {

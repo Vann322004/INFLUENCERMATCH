@@ -1,20 +1,56 @@
-.audit-page .ad-panel h2 { margin-bottom: 12px; }
+.audit-page .ad-panel h2 { margin: 0 0 4px; font-size: 17px; }
+.audit-page .ad-header p { font-size: 14px; }
+.audit-tabs { min-width: 0; }
+.audit-tabs > .ant-tabs-nav { margin-bottom: 20px; }
+.audit-tabs > .ant-tabs-nav .ant-tabs-tab { padding: 12px 4px; font-size: 14px; font-weight: 600; }
+.audit-tabs .ant-tabs-content-holder, .audit-tabs .ant-tabs-tabpane { min-width: 0; }
 .audit-section-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-.audit-health-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
-.audit-health-grid > div { border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; min-width: 0; }
-.audit-health-grid h3 { margin: 0 0 12px; font-size: 14px; color: #64748b; }
-.audit-health-grid p { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
-.audit-filter-form { margin-block: 24px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
-.audit-filter-primary { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); gap: 0 16px; }
-.audit-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 16px; }
+.audit-filter-form { margin-block: 20px; }
+.audit-search-toolbar { display: flex; align-items: flex-start; gap: 12px; }
+.audit-filter-form .audit-search-toolbar .audit-search-field { flex: 1; margin: 0; }
+.audit-search-field > .ant-form-item-row > .ant-form-item-label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+.audit-search-toolbar .ant-input-affix-wrapper { min-height: 40px; }
+.audit-extra-filters { margin-top: 16px; padding: 16px; background: #fafbfe; border: 1px solid #e8edf5; border-radius: 10px; }
+.audit-extra-filters[hidden] { display: none; }
+.audit-extra-filters > .ad-note { font-size: 12px; }
+.audit-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 16px; }
+.audit-filter-form .ant-form-item-label > label { color: #475569; font-size: 12px; font-weight: 500; }
+.audit-filter-form .ant-input, .audit-filter-form .ant-input-affix-wrapper { font-size: 13px; border-radius: 8px; }
+.audit-filter-form .ant-input-affix-wrapper .ant-input { border-radius: 0; }
+.audit-filter-form .ant-input-prefix { color: #94a3b8; margin-right: 8px; }
 .audit-filter-form .ant-form-item, .audit-filter-form .ant-form-item-control-input-content { min-width: 0; }
 .audit-filter-form .ant-form-item { margin-bottom: 16px; }
 .audit-filter-form input { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
-.audit-advanced-filters { border-top: 1px solid #e2e8f0; margin-bottom: 16px; }
-.audit-advanced-filters summary { color: #475569; font-weight: 600; cursor: pointer; padding-block: 14px; }
-.audit-advanced-filters summary:focus-visible { outline: 2px solid #4f46e5; outline-offset: 3px; }
-.audit-filter-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.audit-filter-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .audit-page .ant-btn { min-height: 40px; height: auto; white-space: normal; }
+.audit-page .ant-btn-primary { color: #fff; background: #4f46e5; border-color: #4f46e5; }
+.audit-page .ant-btn-primary:not(:disabled):hover { color: #fff; background: #4338ca; border-color: #4338ca; }
+.audit-page .ant-btn-primary:disabled { color: #94a3b8; background: #f1f5f9; border-color: #e2e8f0; }
+.audit-page .ant-btn-text { color: #64748b; border-color: transparent; }
+.audit-monitor-overview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+.audit-overview-card { min-width: 0; padding: 20px; background: #f8fafc; border: 1px solid #e8edf5; border-radius: 12px; }
+.audit-overview-health { background: #f8f9ff; border-color: #e4e7fb; }
+.audit-overview-card h3, .audit-metric-heading h3 { margin: 0; color: #64748b; font-size: 13px; font-weight: 500; }
+.audit-overview-value { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; margin: 10px 0 8px; line-height: 1.5; }
+.audit-status-dot { flex: 0 0 7px; height: 7px; border-radius: 50%; background: #6366f1; }
+.audit-monitor-caption { font-size: 12px; color: #64748b; line-height: 1.7; margin: 0; }
+.audit-health-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+.audit-metric-card { min-width: 0; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; flex-direction: column; }
+.audit-metric-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; min-height: 25px; }
+.audit-status-pill { padding: 3px 9px; border-radius: 6px; background: #eef2ff; color: #4f46e5; font-size: 11px; font-weight: 600; }
+.audit-metric-unit { font-size: 11px; color: #94a3b8; }
+.audit-metric-value { font-size: clamp(24px, 2.5vw, 30px); letter-spacing: -.5px; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1.4; margin: 24px 0 4px; }
+.audit-metric-value > span { font-size: 14px; font-weight: 400; color: #64748b; letter-spacing: 0; }
+.audit-metric-card .ant-progress { margin-block: 14px 0; }
+.audit-metric-footnote { border-top: 1px solid #eef2f6; padding-top: 16px; margin-top: 24px; }
+.audit-metric-footnote > span { display: block; color: #94a3b8; font-size: 11px; margin-bottom: 4px; }
+.audit-metric-footnote > p { margin: 0; color: #475569; font-size: 12px; line-height: 1.7; }
+.audit-pool-details { display: grid; gap: 10px; margin: 20px 0 0; padding-top: 16px; border-top: 1px solid #eef2f6; font-size: 12px; }
+.audit-pool-details > div { display: flex; justify-content: space-between; gap: 12px; }
+.audit-pool-details dt { color: #64748b; }
+.audit-pool-details dd { color: #334155; margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.audit-monitor-note { font-size: 12px; color: #64748b; line-height: 1.7; padding-top: 20px; margin: 20px 0 0; border-top: 1px solid #eef2f6; }
+.audit-system > .ad-state, .audit-system > [role="status"] { margin-top: 24px; }
 .audit-logs .ant-table-wrapper { min-width: 0; max-width: 100%; }
 .audit-logs .ant-table-content table { width: 100%; table-layout: fixed; }
 .audit-logs .ant-table-cell { overflow-wrap: anywhere; white-space: normal; font-size: 13px; padding: 16px 12px; }
@@ -36,8 +72,8 @@
 .audit-diff-grid h3 { margin: 0 0 12px; font-size: 14px; }
 .audit-diff-grid pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow: auto; margin: 0; font-size: 12px; }
 @container admin-dashboard (max-width: 900px) {
-  .audit-health-grid, .audit-filters, .audit-filter-primary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .audit-filter-primary > .ant-form-item:first-child { grid-column: 1 / -1; }
+  .audit-health-grid, .audit-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .audit-health-grid > :last-child { grid-column: 1 / -1; }
   .audit-logs .ant-table-thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .audit-logs .ant-table-content table { display: block; }
   .audit-logs colgroup { display: none; }
@@ -49,9 +85,16 @@
   .audit-logs .ant-table-placeholder, .audit-logs .ant-table-placeholder > td { display: block; width: 100%; box-sizing: border-box; }
 }
 @container admin-dashboard (max-width: 575px) {
-  .audit-health-grid, .audit-filters, .audit-filter-primary, .audit-logs .ant-table-row { grid-template-columns: minmax(0, 1fr); }
-  .audit-filter-form { padding: 16px 12px; }
+  .audit-monitor-overview, .audit-health-grid, .audit-filters, .audit-logs .ant-table-row { grid-template-columns: minmax(0, 1fr); }
+  .audit-search-toolbar { flex-direction: column; }
+  .audit-search-toolbar > * { width: 100%; }
+  .audit-extra-filters { padding: 12px; }
   .audit-filter-actions > .ant-btn { flex: 1; }
+  .audit-section-header { align-items: flex-start; }
+  .audit-monitor-overview, .audit-health-grid { gap: 12px; }
+  .audit-overview-card, .audit-metric-card { padding: 16px; }
+  .audit-tabs > .ant-tabs-nav .ant-tabs-tab { font-size: 13px; }
+  .audit-tabs > .ant-tabs-nav .ant-tabs-tab + .ant-tabs-tab { margin-left: 20px; }
 }
 @media (max-width: 575px) {
   .audit-detail-meta > div, .audit-diff-grid { grid-template-columns: minmax(0, 1fr); }

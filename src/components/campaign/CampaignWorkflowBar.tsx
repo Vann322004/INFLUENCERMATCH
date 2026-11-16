@@ -40,9 +40,9 @@ export default function CampaignWorkflowBar({
   const isUuid = (val?: string) =>
     !val || /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(val);
 
-  // Xác định campaign hợp lệ: nếu campaignId truyền vào có trong availableCampaigns thì dùng, không thì lấy cái đầu tiên
-  const selectedCamp = availableCampaigns.find((c) => c.id === campaignId) || availableCampaigns[0];
-  const activeId = selectedCamp?.id || (campaignId && !isUuid(campaignId) ? campaignId : 'current');
+  // Keep the requested campaign; never select a different one implicitly.
+  const selectedCamp = availableCampaigns.find((c) => c.id === campaignId);
+  const activeId = selectedCamp?.id || campaignId || '';
   const rawDisplayName = campaignName || selectedCamp?.name;
   const displayName = !rawDisplayName || isUuid(rawDisplayName) ? 'Chiến dịch hiện tại' : rawDisplayName;
 

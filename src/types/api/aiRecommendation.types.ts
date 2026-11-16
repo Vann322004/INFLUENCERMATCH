@@ -64,6 +64,7 @@ export interface RecommendationResponseDto {
 }
 
 export interface RecommendationRun {
+  scoringSnapshot?: CreatorRecommendationItemDto[] | null;
   id: string;
   campaignId?: string;
   brandProfileId?: string;

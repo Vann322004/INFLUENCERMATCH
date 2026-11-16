@@ -1,5 +1,8 @@
-import React from 'react';
-import { Row, Col, Alert, Tag } from 'antd';
+import React, { useSyncExternalStore } from 'react';
+import { getAuthSessionId, subscribeAuthSession } from '../../services/authSession';
+import { Row, Col, Alert, Tag, Input, InputNumber, Button, ConfigProvider } from 'antd';
+import CampaignDeliverablesEditor from './components/create/CampaignDeliverablesEditor';
+import '../../components/layout/CampaignWorkflow.css';
 import { useParams, useLocation } from 'react-router-dom';
 
 import CreateCampaignHeader from './components/create/CreateCampaignHeader';
@@ -26,12 +29,17 @@ export default function CreateCampaignPage() {
     (location.state as any)?.campaignId ||
     (location.state as any)?.id ||
     null;
+  const session = useSyncExternalStore(subscribeAuthSession, getAuthSessionId);
+  return <CampaignEditor key={session + ':' + (resolvedCampaignId || 'new')} resolvedCampaignId={resolvedCampaignId} locationState={location.state} />;
+}
+
+function CampaignEditor({ resolvedCampaignId, locationState }: { resolvedCampaignId: string | null; locationState: unknown }) {
   const isEditMode = Boolean(resolvedCampaignId);
 
   const form = useCreateCampaignForm({
     resolvedCampaignId,
     isEditMode,
-    locationState: location.state,
+    locationState,
   });
 
   return (
@@ -48,25 +56,30 @@ export default function CreateCampaignPage() {
       <CreateCampaignStepper
         currentStep={form.currentStep}
         onStepClick={(step) => {
+          if (step > form.currentStep && form.campaignStatus === 'DRAFT') { void form.handleNextStep(); return; }
           form.setCurrentStep(step);
+          if (resolvedCampaignId) window.history.replaceState(window.history.state, '', '/campaigns/' + resolvedCampaignId + '/edit?step=' + step);
           form.scrollToTop();
         }}
       />
 
       {/* 3. Main Content: Dynamic Form Blocks */}
+      {form.loadError && <Alert type="error" title={form.loadError} action={<Button onClick={() => window.location.reload()}>Tải lại</Button>} />}
+      <ConfigProvider componentDisabled={!!form.loadError || form.isLoadingCampaign || (isEditMode && form.campaignStatus !== 'DRAFT')}>
+      <fieldset disabled={!!form.loadError || form.isLoadingCampaign || (isEditMode && form.campaignStatus !== 'DRAFT')} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
       <Row gutter={[20, 20]}>
         <Col xs={24}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {/* Edit Mode Alert Banner */}
             {isEditMode && (
               <Alert
-                message={
+                title={
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                     <div style={{ fontSize: 13, color: '#1E293B', lineHeight: 1.5 }}>
                       <strong>Chế độ chỉnh sửa chiến dịch: </strong>
                       <span>
                         {form.isProductLocked
-                          ? `Chiến dịch đang ${getStatusBadge(form.campaignStatus).label}. Bạn có thể cập nhật tên chiến dịch, mô tả brief, ngân sách và tiêu chí KOC. Sản phẩm quảng bá được khóa để bảo vệ hợp đồng.`
+                          ? 'Chiến dịch đã rời bản nháp. Bạn chỉ có thể xem lại thông tin, không sửa brief hoặc ngân sách.'
                           : 'Bạn có thể tự do cập nhật mọi thông tin chiến lược, đối tượng và ngân sách của chiến dịch.'}
                       </span>
                     </div>
@@ -118,7 +131,10 @@ export default function CreateCampaignPage() {
 
             {/* Step 2: Yêu cầu Creator & Chân dung khán giả */}
             {form.currentStep === 2 && (
+              <>
               <CreateCampaignStep2
+                creatorMode={form.creatorMode}
+                setCreatorMode={form.setCreatorMode}
                 selectedPlatforms={form.selectedPlatforms}
                 togglePlatform={form.togglePlatform}
                 creatorQuantity={form.creatorQuantity}
@@ -137,10 +153,13 @@ export default function CreateCampaignPage() {
                 setCreatorBrief={form.setCreatorBrief}
                 isAiAutofilled={form.isAiAutofilled}
               />
+              <CampaignDeliverablesEditor value={form.deliverables} onChange={form.setDeliverables} platforms={form.selectedPlatforms} />
+              </>
             )}
 
             {/* Step 3: Ngân sách & Thời gian thực thi */}
             {form.currentStep === 3 && (
+              <>
               <CreateCampaignStep3
                 budgetTotal={form.budgetTotal}
                 setBudgetTotal={form.setBudgetTotal}
@@ -156,13 +175,22 @@ export default function CreateCampaignPage() {
                 locationState={form.formLocation}
                 isAiAutofilled={form.isAiAutofilled}
               />
+              <div className="ccreate-card workflow-fields">
+                <label>Ngày bắt đầu<Input type="date" value={form.savedStartDate || new Date().toISOString().slice(0, 10)} onChange={e => form.setSavedStartDate(e.target.value)} /></label>
+                <label>Ngày kết thúc<Input type="date" value={form.savedEndDate} onChange={e => form.setSavedEndDate(e.target.value)} /></label>
+                <label>Phí tối thiểu mỗi nhà sáng tạo<InputNumber min={0} value={form.creatorFeeMin} onChange={value => form.setCreatorFeeMin(value ?? undefined)} /></label>
+                <label>Phí tối đa mỗi nhà sáng tạo<InputNumber min={0} value={form.creatorFeeMax} onChange={value => form.setCreatorFeeMax(value ?? undefined)} /></label>
+              </div>
+              </>
             )}
           </div>
         </Col>
       </Row>
+      </fieldset>
+      </ConfigProvider>
 
       {/* 4. Sticky Bottom Actions Bar */}
-      <CreateCampaignBottomBar
+      {(!form.loadError && !form.isLoadingCampaign && (!isEditMode || form.campaignStatus === 'DRAFT')) ? <CreateCampaignBottomBar
         isEditMode={isEditMode}
         resolvedCampaignId={resolvedCampaignId}
         currentStep={form.currentStep}
@@ -172,7 +200,7 @@ export default function CreateCampaignPage() {
         handleSaveDraft={form.handleSaveDraft}
         isSubmitting={form.isSubmitting}
         isSavingDraft={form.isSavingDraft}
-      />
+      /> : <Button onClick={() => window.history.back()}>Quay lại</Button>}
     </div>
   );
 }

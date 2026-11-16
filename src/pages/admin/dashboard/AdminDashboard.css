@@ -19,12 +19,18 @@
 .ad-status-list dd { text-align: right; margin: 0; font-variant-numeric: tabular-nums; }
 .ad-status-list small { display: block; margin-top: 4px; }
 .ad-chart-data summary { color: #4f46e5; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.ad-panel.ad-audit { overflow: hidden; max-width: 100%; width: 100%; box-sizing: border-box; }
 .ad-audit > .ad-note { margin-bottom: 16px; }
-.ad-audit .ant-table-wrapper { min-width: 0; max-width: 100%; width: 100%; overflow-x: hidden; }
-.ad-audit .ant-table { width: 100%; table-layout: fixed; }
+.ad-audit .ant-table-wrapper,
+.ad-audit .ant-spin-nested-loading,
+.ad-audit .ant-spin-container,
+.ad-audit .ant-table,
 .ad-audit .ant-table-container,
-.ad-audit .ant-table-content { overflow-x: hidden; }
+.ad-audit .ant-table-content,
+.ad-audit .ant-table-body { min-width: 0 !important; max-width: 100% !important; width: 100% !important; overflow-x: hidden !important; }
+.ad-audit .ant-table { table-layout: fixed !important; }
 .ad-audit .ant-table-cell { overflow-wrap: anywhere; word-break: break-word; }
+.ad-audit .ant-table-placeholder .ant-table-cell { overflow: hidden; }
 .ad-audit .ant-tag { white-space: normal; max-width: 100%; color: #475569; background: #f8fafc; border-color: #e2e8f0; }
 .ad-dashboard .ant-btn { color: #4f46e5; border-color: #e2e8f0; border-radius: 8px; }
 /* Follow the available content width, including when the sidebar expands. */

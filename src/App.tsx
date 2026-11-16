@@ -60,25 +60,6 @@ const { Content } = Layout;
 function SessionSyncHandler() {
   useAccountLogoutSync();
 
-  useEffect(() => {
-    try {
-      const search = window.location.search;
-      if (search && search.includes('campaignId=')) {
-        const sp = new URLSearchParams(search);
-        const cId = sp.get('campaignId');
-        if (cId) {
-          sessionStorage.setItem('current_campaign_id', cId);
-          localStorage.setItem('last_active_campaign_id', cId);
-          sp.delete('campaignId');
-          const newSearch = sp.toString() ? `?${sp.toString()}` : '';
-          window.history.replaceState({}, '', window.location.pathname + newSearch);
-        }
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
   return null;
 }
 
@@ -96,12 +77,10 @@ function CampaignManagementRouteDispatcher() {
 function CampaignManagementIdRedirect() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  if (id) {
-    sessionStorage.setItem('current_campaign_id', id);
-    localStorage.setItem('last_active_campaign_id', id);
-  }
-  const tab = searchParams.get('tab') || 'recommendation';
-  return <Navigate to={`/campaign-management?tab=${tab}`} replace />;
+  const next = new URLSearchParams(searchParams);
+  if (id) next.set('campaignId', id);
+  if (!next.has('tab')) next.set('tab', 'recommendation');
+  return <Navigate to={'/campaign-management?' + next} replace />;
 }
 
 // Main App Layout Wrapper with Light Linear Sidebar & Top Header
