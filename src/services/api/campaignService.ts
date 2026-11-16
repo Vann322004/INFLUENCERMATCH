@@ -1,4 +1,5 @@
 import { apiClient } from '../apiClient';
+import { readPage } from './pageResponse';
 import { ApiResponse } from '../../types/api/common.types';
 import {
   CampaignRequest,
@@ -24,15 +25,9 @@ export type {
   CollaborationResponse,
 };
 import { brandService } from './brandService';
-import { authService } from './authService';
 import { aiRecommendationService } from './aiRecommendationService';
 
-// Lưu cache brandId theo userId của phiên đăng nhập hiện tại
-const userBrandCache = new Map<string, string>();
-
-export const clearBrandCache = () => {
-  userBrandCache.clear();
-};
+export const clearBrandCache = () => brandService.clearBrandCache();
 
 // Keep legacy response aliases out of every campaign write request.
 function campaignWritePayload(payload: Partial<CampaignRequest>) {
@@ -44,146 +39,53 @@ function campaignWritePayload(payload: Partial<CampaignRequest>) {
   };
 }
 
+function readCampaign(response: { data: ApiResponse<CampaignResponse> }, id?: string): CampaignResponse {
+  const data = response.data?.data;
+  if (response.data?.success === false || !data?.id || (id && data.id !== id) || !data.status) {
+    throw new Error('Máy chủ chưa xác nhận dữ liệu chiến dịch hợp lệ.');
+  }
+  return data;
+}
+
 export const campaignService = {
   /**
    * Lấy ID brand của user hiện tại, tự động cache theo userId và tạo profile nếu chưa có
    */
   async resolveCurrentBrandId(forceRefresh = false): Promise<string> {
-    const user = authService.getCurrentUser();
-    const userId = user?.id;
-
-    if (!forceRefresh && userId && userBrandCache.has(userId)) {
-      return userBrandCache.get(userId)!;
-    }
-
-    try {
-      const brand = await brandService.getMyBrand();
-      if (brand?.id) {
-        if (userId) userBrandCache.set(userId, brand.id);
-        return brand.id;
-      }
-    } catch (err) {
-      console.warn('[campaignService] Không thể lấy Brand Profile từ /brands/me:', err);
-    }
-
-    // Nếu chưa có brand profile và user đã đăng nhập, tự động tạo brand profile cho user
-    if (authService.isAuthenticated()) {
-      try {
-        const created = await brandService.createBrand({
-          businessName: user?.fullName ? `Thương hiệu của ${user.fullName}` : 'Thương hiệu của tôi',
-          industry: 'E-commerce',
-          website: 'https://influencermatch.vn',
-          location: 'Việt Nam',
-          targetMarkets: ['Vietnam'],
-          targetAudiences: ['General Audience'],
-          brandTone: 'Chuyên nghiệp',
-          preferredPlatforms: ['TIKTOK', 'INSTAGRAM'],
-          description: 'Thương hiệu đối tác trên hệ thống InfluencerMatch.',
-        });
-        if (created?.id) {
-          if (userId) userBrandCache.set(userId, created.id);
-          return created.id;
-        }
-      } catch (err) {
-        console.warn('[campaignService] Không thể tự tạo brand profile cơ bản:', err);
-      }
-    }
-
-    throw new Error('Không tìm thấy thông tin thương hiệu (Brand Profile). Vui lòng cập nhật hồ sơ Brand trước.');
+    const brand = await brandService.getMyBrand(forceRefresh);
+    if (!brand?.id) throw new Error('Vui lòng hoàn thiện hồ sơ thương hiệu trước.');
+    return brand.id;
   },
-
-  /**
-   * Lấy danh sách các chiến dịch của brand hiện tại (tự động loại bỏ các chiến dịch đã xóa/lưu trữ).
-   * ĐẢM BẢO: Chỉ lấy đúng chiến dịch thuộc sở hữu của Brand account hiện tại, không lấy lẫn của các brand khác.
-   */
+  async getCampaignPage(page = 0, size = 50, brandId?: string) {
+    const target = brandId || await this.resolveCurrentBrandId();
+    const response = await apiClient.get('/brands/' + target + '/campaigns', { params: { page, size: Math.min(100, size) } });
+    return readPage<CampaignResponse>(response.data);
+  },
   async getCampaigns(page = 0, size = 50, brandId?: string, includeArchived = false): Promise<CampaignResponse[]> {
-    let deletedIds: string[] = [];
-    try {
-      deletedIds = JSON.parse(localStorage.getItem('IM_DELETED_CAMPAIGN_IDS') || '[]');
-    } catch {}
-
-    // Backend có thể trả mảng, hoặc trang dạng { items | content | data }
-    const extract = (raw: any): CampaignResponse[] => {
-      const d = raw?.data ?? raw;
-      let list: CampaignResponse[] = [];
-      if (Array.isArray(d)) list = d;
-      else {
-        const inner = d?.items ?? d?.content ?? d?.data ?? d?.campaigns;
-        list = Array.isArray(inner) ? inner : [];
-      }
-
-      if (includeArchived) return list;
-      // Lọc bỏ triệt để các chiến dịch đã lưu trữ hoặc người dùng đã bấm xóa
-      return list.filter((c) => c.status !== 'ARCHIVED' && !deletedIds.includes(c.id));
-    };
-
-    const isAdmin = authService.isAdmin();
-
-    // Xác định targetBrandId
-    let targetBrandId = brandId;
-    if (!targetBrandId && !isAdmin) {
-      try {
-        targetBrandId = await this.resolveCurrentBrandId();
-      } catch (err) {
-        console.warn('[campaignService] Không xác định được brandId của user hiện tại:', err);
-      }
-    }
-
-    // 1. NẾU LÀ TÀI KHOẢN BRAND (hoặc có chỉ định brandId cụ thể):
-    // BẮT BUỘC chỉ lấy chiến dịch thuộc Brand Profile này
-    if (targetBrandId) {
-      try {
-        const response = await apiClient.get(
-          `/brands/${targetBrandId}/campaigns`,
-          { params: { page, size } }
-        );
-        // Trả về đúng danh sách của brand (kể cả khi rỗng [] nếu brand chưa tạo chiến dịch)
-        const brandList = extract(response.data);
-        return brandList;
-      } catch (err) {
-        console.error('[campaignService] Lỗi khi gọi API /brands/:id/campaigns:', targetBrandId, err);
-        // Nếu API theo brand bị lỗi và phải fallback /campaigns,
-        // PHẢI LỌC NGHIÊM NGẶT chỉ trả về campaign có brandId trùng khớp!
-        try {
-          const response = await apiClient.get('/campaigns', { params: { page, size } });
-          const allList = extract(response.data);
-          return allList.filter((c) => c.brandId === targetBrandId);
-        } catch {
-          return [];
-        }
-      }
-    }
-
-    // 2. NẾU LÀ ADMIN (và không chỉ định brandId):
-    // Cho phép lấy toàn bộ chiến dịch trên hệ thống để phục vụ quản trị
-    if (isAdmin) {
-      try {
-        const response = await apiClient.get('/campaigns', { params: { page, size } });
-        return extract(response.data);
-      } catch (err) {
-        console.error('[campaignService] Lỗi admin tải toàn bộ /campaigns:', err);
-        return [];
-      }
-    }
-
-    // 3. Nếu chưa đăng nhập hoặc không xác định được Brand Profile (và không phải Admin):
-    // Tuyệt đối không trả về chiến dịch của người khác!
-    return [];
+    const result = await this.getCampaignPage(page, size, brandId);
+    return includeArchived ? result.items : result.items.filter(item => item.status !== 'ARCHIVED');
+  },
+  async getAllCampaigns(): Promise<CampaignResponse[]> {
+    const brand = await this.resolveCurrentBrandId(); const rows: CampaignResponse[] = []; let page = 0;
+    while (true) { const result = await this.getCampaignPage(page, 100, brand); rows.push(...result.items); if (++page >= result.totalPages) return rows; }
   },
 
   /**
    * Lấy thông tin chi tiết một chiến dịch
    */
   async getCampaignById(id: string): Promise<CampaignResponse> {
-    const response = await apiClient.get<ApiResponse<CampaignResponse>>(`/campaigns/${id}`);
-    return response.data.data;
+    const response = await apiClient.get<ApiResponse<CampaignResponse>>('/campaigns/' + id);
+    const data = response.data?.data;
+    if (response.data?.success === false || data?.id !== id || !data.status) throw new Error('Invalid campaign response.');
+    return data;
   },
 
   /**
    * Tạo chuẩn ETag revision theo contract của backend: "campaign:<uuid>:r<revision>"
    */
   formatCampaignRevisionTag(id: string, revision?: number | null): string {
-    const rev = revision != null && !isNaN(Number(revision)) ? Number(revision) : 0;
+    if (revision == null || !Number.isSafeInteger(Number(revision)) || Number(revision) < 0) throw new Error('Thiếu phiên bản chiến dịch. Vui lòng tải lại.');
+    const rev = Number(revision);
     return `"campaign:${id}:r${rev}"`;
   },
 
@@ -193,7 +95,7 @@ export const campaignService = {
    */
   async getCampaignWithETag(id: string): Promise<{ data: CampaignResponse; etag: string }> {
     const response = await apiClient.get<ApiResponse<CampaignResponse>>(`/campaigns/${id}`);
-    const data = response.data?.data || (response.data as unknown as CampaignResponse);
+    const data = readCampaign(response, id);
     const rawHeader =
       response.headers?.['etag'] ??
       (typeof response.headers?.get === 'function' ? response.headers.get('etag') : null);
@@ -211,7 +113,7 @@ export const campaignService = {
       `/brands/${targetBrandId}/campaigns`,
       campaignWritePayload(payload)
     );
-    return response.data?.data || (response.data as unknown as CampaignResponse);
+    return readCampaign(response);
   },
 
   /**
@@ -230,13 +132,8 @@ export const campaignService = {
       const clean = revisionOrEtag.trim();
       ifMatchValue = clean.startsWith('"') ? clean : `"${clean}"`;
     } else {
-      try {
-        const { etag } = await this.getCampaignWithETag(id);
-        ifMatchValue = etag;
-      } catch (err) {
-        console.warn(`[campaignService] Không fetch được ETag của ${id}, fallback r0:`, err);
-        ifMatchValue = this.formatCampaignRevisionTag(id, 0);
-      }
+      const { etag } = await this.getCampaignWithETag(id);
+      ifMatchValue = etag;
     }
 
     const response = await apiClient.put<ApiResponse<CampaignResponse>>(
@@ -248,7 +145,7 @@ export const campaignService = {
         },
       }
     );
-    return response.data?.data || (response.data as unknown as CampaignResponse);
+    return readCampaign(response, id);
   },
 
   /**
@@ -256,58 +153,11 @@ export const campaignService = {
    * PATCH /campaigns/{id}/archive — luôn gửi kèm If-Match header
    */
   async archiveCampaign(id: string, revisionOrEtag?: number | string | null): Promise<CampaignResponse> {
-    try {
-      let ifMatchValue: string;
-      if (typeof revisionOrEtag === 'number') {
-        ifMatchValue = this.formatCampaignRevisionTag(id, revisionOrEtag);
-      } else if (typeof revisionOrEtag === 'string' && revisionOrEtag.trim()) {
-        const clean = revisionOrEtag.trim();
-        ifMatchValue = clean.startsWith('"') ? clean : `"${clean}"`;
-      } else {
-        const { etag } = await this.getCampaignWithETag(id);
-        ifMatchValue = etag;
-      }
-      const response = await apiClient.patch<ApiResponse<CampaignResponse>>(
-        `/campaigns/${id}/archive`,
-        undefined,
-        { headers: { 'If-Match': ifMatchValue } }
-      );
-      return response.data?.data || (response.data as unknown as CampaignResponse);
-    } catch {
-      // Fallback: cập nhật trạng thái ARCHIVED
-      return this.updateStatus(id, 'ARCHIVED', revisionOrEtag);
-    }
+    const etag = typeof revisionOrEtag === 'number' ? this.formatCampaignRevisionTag(id, revisionOrEtag)
+      : typeof revisionOrEtag === 'string' ? revisionOrEtag : (await this.getCampaignWithETag(id)).etag;
+    return readCampaign(await apiClient.patch<ApiResponse<CampaignResponse>>('/campaigns/' + id + '/archive', undefined, { headers: { 'If-Match': etag } }), id);
   },
-
-  /**
-   * Xóa chiến dịch (Gọi PATCH /campaigns/{id}/archive hoặc PATCH /campaigns/{id}/status -> ARCHIVED)
-   */
-  async deleteCampaign(id: string): Promise<void> {
-    // 1. Lưu ID vào danh sách đã xóa trên client
-    try {
-      const raw = localStorage.getItem('IM_DELETED_CAMPAIGN_IDS');
-      const list: string[] = raw ? JSON.parse(raw) : [];
-      if (!list.includes(id)) {
-        list.push(id);
-        localStorage.setItem('IM_DELETED_CAMPAIGN_IDS', JSON.stringify(list));
-      }
-    } catch {}
-
-    // 2. Gọi API archive chuẩn Swagger PATCH /campaigns/{id}/archive
-    try {
-      await this.archiveCampaign(id);
-      return;
-    } catch (err) {
-      console.warn('[campaignService] Lỗi khi archiveCampaign:', err);
-    }
-
-    // 3. Fallback thử DELETE nếu backend hỗ trợ
-    try {
-      await apiClient.delete(`/campaigns/${id}`);
-    } catch {
-      // ignore
-    }
-  },
+  async deleteCampaign(id: string): Promise<void> { await this.archiveCampaign(id); },
 
   /**
    * Tự động điền thông tin chiến dịch bằng Gemini AI
@@ -315,94 +165,9 @@ export const campaignService = {
    * Tự động kích hoạt Smart Fallback nếu Backend chưa cấu hình GEMINI_API_KEY
    */
   async autofillCampaign(prompt: string): Promise<CampaignAutofillResponse> {
-    try {
-      // Gửi cả productDescription (theo tài liệu Luồng 3.2) và prompt để tương thích 100% với backend
-      const response = await apiClient.post<ApiResponse<CampaignAutofillResponse>>('/ai/campaign-autofill', {
-        productDescription: prompt,
-        prompt,
-      });
-      if (response.data?.data) {
-        return response.data.data;
-      }
-      if (response.data && ((response.data as any).name || (response.data as any).campaignName)) {
-        return response.data as unknown as CampaignAutofillResponse;
-      }
-    } catch (err: any) {
-      const errMsg = err?.response?.data?.message || err?.message || '';
-      console.warn('[campaignService] Backend AI autofill error:', errMsg);
-
-      // Nếu backend thiếu GEMINI_API_KEY hoặc lỗi kết nối, kích hoạt bộ phân tích thông minh dự phòng
-      const lower = prompt.toLowerCase();
-      let niches = ['Phong cách sống', 'Xu hướng'];
-      let platforms: ('TIKTOK' | 'INSTAGRAM' | 'FACEBOOK')[] = ['TIKTOK', 'INSTAGRAM'];
-      let objective: 'AWARENESS' | 'CONVERSION' | 'ENGAGEMENT' = 'AWARENESS';
-      let audiences = ['18-24', '25-34'];
-      let budget = 25000000;
-
-      let keyMessage = '';
-      let dosAndDonts = '';
-
-      if (lower.includes('chống nắng') || lower.includes('kiềm dầu') || lower.includes('học sinh') || lower.includes('sinh viên')) {
-        niches = ['Làm đẹp & Mỹ phẩm', 'Chăm sóc da', 'Học đường & Sinh viên'];
-        platforms = ['TIKTOK', 'INSTAGRAM'];
-        objective = 'CONVERSION';
-        audiences = ['18-24'];
-        budget = 18000000;
-        keyMessage = 'Bảo vệ da tối ưu - Nâng tone sáng mịn tự nhiên - Kiềm dầu bền bỉ suốt ngày học cho học sinh, sinh viên giá chỉ dưới 200k.';
-        dosAndDonts = "Do's: Quay cận cảnh chất kem mỏng nhẹ thẩm thấu nhanh, test độ kiềm dầu thực tế trong buổi học, nhấn mạnh mức giá bình dân dưới 200k.\nDon'ts: Không tâng bốc công dụng quá mức, không so sánh tiêu cực hoặc nêu tên thương hiệu đối thủ.";
-      } else if (lower.includes('công nghệ') || lower.includes('sạc') || lower.includes('điện thoại') || lower.includes('phụ kiện') || lower.includes('tech')) {
-        niches = ['Công nghệ', 'Đời sống số', 'Tiện ích công nghệ'];
-        platforms = ['TIKTOK', 'FACEBOOK'];
-        objective = 'CONVERSION';
-        budget = 30000000;
-        keyMessage = 'Sạc siêu nhanh, an toàn chuẩn GaN, nhỏ gọn đồng hành cùng giới trẻ bận rộn.';
-        dosAndDonts = "Do's: Test tốc độ sạc thực tế với thiết bị, quay góc hiện đại công nghệ.\nDon'ts: Không quay video mờ rung, không so sánh dìm hàng sản phẩm khác.";
-      } else if (lower.includes('skincare') || lower.includes('mỹ phẩm') || lower.includes('làm đẹp') || lower.includes('serum') || lower.includes('son')) {
-        niches = ['Làm đẹp & Mỹ phẩm', 'Chăm sóc da', 'Thời trang'];
-        platforms = ['TIKTOK', 'INSTAGRAM'];
-        objective = 'CONVERSION';
-        budget = 25000000;
-        keyMessage = 'Phục hồi làn da khỏe khoắn rạng rỡ từ bên trong với công thức lành tính.';
-        dosAndDonts = "Do's: Thể hiện làn da mộc trước/sau sử dụng chân thực.\nDon'ts: Tránh dùng filter làm mờ da quá đà.";
-      } else if (lower.includes('thời trang') || lower.includes('quần áo') || lower.includes('sneaker') || lower.includes('giày')) {
-        niches = ['Thời trang & Phong cách', 'OOTD', 'Gen Z'];
-        platforms = ['TIKTOK', 'INSTAGRAM'];
-        objective = 'AWARENESS';
-        budget = 20000000;
-      } else if (lower.includes('ăn uống') || lower.includes('f&b') || lower.includes('ẩm thực') || lower.includes('quán')) {
-        niches = ['Ẩm thực & Review quán', 'Food Reviewer'];
-        platforms = ['TIKTOK', 'INSTAGRAM'];
-        objective = 'ENGAGEMENT';
-        budget = 15000000;
-      }
-
-      // Trích xuất tên sản phẩm từ prompt
-      let cleanProduct = prompt.replace(/^(quảng bá|giới thiệu|ra mắt|chiến dịch|sản phẩm)\s+/i, '').trim();
-      if (!cleanProduct || cleanProduct.length < 3) cleanProduct = prompt;
-
-      const fallbackName = `Chiến dịch ${cleanProduct.charAt(0).toUpperCase() + cleanProduct.slice(1)}`;
-
-      return {
-        name: lower.includes('chống nắng') ? 'Chiến dịch Kem chống nắng nâng tone kiềm dầu học đường' : fallbackName,
-        productService: lower.includes('chống nắng') ? 'Kem chống nắng nâng tone kiềm dầu học sinh sinh viên' : cleanProduct,
-        objective: objective as any,
-        platforms: platforms as any,
-        niches,
-        targetAudiences: audiences,
-        locations: ['Thành phố Hồ Chí Minh', 'Thành phố Hà Nội'],
-        budgetMin: budget * 0.8,
-        budgetMax: budget,
-        keyMessage,
-        dosAndDonts,
-        creatorBrief: keyMessage && dosAndDonts ? `Thông điệp chính:\n${keyMessage}\n\n${dosAndDonts}` : undefined,
-        creatorQuantity: 1,
-        draftDeadline: '5 ngày sau khi Creator nhận sản phẩm',
-        campaignDuration: '4_weeks',
-        aiExplanation: `Trợ lý AI đã phân tích mô tả: "${prompt}". Đề xuất chiến dịch tập trung vào tệp ${audiences.join(', ')} tuổi, kênh ${platforms.join(' & ')}, định hướng thông điệp kiềm dầu và giá thành tiết kiệm dưới 200k.`,
-      };
-    }
-
-    throw new Error('Không thể phân tích dữ liệu chiến dịch.');
+    const response = await apiClient.post<ApiResponse<CampaignAutofillResponse>>('/ai/campaign-autofill', { productDescription: prompt, prompt });
+    if (!response.data?.data) throw new Error('No campaign draft returned by the server.');
+    return response.data.data;
   },
 
   /**
@@ -420,19 +185,17 @@ export const campaignService = {
       const clean = revisionOrEtag.trim();
       ifMatchValue = clean.startsWith('"') ? clean : `"${clean}"`;
     } else {
-      try {
-        const { etag } = await this.getCampaignWithETag(id);
-        ifMatchValue = etag;
-      } catch {
-        ifMatchValue = this.formatCampaignRevisionTag(id, 0);
-      }
+      const { etag } = await this.getCampaignWithETag(id);
+      ifMatchValue = etag;
     }
     const response = await apiClient.patch<ApiResponse<CampaignResponse>>(
       `/campaigns/${id}/status`,
       { status },
       { headers: { 'If-Match': ifMatchValue } }
     );
-    return response.data?.data || (response.data as unknown as CampaignResponse);
+    const data = readCampaign(response, id);
+    if (data.status !== status) throw new Error('Máy chủ chưa xác nhận trạng thái yêu cầu. Tải lại chiến dịch để kiểm tra.');
+    return data;
   },
 
   /**
@@ -441,22 +204,11 @@ export const campaignService = {
    * Nếu chuyển thẳng sang ACTIVE bị từ chối chuyển tiếp, chuyển qua READY_FOR_DISCOVERY trước.
    */
   async activateCampaign(id: string): Promise<CampaignResponse> {
-    try {
-      return await this.updateStatus(id, 'ACTIVE');
-    } catch (err: any) {
-      try {
-        await this.updateStatus(id, 'READY_FOR_DISCOVERY');
-        try {
-          return await this.updateStatus(id, 'ACTIVE');
-        } catch {
-          // Trạng thái READY_FOR_DISCOVERY đã được kích hoạt thành công
-          const latest = await this.getCampaignById(id);
-          return latest;
-        }
-      } catch (innerErr) {
-        throw innerErr || err;
-      }
-    }
+    let current = await this.getCampaignById(id);
+    if (current.status === 'DRAFT') current = await this.updateStatus(id, 'READY_FOR_DISCOVERY', current.campaignRevision);
+    if (current.status === 'READY_FOR_DISCOVERY') return this.updateStatus(id, 'ACTIVE', current.campaignRevision);
+    if (current.status === 'ACTIVE') return current;
+    throw new Error('Chiến dịch này không thể kích hoạt lại.');
   },
 
   /**
@@ -511,14 +263,12 @@ export const campaignService = {
    * Lấy danh sách quan hệ/pipeline CRM của chiến dịch
    */
   async getRelationships(campaignId: string): Promise<RelationshipDto[]> {
-    try {
-      const response = await apiClient.get<ApiResponse<{ content?: RelationshipDto[]; items?: RelationshipDto[] }>>(
-        `/campaigns/${campaignId}/relationships`
-      );
-      const data = response.data.data;
-      return (data?.content || data?.items || (Array.isArray(data) ? data : [])) as RelationshipDto[];
-    } catch {
-      return [];
+    const rows: RelationshipDto[] = [];
+    for (let page = 0; ; page++) {
+      const response = await apiClient.get('/campaigns/' + campaignId + '/relationships', { params: { page, size: 100 } });
+      const result = readPage<RelationshipDto>(response.data);
+      rows.push(...result.items);
+      if (page + 1 >= result.totalPages) return rows;
     }
   },
 
@@ -559,32 +309,19 @@ export const campaignService = {
     relationshipId: string,
     payload: UpdateRelationshipDetailsRequest
   ): Promise<RelationshipDto> {
-    try {
-      const response = await apiClient.patch<ApiResponse<RelationshipDto>>(
-        `/campaigns/${campaignId}/relationships/${relationshipId}/details`,
-        payload
-      );
-      return response.data.data;
-    } catch {
-      const response = await apiClient.put<ApiResponse<RelationshipDto>>(
-        `/campaigns/${campaignId}/relationships/${relationshipId}/details`,
-        payload
-      );
-      return response.data.data;
-    }
+    const response = await apiClient.patch<ApiResponse<RelationshipDto>>('/campaigns/' + campaignId + '/relationships/' + relationshipId + '/details', payload);
+    return response.data.data;
   },
 
   /**
    * Lấy danh sách hợp tác thực tế của chiến dịch
    */
   async getCollaborations(campaignId: string): Promise<CollaborationResponse[]> {
-    try {
-      const response = await apiClient.get<ApiResponse<CollaborationResponse[]>>(
-        `/campaigns/${campaignId}/collaborations`
-      );
-      return response.data.data || [];
-    } catch {
-      return [];
+    const rows: CollaborationResponse[] = [];
+    for (let page = 0; ; page++) {
+      const response = await apiClient.get('/campaigns/' + campaignId + '/collaborations', { params: { page, size: 100 } });
+      const result = readPage<CollaborationResponse>(response.data); rows.push(...result.items);
+      if (page + 1 >= result.totalPages) return rows;
     }
   },
 

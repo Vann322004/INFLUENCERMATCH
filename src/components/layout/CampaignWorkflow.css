@@ -1,0 +1,27 @@
+.workflow-page { display: flex; flex-direction: column; gap: 20px; min-width: 0; color: #0f172a; }
+.workflow-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.workflow-header h1 { margin: 0 0 8px; font-size: 28px; }
+.workflow-page p { line-height: 1.6; }
+.workflow-page :is(h1,h2,h3,p,li,.ant-descriptions-item-content) { overflow-wrap: anywhere; }
+.workflow-page :is(.ant-space,.ant-space-item) { max-width: 100%; min-width: 0; }
+.workflow-page .ant-btn { height: auto; min-height: 32px; white-space: normal; }
+.workflow-page .ant-select { max-width: 100%; }
+.workflow-panel + .workflow-panel { margin-top: 12px; }
+.workflow-panel { padding: 20px; background: white; border: 1px solid #e2e8f0; border-radius: 14px; min-width: 0; }
+.workflow-context { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.workflow-context .ant-select { width: min(100%, 650px); min-width: 0; }
+.workflow-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%,240px),1fr)); gap: 16px; }
+.workflow-fields > label { color: #64748b; font-size: 13px; min-width: 0; }
+.workflow-fields :is(.ant-input-number,.ant-select) { width: 100%; }
+.workflow-deliverable { display: grid; grid-template-columns: minmax(100px,1fr) minmax(140px,2fr) 90px auto; gap: 10px; margin-block: 16px; }
+.workflow-deals { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,340px),1fr)); gap: 16px; }
+.workflow-deal h2 { margin: 0; font-size: 17px; }
+.workflow-facts { display: grid; gap: 10px; }
+.workflow-facts > div { display: flex; justify-content: space-between; gap: 12px; }
+.workflow-facts dt { color: #64748b; }
+.workflow-facts dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+.workflow-table { max-width: 100%; overflow: auto; }
+.workflow-table table { width: 100%; min-width: 600px; border-collapse: collapse; }
+.workflow-table :is(th,td) { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+@container brand (max-width: 650px) { .workflow-deliverable { grid-template-columns: minmax(0,1fr); } .workflow-panel { padding: 16px; } }
+@media (max-width: 650px) { .workflow-deliverable { grid-template-columns: minmax(0,1fr); } .workflow-page h1 { font-size: 24px; } .workflow-panel { padding: 16px; } }

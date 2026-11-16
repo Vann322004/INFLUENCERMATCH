@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { Button, Empty, Form, Input, Table, Tag, Tooltip } from 'antd';
+import { Button, Empty, Form, Input, Table, Tabs, Tag, Tooltip } from 'antd';
+import { DownloadOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import { adminService } from '../../../services/api/adminService';
 import { authService } from '../../../services/api/authService';
@@ -21,6 +22,8 @@ export default function AuditLogPage() {
   const [selected, setSelected] = useState<AuditLogItem | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('audit');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const user = authService.getCurrentUser();
   const canAudit = authService.isAdmin() && !!user?.permissions?.includes('VIEW_AUDIT_LOG');
   const canMonitor = authService.isAdmin() && !!user?.permissions?.includes('VIEW_SYSTEM_STATUS');
@@ -30,6 +33,7 @@ export default function AuditLogPage() {
   const applyFilters = (values: Record<string, string>) => {
     const cleaned = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value?.trim() || undefined]));
     if (cleaned.from && cleaned.to && cleaned.from > cleaned.to) {
+      setFiltersOpen(true);
       form.setFields([{ name: 'to', errors: ['Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.'] }]); return;
     }
     setSelected(null);
@@ -67,33 +71,35 @@ export default function AuditLogPage() {
   ];
 
   return <div className="ad-dashboard audit-page">
-    <header className="ad-header"><h1>Nhật ký & giám sát hệ thống</h1>
-      <p>Tra cứu sự kiện được Backend ghi nhận và các chỉ số vận hành hiện có.</p></header>
-    <SystemMonitoringPanel allowed={canMonitor} />
-    <section className="ad-panel audit-logs" aria-label="Nhật ký kiểm toán">
+    <header className="ad-header"><h1>Nhật ký & giám sát</h1>
+      <p>Theo dõi hoạt động quản trị và trạng thái vận hành hệ thống.</p></header>
+    <Tabs className="audit-tabs" activeKey={activeTab} onChange={key => { setActiveTab(key); setSelected(null); }} items={[
+      { key: 'audit', label: 'Nhật ký kiểm toán', children: <section className="ad-panel audit-logs" aria-label="Nhật ký kiểm toán">
       <div className="audit-section-header audit-logs-header">
-        <div><h2>Nhật ký kiểm toán</h2><p className="ad-note">Tra cứu sự kiện và xem metadata được ghi nhận.</p></div>
+        <div><h2>Nhật ký kiểm toán</h2><p className="ad-note">Tra cứu hành động quản trị, người thực hiện và đối tượng thay đổi.</p></div>
         {canAudit && <Tooltip title="Tải tối đa 10.000 bản ghi theo bộ lọc đã áp dụng. CSV chỉ chứa mã sự kiện, actor UUID, action, entity và thời gian.">
-          <Button loading={exporting} disabled={resource.status !== 'success'} onClick={() => void downloadCsv()}>Xuất CSV</Button>
+          <Button icon={<DownloadOutlined />} loading={exporting} disabled={resource.status !== 'success'} onClick={() => void downloadCsv()}>Xuất CSV</Button>
         </Tooltip>}
       </div>
-      {canAudit && <Form form={form} layout="vertical" onFinish={applyFilters} className="audit-filter-form">
-        <div className="audit-filter-primary">
-          <Form.Item name="keyword" label="Từ khóa" rules={[{ max: 200, message: 'Từ khóa tối đa 200 ký tự.' }]}><Input maxLength={200} placeholder="Action, entity type, mô tả, IP hoặc UUID" /></Form.Item>
+      {canAudit && <Form form={form} layout="vertical" onFinish={applyFilters} onFinishFailed={() => setFiltersOpen(true)} className="audit-filter-form">
+        <div className="audit-search-toolbar">
+          <Form.Item className="audit-search-field" name="keyword" label="Từ khóa" rules={[{ max: 200, message: 'Từ khóa tối đa 200 ký tự.' }]}><Input prefix={<SearchOutlined />} allowClear maxLength={200} placeholder="Tìm hành động, đối tượng, mô tả, IP…" /></Form.Item>
+          <div className="audit-filter-actions">
+            <Button icon={<FilterOutlined />} aria-expanded={filtersOpen} aria-controls="audit-extra-filters" onClick={() => setFiltersOpen(value => !value)}>Bộ lọc</Button>
+            <Button type="primary" htmlType="submit">Tìm kiếm</Button>
+            <Button type="text" onClick={() => { form.resetFields(); setSelected(null); setExportError(null); setFiltersOpen(false); setParams(previous => ({ page: 0, size: previous.size })); }}>Đặt lại</Button>
+          </div>
+        </div>
+        <div id="audit-extra-filters" className="audit-extra-filters" hidden={!filtersOpen}>
+        <div className="audit-filters">
           <Form.Item name="from" label="Từ thời gian"><Input type="datetime-local" step={1} /></Form.Item>
           <Form.Item name="to" label="Đến thời gian"><Input type="datetime-local" step={1} /></Form.Item>
+          <Form.Item name="actorId" label="Người thực hiện (UUID)" rules={[uuidRule]}><Input placeholder="Nhập UUID người thực hiện" /></Form.Item>
+          <Form.Item name="entityId" label="Đối tượng (UUID)" rules={[uuidRule]}><Input placeholder="Nhập UUID đối tượng" /></Form.Item>
+          <Form.Item name="action" label="Hành động"><Input maxLength={100} placeholder="Ví dụ: ASSIGN_USER_ROLE" /></Form.Item>
+          <Form.Item name="entityType" label="Loại đối tượng"><Input maxLength={100} placeholder="Ví dụ: User, Plan, Payment" /></Form.Item>
         </div>
-        <details className="audit-advanced-filters"><summary>Bộ lọc chi tiết</summary>
-        <div className="audit-filters">
-          <Form.Item name="actorId" label="Actor UUID" rules={[uuidRule]}><Input placeholder="UUID người thực hiện" /></Form.Item>
-          <Form.Item name="entityId" label="Entity UUID" rules={[uuidRule]}><Input placeholder="UUID đối tượng" /></Form.Item>
-          <Form.Item name="action" label="Action"><Input maxLength={100} placeholder="Ví dụ: ASSIGN_USER_ROLE" /></Form.Item>
-          <Form.Item name="entityType" label="Entity type"><Input maxLength={100} placeholder="Ví dụ: User, Plan, Payment" /></Form.Item>
-        </div>
-        <p className="ad-note">UUID, action và entity type khớp chính xác. Thời gian theo Backend, chưa kèm múi giờ.</p>
-        </details>
-        <div className="audit-filter-actions"><Button type="primary" htmlType="submit">Áp dụng bộ lọc</Button>
-          <Button onClick={() => { form.resetFields(); setSelected(null); setExportError(null); setParams(previous => ({ page: 0, size: previous.size })); }}>Xóa bộ lọc</Button>
+        <p className="ad-note">Các trường chi tiết khớp chính xác. Nhấn Tìm kiếm để áp dụng.</p>
         </div>
       </Form>}
       {exportError && <p className="ad-state" role="alert">{exportError}</p>}
@@ -105,7 +111,9 @@ export default function AuditLogPage() {
               showTotal: total => `Tổng ${total.toLocaleString('vi-VN')} bản ghi`,
               onChange: (page, size) => { setSelected(null); setParams(previous => ({ ...previous, page: size !== previous.size ? 0 : page - 1, size })); } }} />
         : <ResourceState resource={resource} allowed={canAudit} />}
-    </section>
+    </section> },
+      { key: 'system', label: 'Giám sát hệ thống', children: <SystemMonitoringPanel allowed={canMonitor} /> },
+    ]} />
     <AuditDetailDrawer log={selected} open={selected !== null} onClose={() => setSelected(null)} />
   </div>;
 }

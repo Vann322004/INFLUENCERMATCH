@@ -1,9 +1,8 @@
 import React from 'react';
-import { Row, Col, Select, InputNumber, Input } from 'antd';
+import { Row, Col, Select, InputNumber, Input, Segmented } from 'antd';
 import {
   TikTokBrandIcon,
   InstagramBrandIcon,
-  FacebookBrandIcon,
   AGE_GROUPS,
   GENDERS,
 } from './createCampaignConstants';
@@ -11,6 +10,8 @@ import {
 const { TextArea } = Input;
 
 interface CreateCampaignStep2Props {
+  creatorMode?: 'SINGLE' | 'MULTI';
+  setCreatorMode?: (val: 'SINGLE' | 'MULTI') => void;
   selectedPlatforms: string[];
   togglePlatform: (p: string) => void;
   creatorQuantity: number;
@@ -31,6 +32,8 @@ interface CreateCampaignStep2Props {
 }
 
 export const CreateCampaignStep2: React.FC<CreateCampaignStep2Props> = ({
+  creatorMode = 'SINGLE',
+  setCreatorMode,
   selectedPlatforms,
   togglePlatform,
   creatorQuantity,
@@ -79,9 +82,9 @@ export const CreateCampaignStep2: React.FC<CreateCampaignStep2Props> = ({
               icon: <InstagramBrandIcon size={16} color={selectedPlatforms.includes('instagram') ? '#E1306C' : '#64748B'} />,
             },
             {
-              key: 'facebook',
-              name: 'Facebook',
-              icon: <FacebookBrandIcon size={16} color={selectedPlatforms.includes('facebook') ? '#1877F2' : '#64748B'} />,
+              key: 'youtube',
+              name: 'YouTube',
+              icon: null,
             },
           ].map((p) => {
             const isSelected = selectedPlatforms.includes(p.key);
@@ -101,24 +104,59 @@ export const CreateCampaignStep2: React.FC<CreateCampaignStep2Props> = ({
       </div>
 
       {/* Phần 2: Tiêu chí Creator */}
+      <div className="ccreate-sub-section" style={{ marginBottom: 16 }}>
+        <div className="ccreate-field-label">
+          <span>Mô hình tuyển Creator <span className="req">*</span></span>
+        </div>
+        <Segmented
+          value={creatorMode}
+          onChange={(val) => {
+            const nextMode = val as 'SINGLE' | 'MULTI';
+            if (setCreatorMode) setCreatorMode(nextMode);
+            if (nextMode === 'SINGLE') {
+              setCreatorQuantity(1);
+            } else if (creatorQuantity < 2) {
+              setCreatorQuantity(2);
+            }
+          }}
+          options={[
+            { label: 'Đơn Creator (1 Creator đại sứ)', value: 'SINGLE' },
+            { label: 'Đa Creator (Tuyển từ 2 Creator trở lên)', value: 'MULTI' },
+          ]}
+          block
+          style={{ borderRadius: 10, padding: 4 }}
+        />
+        <div style={{ fontSize: 12, color: '#64748B', marginTop: 6 }}>
+          {creatorMode === 'SINGLE'
+            ? 'Chế độ Đơn Creator tập trung vào 1 KOC/KOL chủ chốt (targetCreatorCount = 1).'
+            : 'Chế độ Đa Creator cho phép tuyển nhiều KOC/KOL cùng lúc để phủ rộng chiến dịch (targetCreatorCount ≥ 2).'}
+        </div>
+      </div>
+
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12}>
           <div className="ccreate-field-label">
             <span>Số lượng Creator cần tuyển <span className="req">*</span></span>
           </div>
           <InputNumber
-            min={1}
-            max={500}
-            value={creatorQuantity}
-            onChange={(val) => setCreatorQuantity(val || 1)}
+            min={creatorMode === 'SINGLE' ? 1 : 2}
+            max={creatorMode === 'SINGLE' ? 1 : 500}
+            disabled={creatorMode === 'SINGLE'}
+            value={creatorMode === 'SINGLE' ? 1 : Math.max(2, creatorQuantity)}
+            onChange={(val) => setCreatorQuantity(val || (creatorMode === 'SINGLE' ? 1 : 2))}
             style={{ width: '100%', borderRadius: 10, height: 40, lineHeight: '38px' }}
             suffix={<span style={{ color: '#94A3B8', fontSize: 12 }}>Creator</span>}
           />
+          {creatorMode === 'SINGLE' && (
+            <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+              Cố định 1 Creator theo chuẩn chế độ SINGLE.
+            </div>
+          )}
         </Col>
 
         <Col xs={24} sm={12}>
           <div className="ccreate-field-label">
-            <span>Lượng Follower tối thiểu <span className="req">*</span></span>
+            <span>Lượng Follower tối thiểu (tùy chọn)</span>
           </div>
           <Select
             value={minFollowers || undefined}
@@ -136,7 +174,7 @@ export const CreateCampaignStep2: React.FC<CreateCampaignStep2Props> = ({
 
         <Col xs={24} sm={12}>
           <div className="ccreate-field-label">
-            <span>Khu vực / Tỉnh thành ưu tiên <span className="req">*</span></span>
+            <span>Khu vực / Tỉnh thành ưu tiên (tùy chọn)</span>
           </div>
           <Select
             showSearch
@@ -156,9 +194,9 @@ export const CreateCampaignStep2: React.FC<CreateCampaignStep2Props> = ({
       <Row gutter={[16, 16]}>
         <Col xs={24} md={14}>
           <div className="ccreate-field-label">
-            <span>Độ tuổi người theo dõi mục tiêu <span className="req">*</span></span>
+            <span>Độ tuổi người theo dõi mục tiêu (tùy chọn)</span>
             <span style={{ fontSize: 11.5, color: '#4F46E5', fontWeight: 600 }}>
-              {selectedAges.length > 0 ? `Đã chọn ${selectedAges.length} nhóm` : '(Bắt buộc)'}
+              {selectedAges.length > 0 ? `Đã chọn ${selectedAges.length} nhóm` : '(Tùy chọn)'}
             </span>
           </div>
           <div className="ccreate-chips-group">
@@ -180,7 +218,7 @@ export const CreateCampaignStep2: React.FC<CreateCampaignStep2Props> = ({
 
         <Col xs={24} md={10}>
           <div className="ccreate-field-label">
-            <span>Giới tính khán giả <span className="req">*</span></span>
+            <span>Giới tính khán giả (tùy chọn)</span>
           </div>
           <div className="ccreate-chips-group">
             {GENDERS.map((g) => {

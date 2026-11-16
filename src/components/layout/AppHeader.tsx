@@ -13,13 +13,13 @@ export default function AppHeader({ onOpenNavigation }: { onOpenNavigation?: () 
   const getPageInfo = () => {
     const p = location.pathname;
     if (p.includes('/campaign-management')) {
-      const campName = sessionStorage.getItem('current_campaign_name');
+      const campName = null;
       const isRec = location.search.includes('recommendation');
       return {
         root: 'Trang chủ',
         sub: campName && campName !== 'Chiến dịch' ? campName : 'Chiến dịch',
         subLink: '/campaigns',
-        current: isRec ? 'Đề xuất AI' : 'Pipeline Kanban',
+        current: isRec ? 'Đề xuất AI' : 'Tiếp cận và thỏa thuận',
       };
     }
     if (

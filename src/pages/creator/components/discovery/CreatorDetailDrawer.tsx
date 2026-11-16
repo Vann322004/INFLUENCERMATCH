@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons';
 import type { Creator, BrandCampaignItem } from './types';
 import CreatorAvatar from './CreatorAvatar';
-import { computeCreatorMatch } from './discoveryUtils';
+
 
 interface CreatorDetailDrawerProps {
   visible: boolean;
@@ -211,7 +211,7 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
             </div>
             <p style={{ fontSize: 12, color: '#475569', margin: 0 }}>
               {matchedCampaign
-                ? (creator.matchReason || computeCreatorMatch(creator, matchedCampaign).reason)
+                ? (creator.matchReason || 'Chưa có giải thích từ hệ thống.')
                 : 'Vui lòng chọn một Dự án / Chiến dịch ở đầu trang và bấm "Tìm KOC phù hợp" để AI tính toán tỷ lệ tương thích chi tiết.'}
             </p>
           </div>

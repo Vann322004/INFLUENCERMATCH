@@ -5,11 +5,14 @@ import type { MenuProps } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import { campaignService } from '../../../services/api/campaignService';
 import { creatorService } from '../../../services/api/creatorService';
-import type { RelationshipDto } from '../../../services/api/campaignService';
+import { dealService } from '../../../services/api/dealService';
+import type { CooperationBudget } from '../../../services/api/dealService';
+import { collaborationService } from '../../../services/api/collaborationService';
+import { shortlistService } from '../../../services/api/shortlistService';
 import type { CampaignResponse } from '../../../types/api/campaign.types';
 import { mapApiCampaignToUi } from '../../../components/dashboard/CampaignTable';
 import type { Campaign } from '../../../data/mockData';
-import type { CampaignItemUI } from '../CampaignPage';
+import type { CampaignItemUI } from '../campaignLegacy.types';
 import type { CampaignCreatorRow, CampaignStatusType } from '../components/detail/campaignDetailTypes';
 import type { CampaignDetailTabKey } from '../components/detail/CampaignDetailNavTabs';
 import {
@@ -131,112 +134,100 @@ export function useCampaignDetail() {
   const [activeTab, setActiveTab] = useState<CampaignDetailTabKey>('overview');
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [cooperationBudget, setCooperationBudget] = useState<CooperationBudget | null>(null);
+  const [shortlistCount, setShortlistCount] = useState<number>(0);
+  const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(true);
 
-  // Fetch dữ liệu từ API chạy nền để giữ view mượt mà
+  // Fetch dữ liệu từ API thật của Backend: Campaign, Budget, Shortlist, Collaborations
   useEffect(() => {
     if (!resolvedId) return;
 
     let isMounted = true;
     const loadCampaign = async () => {
+      setIsLoadingDetail(true);
       try {
-        const data = await campaignService.getCampaignById(resolvedId);
+        const [campaignRes, budgetRes, shortlistRes, collabsRes] = await Promise.allSettled([
+          campaignService.getCampaignById(resolvedId),
+          dealService.budget(resolvedId),
+          shortlistService.list(resolvedId, { page: 0, size: 1 }),
+          collaborationService.listBrand(resolvedId),
+        ]);
+
+        const data = campaignRes.status === 'fulfilled' ? campaignRes.value : null;
+        const budgetData = budgetRes.status === 'fulfilled' ? budgetRes.value : null;
+        const shortlistData = shortlistRes.status === 'fulfilled' ? shortlistRes.value : null;
+        const collabs = collabsRes.status === 'fulfilled' ? collabsRes.value : [];
+
+        if (budgetData && isMounted) {
+          setCooperationBudget(budgetData);
+        }
+        if (shortlistData && isMounted) {
+          setShortlistCount(shortlistData.totalElements ?? 0);
+        }
+
+        let newStatus: CampaignStatusType = 'running';
         if (data && isMounted) {
           setRawCampaign(data);
           const mappedUi = mapApiCampaignToUi(data);
           setCampaign(mappedUi);
 
-          let newStatus: CampaignStatusType = 'running';
           if (data.status === 'COMPLETED') newStatus = 'completed';
           else if (data.status === 'DRAFT') newStatus = 'draft';
           else if (data.status === 'ARCHIVED') newStatus = 'cancelled';
           setCurrentStatus(newStatus);
+        }
 
-          // Tải danh sách KOC từ Pipeline Relationship và Shortlist từ Backend DB
-          let rels: RelationshipDto[] = [];
-          try {
-            rels = await campaignService.getRelationships(resolvedId);
-          } catch {
-            rels = [];
-          }
+        // Tab "Creator tham gia" CHỈ hiển thị hợp tác đã xác nhận (Collaborations)
+        // Tuyệt đối không trộn Shortlist hay Relationship nháp
+        if (isMounted) {
+          const statusMap: Record<string, { text: string; color: string; deliverable: string; delColor: string }> = {
+            CONFIRMED: { text: 'Đã xác nhận', color: '#10B981', deliverable: 'Chờ lên nội dung', delColor: 'blue' },
+            IN_PROGRESS: { text: 'Đang thực hiện', color: '#3B82F6', deliverable: 'Đang sản xuất', delColor: 'processing' },
+            CONTENT_SUBMITTED: { text: 'Đã nộp bài', color: '#F59E0B', deliverable: 'Chờ duyệt nội dung', delColor: 'warning' },
+            CONTENT_APPROVED: { text: 'Đã duyệt bài', color: '#8B5CF6', deliverable: 'Chờ xuất bản', delColor: 'purple' },
+            PUBLISHED: { text: 'Đã xuất bản', color: '#06B6D4', deliverable: 'Đang đo lường', delColor: 'cyan' },
+            COMPLETED: { text: 'Hoàn thành', color: '#10B981', deliverable: 'Nghiệm thu hoàn tất', delColor: 'success' },
+            CANCELLED: { text: 'Đã hủy', color: '#EF4444', deliverable: 'Dừng hợp tác', delColor: 'error' },
+          };
 
-          let shortlists: any[] = [];
-          try {
-            shortlists = await creatorService.getShortlist(resolvedId);
-          } catch {
-            shortlists = [];
-          }
-
-          let currentCreators: CampaignCreatorRow[] = [];
-          if (isMounted) {
-            if (rels && rels.length > 0) {
-              currentCreators = rels.map((r: any, idx) => {
-                const stageInfo = getStageInfo(r.stage);
-                return {
-                  id: r.id || `rel_${idx}`,
-                  name: r.creatorName || `Nhà sáng tạo #${idx + 1}`,
-                  username: r.creatorUsername
-                    ? `@${r.creatorUsername.replace('@', '')}`
-                    : `@creator_${idx + 1}`,
-                  avatar:
-                    r.creatorAvatar && r.creatorAvatar.startsWith('http') && !r.creatorAvatar.includes('NaN')
-                      ? r.creatorAvatar
-                      : VERIFIED_CREATOR_AVATARS[idx % VERIFIED_CREATOR_AVATARS.length],
-                  platform: r.platform?.toLowerCase() === 'instagram' ? 'instagram' : 'tiktok',
-                  followers: r.followersCount ? `${(r.followersCount / 1000).toFixed(0)}K` : '50K+',
-                  fee: r.agreedFee
-                    ? `${r.agreedFee.toLocaleString('vi-VN')} ₫`
-                    : r.quotedFee
-                    ? `${r.quotedFee.toLocaleString('vi-VN')} ₫`
-                    : 'Thỏa thuận',
-                  stageText: stageInfo.text,
-                  stageColor: stageInfo.color,
-                  deliverableStatus: stageInfo.deliverable,
-                  deliverableColor: stageInfo.delColor,
-                };
-              });
-            }
-
-            // Bổ sung các KOC từ bảng Shortlist Database nếu chưa có trong Pipeline
-            if (shortlists && shortlists.length > 0) {
-              shortlists.forEach((s: any, idx) => {
-                const exists = currentCreators.some((c) => c.id === s.id || c.name === s.creatorName);
-                if (!exists) {
-                  currentCreators.push({
-                    id: s.id || `sl_${idx}`,
-                    name: s.creatorName || `Nhà sáng tạo #${idx + 1}`,
-                    username: s.creatorUsername
-                      ? `@${s.creatorUsername.replace('@', '')}`
-                      : `@creator_${idx + 1}`,
-                    avatar:
-                      s.avatarUrl && s.avatarUrl.startsWith('http') && !s.avatarUrl.includes('NaN')
-                        ? s.avatarUrl
-                        : VERIFIED_CREATOR_AVATARS[(idx + 2) % VERIFIED_CREATOR_AVATARS.length],
-                    platform: s.platform?.toLowerCase() === 'instagram' ? 'instagram' : 'tiktok',
-                    followers: s.followers ? `${(s.followers / 1000).toFixed(0)}K` : '80K+',
-                    fee: 'Đang thỏa thuận',
-                    stageText: 'Đã lưu Shortlist',
-                    stageColor: '#6366F1',
-                    deliverableStatus: 'Chờ gửi đề xuất',
-                    deliverableColor: 'blue',
-                  });
-                }
-              });
-            }
-
-            setParticipatingCreators(currentCreators);
-          }
-
-          // Ghi vào memory cache
-          campaignDetailCache.set(resolvedId, {
-            rawCampaign: data,
-            campaign: mappedUi,
-            participatingCreators: currentCreators,
-            currentStatus: newStatus,
-            timestamp: Date.now(),
+          const currentCreators: CampaignCreatorRow[] = (collabs || []).map((c, idx) => {
+            const st = statusMap[c.status] || {
+              text: c.status || 'Đang hợp tác',
+              color: '#6366F1',
+              deliverable: c.hasReview ? 'Đã duyệt bài' : c.hasOutcome ? 'Đã đo lường' : 'Đang xử lý',
+              delColor: 'default',
+            };
+            return {
+              id: c.id,
+              name: c.creatorName || c.channelName || `Nhà sáng tạo #${idx + 1}`,
+              username: c.channelName ? `@${c.channelName.replace(/^@+/, '')}` : (c.creatorName ? `@${c.creatorName.toLowerCase().replace(/\s+/g, '')}` : '—'),
+              avatar: c.avatarUrl || VERIFIED_CREATOR_AVATARS[idx % VERIFIED_CREATOR_AVATARS.length],
+              platform: (c.platform?.toLowerCase() === 'instagram' ? 'instagram' : 'tiktok') as 'instagram' | 'tiktok',
+              followers: '—',
+              fee: c.agreedFee != null ? `${c.agreedFee.toLocaleString('vi-VN')} ₫` : 'Chưa có',
+              stageText: st.text,
+              stageColor: st.color,
+              deliverableStatus: st.deliverable,
+              deliverableColor: st.delColor,
+            };
           });
+
+          setParticipatingCreators(currentCreators);
+
+          if (data) {
+            campaignDetailCache.set(resolvedId, {
+              rawCampaign: data,
+              campaign: mapApiCampaignToUi(data),
+              participatingCreators: currentCreators,
+              currentStatus: newStatus,
+              timestamp: Date.now(),
+            });
+          }
         }
       } catch (err) {
         console.warn('Lỗi khi tải chi tiết chiến dịch:', err);
+      } finally {
+        if (isMounted) setIsLoadingDetail(false);
       }
     };
 
@@ -246,27 +237,15 @@ export function useCampaignDetail() {
     };
   }, [resolvedId]);
 
-  const campaignTitle =
-    rawCampaign?.name || passedItem?.name || 'Chiến dịch trọng điểm 2026';
-  const campaignBudgetFormatted = rawCampaign?.budgetMax
-    ? `${rawCampaign.budgetMax.toLocaleString('vi-VN')} đ`
-    : passedItem?.budgetFormatted || '80.000.000 đ';
-
-  // Tính toán ngân sách thực tế từ danh sách KOC trong pipeline
-  const totalBudget = rawCampaign?.budgetMax || passedItem?.budgetRaw || 80000000;
-  const allocatedBudget =
-    participatingCreators.reduce((sum, c) => {
-      const rawNum = parseInt(c.fee.replace(/\D/g, ''), 10);
-      return sum + (isNaN(rawNum) ? 0 : rawNum);
-    }, 0) || (participatingCreators.length > 0 ? participatingCreators.length * 12000000 : 0);
-
-  const remainingBudget = Math.max(0, totalBudget - allocatedBudget);
-  const progressPercent =
-    currentStatus === 'completed'
-      ? 100
-      : totalBudget > 0
-      ? Math.min(100, Math.round((allocatedBudget / totalBudget) * 100))
-      : 0;
+  const campaignTitle = rawCampaign?.name || passedItem?.name || 'Chiến dịch';
+  const totalBudget = cooperationBudget?.totalBudget ?? (rawCampaign?.totalBudget ?? rawCampaign?.budgetMax ?? null);
+  const allocatedBudget = cooperationBudget?.committedBudget ?? 0;
+  const remainingBudget = cooperationBudget?.remainingBudget ?? (totalBudget != null ? Math.max(0, totalBudget - allocatedBudget) : 0);
+  const campaignBudgetFormatted = totalBudget != null ? `${totalBudget.toLocaleString('vi-VN')} ₫` : 'Chưa thiết lập';
+  const progressPercent = totalBudget && totalBudget > 0 ? Math.min(100, Math.round((allocatedBudget / totalBudget) * 100)) : 0;
+  const confirmedCreatorCount = cooperationBudget?.confirmedCreatorCount ?? participatingCreators.length;
+  const targetCreatorCount = rawCampaign?.targetCreatorCount ?? 1;
+  const isOverTarget = confirmedCreatorCount > targetCreatorCount;
 
   // Handle Lifecycle actions
   const handleActivate = () => {
@@ -411,6 +390,12 @@ export function useCampaignDetail() {
     allocatedBudget,
     remainingBudget,
     progressPercent,
+    cooperationBudget,
+    confirmedCreatorCount,
+    targetCreatorCount,
+    shortlistCount,
+    isOverTarget,
+    isLoadingDetail,
     handleActivate,
     handleComplete,
     handleConfirmCancel,

@@ -60,7 +60,7 @@ export const creatorService = {
     const response = await apiClient.get<ApiResponse<CreatorDetail>>(`/creators/${id}`);
     const payload = response.data;
     const detail = payload?.data ?? payload as unknown as CreatorDetail;
-    if (payload?.success === false || !detail || typeof detail.id !== 'string') {
+    if (payload?.success === false || !detail || detail.id !== id) {
       throw new Error('Invalid creator detail response.');
     }
     return detail;

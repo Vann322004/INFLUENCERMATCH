@@ -1,5 +1,5 @@
+import { campaignService } from './campaignService';
 import apiClient from '../apiClient';
-import { brandService } from './brandService';
 import type { ApiResponse, PageResponse } from '../../types/api/common.types';
 import type { CampaignResponse } from '../../types/api/campaign.types';
 import type {
@@ -36,16 +36,9 @@ function deliverableWriter<T>(action: 'submissions' | 'review' | 'publication' |
 
 export const collaborationService = {
   async listCampaigns(): Promise<CampaignResponse[]> {
-    const brand = await brandService.getMyBrand(true);
-    if (!brand) return [];
-    const campaigns: CampaignResponse[] = [];
-    for (let page = 0; ; page++) {
-      const result = await get<PageResponse<CampaignResponse>>(`/brands/${brand.id}/campaigns`, { page, size: 50 });
-      campaigns.push(...result.items);
-      if (page + 1 >= result.totalPages) return campaigns;
-    }
+    return campaignService.getAllCampaigns();
   },
-  async listBrand(campaignId: string, signal: AbortSignal) {
+  async listBrand(campaignId: string, signal?: AbortSignal) {
     const rows: CollaborationSummary[] = [];
     for (let page = 0; ; page++) {
       const result = await get<PageResponse<CollaborationSummary>>(

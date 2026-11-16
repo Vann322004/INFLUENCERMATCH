@@ -125,26 +125,43 @@ export const CampaignOverviewTab: React.FC<CampaignOverviewTabProps> = ({
             </div>
 
             <div className="cdetail-ops-row">
+              <span className="cdetail-ops-label">Mô hình Creator</span>
+              <span className="cdetail-ops-value" style={{ fontWeight: 600 }}>
+                {rawCampaign?.creatorMode === 'MULTI'
+                  ? `Đa Creator (${rawCampaign.targetCreatorCount ?? 2} Creator mục tiêu)`
+                  : 'Đơn Creator (1 Đại sứ độc quyền)'}
+              </span>
+            </div>
+
+            <div className="cdetail-ops-row">
               <span className="cdetail-ops-label">Khán giả mục tiêu</span>
-              <span className="cdetail-ops-value">Nữ 18–28 (Trẻ, năng động)</span>
+              <span className="cdetail-ops-value">
+                {rawCampaign?.targetAudiences && rawCampaign.targetAudiences.length > 0
+                  ? rawCampaign.targetAudiences.join(', ')
+                  : 'Chưa thiết lập'}
+              </span>
             </div>
 
             <div className="cdetail-ops-row">
               <span className="cdetail-ops-label">Khu vực ưu tiên</span>
-              <span className="cdetail-ops-value">TP.HCM, Hà Nội & Toàn quốc</span>
+              <span className="cdetail-ops-value">
+                {rawCampaign?.locations && rawCampaign.locations.length > 0
+                  ? rawCampaign.locations.join(', ')
+                  : 'Toàn quốc'}
+              </span>
             </div>
 
             <div className="cdetail-ops-row">
               <span className="cdetail-ops-label">Thời gian triển khai</span>
               <span className="cdetail-ops-value">
-                {rawCampaign?.startDate ? new Date(rawCampaign.startDate).toLocaleDateString('vi-VN') : '26/10/2026'} – {rawCampaign?.endDate ? new Date(rawCampaign.endDate).toLocaleDateString('vi-VN') : '25/12/2026'}
+                {rawCampaign?.startDate ? new Date(rawCampaign.startDate).toLocaleDateString('vi-VN') : 'Chưa thiết lập'} – {rawCampaign?.endDate ? new Date(rawCampaign.endDate).toLocaleDateString('vi-VN') : 'Chưa thiết lập'}
               </span>
             </div>
 
             <div className="cdetail-ops-row">
               <span className="cdetail-ops-label">Ngày khởi tạo</span>
               <span className="cdetail-ops-value">
-                {rawCampaign?.createdAt ? new Date(rawCampaign.createdAt).toLocaleDateString('vi-VN') : '15/10/2026'}
+                {rawCampaign?.createdAt ? new Date(rawCampaign.createdAt).toLocaleDateString('vi-VN') : '—'}
               </span>
             </div>
           </div>

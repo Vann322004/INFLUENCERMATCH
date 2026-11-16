@@ -6,6 +6,7 @@ interface CampaignBudgetTabProps {
   campaignBudgetFormatted: string;
   allocatedBudget: number;
   remainingBudget: number;
+  confirmedCreatorCount?: number;
   participatingCreators: CampaignCreatorRow[];
   campaignTitle: string;
 }
@@ -14,6 +15,7 @@ export const CampaignBudgetTab: React.FC<CampaignBudgetTabProps> = ({
   campaignBudgetFormatted,
   allocatedBudget,
   remainingBudget,
+  confirmedCreatorCount = 0,
   participatingCreators,
   campaignTitle,
 }) => {
@@ -22,19 +24,12 @@ export const CampaignBudgetTab: React.FC<CampaignBudgetTabProps> = ({
       <div className="cdetail-card-header">
         <div>
           <span className="cdetail-card-title">
-            Quản lý Ngân sách & Thanh toán KOC
+            Quản lý Ngân sách & Tiến độ Hợp tác
           </span>
           <div style={{ fontSize: 12.5, color: '#64748B', marginTop: 3 }}>
-            Theo dõi hạn mức tài chính, tiến độ giải ngân và các đợt quyết toán cho Nhà sáng tạo
+            Theo dõi hạn mức tài chính, ngân sách đã cam kết và danh sách Creator đã chốt thỏa thuận
           </div>
         </div>
-        <Button
-          type="primary"
-          style={{ background: '#059669', borderColor: '#059669', borderRadius: 8, height: 36, fontWeight: 600 }}
-          onClick={() => message.success('Hệ thống sẵn sàng kích hoạt cổng thanh toán VNPay / Tài khoản doanh nghiệp')}
-        >
-          Duyệt chi & Quyết toán
-        </Button>
       </div>
 
       {/* 4 Financial Tiles */}
@@ -42,22 +37,22 @@ export const CampaignBudgetTab: React.FC<CampaignBudgetTabProps> = ({
         <div className="cdetail-finance-tile plan">
           <span className="cdetail-finance-lbl">Ngân sách kế hoạch</span>
           <span className="cdetail-finance-val">{campaignBudgetFormatted}</span>
-          <span className="cdetail-finance-desc">Hạn mức ngân sách tối đa</span>
+          <span className="cdetail-finance-desc">Tổng ngân sách thiết lập cho chiến dịch</span>
         </div>
         <div className="cdetail-finance-tile committed">
-          <span className="cdetail-finance-lbl">Đã thỏa thuận KOC</span>
+          <span className="cdetail-finance-lbl">Ngân sách đã cam kết</span>
           <span className="cdetail-finance-val">{allocatedBudget > 0 ? `${allocatedBudget.toLocaleString('vi-VN')} đ` : '0 đ'}</span>
-          <span className="cdetail-finance-desc">Chi phí cam kết theo hợp đồng</span>
+          <span className="cdetail-finance-desc">Tổng phí hợp đồng các Creator đã xác nhận</span>
         </div>
         <div className="cdetail-finance-tile paid">
-          <span className="cdetail-finance-lbl">Đã thanh toán / Tạm ứng</span>
-          <span className="cdetail-finance-val">{allocatedBudget > 0 ? `${Math.round(allocatedBudget * 0.5).toLocaleString('vi-VN')} đ` : '0 đ'}</span>
-          <span className="cdetail-finance-desc">Đã cọc 50% khi chốt hợp tác</span>
+          <span className="cdetail-finance-lbl">Creator đã chốt hợp tác</span>
+          <span className="cdetail-finance-val">{confirmedCreatorCount} Creator</span>
+          <span className="cdetail-finance-desc">Đã đồng thuận qua điều khoản Deal</span>
         </div>
         <div className="cdetail-finance-tile remaining">
           <span className="cdetail-finance-lbl">Hạn mức còn lại</span>
-          <span className="cdetail-finance-val">{remainingBudget.toLocaleString('vi-VN')} đ</span>
-          <span className="cdetail-finance-desc">Khả dụng để tuyển thêm KOC</span>
+          <span className="cdetail-finance-val">{remainingBudget > 0 ? `${remainingBudget.toLocaleString('vi-VN')} đ` : '0 đ'}</span>
+          <span className="cdetail-finance-desc">Khả dụng để tuyển thêm Creator</span>
         </div>
       </div>
 

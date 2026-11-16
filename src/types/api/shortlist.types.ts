@@ -2,6 +2,8 @@ import type { ShortlistPriority } from './creator.types';
 export type ShortlistStatus = 'SAVED' | 'READY_TO_CONTACT' | 'CONTACTED' | 'REMOVED';
 export interface Verification { status: string; method: string | null; verifiedAt: string | null; evidenceSource: string | null; environment: string | null }
 export interface ShortlistRecord {
+  userName?: string | null; category?: string | null; contentSummary?: string | null;
+  estimatedFeeMin?: number | null; estimatedFeeMax?: number | null; actualFee?: number | null;
   id: string; campaignId: string; creatorId: string; masterId: string | null; creatorName: string | null;
   platform: string | null; avatarUrl: string | null; priority: ShortlistPriority; status: ShortlistStatus; note: string | null; addedAt: string | null;
   followers: number | null; engagementRate: number | null; niche: string | null; metricId: string | null;

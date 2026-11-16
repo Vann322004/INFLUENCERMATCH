@@ -95,7 +95,7 @@ function ProgressTable({ rows, snapshots, returnTo, emptyLabel }: {
 
 function BrandCollaborations({ campaigns }: { campaigns: CampaignResponse[] }) {
   const [params, setParams] = useSearchParams();
-  const selectedCampaign = params.get('campaign');
+  const selectedCampaign = params.get('campaign') || params.get('campaignId');
   const campaignId = campaigns.find(campaign => campaign.id === selectedCampaign)?.id;
   const status = statusOptions.find(option => option.value === params.get('status'))?.value;
   const query = params.get('q') ?? params.get('campaignSearch') ?? '';
@@ -111,6 +111,7 @@ function BrandCollaborations({ campaigns }: { campaigns: CampaignResponse[] }) {
   function updateParams(changes: Record<string, string | undefined>) {
     setParams(previous => {
       const next = new URLSearchParams(previous);
+      if ('campaign' in changes) next.delete('campaignId');
       if ('q' in changes) next.delete('campaignSearch');
       for (const [key, value] of Object.entries(changes)) {
         if (value) next.set(key, value);
@@ -123,7 +124,7 @@ function BrandCollaborations({ campaigns }: { campaigns: CampaignResponse[] }) {
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
-    const scope = campaignId ? campaigns.filter(campaign => campaign.id === campaignId) : campaigns;
+    const scope = selectedCampaign ? campaigns.filter(campaign => campaign.id === selectedCampaign) : campaigns;
     setData(undefined);
     setLoading(true);
     async function load() {
@@ -146,7 +147,7 @@ function BrandCollaborations({ campaigns }: { campaigns: CampaignResponse[] }) {
     }
     void load();
     return () => controller.abort();
-  }, [campaigns, campaignId, refresh]);
+  }, [campaigns, selectedCampaign, refresh]);
 
   const rows = useMemo(() => {
     const filter = searchableName(query);
