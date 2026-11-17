@@ -22,13 +22,11 @@
 
 html,
 body {
-  
-  height: 100%;
-  max-height: 100vh;
+  min-height: 100%;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  overflow-y: hidden;
+  overflow-y: auto;
   font-family: var(--font-sans);
   background: var(--bg-gradient);
   color: var(--text-dark);
