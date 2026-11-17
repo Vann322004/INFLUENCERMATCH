@@ -220,7 +220,7 @@ export default function SubscriptionPage() {
             used: usedCamp,
             total: totalCamp,
             unit: 'chiến dịch',
-            color: '#6366F1',
+            color: '#2563EB',
             description: 'Số lượng chiến dịch Influencer marketing đang vận hành',
           },
           {
@@ -265,7 +265,7 @@ export default function SubscriptionPage() {
             used: usedCamp,
             total: 0,
             unit: 'chiến dịch',
-            color: '#6366F1',
+            color: '#2563EB',
             description: 'Đăng ký gói dịch vụ để bắt đầu tạo chiến dịch',
           },
           {

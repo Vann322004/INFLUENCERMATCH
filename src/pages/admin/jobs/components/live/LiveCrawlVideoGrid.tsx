@@ -105,10 +105,10 @@ export default function LiveCrawlVideoGrid({ result }: LiveCrawlVideoGridProps) 
                     textAlign: 'center',
                     fontSize: 11.5,
                     fontWeight: 600,
-                    color: '#6366F1',
+                    color: '#2563EB',
                     padding: '4px 0',
                     borderRadius: 6,
-                    background: '#EEF2FF',
+                    background: '#EFF6FF',
                   }}
                 >
                   Xem bài đăng trên {result.platform} ↗

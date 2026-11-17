@@ -91,7 +91,7 @@ export const CreatorGridList: React.FC<CreatorGridListProps> = ({
         <Button
           type="primary"
           onClick={onResetFilters}
-          style={{ background: '#4F46E5', borderRadius: 10, height: 40, fontWeight: 500 }}
+          style={{ background: '#1D4ED8', borderRadius: 10, height: 40, fontWeight: 500 }}
         >
           Đặt lại bộ lọc
         </Button>

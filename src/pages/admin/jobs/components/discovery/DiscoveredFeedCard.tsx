@@ -103,7 +103,7 @@ export default function DiscoveredFeedCard({
               height: 44,
               borderRadius: '50%',
               objectFit: 'cover',
-              border: '2px solid #EEF2FF',
+              border: '2px solid #EFF6FF',
               flexShrink: 0,
             }}
           />
@@ -120,7 +120,7 @@ export default function DiscoveredFeedCard({
             >
               {r.displayName}
             </div>
-            <div style={{ fontSize: 12, color: '#4F46E5', fontWeight: 600 }}>@{r.username}</div>
+            <div style={{ fontSize: 12, color: '#1D4ED8', fontWeight: 600 }}>@{r.username}</div>
             {r.profileUrl && (
               <a
                 href={r.profileUrl}

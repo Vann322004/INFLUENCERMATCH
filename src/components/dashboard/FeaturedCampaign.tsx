@@ -41,8 +41,8 @@ export default function FeaturedCampaign({ campaign }: FeaturedCampaignProps) {
             width: 48,
             height: 48,
             borderRadius: 12,
-            background: '#EEF2FF',
-            color: '#5B5BF0',
+            background: '#EFF6FF',
+            color: '#2563EB',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -62,7 +62,7 @@ export default function FeaturedCampaign({ campaign }: FeaturedCampaignProps) {
           type="primary"
           onClick={() => navigate('/campaigns/create')}
           style={{
-            background: '#5B5BF0',
+            background: '#2563EB',
             fontWeight: 700,
             borderRadius: 10,
             height: 38,
@@ -130,8 +130,8 @@ export default function FeaturedCampaign({ campaign }: FeaturedCampaignProps) {
                 width: 28,
                 height: 28,
                 borderRadius: 6,
-                background: '#EEF2FF',
-                color: '#5B5BF0',
+                background: '#EFF6FF',
+                color: '#2563EB',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -150,7 +150,7 @@ export default function FeaturedCampaign({ campaign }: FeaturedCampaignProps) {
             size="small"
             onClick={() => navigate('/campaigns')}
             style={{
-              color: '#5B5BF0',
+              color: '#2563EB',
               fontWeight: 600,
               fontSize: 12.5,
               padding: 0,
@@ -264,7 +264,7 @@ export default function FeaturedCampaign({ campaign }: FeaturedCampaignProps) {
           }
         }}
         style={{
-          background: '#5B5BF0',
+          background: '#2563EB',
           fontWeight: 700,
           borderRadius: 10,
           height: 38,

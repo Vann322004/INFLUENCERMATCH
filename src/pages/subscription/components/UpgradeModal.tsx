@@ -35,7 +35,7 @@ export default function UpgradeModal({
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, fontWeight: 700 }}>
           <SafetyCertificateFilled
-            style={{ color: isFreeOrTrial ? '#6366F1' : '#10B981' }}
+            style={{ color: isFreeOrTrial ? '#2563EB' : '#10B981' }}
           />
           {isFreeOrTrial
             ? 'Kích hoạt Gói Dùng thử (Miễn phí 0 ₫)'
@@ -70,7 +70,7 @@ export default function UpgradeModal({
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#5B5BF0' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB' }}>
                 {formatVND(plan.priceMonthly)}
               </div>
             </div>

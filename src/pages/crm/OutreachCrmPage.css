@@ -213,7 +213,7 @@
 
 .subtab-btn.active {
   background: #FFFFFF;
-  color: #4F46E5;
+  color: #1D4ED8;
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -228,8 +228,8 @@
 }
 
 .subtab-count-pill.highlight {
-  background: #EEF2FF;
-  color: #4F46E5;
+  background: #EFF6FF;
+  color: #1D4ED8;
 }
 
 /* ==========================================================================
@@ -591,8 +591,8 @@
 }
 
 .kanban-card:hover {
-  border-color: #C7D2FE;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+  border-color: #BFDBFE;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
 }
 
 .kanban-card-top {
@@ -700,12 +700,12 @@
 }
 
 .btn-kanban-next-stage {
-  background: #EEF2FF;
-  border: 1px solid #C7D2FE;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
   border-radius: 6px;
   font-size: 10.5px;
   font-weight: 700;
-  color: #4F46E5;
+  color: #1D4ED8;
   padding: 3px 8px;
   cursor: pointer;
   display: inline-flex;
@@ -714,7 +714,7 @@
 }
 
 .btn-kanban-next-stage:hover {
-  background: #4F46E5;
+  background: #1D4ED8;
   color: #FFFFFF;
 }
 

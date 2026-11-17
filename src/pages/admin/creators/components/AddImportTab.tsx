@@ -87,7 +87,7 @@ function ManualAddForm({ initialValues }: { initialValues?: any }) {
         <TextArea rows={2} placeholder="Ghi chú thêm..." style={{ resize: 'none' }} />
       </Form.Item>
       <Button type="primary" loading={loading} onClick={handleSubmit} icon={<UserAddOutlined />}
-        style={{ background: 'linear-gradient(135deg, #5B5BF0, #7C3AED)', border: 'none', fontWeight: 700 }}>
+        style={{ background: 'linear-gradient(135deg, #2563EB, #1D4ED8)', border: 'none', fontWeight: 700 }}>
         Thêm Creator
       </Button>
     </Form>
@@ -190,7 +190,7 @@ export default function AddImportTab() {
           {
             key: 'crawl',
             label: (
-              <span style={{ fontWeight: 700, color: '#4F46E5' }}>
+              <span style={{ fontWeight: 700, color: '#1D4ED8' }}>
                 <ThunderboltFilled style={{ color: '#F59E0B' }} /> Cào trực tiếp từ Mạng xã hội
               </span>
             ),

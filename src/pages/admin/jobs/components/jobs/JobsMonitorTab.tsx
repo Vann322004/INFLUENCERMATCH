@@ -89,7 +89,7 @@ export default function JobsMonitorTab() {
       dataIndex: 'id',
       key: 'id',
       render: (id: string) => (
-        <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#6366F1' }}>
+        <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#2563EB' }}>
           #{id.slice(0, 8)}...
         </span>
       ),
@@ -102,7 +102,7 @@ export default function JobsMonitorTab() {
           <div style={{ fontWeight: 700, color: '#0F172A' }}>
             {r.displayName || `@${r.username}`}
           </div>
-          <div style={{ fontSize: 11, color: '#6366F1' }}>@{r.username}</div>
+          <div style={{ fontSize: 11, color: '#2563EB' }}>@{r.username}</div>
         </div>
       ),
     },

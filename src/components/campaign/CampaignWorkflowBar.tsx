@@ -253,12 +253,12 @@ export default function CampaignWorkflowBar({
                   border: 'none',
                   cursor: 'pointer',
                   background: isActive
-                    ? 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)'
+                    ? 'linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%)'
                     : 'transparent',
-                  color: isActive ? '#FFFFFF' : isCompleted ? '#4F46E5' : '#64748B',
+                  color: isActive ? '#FFFFFF' : isCompleted ? '#1D4ED8' : '#64748B',
                   fontWeight: isActive ? 700 : isCompleted ? 600 : 500,
                   fontSize: 12,
-                  boxShadow: isActive ? '0 2px 8px rgba(79, 70, 229, 0.28)' : 'none',
+                  boxShadow: isActive ? '0 2px 8px rgba(29, 78, 216, 0.28)' : 'none',
                   transition: 'all 0.15s ease',
                 }}
               >
@@ -279,7 +279,7 @@ export default function CampaignWorkflowBar({
                       ? '#DCFCE7'
                       : '#F1F5F9',
                     color: isActive
-                      ? '#4F46E5'
+                      ? '#1D4ED8'
                       : isCompleted
                       ? '#16A34A'
                       : '#94A3B8',
@@ -295,8 +295,8 @@ export default function CampaignWorkflowBar({
                   <Badge
                     count={shortlistCount}
                     style={{
-                      backgroundColor: isActive ? '#FFFFFF' : '#4F46E5',
-                      color: isActive ? '#4F46E5' : '#FFFFFF',
+                      backgroundColor: isActive ? '#FFFFFF' : '#1D4ED8',
+                      color: isActive ? '#1D4ED8' : '#FFFFFF',
                       fontWeight: 800,
                       boxShadow: 'none',
                       fontSize: 9.5,
@@ -313,7 +313,7 @@ export default function CampaignWorkflowBar({
                 <RightOutlined
                   style={{
                     fontSize: 8,
-                    color: isCompleted ? '#818CF8' : '#CBD5E1',
+                    color: isCompleted ? '#60A5FA' : '#CBD5E1',
                     margin: '0 1px',
                   }}
                 />
@@ -344,9 +344,9 @@ export default function CampaignWorkflowBar({
               borderRadius: 999,
               fontWeight: 700,
               fontSize: 12,
-              background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+              background: 'linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%)',
               border: 'none',
-              boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
+              boxShadow: '0 2px 8px rgba(29, 78, 216, 0.25)',
               padding: '0 14px',
             }}
           >
@@ -369,9 +369,9 @@ export default function CampaignWorkflowBar({
               borderRadius: 999,
               fontWeight: 700,
               fontSize: 12,
-              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+              background: 'linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 100%)',
               border: 'none',
-              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
+              boxShadow: '0 2px 8px rgba(29, 78, 216, 0.25)',
               padding: '0 14px',
             }}
           >

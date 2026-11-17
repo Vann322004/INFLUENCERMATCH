@@ -36,7 +36,7 @@ export const CreatorAvatar: React.FC<CreatorAvatarProps> = ({ src, name, size = 
       style={{
         border: '2px solid #E2E8F0',
         flexShrink: 0,
-        backgroundColor: '#4F46E5',
+        backgroundColor: '#1D4ED8',
         color: '#ffffff',
         fontWeight: 500,
         ...style,

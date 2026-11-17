@@ -95,7 +95,7 @@ export const IdentityTable: React.FC<IdentityTableProps> = ({
       width: 160,
       render: (_, r) => {
         const pct = Math.round(r.matchScore * 100);
-        const color = pct >= 90 ? '#10B981' : pct >= 80 ? '#F59E0B' : '#6366F1';
+        const color = pct >= 90 ? '#10B981' : pct >= 80 ? '#F59E0B' : '#2563EB';
         return (
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 2 }}>

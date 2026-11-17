@@ -79,7 +79,7 @@ export default function ShortlistQuickPicker({
             />
           )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-            <span style={{ fontSize: 12.5, color: ids.length ? '#4F46E5' : '#64748B', fontWeight: ids.length ? 600 : 400 }}>
+            <span style={{ fontSize: 12.5, color: ids.length ? '#1D4ED8' : '#64748B', fontWeight: ids.length ? 600 : 400 }}>
               {ids.length ? `Đã chọn ${ids.length}/${rows.length} kênh (Tối đa 100).` : 'Chưa chọn riêng: Sẽ gợi ý cho toàn bộ danh sách.'}
             </span>
             <Space size="small">

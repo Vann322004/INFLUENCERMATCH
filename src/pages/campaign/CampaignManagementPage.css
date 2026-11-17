@@ -32,7 +32,7 @@
 }
 
 .pipeline-breadcrumb .breadcrumb-link:hover {
-  color: #4F46E5;
+  color: #1D4ED8;
 }
 
 .pipeline-breadcrumb .breadcrumb-sep {
@@ -117,19 +117,19 @@
 
 .pipeline-tab-btn.active {
   background: #FFFFFF;
-  color: #4F46E5;
+  color: #1D4ED8;
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .btn-add-creator-gradient {
-  background: linear-gradient(135deg, #4338CA 0%, #4F46E5 60%, #6366F1 100%) !important;
+  background: linear-gradient(135deg, #1E40AF 0%, #1D4ED8 60%, #2563EB 100%) !important;
   color: #FFFFFF !important;
   border: none !important;
   font-weight: 700 !important;
   height: 40px !important;
   border-radius: 10px !important;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3) !important;
+  box-shadow: 0 4px 14px rgba(29, 78, 216, 0.3) !important;
   display: inline-flex !important;
   align-items: center !important;
   gap: 6px !important;
@@ -140,7 +140,7 @@
 
 .btn-add-creator-gradient:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.4) !important;
+  box-shadow: 0 6px 18px rgba(29, 78, 216, 0.4) !important;
 }
 
 /* 3. Campaign Summary Card */
@@ -311,17 +311,17 @@
 }
 
 .btn-pipeline-add-creator {
-  background: #4F46E5 !important;
+  background: #1D4ED8 !important;
   border-radius: 8px !important;
   font-weight: 600 !important;
   font-size: 12.5px !important;
   height: 34px !important;
   border: none !important;
-  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.25) !important;
+  box-shadow: 0 1px 3px rgba(29, 78, 216, 0.25) !important;
 }
 
 .btn-pipeline-add-creator:hover {
-  background: #4338CA !important;
+  background: #1E40AF !important;
 }
 
 .campaign-select-pill-select {
@@ -373,9 +373,9 @@
 }
 
 .channel-pill-item.active {
-  background: #EEF2FF;
-  border-color: #C7D2FE;
-  color: #4F46E5;
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #1D4ED8;
   font-weight: 700;
 }
 
@@ -408,7 +408,7 @@
 
 .pipeline-search-full-input:hover,
 .pipeline-search-full-input:focus {
-  border-color: #6366F1 !important;
+  border-color: #2563EB !important;
 }
 
 .btn-pipeline-filter {
@@ -565,7 +565,7 @@
 }
 
 .kanban-col-header.stage-found {
-  background: linear-gradient(135deg, #7C3AED 0%, #6366F1 100%);
+  background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%);
 }
 
 .kanban-col-header.stage-review {
@@ -790,9 +790,9 @@
 }
 
 .btn-action-add:hover {
-  border-color: #4F46E5 !important;
-  color: #4F46E5 !important;
-  background: #EEF2FF !important;
+  border-color: #1D4ED8 !important;
+  color: #1D4ED8 !important;
+  background: #EFF6FF !important;
 }
 
 .btn-action-contacted {
@@ -896,8 +896,8 @@
 }
 
 .ai-recommendation-item:hover {
-  background: #EEF2FF;
-  border-color: #C7D2FE;
+  background: #EFF6FF;
+  border-color: #BFDBFE;
   transform: translateX(2px);
 }
 
@@ -917,20 +917,20 @@
 }
 
 .btn-view-ai-proposals {
-  background: linear-gradient(135deg, #4338CA 0%, #4F46E5 100%) !important;
+  background: linear-gradient(135deg, #1E40AF 0%, #1D4ED8 100%) !important;
   color: #FFFFFF !important;
   border: none !important;
   border-radius: 9px !important;
   font-weight: 700 !important;
   font-size: 12.5px !important;
   height: 38px !important;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25) !important;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25) !important;
   margin-top: 4px;
 }
 
 .btn-view-ai-proposals:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35) !important;
+  box-shadow: 0 6px 16px rgba(29, 78, 216, 0.35) !important;
 }
 
 /* Widget 2: Quick Info */
@@ -989,7 +989,7 @@
 
 /* Widget 3: Create Campaign with AI Banner */
 .widget-create-campaign-banner {
-  background: linear-gradient(135deg, #4338CA 0%, #3B82F6 100%);
+  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
   border-radius: 16px;
   padding: 18px;
   color: #FFFFFF;
@@ -1047,9 +1047,9 @@
   width: 58px;
   height: 58px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #EC4899 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #2563EB 50%, #EC4899 100%);
   border: 2.5px solid #FFFFFF;
-  box-shadow: 0 10px 25px -4px rgba(99, 102, 241, 0.5), 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 25px -4px rgba(37, 99, 235, 0.5), 0 4px 12px rgba(0, 0, 0, 0.12);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1062,7 +1062,7 @@
 
 .floating-ai-trigger-btn:hover {
   transform: translateY(-3px) scale(1.06);
-  box-shadow: 0 14px 30px -4px rgba(139, 92, 246, 0.65), 0 6px 16px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 14px 30px -4px rgba(37, 99, 235, 0.65), 0 6px 16px rgba(0, 0, 0, 0.16);
 }
 
 .floating-ai-trigger-btn:active {
@@ -1070,7 +1070,7 @@
 }
 
 .floating-ai-trigger-btn.active {
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.3), 0 12px 28px -4px rgba(99, 102, 241, 0.6);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3), 0 12px 28px -4px rgba(37, 99, 235, 0.6);
 }
 
 /* Pulsing ambient ring */
@@ -1078,7 +1078,7 @@
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  border: 2px solid rgba(139, 92, 246, 0.45);
+  border: 2px solid rgba(37, 99, 235, 0.45);
   animation: ai-pulse 2.4s infinite cubic-bezier(0.4, 0, 0.6, 1);
   pointer-events: none;
 }
@@ -1175,11 +1175,11 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #2563EB 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
 }
 
 .floating-ai-title {
@@ -1335,8 +1335,8 @@
 }
 
 .ai-rec-card:hover {
-  border-color: #818CF8;
-  box-shadow: 0 10px 25px rgba(79, 70, 229, 0.08);
+  border-color: #60A5FA;
+  box-shadow: 0 10px 25px rgba(29, 78, 216, 0.08);
   transform: translateY(-2px);
 }
 
@@ -1356,8 +1356,8 @@
   border-radius: 8px;
   font-size: 12px;
   font-weight: 800;
-  background: #EEF2FF;
-  color: #4F46E5;
+  background: #EFF6FF;
+  color: #1D4ED8;
 }
 
 .rec-score-pill {
@@ -1457,7 +1457,7 @@
 }
 
 .ai-rec-name:hover {
-  color: #4F46E5;
+  color: #1D4ED8;
 }
 
 .ai-rec-username {
@@ -1534,7 +1534,7 @@
   justify-content: space-between;
   font-size: 11.5px;
   font-weight: 700;
-  color: #4F46E5;
+  color: #1D4ED8;
 }
 
 .rec-deep-link {
@@ -1579,8 +1579,8 @@
 }
 
 .rec-mini-m4-bar:hover {
-  background: #EEF2FF;
-  color: #4F46E5;
+  background: #EFF6FF;
+  color: #1D4ED8;
 }
 
 .m4-pill b {
@@ -1589,7 +1589,7 @@
 }
 
 .rec-mini-m4-bar:hover .m4-pill b {
-  color: #4F46E5;
+  color: #1D4ED8;
 }
 
 /* Card Actions */
@@ -1603,14 +1603,14 @@
 
 .btn-rec-add {
   flex: 1 !important;
-  background: #4F46E5 !important;
+  background: #1D4ED8 !important;
   border: none !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
   font-size: 12px !important;
   height: 34px !important;
   border-radius: 8px !important;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25) !important;
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.25) !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1618,9 +1618,9 @@
 }
 
 .btn-rec-add:hover {
-  background: #4338CA !important;
+  background: #1E40AF !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35) !important;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.35) !important;
 }
 
 .btn-rec-saved {
@@ -1653,8 +1653,8 @@
 }
 
 .btn-rec-detail:hover {
-  border-color: #4F46E5 !important;
-  color: #4F46E5 !important;
+  border-color: #1D4ED8 !important;
+  color: #1D4ED8 !important;
 }
 
 /* ── 6. Top Stepper 5 bước đồng bộ nghiệp vụ như bên Shortlist ── */
@@ -1697,14 +1697,14 @@
 }
 
 .cdiscovery-step-badge.done {
-  background: #6366F1;
+  background: #2563EB;
   color: #FFFFFF;
 }
 
 .cdiscovery-step-badge.active {
-  background: #4F46E5;
+  background: #1D4ED8;
   color: #FFFFFF;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.35);
 }
 
 .cdiscovery-step-badge.upcoming {
@@ -1733,7 +1733,7 @@
 }
 
 .cdiscovery-step-line.done {
-  background: #6366F1;
+  background: #2563EB;
 }
 
 /* ── 7. Header Row đồng bộ Shortlist ── */
@@ -1835,8 +1835,8 @@
 }
 
 .mode-tab-btn.active {
-  background: #EEF2FF;
-  color: #4F46E5;
+  background: #EFF6FF;
+  color: #1D4ED8;
   font-weight: 700;
 }
 
@@ -1928,8 +1928,8 @@
 }
 
 .deep-analysis-header-card {
-  background: linear-gradient(135deg, #FAF5FF 0%, #EEF2FF 100%);
-  border: 1px solid #E0E7FF;
+  background: linear-gradient(135deg, #FAF5FF 0%, #EFF6FF 100%);
+  border: 1px solid #DBEAFE;
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 20px;
@@ -1960,11 +1960,11 @@
 /* ── 10. Discovery vs Recommendation Difference Banner ── */
 .diff-compare-banner {
   background: linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 50%, #F5F3FF 100%);
-  border: 1px solid #E0E7FF;
+  border: 1px solid #DBEAFE;
   border-radius: 14px;
   padding: 16px 20px;
   margin-bottom: 18px;
-  box-shadow: 0 2px 10px rgba(79, 70, 229, 0.04);
+  box-shadow: 0 2px 10px rgba(29, 78, 216, 0.04);
 }
 
 .diff-compare-header {
@@ -2011,7 +2011,7 @@
 }
 
 .diff-card-col.recommendation-side {
-  border-left: 3px solid #4F46E5;
+  border-left: 3px solid #1D4ED8;
   background: linear-gradient(to right, #FAF5FF, #FFFFFF);
 }
 
@@ -2028,7 +2028,7 @@
 }
 
 .diff-card-col.recommendation-side .diff-card-title {
-  color: #4338CA;
+  color: #1E40AF;
 }
 
 .diff-card-desc {
@@ -2055,13 +2055,13 @@
 }
 
 .diff-pill-rec {
-  background: #EEF2FF;
-  color: #4338CA;
+  background: #EFF6FF;
+  color: #1E40AF;
   font-size: 10.5px;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 6px;
-  border: 1px solid #C7D2FE;
+  border: 1px solid #BFDBFE;
 }
 
 /* ── Section Titles within Recommendation Tab ── */
@@ -2088,7 +2088,7 @@
 }
 
 .rec-section-count {
-  background: #4F46E5;
+  background: #1D4ED8;
   color: #FFFFFF;
   font-size: 11px;
   font-weight: 700;

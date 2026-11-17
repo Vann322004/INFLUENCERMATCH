@@ -176,7 +176,7 @@ export default function PaymentsPage() {
       dataIndex: 'ref',
       key: 'ref',
       render: (ref: string, r) => (
-        <a onClick={() => handleOpenDetail(r)} style={{ fontWeight: 700, color: '#6366F1' }}>
+        <a onClick={() => handleOpenDetail(r)} style={{ fontWeight: 700, color: '#2563EB' }}>
           #{ref}
         </a>
       ),
@@ -300,7 +300,7 @@ export default function PaymentsPage() {
             type="primary"
             icon={<DownloadOutlined />}
             onClick={handleExportCSV}
-            style={{ borderRadius: 8, fontWeight: 600, background: '#6366F1' }}
+            style={{ borderRadius: 8, fontWeight: 600, background: '#2563EB' }}
           >
             Xuất báo cáo
           </Button>
@@ -369,7 +369,7 @@ export default function PaymentsPage() {
         <Col xs={24} sm={12} lg={6}>
           <Card bordered={false} loading={reportLoading} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>TỔNG GIAO DỊCH</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: '#6366F1', marginTop: 4 }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#2563EB', marginTop: 4 }}>
               {stats.totalCount} đơn
             </div>
             <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Trong khoảng thời gian đã chọn</div>

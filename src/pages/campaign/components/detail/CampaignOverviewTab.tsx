@@ -212,7 +212,7 @@ export const CampaignOverviewTab: React.FC<CampaignOverviewTabProps> = ({
             <span className="cdetail-card-title">
               Kế hoạch nội dung & Bàn giao
             </span>
-            <span style={{ fontSize: 12, color: '#4F46E5', fontWeight: 600, background: '#EEF2FF', padding: '2px 8px', borderRadius: 6 }}>
+            <span style={{ fontSize: 12, color: '#1D4ED8', fontWeight: 600, background: '#EFF6FF', padding: '2px 8px', borderRadius: 6 }}>
               {participatingCreators.length} KOC tham gia
             </span>
           </div>

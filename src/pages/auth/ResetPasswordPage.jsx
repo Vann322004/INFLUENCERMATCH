@@ -79,7 +79,7 @@ export default function ResetPasswordPage() {
       </Form>
 
       <div className="card-footer-text">
-        <Link to={ROUTES.AUTH.LOGIN} style={{ fontWeight: 700, color: '#8B5CF6' }}>
+        <Link to={ROUTES.AUTH.LOGIN} style={{ fontWeight: 700, color: '#2563EB' }}>
           ← Quay lại {LABELS.AUTH.LOGIN_NOW_LINK}
         </Link>
       </div>

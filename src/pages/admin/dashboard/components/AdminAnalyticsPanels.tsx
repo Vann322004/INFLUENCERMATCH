@@ -36,7 +36,7 @@ export function UserGrowthPanel({ resource, allowed }: { resource: AsyncResource
             <LineChart data={resource.data.data} margin={{ top: 12, right: 16, left: -20, bottom: 0 }}>
               <CartesianGrid stroke="#e2e8f0" vertical={false} /><XAxis dataKey="month" tick={{ fontSize: 11 }} />
               <YAxis allowDecimals={false} tick={{ fontSize: 11 }} /><Tooltip />
-              <Line dataKey="newUsers" name="Tài khoản mới" stroke="#4f46e5" strokeWidth={2} isAnimationActive={false} />
+              <Line dataKey="newUsers" name="Tài khoản mới" stroke="#1D4ED8" strokeWidth={2} isAnimationActive={false} />
             </LineChart>
           </ResponsiveContainer></div>
           <details className="ad-chart-data"><summary>Xem số liệu theo tháng</summary>
@@ -60,7 +60,7 @@ export function RevenuePanel({ resource, allowed }: { resource: AsyncResource<Pl
               <CartesianGrid stroke="#e2e8f0" vertical={false} /><XAxis dataKey="planName" hide />
               <YAxis width={70} tick={{ fontSize: 11 }} tickFormatter={value => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(value)} />
               <Tooltip formatter={value => formatMoney(Number(value), currency)} labelFormatter={(_, payload) => payload[0]?.payload?.planName ?? ''} />
-              <Bar dataKey="revenue" name="Doanh thu" fill="#4f46e5" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+              <Bar dataKey="revenue" name="Doanh thu" fill="#1D4ED8" radius={[4, 4, 0, 0]} isAnimationActive={false} />
             </BarChart>
           </ResponsiveContainer></div>
           <dl className="ad-status-list">{rows.map(row => <div key={row.planId}>

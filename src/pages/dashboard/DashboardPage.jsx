@@ -50,7 +50,7 @@ const formatRelativeTime = (dateStr) => {
 };
 
 // Mini Sparkline Vertical Bar Chart Component
-const MiniBarChart = ({ color = '#6366F1' }) => (
+const MiniBarChart = ({ color = '#2563EB' }) => (
   <svg width="44" height="26" viewBox="0 0 44 26" fill="none" style={{ flexShrink: 0 }}>
     <rect x="2" y="15" width="4.5" height="11" rx="2.25" fill={color} fillOpacity="0.25" />
     <rect x="10" y="11" width="4.5" height="15" rx="2.25" fill={color} fillOpacity="0.4" />
@@ -260,9 +260,9 @@ export default function DashboardPage() {
       title: 'KOC trong Giỏ chọn lọc',
       value: String(shortlistCount),
       trend: shortlistCount > 0 ? `${shortlistCount} KOC sẵn sàng gửi lời mời` : 'Chưa có KOC trong giỏ',
-      icon: <StarOutlined style={{ color: '#6366F1' }} />,
-      iconBg: '#EEF2FF',
-      chartColor: '#818CF8',
+      icon: <StarOutlined style={{ color: '#2563EB' }} />,
+      iconBg: '#EFF6FF',
+      chartColor: '#60A5FA',
     },
     {
       id: 'kpi_campaigns',
@@ -376,8 +376,8 @@ export default function DashboardPage() {
         campaign: camp.productService || 'Đang tìm kiếm & kết nối KOC',
         time: camp.createdAt ? formatRelativeTime(camp.createdAt) : `${idx + 1} giờ trước`,
         avatar: camp.imageUrl || campaignThumbnails[idx % campaignThumbnails.length],
-        icon: isRunning ? <CheckCircleOutlined style={{ color: '#10B981' }} /> : <RocketOutlined style={{ color: '#6366F1' }} />,
-        iconBg: isRunning ? '#ECFDF5' : '#EEF2FF',
+        icon: isRunning ? <CheckCircleOutlined style={{ color: '#10B981' }} /> : <RocketOutlined style={{ color: '#2563EB' }} />,
+        iconBg: isRunning ? '#ECFDF5' : '#EFF6FF',
         timestamp: camp.createdAt ? new Date(camp.createdAt).getTime() : Date.now() - (idx + 1) * 7200000,
       });
     });
@@ -562,11 +562,11 @@ export default function DashboardPage() {
                     width: 26,
                     height: 26,
                     borderRadius: 7,
-                    background: '#EEF2FF',
+                    background: '#EFF6FF',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#4F46E5',
+                    color: '#1D4ED8',
                     fontSize: 13,
                   }}
                 >
@@ -581,7 +581,7 @@ export default function DashboardPage() {
               <Button
                 type="link"
                 onClick={() => navigate('/campaigns')}
-                style={{ color: '#4F46E5', fontWeight: 700, fontSize: 12.5, padding: 0 }}
+                style={{ color: '#1D4ED8', fontWeight: 700, fontSize: 12.5, padding: 0 }}
               >
                 Xem tất cả <RightOutlined style={{ fontSize: 9, marginLeft: 2 }} />
               </Button>
@@ -665,7 +665,7 @@ export default function DashboardPage() {
                       <Progress
                         percent={c.progress}
                         showInfo={false}
-                        strokeColor={c.status === 'completed' ? '#2563EB' : c.status === 'pending' ? '#F59E0B' : '#6366F1'}
+                        strokeColor={c.status === 'completed' ? '#2563EB' : c.status === 'pending' ? '#F59E0B' : '#2563EB'}
                         railColor="#F1F5F9"
                         size="small"
                         style={{ margin: 0 }}
@@ -692,7 +692,7 @@ export default function DashboardPage() {
                     size="small"
                     icon={<PlusOutlined />}
                     onClick={() => navigate('/campaigns/create')}
-                    style={{ background: '#4F46E5', borderColor: '#4F46E5', borderRadius: 6, fontSize: 12, height: 32 }}
+                    style={{ background: '#1D4ED8', borderColor: '#1D4ED8', borderRadius: 6, fontSize: 12, height: 32 }}
                   >
                     Tạo chiến dịch mới
                   </Button>
@@ -733,7 +733,7 @@ export default function DashboardPage() {
               <Button
                 type="link"
                 onClick={() => navigate('/crm')}
-                style={{ color: '#4F46E5', fontWeight: 700, fontSize: 12.5, padding: 0 }}
+                style={{ color: '#1D4ED8', fontWeight: 700, fontSize: 12.5, padding: 0 }}
               >
                 Xem tất cả <RightOutlined style={{ fontSize: 9, marginLeft: 2 }} />
               </Button>
@@ -884,14 +884,14 @@ export default function DashboardPage() {
                     <svg viewBox="0 0 500 160" style={{ width: '100%', height: 140 }} preserveAspectRatio="none">
                       <defs>
                         <linearGradient id="areaGradSmooth2" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#818CF8" stopOpacity="0.4" />
+                          <stop offset="0%" stopColor="#60A5FA" stopOpacity="0.4" />
                           <stop offset="60%" stopColor="#C084FC" stopOpacity="0.1" />
                           <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
                         </linearGradient>
                         <linearGradient id="lineGradSmooth2" x1="0" y1="0" x2="1" y2="0">
-                          <stop offset="0%" stopColor="#6366F1" />
-                          <stop offset="50%" stopColor="#8B5CF6" />
-                          <stop offset="100%" stopColor="#A855F7" />
+                          <stop offset="0%" stopColor="#2563EB" />
+                          <stop offset="50%" stopColor="#2563EB" />
+                          <stop offset="100%" stopColor="#3B82F6" />
                         </linearGradient>
                       </defs>
 
@@ -914,8 +914,8 @@ export default function DashboardPage() {
                         strokeLinecap="round"
                       />
 
-                      <circle cx="240" cy="65" r="4" fill="#8B5CF6" stroke="#FFFFFF" strokeWidth="2" />
-                      <circle cx="380" cy="42" r="4" fill="#8B5CF6" stroke="#FFFFFF" strokeWidth="2" />
+                      <circle cx="240" cy="65" r="4" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2" />
+                      <circle cx="380" cy="42" r="4" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2" />
                     </svg>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#94A3B8', marginTop: 3 }}>
@@ -1000,7 +1000,7 @@ export default function DashboardPage() {
               <Button
                 type="link"
                 onClick={() => navigate('/campaigns')}
-                style={{ color: '#4F46E5', fontWeight: 700, fontSize: 12.5, padding: 0 }}
+                style={{ color: '#1D4ED8', fontWeight: 700, fontSize: 12.5, padding: 0 }}
               >
                 Xem tất cả <RightOutlined style={{ fontSize: 9, marginLeft: 2 }} />
               </Button>

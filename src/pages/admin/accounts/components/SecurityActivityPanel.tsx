@@ -12,7 +12,7 @@ const ACTION_ICON: Record<string, { icon: React.ReactNode; color: string }> = {
   LOGIN:  { icon: <LoginOutlined />, color: '#10B981' },
   LOGOUT: { icon: <LoginOutlined />, color: '#64748B' },
   UPDATE: { icon: <KeyOutlined />,   color: '#F59E0B' },
-  CREATE: { icon: <KeyOutlined />,   color: '#6366F1' },
+  CREATE: { icon: <KeyOutlined />,   color: '#2563EB' },
   DELETE: { icon: <WarningOutlined />, color: '#EF4444' },
 };
 

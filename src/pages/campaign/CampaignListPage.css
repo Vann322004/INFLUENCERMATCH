@@ -35,7 +35,7 @@
 }
 
 .clist-btn-create {
-  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%) !important;
+  background: linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 100%) !important;
   color: #fff !important;
   border: none !important;
   font-weight: 700 !important;
@@ -43,7 +43,7 @@
   height: 42px !important;
   padding: 0 20px !important;
   border-radius: 10px !important;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(29, 78, 216, 0.35) !important;
   transition: all 0.2s ease !important;
   display: flex !important;
   align-items: center !important;
@@ -52,7 +52,7 @@
 
 .clist-btn-create:hover {
   transform: translateY(-1px) !important;
-  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45) !important;
+  box-shadow: 0 6px 20px rgba(29, 78, 216, 0.45) !important;
 }
 
 /* ── Summary Stats ───────────────────────────── */
@@ -140,11 +140,11 @@
 }
 
 .clist-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
-  color: #4F46E5 !important;
+  color: #1D4ED8 !important;
 }
 
 .clist-tabs .ant-tabs-ink-bar {
-  background: #4F46E5 !important;
+  background: #1D4ED8 !important;
 }
 
 .clist-filter-controls {
@@ -205,8 +205,8 @@
 }
 
 .clist-card:hover {
-  border-color: #C7D2FE;
-  box-shadow: 0 8px 28px rgba(79, 70, 229, 0.1);
+  border-color: #BFDBFE;
+  box-shadow: 0 8px 28px rgba(29, 78, 216, 0.1);
   transform: translateY(-2px);
 }
 
@@ -359,7 +359,7 @@
 }
 
 .clist-btn-pipeline {
-  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%) !important;
+  background: linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 100%) !important;
   color: #fff !important;
   border: none !important;
   font-size: 12px !important;
@@ -367,7 +367,7 @@
   height: 32px !important;
   padding: 0 14px !important;
   border-radius: 8px !important;
-  box-shadow: 0 2px 10px rgba(79, 70, 229, 0.3) !important;
+  box-shadow: 0 2px 10px rgba(29, 78, 216, 0.3) !important;
   transition: all 0.2s !important;
   display: flex !important;
   align-items: center !important;
@@ -376,7 +376,7 @@
 
 .clist-btn-pipeline:hover {
   transform: translateX(2px) !important;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4) !important;
+  box-shadow: 0 4px 14px rgba(29, 78, 216, 0.4) !important;
 }
 
 /* ── Empty State ─────────────────────────────── */

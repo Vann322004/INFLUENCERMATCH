@@ -53,10 +53,10 @@ export default function AdminSidebarUserSection({
               <div
                 className="sidebar-rail-avatar-btn"
                 style={{
-                  background: isManager ? '#0EA5E9' : '#7C3AED',
+                  background: isManager ? '#0EA5E9' : '#1D4ED8',
                   boxShadow: isManager
                     ? '0 2px 6px rgba(14, 165, 233, 0.35)'
-                    : '0 2px 6px rgba(124, 58, 237, 0.35)',
+                    : '0 2px 6px rgba(29, 78, 216, 0.35)',
                 }}
               >
                 {currentUser?.avatar ? (
@@ -85,10 +85,10 @@ export default function AdminSidebarUserSection({
           <div
             className="sidebar-user-avatar"
             style={{
-              background: isManager ? '#0EA5E9' : '#7C3AED',
+              background: isManager ? '#0EA5E9' : '#1D4ED8',
               boxShadow: isManager
                 ? '0 2px 6px rgba(14, 165, 233, 0.35)'
-                : '0 2px 6px rgba(124, 58, 237, 0.35)',
+                : '0 2px 6px rgba(29, 78, 216, 0.35)',
             }}
           >
             {currentUser?.avatar ? (
@@ -108,7 +108,7 @@ export default function AdminSidebarUserSection({
             </div>
             <div
               className="sidebar-user-role"
-              style={{ color: isManager ? '#0284C7' : '#7C3AED', fontWeight: 600 }}
+              style={{ color: isManager ? '#0284C7' : '#1D4ED8', fontWeight: 600 }}
             >
               {roleLabel}
             </div>

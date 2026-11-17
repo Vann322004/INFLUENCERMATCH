@@ -23,7 +23,7 @@ export default function NotificationBell() {
   return <Popover open={open && state.canView} onOpenChange={setOpen} trigger="click" placement="bottomRight"
     classNames={{ root: 'notification-popover' }} arrow={false}
     content={<NotificationDrawer onClose={() => setOpen(false)} />}>
-    <Badge count={state.unreadCount ?? undefined} overflowCount={99} size="small" color="#4f46e5" offset={[-3, 3]}>
+    <Badge count={state.unreadCount ?? undefined} overflowCount={99} size="small" color="#1D4ED8" offset={[-3, 3]}>
       <button type="button" className="standalone-action-btn notification-bell" aria-label={label} aria-haspopup="dialog"
         aria-expanded={open && state.canView} disabled={!state.canView} title={!state.canView ? 'Chưa đăng nhập hoặc chưa có quyền xem thông báo' : 'Thông báo'}>
         <BellOutlined />

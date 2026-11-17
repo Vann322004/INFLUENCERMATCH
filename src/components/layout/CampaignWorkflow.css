@@ -78,12 +78,12 @@
 .rec-author { flex: 1; min-width: 0; }
 .rec-author h3 { margin: 0; font-size: 16px; line-height: 1.5; }
 .rec-author h3 button { border: 0; padding: 0; color: #0f172a; background: none; text-align: left; font: inherit; font-weight: 600; cursor: pointer; overflow-wrap: anywhere; }
-.rec-author h3 button:hover { color: #4f46e5; }
+.rec-author h3 button:hover { color: #1D4ED8; }
 .rec-author p { margin: 3px 0 0; color: #64748b; font-size: 13px; overflow-wrap: anywhere; }
 .rec-statuses, .rec-niches { display: flex; flex-wrap: wrap; gap: 6px; }
 .rec-statuses .ant-tag { margin: 0; border-color: #e2e8f0; color: #64748b; background: #f8fafc; white-space: normal; }
-.rec-niches span { border-radius: 6px; padding: 4px 8px; background: #eef2ff; color: #4f46e5; font-size: 12px; overflow-wrap: anywhere; }
-.rec-score { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 14px 16px; border-radius: 12px; background: #eef2ff; color: #4338ca; font-size: 13px; }
+.rec-niches span { border-radius: 6px; padding: 4px 8px; background: #EFF6FF; color: #1D4ED8; font-size: 12px; overflow-wrap: anywhere; }
+.rec-score { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 14px 16px; border-radius: 12px; background: #EFF6FF; color: #1E40AF; font-size: 13px; }
 .rec-score strong { font-size: 22px; font-variant-numeric: tabular-nums; }
 .rec-metrics { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px 20px; margin: 0; padding: 4px 0; }
 .rec-metrics dt { color: #64748b; font-size: 12px; line-height: 1.5; }
@@ -93,7 +93,7 @@
 .rec-creator-card h4 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #334155; }
 .rec-reason-summary p { margin: 0; font-size: 13px; line-height: 1.75; color: #475569; }
 .rec-details { font-size: 13px; color: #475569; }
-.rec-details summary { cursor: pointer; color: #4f46e5; font-weight: 500; padding-block: 4px; }
+.rec-details summary { cursor: pointer; color: #1D4ED8; font-weight: 500; padding-block: 4px; }
 .rec-details ul, .rec-evidence ul { padding-left: 18px; margin: 10px 0 16px; line-height: 1.75; }
 .rec-details li + li, .rec-evidence li + li { margin-top: 6px; }
 .rec-details h4 { margin-top: 16px; }
@@ -113,7 +113,7 @@
 .rec-card-compact .rec-statuses .ant-tag { font-size: 11px; }
 .rec-card-compact .rec-niches span { padding: 4px 8px; background: #f5f6fa; color: #536178; font-size: 11px; }
 .rec-card-compact .rec-score { padding: 12px 0; background: none; border-bottom: 1px solid #f1f5f9; border-radius: 0; color: #475569; font-size: 12px; }
-.rec-card-compact .rec-score strong { font-size: 18px; font-weight: 500; color: #4338ca; }
+.rec-card-compact .rec-score strong { font-size: 18px; font-weight: 500; color: #1E40AF; }
 .rec-card-compact .rec-metrics { gap: 12px; }
 .rec-card-compact .rec-metrics dt { font-size: 11px; }
 .rec-card-compact .rec-metrics dd { font-size: 20px; font-weight: 500; }

@@ -195,7 +195,7 @@ export const CreateCampaignStep2: React.FC<CreateCampaignStep2Props> = ({
         <Col xs={24} md={14}>
           <div className="ccreate-field-label">
             <span>Độ tuổi người theo dõi mục tiêu (tùy chọn)</span>
-            <span style={{ fontSize: 11.5, color: '#4F46E5', fontWeight: 600 }}>
+            <span style={{ fontSize: 11.5, color: '#1D4ED8', fontWeight: 600 }}>
               {selectedAges.length > 0 ? `Đã chọn ${selectedAges.length} nhóm` : '(Tùy chọn)'}
             </span>
           </div>

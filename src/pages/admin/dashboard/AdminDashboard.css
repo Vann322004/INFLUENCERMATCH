@@ -18,7 +18,7 @@
 .ad-status-list dt { color: #64748b; min-width: 0; }
 .ad-status-list dd { text-align: right; margin: 0; font-variant-numeric: tabular-nums; }
 .ad-status-list small { display: block; margin-top: 4px; }
-.ad-chart-data summary { color: #4f46e5; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.ad-chart-data summary { color: #1D4ED8; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
 .ad-panel.ad-audit { overflow: hidden; max-width: 100%; width: 100%; box-sizing: border-box; }
 .ad-audit > .ad-note { margin-bottom: 16px; }
 .ad-audit .ant-table-wrapper,
@@ -32,7 +32,7 @@
 .ad-audit .ant-table-cell { overflow-wrap: anywhere; word-break: break-word; }
 .ad-audit .ant-table-placeholder .ant-table-cell { overflow: hidden; }
 .ad-audit .ant-tag { white-space: normal; max-width: 100%; color: #475569; background: #f8fafc; border-color: #e2e8f0; }
-.ad-dashboard .ant-btn { color: #4f46e5; border-color: #e2e8f0; border-radius: 8px; }
+.ad-dashboard .ant-btn { color: #1D4ED8; border-color: #e2e8f0; border-radius: 8px; }
 /* Follow the available content width, including when the sidebar expands. */
 @container admin-dashboard (max-width: 900px) {
   .ad-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }

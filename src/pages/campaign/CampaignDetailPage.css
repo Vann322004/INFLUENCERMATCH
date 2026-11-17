@@ -116,9 +116,9 @@
 }
 
 .cdetail-hero-status-tag.completed {
-  background: #EEF2FF;
-  color: #4F46E5;
-  border: 1px solid #C7D2FE;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
 }
 
 .cdetail-hero-status-tag.draft {
@@ -154,9 +154,9 @@
 }
 
 .cdetail-hero-tag.highlight {
-  background: #EEF2FF;
-  border-color: #C7D2FE;
-  color: #4F46E5;
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #1D4ED8;
   font-weight: 700;
 }
 
@@ -238,14 +238,14 @@
 }
 
 .cdetail-hero-btn.primary-action {
-  background: #4F46E5;
-  border: 1px solid #4F46E5;
+  background: #1D4ED8;
+  border: 1px solid #1D4ED8;
   color: #FFFFFF;
 }
 
 .cdetail-hero-btn.primary-action:hover {
-  background: #4338CA;
-  border-color: #4338CA;
+  background: #1E40AF;
+  border-color: #1E40AF;
 }
 
 .cdetail-hero-btn.secondary {
@@ -382,7 +382,7 @@
 
 .cdetail-metric-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4F46E5 0%, #6366F1 100%);
+  background: linear-gradient(90deg, #1D4ED8 0%, #2563EB 100%);
   border-radius: 999px;
   transition: width 0.4s ease;
 }
@@ -390,7 +390,7 @@
 .cdetail-metric-progress-label {
   font-size: 11px;
   font-weight: 700;
-  color: #4F46E5;
+  color: #1D4ED8;
 }
 
 /* Sparklines for Card 2 & 3 */
@@ -404,7 +404,7 @@
 .cdetail-sparkline-bar {
   width: 4px;
   border-radius: 2px;
-  background: linear-gradient(180deg, #818CF8 0%, #6366F1 100%);
+  background: linear-gradient(180deg, #60A5FA 0%, #2563EB 100%);
   opacity: 0.85;
 }
 
@@ -484,9 +484,9 @@
 
 .cdetail-seg-tab-btn.active {
   background: #FFFFFF;
-  color: #4F46E5;
+  color: #1D4ED8;
   font-weight: 700;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(79, 70, 229, 0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(29, 78, 216, 0.04);
 }
 
 /* ==========================================================================
@@ -586,8 +586,8 @@
 
 .cdetail-action-step-item:hover {
   background: #FFFFFF;
-  border-color: #818CF8;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.1);
+  border-color: #60A5FA;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
   transform: translateY(-2px);
 }
 
@@ -752,9 +752,9 @@
 .cdetail-product-tag {
   font-size: 10px;
   font-weight: 700;
-  color: #4F46E5;
-  background: #EEF2FF;
-  border: 1px solid #E0E7FF;
+  color: #1D4ED8;
+  background: #EFF6FF;
+  border: 1px solid #DBEAFE;
   padding: 1px 7px;
   border-radius: 4px;
 }
@@ -815,9 +815,9 @@
 .cdetail-deliv-badge {
   font-size: 11px;
   font-weight: 700;
-  color: #4F46E5;
-  background: #EEF2FF;
-  border: 1px solid #C7D2FE;
+  color: #1D4ED8;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
   padding: 2px 8px;
   border-radius: 4px;
   white-space: nowrap;
@@ -926,7 +926,7 @@
 .cdetail-creators-link {
   font-size: 12.5px;
   font-weight: 600;
-  color: #4F46E5;
+  color: #1D4ED8;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -934,7 +934,7 @@
 }
 
 .cdetail-creators-link:hover {
-  color: #4338CA;
+  color: #1E40AF;
   text-decoration: underline;
 }
 
@@ -1107,19 +1107,19 @@
 }
 
 .cdetail-count-badge {
-  background: #EEF2FF;
-  color: #4F46E5;
+  background: #EFF6FF;
+  color: #1D4ED8;
   font-size: 11px;
   font-weight: 800;
   padding: 1px 8px;
   border-radius: 999px;
-  border: 1px solid #E0E7FF;
+  border: 1px solid #DBEAFE;
 }
 
 .cdetail-sidebar-link {
   font-size: 12.5px;
   font-weight: 600;
-  color: #4F46E5;
+  color: #1D4ED8;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1346,8 +1346,8 @@
 }
 
 .cdetail-finance-tile.committed {
-  background: #EEF2FF;
-  border: 1px solid #E0E7FF;
+  background: #EFF6FF;
+  border: 1px solid #DBEAFE;
 }
 
 .cdetail-finance-tile.paid {
@@ -1367,7 +1367,7 @@
 }
 
 .cdetail-finance-tile.committed .cdetail-finance-lbl {
-  color: #4338CA;
+  color: #1E40AF;
 }
 
 .cdetail-finance-tile.paid .cdetail-finance-lbl {
@@ -1387,7 +1387,7 @@
 }
 
 .cdetail-finance-tile.committed .cdetail-finance-val {
-  color: #4F46E5;
+  color: #1D4ED8;
 }
 
 .cdetail-finance-tile.paid .cdetail-finance-val {

@@ -92,7 +92,7 @@ export default function CreatorDetailTab() {
     : [];
 
   const displayList = suggestions.length > 0 ? suggestions : creators.slice(0, 10);
-  const color = selected ? PLATFORM_COLOR[selected.platform] ?? '#5B5BF0' : '#5B5BF0';
+  const color = selected ? PLATFORM_COLOR[selected.platform] ?? '#2563EB' : '#2563EB';
 
   return (
     <Row gutter={[20, 20]}>
@@ -123,8 +123,8 @@ export default function CreatorDetailTab() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
-                  background: selected?.id === c.id ? '#EEF2FF' : '#F8FAFC',
-                  border: `1px solid ${selected?.id === c.id ? '#C7D2FE' : '#E2E8F0'}`,
+                  background: selected?.id === c.id ? '#EFF6FF' : '#F8FAFC',
+                  border: `1px solid ${selected?.id === c.id ? '#BFDBFE' : '#E2E8F0'}`,
                   transition: 'all 0.15s',
                 }}
               >
@@ -133,7 +133,7 @@ export default function CreatorDetailTab() {
                   <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A', lineHeight: 1.2 }}>{c.handle}</div>
                   <div style={{ color: '#64748B', fontSize: 11 }}>{c.platform} • {c.followers >= 1e6 ? (c.followers/1e6).toFixed(1)+'M' : (c.followers/1e3).toFixed(0)+'K'}</div>
                 </div>
-                {selected?.id === c.id && <span style={{ color: '#5B5BF0', fontSize: 12 }}>●</span>}
+                {selected?.id === c.id && <span style={{ color: '#2563EB', fontSize: 12 }}>●</span>}
               </div>
             ))}
           </div>
@@ -166,7 +166,7 @@ export default function CreatorDetailTab() {
                   </Tag>
                 </div>
               </div>
-              <Button icon={<ReloadOutlined />} onClick={refreshCreatorDetail} loading={detailLoading} style={{ borderColor: '#5B5BF0', color: '#5B5BF0' }}>
+              <Button icon={<ReloadOutlined />} onClick={refreshCreatorDetail} loading={detailLoading} style={{ borderColor: '#2563EB', color: '#2563EB' }}>
                 Làm mới
               </Button>
             </div>
@@ -184,7 +184,7 @@ export default function CreatorDetailTab() {
                 <>
                   <Row gutter={[12, 12]} style={{ marginBottom: 20 }}>
                     {[
-                      { label: 'Followers',    value: selected.followers >= 1e6 ? (selected.followers/1e6).toFixed(2)+'M' : (selected.followers/1e3).toFixed(0)+'K', color: '#5B5BF0' },
+                      { label: 'Followers',    value: selected.followers >= 1e6 ? (selected.followers/1e6).toFixed(2)+'M' : (selected.followers/1e3).toFixed(0)+'K', color: '#2563EB' },
                       { label: 'Engagement Rate', value: selected.er + '%', color: selected.er >= 7 ? '#10B981' : '#F59E0B' },
                       { label: 'Avg. Views',   value: avgViews >= 1e6 ? (avgViews/1e6).toFixed(1)+'M' : (avgViews/1e3).toFixed(0)+'K', color: '#0EA5E9' },
                       { label: 'Score',        value: score + '/100', color: score >= 80 ? '#10B981' : '#F59E0B' },
@@ -202,9 +202,9 @@ export default function CreatorDetailTab() {
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                       <Text style={{ fontWeight: 600, fontSize: 12, color: '#334155' }}>Influencer Score</Text>
-                      <Text style={{ fontWeight: 700, color: '#5B5BF0' }}>{score}/100</Text>
+                      <Text style={{ fontWeight: 700, color: '#2563EB' }}>{score}/100</Text>
                     </div>
-                    <Progress percent={score} strokeColor={{ '0%': '#5B5BF0', '100%': '#7C3AED' }} showInfo={false} />
+                    <Progress percent={score} strokeColor={{ '0%': '#2563EB', '100%': '#1D4ED8' }} showInfo={false} />
                   </div>
 
                   <Descriptions column={2} size="small"
@@ -215,7 +215,7 @@ export default function CreatorDetailTab() {
                     <Descriptions.Item label="Quốc gia">{country}</Descriptions.Item>
                     <Descriptions.Item label="Xác minh cuối">{selected.lastVerified}</Descriptions.Item>
                     <Descriptions.Item label="Profile URL" span={2}>
-                      <a href={profileUrl} target="_blank" rel="noreferrer" style={{ color: '#5B5BF0' }}>{profileUrl}</a>
+                      <a href={profileUrl} target="_blank" rel="noreferrer" style={{ color: '#2563EB' }}>{profileUrl}</a>
                     </Descriptions.Item>
                   </Descriptions>
                 </>

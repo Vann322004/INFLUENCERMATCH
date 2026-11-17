@@ -324,7 +324,7 @@ export default function CreatorPortalPage() {
             <Avatar
               size={72}
               src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&auto=format&fit=crop&q=80"
-              style={{ border: '3px solid #10B981', flexShrink: 0 }}
+              style={{ border: '3px solid #2563EB', flexShrink: 0 }}
             />
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -334,7 +334,7 @@ export default function CreatorPortalPage() {
                 <Tooltip title="Hồ sơ đã xác minh CCCD & Kênh chính chủ">
                   <CheckCircleFilled style={{ color: '#10B981', fontSize: 18 }} />
                 </Tooltip>
-                <Tag color="#059669" style={{ fontWeight: 700, borderRadius: 20, border: 'none', marginLeft: 4 }}>
+                <Tag color="#2563EB" style={{ fontWeight: 700, borderRadius: 20, border: 'none', marginLeft: 4 }}>
                   TOP CREATOR
                 </Tag>
               </div>
@@ -365,7 +365,7 @@ export default function CreatorPortalPage() {
               type="primary"
               icon={<SafetyCertificateOutlined />}
               onClick={handleOpenClaimModal}
-              style={{ background: '#059669', borderColor: '#059669', color: '#FFFFFF', borderRadius: 8, fontWeight: 700, height: 38 }}
+              style={{ background: '#2563EB', borderColor: '#2563EB', color: '#FFFFFF', borderRadius: 8, fontWeight: 700, height: 38 }}
             >
               Nộp đơn Claim Tích Xanh
             </Button>
@@ -405,7 +405,7 @@ export default function CreatorPortalPage() {
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
                 <ApiOutlined />
                 <span>Kênh liên kết & Claim Tích Xanh</span>
-                <Badge count={channels.filter((c) => c.connected).length} style={{ backgroundColor: '#059669' }} />
+                <Badge count={channels.filter((c) => c.connected).length} style={{ backgroundColor: '#2563EB' }} />
               </span>
             ),
           },
@@ -455,7 +455,7 @@ export default function CreatorPortalPage() {
             <Col xs={24} sm={12} lg={6}>
               <Card bordered={false} style={{ borderRadius: 12, border: '1px solid #E2E8F0' }} bodyStyle={{ padding: '18px 20px' }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>Tổng lượt xem Video</div>
-                <div style={{ fontSize: 26, fontWeight: 800, color: '#059669', marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>
+                <div style={{ fontSize: 26, fontWeight: 800, color: '#2563EB', marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>
                   {(metrics.totalVideoViews / 1000000).toFixed(2)}M
                 </div>
                 <div style={{ fontSize: 12, color: '#64748B', marginTop: 6 }}>
@@ -467,7 +467,7 @@ export default function CreatorPortalPage() {
             <Col xs={24} sm={12} lg={6}>
               <Card bordered={false} style={{ borderRadius: 12, border: '1px solid #E2E8F0' }} bodyStyle={{ padding: '18px 20px' }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B' }}>Tỷ lệ tương tác (ER trung bình)</div>
-                <div style={{ fontSize: 26, fontWeight: 800, color: '#6366F1', marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>
+                <div style={{ fontSize: 26, fontWeight: 800, color: '#2563EB', marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>
                   {metrics.avgEngagementRate}%
                 </div>
                 <div style={{ fontSize: 12, color: '#10B981', fontWeight: 600, marginTop: 6 }}>
@@ -496,7 +496,7 @@ export default function CreatorPortalPage() {
                       </div>
                       <Progress
                         percent={Math.round((item.reach / 9000000) * 100)}
-                        strokeColor="linear-gradient(90deg, #10B981 0%, #059669 100%)"
+                        strokeColor="linear-gradient(90deg, #2563EB 0%, #1D4ED8 100%)"
                         showInfo={false}
                         size="small"
                       />
@@ -518,7 +518,7 @@ export default function CreatorPortalPage() {
                     Giới tính người xem:
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ flex: metrics.audienceDemographics.femalePct, background: '#EC4899', height: 18, borderRadius: '4px 0 0 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 10, fontWeight: 700 }}>
+                    <div style={{ flex: metrics.audienceDemographics.femalePct, background: '#475569', height: 18, borderRadius: '4px 0 0 4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 10, fontWeight: 700 }}>
                       Nữ {metrics.audienceDemographics.femalePct}%
                     </div>
                     <div style={{ flex: metrics.audienceDemographics.malePct, background: '#3B82F6', height: 18, borderRadius: '0 4px 4px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 10, fontWeight: 700 }}>
@@ -537,7 +537,7 @@ export default function CreatorPortalPage() {
                       <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
                         <span style={{ color: '#475569', width: 60 }}>{g.age}</span>
                         <div style={{ flex: 1, margin: '0 10px' }}>
-                          <Progress percent={g.pct} size="small" strokeColor="#6366F1" showInfo={false} />
+                          <Progress percent={g.pct} size="small" strokeColor="#2563EB" showInfo={false} />
                         </div>
                         <span style={{ fontWeight: 700, width: 35, textAlign: 'right' }}>{g.pct}%</span>
                       </div>
@@ -574,7 +574,7 @@ export default function CreatorPortalPage() {
             title={
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <IdcardOutlined style={{ color: '#10B981', fontSize: 18 }} />
+                  <IdcardOutlined style={{ color: '#2563EB', fontSize: 18 }} />
                   <span style={{ fontWeight: 800, fontSize: 15 }}>Định danh Pháp lý & Căn Cước Công Dân (eKYC)</span>
                 </div>
                 {verification.status === 'VERIFIED' ? (
@@ -759,7 +759,7 @@ export default function CreatorPortalPage() {
                       </Col>
                       <Col span={12}>
                         <div style={{ fontSize: 11, color: '#64748B' }}>Tỷ lệ tương tác</div>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: '#10B981' }}>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: '#2563EB' }}>
                           {(ch.engagementRate * 100).toFixed(1)}%
                         </div>
                       </Col>
@@ -814,8 +814,8 @@ export default function CreatorPortalPage() {
                   bordered={false}
                   style={{
                     borderRadius: 12,
-                    border: pkg.isPopular ? '2px solid #10B981' : '1px solid #E2E8F0',
-                    boxShadow: pkg.isPopular ? '0 4px 16px rgba(16,185,129,0.1)' : 'none',
+                    border: pkg.isPopular ? '2px solid #2563EB' : '1px solid #E2E8F0',
+                    boxShadow: pkg.isPopular ? '0 4px 16px rgba(37,99,235,0.12)' : 'none',
                     position: 'relative',
                     height: '100%',
                     display: 'flex',
@@ -824,7 +824,7 @@ export default function CreatorPortalPage() {
                   bodyStyle={{ padding: '22px', flex: 1, display: 'flex', flexDirection: 'column' }}
                 >
                   {pkg.isPopular && (
-                    <div style={{ position: 'absolute', top: -11, right: 18, background: '#10B981', color: '#fff', fontSize: 10.5, fontWeight: 800, padding: '2px 10px', borderRadius: 20, textTransform: 'uppercase' }}>
+                    <div style={{ position: 'absolute', top: -11, right: 18, background: '#2563EB', color: '#fff', fontSize: 10.5, fontWeight: 800, padding: '2px 10px', borderRadius: 20, textTransform: 'uppercase' }}>
                       Gói phổ biến nhất
                     </div>
                   )}
@@ -845,7 +845,7 @@ export default function CreatorPortalPage() {
                     {pkg.name}
                   </div>
 
-                  <div style={{ fontSize: 24, fontWeight: 900, color: '#059669', fontVariantNumeric: 'tabular-nums', marginBottom: 12 }}>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: '#2563EB', fontVariantNumeric: 'tabular-nums', marginBottom: 12 }}>
                     {pkg.priceVnd.toLocaleString('vi-VN')} ₫
                   </div>
 
@@ -1072,7 +1072,7 @@ export default function CreatorPortalPage() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <ApiOutlined style={{ color: '#059669', fontSize: 16 }} />
+                    <ApiOutlined style={{ color: '#2563EB', fontSize: 16 }} />
                     <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
                       Ủy quyền trực tiếp qua OAuth (Fast-track)
                     </span>
@@ -1089,7 +1089,7 @@ export default function CreatorPortalPage() {
                       type="default"
                       icon={<LinkOutlined />}
                       block
-                      style={{ borderRadius: 8, height: 36, fontWeight: 600, borderColor: '#059669', color: '#059669' }}
+                      style={{ borderRadius: 8, height: 36, fontWeight: 600, borderColor: '#2563EB', color: '#2563EB' }}
                       onClick={(e) => {
                         e.stopPropagation();
                         message.info('Đang mở cổng ủy quyền OAuth...');
@@ -1143,7 +1143,7 @@ export default function CreatorPortalPage() {
       <Modal
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 800 }}>
-            <IdcardOutlined style={{ color: '#10B981' }} />
+            <IdcardOutlined style={{ color: '#2563EB' }} />
             <span>Cập nhật Hồ sơ Căn Cước Công Dân (eKYC)</span>
           </div>
         }

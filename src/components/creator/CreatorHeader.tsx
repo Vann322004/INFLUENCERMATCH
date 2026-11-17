@@ -81,13 +81,13 @@ export default function CreatorHeader({ title }: CreatorHeaderProps) {
               <Avatar
                 size={30}
                 icon={<UserOutlined />}
-                style={{ border: '1.5px solid #10B981' }}
+                style={{ border: '1.5px solid #2563EB' }}
               />
               <div style={{ lineHeight: 1.2, textAlign: 'left' }}>
                 <div style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A' }}>
                   {currentUser?.fullName || currentUser?.email || '—'}
                 </div>
-                <div style={{ fontSize: 10.5, color: '#059669', fontWeight: 600 }}>
+                <div style={{ fontSize: 10.5, color: '#2563EB', fontWeight: 600 }}>
                   Creator
                 </div>
               </div>
@@ -180,7 +180,7 @@ export default function CreatorHeader({ title }: CreatorHeaderProps) {
               <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {currentUser?.fullName || currentUser?.email || '—'}
               </div>
-              <div style={{ fontSize: 11, color: '#059669', fontWeight: 600 }}>
+              <div style={{ fontSize: 11, color: '#2563EB', fontWeight: 600 }}>
                 Creator
               </div>
             </div>

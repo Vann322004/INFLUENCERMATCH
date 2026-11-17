@@ -48,7 +48,7 @@ function getStatusConfig(status: DisplayCampaign['status']) {
     case 'ready_for_discovery':
       return { color: '#0284C7', bg: '#F0F9FF', dot: '#0284C7', icon: <ThunderboltOutlined />, label: 'Sẵn sàng đề xuất' };
     case 'draft':
-      return { color: '#6366F1', bg: '#EEF2FF', dot: '#6366F1', icon: <EditOutlined />, label: 'Bản nháp' };
+      return { color: '#2563EB', bg: '#EFF6FF', dot: '#2563EB', icon: <EditOutlined />, label: 'Bản nháp' };
     case 'completed':
       return { color: '#64748B', bg: '#F1F5F9', dot: '#94A3B8', icon: <CheckCircleOutlined />, label: 'Hoàn thành' };
     default:
@@ -216,7 +216,7 @@ export default function CampaignListPage() {
       {/* ── Summary Stats Row ── */}
       <div className="clist-stats-row">
         <div className="clist-stat-card">
-          <div className="clist-stat-icon" style={{ background: '#EEF2FF', color: '#6366F1' }}>
+          <div className="clist-stat-icon" style={{ background: '#EFF6FF', color: '#2563EB' }}>
             <ThunderboltOutlined />
           </div>
           <div>
@@ -381,7 +381,7 @@ export default function CampaignListPage() {
                           ? '#F43F5E'
                           : budgetPct > 60
                           ? '#F59E0B'
-                          : '#6366F1'
+                          : '#2563EB'
                       }
                       railColor="#F1F5F9"
                       size="small"

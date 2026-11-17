@@ -56,12 +56,12 @@ export const getStageInfo = (stage?: string) => {
     case 'REPLIED':
       return { text: 'Đã phản hồi', color: '#0284C7', deliverable: 'Đang thảo luận', delColor: 'cyan' };
     case 'NEGOTIATING':
-      return { text: 'Đang đàm phán', color: '#6366F1', deliverable: 'Thương lượng cát-xê', delColor: 'blue' };
+      return { text: 'Đang đàm phán', color: '#2563EB', deliverable: 'Thương lượng cát-xê', delColor: 'blue' };
     case 'AGREED':
     case 'CONTRACT_SIGNED':
       return { text: 'Đã ký hợp đồng', color: '#10B981', deliverable: 'Đã chốt hợp tác', delColor: 'green' };
     case 'CONTENT_PENDING':
-      return { text: 'Đang chờ nội dung', color: '#8B5CF6', deliverable: 'Đang sản xuất video', delColor: 'purple' };
+      return { text: 'Đang chờ nội dung', color: '#2563EB', deliverable: 'Đang sản xuất video', delColor: 'purple' };
     case 'CONTENT_APPROVED':
       return { text: 'Nội dung đã duyệt', color: '#10B981', deliverable: 'Sẵn sàng đăng bài', delColor: 'green' };
     case 'POSTED':
@@ -73,7 +73,7 @@ export const getStageInfo = (stage?: string) => {
     case 'NOT_INTERESTED':
       return { text: 'Từ chối', color: '#EF4444', deliverable: 'Dừng hợp tác', delColor: 'red' };
     default:
-      return { text: stage || 'Đang kết nối', color: '#6366F1', deliverable: 'Đang triển khai', delColor: 'blue' };
+      return { text: stage || 'Đang kết nối', color: '#2563EB', deliverable: 'Đang triển khai', delColor: 'blue' };
   }
 };
 
@@ -125,7 +125,7 @@ export const getCreatorTableColumns = (): ColumnsType<CampaignCreatorRow> => [
     title: 'Chi phí thỏa thuận',
     dataIndex: 'fee',
     key: 'fee',
-    render: (val) => <span style={{ fontWeight: 700, color: '#4F46E5' }}>{val}</span>,
+    render: (val) => <span style={{ fontWeight: 700, color: '#1D4ED8' }}>{val}</span>,
   },
   {
     title: 'Tiến độ hợp tác',

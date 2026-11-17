@@ -154,7 +154,7 @@ export const CompareConflictDrawer: React.FC<CompareConflictDrawerProps> = ({
                 <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A', marginTop: 8 }}>
                   {selectedConflict.profileA.displayName}
                 </div>
-                <div style={{ fontSize: 12, color: '#4F46E5', fontWeight: 600 }}>@{selectedConflict.profileA.userName}</div>
+                <div style={{ fontSize: 12, color: '#1D4ED8', fontWeight: 600 }}>@{selectedConflict.profileA.userName}</div>
               </div>
 
               <Descriptions size="small" column={1} bordered>
@@ -205,7 +205,7 @@ export const CompareConflictDrawer: React.FC<CompareConflictDrawerProps> = ({
                 <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A', marginTop: 8 }}>
                   {selectedConflict.profileB.displayName}
                 </div>
-                <div style={{ fontSize: 12, color: '#4F46E5', fontWeight: 600 }}>@{selectedConflict.profileB.userName}</div>
+                <div style={{ fontSize: 12, color: '#1D4ED8', fontWeight: 600 }}>@{selectedConflict.profileB.userName}</div>
               </div>
 
               <Descriptions size="small" column={1} bordered>

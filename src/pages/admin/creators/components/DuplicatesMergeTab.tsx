@@ -96,7 +96,7 @@ export default function DuplicatesMergeTab() {
                     icon={<MergeCellsOutlined />}
                     type="primary"
                     onClick={() => { setMergeGroup(group); setKeepId(group.duplicates[0].id); }}
-                    style={{ background: '#5B5BF0', border: 'none', fontWeight: 700 }}
+                    style={{ background: '#2563EB', border: 'none', fontWeight: 700 }}
                   >
                     Merge
                   </Button>
@@ -140,10 +140,10 @@ export default function DuplicatesMergeTab() {
       <Modal
         open={!!mergeGroup}
         onCancel={() => { setMergeGroup(null); setKeepId(''); }}
-        title={<span><MergeCellsOutlined style={{ color: '#5B5BF0' }} /> Merge Creator</span>}
+        title={<span><MergeCellsOutlined style={{ color: '#2563EB' }} /> Merge Creator</span>}
         onOk={handleMerge}
         okText="Xác nhận Merge"
-        okButtonProps={{ style: { background: '#5B5BF0', border: 'none' } }}
+        okButtonProps={{ style: { background: '#2563EB', border: 'none' } }}
       >
         <div style={{ marginBottom: 12 }}>
           <Text style={{ fontWeight: 600 }}>Chọn creator gốc cần giữ lại (các creator còn lại sẽ bị gộp vào):</Text>

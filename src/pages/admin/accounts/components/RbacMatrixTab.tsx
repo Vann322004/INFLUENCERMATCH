@@ -37,7 +37,7 @@ const ROLE_OPTIONS = [
   { value: 'BRAND', label: 'Doanh nghiệp (BRAND)', icon: <TeamOutlined />, color: '#0EA5E9' },
   { value: 'CREATOR', label: 'Nhà sáng tạo (CREATOR)', icon: <UserOutlined />, color: '#10B981' },
   { value: 'DATA_MANAGER', label: 'Quản trị Dữ liệu (DATA_MANAGER)', icon: <ControlOutlined />, color: '#F59E0B' },
-  { value: 'ADMIN', label: 'Quản trị Cấp cao (ADMIN - Bất biến)', icon: <CrownOutlined />, color: '#8B5CF6' },
+  { value: 'ADMIN', label: 'Quản trị Cấp cao (ADMIN - Bất biến)', icon: <CrownOutlined />, color: '#2563EB' },
 ];
 
 export default function RbacMatrixTab() {

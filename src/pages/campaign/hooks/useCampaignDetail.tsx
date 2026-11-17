@@ -184,7 +184,7 @@ export function useCampaignDetail() {
             CONFIRMED: { text: 'Đã xác nhận', color: '#10B981', deliverable: 'Chờ lên nội dung', delColor: 'blue' },
             IN_PROGRESS: { text: 'Đang thực hiện', color: '#3B82F6', deliverable: 'Đang sản xuất', delColor: 'processing' },
             CONTENT_SUBMITTED: { text: 'Đã nộp bài', color: '#F59E0B', deliverable: 'Chờ duyệt nội dung', delColor: 'warning' },
-            CONTENT_APPROVED: { text: 'Đã duyệt bài', color: '#8B5CF6', deliverable: 'Chờ xuất bản', delColor: 'purple' },
+            CONTENT_APPROVED: { text: 'Đã duyệt bài', color: '#2563EB', deliverable: 'Chờ xuất bản', delColor: 'purple' },
             PUBLISHED: { text: 'Đã xuất bản', color: '#06B6D4', deliverable: 'Đang đo lường', delColor: 'cyan' },
             COMPLETED: { text: 'Hoàn thành', color: '#10B981', deliverable: 'Nghiệm thu hoàn tất', delColor: 'success' },
             CANCELLED: { text: 'Đã hủy', color: '#EF4444', deliverable: 'Dừng hợp tác', delColor: 'error' },
@@ -193,7 +193,7 @@ export function useCampaignDetail() {
           const currentCreators: CampaignCreatorRow[] = (collabs || []).map((c, idx) => {
             const st = statusMap[c.status] || {
               text: c.status || 'Đang hợp tác',
-              color: '#6366F1',
+              color: '#2563EB',
               deliverable: c.hasReview ? 'Đã duyệt bài' : c.hasOutcome ? 'Đã đo lường' : 'Đang xử lý',
               delColor: 'default',
             };
@@ -287,7 +287,7 @@ export function useCampaignDetail() {
         'Đóng chiến dịch và lưu trữ toàn bộ chỉ số KPI, chi phí thực tế vào Lịch sử chiến dịch.',
       okText: 'Hoàn thành chiến dịch',
       cancelText: 'Hủy',
-      okButtonProps: { style: { background: '#4F46E5', borderColor: '#4F46E5' } },
+      okButtonProps: { style: { background: '#1D4ED8', borderColor: '#1D4ED8' } },
       onOk: async () => {
         try {
           message.loading({ content: 'Đang đánh dấu hoàn thành chiến dịch...', key: 'comp_camp' });

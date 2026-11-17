@@ -380,7 +380,7 @@ export default function CampaignTable() {
                 marginBottom: 3,
                 transition: 'color 0.2s',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#5B5BF0')}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#2563EB')}
               onMouseLeave={(e) => (e.currentTarget.style.color = '#0F172A')}
             >
               {record.title}
@@ -419,8 +419,8 @@ export default function CampaignTable() {
 
         if (record.status === 'draft') {
           color = 'processing';
-          bg = '#EEF2FF';
-          text = '#4F46E5';
+          bg = '#EFF6FF';
+          text = '#1D4ED8';
         } else if (record.status === 'completed') {
           color = 'default';
           bg = '#F1F5F9';

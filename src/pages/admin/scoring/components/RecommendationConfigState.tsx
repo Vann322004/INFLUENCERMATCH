@@ -52,7 +52,7 @@ export default function RecommendationConfigState({ hasAccess, config, loading, 
                 icon={<ReloadOutlined />}
                 onClick={fetchConfig}
                 style={{
-                  background: '#5B5BF0',
+                  background: '#2563EB',
                   borderRadius: 10,
                   height: 38,
                   fontWeight: 600,

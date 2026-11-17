@@ -38,7 +38,7 @@ export default function LiveCrawlProfileCard({ result, engagementRate }: LiveCra
                 height: 72,
                 borderRadius: '50%',
                 objectFit: 'cover',
-                border: '2px solid #EEF2FF',
+                border: '2px solid #EFF6FF',
                 flexShrink: 0,
               }}
             />
@@ -57,7 +57,7 @@ export default function LiveCrawlProfileCard({ result, engagementRate }: LiveCra
                 </Tag>
               </div>
 
-              <div style={{ color: '#4F46E5', fontWeight: 600, fontSize: 13, marginTop: 2 }}>
+              <div style={{ color: '#1D4ED8', fontWeight: 600, fontSize: 13, marginTop: 2 }}>
                 @{result.username}
               </div>
 

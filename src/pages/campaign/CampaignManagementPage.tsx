@@ -790,7 +790,7 @@ export default function CampaignManagementPage() {
               type="primary"
               htmlType="submit"
               style={{
-                background: 'linear-gradient(135deg, #4338CA 0%, #4F46E5 100%)',
+                background: 'linear-gradient(135deg, #1E40AF 0%, #1D4ED8 100%)',
                 fontWeight: 700,
               }}
             >
@@ -848,7 +848,7 @@ export default function CampaignManagementPage() {
             }}
           >
             <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#4F46E5' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#1D4ED8' }}>
                 {pipelineCreators.length}
               </div>
               <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>KOC trong Pipeline</div>

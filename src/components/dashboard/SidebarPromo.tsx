@@ -89,11 +89,11 @@ export default function SidebarPromo() {
     <div
       onClick={() => navigate('/subscription')}
       style={{
-        background: 'linear-gradient(145deg, #FAF5FF 0%, #F5F3FF 50%, #EEF2FF 100%)',
+        background: 'linear-gradient(145deg, #FAF5FF 0%, #F5F3FF 50%, #EFF6FF 100%)',
         border: '1px solid #DDD6FE',
         borderRadius: 14,
         padding: '13px 12px 12px 12px',
-        boxShadow: '0 4px 14px rgba(124, 58, 237, 0.08)',
+        boxShadow: '0 4px 14px rgba(29, 78, 216, 0.08)',
         position: 'relative',
         overflow: 'hidden',
         cursor: 'pointer',
@@ -109,7 +109,7 @@ export default function SidebarPromo() {
           right: -20,
           width: 70,
           height: 70,
-          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, rgba(255, 255, 255, 0) 70%)',
+          background: 'radial-gradient(circle, rgba(37, 99, 235, 0.2) 0%, rgba(255, 255, 255, 0) 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -121,11 +121,11 @@ export default function SidebarPromo() {
             width: 32,
             height: 32,
             borderRadius: 9,
-            background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+            background: 'linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 3px 10px rgba(124, 58, 237, 0.35)',
+            boxShadow: '0 3px 10px rgba(29, 78, 216, 0.35)',
             flexShrink: 0,
           }}
         >
@@ -169,7 +169,7 @@ export default function SidebarPromo() {
           <div
             style={{
               fontSize: 10.5,
-              color: '#6366F1',
+              color: '#2563EB',
               fontWeight: 600,
               marginTop: 1,
               whiteSpace: 'nowrap',
@@ -198,7 +198,7 @@ export default function SidebarPromo() {
           }}
         >
           <span>Dung lượng sử dụng</span>
-          <span style={{ color: '#4F46E5', fontWeight: 700 }}>{subInfo.percent}%</span>
+          <span style={{ color: '#1D4ED8', fontWeight: 700 }}>{subInfo.percent}%</span>
         </div>
 
         <Progress
@@ -206,8 +206,8 @@ export default function SidebarPromo() {
           size="small"
           showInfo={false}
           strokeColor={{
-            '0%': '#6366F1',
-            '100%': '#8B5CF6',
+            '0%': '#2563EB',
+            '100%': '#2563EB',
           }}
           railColor="#E2E8F0"
           style={{ margin: 0, height: 6 }}
@@ -234,14 +234,14 @@ export default function SidebarPromo() {
         size="small"
         block
         style={{
-          background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+          background: 'linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 100%)',
           border: 'none',
           borderRadius: 8,
           fontWeight: 700,
           fontSize: 11,
           height: 28,
           marginTop: 9,
-          boxShadow: '0 3px 10px rgba(99, 102, 241, 0.22)',
+          boxShadow: '0 3px 10px rgba(37, 99, 235, 0.22)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

@@ -91,7 +91,7 @@ function ClaimDetailDrawer({
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <Card size="small" bordered={false}
-            style={{ background: "linear-gradient(135deg,#EEF2FF,#F0FDF4)", border: "1px solid #C7D2FE", borderRadius: 12 }}>
+            style={{ background: "linear-gradient(135deg,#EFF6FF,#F0FDF4)", border: "1px solid #BFDBFE", borderRadius: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <Avatar src={d.creatorAvatar} size={48} icon={<UserOutlined />}
                 style={{ border: "2px solid #3B82F6", flexShrink: 0 }} />
@@ -361,7 +361,7 @@ export default function CreatorClaimReviewPage() {
           <Tooltip title="Xem bằng chứng">
             <Button size="small" icon={<EyeOutlined />}
               onClick={e => { e.stopPropagation(); setSelectedClaim(record); setDrawerOpen(true); }}
-              style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", color: "#818CF8" }} />
+              style={{ background: "rgba(37, 99, 235,0.1)", border: "1px solid rgba(37, 99, 235,0.2)", color: "#60A5FA" }} />
           </Tooltip>
           {record.status === "PENDING" && (
             <>

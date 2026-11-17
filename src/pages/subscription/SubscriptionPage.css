@@ -10,7 +10,7 @@
 
 /* Header Banner */
 .sub-current-card {
-  background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
+  background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #1E40AF 100%);
   border-radius: 16px;
   padding: 24px 28px;
   color: #FFFFFF;
@@ -124,7 +124,7 @@
 
 .switch-to-yearly-hint {
   font-size: 12px;
-  color: #6366F1;
+  color: #2563EB;
   font-weight: 500;
   cursor: pointer;
   margin-top: 6px;
@@ -136,7 +136,7 @@
 }
 
 .switch-to-yearly-hint:hover {
-  color: #4338CA;
+  color: #1E40AF;
   text-decoration: underline;
 }
 
@@ -155,14 +155,14 @@
 
 .pricing-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 14px 30px -8px rgba(91, 91, 240, 0.15);
-  border-color: #C7D2FE;
+  box-shadow: 0 14px 30px -8px rgba(37, 99, 235, 0.15);
+  border-color: #BFDBFE;
 }
 
 .pricing-card.popular {
-  border: 2px solid #6366F1;
+  border: 2px solid #2563EB;
   background: linear-gradient(180deg, #FAF5FF 0%, #FFFFFF 25%);
-  box-shadow: 0 12px 28px -6px rgba(99, 102, 241, 0.22);
+  box-shadow: 0 12px 28px -6px rgba(37, 99, 235, 0.22);
 }
 
 .popular-badge {
@@ -170,14 +170,14 @@
   top: -13px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #2563EB 100%);
   color: #FFFFFF;
   font-size: 11px;
   font-weight: 700;
   padding: 4px 14px;
   border-radius: 999px;
   letter-spacing: 0.5px;
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
   white-space: nowrap;
 }
 
@@ -267,8 +267,8 @@
 }
 
 .addon-card:hover {
-  background: #EEF2FF;
-  border-color: #818CF8;
+  background: #EFF6FF;
+  border-color: #60A5FA;
 }
 
 /* Invoice Modal */

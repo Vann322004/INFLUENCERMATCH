@@ -42,7 +42,7 @@ export default function CreateAdminModal({ open, onClose, onCreate }: CreateAdmi
       onCancel={onClose}
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <SafetyCertificateOutlined style={{ color: '#6366F1', fontSize: 18 }} />
+          <SafetyCertificateOutlined style={{ color: '#2563EB', fontSize: 18 }} />
           <span style={{ fontWeight: 700, fontSize: 15 }}>Tạo tài khoản Quản trị / Quản lý mới</span>
         </div>
       }
@@ -56,7 +56,7 @@ export default function CreateAdminModal({ open, onClose, onCreate }: CreateAdmi
           rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
         >
           <Input
-            prefix={<UserOutlined style={{ color: '#6366F1' }} />}
+            prefix={<UserOutlined style={{ color: '#2563EB' }} />}
             placeholder="Nguyễn Văn A"
             size="large"
           />
@@ -71,7 +71,7 @@ export default function CreateAdminModal({ open, onClose, onCreate }: CreateAdmi
           ]}
         >
           <Input
-            prefix={<MailOutlined style={{ color: '#6366F1' }} />}
+            prefix={<MailOutlined style={{ color: '#2563EB' }} />}
             placeholder="admin@influencermatch.vn"
             size="large"
           />
@@ -99,7 +99,7 @@ export default function CreateAdminModal({ open, onClose, onCreate }: CreateAdmi
           ]}
         >
           <Input.Password
-            prefix={<LockOutlined style={{ color: '#6366F1' }} />}
+            prefix={<LockOutlined style={{ color: '#2563EB' }} />}
             placeholder="Tối thiểu 8 ký tự"
             size="large"
           />
@@ -119,7 +119,7 @@ export default function CreateAdminModal({ open, onClose, onCreate }: CreateAdmi
             type="primary"
             loading={loading}
             onClick={handleSubmit}
-            style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', border: 'none', fontWeight: 700 }}
+            style={{ background: 'linear-gradient(135deg, #2563EB, #2563EB)', border: 'none', fontWeight: 700 }}
           >
             Tạo tài khoản
           </Button>

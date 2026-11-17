@@ -84,7 +84,7 @@ export default function CollectionJobsPage() {
             icon={<PlusOutlined />}
             onClick={() => setCreateModalOpen(true)}
             style={{
-              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+              background: 'linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 100%)',
               border: 'none',
               borderRadius: 8,
               fontWeight: 700,

@@ -246,7 +246,7 @@ export default function LandingPage() {
             {/* Hero Left Content */}
             <div>
               <div className="lp-hero-tag">
-                <Sparkles size={14} style={{ color: '#818CF8' }} />
+                <Sparkles size={14} style={{ color: '#60A5FA' }} />
                 <span>Thuật toán Vector Semantic AI đầu tiên tại Việt Nam</span>
               </div>
 
@@ -414,7 +414,7 @@ export default function LandingPage() {
 
               {/* Floating Badge Bottom Right */}
               <div className="lp-float-badge lp-float-badge-2">
-                <div className="lp-float-icon-wrap" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818CF8' }}>
+                <div className="lp-float-icon-wrap" style={{ background: 'rgba(37, 99, 235, 0.15)', color: '#60A5FA' }}>
                   <TrendingUp size={18} />
                 </div>
                 <div>
@@ -488,7 +488,7 @@ export default function LandingPage() {
           <div className="lp-features-grid">
             {/* Feature 1 */}
             <div className="lp-feature-card">
-              <div className="lp-feature-icon-wrap" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818CF8' }}>
+              <div className="lp-feature-icon-wrap" style={{ background: 'rgba(37, 99, 235, 0.15)', color: '#60A5FA' }}>
                 <Sparkles size={26} />
               </div>
               <h3 className="lp-feature-title">AI Vector Semantic Search</h3>
@@ -634,7 +634,7 @@ export default function LandingPage() {
                     <div>
                       <div className="lp-creator-name">
                         <span>{activeCreator.name}</span>
-                        <span style={{ fontSize: 11, padding: '2px 6px', background: 'rgba(99, 102, 241, 0.2)', color: '#A5B4FC', borderRadius: 4 }}>
+                        <span style={{ fontSize: 11, padding: '2px 6px', background: 'rgba(37, 99, 235, 0.2)', color: '#A5B4FC', borderRadius: 4 }}>
                           {activeCreator.genderBadge}
                         </span>
                       </div>
@@ -688,7 +688,7 @@ export default function LandingPage() {
 
               {/* Rationale & Analytics Right Column */}
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#818CF8', fontWeight: 700, fontSize: 13, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#60A5FA', fontWeight: 700, fontSize: 13, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.8 }}>
                   <Award size={16} />
                   <span>Điểm mạnh nổi bật được AI chứng thực</span>
                 </div>
@@ -779,8 +779,8 @@ export default function LandingPage() {
                       style={{
                         padding: '10px 14px',
                         borderRadius: 10,
-                        border: calcIndustry === ind.key ? '1px solid #6366F1' : '1px solid rgba(255, 255, 255, 0.08)',
-                        background: calcIndustry === ind.key ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                        border: calcIndustry === ind.key ? '1px solid #2563EB' : '1px solid rgba(255, 255, 255, 0.08)',
+                        background: calcIndustry === ind.key ? 'rgba(37, 99, 235, 0.15)' : 'rgba(255, 255, 255, 0.03)',
                         color: calcIndustry === ind.key ? '#FFFFFF' : '#94A3B8',
                         fontSize: 13,
                         fontWeight: 600,
@@ -860,7 +860,7 @@ export default function LandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 30 }}>
             {/* Step 1 */}
             <div style={{ background: 'var(--lp-bg-card)', padding: 32, borderRadius: 20, border: '1px solid var(--lp-border)' }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(99, 102, 241, 0.2)', color: '#818CF8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18, marginBottom: 20 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(37, 99, 235, 0.2)', color: '#60A5FA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18, marginBottom: 20 }}>
                 1
               </div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#FFFFFF', marginBottom: 12 }}>
@@ -1257,7 +1257,7 @@ export default function LandingPage() {
                 <li><span style={{ color: '#94A3B8', fontSize: 13.5 }}>Hotline: 1900 6868</span></li>
                 <li><span style={{ color: '#94A3B8', fontSize: 13.5 }}>Email: support@influencermatch.vn</span></li>
                 <li><span style={{ color: '#94A3B8', fontSize: 13.5 }}>Trụ sở: Tòa nhà Tech Tower, Q.1, TP. HCM</span></li>
-                <li><a href="/login" style={{ color: '#818CF8', fontWeight: 600, marginTop: 6, display: 'inline-block' }}>Đăng nhập quản trị →</a></li>
+                <li><a href="/login" style={{ color: '#60A5FA', fontWeight: 600, marginTop: 6, display: 'inline-block' }}>Đăng nhập quản trị →</a></li>
               </ul>
             </div>
           </div>

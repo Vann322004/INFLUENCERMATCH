@@ -117,9 +117,9 @@ export default function CreatorListTab() {
         <Tag
           icon={PLATFORM_ICON[p]}
           style={{
-            background: (PLATFORM_COLOR[p] || '#5B5BF0') + '10',
-            border: `1px solid ${(PLATFORM_COLOR[p] || '#5B5BF0')}30`,
-            color: PLATFORM_COLOR[p] || '#5B5BF0',
+            background: (PLATFORM_COLOR[p] || '#2563EB') + '10',
+            border: `1px solid ${(PLATFORM_COLOR[p] || '#2563EB')}30`,
+            color: PLATFORM_COLOR[p] || '#2563EB',
             borderRadius: 20, fontWeight: 700, fontSize: 11,
           }}
         >

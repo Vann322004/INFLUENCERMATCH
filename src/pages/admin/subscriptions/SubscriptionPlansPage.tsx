@@ -195,7 +195,7 @@ export default function SubscriptionPlansPage() {
             icon={<PlusOutlined />}
             onClick={handleOpenCreate}
             style={{
-              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+              background: 'linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 100%)',
               border: 'none',
               borderRadius: 8,
               fontWeight: 700,
@@ -238,7 +238,7 @@ export default function SubscriptionPlansPage() {
               <span style={{ color: '#64748B', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px' }}>
                 TỔNG SỐ GÓI DỊCH VỤ
               </span>
-              <AppstoreOutlined style={{ color: '#6366F1', fontSize: 16 }} />
+              <AppstoreOutlined style={{ color: '#2563EB', fontSize: 16 }} />
             </div>
             <div style={{ fontSize: 26, fontWeight: 800, color: '#0F172A', marginTop: 6 }}>
               {plans.length} gói
@@ -288,9 +288,9 @@ export default function SubscriptionPlansPage() {
               <span style={{ color: '#64748B', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px' }}>
                 GIAO DỊCH THÀNH CÔNG
               </span>
-              <CheckCircleOutlined style={{ color: '#6366F1', fontSize: 16 }} />
+              <CheckCircleOutlined style={{ color: '#2563EB', fontSize: 16 }} />
             </div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: '#6366F1', marginTop: 6 }}>
+            <div style={{ fontSize: 26, fontWeight: 800, color: '#2563EB', marginTop: 6 }}>
               {stats ? `${stats.paidCount} giao dịch` : '—'}
             </div>
             <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
@@ -328,9 +328,9 @@ export default function SubscriptionPlansPage() {
                   bordered={false}
                   style={{
                     borderRadius: 14,
-                    border: isHighlight ? '1.5px solid #6366F1' : '1px solid #E2E8F0',
+                    border: isHighlight ? '1.5px solid #2563EB' : '1px solid #E2E8F0',
                     boxShadow: isHighlight
-                      ? '0 6px 20px rgba(99,102,241,0.12)'
+                      ? '0 6px 20px rgba(37, 99, 235,0.12)'
                       : '0 2px 8px rgba(0,0,0,0.03)',
                     height: '100%',
                     display: 'flex',
@@ -418,8 +418,8 @@ export default function SubscriptionPlansPage() {
                       marginBottom: 16,
                       padding: '12px',
                       borderRadius: 10,
-                      background: isHighlight ? '#EEF2FF' : '#F8FAFC',
-                      border: isHighlight ? '1px solid #C7D2FE' : '1px solid #E2E8F0',
+                      background: isHighlight ? '#EFF6FF' : '#F8FAFC',
+                      border: isHighlight ? '1px solid #BFDBFE' : '1px solid #E2E8F0',
                     }}
                   >
                     <div style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', lineHeight: 1.2 }}>
@@ -460,7 +460,7 @@ export default function SubscriptionPlansPage() {
                         }}
                       >
                         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <AimOutlined style={{ color: '#6366F1' }} />
+                          <AimOutlined style={{ color: '#2563EB' }} />
                           <span>Chiến dịch tối đa:</span>
                         </span>
                         <strong style={{ color: '#0F172A' }}>{plan.campaignQuota} chiến dịch</strong>

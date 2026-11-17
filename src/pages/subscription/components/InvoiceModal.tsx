@@ -34,7 +34,7 @@ export default function InvoiceModal({
           key="download"
           type="primary"
           icon={<DownloadOutlined />}
-          style={{ background: '#5B5BF0' }}
+          style={{ background: '#2563EB' }}
           onClick={() => message.success('Đang tải hóa đơn PDF về máy...')}
         >
           Tải PDF
@@ -53,7 +53,7 @@ export default function InvoiceModal({
           }}
         >
           <div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: '#5B5BF0' }}>INFLUENCERMATCH CORP</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB' }}>INFLUENCERMATCH CORP</div>
             <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>Mã số thuế: 0109887766</div>
             <div style={{ fontSize: 12, color: '#64748B' }}>Tòa nhà TechHub, Q.1, TP. Hồ Chí Minh</div>
           </div>
@@ -133,7 +133,7 @@ export default function InvoiceModal({
           }}
         >
           <span style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>Tổng cộng thanh toán (VAT 10%):</span>
-          <span style={{ fontSize: 20, fontWeight: 800, color: '#5B5BF0' }}>
+          <span style={{ fontSize: 20, fontWeight: 800, color: '#2563EB' }}>
             {formatVND(invoice.amount)}
           </span>
         </div>

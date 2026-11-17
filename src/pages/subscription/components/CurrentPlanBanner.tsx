@@ -102,7 +102,7 @@ export default function CurrentPlanBanner({ subInfo, loading, onGoToPlans, onGoT
                   style={{
                     flex: 1,
                     background: '#FFFFFF',
-                    color: '#4338CA',
+                    color: '#1E40AF',
                     fontWeight: 700,
                     border: 'none',
                     borderRadius: 8,

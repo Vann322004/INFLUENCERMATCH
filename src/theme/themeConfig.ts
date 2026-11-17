@@ -2,8 +2,8 @@ import type { ThemeConfig } from 'antd';
 
 export const themeConfig: ThemeConfig = {
   token: {
-    colorPrimary: '#5B5BF0',
-    colorInfo: '#5B5BF0',
+    colorPrimary: '#2563EB',
+    colorInfo: '#2563EB',
     colorSuccess: '#10B981',
     colorWarning: '#F59E0B',
     colorError: '#EF4444',
@@ -26,8 +26,8 @@ export const themeConfig: ThemeConfig = {
     Button: {
       borderRadius: 10,
       fontWeight: 600,
-      colorPrimary: '#5B5BF0',
-      colorPrimaryHover: '#4A4AE0',
+      colorPrimary: '#2563EB',
+      colorPrimaryHover: '#1D4ED8',
     },
     Table: {
       borderRadius: 12,
@@ -49,9 +49,9 @@ export const themeConfig: ThemeConfig = {
       borderRadius: 10,
     },
     Tabs: {
-      inkBarColor: '#5B5BF0',
-      itemSelectedColor: '#5B5BF0',
-      itemHoverColor: '#4A4AE0',
+      inkBarColor: '#2563EB',
+      itemSelectedColor: '#2563EB',
+      itemHoverColor: '#1D4ED8',
     },
     Pagination: {
       borderRadius: 8,

@@ -126,7 +126,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
       {loading && (
         <Card style={{ borderRadius: 12, textAlign: 'center', padding: '36px 20px', marginBottom: 20 }}>
           <Spin size="large" />
-          <div style={{ marginTop: 16, fontSize: 14, fontWeight: 700, color: '#4F46E5' }}>
+          <div style={{ marginTop: 16, fontSize: 14, fontWeight: 700, color: '#1D4ED8' }}>
             {currentStep || 'Đang thực hiện cào dữ liệu...'}
           </div>
           <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>

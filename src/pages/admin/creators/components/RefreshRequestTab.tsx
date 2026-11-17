@@ -135,7 +135,7 @@ export default function RefreshRequestTab() {
           {r.status === 'failed' && (
             <Tooltip title="Thử lại">
               <Button size="small" icon={<SyncOutlined />} onClick={() => retry(r.id)}
-                style={{ borderColor: '#5B5BF0', color: '#5B5BF0' }} />
+                style={{ borderColor: '#2563EB', color: '#2563EB' }} />
             </Tooltip>
           )}
           {(r.status === 'queued') && (
@@ -162,7 +162,7 @@ export default function RefreshRequestTab() {
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
         {[
           { key: 'queued',      label: 'Chờ xử lý', color: '#64748B', bg: '#F8FAFC' },
-          { key: 'in_progress', label: 'Đang chạy',  color: '#5B5BF0', bg: '#EEF2FF' },
+          { key: 'in_progress', label: 'Đang chạy',  color: '#2563EB', bg: '#EFF6FF' },
           { key: 'done',        label: 'Xong',        color: '#10B981', bg: '#ECFDF5' },
           { key: 'failed',      label: 'Lỗi',         color: '#EF4444', bg: '#FEF2F2' },
         ].map(s => (

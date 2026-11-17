@@ -78,8 +78,8 @@
 }
 
 .collab-tab-btn.active {
-  background: #EEF2FF;
-  color: #4F46E5;
+  background: #EFF6FF;
+  color: #1D4ED8;
   font-weight: 700;
 }
 
@@ -185,9 +185,9 @@
 }
 
 .deliverable-card-item.active {
-  border-color: #7C3AED;
+  border-color: #1D4ED8;
   background: #FAF5FF;
-  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.1);
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.1);
 }
 
 .item-title-preview {
@@ -371,8 +371,8 @@
 
 .collab-back-link:hover,
 .collab-row-link:hover {
-  color: #4F46E5;
-  border-color: #C7D2FE;
+  color: #1D4ED8;
+  border-color: #BFDBFE;
 }
 
 .collab-detail-heading {

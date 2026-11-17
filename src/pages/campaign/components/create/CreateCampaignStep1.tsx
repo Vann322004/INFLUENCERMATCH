@@ -129,7 +129,7 @@ export const CreateCampaignStep1: React.FC<CreateCampaignStep1Props> = ({
       <div className="ccreate-sub-section">
         <div className="ccreate-sub-title">
           <span>Mục tiêu chiến dịch <span style={{ color: '#EF4444' }}>*</span></span>
-          <span style={{ fontSize: 12, color: '#4F46E5', fontWeight: 600 }}>
+          <span style={{ fontSize: 12, color: '#1D4ED8', fontWeight: 600 }}>
             Đã chọn {selectedObjectives.length} mục tiêu
           </span>
         </div>

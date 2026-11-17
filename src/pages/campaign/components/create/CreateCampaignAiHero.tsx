@@ -106,13 +106,13 @@ export const CreateCampaignAiHero: React.FC<CreateCampaignAiHeroProps> = ({
           title={
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
               <span style={{ fontWeight: 700, color: '#5B21B6', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-                <RobotOutlined style={{ fontSize: 15, color: '#7C3AED' }} /> Chiến lược phân tích từ AI
+                <RobotOutlined style={{ fontSize: 15, color: '#1D4ED8' }} /> Chiến lược phân tích từ AI
               </span>
               <Button
                 type="text"
                 size="small"
                 onClick={() => setAiExplanation(null)}
-                style={{ color: '#7C3AED', fontWeight: 600, fontSize: 11.5 }}
+                style={{ color: '#1D4ED8', fontWeight: 600, fontSize: 11.5 }}
               >
                 Đóng
               </Button>

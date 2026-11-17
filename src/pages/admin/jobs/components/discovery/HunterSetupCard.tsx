@@ -160,9 +160,9 @@ export default function HunterSetupCard({
                         borderRadius: 20,
                         fontSize: 12,
                         fontWeight: 600,
-                        background: isSelected ? '#EEF2FF' : '#F8FAFC',
-                        color: isSelected ? '#4338CA' : '#64748B',
-                        border: isSelected ? '1.5px solid #6366F1' : '1px solid #E2E8F0',
+                        background: isSelected ? '#EFF6FF' : '#F8FAFC',
+                        color: isSelected ? '#1E40AF' : '#64748B',
+                        border: isSelected ? '1.5px solid #2563EB' : '1px solid #E2E8F0',
                       }}
                     >
                       {t.name}
@@ -259,7 +259,7 @@ export default function HunterSetupCard({
               Số kênh thử tối đa
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: '#4F46E5' }}>{maxKocs}</span>
+            <span style={{ fontSize: 24, fontWeight: 800, color: '#1D4ED8' }}>{maxKocs}</span>
             <span style={{ fontSize: 13, color: '#64748B' }}>KOC</span>
           </div>
           <Slider
@@ -281,11 +281,11 @@ export default function HunterSetupCard({
             style={{
               height: 44,
               borderRadius: 8,
-              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+              background: 'linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 100%)',
               border: 'none',
               fontWeight: 700,
               fontSize: 14,
-              boxShadow: '0 3px 10px rgba(79,70,229,0.3)',
+              boxShadow: '0 3px 10px rgba(29, 78, 216,0.3)',
             }}
           >
             {mode === 'category' ? 'Bắt đầu săn KOC tự động' : 'Bắt đầu cào danh sách KOC'}

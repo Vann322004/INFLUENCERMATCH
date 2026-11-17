@@ -1,9 +1,9 @@
 export const themeConfig = {
   token: {
-    colorPrimary: '#8B5CF6',
-    colorPrimaryHover: '#7C3AED',
-    colorLink: '#8B5CF6',
-    colorLinkHover: '#7C3AED',
+    colorPrimary: '#2563EB',
+    colorPrimaryHover: '#1D4ED8',
+    colorLink: '#2563EB',
+    colorLinkHover: '#1D4ED8',
     borderRadius: 12,
     fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
     colorTextHeading: '#0F172A',
@@ -12,7 +12,7 @@ export const themeConfig = {
   },
   components: {
     Button: {
-      colorPrimary: '#8B5CF6',
+      colorPrimary: '#2563EB',
       algorithm: true,
       fontWeight: 700,
       borderRadiusLG: 12,
@@ -20,8 +20,8 @@ export const themeConfig = {
     },
     Input: {
       paddingBlockLG: 12,
-      activeBorderColor: '#8B5CF6',
-      hoverBorderColor: '#A855F7',
+      activeBorderColor: '#2563EB',
+      hoverBorderColor: '#3B82F6',
       borderRadiusLG: 12,
       colorBgContainer: '#F8FAFC',
     },
@@ -29,7 +29,7 @@ export const themeConfig = {
       borderRadiusLG: 24,
     },
     Checkbox: {
-      colorPrimary: '#8B5CF6',
+      colorPrimary: '#2563EB',
     }
   },
 };

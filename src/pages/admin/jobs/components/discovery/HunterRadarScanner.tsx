@@ -30,7 +30,7 @@ export default function HunterRadarScanner({
     <Card
       style={{
         borderRadius: 12,
-        border: '1px solid #E0E7FF',
+        border: '1px solid #DBEAFE',
         background: '#FAFAFE',
         marginBottom: 20,
       }}
@@ -40,7 +40,7 @@ export default function HunterRadarScanner({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {isRunning && (
-            <Spin indicator={<SyncOutlined spin style={{ fontSize: 16, color: '#6366F1' }} />} />
+            <Spin indicator={<SyncOutlined spin style={{ fontSize: 16, color: '#2563EB' }} />} />
           )}
           <span style={{ fontWeight: 700, fontSize: 14, color: '#1E293B' }}>
             {isRunning ? 'Đang cào dữ liệu từ các kênh...' : isDone ? 'Hoàn tất quét dữ liệu' : 'Tiến trình quét'}
@@ -57,13 +57,13 @@ export default function HunterRadarScanner({
       <Progress
         percent={progressPercent}
         status={isRunning ? 'active' : isDone && matchedCount > 0 ? 'success' : 'normal'}
-        strokeColor={{ '0%': '#6366F1', '100%': '#10B981' }}
+        strokeColor={{ '0%': '#2563EB', '100%': '#10B981' }}
         style={{ marginBottom: 16 }}
       />
 
       {/* Stats row */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-        <StatBadge label="Tổng số yêu cầu" value={scannedCount} unit="kênh" color="#6366F1" />
+        <StatBadge label="Tổng số yêu cầu" value={scannedCount} unit="kênh" color="#2563EB" />
         <StatBadge
           label="Cào lỗi / Bị lọc Tier-0"
           value={filteredOutCount}
@@ -102,13 +102,13 @@ export default function HunterRadarScanner({
                   icon={<ArrowRightOutlined />}
                   onClick={onNavigateQuality}
                   style={{
-                    background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+                    background: 'linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 100%)',
                     border: 'none',
                     fontWeight: 700,
                     borderRadius: 8,
                     height: 36,
                     padding: '0 16px',
-                    boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
+                    boxShadow: '0 2px 6px rgba(29, 78, 216, 0.25)',
                   }}
                 >
                   {pendingReviewCount === null ? 'Mở danh sách kiểm định' : `Kiểm định chất lượng (${pendingReviewCount})`}
@@ -190,7 +190,7 @@ function StatBadge({
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <div style={{ fontSize: 20, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
         {actionHint && (
-          <span style={{ fontSize: 11, fontWeight: 600, color: '#4F46E5' }}>{actionHint}</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#1D4ED8' }}>{actionHint}</span>
         )}
       </div>
       <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>{label} ({unit})</div>

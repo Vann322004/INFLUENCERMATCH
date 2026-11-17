@@ -54,7 +54,7 @@ export const QualityStatsCards: React.FC<QualityStatsCardsProps> = ({
         <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
           Độ tin cậy phân loại
         </div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: '#4F46E5', marginTop: 2 }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: '#1D4ED8', marginTop: 2 }}>
           {overview.accuracyRate ? `${overview.accuracyRate}%` : '—'}
         </div>
       </div>

@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Menu, Avatar, Dropdown, Tooltip } from 'antd';
+import { Layout, Dropdown, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   LineChartOutlined,
-  SafetyCertificateOutlined,
   ApiOutlined,
   DollarOutlined,
   CalendarOutlined,
   LogoutOutlined,
   UserOutlined,
   SettingOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
 } from '@ant-design/icons';
 import { authService } from '../../services/api/authService';
 
@@ -25,12 +22,24 @@ export const CREATOR_MENU_ITEMS = [
   { key: 'bookings', icon: <CalendarOutlined />, label: 'Hợp tác' },
 ];
 
+/**
+ * Sidebar Creator Portal — dùng chung class/hệ màu với AppSider (Brand)
+ * để đồng bộ giao diện giữa các vai trò (Dark Slate / Royal Blue).
+ */
 export default function CreatorSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
   const currentUser = authService.getCurrentUser();
+  const userName = currentUser?.fullName || currentUser?.email || 'Nhà sáng tạo';
+
+  const initials = (() => {
+    const parts = (currentUser?.fullName || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return 'KC';
+  })();
 
   const getActiveKey = () => {
     const path = location.pathname;
@@ -40,10 +49,7 @@ export default function CreatorSidebar() {
     if (path.includes('booking')) return 'bookings';
     return 'dashboard';
   };
-
-  const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
-    navigate(`/creator/${key}`);
-  };
+  const activeKey = getActiveKey();
 
   const handleLogout = () => {
     authService.logout();
@@ -60,113 +66,78 @@ export default function CreatorSidebar() {
   return (
     <Sider
       width={240}
-      collapsedWidth={68}
+      collapsedWidth={62}
       collapsed={collapsed}
       className="app-sider creator-desktop-sidebar"
       style={{ position: 'sticky', top: 0, height: '100vh' }}
     >
-      {/* Logo + Brand */}
-      <div
-        onClick={() => navigate('/creator/dashboard')}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: collapsed ? 0 : 10,
-          padding: '14px 16px',
-          cursor: 'pointer',
-          justifyContent: collapsed ? 'center' : 'flex-start',
-          transition: 'all 0.2s',
-        }}
-      >
-        <div
-          style={{
-            width: 34,
-            height: 34,
-            background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
-            borderRadius: 8,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#FFFFFF',
-            fontSize: 16,
-            flexShrink: 0,
-            boxShadow: '0 2px 6px rgba(16,185,129,0.3)',
-          }}
-        >
-          <SafetyCertificateOutlined />
-        </div>
-        {!collapsed && (
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 13.5, color: '#0F172A', letterSpacing: -0.2, lineHeight: 1.2 }}>
-              CREATOR PORTAL
-            </div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: '#059669' }}>
-              InfluencerMatch
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Collapse Toggle */}
-      <div style={{ display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end', padding: '0 12px 8px' }}>
-        <Tooltip title={collapsed ? 'Mở rộng' : 'Thu gọn'} placement="right">
-          <div
-            onClick={() => setCollapsed(!collapsed)}
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: 6,
-              background: 'rgba(16,185,129,0.08)',
-              border: '1px solid rgba(16,185,129,0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: '#059669',
-              transition: 'all 0.2s',
-            }}
-          >
-            {collapsed ? <MenuUnfoldOutlined style={{ fontSize: 11 }} /> : <MenuFoldOutlined style={{ fontSize: 11 }} />}
-          </div>
-        </Tooltip>
-      </div>
-
-      {/* Navigation Menu */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        <Menu
-          mode="inline"
-          selectedKeys={[getActiveKey()]}
-          onClick={handleMenuClick}
-          items={CREATOR_MENU_ITEMS}
-          className="sidebar-menu"
-          inlineCollapsed={collapsed}
-          style={{ background: 'transparent', border: 'none', fontSize: 13.5 }}
-        />
-      </div>
-
-      {/* Bottom User Card */}
-      <div className="sidebar-user-card" style={{ padding: '10px 14px', borderTop: '1px solid #E2E8F0' }}>
-        <Dropdown menu={{ items: userDropdown }} placement="topRight" trigger={['click']}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-            <Avatar
-              icon={<UserOutlined />}
-              size={36}
-              style={{ border: '2px solid #10B981', flexShrink: 0 }}
-            />
-            {!collapsed && (
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {currentUser?.fullName || currentUser?.email || '—'}
-                  </span>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', alignItems: collapsed ? 'center' : 'stretch' }}>
+        <div>
+          {/* Logo + Brand (bấm để thu gọn / mở rộng giống sidebar Brand) */}
+          <div className="sidebar-expanded-header" style={collapsed ? { justifyContent: 'center', padding: 0 } : undefined}>
+            <Tooltip title={collapsed ? 'Mở thanh bên' : 'Thu gọn thanh bên'} placement={collapsed ? 'right' : 'bottom'}>
+              <div
+                className="sidebar-brand-btn"
+                role="button"
+                tabIndex={0}
+                onClick={() => setCollapsed((v) => !v)}
+                aria-label={collapsed ? 'Mở thanh bên' : 'Thu gọn thanh bên'}
+              >
+                <div className="sidebar-logo-icon-box">
+                  <img src="/logo.png" alt="InfluencerMatch Logo" className="sidebar-logo-img" />
                 </div>
-                <div style={{ fontSize: 10.5, color: '#64748B' }}>
-                  Creator
-                </div>
+                {!collapsed && <span className="sidebar-brand-name">InfluencerMatch</span>}
               </div>
+            </Tooltip>
+          </div>
+
+          {/* Navigation */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: collapsed ? 6 : 4, alignItems: collapsed ? 'center' : 'stretch' }}>
+            {CREATOR_MENU_ITEMS.map((item) =>
+              collapsed ? (
+                <Tooltip key={item.key} title={item.label} placement="right">
+                  <button
+                    type="button"
+                    className={`sidebar-rail-btn ${activeKey === item.key ? 'active' : ''}`}
+                    onClick={() => navigate(`/creator/${item.key}`)}
+                    aria-label={item.label}
+                  >
+                    {item.icon}
+                  </button>
+                </Tooltip>
+              ) : (
+                <div
+                  key={item.key}
+                  onClick={() => navigate(`/creator/${item.key}`)}
+                  className={`sidebar-nav-item ${activeKey === item.key ? 'active' : ''}`}
+                >
+                  <span className="sidebar-nav-icon">{item.icon}</span>
+                  <span className="sidebar-nav-label">{item.label}</span>
+                </div>
+              ),
             )}
           </div>
-        </Dropdown>
+        </div>
+
+        {/* User card */}
+        <div className="sidebar-bottom-user-section" style={collapsed ? { padding: '8px 0', display: 'flex', justifyContent: 'center' } : undefined}>
+          <Dropdown menu={{ items: userDropdown }} placement="topRight" trigger={['click']}>
+            {collapsed ? (
+              <div className="sidebar-rail-avatar-btn" style={{ cursor: 'pointer' }}>
+                <span style={{ color: '#FFFFFF', fontWeight: 800, fontSize: 12.5 }}>{initials}</span>
+              </div>
+            ) : (
+              <div className="sidebar-user-info-row" style={{ cursor: 'pointer' }}>
+                <div className="sidebar-user-avatar">{initials}</div>
+                <div className="sidebar-user-details" style={{ flex: 1, minWidth: 0 }}>
+                  <div className="sidebar-user-name">{userName}</div>
+                  <div className="sidebar-user-role">Nhà sáng tạo (Creator)</div>
+                </div>
+                <SettingOutlined style={{ fontSize: 14, color: '#94A3B8', marginLeft: 'auto', flexShrink: 0 }} />
+              </div>
+            )}
+          </Dropdown>
+        </div>
       </div>
     </Sider>
   );

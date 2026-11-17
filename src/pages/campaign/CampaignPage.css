@@ -89,8 +89,8 @@
 .campaign-full-search-input:hover,
 .campaign-full-search-input:focus,
 .campaign-full-search-input-focused {
-  border-color: #6366F1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
 }
 
 .campaign-filter-actions-row {
@@ -173,11 +173,11 @@
 }
 
 .campaign-tab-btn.active {
-  background: #4F46E5;
+  background: #1D4ED8;
   color: #ffffff;
-  border-color: #4F46E5;
+  border-color: #1D4ED8;
   font-weight: 700;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.22);
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.22);
 }
 
 .campaign-tab-badge {
@@ -310,8 +310,8 @@
 }
 
 .status-pill.ready {
-  background: #EEF2FF;
-  color: #4F46E5;
+  background: #EFF6FF;
+  color: #1D4ED8;
 }
 
 .status-pill.completed {
@@ -335,7 +335,7 @@
 }
 
 .status-pill.ready .status-pill-dot {
-  background: #6366F1;
+  background: #2563EB;
 }
 
 .status-pill.completed .status-pill-dot {

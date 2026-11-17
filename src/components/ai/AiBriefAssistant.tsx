@@ -177,10 +177,10 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
             width: 58,
             height: 58,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 50%, #EC4899 100%)',
+            background: 'linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 50%, #EC4899 100%)',
             boxShadow: isOpen
-              ? '0 6px 20px rgba(124, 58, 237, 0.5)'
-              : '0 8px 28px rgba(124, 58, 237, 0.42), 0 2px 8px rgba(0, 0, 0, 0.12)',
+              ? '0 6px 20px rgba(29, 78, 216, 0.5)'
+              : '0 8px 28px rgba(29, 78, 216, 0.42), 0 2px 8px rgba(0, 0, 0, 0.12)',
             border: '2px solid rgba(255, 255, 255, 0.8)',
             display: 'flex',
             alignItems: 'center',
@@ -232,7 +232,7 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
             background: 'linear-gradient(180deg, #FFFFFF 0%, #FAF5FF 100%)',
             borderRadius: 20,
             border: '1.5px solid #DDD6FE',
-            boxShadow: '0 20px 48px rgba(30, 27, 75, 0.22), 0 4px 18px rgba(124, 58, 237, 0.15)',
+            boxShadow: '0 20px 48px rgba(30, 27, 75, 0.22), 0 4px 18px rgba(29, 78, 216, 0.15)',
             zIndex: 1050,
             overflow: 'hidden',
             animation: 'fadeInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -242,7 +242,7 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
           <div
             style={{
               padding: '16px 18px',
-              background: 'linear-gradient(135deg, #7C3AED 0%, #6366F1 100%)',
+              background: 'linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%)',
               color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
@@ -268,7 +268,7 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
                 <div style={{ fontWeight: 800, fontSize: 14.5, color: '#FFFFFF', lineHeight: 1.2 }}>
                   Trợ lý AI Brief
                 </div>
-                <div style={{ fontSize: 11, color: '#E0E7FF', display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ fontSize: 11, color: '#DBEAFE', display: 'flex', alignItems: 'center', gap: 5 }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80' }} />
                   Tự động trích xuất bộ lọc Creator
                 </div>
@@ -320,7 +320,7 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
                       border: '1px solid #E2E8F0',
                       borderRadius: 8,
                       fontSize: 12,
-                      color: '#4338CA',
+                      color: '#1E40AF',
                       fontWeight: 600,
                       transition: 'all 0.2s',
                       display: 'flex',
@@ -328,8 +328,8 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
                       justifyContent: 'space-between',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#EEF2FF';
-                      e.currentTarget.style.borderColor = '#C7D2FE';
+                      e.currentTarget.style.background = '#EFF6FF';
+                      e.currentTarget.style.borderColor = '#BFDBFE';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = '#FFFFFF';
@@ -353,7 +353,7 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
                 style={{
                   borderRadius: 10,
                   background: '#FFFFFF',
-                  borderColor: '#C7D2FE',
+                  borderColor: '#BFDBFE',
                   fontSize: 12.5,
                   padding: '10px 12px',
                 }}
@@ -384,13 +384,13 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
                   icon={<SendOutlined />}
                   onClick={() => handleAnalyze()}
                   style={{
-                    background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)',
+                    background: 'linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 100%)',
                     borderRadius: 8,
                     fontWeight: 700,
                     fontSize: 12.5,
                     height: 36,
                     padding: '0 16px',
-                    boxShadow: '0 2px 8px rgba(124, 58, 237, 0.3)',
+                    boxShadow: '0 2px 8px rgba(29, 78, 216, 0.3)',
                     border: 'none',
                   }}
                 >
@@ -405,7 +405,7 @@ export default function AiBriefAssistant({ onApplyBrief, onReset }: AiBriefAssis
                 style={{
                   marginTop: 14,
                   background: 'rgba(255, 255, 255, 0.95)',
-                  border: '1px solid #C7D2FE',
+                  border: '1px solid #BFDBFE',
                   borderRadius: 12,
                   padding: '12px 14px',
                 }}

@@ -80,7 +80,7 @@ export const QualityTable: React.FC<QualityTableProps> = ({
                 {r.displayName || r.userName}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, marginTop: 2 }}>
-                <span style={{ color: '#4F46E5', fontWeight: 600 }}>@{r.userName}</span>
+                <span style={{ color: '#1D4ED8', fontWeight: 600 }}>@{r.userName}</span>
                 <span>•</span>
                 <Tag
                   color={platColor}
@@ -308,7 +308,7 @@ export const QualityTable: React.FC<QualityTableProps> = ({
           type="primary"
           onClick={() => navigate('/admin/jobs')}
           style={{
-            background: '#4F46E5',
+            background: '#1D4ED8',
             borderRadius: 8,
             fontWeight: 600,
             height: 38,

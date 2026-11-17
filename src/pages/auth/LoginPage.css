@@ -72,7 +72,7 @@
 }
 
 .login-card-inner .ant-input-password-icon:hover {
-  color: #6366F1 !important;
+  color: #2563EB !important;
 }
 
 /* ── Options Row (Checkbox & Forgot link) ── */
@@ -95,14 +95,14 @@
 }
 
 .luxe-checkbox .ant-checkbox-checked .ant-checkbox-inner {
-  background-color: #6366F1 !important;
-  border-color: #6366F1 !important;
+  background-color: #2563EB !important;
+  border-color: #2563EB !important;
 }
 
 .login-forgot-link {
   font-size: 12.5px;
   font-weight: 500;
-  color: #6366F1;
+  color: #2563EB;
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -115,7 +115,7 @@
 /* ── Primary Submit Button (Solid Purple with Arrow) ── */
 .luxe-primary-btn {
   height: clamp(38px, 4.2vh, 44px) !important;
-  background: linear-gradient(135deg, #6366F1 0%, #2563EB 100%) !important;
+  background: linear-gradient(135deg, #2563EB 0%, #2563EB 100%) !important;
   border: none !important;
   border-radius: 12px !important;
   font-size: 14px !important;
@@ -125,13 +125,13 @@
   align-items: center !important;
   justify-content: center !important;
   gap: 8px !important;
-  box-shadow: 0 4px 14px -3px rgba(99, 102, 241, 0.4) !important;
+  box-shadow: 0 4px 14px -3px rgba(37, 99, 235, 0.4) !important;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .luxe-primary-btn:hover:not(:disabled) {
   transform: translateY(-1px) !important;
-  box-shadow: 0 8px 18px -3px rgba(99, 102, 241, 0.5) !important;
+  box-shadow: 0 8px 18px -3px rgba(37, 99, 235, 0.5) !important;
   opacity: 0.96 !important;
 }
 
@@ -195,7 +195,7 @@
 }
 
 .register-now-link {
-  color: #6366F1;
+  color: #2563EB;
   font-weight: 600;
   text-decoration: none;
   display: inline-flex;
@@ -217,7 +217,7 @@
   flex-wrap: wrap;
   gap: 8px;
   padding: 6px 10px;
-  background: rgba(99, 102, 241, 0.04);
+  background: rgba(37, 99, 235, 0.04);
   border-radius: 8px;
 }
 
@@ -236,18 +236,18 @@
 
 .demo-chip {
   background: #FFFFFF;
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(37, 99, 235, 0.2);
   border-radius: 6px;
   padding: 2px 7px;
   font-size: 10.5px;
   font-weight: 600;
-  color: #6366F1;
+  color: #2563EB;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .demo-chip:hover {
-  background: #6366F1;
+  background: #2563EB;
   color: #FFFFFF;
 }
 
