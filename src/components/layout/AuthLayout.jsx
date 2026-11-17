@@ -3,6 +3,9 @@ import { Dropdown, message } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import './AuthLayout.css';
 
+const AUTH_BG_VIDEO =
+  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261029_084140_553c4785-d33c-496e-9702-45247fa2fcf3.mp4';
+
 export default function AuthLayout({ children }) {
   const [lang, setLang] = useState('vi');
 
@@ -27,16 +30,18 @@ export default function AuthLayout({ children }) {
 
   return (
     <div className="al-root">
-      {/* ── 2K Ultra-HD Wave Background Canvas with Subtle Breathing ── */}
-      <div className="al-bg-canvas" aria-hidden="true" />
-
-      {/* ── Dynamic Ambient Shimmer & Sparkles on Light Waves ── */}
-      <div className="al-effects-layer" aria-hidden="true">
-        <div className="al-ambient-glow" />
-        <div className="al-wave-sparkle sparkle-1" />
-        <div className="al-wave-sparkle sparkle-2" />
-        <div className="al-wave-sparkle sparkle-3" />
-      </div>
+      {/* ── Full-Viewport Looping Video Background ── */}
+      <video
+        className="al-bg-video"
+        src={AUTH_BG_VIDEO}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+      />
+      <div className="al-video-overlay" aria-hidden="true" />
 
       <div className="al-wrap">
         {/* ── Top Header: Logo on left, Language on right ── */}

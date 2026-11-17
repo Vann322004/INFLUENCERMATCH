@@ -14,6 +14,7 @@ type GoogleIdentity = {
     type: 'standard';
     theme: 'outline';
     size: 'large';
+    shape?: 'rectangular' | 'pill' | 'circle' | 'square';
     text: 'signin_with' | 'continue_with';
     width: number;
     locale: 'vi';
@@ -120,9 +121,9 @@ export default function GoogleIdentityButton({ start, onCredential, disabled, li
         });
         const width = element.clientWidth;
         google.renderButton(element, {
-          type: 'standard', theme: 'outline', size: 'large',
+          type: 'standard', theme: 'outline', size: 'large', shape: 'pill',
           text: linking ? 'continue_with' : 'signin_with',
-          width: Math.min(400, Math.floor(width) || 240), locale: 'vi',
+          width: Math.min(400, Math.floor(width) || 360), locale: 'vi',
         });
         setReady(true);
         expiryTimer = window.setTimeout(() => {
@@ -145,8 +146,8 @@ export default function GoogleIdentityButton({ start, onCredential, disabled, li
     };
   }, [start, linking, retry]);
 
-  return <div>
-    <div ref={container} inert={disabled || !ready} />
+  return <div className="google-identity-root">
+    <div ref={container} className="google-identity-slot" inert={disabled || !ready} />
     {!ready && !error && <Spin size="small" aria-label="Đang tải đăng nhập Google" />}
     {error && <Alert type="warning" showIcon title={error}
       action={<Button size="small" disabled={disabled} onClick={() => setRetry(value => value + 1)}>Thử lại</Button>} />}

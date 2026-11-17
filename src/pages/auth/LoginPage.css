@@ -17,7 +17,7 @@
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
   font-size: clamp(24px, 2.5vw, 28px);
   font-weight: 700;
-  color: #0F172A;
+  color: #FFFFFF;
   margin: 0 0 2px 0;
   letter-spacing: normal;
   line-height: 1.2;
@@ -25,54 +25,61 @@
 
 .login-welcome-text {
   font-size: 13px;
-  color: #64748B;
+  color: rgba(226, 232, 240, 0.8);
   margin: 0;
   font-weight: 400;
 }
 
-/* ── Luxe Text Inputs (Soft grey background, subtle borders) ── */
+.login-card-inner .ant-form-item-label > label {
+  color: rgba(241, 245, 249, 0.9) !important;
+  font-weight: 600 !important;
+}
+
+/* ── Luxe Text Inputs (Translucent Glass) ── */
 .login-card-inner .luxe-input {
-  background: #F8FAFC !important;
-  border: 1px solid #E2E8F0 !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.24) !important;
   border-radius: 12px !important;
   height: clamp(38px, 4.2vh, 44px) !important;
   font-size: 13.5px !important;
   padding: 0 14px !important;
-  color: #0F172A !important;
+  color: #FFFFFF !important;
   transition: all 0.2s ease !important;
   box-shadow: none !important;
 }
 
 .login-card-inner .luxe-input:hover {
-  background: #F1F5F9 !important;
-  border-color: #CBD5E1 !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.38) !important;
 }
 
 .login-card-inner .luxe-input:focus,
 .login-card-inner .luxe-input-focused,
 .login-card-inner .ant-input-affix-wrapper-focused {
-  background: #FFFFFF !important;
-  border-color: #2563EB !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-color: #93C5FD !important;
+  box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.22) !important;
 }
 
 .login-card-inner .luxe-input input {
   background: transparent !important;
+  color: #FFFFFF !important;
   font-size: 14px !important;
 }
 
-.login-card-inner .luxe-input input::placeholder {
-  color: #94A3B8 !important;
+.login-card-inner .luxe-input input::placeholder,
+.login-card-inner .luxe-input::placeholder {
+  color: rgba(226, 232, 240, 0.58) !important;
 }
 
 /* Eye icon button */
 .login-card-inner .ant-input-password-icon {
-  color: #94A3B8 !important;
+  color: rgba(226, 232, 240, 0.75) !important;
   transition: color 0.2s ease;
 }
 
 .login-card-inner .ant-input-password-icon:hover {
-  color: #2563EB !important;
+  color: #FFFFFF !important;
 }
 
 /* ── Options Row (Checkbox & Forgot link) ── */
@@ -85,37 +92,38 @@
 
 .luxe-checkbox {
   font-size: 12.5px !important;
-  color: #334155 !important;
+  color: rgba(241, 245, 249, 0.9) !important;
   font-weight: 500 !important;
 }
 
 .luxe-checkbox .ant-checkbox-inner {
   border-radius: 5px !important;
-  border-color: #CBD5E1 !important;
+  background-color: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
 }
 
 .luxe-checkbox .ant-checkbox-checked .ant-checkbox-inner {
-  background-color: #2563EB !important;
-  border-color: #2563EB !important;
+  background-color: #6f78ff !important;
+  border-color: #6f78ff !important;
 }
 
 .login-forgot-link {
   font-size: 12.5px;
   font-weight: 500;
-  color: #2563EB;
+  color: #C4B5FD;
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .login-forgot-link:hover {
-  color: #1D4ED8;
+  color: #FFFFFF;
   text-decoration: underline;
 }
 
-/* ── Primary Submit Button (Solid Purple with Arrow) ── */
+/* ── Primary Submit Button ── */
 .luxe-primary-btn {
   height: clamp(38px, 4.2vh, 44px) !important;
-  background: linear-gradient(135deg, #2563EB 0%, #2563EB 100%) !important;
+  background: linear-gradient(135deg, #6f78ff 0%, #5b5bf0 100%) !important;
   border: none !important;
   border-radius: 12px !important;
   font-size: 14px !important;
@@ -125,7 +133,7 @@
   align-items: center !important;
   justify-content: center !important;
   gap: 8px !important;
-  box-shadow: 0 4px 14px -3px rgba(37, 99, 235, 0.4) !important;
+  box-shadow: 0 8px 24px -4px rgba(111, 120, 255, 0.45) !important;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
@@ -159,12 +167,12 @@
 .luxe-divider-line {
   flex: 1;
   height: 1px;
-  background: #E2E8F0;
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .luxe-divider-text {
   font-size: 11.5px;
-  color: #94A3B8;
+  color: rgba(226, 232, 240, 0.75);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -176,26 +184,50 @@
   min-width: 0;
 }
 
-/* ── Register Banner Box (Grey capsule matching mockup) ── */
+.google-login-control .google-identity-root,
+.google-identity-root {
+  width: 100%;
+}
+
+.google-login-control .google-identity-slot,
+.google-identity-slot {
+  width: 100%;
+  border-radius: 9999px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.google-login-control .google-identity-slot > div,
+.google-login-control .google-identity-slot iframe,
+.google-identity-slot > div,
+.google-identity-slot iframe {
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+  color-scheme: normal !important;
+}
+
+/* ── Register Banner Box (Translucent Glass Capsule) ── */
 .login-register-banner {
   margin-top: clamp(8px, 1.2vh, 12px);
   padding: 8px 14px;
-  background: #F8FAFC;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 12.5px;
-  border: 1px solid #F1F5F9;
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .register-prompt {
-  color: #64748B;
+  color: rgba(226, 232, 240, 0.85);
   font-weight: 500;
 }
 
 .register-now-link {
-  color: #2563EB;
+  color: #C4B5FD;
   font-weight: 600;
   text-decoration: none;
   display: inline-flex;
@@ -204,7 +236,7 @@
 }
 
 .register-now-link:hover {
-  color: #1D4ED8;
+  color: #FFFFFF;
   transform: translateX(2px);
 }
 
