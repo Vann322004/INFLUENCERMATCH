@@ -1,13 +1,44 @@
 .login-card-inner { display:flex; flex-direction:column; width:100%; min-width:0; }
+.al-login .al-form-card .login-form-field { margin-bottom:16px; }
+.al-login .al-form-card .login-submit-field { margin-bottom:0; margin-top:8px; }
 .login-options-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 16px; margin-bottom:20px; }
 .login-forgot-link { font-size:13px; }
 .luxe-primary-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:8px; }
 .luxe-divider { display:flex; align-items:center; gap:12px; margin:20px 0; }
 .luxe-divider-line { flex:1; height:1px; background:#ffffff26; }
 .luxe-divider-text { font-size:12px; color:#ddd6e8; }
-.google-login-control { display:grid; min-width:0; }
-.google-identity-root,.google-identity-slot { width:100%; }
-.google-identity-control { position:relative; min-height:40px; }
-.google-identity-placeholder.ant-btn:disabled { position:absolute; inset:0; width:100%; height:40px; border:1px solid #dadce0; border-radius:9999px; background:#fff; color:#5f6368; font-size:14px; }
+.google-login-control { display:grid; grid-template-columns:minmax(0,1fr); min-width:0; }
+.google-identity-root,.google-identity-slot { width:100%; min-width:0; }
+.google-identity-control { position:relative; min-height:40px; width:100%; max-width:400px; margin-inline:auto; }
+.google-identity-loading { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:10px; color:#ddd6e8; font-size:13px; }
+.google-identity-spinner { width:16px; height:16px; border:1.5px solid #ffffff30; border-top-color:#ddd6e8; border-radius:50%; animation:google-identity-spin .8s linear infinite; }
+@keyframes google-identity-spin { to { transform:rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) { .google-identity-spinner { animation:none; } }
 .google-identity-slot { border-radius:9999px; overflow:hidden; display:flex; justify-content:center; align-items:center; }
 .google-identity-slot > div,.google-identity-slot iframe { border-radius:9999px !important; overflow:hidden !important; color-scheme:normal !important; }
+
+.al-login .login-options-row { gap:8px 12px; }
+.al-login .login-forgot-link { display:inline-flex; align-items:center; min-height:36px; }
+.al-login .luxe-divider-text { flex-shrink:0; }
+.al-login .google-login-control :is(.ant-alert-message,.ant-alert-description) { overflow-wrap:anywhere; }
+@media(max-width:380px) {
+ .al-login .login-options-row { column-gap:8px; }
+ .al-login .login-options-row :is(.ant-checkbox-wrapper,.login-forgot-link) { font-size:12px; }
+ .al-login .login-register-banner { align-items:flex-start; }
+}
+
+@media(min-width:1001px) and (max-height:760px) {
+ .al-login .al-form-card .login-heading-group { margin-bottom:16px; }
+ .al-login .login-options-row { margin-bottom:8px; }
+ .al-login .luxe-divider { margin:12px 0; }
+ .al-login .al-form-card .login-register-banner { margin-top:12px; padding-top:10px; }
+}
+@media(min-width:1001px) and (max-height:620px) {
+ .al-login .login-welcome-text { display:none; }
+ .al-login .al-form-card .login-heading-group { margin-bottom:10px; }
+ .al-login .al-form-card .login-title { font-size:26px !important; margin-bottom:0 !important; }
+ .al-login .al-form-card .login-form-field { margin-bottom:10px; }
+ .al-login .al-form-card .login-submit-field { margin-top:0; }
+ .al-login .login-options-row { margin-bottom:4px; }
+ .al-login .luxe-divider { margin:10px 0; }
+}

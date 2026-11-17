@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Dropdown, message } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
+import { useLocation } from 'react-router-dom';
 import './AuthLayout.css';
 import BrandLogo from './BrandLogo';
 
@@ -9,6 +10,11 @@ const AUTH_BG_VIDEO =
 
 export default function AuthLayout({ children }) {
   const [lang, setLang] = useState('vi');
+  const { pathname } = useLocation();
+  const isLogin = pathname === '/login';
+  const isRegister = pathname === '/register';
+  const isForgot = pathname === '/forgot-password';
+  const isAuthEntry = isLogin || isRegister || isForgot;
 
   const langMenuItems = [
     {
@@ -30,11 +36,12 @@ export default function AuthLayout({ children }) {
   ];
 
   return (
-    <div className="al-root">
+    <div className={`al-root${isAuthEntry ? ' al-auth-entry' : ''}${isLogin ? ' al-login' : ''}${isRegister ? ' al-register' : ''}${isForgot ? ' al-forgot' : ''}`}>
       {/* ── Full-Viewport Looping Video Background ── */}
       <video
         className="al-bg-video"
         src={AUTH_BG_VIDEO}
+        poster="/auth-video-poster.webp"
         autoPlay
         muted
         loop
@@ -47,7 +54,7 @@ export default function AuthLayout({ children }) {
       <div className="al-wrap">
         {/* ── Top Header: Logo on left, Language on right ── */}
         <header className="al-header">
-          <BrandLogo href="/" className="al-brand" />
+          <BrandLogo href="/#top" className="al-brand" />
 
           <div className="al-header-actions">
             <Dropdown menu={{ items: langMenuItems }} trigger={['click']} placement="bottomRight">
@@ -64,10 +71,9 @@ export default function AuthLayout({ children }) {
           {/* ════ LEFT COLUMN: Pure Refined Editorial Typography ════ */}
           <section className="al-hero-col" aria-label="Giới thiệu nền tảng">
             <div className="al-hero-text">
-              <p className="al-hero-eyebrow">Khởi đầu một kết nối phù hợp</p>
+              {!isAuthEntry && <p className="al-hero-eyebrow">Khởi đầu một kết nối phù hợp</p>}
               <h1 className="al-hero-title">
-                Kết nối đúng{' '}
-                <span className="al-hero-highlight">nhà sáng tạo</span>
+                {isAuthEntry ? <>Kết nối thông minh,{' '}<span className="al-hero-highlight">nâng tầm thương hiệu</span></> : <>Kết nối đúng{' '}<span className="al-hero-highlight">nhà sáng tạo</span></>}
               </h1>
 
               <p className="al-hero-desc">

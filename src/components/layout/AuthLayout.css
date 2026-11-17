@@ -4,6 +4,7 @@
 .al-root *, .al-root *::before, .al-root *::after { box-sizing:border-box; }
 .al-bg-video,.al-video-overlay { position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:-1; }
 .al-bg-video { object-fit:cover; }
+.al-root { background:#16102e url('/auth-video-poster.webp') center / cover fixed no-repeat; }
 .al-video-overlay { background:linear-gradient(110deg,#16102e80,#16102e50 45%,#16102eb0); }
 .al-wrap { max-width:1440px; min-height:100svh; margin:auto; padding:24px clamp(20px,4vw,64px) 40px; display:flex; flex-direction:column; gap:40px; }
 .al-header { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:44px; }
@@ -45,6 +46,12 @@
 .al-form-card :is(.register-now-link,.register-login-banner .link) { display:inline-flex; align-items:center; gap:6px; font-weight:500; min-height:28px; }
 .al-form-card .card-footer-text { margin-top:24px; font-size:14px; }
 .al-form-card .card-footer-text a { color:#dfd2ff !important; font-weight:500 !important; }
+.al-recovery-form .card-title-group .ant-typography { display:block; }
+.al-forgot .al-form-card .al-recovery-submit { margin:8px 0 0; }
+.al-recovery-form .ant-input-prefix { color:#d3c6ee; margin-inline-end:10px; }
+.al-recovery-note { margin:16px 0 0; color:#ddd6e8; font-size:13px; line-height:1.65; }
+.al-recovery-form .card-footer-text { padding-top:18px; border-top:1px solid #ffffff24; }
+.al-recovery-form .card-footer-text a { display:inline-flex; align-items:center; gap:8px; min-height:36px; }
 @media(max-width:1050px) {
  .al-wrap { gap:32px; }
  .al-main { grid-template-columns:minmax(0,1fr) minmax(0,520px); gap:32px; }
@@ -70,4 +77,53 @@
 @media(max-width:360px) {
  .al-wrap { padding-inline:12px; }
  .al-form-card { padding-inline:16px; }
+}
+
+/* Login and registration share the same responsive introduction and form layout. */
+.al-auth-entry .al-wrap { gap:clamp(28px,5vh,56px); }
+.al-auth-entry .al-main { grid-template-columns:minmax(0,1fr) minmax(0,480px); gap:clamp(32px,5vw,80px); }
+.al-auth-entry .al-hero-title { font-size:clamp(36px,4vw,58px); line-height:1.25; letter-spacing:-.025em; }
+.al-auth-entry .al-hero-highlight { margin-top:10px; }
+.al-auth-entry .al-hero-desc { max-width:410px; margin-top:24px; }
+.al-auth-entry .al-form-card { padding:clamp(24px,2.5vw,32px); }
+.al-auth-entry .al-header-actions { flex-shrink:0; }
+@media(min-width:1001px) {
+ .al-auth-entry .al-wrap { height:100dvh; min-height:0; }
+ .al-auth-entry .al-header { flex-shrink:0; }
+ .al-auth-entry .al-main { min-height:0; grid-template-rows:minmax(0,1fr); }
+ .al-auth-entry .al-card-col { max-height:100%; overflow-y:auto; border-radius:28px; scrollbar-width:thin; scrollbar-color:#a997d4 transparent; }
+}
+@media(min-width:1001px) and (max-height:760px) {
+ .al-auth-entry .al-wrap { padding-block:16px; gap:16px; }
+ .al-auth-entry .al-form-card { padding:24px; }
+ .al-auth-entry .al-hero-title { font-size:clamp(36px,3.4vw,50px); }
+}
+@media(min-width:1001px) and (max-height:620px) {
+ .al-auth-entry .al-wrap { padding-block:12px; gap:12px; }
+ .al-auth-entry .al-form-card { padding:18px 24px; }
+ .al-auth-entry .al-form-card :is(.ant-input-outlined,.ant-input-affix-wrapper) { min-height:44px; padding-block:9px; }
+ .al-auth-entry .al-form-card .ant-input-affix-wrapper > input.ant-input { min-height:0; padding:0; }
+ .al-auth-entry .al-form-card .ant-btn-primary { min-height:44px; padding-block:10px; }
+}
+@media(max-width:1000px) {
+ .al-auth-entry .al-main { grid-template-columns:minmax(0,500px); justify-content:center; align-content:center; gap:28px; }
+ .al-auth-entry .al-hero-text { text-align:center; }
+ .al-auth-entry .al-hero-title { font-size:clamp(32px,4.5vw,42px); }
+ .al-auth-entry .al-hero-highlight { display:block; margin-top:6px; }
+ .al-auth-entry .al-hero-desc { max-width:440px; margin:16px auto 0; font-size:14px; }
+}
+@media(max-width:600px) {
+ .al-auth-entry .al-wrap { gap:28px; padding-bottom:max(24px,env(safe-area-inset-bottom)); }
+ .al-auth-entry .al-main { align-content:start; gap:24px; }
+ .al-auth-entry .al-hero-title { font-size:clamp(29px,7.5vw,38px); }
+ .al-auth-entry .al-form-card { padding:24px 20px; }
+ .al-auth-entry .al-brand .brand-logo-text { display:inline; font-size:15px; }
+ .al-auth-entry .al-brand { min-width:0; gap:6px; }
+ .al-auth-entry .al-lang-pill { padding-inline:10px; font-size:12px; }
+}
+@media(max-width:360px) {
+ .al-auth-entry .al-header { gap:8px; }
+ .al-auth-entry .al-brand .brand-logo-mark { width:24px; height:24px; }
+ .al-auth-entry .al-brand .brand-logo-text { font-size:14px; }
+ .al-auth-entry .al-form-card { padding:22px 16px; }
 }

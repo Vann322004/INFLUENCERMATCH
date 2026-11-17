@@ -122,7 +122,7 @@ export default function LoginPage() {
             { required: true, message: 'Vui lòng nhập email!' },
             { type: 'email', message: 'Địa chỉ email không hợp lệ!' },
           ]}
-          style={{ marginBottom: 16 }}
+          className="login-form-field"
         >
           <Input
             id="login-email"
@@ -136,7 +136,7 @@ export default function LoginPage() {
         <Form.Item
           name="password"
           rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
-          style={{ marginBottom: 16 }}
+          className="login-form-field"
         >
           <Input.Password
             id="login-password"
@@ -164,7 +164,7 @@ export default function LoginPage() {
         </div>
 
         {/* ── Submit Button with Arrow Icon ── */}
-        <Form.Item style={{ marginBottom: 0, marginTop: 8 }}>
+        <Form.Item className="login-submit-field">
           <Button
             type="primary"
             htmlType="submit"

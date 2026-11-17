@@ -88,14 +88,17 @@ export default function GoogleIdentityButton({ start, onCredential, disabled, li
   const [retry, setRetry] = useState(0);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
-  callback.current = onCredential;
-  disabledRef.current = disabled;
+  useEffect(() => {
+    callback.current = onCredential;
+    disabledRef.current = disabled;
+  }, [onCredential, disabled]);
 
   useEffect(() => {
     const element = container.current;
     if (!element) return;
     const controller = new AbortController();
     let expiryTimer: number | undefined;
+    let resizeObserver: ResizeObserver | undefined;
     let delivered = false;
     setError('');
     setReady(false);
@@ -120,15 +123,24 @@ export default function GoogleIdentityButton({ start, onCredential, disabled, li
             callback.current(challenge, credential, sessionId);
           },
         });
-        const width = element.clientWidth;
-        google.renderButton(element, {
-          type: 'standard', theme: 'outline', size: 'large', shape: 'pill',
-          text: linking ? 'continue_with' : 'signin_with',
-          width: Math.min(400, Math.floor(width) || 360), locale: 'vi',
-        });
+        let renderedWidth = 0;
+        const renderButton = () => {
+          const width = Math.min(400, Math.floor(element.clientWidth));
+          if (controller.signal.aborted || width <= 0 || width === renderedWidth) return;
+          renderedWidth = width;
+          element.replaceChildren();
+          google.renderButton(element, {
+            type: 'standard', theme: 'outline', size: 'large', shape: 'pill',
+            text: linking ? 'continue_with' : 'signin_with', width, locale: 'vi',
+          });
+        };
+        renderButton();
+        resizeObserver = new ResizeObserver(renderButton);
+        resizeObserver.observe(element);
         setReady(true);
         expiryTimer = window.setTimeout(() => {
           if (delivered) return;
+          resizeObserver?.disconnect();
           element.replaceChildren();
           setReady(false);
           setError('Phiên Google đã hết hạn. Vui lòng thử lại.');
@@ -142,18 +154,19 @@ export default function GoogleIdentityButton({ start, onCredential, disabled, li
     void render();
     return () => {
       controller.abort();
+      resizeObserver?.disconnect();
       window.clearTimeout(expiryTimer);
       element.replaceChildren();
     };
   }, [start, linking, retry]);
 
   return <div className="google-identity-root">
-    <div className="google-identity-control" aria-busy={!ready && !error}>
+    <div className="google-identity-control" aria-busy={!ready && !error} hidden={!!error}>
       <div ref={container} className="google-identity-slot" inert={disabled || !ready} />
-      {!ready && <Button disabled className="google-identity-placeholder"
-        aria-label={error ? 'Đăng nhập Google chưa khả dụng' : 'Đang kết nối Google'}>
-        {linking ? 'Tiếp tục với Google' : 'Đăng nhập bằng Google'}
-      </Button>}
+      {!ready && !error && <div className="google-identity-loading" role="status">
+        <span className="google-identity-spinner" aria-hidden="true" />
+        Đang kết nối Google…
+      </div>}
     </div>
     {error && <Alert type="warning" showIcon title={error}
       action={<Button size="small" disabled={disabled} onClick={() => setRetry(value => value + 1)}>Thử lại</Button>} />}

@@ -4,3 +4,18 @@
 .register-card-inner .luxe-checkbox > span:last-child { min-width:0; padding-inline-end:0; }
 .register-legal-link { font-weight:500; text-underline-offset:3px; }
 .register-card-inner .luxe-primary-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:8px; }
+
+@media(min-width:1001px) and (max-height:760px) {
+ .al-register .al-form-card .register-heading-group { margin-bottom:16px; }
+ .al-register .al-form-card .ant-form-item { margin-bottom:12px; }
+ .al-register .al-form-card .register-login-banner { margin-top:12px; padding-top:10px; }
+}
+@media(min-width:1001px) and (max-height:620px) {
+ .al-register .al-form-card .register-title { font-size:26px !important; margin-bottom:4px !important; }
+ .al-register .al-form-card .register-heading-group { margin-bottom:10px; }
+ .al-register .al-form-card .ant-form-item { margin-bottom:6px; }
+ .al-register .al-form-card .ant-form-item-label { padding-bottom:4px; }
+ .al-register .al-form-card .ant-form-item-label > label { height:auto; font-size:13px; line-height:1.4; }
+ .al-register .al-form-card .register-checkbox-item { margin-block:0 10px; }
+ .al-register .al-form-card .register-checkbox-item .ant-form-item-control-input { min-height:24px; }
+}
