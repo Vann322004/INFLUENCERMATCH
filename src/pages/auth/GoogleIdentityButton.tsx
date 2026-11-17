@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Spin } from 'antd';
+import { Alert, Button } from 'antd';
 import type { GoogleChallenge } from '../../types/api/auth.types';
 import { getErrorMessage } from '../../services/apiClient';
 
@@ -101,9 +101,10 @@ export default function GoogleIdentityButton({ start, onCredential, disabled, li
     setReady(false);
     async function render() {
       try {
-        const { challenge, sessionId } = await start(controller.signal);
-        if (controller.signal.aborted) return;
-        const google = await loadGoogleIdentity();
+        const [{ challenge, sessionId }, google] = await Promise.all([
+          start(controller.signal),
+          loadGoogleIdentity(),
+        ]);
         if (controller.signal.aborted || !element) return;
         const remaining = Date.parse(challenge?.expiresAt) - Date.now();
         if (!challenge?.sessionId || !challenge.clientId || !challenge.nonce || !(remaining > 0)) {
@@ -147,8 +148,13 @@ export default function GoogleIdentityButton({ start, onCredential, disabled, li
   }, [start, linking, retry]);
 
   return <div className="google-identity-root">
-    <div ref={container} className="google-identity-slot" inert={disabled || !ready} />
-    {!ready && !error && <Spin size="small" aria-label="Đang tải đăng nhập Google" />}
+    <div className="google-identity-control" aria-busy={!ready && !error}>
+      <div ref={container} className="google-identity-slot" inert={disabled || !ready} />
+      {!ready && <Button disabled className="google-identity-placeholder"
+        aria-label={error ? 'Đăng nhập Google chưa khả dụng' : 'Đang kết nối Google'}>
+        {linking ? 'Tiếp tục với Google' : 'Đăng nhập bằng Google'}
+      </Button>}
+    </div>
     {error && <Alert type="warning" showIcon title={error}
       action={<Button size="small" disabled={disabled} onClick={() => setRetry(value => value + 1)}>Thử lại</Button>} />}
   </div>;

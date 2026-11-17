@@ -72,7 +72,6 @@ export default function LoginPage() {
     } finally {
       pending.current = false;
       setLoading(false);
-      setGoogleAttempt(value => value + 1);
     }
   };
 

@@ -1,24 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import './HeroLanding.css';
+import LandingPlans from './LandingPlans';
+import BrandLogo from '../../../components/layout/BrandLogo';
 
 const POND_VIDEO_URL =
   'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261104_160514_d8369d6e-d8ba-4532-9751-b32e0c8aaf75.mp4';
 const KOI_GLB_URL =
   'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261104_151843_47d87652-1c40-465c-b0d6-cd94c22a9d3e.glb';
-
-const BID_REQUEST_CODE = `{
-  "chien_dich": "serum_phuc_hoi_b5_2026",
-  "nganh_hang": "My pham & Cham soc da",
-  "thuat_toan": "four_memory_hybrid",
-  "ung_vien_koc": [{
-    "handle": "@chaukikii",
-    "nen_tang": "TIKTOK",
-    "diem_phu_hop": 98.4,
-    "rate_card_vnd": 25000000,
-    "tich_xanh": { "da_xac_minh": true }
-  }]
-}`;
 
 // Deterministic seeded generator (section 8.2)
 function makeSeries(n: number, seed: number, base: number, amp: number, trend: number): number[] {
@@ -62,11 +51,17 @@ function buildSparkline(values: number[]) {
   return { line, area };
 }
 
-const ChevronSvg = () => (
-  <svg className="nl-chev" viewBox="0 0 10 10" fill="none">
-    <path d="M2 3.5 l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+const LANDING_NAV = [
+  { id: 'features', label: 'Tính năng' },
+  { id: 'workflow', label: 'Quy trình' },
+  { id: 'plans', label: 'Gói dịch vụ' },
+];
+
+function layoutTop(element: Element): number {
+  let top = 0;
+  for (let current = element as HTMLElement | null; current; current = current.offsetParent as HTMLElement | null) top += current.offsetTop;
+  return top;
+}
 
 const ArrowRightSvg = () => (
   <svg viewBox="0 0 16 16" fill="none">
@@ -88,16 +83,166 @@ export default function HeroLanding() {
   const heroLine2Ref = useRef<HTMLSpanElement>(null);
   const heroSubRef = useRef<HTMLParagraphElement>(null);
   const heroBtnsRef = useRef<HTMLDivElement>(null);
-  const scrollCardRef = useRef<HTMLButtonElement>(null);
+  const scrollHintRef = useRef<HTMLButtonElement>(null);
 
   const studioRef = useRef<HTMLElement>(null);
   const dashRef = useRef<HTMLDivElement>(null);
   const packsRef = useRef<HTMLElement>(null);
-  const usesRef = useRef<HTMLElement>(null);
   const endRef = useRef<HTMLElement>(null);
-  const codeBlockRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initialStudioEntry = useRef(location.hash === '#studio');
+  const [activeSection, setActiveSection] = useState('');
 
-  const [typedCode, setTypedCode] = useState('');
+  const anchorOffset = useCallback(() => 0, []);
+  const scrollToAnchor = useCallback((hash: string) => {
+    let id: string;
+    try { id = decodeURIComponent(hash.slice(1)); } catch { return; }
+    const target = document.getElementById(id);
+    if (!target) return;
+    if (id !== 'top') (target.closest('section') ?? target).classList.add('nl-anchor-target');
+    window.scrollTo({
+      top: id === 'top' ? 0 : Math.max(0, layoutTop(target) - anchorOffset()),
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+    });
+    target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
+  }, [anchorOffset]);
+  const handleAnchorClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !(event.target instanceof Element)) return;
+    const anchor = event.target.closest<HTMLAnchorElement>('a[href^="#"]');
+    const hash = anchor?.getAttribute('href');
+    if (!hash || !document.getElementById(hash.slice(1))) return;
+    event.preventDefault();
+    anchor?.closest('details')?.removeAttribute('open');
+    if (location.hash === hash) scrollToAnchor(hash);
+    else navigate({ pathname: location.pathname, search: location.search, hash }, { preventScrollReset: true });
+  };
+
+  useEffect(() => {
+    if (location.hash === '#uses') {
+      navigate({ pathname: location.pathname, search: location.search, hash: '#workflow' }, { replace: true, preventScrollReset: true });
+      return;
+    }
+    if (initialStudioEntry.current) {
+      if (location.hash === '#studio') {
+        navigate({ pathname: location.pathname, search: location.search, hash: '' }, { replace: true, preventScrollReset: true });
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        return;
+      }
+      initialStudioEntry.current = false;
+    }
+    if (!location.hash) return;
+    let cancelled = false;
+    let frame = 0;
+    void document.fonts.ready.then(() => {
+      if (!cancelled) frame = requestAnimationFrame(() => scrollToAnchor(location.hash));
+    });
+    return () => { cancelled = true; cancelAnimationFrame(frame); };
+  }, [location.hash, location.pathname, location.search, navigate, scrollToAnchor]);
+
+  useEffect(() => {
+    let frame = 0;
+    let disposed = false;
+    const update = () => {
+      const plans = document.getElementById('plans');
+      pageRef.current?.classList.toggle('nl-ending-reading', !!plans && window.scrollY >= layoutTop(plans) - anchorOffset() - 2);
+      // Follow the reading area near the top, even when the next section is taller.
+      const readingLine = window.scrollY + anchorOffset() + Math.min(120, window.innerHeight * 0.15);
+      let current = '';
+      for (const section of pageRef.current?.querySelectorAll<HTMLElement>('[data-scroll-section]') ?? []) {
+        const top = layoutTop(section);
+        if (top <= readingLine && top + section.offsetHeight > readingLine) {
+          current = section.dataset.navSection ?? section.id;
+          break;
+        }
+      }
+      if (window.scrollY >= document.documentElement.scrollHeight - window.innerHeight - 2) current = 'footer';
+      setActiveSection(LANDING_NAV.some(item => item.id === current) ? current : '');
+    };
+    const schedule = () => {
+      if (!disposed && !frame) frame = requestAnimationFrame(() => { frame = 0; update(); });
+    };
+    const observer = new ResizeObserver(schedule);
+    if (navRef.current) observer.observe(navRef.current);
+    if (pageRef.current) observer.observe(pageRef.current);
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    void document.fonts.ready.then(schedule);
+    schedule();
+    return () => { disposed = true; cancelAnimationFrame(frame); observer.disconnect(); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); };
+  }, [anchorOffset]);
+
+  // Native snap handles layout. Desktop gestures only need a guard at section
+  // boundaries: Chromium can otherwise skip snap-stop:always with large deltas.
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1025px) and (hover: hover) and (pointer: fine)');
+    let lastWheel = 0;
+    let direction = 0;
+    let handled = false;
+    let transitioning = false;
+    let settleTimer: number | undefined;
+    const releaseAfterScroll = () => {
+      if (!transitioning) return;
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(() => { transitioning = false; }, 120);
+    };
+    const onWheel = (event: WheelEvent) => {
+      if (!desktop.matches || event.defaultPrevented || event.ctrlKey || event.metaKey || event.shiftKey ||
+        !event.deltaY || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+      const origin = event.target instanceof Element ? event.target : null;
+      if (origin?.closest('input, textarea, select, [contenteditable="true"], [role="combobox"], [role="listbox"], details[open]')) return;
+      for (let element = origin; element && element !== pageRef.current; element = element.parentElement) {
+        if (/(auto|scroll)/.test(getComputedStyle(element).overflowY) && element.scrollHeight > element.clientHeight + 1) return;
+      }
+      const now = performance.now();
+      const nextDirection = Math.sign(event.deltaY);
+      if ((now - lastWheel > 180 || nextDirection !== direction) && !transitioning) handled = false;
+      lastWheel = now;
+      direction = nextDirection;
+      if (handled || transitioning) {
+        event.preventDefault();
+        return;
+      }
+      const sections = Array.from(pageRef.current?.querySelectorAll<HTMLElement>('[data-scroll-section]') ?? []);
+      const viewport = window.innerHeight;
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - viewport);
+      const pageStep = Math.max(1, viewport - 48);
+      const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? pageStep : 1);
+      const start = (section: HTMLElement) => section.id === 'hero' ? 0 : Math.min(maxScroll, Math.max(0, layoutTop(section) - anchorOffset()));
+      const end = (section: HTMLElement) => Math.max(start(section), layoutTop(section) + section.offsetHeight - viewport);
+      let index = 0;
+      for (let i = 0; i < sections.length; i++) if (start(sections[i]) <= window.scrollY + 2) index = i;
+      const section = sections[index];
+      if (!section) return;
+      const y = window.scrollY;
+      // Pricing and the compact footer form a continuous closing area.
+      if (index === sections.length - 1 && (direction > 0 || y > start(section) + 2)) return;
+      let destination: number | undefined;
+      if (direction > 0) {
+        if (y < end(section) - 2) {
+          if (delta > Math.min(pageStep, end(section) - y)) destination = Math.min(end(section), y + pageStep);
+        } else if (sections[index + 1]) destination = start(sections[index + 1]);
+      } else {
+        if (y > start(section) + 2) {
+          if (-delta > Math.min(pageStep, y - start(section))) destination = Math.max(start(section), y - pageStep);
+        } else if (sections[index - 1]) destination = end(sections[index - 1]);
+      }
+      if (destination === undefined || Math.abs(destination - y) < 1) return;
+      event.preventDefault();
+      handled = true;
+      transitioning = true;
+      settleTimer = window.setTimeout(() => { transitioning = false; }, 600);
+      window.scrollTo({ top: destination, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    };
+    window.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('scroll', releaseAfterScroll, { passive: true });
+    return () => {
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('scroll', releaseAfterScroll);
+      window.clearTimeout(settleTimer);
+    };
+  }, [anchorOffset]);
 
   // Deterministic charts data
   const charts = useMemo(() => {
@@ -139,8 +284,8 @@ export default function HeroLanding() {
   useEffect(() => {
     const prevTitle = document.title;
     document.title = 'InfluencerMatch — Nền tảng Kết nối KOC & Thương hiệu bằng AI';
-    // Keep animations enabled regardless of Windows OS "Show animations" toggle
-    const reducedMotion = false;
+    // Respect the visitor’s motion preference.
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // Ensure html & body are scrollable (override any global overflow: hidden)
     const htmlEl = document.documentElement;
@@ -151,6 +296,8 @@ export default function HeroLanding() {
     const prevBodyOverflow = bodyEl.style.overflowY;
     const prevBodyMaxH = bodyEl.style.maxHeight;
     const prevBodyH = bodyEl.style.height;
+    const previousRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = 'manual';
 
     htmlEl.style.overflowY = 'auto';
     htmlEl.style.maxHeight = 'none';
@@ -219,49 +366,49 @@ export default function HeroLanding() {
           delay: number;
           duration: number;
         }> = [
-          {
-            el: navRef.current,
-            from: { opacity: 0, transform: 'translateY(-14px)' },
-            to: { opacity: 1, transform: 'none' },
-            delay: 0,
-            duration: 900,
-          },
-          {
-            el: heroLine1Ref.current,
-            from: { opacity: 0, transform: 'translateY(105%)' },
-            to: { opacity: 1, transform: 'none' },
-            delay: 250,
-            duration: 1100,
-          },
-          {
-            el: heroLine2Ref.current,
-            from: { opacity: 0, transform: 'translateY(105%)' },
-            to: { opacity: 1, transform: 'none' },
-            delay: 370,
-            duration: 1100,
-          },
-          {
-            el: heroSubRef.current,
-            from: { opacity: 0, transform: 'translateY(12px)' },
-            to: { opacity: 1, transform: 'none' },
-            delay: 620,
-            duration: 900,
-          },
-          {
-            el: heroBtnsRef.current,
-            from: { opacity: 0, transform: 'translateY(14px)' },
-            to: { opacity: 1, transform: 'none' },
-            delay: 740,
-            duration: 900,
-          },
-          {
-            el: scrollCardRef.current,
-            from: { opacity: 0, transform: 'translateY(40px) scale(0.96)' },
-            to: { opacity: 1, transform: 'none' },
-            delay: 880,
-            duration: 1100,
-          },
-        ];
+            {
+              el: navRef.current,
+              from: { opacity: 0, transform: 'translateY(-14px)' },
+              to: { opacity: 1, transform: 'none' },
+              delay: 0,
+              duration: 900,
+            },
+            {
+              el: heroLine1Ref.current,
+              from: { opacity: 0, transform: 'translateY(105%)' },
+              to: { opacity: 1, transform: 'none' },
+              delay: 250,
+              duration: 1100,
+            },
+            {
+              el: heroLine2Ref.current,
+              from: { opacity: 0, transform: 'translateY(105%)' },
+              to: { opacity: 1, transform: 'none' },
+              delay: 370,
+              duration: 1100,
+            },
+            {
+              el: heroSubRef.current,
+              from: { opacity: 0, transform: 'translateY(12px)' },
+              to: { opacity: 1, transform: 'none' },
+              delay: 620,
+              duration: 900,
+            },
+            {
+              el: heroBtnsRef.current,
+              from: { opacity: 0, transform: 'translateY(14px)' },
+              to: { opacity: 1, transform: 'none' },
+              delay: 740,
+              duration: 900,
+            },
+            {
+              el: scrollHintRef.current,
+              from: { opacity: 0, transform: 'translateY(8px)' },
+              to: { opacity: 1, transform: 'none' },
+              delay: 880,
+              duration: 1100,
+            },
+          ];
 
         animSpecs.forEach(({ el, from, to, delay, duration }) => {
           if (el && el.animate) {
@@ -319,29 +466,27 @@ export default function HeroLanding() {
       const h = window.innerHeight || 1;
       const y = getScrollY();
       const toViolet = smoothstep(0.15 * h, 1.05 * h, y);
+      const endTop = endRef.current ? layoutTop(endRef.current) : document.documentElement.scrollHeight - h;
+      const toNight = smoothstep(endTop - 1.1 * h, endTop - 0.1 * h, y);
+      const studioTop = studioRef.current ? layoutTop(studioRef.current) : h;
+      const studioFocus = 1 - smoothstep(0.15 * h, 0.85 * h, Math.abs(y - studioTop));
 
       if (dayLayerRef.current) {
-        dayLayerRef.current.style.opacity = String(1 - toViolet);
-        dayLayerRef.current.style.transform = `scale(${1 + 0.08 * toViolet}) translateY(${-0.06 * y}px)`;
+        dayLayerRef.current.style.opacity = String(1 - toNight);
+        dayLayerRef.current.style.transform = `scale(${1 + 0.08 * toViolet}) translateY(${-0.02 * Math.min(y, h)}px)`;
       }
 
-      const endTop = endRef.current ? endRef.current.offsetTop : document.documentElement.scrollHeight - h;
-      const toNight = smoothstep(endTop - 1.1 * h, endTop - 0.1 * h, y);
-
       if (violetLayerRef.current) {
-        violetLayerRef.current.style.opacity = String(toViolet * (1 - toNight));
+        violetLayerRef.current.style.opacity = String((0.68 - 0.32 * studioFocus) * toViolet * (1 - toNight));
       }
       if (nightLayerRef.current) {
         nightLayerRef.current.style.opacity = String(toNight);
       }
-      if (navRef.current) {
-        navRef.current.classList.toggle('scrolled', y > 0.5 * h);
-      }
 
       if (videoEl && !reducedMotion) {
-        if (toViolet < 0.999) {
+        if (toNight < 0.999) {
           if (videoEl.paused) {
-            videoEl.play().catch(() => {});
+            videoEl.play().catch(() => { });
           }
         } else if (!videoEl.paused) {
           videoEl.pause();
@@ -423,7 +568,7 @@ export default function HeroLanding() {
 
         if (!gl || !prog) {
           videoEl.classList.add('fallback-visible');
-          videoEl.play().catch(() => {});
+          videoEl.play().catch(() => { });
         } else {
           const ctx = gl;
           ctx.useProgram(prog);
@@ -481,7 +626,7 @@ export default function HeroLanding() {
             pondCanvas.classList.add('ready');
           };
           videoEl.addEventListener('playing', onPlaying);
-          videoEl.play().catch(() => {});
+          videoEl.play().catch(() => { });
 
           let lastT = performance.now();
           let elapsed = 0;
@@ -511,7 +656,7 @@ export default function HeroLanding() {
               ctx.bindTexture(ctx.TEXTURE_2D, tex);
               try {
                 ctx.texImage2D(ctx.TEXTURE_2D, 0, ctx.RGB, ctx.RGB, ctx.UNSIGNED_BYTE, videoEl);
-              } catch {}
+              } catch { }
               ctx.uniform2f(uScale, scaleX, scaleY);
               ctx.uniform2f(uTilt, curTx * 0.009 * scaleX, curTy * 0.009 * scaleY);
               ctx.uniform2f(uMouse, mouseU, mouseV);
@@ -729,7 +874,7 @@ export default function HeroLanding() {
             }
           },
           undefined,
-          () => {}
+          () => { }
         );
 
         // Pose definitions & scroll choreography
@@ -746,10 +891,9 @@ export default function HeroLanding() {
         let poses: Pose[] = [];
         const computePoses = () => {
           const h = window.innerHeight || 1;
-          const sy = getScrollY();
           const isPhone = (document.documentElement.clientWidth || window.innerWidth) <= 820;
           const absTop = (el: HTMLElement | null) =>
-            el ? el.getBoundingClientRect().top + sy : 0;
+            el ? layoutTop(el) : 0;
 
           const studioTop = absTop(studioRef.current);
           const dashEl = dashRef.current;
@@ -757,7 +901,7 @@ export default function HeroLanding() {
             ? absTop(dashEl) + dashEl.offsetHeight * 0.5 - 0.5 * h
             : studioTop + 0.8 * h;
           const packsTop = absTop(packsRef.current);
-          const usesTop = absTop(usesRef.current);
+          const workflowTop = absTop(document.getElementById('workflow'));
           const endTop = absTop(endRef.current);
           const maxScroll = Math.max(0, document.documentElement.scrollHeight - h);
 
@@ -772,10 +916,10 @@ export default function HeroLanding() {
               roll: 0.05,
             },
             {
-              scrollY: studioTop + 0.2 * h,
-              x: isPhone ? 0.42 : -0.66,
-              y: isPhone ? -0.72 : -0.6,
-              s: isPhone ? 0.3 : 0.42,
+              scrollY: Math.max(0, studioTop - 24),
+              x: isPhone ? 0.72 : -0.76,
+              y: isPhone ? -0.42 : 0.05,
+              s: isPhone ? 0.24 : 0.42,
               yaw: 0.5,
               pitch: 0.2,
               roll: -0.1,
@@ -790,22 +934,22 @@ export default function HeroLanding() {
               roll: 0.1,
             },
             {
-              scrollY: packsTop + 0.3 * h,
-              x: isPhone ? 0.38 : 0.4,
-              y: isPhone ? -0.74 : -0.78,
-              s: isPhone ? 0.3 : 0.5,
-              yaw: 0.55,
-              pitch: -0.05,
-              roll: 0.08,
+              scrollY: packsTop,
+              x: isPhone ? 0.68 : 0.72,
+              y: isPhone ? -0.65 : -0.62,
+              s: isPhone ? 0.24 : 0.28,
+              yaw: 0.2,
+              pitch: -0.1,
+              roll: 0.04,
             },
             {
-              scrollY: usesTop + 0.3 * h,
-              x: isPhone ? -0.3 : -0.42,
-              y: isPhone ? -0.76 : -0.42,
-              s: isPhone ? 0.32 : 0.6,
-              yaw: 3.0,
-              pitch: 0.12,
-              roll: -0.06,
+              scrollY: workflowTop,
+              x: isPhone ? 0.72 : 0.76,
+              y: isPhone ? -0.65 : -0.62,
+              s: isPhone ? 0.24 : 0.28,
+              yaw: 0.2,
+              pitch: -0.1,
+              roll: 0.04,
             },
             {
               scrollY: Math.min(endTop, maxScroll),
@@ -816,7 +960,7 @@ export default function HeroLanding() {
               pitch: -0.14,
               roll: 0.05,
             },
-          ];
+          ].sort((a, b) => a.scrollY - b.scrollY);
         };
 
         computePoses();
@@ -953,6 +1097,7 @@ export default function HeroLanding() {
     return () => {
       disposed = true;
       document.title = prevTitle;
+      window.history.scrollRestoration = previousRestoration;
       htmlEl.style.overflowY = prevHtmlOverflow;
       htmlEl.style.maxHeight = prevHtmlMaxH;
       htmlEl.style.height = prevHtmlH;
@@ -972,60 +1117,13 @@ export default function HeroLanding() {
     };
   }, []);
 
-  // Typing animation for OpenRTB JSON (section 8.3)
-  useEffect(() => {
-    const el = codeBlockRef.current;
-    if (!el) return;
-
-    let timer: number | undefined;
-    let started = false;
-    let cancelled = false;
-
-    const runTyping = (idx: number) => {
-      if (cancelled) return;
-      if (idx > BID_REQUEST_CODE.length) {
-        timer = window.setTimeout(() => {
-          if (!cancelled) {
-            setTypedCode('');
-            runTyping(1);
-          }
-        }, 3200);
-        return;
-      }
-      const nextSlice = BID_REQUEST_CODE.slice(0, idx);
-      setTypedCode(nextSlice);
-      const lastChar = BID_REQUEST_CODE[idx - 1];
-      const delay = lastChar === '\n' ? 120 : 22;
-      timer = window.setTimeout(() => runTyping(idx + 1), delay);
-    };
-
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !started) {
-            started = true;
-            runTyping(1);
-            obs.disconnect();
-          }
-        });
-      },
-      { threshold: 0.3 }
-    );
-    obs.observe(el);
-
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-      obs.disconnect();
-    };
-  }, []);
-
   const scrollToStudio = () => {
-    studioRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (location.hash === '#studio') scrollToAnchor('#studio');
+    else navigate({ pathname: location.pathname, search: location.search, hash: '#studio' }, { preventScrollReset: true });
   };
 
   return (
-    <div ref={pageRef} id="top" className="nl-page anim">
+    <div ref={pageRef} id="top" className="nl-page anim" onClick={handleAnchorClick}>
       {/* ====================================================================
           5. Fixed Full-Viewport Scene Stack
           ==================================================================== */}
@@ -1048,156 +1146,126 @@ export default function HeroLanding() {
         <canvas ref={koiCanvasRef} id="koifx" className="nl-koifx" />
       </div>
 
-      {/* ====================================================================
-          6. Fixed Navigation Bar
-          ==================================================================== */}
-      <nav ref={navRef} className="nl-nav" data-in>
-        <a href="#top" className="nl-logo">
-          <img src="/logo.png" alt="InfluencerMatch" className="nl-logo-img" />
-          <span>InfluencerMatch</span>
-        </a>
-
-        <div className="nl-nav-center">
-          <a href="#studio" className="nl-nav-item">
-            <span>Tính năng AI</span>
-            <ChevronSvg />
-          </a>
-          <a href="#packs" className="nl-nav-item">
-            <span>Giải pháp</span>
-            <ChevronSvg />
-          </a>
-          <a href="#uses" className="nl-nav-item">
-            <span>Vai trò</span>
-            <ChevronSvg />
-          </a>
-          <a href="#end" className="nl-nav-item">
-            <span>Bắt đầu ngay</span>
-          </a>
-        </div>
-
-        <div className="nl-nav-right">
-          <Link to="/login" className="nl-nav-pill grey">
-            Đăng nhập
-          </Link>
-          <Link to="/register" className="nl-nav-pill dark">
-            Đăng ký
-          </Link>
-        </div>
-      </nav>
-
-      {/* ====================================================================
-          Main Content (5 Sections)
-          ==================================================================== */}
       <main className="nl-main">
-        {/* ── 8.1 Hero ───────────────────────────────────────────────────── */}
-        <section id="hero">
-          <h1 className="nl-hero-h1">
-            <span className="nl-hero-line">
-              <span ref={heroLine1Ref} data-in>
-                Khám phá
-              </span>
-            </span>
-            <span className="nl-hero-line">
-              <span ref={heroLine2Ref} data-in>
-                InfluencerMatch
-              </span>
-            </span>
-          </h1>
+        <section id="hero" data-scroll-section aria-label="Giới thiệu InfluencerMatch">
+          {/* Navigation stays in document flow inside the opening section. */}
+          <nav ref={navRef} className="nl-nav" aria-label="Điều hướng trang chủ" data-in>
+            <BrandLogo href="#top" className="nl-logo" />
 
-          <p ref={heroSubRef} className="nl-hero-sub" data-in>
-            Nền tảng Kết nối KOC &amp; Thương hiệu bằng AI<sup>®</sup>
-          </p>
+            <div className="nl-nav-center">
+              {LANDING_NAV.map(item => <a key={item.id} href={'#' + item.id} className={'nl-nav-item' + (activeSection === item.id ? ' is-active' : '')} aria-current={activeSection === item.id ? 'location' : undefined}>{item.label}</a>)}
+            </div>
 
-          <div ref={heroBtnsRef} className="nl-hero-btns" data-in>
-            <Link to="/register" className="nl-btn fill">
-              Bắt đầu — Miễn phí
-            </Link>
-            <Link to="/login" className="nl-btn ghost">
-              Đăng nhập hệ thống
-            </Link>
+            <div className="nl-nav-right">
+              <details className="nl-mobile-menu">
+                <summary aria-label="Mở menu điều hướng"><span aria-hidden="true">☰</span></summary>
+                <div>
+                  {LANDING_NAV.map(item => <a key={item.id} href={'#' + item.id} aria-current={activeSection === item.id ? 'location' : undefined}>{item.label}</a>)}
+                  <Link to="/login">Đăng nhập</Link>
+                </div>
+              </details>
+              <Link to="/login" className="nl-nav-pill grey">
+                Đăng nhập
+              </Link>
+              <Link to="/register" className="nl-nav-pill primary">
+                Đăng ký
+              </Link>
+            </div>
+          </nav>
+
+          <div className="nl-hero-stage">
+            <div className="nl-hero-copy">
+              <h1 className="nl-hero-h1">
+                <span className="nl-hero-line">
+                  <span ref={heroLine1Ref} data-in>
+                    Khám phá
+                  </span>
+                </span>
+                <span className="nl-hero-line">
+                  <span ref={heroLine2Ref} data-in>
+                    InfluencerMatch
+                  </span>
+                </span>
+              </h1>
+
+              <p ref={heroSubRef} className="nl-hero-sub" data-in>
+                Kết nối thông minh, nâng tầm thương hiệu
+              </p>
+
+              <div ref={heroBtnsRef} className="nl-hero-btns" data-in>
+                <Link to="/register" className="nl-btn fill nl-studio-btn-primary">
+                  <span>Bắt đầu — Miễn phí</span>
+                  <svg className="nl-btn-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M2.5 8h11M9.5 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </Link>
+                <Link to="/login" className="nl-btn ghost nl-studio-btn-ghost">
+                  <svg className="nl-btn-play" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path d="M4.5 3.5v9l8-4.5-8-4.5z" />
+                  </svg>
+                  <span>Đăng nhập hệ thống</span>
+                </Link>
+              </div>
+
+            </div>
+
+            <button
+              ref={scrollHintRef}
+              type="button"
+              className="nl-scroll-hint"
+              aria-label="Tìm hiểu nền tảng, cuộn đến phần giới thiệu"
+              onClick={scrollToStudio}
+              data-in
+            >
+              <span>Tìm hiểu nền tảng</span>
+              <svg className="nl-scroll-arrow" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+                <path
+                  d="M11 3 v15 M5 12 l6 6 6 -6"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
           </div>
-
-          <button
-            ref={scrollCardRef}
-            type="button"
-            className="nl-scroll-card"
-            onClick={scrollToStudio}
-            data-in
-          >
-            <span>
-              Cuộn xuống
-              <br />
-              &amp; khám phá
-            </span>
-            <svg className="nl-scroll-arrow" viewBox="0 0 22 22" fill="none">
-              <path
-                d="M11 3 v15 M5 12 l6 6 6 -6"
-                stroke="#fff"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
         </section>
 
         {/* ── 8.2 Studio & Product Dashboard ─────────────────────────────── */}
-        <section ref={studioRef} id="studio">
-          <h2 className="nl-studio-h2 nl-reveal">
-            Nền tảng AI độc lập hàng đầu <span className="nl-accent">kết nối KOC &amp; quản trị chiến dịch</span>
-            <br />
-            cho mọi thương hiệu và nhà tiếp thị Việt Nam.
-          </h2>
+        <section ref={studioRef} id="studio" data-scroll-section aria-labelledby="landing-studio-title">
+          <div className="nl-studio-content">
+            <h2 id="landing-studio-title" className="nl-studio-h2 nl-reveal">
+              Tìm nhà sáng tạo phù hợp,<br />
+              <span className="nl-accent">quản lý hợp tác rõ ràng.
+                <svg className="nl-studio-underline" viewBox="0 0 220 28" fill="none" aria-hidden="true">
+                  <path d="M4 13C63-1 147-1 215 13M46 24C100 12 151 13 184 22" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                </svg>
+              </span>
+            </h2>
 
-          <p className="nl-lede nl-studio-lede nl-reveal">
-            Tìm đúng người ảnh hưởng trước khi xuống ngân sách. Khám phá bằng AI Four-Memory, đàm phán CRM và nghiệm thu KPI từ một không gian tập trung.
-          </p>
+            <p className="nl-lede nl-studio-lede nl-reveal">
+              Khám phá kênh, đánh giá mức độ phù hợp và theo dõi quá trình hợp tác.
+            </p>
 
-          <div className="nl-studio-btns nl-reveal">
-            <Link to="/register" className="nl-btn fill">
-              Bắt đầu — miễn phí
-            </Link>
-            <a href="#packs" className="nl-btn ghost">
-              Xem quy trình AI
-            </a>
+            <div className="nl-studio-btns nl-reveal">
+              <Link to="/register" className="nl-btn fill">
+                <span>Bắt đầu — miễn phí</span>
+                <svg className="nl-btn-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M2.5 8h11M9.5 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
+              <a href="#workflow" className="nl-btn ghost">
+                <svg className="nl-studio-play" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.5v11L13 8z" /></svg>
+                <span>Xem quy trình</span>
+              </a>
+            </div>
+
           </div>
+        </section>
 
-          <div className="nl-stats-row nl-reveal">
-            <div className="nl-stat-cell">
-              <div className="nl-stat-num">1.500+</div>
-              <div className="nl-stat-cap">
-                hồ sơ Master KOC
-                <br />
-                đã chuẩn hóa đa kênh
-              </div>
-            </div>
-            <div className="nl-stat-cell">
-              <div className="nl-stat-num">48s</div>
-              <div className="nl-stat-cap">
-                thời gian trung bình từ brief
-                <br />
-                đến danh sách KOC gợi ý
-              </div>
-            </div>
-            <div className="nl-stat-cell">
-              <div className="nl-stat-num">4 Lớp</div>
-              <div className="nl-stat-cap">
-                thuật toán Four-Memory AI
-                <br />
-                chấm điểm độ khớp thực tế
-              </div>
-            </div>
-            <div className="nl-stat-cell">
-              <div className="nl-stat-num">100%</div>
-              <div className="nl-stat-cap">
-                minh bạch bảng giá Rate Card
-                <br />
-                &amp; nghiệm thu ấn phẩm
-              </div>
-            </div>
-          </div>
-
-          {/* Product Dashboard */}
+        <section id="preview" className="nl-preview" data-scroll-section aria-labelledby="landing-preview-title">
+          <p className="nl-demo-caption">Minh hoạ giao diện — số liệu mô phỏng, không phải kết quả kinh doanh hay dữ liệu người dùng thực.</p>
+          {/* Product Dashboard illustration */}
           <div ref={dashRef} id="dash" className="nl-reveal">
             <div className="nl-dash-top">
               <div className="nl-dash-mini-logo">
@@ -1275,14 +1343,14 @@ export default function HeroLanding() {
                   <svg viewBox="0 0 16 16" fill="none">
                     <path d="M8 2l4.8 2.2v3.6c0 3.1-2 5.2-4.8 6.2-2.8-1-4.8-3.1-4.8-6.2V4.2L8 2z" stroke="currentColor" strokeWidth="1.3" />
                   </svg>
-                  <span>Xác minh Tích Xanh</span>
+                  <span>Xác minh kênh</span>
                 </div>
                 <div className="nl-dash-nav-item">
                   <svg viewBox="0 0 16 16" fill="none">
                     <rect x="2" y="3.2" width="12" height="8" rx="1.6" stroke="currentColor" strokeWidth="1.3" />
                     <path d="M5.5 13.5h5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                   </svg>
-                  <span>Bảng giá Rate Card</span>
+                  <span>Báo giá dịch vụ</span>
                   <span className="nl-dash-count">24</span>
                 </div>
               </aside>
@@ -1304,10 +1372,10 @@ export default function HeroLanding() {
                 {/* KPI Tiles */}
                 <div className="nl-kpi-grid">
                   {[
-                    { label: 'Tổng lượt tiếp cận (Reach)', val: '8,42M', chip: '+18%', up: true, color: '#9b8cff', id: 'sp0' },
-                    { label: 'Tỷ lệ tương tác (ER TB)', val: '6,8%', chip: '+1,4pt', up: true, color: '#ff8fd8', id: 'sp1' },
-                    { label: 'Ngân sách đã giải ngân', val: '184,2Tr', chip: '+12%', up: true, color: '#7fd6ff', id: 'sp2' },
-                    { label: 'KOC đang hợp tác', val: '24', chip: '+5', up: true, color: '#7cf0bd', id: 'sp3' },
+                    { label: 'Tổng lượt tiếp cận (Reach)', val: '8,42M', chip: '+18%', up: true, color: 'var(--preview-chart-primary)', id: 'sp0' },
+                    { label: 'Tỷ lệ tương tác (ER TB)', val: '6,8%', chip: '+1,4pt', up: true, color: 'var(--preview-chart-secondary)', id: 'sp1' },
+                    { label: 'Ngân sách đã giải ngân', val: '184,2Tr', chip: '+12%', up: true, color: 'var(--preview-chart-primary)', id: 'sp2' },
+                    { label: 'KOC đang hợp tác', val: '24', chip: '+5', up: true, color: 'var(--preview-chart-secondary)', id: 'sp3' },
                   ].map((k, idx) => {
                     const sp = charts.sparks[idx];
                     return (
@@ -1347,11 +1415,11 @@ export default function HeroLanding() {
                       <span>Lượt xem thực tế &amp; Tỷ lệ tương tác</span>
                       <div className="nl-legend">
                         <span>
-                          <i className="nl-swatch" style={{ background: '#9b8cff' }} />
+                          <i className="nl-swatch" style={{ background: 'var(--preview-chart-primary)' }} />
                           Lượt xem
                         </span>
                         <span>
-                          <i className="nl-swatch" style={{ background: '#ff8fd8' }} />
+                          <i className="nl-swatch" style={{ background: 'var(--preview-chart-secondary)' }} />
                           Tương tác
                         </span>
                       </div>
@@ -1360,12 +1428,12 @@ export default function HeroLanding() {
                     <svg className="nl-area-svg" viewBox="0 0 600 190" preserveAspectRatio="none">
                       <defs>
                         <linearGradient id="areaSpend" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#9b8cff" stopOpacity="0.42" />
-                          <stop offset="100%" stopColor="#9b8cff" stopOpacity="0" />
+                          <stop offset="0%" stopColor="var(--preview-chart-primary)" stopOpacity="0.42" />
+                          <stop offset="100%" stopColor="var(--preview-chart-primary)" stopOpacity="0" />
                         </linearGradient>
                         <linearGradient id="areaWin" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#ff8fd8" stopOpacity="0.22" />
-                          <stop offset="100%" stopColor="#ff8fd8" stopOpacity="0" />
+                          <stop offset="0%" stopColor="var(--preview-chart-secondary)" stopOpacity="0.22" />
+                          <stop offset="100%" stopColor="var(--preview-chart-secondary)" stopOpacity="0" />
                         </linearGradient>
                       </defs>
 
@@ -1391,7 +1459,7 @@ export default function HeroLanding() {
                       <path
                         d={charts.spendLine}
                         fill="none"
-                        stroke="#9b8cff"
+                        stroke="var(--preview-chart-primary)"
                         strokeWidth="2"
                         vectorEffect="non-scaling-stroke"
                         pathLength={1}
@@ -1400,7 +1468,7 @@ export default function HeroLanding() {
                       <path
                         d={charts.winLine}
                         fill="none"
-                        stroke="#ff8fd8"
+                        stroke="var(--preview-chart-secondary)"
                         strokeWidth="1.6"
                         vectorEffect="non-scaling-stroke"
                         pathLength={1}
@@ -1423,8 +1491,8 @@ export default function HeroLanding() {
                             cx={charts.marker.x}
                             cy={charts.marker.y}
                             r="4.5"
-                            fill="#1a1150"
-                            stroke="#b9adff"
+                            fill="var(--navy)"
+                            stroke="var(--preview-chart-primary)"
                             strokeWidth="2"
                             vectorEffect="non-scaling-stroke"
                           />
@@ -1439,11 +1507,11 @@ export default function HeroLanding() {
                     </div>
                     <div className="nl-bars-list">
                       {[
-                        { label: 'TikTok Video', val: 38, color: '#9b8cff', alpha: 'rgba(155,140,255,0.67)' },
-                        { label: 'Instagram Reels', val: 27, color: '#7fd6ff', alpha: 'rgba(127,214,255,0.67)' },
-                        { label: 'YouTube Shorts', val: 19, color: '#ff8fd8', alpha: 'rgba(255,143,216,0.67)' },
-                        { label: 'Livestream', val: 10, color: '#ffc27a', alpha: 'rgba(255,194,122,0.67)' },
-                        { label: 'Bài đăng Review', val: 6, color: '#7cf0bd', alpha: 'rgba(124,240,189,0.67)' },
+                        { label: 'TikTok Video', val: 38, color: 'var(--preview-chart-primary)', alpha: 'var(--preview-chart-fade)' },
+                        { label: 'Instagram Reels', val: 27, color: 'var(--preview-chart-primary)', alpha: 'var(--preview-chart-fade)' },
+                        { label: 'YouTube Shorts', val: 19, color: 'var(--preview-chart-secondary)', alpha: 'var(--preview-chart-fade)' },
+                        { label: 'Livestream', val: 10, color: 'var(--preview-chart-primary)', alpha: 'var(--preview-chart-fade)' },
+                        { label: 'Bài đăng Review', val: 6, color: 'var(--preview-chart-secondary)', alpha: 'var(--preview-chart-fade)' },
                       ].map((b) => (
                         <div key={b.label}>
                           <div className="nl-bar-label-row">
@@ -1515,372 +1583,210 @@ export default function HeroLanding() {
           </div>
         </section>
 
-        {/* ── 8.3 Packages ───────────────────────────────────────────────── */}
-        <section ref={packsRef} id="packs">
-          <div className="nl-packs-split">
-            <div className="nl-reveal">
-              <h2 className="nl-packs-h2">
-                Chọn đúng người, nhìn thấu dữ liệu, đàm phán nhanh,{' '}
-                <span className="nl-accent">
-                  đo lường <span className="nl-serif">thực chất.</span>
-                </span>
+        {/* ── 8.3 Features & Tools (Merged into 1 concise section) ────── */}
+        <section ref={packsRef} id="features" data-scroll-section aria-labelledby="landing-features-title">
+          <div className="nl-features-unified">
+            <header className="nl-features-header nl-reveal">
+              <div className="nl-studio-badge">
+                <span className="nl-studio-badge-sparkle">✦</span>
+                <span>Bộ công cụ quy trình hợp tác</span>
+              </div>
+              <h2 id="landing-features-title" className="nl-packs-h2">
+                Các công cụ cho một <span className="nl-accent">quy trình hợp tác rõ ràng.</span>
               </h2>
               <p className="nl-lede nl-packs-lede">
-                Khởi tạo brief chiến dịch bằng AI, lọc KOC qua 4 tầng bộ nhớ thông minh, đẩy thẳng sang phễu Outreach CRM và nghiệm thu KPI minh bạch.
+                Chuẩn bị chiến dịch, đánh giá kênh phù hợp và chủ động theo dõi hợp tác ở từng bước.
               </p>
               <div className="nl-packs-btns">
-                <Link to="/register" className="nl-btn white">
-                  Đăng ký Thương hiệu
+                <Link to="/register" className="nl-btn fill nl-studio-btn-primary">
+                  <span>Đăng ký Thương hiệu</span>
+                  <ArrowRightSvg />
                 </Link>
-                <Link to="/login" className="nl-btn dk">
-                  Cổng Nhà sáng tạo
+                <Link to="/login" className="nl-btn ghost nl-studio-btn-ghost">
+                  <span>Cổng Nhà sáng tạo</span>
                 </Link>
               </div>
-            </div>
+            </header>
 
-            <div ref={codeBlockRef} className="nl-code-wrap nl-reveal" aria-hidden="true">
-              <div className="nl-code-head">
-                <span>goi_y_koc_ai.json</span>
-                <span>Four-Memory AI v2.4</span>
+            <div className="nl-pack-grid nl-reveal">
+              <div className="nl-pack-card lead">
+                <div className="nl-pack-top">
+                  <span className="nl-pack-idx">01</span>
+                  <span className="nl-bare-icon">
+                    <svg viewBox="0 0 22 22" fill="none">
+                      <circle cx="11" cy="11" r="6" stroke="#fff" strokeWidth="1.3" />
+                      <circle cx="11" cy="11" r="2" stroke="#fff" strokeWidth="1.3" />
+                      <path d="M11 2v3M11 17v3M2 11h3M17 11h3" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                </div>
+                <div className="nl-pack-eyebrow">KHÁM PHÁ VÀ GỢI Ý</div>
+                <h3 className="nl-pack-title">Đánh giá kênh phù hợp</h3>
+                <p className="nl-pack-body">
+                  Tìm kiếm, lưu kênh và nhận gợi ý chuẩn xác theo mục tiêu chiến dịch với công nghệ AI.
+                </p>
+                <div className="nl-pack-meta">
+                  <div>
+                    <div className="nl-pack-meta-cap">Nguồn đánh giá</div>
+                    <div className="nl-pack-metric">Four-Memory</div>
+                  </div>
+                  <Link to="/register" className="nl-arrow-link">
+                    <span>Khám phá</span>
+                    <ArrowRightSvg />
+                  </Link>
+                </div>
               </div>
-              <pre className="nl-code-pre">
-                {typedCode}
-                <span className="nl-caret" />
-              </pre>
-              <div className="nl-code-foot">
-                <span>chiến dịch im.b5.0428</span>
-                <span className="nl-code-ready">
-                  <span className="nl-live-dot" />
-                  khớp 98.4%
-                </span>
+
+              <div className="nl-pack-card nl-glass">
+                <div className="nl-pack-top">
+                  <span className="nl-pack-idx">02</span>
+                  <span className="nl-bare-icon">
+                    <svg viewBox="0 0 22 22" fill="none">
+                      <rect x="4" y="5" width="14" height="9" rx="1.8" stroke="#fff" strokeWidth="1.3" />
+                      <path d="M7.5 17.5h7" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" />
+                    </svg>
+                  </span>
+                </div>
+                <div className="nl-pack-eyebrow">QUẢN LÝ HỢP TÁC</div>
+                <h3 className="nl-pack-title">Theo dõi thỏa thuận &amp; nội dung</h3>
+                <p className="nl-pack-body">
+                  Chuẩn bị hồ sơ tiếp cận, kiểm soát tiến độ đăng bài và xác nhận kết quả theo thời gian thực.
+                </p>
+                <div className="nl-pack-meta">
+                  <div>
+                    <div className="nl-pack-meta-cap">Cách làm việc</div>
+                    <div className="nl-pack-metric">Theo từng bước</div>
+                  </div>
+                  <Link to="/register" className="nl-arrow-link">
+                    <span>Khám phá</span>
+                    <ArrowRightSvg />
+                  </Link>
+                </div>
+              </div>
+
+              <div className="nl-pack-card nl-glass">
+                <div className="nl-pack-top">
+                  <span className="nl-pack-idx">03</span>
+                  <span className="nl-bare-icon">
+                    <svg viewBox="0 0 22 22" fill="none">
+                      <path d="M3 16l5.5-5.5 4 4L19 8" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M14 8h5v5" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                </div>
+                <div className="nl-pack-eyebrow">HỒ SƠ NHÀ SÁNG TẠO</div>
+                <h3 className="nl-pack-title">Quản lý hồ sơ &amp; báo giá</h3>
+                <p className="nl-pack-body">
+                  Nhà sáng tạo cập nhật hồ sơ, công khai bảng giá minh bạch và xác thực quyền sở hữu kênh.
+                </p>
+                <div className="nl-pack-meta">
+                  <div>
+                    <div className="nl-pack-meta-cap">Quyền sở hữu kênh</div>
+                    <div className="nl-pack-metric">Có kiểm duyệt</div>
+                  </div>
+                  <Link to="/register" className="nl-arrow-link">
+                    <span>Khám phá</span>
+                    <ArrowRightSvg />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
+        </section>
+        <section id="workflow" className="nl-workflow nl-collaboration" data-scroll-section aria-labelledby="landing-workflow-title">
+          <header className="nl-collaboration-header">
+            <h2 id="landing-workflow-title" className="nl-packs-h2">Từ lựa chọn <span className="nl-accent">đến hợp tác.</span></h2>
+            <p className="nl-packs-lede">Một quy trình rõ ràng cho thương hiệu và nhà sáng tạo.</p>
+          </header>
 
-          {/* 3 Package Cards */}
-          <div className="nl-pack-grid">
-            <div className="nl-pack-card lead nl-reveal">
-              <div className="nl-pack-top">
-                <span className="nl-pack-idx">01</span>
-                <span className="nl-bare-icon">
-                  <svg viewBox="0 0 22 22" fill="none">
-                    <circle cx="11" cy="11" r="6" stroke="#fff" strokeWidth="1.3" />
-                    <circle cx="11" cy="11" r="2" stroke="#fff" strokeWidth="1.3" />
-                    <path d="M11 2v3M11 17v3M2 11h3M17 11h3" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" />
+          <div className="nl-staircase">
+            <article className="nl-use-card">
+              <h3 className="nl-use-title">
+                <span className="nl-role-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H12l8 8a2 2 0 0 1 0 2.8L14.8 20a2 2 0 0 1-2.8 0l-8-8V5.5Z" />
+                    <circle cx="8.2" cy="8.2" r="1.2" />
+                    <path d="m11 15 4-4" />
                   </svg>
                 </span>
+                Thương hiệu
+              </h3>
+              <p className="nl-use-body">Tạo chiến dịch, tìm kênh phù hợp và quản lý hợp tác.</p>
+              <div className="nl-use-foot">
+                <Link to="/register" className="nl-btn fill">Đăng ký thương hiệu <ArrowRightSvg /></Link>
               </div>
-              <div className="nl-pack-eyebrow">AI FOUR-MEMORY DISCOVERY</div>
-              <h3 className="nl-pack-title">Tìm Đúng KOC Trong Vài Giây</h3>
-              <p className="nl-pack-body">
-                Kết hợp tìm kiếm ngữ nghĩa Vector BKAI 768 chiều, bộ lọc cứng và xếp hạng độ phủ thực tế của từng nhà sáng tạo.
-              </p>
-              <div className="nl-pack-meta">
-                <div>
-                  <div className="nl-pack-meta-cap">Độ chính xác ghép nối</div>
-                  <div className="nl-pack-metric">98.4%</div>
-                </div>
-                <Link to="/register" className="nl-arrow-link">
-                  <span>Khám phá ngay</span>
-                  <ArrowRightSvg />
-                </Link>
-              </div>
-            </div>
-
-            <div className="nl-pack-card nl-glass nl-reveal" style={{ transitionDelay: '0.08s' }}>
-              <div className="nl-pack-top">
-                <span className="nl-pack-idx">02</span>
-                <span className="nl-bare-icon">
-                  <svg viewBox="0 0 22 22" fill="none">
-                    <rect x="4" y="5" width="14" height="9" rx="1.8" stroke="#fff" strokeWidth="1.3" />
-                    <path d="M7.5 17.5h7" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" />
+            </article>
+            <article className="nl-use-card">
+              <h3 className="nl-use-title">
+                <span className="nl-role-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M20 12a5.66 5.66 0 0 0-8-8L4 12v8h8l8-8Z" />
+                    <path d="M16 8 3 21M9 15h6" />
                   </svg>
                 </span>
+                Nhà sáng tạo
+              </h3>
+              <p className="nl-use-body">Quản lý hồ sơ, báo giá và phản hồi lời mời hợp tác.</p>
+              <div className="nl-use-foot">
+                <Link to="/login" className="nl-btn ghost">Đăng nhập nhà sáng tạo</Link>
               </div>
-              <div className="nl-pack-eyebrow">OUTREACH CRM &amp; HỢP TÁC</div>
-              <h3 className="nl-pack-title">Đàm Phán &amp; Duyệt Ấn Phẩm</h3>
-              <p className="nl-pack-body">
-                Quản lý phễu mời hợp tác Kanban, soạn thư mời tự động theo 3 giọng văn, duyệt kịch bản video và đối soát thanh toán.
-              </p>
-              <div className="nl-pack-meta">
-                <div>
-                  <div className="nl-pack-meta-cap">Tốc độ chốt deal KOC</div>
-                  <div className="nl-pack-metric">3.2×</div>
-                </div>
-                <Link to="/register" className="nl-arrow-link">
-                  <span>Khám phá ngay</span>
-                  <ArrowRightSvg />
-                </Link>
-              </div>
-            </div>
-
-            <div className="nl-pack-card nl-glass nl-reveal" style={{ transitionDelay: '0.16s' }}>
-              <div className="nl-pack-top">
-                <span className="nl-pack-idx">03</span>
-                <span className="nl-bare-icon">
-                  <svg viewBox="0 0 22 22" fill="none">
-                    <path d="M3 16l5.5-5.5 4 4L19 8" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M14 8h5v5" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-              </div>
-              <div className="nl-pack-eyebrow">CREATOR PORTAL &amp; TÍCH XANH</div>
-              <h3 className="nl-pack-title">Minh Bạch Rate Card Chính Chủ</h3>
-              <p className="nl-pack-body">
-                KOC tự quản lý bảng giá dịch vụ, xác thực quyền sở hữu kênh qua mã bảo mật Bio hoặc OAuth để nhận huy hiệu Tích Xanh.
-              </p>
-              <div className="nl-pack-meta">
-                <div>
-                  <div className="nl-pack-meta-cap">KOC xác thực chính chủ</div>
-                  <div className="nl-pack-metric">100%</div>
-                </div>
-                <Link to="/register" className="nl-arrow-link">
-                  <span>Khám phá ngay</span>
-                  <ArrowRightSvg />
-                </Link>
-              </div>
-            </div>
+            </article>
           </div>
 
-          {/* Steps Strip */}
-          <ol className="nl-steps-strip nl-reveal">
-            <li className="nl-step-item">
-              <span className="nl-step-num">01</span>
-              <div>
-                <strong>Khởi tạo Brief chiến dịch bằng AI</strong>
-                Tự động trích xuất mục tiêu, tệp khán giả, ngân sách và ngành hàng chỉ từ vài dòng mô tả.
-              </div>
-            </li>
-            <li className="nl-step-item">
-              <span className="nl-step-num">02</span>
-              <div>
-                <strong>Chọn lọc Shortlist &amp; Mời hợp tác CRM</strong>
-                So sánh chỉ số tương tác, bảng giá Rate Card và gửi lời mời hàng loạt tới KOC phù hợp.
-              </div>
-            </li>
-            <li className="nl-step-item">
-              <span className="nl-step-num">03</span>
-              <div>
-                <strong>Duyệt ấn phẩm &amp; Nghiệm thu KPI thực tế</strong>
-                Theo dõi tiến độ sản xuất video, đối soát thù lao tạm ứng và đo lường lượt xem trực tiếp.
-              </div>
-            </li>
+          <ol className="nl-steps-strip" aria-label="Ba bước hợp tác">
+            {[
+              ['Chuẩn bị', 'Hoàn thiện yêu cầu chiến dịch hoặc hồ sơ kênh.'],
+              ['Lựa chọn và thỏa thuận', 'Khám phá, so sánh, xem gợi ý và chủ động liên hệ.'],
+              ['Theo dõi hợp tác', 'Quản lý nội dung, tiến độ và kết quả.'],
+            ].map(([title, description], index) => <li className="nl-step-item" key={title}><span className="nl-step-num">{String(index + 1).padStart(2, '0')}</span><div><strong>{title}</strong>{description}</div></li>)}
           </ol>
         </section>
 
-        {/* ── 8.4 Use Cases (Stepped Staircase) ──────────────────────────── */}
-        <section ref={usesRef} id="uses">
-          <div className="nl-uses-head">
-            <h2 className="nl-uses-h2 nl-reveal">
-              Thiết kế tối ưu cho
-              <br />
-              mọi vai trò <span className="nl-serif">kiến tạo</span> chiến dịch.
-            </h2>
-            <p className="nl-lede nl-uses-lede nl-reveal">
-              Một nền tảng thống nhất với 4 không gian chuyên biệt. Mỗi vai trò đều có bộ công cụ chuẩn xác cho quy trình của mình.
-            </p>
-          </div>
-
-          <div className="nl-staircase">
-            <div className="nl-use-card c1 nl-glass nl-reveal">
-              <div className="nl-use-top">
-                <span className="nl-use-tag">VAI TRÒ 01</span>
-                <span className="nl-bare-icon">
-                  <svg viewBox="0 0 22 22" fill="none">
-                    <rect x="3" y="6.5" width="16" height="11.5" rx="2" stroke="#fff" strokeWidth="1.3" />
-                    <path d="M8 6.5V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 14 5v1.5" stroke="#fff" strokeWidth="1.3" />
-                  </svg>
-                </span>
-              </div>
-              <h3 className="nl-use-title">Thương hiệu &amp; Nhãn hàng</h3>
-              <p className="nl-use-body">
-                Chấm dứt việc tìm KOC cảm tính trên bảng tính rời rạc. Làm chủ dữ liệu tiếp cận, kiểm soát ngân sách và tối ưu ROI thực tế.
-              </p>
-              <div className="nl-use-chips">
-                <span className="nl-chip">Khám phá AI</span>
-                <span className="nl-chip">Nghiệm thu KPI</span>
-              </div>
-              <div className="nl-use-foot">
-                <Link to="/register" className="nl-arrow-link">
-                  <span>Bắt đầu ngay</span>
-                  <ArrowRightSvg />
-                </Link>
-              </div>
-            </div>
-
-            <div className="nl-use-card c2 nl-glass nl-reveal">
-              <div className="nl-use-top">
-                <span className="nl-use-tag">VAI TRÒ 02</span>
-                <span className="nl-bare-icon">
-                  <svg viewBox="0 0 22 22" fill="none">
-                    <path d="M4 12V9l11-4v10L4 12z" stroke="#fff" strokeWidth="1.3" strokeLinejoin="round" />
-                    <path d="M6.5 12.8l1.2 4.2" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" />
-                  </svg>
-                </span>
-              </div>
-              <h3 className="nl-use-title">Nhà sáng tạo (KOC / KOL)</h3>
-              <p className="nl-use-body">
-                Sở hữu cổng Creator Portal riêng trên cả máy tính và điện thoại. Niêm yết bảng giá Rate Card và nhận lời mời booking trực tiếp.
-              </p>
-              <div className="nl-use-chips">
-                <span className="nl-chip">Bảng giá Rate Card</span>
-                <span className="nl-chip">Claim Tích Xanh</span>
-              </div>
-              <div className="nl-use-foot">
-                <Link to="/login" className="nl-arrow-link">
-                  <span>Mở Creator Portal</span>
-                  <ArrowRightSvg />
-                </Link>
-              </div>
-            </div>
-
-            <div className="nl-use-card c3 nl-glass nl-reveal">
-              <div className="nl-use-top">
-                <span className="nl-use-tag">VAI TRÒ 03</span>
-                <span className="nl-bare-icon">
-                  <svg viewBox="0 0 22 22" fill="none">
-                    <rect x="4.5" y="3" width="13" height="16" rx="2" stroke="#fff" strokeWidth="1.3" />
-                    <path d="M8 8h6M8 11.5h6M8 15h4" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" />
-                  </svg>
-                </span>
-              </div>
-              <h3 className="nl-use-title">Quản trị Dữ liệu</h3>
-              <p className="nl-use-body">
-                Giám sát chất lượng dữ liệu KOC toàn hệ thống, hợp nhất định danh Master KOC đa nền tảng và xét duyệt hồ sơ cấp Tích Xanh.
-              </p>
-              <div className="nl-use-chips">
-                <span className="nl-chip">Định danh Master</span>
-                <span className="nl-chip">Kiểm duyệt kênh</span>
-              </div>
-              <div className="nl-use-foot">
-                <Link to="/login" className="nl-arrow-link">
-                  <span>Đăng nhập quản trị</span>
-                  <ArrowRightSvg />
-                </Link>
-              </div>
-            </div>
-
-            <div className="nl-use-card c4 nl-glass nl-reveal">
-              <div className="nl-use-top">
-                <span className="nl-use-tag">VAI TRÒ 04</span>
-                <span className="nl-bare-icon">
-                  <svg viewBox="0 0 22 22" fill="none">
-                    <path d="M8 7L4 11l4 4M14 7l4 4-4 4" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-              </div>
-              <h3 className="nl-use-title">Quản trị Hệ thống</h3>
-              <p className="nl-use-body">
-                Điều phối tài khoản toàn nền tảng, cấu hình ma trận phân quyền RBAC động, quản lý gói cước doanh nghiệp và nhật ký kiểm toán.
-              </p>
-              <div className="nl-use-chips">
-                <span className="nl-chip">Phân quyền RBAC</span>
-                <span className="nl-chip">Giám sát hệ thống</span>
-              </div>
-              <div className="nl-use-foot">
-                <Link to="/login" className="nl-arrow-link">
-                  <span>Trung tâm Admin</span>
-                  <ArrowRightSvg />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── 8.5 Call to Action & Footer ────────────────────────────────── */}
         <section ref={endRef} id="end">
-          <div className="nl-cta-panel nl-glass nl-reveal">
-            <h2 className="nl-cta-h2">
-              Bắt đầu Chiến dịch
-              <br />
-              <span className="nl-serif">Kết nối KOC</span> Ngay!
-            </h2>
-            <p className="nl-lede nl-cta-lede">
-              Đăng ký miễn phí. Khởi tạo chiến dịch đầu tiên và tìm ra danh sách KOC hoàn hảo chỉ trong vài phút.
-            </p>
-            <div className="nl-cta-btns">
-              <Link to="/register" className="nl-btn fill">
-                Đăng ký miễn phí ngay
-              </Link>
-              <Link to="/login" className="nl-btn ghost">
-                Đăng nhập tài khoản
-              </Link>
-            </div>
-            <div className="nl-cta-note">
-              Miễn phí trải nghiệm &nbsp;·&nbsp; Xác thực OTP tức thì &nbsp;·&nbsp; Báo cáo KPI minh bạch
-            </div>
-          </div>
+          <LandingPlans />
 
-          <footer className="nl-footer">
+          <footer id="footer" className="nl-footer" aria-label="Thông tin và liên kết nền tảng">
+            <svg className="nl-footer-wave" viewBox="0 0 600 140" fill="none" aria-hidden="true">
+              <path d="M1 128C172 145 215 24 364 29s173 72 235 91" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M1 137C172 154 215 33 364 38s173 72 235 91" stroke="currentColor" strokeWidth=".5" />
+            </svg>
             <div className="nl-foot-grid">
               <div className="nl-foot-brand">
-                <a href="#top" className="nl-logo">
-                  <img src="/logo.png" alt="InfluencerMatch" className="nl-logo-img" />
-                  <span>InfluencerMatch</span>
-                </a>
-                <p className="nl-foot-desc">
-                  Nền tảng kết nối Thương hiệu và Nhà sáng tạo nội dung (KOC/KOL) bằng AI thông minh hàng đầu Việt Nam.
-                </p>
-                <div className="nl-foot-status">
-                  <span className="nl-chip">
-                    <span className="nl-live-dot" />
-                    Hệ thống hoạt động ổn định
-                  </span>
-                </div>
+                <BrandLogo href="#top" className="nl-logo" />
+                <p className="nl-foot-tagline">Kết nối phù hợp. Hợp tác bền lâu.</p>
               </div>
 
               <div className="nl-foot-col">
-                <h4>TÍNH NĂNG</h4>
+                <h4>Khám phá</h4>
                 <ul>
-                  <li><a href="#studio">Khám phá KOC bằng AI</a></li>
-                  <li><a href="#packs">Giỏ Shortlist &amp; So sánh</a></li>
-                  <li><a href="#dash">Outreach CRM &amp; Hợp tác</a></li>
+                  <li><a href="#studio">Tìm nhà sáng tạo</a></li>
+                  <li><a href="#features">Gợi ý phù hợp</a></li>
+                  <li><a href="#workflow">Quản lý hợp tác</a></li>
                 </ul>
               </div>
 
               <div className="nl-foot-col">
-                <h4>VAI TRÒ</h4>
+                <h4>Dành cho bạn</h4>
                 <ul>
-                  <li><a href="#uses">Thương hiệu (Brand)</a></li>
-                  <li><a href="#uses">Nhà sáng tạo (KOC)</a></li>
-                  <li><a href="#uses">Quản trị Dữ liệu</a></li>
-                  <li><a href="#uses">Quản trị Hệ thống</a></li>
+                  <li><a href="#workflow">Thương hiệu</a></li>
+                  <li><a href="#workflow">Nhà sáng tạo</a></li>
                 </ul>
               </div>
 
               <div className="nl-foot-col">
-                <h4>NỀN TẢNG</h4>
+                <h4>Thông tin</h4>
                 <ul>
-                  <li><a href="#packs">TikTok Việt Nam</a></li>
-                  <li><a href="#packs">Instagram Reels</a></li>
-                  <li><a href="#packs">YouTube Shorts</a></li>
-                  <li><a href="#packs">Facebook &amp; Livestream</a></li>
-                </ul>
-              </div>
-
-              <div className="nl-foot-col">
-                <h4>TRUY CẬP</h4>
-                <ul>
-                  <li><Link to="/register">Đăng ký Thương hiệu</Link></li>
-                  <li><Link to="/login">Đăng nhập Hệ thống</Link></li>
-                  <li><Link to="/login">Cổng Creator Portal</Link></li>
-                  <li><a href="#end">Liên hệ Hỗ trợ</a></li>
+                  <li><a href="#studio">Giới thiệu nền tảng</a></li>
+                  <li><a href="#plans">Gói dịch vụ</a></li>
                 </ul>
               </div>
             </div>
 
             <div className="nl-legal-bar">
-              <span>©2026 InfluencerMatch: Nền tảng Kết nối KOC &amp; Thương hiệu bằng AI®</span>
-              <div className="nl-legal-links">
-                <a href="#end">Chính sách Bảo mật</a>
-                <a href="#end">Điều khoản Dịch vụ</a>
-                <a href="#end">Quy chuẩn KOC</a>
-              </div>
+              <span>© 2026 InfluencerMatch. Bảo lưu mọi quyền.</span>
             </div>
+            <div className="nl-footer-signature" aria-hidden="true">InfluencerMatch</div>
 
-            <div className="nl-wordmark" aria-hidden="true">
-              InfluencerMatch
-            </div>
           </footer>
         </section>
       </main>

@@ -20,15 +20,6 @@ export default function RegisterPage() {
     return () => clearTimeout(timeout);
   }, [resendCooldown]);
 
-  // Thêm class để card mở rộng vừa vặn cho layout 2 cột đều nhau
-  React.useEffect(() => {
-    const parentCard = document.querySelector('.al-form-card');
-    if (parentCard) {
-      parentCard.classList.add('al-form-card-register');
-      return () => parentCard.classList.remove('al-form-card-register');
-    }
-  }, []);
-
   const onFinish = async (values) => {
     if (loading) return;
     setLoading(true);
@@ -116,7 +107,7 @@ export default function RegisterPage() {
       {/* ── Heading ── */}
       <div className="register-heading-group">
         <h2 className="register-title">Đăng ký tài khoản</h2>
-        <p className="register-subtitle">Dành cho Doanh nghiệp & Thương hiệu (Brand / SME)</p>
+        <p className="register-subtitle">Dành cho doanh nghiệp và thương hiệu</p>
       </div>
 
       <Form
@@ -266,7 +257,7 @@ export default function RegisterPage() {
           <Checkbox className="luxe-checkbox">
             Tôi đồng ý với{' '}
             <a href="#terms" className="register-legal-link" onClick={(e) => e.preventDefault()}>
-              Điều khoản dịch vụ
+              Điều khoản
             </a>{' '}
             và{' '}
             <a href="#privacy" className="register-legal-link" onClick={(e) => e.preventDefault()}>

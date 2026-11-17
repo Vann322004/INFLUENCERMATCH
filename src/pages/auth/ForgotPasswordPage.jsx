@@ -42,7 +42,8 @@ export default function ForgotPasswordPage() {
         >
           <Input
             prefix={<MailOutlined style={{ color: '#94A3B8' }} />}
-            placeholder={LABELS.AUTH.EMAIL_OR_PHONE_PLACEHOLDER}
+            placeholder="Email của bạn"
+            autoComplete="email"
           />
         </Form.Item>
 
