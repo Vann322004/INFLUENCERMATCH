@@ -73,6 +73,8 @@ export default defineConfig(({ mode }) => {
             // Match the upstream origin for requests forwarded by the local dev proxy.
             proxyReq.setHeader('Origin', 'https://api.influencermatch.site');
             proxyReq.setHeader('Referer', 'https://api.influencermatch.site/');
+            proxyReq.removeHeader('forwarded');
+            proxyReq.removeHeader('x-forwarded-host');
           });
         },
       },

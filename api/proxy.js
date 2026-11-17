@@ -9,6 +9,28 @@ const agent = new https.Agent({
   rejectUnauthorized: false,
 });
 
+// Only forward clean client headers; never forward Vercel/proxy headers like
+// `forwarded`, `x-forwarded-host`, `x-vercel-*` which cause Spring's
+// ForwardedHeaderFilter + CorsFilter to return 403 Invalid CORS request.
+const ALLOWED_REQUEST_HEADERS = new Set([
+  'accept',
+  'accept-encoding',
+  'accept-language',
+  'authorization',
+  'cache-control',
+  'content-length',
+  'content-type',
+  'cookie',
+  'if-match',
+  'if-none-match',
+  'pragma',
+  'user-agent',
+  'x-csrf-token',
+  'x-xsrf-token',
+  'x-requested-with',
+  'x-service-key',
+]);
+
 export const config = {
   api: {
     bodyParser: false,
@@ -29,7 +51,7 @@ export default function handler(req, res) {
     res.setHeader(
       'Access-Control-Allow-Headers',
       req.headers['access-control-request-headers'] ||
-        'Content-Type, Authorization, X-XSRF-TOKEN, X-Requested-With, If-Match',
+        'Content-Type, Authorization, X-XSRF-TOKEN, X-CSRF-TOKEN, X-Requested-With, If-Match',
     );
     res.statusCode = 204;
     res.end();
@@ -50,19 +72,24 @@ export default function handler(req, res) {
   const search = parsedUrl.searchParams.toString();
   const upstreamPath = search ? `${targetPathname}?${search}` : targetPathname;
 
-  // Clone headers and rewrite Origin/Referer/Host so Spring Security CorsFilter accepts the request
-  const headers = { ...req.headers };
-  headers.host = UPSTREAM_HOST;
-  headers.origin = UPSTREAM_ORIGIN;
-  headers.referer = `${UPSTREAM_ORIGIN}/`;
+  // Build clean upstream headers without `forwarded` or `x-forwarded-*`
+  const headers = {
+    host: UPSTREAM_HOST,
+    origin: UPSTREAM_ORIGIN,
+    referer: `${UPSTREAM_ORIGIN}/`,
+  };
 
-  // Remove hop-by-hop / Vercel internal headers that could confuse upstream
-  delete headers['x-forwarded-host'];
-  delete headers['x-forwarded-proto'];
-  delete headers['x-forwarded-for'];
-  delete headers['x-vercel-id'];
-  delete headers['x-vercel-deployment-url'];
-  delete headers['x-vercel-forwarded-for'];
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (value === undefined) continue;
+    const lower = key.toLowerCase();
+    if (
+      ALLOWED_REQUEST_HEADERS.has(lower) ||
+      lower.startsWith('x-xsrf-') ||
+      lower.startsWith('x-csrf-')
+    ) {
+      headers[lower] = value;
+    }
+  }
 
   const options = {
     hostname: UPSTREAM_HOST,
@@ -75,12 +102,12 @@ export default function handler(req, res) {
 
   const proxyReq = https.request(options, (proxyRes) => {
     res.statusCode = proxyRes.statusCode || 502;
+    res.setHeader('X-Proxy-Upstream', UPSTREAM_HOST);
 
     for (const [key, value] of Object.entries(proxyRes.headers)) {
       if (value === undefined) continue;
       const lower = key.toLowerCase();
 
-      // Skip upstream CORS headers that might conflict with current frontend origin
       if (
         lower === 'access-control-allow-origin' ||
         lower === 'access-control-allow-credentials' ||
@@ -121,4 +148,3 @@ export default function handler(req, res) {
 
   req.pipe(proxyReq);
 }
-
