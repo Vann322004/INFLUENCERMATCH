@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
 import { Dropdown, message } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
+import { useLocation } from 'react-router-dom';
 import './AuthLayout.css';
+import BrandLogo from './BrandLogo';
 
 const AUTH_BG_VIDEO =
   'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261029_084140_553c4785-d33c-496e-9702-45247fa2fcf3.mp4';
 
 export default function AuthLayout({ children }) {
   const [lang, setLang] = useState('vi');
+  const { pathname } = useLocation();
+  const isLogin = pathname === '/login';
+  const isRegister = pathname === '/register';
+  const isForgot = pathname === '/forgot-password';
+  const isAuthEntry = isLogin || isRegister || isForgot;
 
   const langMenuItems = [
     {
@@ -29,11 +36,12 @@ export default function AuthLayout({ children }) {
   ];
 
   return (
-    <div className="al-root">
+    <div className={`al-root${isAuthEntry ? ' al-auth-entry' : ''}${isLogin ? ' al-login' : ''}${isRegister ? ' al-register' : ''}${isForgot ? ' al-forgot' : ''}`}>
       {/* ── Full-Viewport Looping Video Background ── */}
       <video
         className="al-bg-video"
         src={AUTH_BG_VIDEO}
+        poster="/auth-video-poster.webp"
         autoPlay
         muted
         loop
@@ -46,13 +54,7 @@ export default function AuthLayout({ children }) {
       <div className="al-wrap">
         {/* ── Top Header: Logo on left, Language on right ── */}
         <header className="al-header">
-          <div className="al-brand" onClick={() => (window.location.href = '/')}>
-            <img src="/logo.png" alt="InfluencerMatch Logo" className="al-logo-img" />
-            <div className="al-brand-name">
-              <span className="brand-dark">Influencer</span>
-              <span className="brand-purple">Match</span>
-            </div>
-          </div>
+          <BrandLogo href="/#top" className="al-brand" />
 
           <div className="al-header-actions">
             <Dropdown menu={{ items: langMenuItems }} trigger={['click']} placement="bottomRight">
@@ -69,17 +71,13 @@ export default function AuthLayout({ children }) {
           {/* ════ LEFT COLUMN: Pure Refined Editorial Typography ════ */}
           <section className="al-hero-col" aria-label="Giới thiệu nền tảng">
             <div className="al-hero-text">
+              {!isAuthEntry && <p className="al-hero-eyebrow">Khởi đầu một kết nối phù hợp</p>}
               <h1 className="al-hero-title">
-                Kết nối<br />
-                <span className="word-dung-wrap">
-                  đúng
-                  <span className="al-hero-underline" />
-                </span>{' '}
-                <span className="al-hero-highlight">nhà sáng tạo</span>
+                {isAuthEntry ? <>Kết nối thông minh,{' '}<span className="al-hero-highlight">nâng tầm thương hiệu</span></> : <>Kết nối đúng{' '}<span className="al-hero-highlight">nhà sáng tạo</span></>}
               </h1>
 
               <p className="al-hero-desc">
-                Nền tảng AI giúp thương hiệu tìm và hợp tác<br />
+                Nền tảng AI giúp thương hiệu tìm và hợp tác{' '}
                 với nhà sáng tạo nội dung phù hợp.
               </p>
             </div>

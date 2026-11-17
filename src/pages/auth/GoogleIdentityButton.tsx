@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Spin } from 'antd';
+import { Alert, Button } from 'antd';
 import type { GoogleChallenge } from '../../types/api/auth.types';
 import { getErrorMessage } from '../../services/apiClient';
 
@@ -88,22 +88,26 @@ export default function GoogleIdentityButton({ start, onCredential, disabled, li
   const [retry, setRetry] = useState(0);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
-  callback.current = onCredential;
-  disabledRef.current = disabled;
+  useEffect(() => {
+    callback.current = onCredential;
+    disabledRef.current = disabled;
+  }, [onCredential, disabled]);
 
   useEffect(() => {
     const element = container.current;
     if (!element) return;
     const controller = new AbortController();
     let expiryTimer: number | undefined;
+    let resizeObserver: ResizeObserver | undefined;
     let delivered = false;
     setError('');
     setReady(false);
     async function render() {
       try {
-        const { challenge, sessionId } = await start(controller.signal);
-        if (controller.signal.aborted) return;
-        const google = await loadGoogleIdentity();
+        const [{ challenge, sessionId }, google] = await Promise.all([
+          start(controller.signal),
+          loadGoogleIdentity(),
+        ]);
         if (controller.signal.aborted || !element) return;
         const remaining = Date.parse(challenge?.expiresAt) - Date.now();
         if (!challenge?.sessionId || !challenge.clientId || !challenge.nonce || !(remaining > 0)) {
@@ -119,15 +123,24 @@ export default function GoogleIdentityButton({ start, onCredential, disabled, li
             callback.current(challenge, credential, sessionId);
           },
         });
-        const width = element.clientWidth;
-        google.renderButton(element, {
-          type: 'standard', theme: 'outline', size: 'large', shape: 'pill',
-          text: linking ? 'continue_with' : 'signin_with',
-          width: Math.min(400, Math.floor(width) || 360), locale: 'vi',
-        });
+        let renderedWidth = 0;
+        const renderButton = () => {
+          const width = Math.min(400, Math.floor(element.clientWidth));
+          if (controller.signal.aborted || width <= 0 || width === renderedWidth) return;
+          renderedWidth = width;
+          element.replaceChildren();
+          google.renderButton(element, {
+            type: 'standard', theme: 'outline', size: 'large', shape: 'pill',
+            text: linking ? 'continue_with' : 'signin_with', width, locale: 'vi',
+          });
+        };
+        renderButton();
+        resizeObserver = new ResizeObserver(renderButton);
+        resizeObserver.observe(element);
         setReady(true);
         expiryTimer = window.setTimeout(() => {
           if (delivered) return;
+          resizeObserver?.disconnect();
           element.replaceChildren();
           setReady(false);
           setError('Phiên Google đã hết hạn. Vui lòng thử lại.');
@@ -141,14 +154,20 @@ export default function GoogleIdentityButton({ start, onCredential, disabled, li
     void render();
     return () => {
       controller.abort();
+      resizeObserver?.disconnect();
       window.clearTimeout(expiryTimer);
       element.replaceChildren();
     };
   }, [start, linking, retry]);
 
   return <div className="google-identity-root">
-    <div ref={container} className="google-identity-slot" inert={disabled || !ready} />
-    {!ready && !error && <Spin size="small" aria-label="Đang tải đăng nhập Google" />}
+    <div className="google-identity-control" aria-busy={!ready && !error} hidden={!!error}>
+      <div ref={container} className="google-identity-slot" inert={disabled || !ready} />
+      {!ready && !error && <div className="google-identity-loading" role="status">
+        <span className="google-identity-spinner" aria-hidden="true" />
+        Đang kết nối Google…
+      </div>}
+    </div>
     {error && <Alert type="warning" showIcon title={error}
       action={<Button size="small" disabled={disabled} onClick={() => setRetry(value => value + 1)}>Thử lại</Button>} />}
   </div>;
