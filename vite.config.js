@@ -67,10 +67,12 @@ export default defineConfig(({ mode }) => {
         target: 'https://api.influencermatch.site',
         changeOrigin: true,
         secure: false,
+        cookieDomainRewrite: '',
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq) => {
             // Match the upstream origin for requests forwarded by the local dev proxy.
             proxyReq.setHeader('Origin', 'https://api.influencermatch.site');
+            proxyReq.setHeader('Referer', 'https://api.influencermatch.site/');
           });
         },
       },

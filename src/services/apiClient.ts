@@ -5,7 +5,23 @@ import { invalidateDataManagerCacheForMutation, invalidateAdminCacheForMutation 
 import { getAccessToken, getStoredUser, getAuthSessionId, setAuthSession, clearAuthSession, ownsRefreshCookie, withAuthCookieLock, consumeAccountLogout, redirectToCurrentAccount } from './authSession';
 export { STORAGE_KEYS, getAccessToken, getRefreshToken, getStoredUser, getAuthSessionId, setAuthSession, clearAuthSession } from './authSession';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+function resolveApiBaseUrl(): string {
+  const envUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
+  if (!envUrl) return '/api/v1';
+  if (typeof window !== 'undefined' && /^https?:\/\//i.test(envUrl)) {
+    try {
+      const targetOrigin = new URL(envUrl).origin;
+      if (window.location.origin !== targetOrigin) {
+        return '/api/v1';
+      }
+    } catch {
+      return '/api/v1';
+    }
+  }
+  return envUrl;
+}
+
+const BASE_URL = resolveApiBaseUrl();
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
