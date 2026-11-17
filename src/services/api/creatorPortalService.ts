@@ -87,16 +87,61 @@ export interface CreatorBookingItem {
 
 export interface CreatorClaimItem {
   id: string;
+  creatorId?: string;
   platform: 'TikTok' | 'Instagram' | 'YouTube';
   handle: string;
   channelName: string;
   followers: number;
   channelAvatar: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  claimantName?: string;
+  claimantEmail?: string;
+  evidenceType?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVOKED';
   submittedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
   evidenceNote: string;
   evidenceUrl?: string;
   adminNote?: string;
+}
+
+const PLATFORM_LABEL: Record<string, CreatorClaimItem['platform']> = {
+  TIKTOK: 'TikTok',
+  INSTAGRAM: 'Instagram',
+  YOUTUBE: 'YouTube',
+};
+
+/** Chuẩn hóa một đơn claim từ backend (GET /creator-claims/me) sang CreatorClaimItem */
+export function mapBackendClaim(raw: any): CreatorClaimItem {
+  const rawStatus = String(raw?.status ?? 'PENDING').toUpperCase();
+  const status: CreatorClaimItem['status'] =
+    rawStatus === 'APPROVED' || rawStatus === 'REJECTED' || rawStatus === 'REVOKED' ? rawStatus : 'PENDING';
+  const platformKey = String(raw?.creatorPlatform ?? raw?.platform ?? 'TIKTOK').toUpperCase();
+  const handle = String(raw?.creatorHandle ?? raw?.handle ?? raw?.username ?? '@chaukikii');
+  const noteStr = String(raw?.evidenceNote ?? raw?.note ?? '');
+  const evidenceUrl = raw?.evidenceUrl ?? (Array.isArray(raw?.evidenceUrls) ? raw.evidenceUrls[0] : undefined);
+  return {
+    id: String(raw?.id ?? raw?.claimId ?? ''),
+    creatorId: raw?.creatorId,
+    platform: PLATFORM_LABEL[platformKey] ?? 'TikTok',
+    handle: handle && !handle.startsWith('@') ? `@${handle}` : handle,
+    channelName: raw?.creatorName ?? raw?.channelName ?? raw?.displayName ?? (handle || 'Kênh KOC'),
+    followers: Number(raw?.creatorFollowers ?? raw?.followers ?? 2450000),
+    channelAvatar:
+      raw?.creatorAvatar ??
+      raw?.channelAvatar ??
+      'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400',
+    claimantName: raw?.claimantName,
+    claimantEmail: raw?.claimantEmail,
+    evidenceType: raw?.evidenceType,
+    status,
+    submittedAt: raw?.submittedAt ?? raw?.createdAt ?? new Date().toISOString(),
+    reviewedAt: raw?.reviewedAt,
+    reviewedBy: raw?.reviewedBy,
+    evidenceNote: noteStr,
+    evidenceUrl,
+    adminNote: raw?.reason ?? raw?.revokeReason ?? raw?.adminNote ?? raw?.reviewNote,
+  };
 }
 
 // Dữ liệu mẫu khởi tạo cho Châu Bùi (Demo Creator)
@@ -462,15 +507,16 @@ export const creatorPortalService = {
   },
 
   /** 6b. Nộp yêu cầu Claim kênh mới */
-  submitClaim(payload: Omit<CreatorClaimItem, 'id' | 'status' | 'submittedAt'>): CreatorClaimItem {
+  submitClaim(payload: Omit<CreatorClaimItem, 'id' | 'status' | 'submittedAt'> & { id?: string }): CreatorClaimItem {
     const current = this.getClaims();
     const newClaim: CreatorClaimItem = {
       ...payload,
-      id: 'clm_c_' + Date.now(),
+      id: payload.id || 'clm_c_' + Date.now(),
       status: 'PENDING',
       submittedAt: new Date().toISOString(),
     };
-    const updated = [newClaim, ...current];
+    const filtered = current.filter((c) => c.id !== newClaim.id);
+    const updated = [newClaim, ...filtered];
     try {
       localStorage.setItem(STORAGE_PREFIX + 'claims', JSON.stringify(updated));
     } catch {}
@@ -522,25 +568,44 @@ export const creatorPortalService = {
 
   /** 10. Backend API: Nộp đơn Claim quyền sở hữu (POST /creators/{id}/claim) */
   async submitClaimApi(creatorId: string, payload: { evidenceUrls: string[]; note: string }): Promise<any> {
-    try {
-      const response = await apiClient.post(`/creators/${creatorId}/claim`, payload);
-      return response.data?.data || response.data;
-    } catch (err) {
-      console.warn('[creatorPortalService.submitClaimApi] API error or unauthorized:', err);
-      return null;
-    }
+    const response = await apiClient.post(`/creators/${creatorId}/claim`, payload);
+    return response.data?.data || response.data;
   },
 
-  /** 11. Backend API: Lấy danh sách Claim của tôi (GET /creator-claims/me) */
-  async fetchMyClaimsApi(): Promise<any[]> {
+  /**
+   * 11. Backend API: Lấy danh sách Claim của tôi (GET /creator-claims/me)
+   * Hợp nhất với dữ liệu đồng bộ localStorage để hiển thị tức thì đơn vừa nộp & trạng thái duyệt.
+   */
+  async fetchMyClaimsApi(): Promise<CreatorClaimItem[] | null> {
+    const localList = this.getClaims();
     try {
       const response = await apiClient.get('/creator-claims/me');
       const data = response.data?.data || response.data;
       const items = data?.content || data?.items || (Array.isArray(data) ? data : []);
-      return items;
+      const backendList = (Array.isArray(items) ? items : []).map(mapBackendClaim);
+      if (backendList.length === 0) return localList;
+      const mergedMap = new Map<string, CreatorClaimItem>();
+      backendList.forEach((b) => mergedMap.set(b.id, b));
+      localList.forEach((l) => {
+        if (!mergedMap.has(l.id)) {
+          mergedMap.set(l.id, l);
+        } else {
+          const existing = mergedMap.get(l.id)!;
+          mergedMap.set(l.id, {
+            ...l,
+            ...existing,
+            channelName: existing.channelName !== 'Kênh KOC' ? existing.channelName : l.channelName,
+            handle: existing.handle || l.handle,
+            platform: existing.platform || l.platform,
+            followers: existing.followers || l.followers,
+            channelAvatar: existing.channelAvatar || l.channelAvatar,
+          });
+        }
+      });
+      return Array.from(mergedMap.values());
     } catch (err) {
-      console.warn('[creatorPortalService.fetchMyClaimsApi] API error or unauthorized:', err);
-      return [];
+      console.warn('[creatorPortalService.fetchMyClaimsApi] API error or unauthorized, using synced local claims:', err);
+      return localList;
     }
   },
 };

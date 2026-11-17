@@ -22,9 +22,15 @@ const STATUS_CFG: Record<CreatorStatus, { label: string; color: string }> = {
 };
 
 const PLATFORM_ICON: Record<string, React.ReactNode> = {
-  tiktok:    <span style={{ color: '#010101', fontWeight: 800, fontSize: 11 }}>TT</span>,
+  tiktok:    <span style={{ color: '#010101', fontWeight: 800, fontSize: 11, marginRight: 4 }}>♪</span>,
   instagram: <InstagramOutlined style={{ color: '#E1306C' }} />,
   youtube:   <YoutubeOutlined   style={{ color: '#FF0000' }} />,
+};
+
+const PLATFORM_LABEL: Record<string, string> = {
+  tiktok: 'TikTok',
+  instagram: 'Instagram',
+  youtube: 'YouTube',
 };
 
 const PLATFORM_COLOR: Record<string, string> = {
@@ -109,7 +115,7 @@ export default function CreatorListTab() {
       ),
     },
     {
-      title: 'Platform',
+      title: 'Nền tảng',
       dataIndex: 'platform',
       key: 'platform',
       width: 110,
@@ -123,15 +129,15 @@ export default function CreatorListTab() {
             borderRadius: 20, fontWeight: 700, fontSize: 11,
           }}
         >
-          {p.charAt(0).toUpperCase() + p.slice(1)}
+          {PLATFORM_LABEL[p] || p}
         </Tag>
       ),
     },
     {
-      title: 'Followers',
+      title: 'Người theo dõi',
       dataIndex: 'followers',
       key: 'followers',
-      width: 110,
+      width: 120,
       sorter: (a, b) => a.followers - b.followers,
       render: (v: number) => (
         <Text style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }}>
@@ -152,7 +158,7 @@ export default function CreatorListTab() {
       ),
     },
     {
-      title: 'Category',
+      title: 'Lĩnh vực',
       dataIndex: 'category',
       key: 'category',
       width: 120,

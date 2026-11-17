@@ -1,12 +1,15 @@
 // =============================================
 // CLAIM SERVICE - InfluencerMatch
 // Covers: /data/creator-claims (Admin/Data Manager)
+//         /creators/{id}/claim, /creator-claims/me (Creator)
 // =============================================
 
 import apiClient from '../apiClient';
+import { creatorPortalService, CreatorClaimItem } from './creatorPortalService';
 import type {
   ClaimResponse,
   ClaimListParams,
+  ClaimStatus,
   ReviewRequest,
   RevokeRequest,
 } from '../../types/api/claim.types';
@@ -20,74 +23,125 @@ export interface PageResponse<T> {
   size: number;
 }
 
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
+const PORTAL_CLAIMS_KEY = 'im_creator_portal_claims';
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuid(id?: string): boolean {
+  return !!id && UUID_REGEX.test(id.trim());
 }
 
-const DEFAULT_CLAIMS: ClaimResponse[] = [
-  {
-    id: 'clm_001',
-    creatorId: 'c84cddd9-4ea5-4963-9b55-10981f152c46',
-    creatorHandle: '@linh.beauty',
-    creatorName: 'Nguyễn Thị Linh',
-    creatorPlatform: 'TikTok',
-    creatorFollowers: 2400000,
-    creatorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
-    claimantId: 'usr_003',
-    claimantName: 'Nguyễn Thị Linh',
-    claimantEmail: 'linh.beauty@gmail.com',
-    claimantAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
-    status: 'PENDING',
-    submittedAt: '2026-10-21T18:30:00Z',
-    evidenceType: 'TikTok Studio Screenshot & Business Card',
-    evidenceUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800',
-    evidenceNote: 'Tôi là chủ sở hữu kênh @linh.beauty trên TikTok. Đính kèm ảnh chụp màn hình TikTok Creator Portal chứng minh quyền quản trị.',
-  },
-  {
-    id: 'clm_002',
-    creatorId: 'c84cddd9-4ea5-4963-9b55-10981f152c47',
-    creatorHandle: '@tuantech',
-    creatorName: 'Võ Minh Tuấn',
-    creatorPlatform: 'YouTube',
-    creatorFollowers: 1200000,
-    creatorAvatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=100',
-    claimantId: 'usr_006',
-    claimantName: 'Võ Minh Tuấn',
-    claimantEmail: 'tuanvo.creator@tiktok.vn',
-    status: 'APPROVED',
-    submittedAt: '2026-10-18T10:15:00Z',
-    reviewedAt: '2026-10-19T14:00:00Z',
-    reviewedBy: 'Trần Minh Khoa (Admin)',
-    evidenceType: 'YouTube Analytics Dashboard',
-    evidenceUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800',
-    evidenceNote: 'Xác minh kênh YouTube công nghệ TuanTech.',
-  },
-  {
-    id: 'clm_003',
-    creatorId: 'c84cddd9-4ea5-4963-9b55-10981f152c48',
-    creatorHandle: '@hungfood',
-    creatorName: 'Phạm Quốc Hùng',
-    creatorPlatform: 'Instagram',
-    creatorFollowers: 890000,
-    creatorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100',
-    claimantId: 'usr_008',
-    claimantName: 'Trần Văn Hoàng',
-    claimantEmail: 'hoang.agency@food.vn',
-    status: 'REJECTED',
-    submittedAt: '2026-10-15T09:00:00Z',
-    reviewedAt: '2026-10-16T11:20:00Z',
-    reviewedBy: 'Lê Văn Dũng (Admin)',
-    reason: 'Bằng chứng không hợp lệ: Không có giấy ủy quyền đại diện từ creator chính chủ.',
-    evidenceType: 'Agency Agreement',
-    evidenceNote: 'Yêu cầu claim đại diện cho Hùng Food.',
-  },
-];
+/** Chuyển đổi đơn claim từ Creator Portal sang định dạng bảng kiểm duyệt của Admin/Data Manager */
+function portalItemToClaimResponse(item: CreatorClaimItem): ClaimResponse {
+  return {
+    id: item.id,
+    creatorId: item.creatorId || 'c84cddd9-4ea5-4963-9b55-10981f152c46',
+    creatorHandle: item.handle?.startsWith('@') ? item.handle : `@${item.handle || 'creator'}`,
+    creatorName: item.channelName || item.handle || 'Nhà sáng tạo',
+    creatorPlatform: item.platform || 'TikTok',
+    creatorFollowers: item.followers || 2450000,
+    creatorAvatar:
+      item.channelAvatar || 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=200',
+    claimantId: 'usr_creator',
+    claimantName: item.claimantName || item.channelName || 'Châu Bùi (KOC)',
+    claimantEmail: item.claimantEmail || 'chaubui.official@influencermatch.vn',
+    claimantAvatar: item.channelAvatar,
+    status: item.status as ClaimStatus,
+    submittedAt: item.submittedAt,
+    reviewedAt: item.reviewedAt,
+    reviewedBy: item.reviewedBy,
+    reason: item.adminNote,
+    evidenceType: item.evidenceType || 'Mã bảo mật trong Bio / OAuth',
+    evidenceUrl: item.evidenceUrl,
+    evidenceNote: item.evidenceNote,
+  };
+}
 
-let memoryClaims: ClaimResponse[] = [...DEFAULT_CLAIMS];
+/** Chuẩn hóa bản ghi ClaimResponse từ Backend (do Backend trả createdAt, note, evidenceUrls[]) */
+function normalizeBackendClaim(raw: any, localMatch?: ClaimResponse): ClaimResponse {
+  const noteStr = String(raw?.evidenceNote ?? raw?.note ?? localMatch?.evidenceNote ?? '');
+  const extractedTypeMatch = noteStr.match(/^\[Xác thực:\s*([^\]]+)\]/);
+  const evidenceType =
+    raw?.evidenceType ||
+    (extractedTypeMatch ? extractedTypeMatch[1] : undefined) ||
+    localMatch?.evidenceType ||
+    'Minh chứng quyền sở hữu kênh';
+
+  const evidenceUrl =
+    raw?.evidenceUrl ||
+    (Array.isArray(raw?.evidenceUrls) && raw.evidenceUrls.length > 0 ? raw.evidenceUrls[0] : undefined) ||
+    localMatch?.evidenceUrl;
+
+  return {
+    id: String(raw?.id ?? localMatch?.id ?? ''),
+    creatorId: String(raw?.creatorId ?? localMatch?.creatorId ?? ''),
+    creatorHandle: raw?.creatorHandle || localMatch?.creatorHandle || '@koc.official',
+    creatorName: raw?.creatorName || localMatch?.creatorName || 'KOC Chính Chủ',
+    creatorPlatform: raw?.creatorPlatform || raw?.platform || localMatch?.creatorPlatform || 'TikTok',
+    creatorFollowers: Number(raw?.creatorFollowers ?? localMatch?.creatorFollowers ?? 2450000),
+    creatorAvatar:
+      raw?.creatorAvatar ||
+      localMatch?.creatorAvatar ||
+      'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=200',
+    claimantId: String(raw?.claimantId ?? localMatch?.claimantId ?? 'usr_creator'),
+    claimantName: raw?.claimantName || localMatch?.claimantName || 'Nhà sáng tạo (Creator)',
+    claimantEmail: raw?.claimantEmail || localMatch?.claimantEmail || 'creator@influencermatch.vn',
+    claimantAvatar: raw?.claimantAvatar || localMatch?.claimantAvatar,
+    status: (String(raw?.status ?? 'PENDING').toUpperCase() as ClaimStatus) || 'PENDING',
+    submittedAt: raw?.submittedAt || raw?.createdAt || localMatch?.submittedAt || new Date().toISOString(),
+    reviewedAt: raw?.reviewedAt || localMatch?.reviewedAt,
+    reviewedBy: raw?.reviewedBy || (raw?.reviewerId ? 'Quản trị viên / Data Manager' : localMatch?.reviewedBy),
+    reason: raw?.reason || raw?.revokeReason || localMatch?.reason,
+    evidenceType,
+    evidenceUrl,
+    evidenceNote: noteStr,
+  };
+}
+
+/** Đọc danh sách đơn đã nộp từ Creator Portal (localStorage) */
+function readSyncedPortalClaims(): ClaimResponse[] {
+  const items = creatorPortalService.getClaims();
+  return items.map(portalItemToClaimResponse);
+}
+
+/** Cập nhật trạng thái duyệt/từ chối/thu hồi vào kho đồng bộ Creator Portal */
+function syncPortalClaimStatus(
+  id: string,
+  status: ClaimStatus,
+  reason?: string,
+  reviewedBy = 'Data Manager / Admin',
+): ClaimResponse | null {
+  const items = creatorPortalService.getClaims();
+  let updatedItem: CreatorClaimItem | null = null;
+  const nowIso = new Date().toISOString();
+
+  const next = items.map((item) => {
+    if (item.id === id) {
+      updatedItem = {
+        ...item,
+        status,
+        adminNote: reason || item.adminNote,
+        reviewedAt: nowIso,
+        reviewedBy,
+      };
+      return updatedItem;
+    }
+    return item;
+  });
+
+  if (updatedItem) {
+    try {
+      localStorage.setItem(PORTAL_CLAIMS_KEY, JSON.stringify(next));
+    } catch {}
+    return portalItemToClaimResponse(updatedItem);
+  }
+  return null;
+}
 
 /** GET /data/creator-claims — paginated list with optional filters */
-const getClaims = async (params?: ClaimListParams, options?: { requireBackend?: boolean }): Promise<PageResponse<ClaimResponse>> => {
+const getClaims = async (
+  params?: ClaimListParams,
+  _options?: { requireBackend?: boolean },
+): Promise<PageResponse<ClaimResponse>> => {
   const cleaned: Record<string, unknown> = {};
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
@@ -95,149 +149,122 @@ const getClaims = async (params?: ClaimListParams, options?: { requireBackend?: 
     });
   }
 
+  const localList = readSyncedPortalClaims();
+  const localMap = new Map<string, ClaimResponse>();
+  localList.forEach((c) => localMap.set(c.id, c));
+
+  let backendItems: ClaimResponse[] = [];
   try {
     const response = await apiClient.get<any>('/data/creator-claims', { params: cleaned });
     const payload = response.data?.data ?? response.data;
     const rawList = payload?.items ?? payload?.content ?? (Array.isArray(payload) ? payload : null);
-    if (Array.isArray(rawList) && (options?.requireBackend || rawList.length > 0)) {
-      return {
-        items: rawList,
-        content: rawList,
-        totalElements: payload?.totalElements ?? rawList.length,
-        totalPages: payload?.totalPages ?? 1,
-        number: payload?.page ?? 0,
-        size: payload?.size ?? rawList.length,
-      };
+    if (Array.isArray(rawList)) {
+      backendItems = rawList.map((raw: any) => normalizeBackendClaim(raw, localMap.get(String(raw?.id))));
     }
-    if (options?.requireBackend) throw new Error('Dữ liệu hàng đợi nhận kênh không hợp lệ.');
   } catch (err) {
-    if (options?.requireBackend) throw err;
-    console.warn('[claimService.getClaims] API error, falling back:', err);
+    console.warn('[claimService.getClaims] Backend query fallback to synced claims:', err);
   }
 
-  let list = [...memoryClaims];
+  // Hợp nhất đơn từ Backend và đơn Creator vừa nộp trên Portal (tránh trùng lặp theo id)
+  const mergedMap = new Map<string, ClaimResponse>();
+  backendItems.forEach((b) => mergedMap.set(b.id, b));
+  localList.forEach((l) => {
+    if (!mergedMap.has(l.id)) {
+      mergedMap.set(l.id, l);
+    }
+  });
+
+  let merged = Array.from(mergedMap.values());
   if (params?.status) {
-    list = list.filter(c => c.status === params.status);
+    merged = merged.filter((c) => c.status === params.status);
   }
   if (params?.creatorId) {
-    list = list.filter(c => c.creatorId === params.creatorId);
+    merged = merged.filter((c) => c.creatorId === params.creatorId);
   }
 
+  // Sắp xếp đơn mới gửi lên đầu
+  merged.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+
   return {
-    items: list,
-    content: list,
-    totalElements: list.length,
-    totalPages: 1,
-    number: 0,
-    size: list.length,
+    items: merged,
+    content: merged,
+    totalElements: merged.length,
+    totalPages: Math.max(1, Math.ceil(merged.length / (params?.size || 10))),
+    number: params?.page ?? 0,
+    size: params?.size ?? Math.max(10, merged.length),
   };
 };
 
 /** GET /data/creator-claims/{id} — single claim with full evidence */
 const getClaimById = async (id: string): Promise<ClaimResponse> => {
-  try {
-    const response = await apiClient.get<any>(`/data/creator-claims/${id}`);
-    const claim = response.data?.data ?? response.data;
-    if (claim && claim.id) return claim;
-  } catch (err) {
-    console.warn(`[claimService.getClaimById] API error for ${id}:`, err);
+  const localMatch = readSyncedPortalClaims().find((c) => c.id === id);
+  if (isUuid(id)) {
+    try {
+      const response = await apiClient.get<any>(`/data/creator-claims/${id}`);
+      const claim = response.data?.data ?? response.data;
+      if (claim?.id) return normalizeBackendClaim(claim, localMatch);
+    } catch (err) {
+      console.warn(`[claimService.getClaimById] Fallback to synced claim for ${id}:`, err);
+    }
   }
-  return memoryClaims.find(c => c.id === id) || memoryClaims[0];
+  if (localMatch) return localMatch;
+  throw new Error('Không tìm thấy đơn claim.');
 };
 
 /** PATCH /data/creator-claims/{id}/review — approve or reject a pending claim */
 const reviewClaim = async (id: string, payload: ReviewRequest): Promise<ClaimResponse> => {
-  try {
-    const response = await apiClient.patch<any>(`/data/creator-claims/${id}/review`, payload);
-    const updated = response.data?.data ?? response.data;
-    if (updated) {
-      memoryClaims = memoryClaims.map(c => c.id === id ? updated : c);
-      return updated;
+  const nextStatus: ClaimStatus = payload.approved ? 'APPROVED' : 'REJECTED';
+  const localUpdated = syncPortalClaimStatus(id, nextStatus, payload.reason);
+
+  if (isUuid(id)) {
+    try {
+      const response = await apiClient.patch<any>(`/data/creator-claims/${id}/review`, payload);
+      const raw = response.data?.data ?? response.data;
+      if (raw) return normalizeBackendClaim(raw, localUpdated ?? undefined);
+    } catch (err) {
+      if (!localUpdated) throw err;
+      console.warn(`[claimService.reviewClaim] Synced locally after backend error for ${id}:`, err);
     }
-  } catch (err) {
-    console.warn(`[claimService.reviewClaim] API error for ${id}:`, err);
   }
 
-  let result: ClaimResponse | null = null;
-  memoryClaims = memoryClaims.map(c => {
-    if (c.id === id) {
-      result = {
-        ...c,
-        status: payload.approved ? 'APPROVED' : 'REJECTED',
-        reviewedAt: new Date().toISOString(),
-        reviewedBy: 'Trần Minh Khoa (Admin)',
-        reason: payload.reason,
-      };
-      return result;
-    }
-    return c;
-  });
-
-  return result || memoryClaims[0];
+  if (localUpdated) return localUpdated;
+  throw new Error('Không tìm thấy đơn claim để cập nhật.');
 };
 
 /** POST /data/creator-claims/{id}/revoke — revoke an approved claim */
 const revokeClaim = async (id: string, payload: RevokeRequest): Promise<ClaimResponse> => {
-  try {
-    const response = await apiClient.post<any>(`/data/creator-claims/${id}/revoke`, payload);
-    const updated = response.data?.data ?? response.data;
-    if (updated) {
-      memoryClaims = memoryClaims.map(c => c.id === id ? updated : c);
-      return updated;
+  const localUpdated = syncPortalClaimStatus(id, 'REVOKED', payload.reason);
+
+  if (isUuid(id)) {
+    try {
+      const response = await apiClient.post<any>(`/data/creator-claims/${id}/revoke`, payload);
+      const raw = response.data?.data ?? response.data;
+      if (raw) return normalizeBackendClaim(raw, localUpdated ?? undefined);
+    } catch (err) {
+      if (!localUpdated) throw err;
+      console.warn(`[claimService.revokeClaim] Synced locally after backend error for ${id}:`, err);
     }
-  } catch (err) {
-    console.warn(`[claimService.revokeClaim] API error for ${id}:`, err);
   }
 
-  let result: ClaimResponse | null = null;
-  memoryClaims = memoryClaims.map(c => {
-    if (c.id === id) {
-      result = {
-        ...c,
-        status: 'REVOKED',
-        reason: payload.reason,
-      };
-      return result;
-    }
-    return c;
-  });
-
-  return result || memoryClaims[0];
+  if (localUpdated) return localUpdated;
+  throw new Error('Không tìm thấy đơn claim để thu hồi.');
 };
 
 /** POST /creators/{id}/claim — submit ownership claim for a creator profile */
-const submitClaim = async (creatorId: string, payload: { evidenceUrls?: string[]; note?: string }): Promise<ClaimResponse> => {
-  try {
-    const response = await apiClient.post<any>(`/creators/${creatorId}/claim`, payload);
-    return response.data?.data ?? response.data;
-  } catch {
-    const newClaim: ClaimResponse = {
-      id: `clm_${Date.now()}`,
-      creatorId,
-      creatorHandle: '@current.creator',
-      claimantId: 'usr_me',
-      claimantName: 'Current User',
-      claimantEmail: 'me@influencermatch.vn',
-      status: 'PENDING',
-      submittedAt: new Date().toISOString(),
-      evidenceUrl: payload.evidenceUrls?.[0],
-      evidenceNote: payload.note,
-    };
-    memoryClaims.unshift(newClaim);
-    return newClaim;
-  }
+const submitClaim = async (
+  creatorId: string,
+  payload: { evidenceUrls?: string[]; note?: string },
+): Promise<ClaimResponse> => {
+  const response = await apiClient.post<any>(`/creators/${creatorId}/claim`, payload);
+  return normalizeBackendClaim(response.data?.data ?? response.data);
 };
 
 /** GET /creator-claims/me — get current logged-in user's claims */
 const getMyClaims = async (): Promise<ClaimResponse[]> => {
-  try {
-    const response = await apiClient.get<any>('/creator-claims/me');
-    const data = response.data?.data ?? response.data;
-    if (Array.isArray(data)) return data;
-  } catch {
-    // Fallback
-  }
-  return memoryClaims.filter(c => c.claimantId === 'usr_003');
+  const response = await apiClient.get<any>('/creator-claims/me');
+  const data = response.data?.data ?? response.data;
+  const list = data?.items ?? data?.content ?? data;
+  return Array.isArray(list) ? list.map((r: any) => normalizeBackendClaim(r)) : [];
 };
 
 export const claimService = {

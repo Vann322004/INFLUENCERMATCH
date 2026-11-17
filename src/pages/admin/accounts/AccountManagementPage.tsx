@@ -11,7 +11,7 @@ import {
   SafetyCertificateOutlined, CrownOutlined, ControlOutlined,
   ExportOutlined,
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { adminService } from '../../../services/api/adminService';
 import type { AdminUser, AdminUserRole, AdminUserStatus } from '../../../types/api/admin.types';
 import CreateAdminModal from './components/CreateAdminModal';
@@ -39,8 +39,15 @@ const ROLE_CONFIG: Record<AdminUserRole, { label: string; color: string; icon: R
 
 export default function AccountManagementPage() {
   const navigate = useNavigate();
-  const [activeMainTab, setActiveMainTab] = useState<'accounts' | 'rbac'>('accounts');
+  const location = useLocation();
+  const [activeMainTab, setActiveMainTab] = useState<'accounts' | 'rbac'>(() =>
+    location.search.includes('tab=permissions') ? 'rbac' : 'accounts'
+  );
   const [data, setData] = useState<AdminUser[]>([]);
+
+  useEffect(() => {
+    setActiveMainTab(location.search.includes('tab=permissions') ? 'rbac' : 'accounts');
+  }, [location.search]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -221,7 +228,7 @@ export default function AccountManagementPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
           <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>
-            Quản trị Tài khoản & Phân quyền RBAC (Luồng AD-01 & AD-05)
+            Quản trị Tài khoản & Phân quyền RBAC
           </div>
           <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
             Quản lý tài khoản toàn hệ thống, khóa/mở khóa tức thì và phân bổ ma trận quyền hạn cho từng nhóm vai trò
@@ -247,7 +254,7 @@ export default function AccountManagementPage() {
         )}
       </div>
 
-      {/* Main Tabs: Danh sách tài khoản (AD-01) vs Phân bổ quyền hạn RBAC (AD-05) */}
+      {/* Main Tabs: Danh sách tài khoản vs Phân bổ quyền hạn RBAC */}
       <Tabs
         activeKey={activeMainTab}
         onChange={(k) => setActiveMainTab(k as 'accounts' | 'rbac')}
@@ -257,7 +264,7 @@ export default function AccountManagementPage() {
             key: 'accounts',
             label: (
               <span style={{ fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <TeamOutlined /> Danh sách tài khoản & Khóa tức thì (AD-01)
+                <TeamOutlined /> Danh sách tài khoản & Khóa tức thì
               </span>
             ),
           },
@@ -265,7 +272,7 @@ export default function AccountManagementPage() {
             key: 'rbac',
             label: (
               <span style={{ fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <SafetyCertificateOutlined /> Phân bổ Quyền hạn & Ma trận RBAC (AD-05)
+                <SafetyCertificateOutlined /> Phân bổ Quyền hạn & Ma trận RBAC
               </span>
             ),
           },

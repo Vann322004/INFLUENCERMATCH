@@ -38,7 +38,7 @@ export default function RecommendationConfigState({ hasAccess, config, loading, 
             subTitle={
               <div>
                 <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-                  Màn hình DM-04 hoạt động ở chế độ Single Source of Truth, không sử dụng dữ liệu giả lập dự phòng khi kết nối API thất bại.
+                  Màn hình này hoạt động ở chế độ Single Source of Truth, không sử dụng dữ liệu giả lập dự phòng khi kết nối API thất bại.
                 </Text>
                 <div style={{ background: '#FEF2F2', padding: '8px 16px', borderRadius: 8, display: 'inline-block', color: '#991B1B', fontFamily: 'monospace', fontSize: 13 }}>
                   Lỗi: {error}

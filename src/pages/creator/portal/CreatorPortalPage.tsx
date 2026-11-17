@@ -55,6 +55,8 @@ import {
   CreatorReachMetrics,
   CreatorClaimItem,
 } from '../../../services/api/creatorPortalService';
+import { authService } from '../../../services/api/authService';
+import { creatorService } from '../../../services/api/creatorService';
 import './CreatorPortalPage.css';
 
 import { CreatorCollaborations } from '../../collaboration/CollaborationPage';
@@ -100,7 +102,13 @@ export default function CreatorPortalPage() {
   const [channels, setChannels] = useState<CreatorSocialChannel[]>(creatorPortalService.getChannels());
   const [rateCards, setRateCards] = useState<CreatorRateCardPackage[]>(creatorPortalService.getRateCards());
   const [metrics, setMetrics] = useState<CreatorReachMetrics>(creatorPortalService.getReachMetrics());
+  // Đơn claim đồng bộ giữa Backend (GET /creator-claims/me) và kho đồng bộ Portal
   const [claims, setClaims] = useState<CreatorClaimItem[]>(creatorPortalService.getClaims());
+  const [claimsLoading, setClaimsLoading] = useState(false);
+  const [claimsError, setClaimsError] = useState(false);
+  const [profileCreatorId, setProfileCreatorId] = useState<string>('');
+  const [submittingClaim, setSubmittingClaim] = useState(false);
+  const isVerified = claims.some((c) => c.status === 'APPROVED');
 
   // Modal Rate Card
   const [rateCardModalOpen, setRateCardModalOpen] = useState(false);
@@ -121,28 +129,39 @@ export default function CreatorPortalPage() {
   const [syncingChannel, setSyncingChannel] = useState<string | null>(null);
 
   // Tải dữ liệu từ Backend API khi khởi tạo
+  const reloadMyClaims = async () => {
+    setClaimsLoading(true);
+    const items = await creatorPortalService.fetchMyClaimsApi();
+    if (items === null) {
+      setClaimsError(true);
+    } else {
+      setClaimsError(false);
+      setClaims(items);
+    }
+    setClaimsLoading(false);
+  };
+
   useEffect(() => {
     let isMounted = true;
     const syncBackendData = async () => {
       try {
-        const [profile, accounts, myClaims] = await Promise.allSettled([
+        const [profile, accounts] = await Promise.allSettled([
           creatorPortalService.fetchProfileApi(),
           creatorPortalService.fetchLinkedAccountsApi(),
-          creatorPortalService.fetchMyClaimsApi(),
         ]);
 
         if (!isMounted) return;
 
-        if (profile.status === 'fulfilled' && profile.value?.profile) {
-          // Đã kết nối Profile backend thành công
+        if (profile.status === 'fulfilled' && profile.value) {
+          const pv: any = profile.value;
+          const id = pv?.profile?.id ?? pv?.profile?.creatorId ?? pv?.creatorId ?? pv?.id;
+          if (id) setProfileCreatorId(String(id));
         }
         if (accounts.status === 'fulfilled' && Array.isArray(accounts.value) && accounts.value.length > 0) {
           // Đã đồng bộ danh sách kênh backend
         }
-        if (myClaims.status === 'fulfilled' && Array.isArray(myClaims.value) && myClaims.value.length > 0) {
-          // Đã đồng bộ danh sách claim backend
-        }
       } catch {}
+      if (isMounted) await reloadMyClaims();
     };
     syncBackendData();
     return () => { isMounted = false; };
@@ -261,24 +280,54 @@ export default function CreatorPortalPage() {
           : 'Minh chứng ảnh chụp / Quản trị viên';
 
       const finalNote = `[Xác thực: ${methodLabel}] ${values.evidenceNote || ''}`;
+      const currentUser = authService.getCurrentUser();
 
-      await creatorPortalService.submitClaimApi(values.creatorId || 'me', {
-        evidenceUrls: values.evidenceUrl ? [values.evidenceUrl] : [],
-        note: finalNote,
-      }).catch(() => null);
+      setSubmittingClaim(true);
+      let backendClaimId: string | undefined;
+      let targetCreatorId = values.creatorId || profileCreatorId;
+
+      try {
+        if (!targetCreatorId) {
+          const allCreators = await creatorService.getCreators().catch(() => []);
+          const cleanH = formattedHandle.replace('@', '').toLowerCase();
+          const matched = allCreators.find(
+            (c: any) =>
+              (c.username && String(c.username).replace('@', '').toLowerCase() === cleanH) ||
+              (c.displayName && String(c.displayName).toLowerCase() === String(values.channelName || '').toLowerCase())
+          );
+          targetCreatorId = matched?.id || allCreators[0]?.id || '';
+        }
+
+        if (targetCreatorId) {
+          const res = await creatorPortalService.submitClaimApi(targetCreatorId, {
+            evidenceUrls: values.evidenceUrl ? [values.evidenceUrl] : [],
+            note: finalNote,
+          });
+          if (res?.id) backendClaimId = String(res.id);
+        }
+      } catch (err) {
+        console.warn('[CreatorPortalPage.handleSubmitClaim] Backend submit fallback to synced storage:', err);
+      } finally {
+        setSubmittingClaim(false);
+      }
 
       creatorPortalService.submitClaim({
+        id: backendClaimId,
+        creatorId: targetCreatorId || undefined,
         platform: values.platform,
         handle: formattedHandle,
         channelName: values.channelName,
-        followers: values.followers || 50000,
+        followers: values.followers || 2450000,
         channelAvatar: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400',
+        claimantName: currentUser?.fullName || values.channelName || 'Châu Bùi (KOC)',
+        claimantEmail: currentUser?.email || 'chaubui.official@influencermatch.vn',
+        evidenceType: methodLabel,
         evidenceNote: finalNote,
         evidenceUrl: values.evidenceUrl,
       });
 
-      setClaims(creatorPortalService.getClaims());
-      message.success('Đã nộp đơn Claim Tích Xanh thành công! Quản trị viên sẽ đối soát mã bảo mật và cấp huy hiệu trong 24h.');
+      await reloadMyClaims();
+      message.success('Đã gửi đơn Claim Tích Xanh! Đơn đã chuyển vào hàng đợi Kiểm duyệt nhận kênh.');
       setClaimModalOpen(false);
     } catch {}
   };
@@ -331,12 +380,22 @@ export default function CreatorPortalPage() {
                 <h1 style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', margin: 0 }}>
                   Châu Bùi (Chau Bui Official)
                 </h1>
-                <Tooltip title="Hồ sơ đã xác minh CCCD & Kênh chính chủ">
-                  <CheckCircleFilled style={{ color: '#10B981', fontSize: 18 }} />
-                </Tooltip>
-                <Tag color="#2563EB" style={{ fontWeight: 700, borderRadius: 20, border: 'none', marginLeft: 4 }}>
-                  TOP CREATOR
-                </Tag>
+                {isVerified ? (
+                  <>
+                    <Tooltip title="Kênh chính chủ đã được quản trị viên xác minh (Tích Xanh)">
+                      <CheckCircleFilled style={{ color: '#10B981', fontSize: 18 }} />
+                    </Tooltip>
+                    <Tag color="#2563EB" style={{ fontWeight: 700, borderRadius: 20, border: 'none', marginLeft: 4 }}>
+                      ĐÃ XÁC MINH
+                    </Tag>
+                  </>
+                ) : (
+                  <Tooltip title="Nộp đơn Claim Tích Xanh để được quản trị viên xác minh kênh">
+                    <Tag color="default" style={{ fontWeight: 700, borderRadius: 20, marginLeft: 4 }}>
+                      CHƯA XÁC MINH
+                    </Tag>
+                  </Tooltip>
+                )}
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#94A3B8', fontSize: 13, marginTop: 6, flexWrap: 'wrap' }}>
@@ -624,6 +683,23 @@ export default function CreatorPortalPage() {
             style={{ borderRadius: 12, border: '1px solid #E2E8F0' }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {claimsError && (
+                <Alert
+                  type="error"
+                  showIcon
+                  message="Không tải được danh sách đơn claim từ máy chủ"
+                  description="Vui lòng kiểm tra đăng nhập/kết nối rồi thử lại. Huy hiệu Tích Xanh chỉ hiển thị khi quản trị viên đã duyệt."
+                  action={<Button size="small" onClick={reloadMyClaims}>Thử lại</Button>}
+                />
+              )}
+              {!claimsError && !claimsLoading && claims.length === 0 && (
+                <Alert
+                  type="info"
+                  showIcon
+                  message="Bạn chưa gửi đơn claim nào"
+                  description="Nộp đơn Claim Tích Xanh để quản trị viên xác minh quyền sở hữu kênh của bạn."
+                />
+              )}
               {claims.map((claim) => (
                 <div
                   key={claim.id}
@@ -655,6 +731,9 @@ export default function CreatorPortalPage() {
                         )}
                         {claim.status === 'REJECTED' && (
                           <Tag color="error" icon={<CloseCircleOutlined />}>Từ chối</Tag>
+                        )}
+                        {claim.status === 'REVOKED' && (
+                          <Tag color="default" icon={<CloseCircleOutlined />}>Đã thu hồi</Tag>
                         )}
                       </div>
                       <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
@@ -976,6 +1055,7 @@ export default function CreatorPortalPage() {
         open={claimModalOpen}
         onCancel={() => setClaimModalOpen(false)}
         onOk={handleSubmitClaim}
+        okButtonProps={{ loading: submittingClaim }}
         okText="Gửi đơn Claim Tích Xanh"
         cancelText="Hủy"
         width={560}

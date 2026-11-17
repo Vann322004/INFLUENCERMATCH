@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Card, Table, Tag, Avatar, Button, Input, Select, Space,
-  Drawer, Descriptions, Modal, Form, Badge,
+  Drawer, Descriptions, Modal, Form, Badge, message,
   Typography, Tooltip, Tabs, Spin, Alert, Divider,
 } from "antd";
 import type { TableColumnsType } from "antd";
@@ -176,12 +176,20 @@ function ClaimDetailDrawer({
 
 function ApproveModal({ claim, open, onClose, onDone }: { claim: ClaimResponse | null; open: boolean; onClose: () => void; onDone: (u: ClaimResponse) => void }) {
   const [loading, setLoading] = useState(false);
+  const [note, setNote] = useState("");
+  useEffect(() => { if (open) setNote(""); }, [open]);
   const handleConfirm = async () => {
     if (!claim) return;
     try {
       setLoading(true);
-      const updated = await claimService.reviewClaim(claim.id, { approved: true, reason: "Đã duyệt bởi quản trị viên" });
+      const updated = await claimService.reviewClaim(claim.id, {
+        approved: true,
+        reason: note.trim() || "Đã duyệt bởi quản trị viên",
+      });
+      message.success("Đã duyệt đơn và cấp Tích Xanh cho nhà sáng tạo.");
       onDone(updated); onClose();
+    } catch (err: any) {
+      message.error(err?.response?.data?.message || "Không thể duyệt đơn. Backend chưa ghi nhận thay đổi, vui lòng thử lại.");
     } finally { setLoading(false); }
   };
   return (
@@ -198,6 +206,9 @@ function ApproveModal({ claim, open, onClose, onDone }: { claim: ClaimResponse |
             </div>
           </div>
         )}
+        <div style={{ fontSize: 12.5, fontWeight: 600, color: "#334155", marginBottom: 6 }}>Ghi chú duyệt (tùy chọn)</div>
+        <TextArea rows={3} value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} showCount
+          placeholder="VD: Mã trong Bio khớp, kênh chính chủ..." style={{ resize: "none", marginBottom: 16 }} />
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <Button onClick={onClose}>Hủy</Button>
           <Button loading={loading} onClick={handleConfirm}
@@ -219,8 +230,12 @@ function RejectModal({ claim, open, onClose, onDone }: { claim: ClaimResponse | 
       const values = await form.validateFields();
       setLoading(true);
       const updated = await claimService.reviewClaim(claim.id, { approved: false, reason: values.reason });
+      message.success("Đã từ chối đơn claim.");
       onDone(updated); onClose(); form.resetFields();
-    } catch { } finally { setLoading(false); }
+    } catch (err: any) {
+      if (err?.errorFields) return; // lỗi validate form, Ant Design đã hiển thị
+      message.error(err?.response?.data?.message || "Không thể từ chối đơn. Backend chưa ghi nhận thay đổi, vui lòng thử lại.");
+    } finally { setLoading(false); }
   };
   return (
     <Modal open={open} onCancel={onClose} footer={null} width={480}
@@ -251,8 +266,12 @@ function RevokeModal({ claim, open, onClose, onDone }: { claim: ClaimResponse | 
       const values = await form.validateFields();
       setLoading(true);
       const updated = await claimService.revokeClaim(claim.id, { reason: values.reason });
+      message.success("Đã thu hồi Tích Xanh.");
       onDone(updated); onClose(); form.resetFields();
-    } catch { } finally { setLoading(false); }
+    } catch (err: any) {
+      if (err?.errorFields) return;
+      message.error(err?.response?.data?.message || "Không thể thu hồi. Backend chưa ghi nhận thay đổi, vui lòng thử lại.");
+    } finally { setLoading(false); }
   };
   return (
     <Modal open={open} onCancel={onClose} footer={null} width={480}
@@ -288,15 +307,22 @@ export default function CreatorClaimReviewPage() {
   const [rejectTarget, setRejectTarget] = useState<ClaimResponse | null>(null);
   const [revokeTarget, setRevokeTarget] = useState<ClaimResponse | null>(null);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const fetchClaims = useCallback(async (p = 1) => {
     try {
       setLoading(true);
+      setLoadError(null);
       const statusParam = tab === "pending" ? "PENDING" : statusFilter !== "ALL" ? statusFilter : undefined;
       const res = await claimService.getClaims({ status: statusParam as any, page: p - 1, size: 10 });
       const list = res.items ?? res.content ?? (Array.isArray(res) ? res : []);
       setClaims(list);
       setTotal(res.totalElements ?? list.length);
-    } catch { setClaims([]); } finally { setLoading(false); }
+    } catch (err: any) {
+      setClaims([]);
+      setTotal(0);
+      setLoadError(err?.response?.data?.message || err?.message || "Không kết nối được máy chủ.");
+    } finally { setLoading(false); }
   }, [tab, statusFilter]);
 
   useEffect(() => { setPage(1); fetchClaims(1); }, [tab, statusFilter]);
@@ -422,13 +448,22 @@ export default function CreatorClaimReviewPage() {
         <div>
           <div style={{ color: "#0F172A", fontWeight: 800, fontSize: 20, display: "flex", alignItems: "center", gap: 10 }}>
             <SafetyCertificateOutlined style={{ color: "#2563EB" }} />
-            Kiểm duyệt đơn nhận kênh KOC & Cấp Tích Xanh (DM-02)
+            Kiểm duyệt đơn nhận kênh KOC & Cấp Tích Xanh
           </div>
           <div style={{ color: "#64748B", fontSize: 13, marginTop: 2 }}>
             Xét duyệt yêu cầu xác minh quyền sở hữu kênh nhà sáng tạo
           </div>
         </div>
       </div>
+
+      {loadError && (
+        <Alert
+          type="error" showIcon style={{ marginBottom: 16, borderRadius: 10 }}
+          message="Không tải được danh sách đơn claim từ máy chủ"
+          description={`${loadError} — Không hiển thị dữ liệu giả lập. Kiểm tra đăng nhập, CORS hoặc kết nối backend rồi thử lại.`}
+          action={<Button size="small" onClick={() => fetchClaims(page)}>Thử lại</Button>}
+        />
+      )}
 
       <Card bordered={false} bodyStyle={{ padding: 0 }}
         style={{ borderRadius: 14, boxShadow: "0 2px 10px rgba(0,0,0,0.04)", overflow: "hidden" }}>
