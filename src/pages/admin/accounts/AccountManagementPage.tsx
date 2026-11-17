@@ -228,10 +228,12 @@ export default function AccountManagementPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
           <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>
-            Quản trị Tài khoản & Phân quyền RBAC
+            {activeMainTab === 'rbac' ? 'Vai trò & Phân quyền' : 'Quản lý người dùng'}
           </div>
           <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
-            Quản lý tài khoản toàn hệ thống, khóa/mở khóa tức thì và phân bổ ma trận quyền hạn cho từng nhóm vai trò
+            {activeMainTab === 'rbac'
+              ? 'Phân bổ ma trận quyền hạn (RBAC) và kiểm soát phạm vi truy cập cho từng nhóm vai trò trong hệ thống'
+              : 'Quản lý tài khoản toàn hệ thống, khóa/mở khóa tức thì và theo dõi trạng thái hoạt động'}
           </div>
         </div>
         {activeMainTab === 'accounts' && (
@@ -253,31 +255,6 @@ export default function AccountManagementPage() {
           </Space>
         )}
       </div>
-
-      {/* Main Tabs: Danh sách tài khoản vs Phân bổ quyền hạn RBAC */}
-      <Tabs
-        activeKey={activeMainTab}
-        onChange={(k) => setActiveMainTab(k as 'accounts' | 'rbac')}
-        style={{ marginBottom: 16 }}
-        items={[
-          {
-            key: 'accounts',
-            label: (
-              <span style={{ fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <TeamOutlined /> Danh sách tài khoản & Khóa tức thì
-              </span>
-            ),
-          },
-          {
-            key: 'rbac',
-            label: (
-              <span style={{ fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <SafetyCertificateOutlined /> Phân bổ Quyền hạn & Ma trận RBAC
-              </span>
-            ),
-          },
-        ]}
-      />
 
       {activeMainTab === 'rbac' ? (
         <RbacMatrixTab />

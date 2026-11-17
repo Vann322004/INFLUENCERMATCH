@@ -39,10 +39,7 @@ export default function AdminSidebarNav({
       return currentPath.includes('/admin/accounts') && currentSearch.includes('permissions');
     }
     if (item.key === 'user-management') {
-      return (
-        (currentPath.includes('/admin/accounts') && !currentSearch.includes('permissions')) ||
-        activeKey === 'user-management'
-      );
+      return currentPath.includes('/admin/accounts') && !currentSearch.includes('permissions');
     }
     return (
       item.key === activeKey ||

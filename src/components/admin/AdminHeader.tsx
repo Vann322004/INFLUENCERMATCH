@@ -43,7 +43,10 @@ export default function AdminHeader({ title, mobile, menuOpen, onOpenMenu }: Adm
       return { current: 'Danh mục Nhà sáng tạo' };
     }
     if (p.includes('/accounts')) {
-      return { current: 'Tài khoản người dùng' };
+      if (location.search.includes('permissions')) {
+        return { current: 'Vai trò & Phân quyền' };
+      }
+      return { current: 'Quản lý người dùng' };
     }
     if (p.includes('/subscriptions')) {
       return { current: 'Gói đăng ký dịch vụ' };

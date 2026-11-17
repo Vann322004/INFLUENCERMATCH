@@ -25,56 +25,66 @@
 .admin-nav-items-stack {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 6px;
 }
 
-/* ── Level 1 Item (Menu trực tiếp phẳng) ── */
+/* ── Level 1 Item (Menu trực tiếp phẳng — đồng bộ 100% với Brand & Creator) ── */
 .admin-nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 9px 12px;
-  min-height: 38px;
-  border-radius: 8px;
+  padding: 0 14px;
+  height: 42px;
+  min-height: 42px;
+  border-radius: 12px;
   font-size: 13.5px;
-  font-weight: 500;
+  font-weight: 600;
   color: #334155;
   cursor: pointer;
-  transition: all 0.15s ease-in-out;
+  transition: all 0.15s ease;
   position: relative;
   text-decoration: none;
   box-sizing: border-box;
+  border: none !important;
+  background: transparent;
 }
 
 .admin-nav-item:hover {
-  background-color: #F8FAFC;
-  color: #0F172A;
+  background: #EFF6FF !important;
+  color: #2563EB !important;
 }
 
-/* Level 1 Active State (Pill xanh dịu giống hệt Brand Workspace) */
+/* Level 1 Active State (Royal Blue Solid Pill — đồng bộ hoàn toàn với Brand & Creator) */
 .admin-nav-item.active {
-  background-color: #EFF6FF !important;
-  color: #2563EB !important;
-  font-weight: 600 !important;
-  border: 1px solid #BFDBFE;
+  background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%) !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
 }
 
 .admin-nav-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
+  font-size: 18px;
   color: #64748B;
   flex-shrink: 0;
   transition: color 0.15s ease;
 }
 
-.admin-nav-item:hover .admin-nav-icon {
-  color: #0F172A;
+.admin-nav-item:hover .admin-nav-icon,
+.admin-nav-item:hover .admin-nav-icon svg,
+.admin-nav-item:hover .admin-nav-icon .anticon {
+  color: #2563EB !important;
+  stroke: #2563EB !important;
 }
 
-.admin-nav-item.active .admin-nav-icon {
-  color: #2563EB !important;
+.admin-nav-item.active .admin-nav-icon,
+.admin-nav-item.active .admin-nav-icon svg,
+.admin-nav-item.active .admin-nav-icon .anticon {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
 }
 
 .admin-nav-label {

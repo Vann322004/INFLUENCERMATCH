@@ -45,9 +45,12 @@ export default function AdminSidebar({ mobile = false, compact = false, open = f
   const currentUser: any = adminAuthService.getCurrentUser() || { fullName: 'Quản trị viên', role: 'ADMIN' };
   const isManager = authService.isManager() || currentUser?.role === 'DATA_MANAGER' || currentUser?.role === 'manager';
 
-  const activeKey = Object.entries(ROUTE_KEY_MAP).find(([path]) =>
-    location.pathname.startsWith(path)
-  )?.[1] ?? 'dashboard';
+  const activeKey =
+    location.pathname.includes('/admin/accounts') && location.search.includes('permissions')
+      ? 'roles-permissions'
+      : Object.entries(ROUTE_KEY_MAP).find(([path]) =>
+          location.pathname.startsWith(path)
+        )?.[1] ?? 'dashboard';
 
   const handleLogout = () => {
     adminAuthService.logout();
