@@ -5,6 +5,10 @@
       "destination": "/api/proxy?__proxy_path=:path*"
     },
     {
+      "source": "/privacy-policy",
+      "destination": "/privacy-policy.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

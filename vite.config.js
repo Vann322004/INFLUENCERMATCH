@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => {
   return {
   cacheDir: `node_modules/.vite_cache/dev-${cachePort}`,
   plugins: [react()],
+    input: ['index.html', 'privacy-policy.html'],
   server: {
     proxy: {
       '/crawler-api': {

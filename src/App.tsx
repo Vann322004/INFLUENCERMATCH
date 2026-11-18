@@ -26,7 +26,6 @@ import CollaborationDetailPage from './pages/collaboration/CollaborationDetailPa
 import PerformancePage from './pages/performance/PerformancePage';
 import CampaignHistoryPage from './pages/history/CampaignHistoryPage';
 import LandingPage from './pages/landing/hero/HeroLanding';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import './styles/custom.css';
 import './components/layout/BrandResponsive.css';
 
@@ -160,7 +159,6 @@ export default function App() {
           {/* Public Landing Page / Homepage */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/landing" element={<LandingPage />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 
           {/* Auth Routes */}
           <Route
