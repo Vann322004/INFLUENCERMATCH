@@ -167,7 +167,7 @@ export const QualityTable: React.FC<QualityTableProps> = ({
             value={currentType}
             onChange={(val) => onDraftChange(r.metricId, { primaryType: val })}
             options={[
-              { value: 'KOC', label: 'KOC' },
+              { value: 'KOC', label: 'Nhà sáng tạo' },
               { value: 'KOL', label: 'KOL' },
             ]}
             style={{ width: 85 }}
@@ -249,7 +249,7 @@ export const QualityTable: React.FC<QualityTableProps> = ({
 
             <Popconfirm
               title="Từ chối hồ sơ này?"
-              description="KOC sẽ được đưa vào danh sách từ chối và loại khỏi bảng chờ."
+              description="Nhà sáng tạo sẽ được đưa vào danh sách từ chối và loại khỏi bảng chờ."
               onConfirm={() => onReject(r)}
               okText="Từ chối"
               cancelText="Hủy"
@@ -302,7 +302,7 @@ export const QualityTable: React.FC<QualityTableProps> = ({
           Không có hồ sơ nào cần kiểm duyệt
         </div>
         <div style={{ fontSize: 13, color: '#64748B', marginTop: 4, maxWidth: 460, margin: '6px auto 18px', lineHeight: 1.5 }}>
-          Dữ liệu thu thập từ các kênh đã được xử lý xong. Khi có đợt cào mới hoặc phát hiện KOC cần xác nhận, danh sách sẽ hiển thị tại đây.
+          Dữ liệu thu thập từ các kênh đã được xử lý xong. Khi có đợt cào mới hoặc phát hiện Nhà sáng tạo cần xác nhận, danh sách sẽ hiển thị tại đây.
         </div>
         <Button
           type="primary"

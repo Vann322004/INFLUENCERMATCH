@@ -52,7 +52,7 @@ export const VERIFIED_CREATOR_AVATARS = [
 export const getStageInfo = (stage?: string) => {
   switch (stage) {
     case 'OUTREACHED':
-      return { text: 'Đã gửi lời mời', color: '#F59E0B', deliverable: 'Chờ KOC phản hồi', delColor: 'gold' };
+      return { text: 'Đã gửi lời mời', color: '#F59E0B', deliverable: 'Chờ Nhà sáng tạo phản hồi', delColor: 'gold' };
     case 'REPLIED':
       return { text: 'Đã phản hồi', color: '#0284C7', deliverable: 'Đang thảo luận', delColor: 'cyan' };
     case 'NEGOTIATING':
@@ -82,7 +82,7 @@ export const campaignDetailCache = new Map<string, CampaignDetailCacheEntry>();
 
 export const getCreatorTableColumns = (): ColumnsType<CampaignCreatorRow> => [
   {
-    title: 'Nhà sáng tạo / KOC',
+    title: 'Nhà sáng tạo',
     dataIndex: 'name',
     key: 'name',
     render: (text, record) => (

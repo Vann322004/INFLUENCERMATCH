@@ -176,7 +176,7 @@ export default function AddImportTab() {
       note: `Tự động cào từ ${result.platform}: ${result.followers?.toLocaleString()} followers, Bio: ${result.bio || ''}`,
     });
     setActiveSubTab('manual');
-    message.info('Đã chuyển số liệu KOC vừa cào vào biểu mẫu thêm Creator!');
+    message.info('Đã chuyển số liệu Nhà sáng tạo vừa thu thập vào biểu mẫu!');
   };
 
   return (

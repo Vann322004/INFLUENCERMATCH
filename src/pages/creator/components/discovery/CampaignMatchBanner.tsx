@@ -59,7 +59,7 @@ export const CampaignMatchBanner: React.FC<CampaignMatchBannerProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <CompassOutlined style={{ fontSize: 18, color: '#2563EB' }} />
         <div style={{ fontSize: 13, color: '#475569' }}>
-          <strong>Gợi ý thông minh theo Chiến dịch:</strong> Vui lòng chọn chiến dịch mục tiêu để AI xếp hạng Top KOC phù hợp nhất.
+          <strong>Gợi ý thông minh theo Chiến dịch:</strong> Vui lòng chọn chiến dịch mục tiêu để AI xếp hạng Top Nhà sáng tạo phù hợp nhất.
         </div>
       </div>
       {campaignsList.length > 0 && (

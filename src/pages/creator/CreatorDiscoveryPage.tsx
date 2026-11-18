@@ -185,7 +185,7 @@ export default function CreatorDiscoveryPage() {
     if (selectedCreatorIds.size === 0) return;
     const targetCampId = selectedCampaignId || matchedCampaign?.id;
     if (!targetCampId) {
-      message.warning('Vui lòng tạo hoặc chọn một chiến dịch trước khi thêm KOC vào danh sách chọn!');
+      message.warning('Vui lòng tạo hoặc chọn một chiến dịch trước khi thêm Nhà sáng tạo vào danh sách chọn!');
       return;
     }
     if (selectedCreatorIds.size > 100) { message.warning('Mỗi lần chỉ lưu tối đa 100 kênh. Vui lòng bỏ bớt kênh đã chọn.'); return; }
@@ -194,7 +194,7 @@ export default function CreatorDiscoveryPage() {
 
   const handleShareCreator = async (creator: Creator) => {
     try { if (!navigator.clipboard) throw new Error('Clipboard unavailable'); await navigator.clipboard.writeText(window.location.origin + '/creators/' + creator.id);
-    message.success('Đã sao chép liên kết KOC!'); } catch { message.error('Không thể sao chép liên kết.'); }
+    message.success('Đã sao chép liên kết Nhà sáng tạo!'); } catch { message.error('Không thể sao chép liên kết.'); }
   };
 
   return (

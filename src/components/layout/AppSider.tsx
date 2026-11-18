@@ -365,7 +365,7 @@ export default function AppSider({ collapsed: initialCollapsed = false, inDrawer
             </div>
 
             {/* Navigation Menu List (Flat 5-Item Domain Architecture) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {navItems.map((item) => (
                 <div
                   key={item.key}

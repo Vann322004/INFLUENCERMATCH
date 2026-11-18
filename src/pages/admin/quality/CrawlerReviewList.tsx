@@ -62,7 +62,7 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
 
   return <Card className="quality-collection-list">
     <Typography.Title level={4}>Dữ liệu cào thủ công và tự động</Typography.Title>
-    <Typography.Paragraph type="secondary">Tổng hợp kết quả thu thập từ hai nguồn và tài khoản cần xác minh. Hồ sơ đã đồng bộ và đủ điều kiện duyệt KOC nằm trong danh sách bên dưới.</Typography.Paragraph>
+    <Typography.Paragraph type="secondary">Tổng hợp kết quả thu thập từ hai nguồn và tài khoản cần xác minh. Hồ sơ đã đồng bộ và đủ điều kiện duyệt Nhà sáng tạo nằm trong danh sách bên dưới.</Typography.Paragraph>
     <Space wrap className="quality-source-filter">
       <span>Nguồn thu thập</span>
       <Select value={source} onChange={setSource} style={{ width: 100 }} options={[

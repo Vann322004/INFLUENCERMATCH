@@ -24,7 +24,7 @@ const columns: TableColumnsType<Activity> = [
   {
     title: 'Kiểm định', dataIndex: 'decision', key: 'decision',
     render: (decision: string) => {
-      const labels: Record<string, string> = { ACCEPTED: 'Đạt (KOC)', REJECTED: 'Loại', REVIEW: 'Chờ duyệt' };
+      const labels: Record<string, string> = { ACCEPTED: 'Đạt (Nhà sáng tạo)', REJECTED: 'Loại', REVIEW: 'Chờ duyệt' };
       return <Tag className="dm-status-tag">{labels[decision] || decision || '—'}</Tag>;
     },
   },

@@ -51,7 +51,7 @@ export const getStatusBadge = (st: string) => {
     case 'ACTIVE':
       return { label: 'Đang triển khai', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0', text: 'Chiến dịch đang chạy thực tế' };
     case 'READY_FOR_DISCOVERY':
-      return { label: 'Sẵn sàng đề xuất', color: '#0284C7', bg: '#F0F9FF', border: '#BAE6FD', text: 'Đang tìm kiếm & kết nối KOC' };
+      return { label: 'Sẵn sàng đề xuất', color: '#0284C7', bg: '#F0F9FF', border: '#BAE6FD', text: 'Đang tìm kiếm & kết nối Nhà sáng tạo' };
     case 'COMPLETED':
       return { label: 'Đã hoàn thành', color: '#1D4ED8', bg: '#F5F3FF', border: '#DDD6FE', text: 'Chiến dịch đã kết thúc' };
     case 'ARCHIVED':

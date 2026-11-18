@@ -30,7 +30,7 @@ const STATUS_COLOR_MAP: Record<string, { color: string; label: string }> = {
 };
 
 const DECISION_COLOR_MAP: Record<string, { color: string; label: string }> = {
-  AUTO_ACCEPT_KOC:      { color: 'green',   label: 'Đạt chuẩn KOC' },
+  AUTO_ACCEPT_KOC:      { color: 'green',   label: 'Đạt chuẩn Nhà sáng tạo' },
   AUTO_ACCEPT_KOL:      { color: 'purple',  label: 'Đạt chuẩn KOL' },
   ACCEPTED:             { color: 'green',   label: 'Đạt chuẩn' },
   PASS:                 { color: 'green',   label: 'Đạt chuẩn' },
@@ -147,7 +147,7 @@ export default function JobsMonitorTab() {
       render: (dec: string, r: ActivityRecord) => {
         const outcome = collectionOutcome(dec, r.primaryType);
         const conf = outcome === 'accepted'
-          ? { color: 'green', label: `Đạt chuẩn ${dec === 'AUTO_ACCEPT_KOL' || r.primaryType === 'KOL' ? 'KOL' : 'KOC'}` }
+          ? { color: 'green', label: `Đạt chuẩn ${dec === 'AUTO_ACCEPT_KOL' || r.primaryType === 'KOL' ? 'KOL' : 'Nhà sáng tạo'}` }
           : outcome === 'review'
             ? { color: 'warning', label: collectionOutcomeLabel(outcome) }
             : DECISION_COLOR_MAP[dec] || { color: 'default', label: dec || 'Chờ đánh giá' };
@@ -168,7 +168,7 @@ export default function JobsMonitorTab() {
         const isKoc = type === 'KOC';
         return (
           <Tag color={isKol ? 'purple' : isKoc ? 'cyan' : 'default'} style={{ borderRadius: 6, fontWeight: 700 }}>
-            {isKol ? 'KOL' : isKoc ? 'KOC' : 'Chưa rõ'}
+            {isKol ? 'KOL' : isKoc ? 'Nhà sáng tạo' : 'Chưa rõ'}
           </Tag>
         );
       },

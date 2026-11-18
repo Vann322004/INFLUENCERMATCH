@@ -12,7 +12,7 @@ import ExternalDiscoveredTab from './components/ExternalDiscoveredTab';
 import RefreshRequestTab    from './components/RefreshRequestTab';
 
 const TABS = [
-  { key: 'list',       label: 'Danh sách Master KOC',        icon: <UnorderedListOutlined />, component: <CreatorListTab /> },
+  { key: 'list',       label: 'Danh sách Nhà sáng tạo',        icon: <UnorderedListOutlined />, component: <CreatorListTab /> },
   { key: 'import',     label: 'Thêm mới / Nhập dữ liệu',      icon: <PlusCircleOutlined />,   component: <AddImportTab /> },
   { key: 'detail',     label: 'Hồ sơ chi tiết & Kênh',       icon: <IdcardOutlined />,       component: <CreatorDetailTab /> },
   { key: 'duplicates', label: 'Trùng lặp & Gộp định danh',   icon: <CopyOutlined />,         component: <DuplicatesMergeTab /> },
@@ -28,7 +28,7 @@ export default function CreatorCatalogPage() {
       {/* Page Header */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>
-          Quản trị Định danh Master KOC
+          Quản trị Định danh Nhà sáng tạo
         </div>
         <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
           Hồ sơ định danh duy nhất (Master Identity), hợp nhất tài khoản đa nền tảng và kiểm soát trùng lặp

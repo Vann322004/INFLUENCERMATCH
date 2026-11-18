@@ -31,7 +31,7 @@ export const CampaignGuidelinesTab: React.FC<CampaignGuidelinesTabProps> = ({ ra
         <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 10, border: '1px solid #E2E8F0' }}>
           <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 13 }}>Yêu cầu kiểm duyệt nội dung</div>
           <div style={{ fontSize: 13, color: '#475569', marginTop: 4, lineHeight: 1.6 }}>
-            KOC cần gửi kịch bản trước khi quay 3 ngày và gửi video bản xem trước ít nhất 48 giờ trước thời điểm đăng tải để nhãn hàng duyệt.
+            Nhà sáng tạo cần gửi kịch bản trước khi quay 3 ngày và gửi video bản xem trước ít nhất 48 giờ trước thời điểm đăng tải để nhãn hàng duyệt.
           </div>
         </div>
       </div>

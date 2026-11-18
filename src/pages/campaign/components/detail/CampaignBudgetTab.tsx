@@ -146,7 +146,7 @@ export const CampaignBudgetTab: React.FC<CampaignBudgetTabProps> = ({
           dataSource={participatingCreators}
           rowKey="id"
           pagination={false}
-          locale={{ emptyText: 'Chưa có KOC trong danh sách chi trả' }}
+          locale={{ emptyText: 'Chưa có Nhà sáng tạo trong danh sách chi trả' }}
         />
       </div>
     </div>

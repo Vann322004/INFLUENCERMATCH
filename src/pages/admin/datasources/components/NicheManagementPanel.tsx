@@ -76,7 +76,7 @@ export default function NicheManagementPanel() {
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
             <Typography.Title level={4} style={{ margin: '0 0 4px' }}>Quản lý lĩnh vực</Typography.Title>
-            <Typography.Text type="secondary">Thiết lập danh mục ngành hàng và bộ từ khóa gợi ý phục vụ tìm kiếm, phân loại và Săn KOC tự động.</Typography.Text>
+            <Typography.Text type="secondary">Thiết lập danh mục ngành hàng và bộ từ khóa gợi ý phục vụ tìm kiếm, phân loại và Khám phá Nhà sáng tạo tự động.</Typography.Text>
           </div>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => showEditor(null)}>Thêm ngành hàng</Button>
         </div>
@@ -116,10 +116,10 @@ export default function NicheManagementPanel() {
           <Form.Item name="description" label="Mô tả" rules={[{ max: 500, message: 'Mô tả tối đa 500 ký tự.' }]}>
             <Input.TextArea rows={3} maxLength={500} showCount />
           </Form.Item>
-          <Form.Item name="keywords" label="Từ khóa & hashtag gợi ý" extra="Nhập từ khóa rồi nhấn Enter. Bộ từ khóa này được nạp khi chọn ngành hàng để săn KOC." rules={[{ required: true, type: 'array', min: 1, message: 'Nhập ít nhất một từ khóa.' }, { type: 'array', max: 30, message: 'Tối đa 30 từ khóa.' }, { validator: (_, values: string[] = []) => values.some(value => value.trim().replace(/^#+/, '').trim().length === 0 || value.length > 100) ? Promise.reject(new Error('Mỗi từ khóa phải có nội dung và tối đa 100 ký tự.')) : Promise.resolve() }]}>
+          <Form.Item name="keywords" label="Từ khóa & hashtag gợi ý" extra="Nhập từ khóa rồi nhấn Enter. Bộ từ khóa này được nạp khi chọn ngành hàng để khám phá Nhà sáng tạo." rules={[{ required: true, type: 'array', min: 1, message: 'Nhập ít nhất một từ khóa.' }, { type: 'array', max: 30, message: 'Tối đa 30 từ khóa.' }, { validator: (_, values: string[] = []) => values.some(value => value.trim().replace(/^#+/, '').trim().length === 0 || value.length > 100) ? Promise.reject(new Error('Mỗi từ khóa phải có nội dung và tối đa 100 ký tự.')) : Promise.resolve() }]}>
             <Select mode="tags" open={false} placeholder="Ví dụ: review mỹ phẩm, skincare review" tokenSeparators={[',']} />
           </Form.Item>
-          <Form.Item name="active" label="Hiển thị ngành hàng trong Săn KOC tự động" valuePropName="checked"><Switch checkedChildren="Bật" unCheckedChildren="Tắt" /></Form.Item>
+          <Form.Item name="active" label="Hiển thị ngành hàng trong Khám phá Nhà sáng tạo tự động" valuePropName="checked"><Switch checkedChildren="Bật" unCheckedChildren="Tắt" /></Form.Item>
         </Form>
       </Modal>
     </>

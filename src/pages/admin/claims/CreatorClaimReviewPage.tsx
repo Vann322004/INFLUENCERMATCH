@@ -448,7 +448,7 @@ export default function CreatorClaimReviewPage() {
         <div>
           <div style={{ color: "#0F172A", fontWeight: 800, fontSize: 20, display: "flex", alignItems: "center", gap: 10 }}>
             <SafetyCertificateOutlined style={{ color: "#2563EB" }} />
-            Kiểm duyệt đơn nhận kênh KOC & Cấp Tích Xanh
+            Kiểm duyệt đơn nhận kênh Nhà sáng tạo & Cấp Tích Xanh
           </div>
           <div style={{ color: "#64748B", fontSize: 13, marginTop: 2 }}>
             Xét duyệt yêu cầu xác minh quyền sở hữu kênh nhà sáng tạo

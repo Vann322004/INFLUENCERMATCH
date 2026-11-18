@@ -136,7 +136,7 @@ export const CreateCampaignStep1: React.FC<CreateCampaignStep1Props> = ({
           <div className="ccreate-field-label">
             <span>Sản phẩm / Dịch vụ được quảng bá <span className="req">*</span></span>
             {isProductLocked && (
-              <Tooltip title="Chiến dịch đã khởi chạy hoặc chốt KOC. Tên sản phẩm được khóa để bảo vệ tính nhất quán của hợp đồng.">
+              <Tooltip title="Chiến dịch đã khởi chạy hoặc chốt Nhà sáng tạo. Tên sản phẩm được khóa để bảo vệ tính nhất quán của hợp đồng.">
                 <Tag color="orange" icon={<LockOutlined />} style={{ borderRadius: 6, fontSize: 11, cursor: 'help', margin: 0 }}>
                   Đã khóa
                 </Tag>

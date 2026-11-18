@@ -32,10 +32,10 @@ export const DiscoveryResultsToolbar: React.FC<DiscoveryResultsToolbarProps> = (
       <div className="cdiscovery-results-left">
         <span className="cdiscovery-results-heading">
           {loading || isMatching
-            ? 'Đang tải danh sách KOC...'
+            ? 'Đang tải danh sách Nhà sáng tạo...'
             : matchedCampaign
             ? `Nhà sáng tạo phù hợp (${filteredCount} hồ sơ)`
-            : `Tất cả KOC hệ thống (${filteredCount.toLocaleString('vi-VN')} KOC)`}
+            : `Tất cả Nhà sáng tạo hệ thống (${filteredCount.toLocaleString('vi-VN')} Nhà sáng tạo)`}
         </span>
         <label className="cdiscovery-select-all-label">
           <input
@@ -50,7 +50,7 @@ export const DiscoveryResultsToolbar: React.FC<DiscoveryResultsToolbarProps> = (
 
       <div className="cdiscovery-results-right">
         <span className="cdiscovery-selected-badge">
-          Đã chọn: {selectedCreatorIds.size} KOC
+          Đã chọn: {selectedCreatorIds.size} Nhà sáng tạo
         </span>
         <Button
           type="primary"

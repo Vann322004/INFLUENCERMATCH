@@ -86,7 +86,7 @@ export const QualityFilterBar: React.FC<QualityFilterBarProps> = ({
         {highConfidenceCount > 0 && (
           <Popconfirm
             title={`Phê duyệt ${highConfidenceCount} hồ sơ đạt chuẩn?`}
-            description="Các hồ sơ này sẽ được xác nhận theo ngành hàng gợi ý và nạp vào danh mục KOC."
+            description="Các hồ sơ này sẽ được xác nhận theo ngành hàng gợi ý và nạp vào danh mục Nhà sáng tạo."
             onConfirm={onBatchApproveHighConfidence}
             okText="Duyệt tất cả"
             cancelText="Hủy"

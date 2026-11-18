@@ -67,7 +67,7 @@ export const CampaignOverviewTab: React.FC<CampaignOverviewTabProps> = ({
 
           {/* Định hướng nội dung cho KOC */}
           <div className="cdetail-brief-block">
-            <span className="cdetail-brief-label">Định hướng hợp tác với KOC</span>
+            <span className="cdetail-brief-label">Định hướng hợp tác với Nhà sáng tạo</span>
             <div className="cdetail-bullet-group">
               <div className="cdetail-bullet-item">
                 <span className="cdetail-bullet-bullet">•</span>
@@ -213,7 +213,7 @@ export const CampaignOverviewTab: React.FC<CampaignOverviewTabProps> = ({
               Kế hoạch nội dung & Bàn giao
             </span>
             <span style={{ fontSize: 12, color: '#1D4ED8', fontWeight: 600, background: '#EFF6FF', padding: '2px 8px', borderRadius: 6 }}>
-              {participatingCreators.length} KOC tham gia
+              {participatingCreators.length} Nhà sáng tạo tham gia
             </span>
           </div>
 
@@ -222,7 +222,7 @@ export const CampaignOverviewTab: React.FC<CampaignOverviewTabProps> = ({
               <div className="cdetail-deliv-badge">Giai đoạn 1</div>
               <div className="cdetail-deliv-info">
                 <div className="cdetail-deliv-title">Tuyển chọn và đàm phán hợp đồng</div>
-                <div className="cdetail-deliv-sub">Chốt danh sách {participatingCreators.length > 0 ? participatingCreators.length : 3} KOC phù hợp với định vị sản phẩm</div>
+                <div className="cdetail-deliv-sub">Chốt danh sách {participatingCreators.length > 0 ? participatingCreators.length : 3} Nhà sáng tạo phù hợp với định vị sản phẩm</div>
               </div>
             </div>
 
@@ -230,7 +230,7 @@ export const CampaignOverviewTab: React.FC<CampaignOverviewTabProps> = ({
               <div className="cdetail-deliv-badge">Giai đoạn 2</div>
               <div className="cdetail-deliv-info">
                 <div className="cdetail-deliv-title">Gửi sản phẩm mẫu và duyệt kịch bản</div>
-                <div className="cdetail-deliv-sub">KOC nhận mẫu thử và gửi kịch bản trước khi quay 3 ngày</div>
+                <div className="cdetail-deliv-sub">Nhà sáng tạo nhận mẫu thử và gửi kịch bản trước khi quay 3 ngày</div>
               </div>
             </div>
 

@@ -25,14 +25,14 @@ export const DiscoveryHeader: React.FC<DiscoveryHeaderProps> = ({ matchedCampaig
           {matchedCampaign?.name || 'Chiến dịch'}
         </span>
         <span className="cdiscovery-breadcrumb-sep">›</span>
-        <span className="cdiscovery-breadcrumb-current">Khám phá KOC</span>
+        <span className="cdiscovery-breadcrumb-current">Khám phá Nhà sáng tạo</span>
       </div>
 
       {/* 2. Tiêu đề trang */}
       <div className="cdiscovery-header-section">
-        <h1 className="cdiscovery-header-title">Khám phá KOC</h1>
+        <h1 className="cdiscovery-header-title">Khám phá Nhà sáng tạo</h1>
         <p className="cdiscovery-header-sub">
-          Tìm kiếm KOC phù hợp theo tên, ngành hàng, tương tác và phong cách nội dung.
+          Tìm kiếm Nhà sáng tạo phù hợp theo tên, ngành hàng, tương tác và phong cách nội dung.
         </p>
       </div>
     </>

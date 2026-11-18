@@ -59,7 +59,7 @@ export const CreateCampaignStep2: React.FC<CreateCampaignStep2Props> = ({
         <div>
           <div className="ccreate-card-title">Yêu cầu Creator & Chân dung khán giả</div>
           <div className="ccreate-card-subtitle">
-            Thiết lập các tiêu chí tuyển chọn KOC/KOL và đặc điểm nhân khẩu học tệp người theo dõi.
+            Thiết lập các tiêu chí tuyển chọn Nhà sáng tạo và đặc điểm nhân khẩu học tệp người theo dõi.
           </div>
         </div>
       </div>
@@ -128,8 +128,8 @@ export const CreateCampaignStep2: React.FC<CreateCampaignStep2Props> = ({
         />
         <div style={{ fontSize: 12, color: '#64748B', marginTop: 6 }}>
           {creatorMode === 'SINGLE'
-            ? 'Chế độ Đơn Creator tập trung vào 1 KOC/KOL chủ chốt (targetCreatorCount = 1).'
-            : 'Chế độ Đa Creator cho phép tuyển nhiều KOC/KOL cùng lúc để phủ rộng chiến dịch (targetCreatorCount ≥ 2).'}
+            ? 'Chế độ Đơn Creator tập trung vào 1 Nhà sáng tạo chủ chốt (targetCreatorCount = 1).'
+            : 'Chế độ Đa Creator cho phép tuyển nhiều Nhà sáng tạo cùng lúc để phủ rộng chiến dịch (targetCreatorCount ≥ 2).'}
         </div>
       </div>
 

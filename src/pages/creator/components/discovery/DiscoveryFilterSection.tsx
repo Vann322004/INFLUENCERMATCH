@@ -88,7 +88,7 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
           <div className="cdiscovery-filter-row-top">
             <div className="cdiscovery-search-input-group">
               <Input
-                placeholder="Tìm kiếm KOC theo tên, kênh, chủ đề, từ khóa..."
+                placeholder="Tìm kiếm Nhà sáng tạo theo tên, kênh, chủ đề, từ khóa..."
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
                 onPressEnter={onSearchSubmit}

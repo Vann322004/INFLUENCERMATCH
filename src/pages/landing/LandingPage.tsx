@@ -1123,7 +1123,7 @@ export default function LandingPage() {
                 />
                 <div>
                   <div className="lp-testi-name">Huy Tiện Ích</div>
-                  <div className="lp-testi-role">KOC Công nghệ & Đời sống (305K người theo dõi)</div>
+                  <div className="lp-testi-role">Nhà sáng tạo Công nghệ & Đời sống (305K người theo dõi)</div>
                 </div>
               </div>
             </div>

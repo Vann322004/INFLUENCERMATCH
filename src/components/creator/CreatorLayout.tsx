@@ -15,17 +15,20 @@ export default function CreatorLayout({ pageTitle }: CreatorLayoutProps) {
   return (
     <Layout style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden' }}>
       <CreatorSidebar />
-      <Layout style={{ background: '#F8FAFC', height: '100vh', overflow: 'hidden' }}>
-        <CreatorHeader title={pageTitle ?? (collaborationDetail ? 'Creator Portal' : undefined)} />
+      <Layout style={{ background: '#F5F6FA', height: '100vh', overflow: 'hidden' }}>
+        <CreatorHeader title={pageTitle ?? (collaborationDetail ? 'Chi tiết Hợp tác' : undefined)} />
         <Content
           className="creator-content-layout"
           style={{
-            background: '#F8FAFC',
+            background: '#F5F6FA',
             overflowY: 'auto',
             boxSizing: 'border-box',
+            padding: '24px 28px 40px',
           }}
         >
-          <Outlet />
+          <div className="app-page-wrapper">
+            <Outlet />
+          </div>
         </Content>
       </Layout>
     </Layout>
