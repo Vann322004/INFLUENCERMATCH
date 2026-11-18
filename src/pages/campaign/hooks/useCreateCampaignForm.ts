@@ -368,6 +368,12 @@ export function useCreateCampaignForm({
       finalFollowerMax = parsedMinFollowers >= 500000 ? undefined : parsedMinFollowers * 5;
     }
 
+    // An explicit minimum is a lower bound, not a creator-tier range.
+    if (parsedMinFollowers !== undefined) {
+      finalFollowerMin = parsedMinFollowers;
+      finalFollowerMax = undefined;
+    }
+
     if (savedFollowerRange.current && savedFollowerRange.current.tier === creatorTier && savedFollowerRange.current.selection === minFollowers) { finalFollowerMin = savedFollowerRange.current.min; finalFollowerMax = savedFollowerRange.current.max; }
     const primaryObj = selectedObjectives[0];
     const niches = interests

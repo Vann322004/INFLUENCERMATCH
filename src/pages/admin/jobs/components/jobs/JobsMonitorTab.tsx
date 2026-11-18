@@ -1,5 +1,6 @@
+import { collectionOutcome, collectionOutcomeLabel } from '../../../../../services/collectionDecision';
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Input, Select, Row, Col, Button, Space, message } from 'antd';
+import { Card, Table, Tag, Input, Select, Row, Col, Button, Space, message, Alert } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   SearchOutlined,
@@ -20,7 +21,7 @@ interface ActivityRecord {
 }
 
 const STATUS_COLOR_MAP: Record<string, { color: string; label: string }> = {
-  INGESTED:          { color: 'success',    label: 'Đã lưu hệ thống' },
+  INGESTED:          { color: 'default',    label: 'Đã thu thập dữ liệu' },
   DEEP_CRAWLING:     { color: 'processing', label: 'Đang cào dữ liệu' },
   DEEP_CRAWL_QUEUED: { color: 'warning',    label: 'Chờ cào sâu' },
   PREFLIGHT_DONE:    { color: 'purple',     label: 'Đã sàng lọc sơ bộ' },
@@ -31,18 +32,20 @@ const STATUS_COLOR_MAP: Record<string, { color: string; label: string }> = {
 const DECISION_COLOR_MAP: Record<string, { color: string; label: string }> = {
   AUTO_ACCEPT_KOC:      { color: 'green',   label: 'Đạt chuẩn Nhà sáng tạo' },
   AUTO_ACCEPT_KOL:      { color: 'purple',  label: 'Đạt chuẩn KOL' },
-  ACCEPTED:             { color: 'green',   label: 'Đạt chuẩn Nhà sáng tạo' },
-  PASS:                 { color: 'green',   label: 'Đạt chuẩn Nhà sáng tạo' },
+  ACCEPTED:             { color: 'green',   label: 'Đạt chuẩn' },
+  PASS:                 { color: 'green',   label: 'Đạt chuẩn' },
   MANAGER_APPROVED:     { color: 'cyan',    label: 'Chuyên viên duyệt' },
+  REJECTED:            { color: 'red', label: 'Từ chối (Không đủ điều kiện)' },
   AUTO_REJECT:          { color: 'red',     label: 'Từ chối (Bán hàng / Spam)' },
   MANAGER_REJECTED:     { color: 'volcano', label: 'Chuyên viên từ chối' },
-  NEEDS_MANAGER_REVIEW: { color: 'warning', label: 'Cần xem xét' },
-  SKIP_INSUFFICIENT:    { color: 'default', label: 'Chưa đủ dữ liệu' },
+  NEEDS_MANAGER_REVIEW: { color: 'warning', label: 'Chờ kiểm định phân loại / ngành' },
+  SKIP_INSUFFICIENT:    { color: 'red', label: 'Từ chối (Không đủ dữ liệu)' },
 };
 
 export default function JobsMonitorTab() {
   const [loading, setLoading] = useState<boolean>(true);
   const [overview, setOverview] = useState<CrawlMonitorOverview | null>(null);
+  const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [platformFilter, setPlatformFilter] = useState('all');
@@ -52,7 +55,9 @@ export default function JobsMonitorTab() {
     try {
       const data = await crawlerService.getOverview(50);
       setOverview(data);
+      setLoadError('');
     } catch (err: any) {
+      setLoadError(err.message || 'Unable to load collection history');
       message.error(err.message || 'Không thể tải dữ liệu giám sát từ máy chủ');
     } finally {
       setLoading(false);
@@ -61,15 +66,18 @@ export default function JobsMonitorTab() {
 
   useEffect(() => {
     fetchRealOverview();
+    const timer = setInterval(fetchRealOverview, 15000);
+    return () => clearInterval(timer);
   }, []);
 
   const items: ActivityRecord[] = overview?.activities?.items || [];
-  const stats = (overview?.stats || {}) as any;
+  const stats = overview?.stats || {};
 
   const totalCandidates = stats.total_candidates ?? items.length;
-  const activeCount = stats.active_crawls ?? items.filter((i) => i.status.includes('CRAWL')).length;
-  const completedCount = stats.completed ?? items.filter((i) => i.status === 'INGESTED').length;
-  const failedCount = stats.failed ?? items.filter((i) => i.status === 'FAILED').length;
+  const activeCount = items.filter(i => i.status.includes('CRAWL')).length;
+  const completedCount = items.filter(i => collectionOutcome(i.decision, i.primaryType) === 'accepted').length;
+  const failedCount = items.filter(i => i.status === 'FAILED' || collectionOutcome(i.decision, i.primaryType) === 'rejected').length;
+  const reviewCount = items.filter(i => collectionOutcome(i.decision, i.primaryType) === 'review').length;
 
   const filteredItems = items.filter((item) => {
     const q = search.toLowerCase();
@@ -78,7 +86,7 @@ export default function JobsMonitorTab() {
       item.id.toLowerCase().includes(q) ||
       item.username.toLowerCase().includes(q) ||
       (item.displayName && item.displayName.toLowerCase().includes(q));
-    const matchS = statusFilter === 'all' || item.status === statusFilter;
+    const matchS = statusFilter === 'all' || collectionOutcome(item.decision, item.primaryType) === statusFilter || item.status === statusFilter;
     const matchP = platformFilter === 'all' || item.platform.toLowerCase() === platformFilter.toLowerCase();
     return matchQ && matchS && matchP;
   });
@@ -120,8 +128,11 @@ export default function JobsMonitorTab() {
       title: 'Trạng thái quy trình',
       dataIndex: 'status',
       key: 'status',
-      render: (st: string) => {
-        const conf = STATUS_COLOR_MAP[st] || { color: 'default', label: st };
+      render: (st: string, record) => {
+        const outcome = collectionOutcome(record.decision, record.primaryType);
+        const conf = outcome !== 'pending'
+          ? { color: outcome === 'accepted' ? 'success' : outcome === 'rejected' ? 'error' : 'warning', label: collectionOutcomeLabel(outcome) }
+          : STATUS_COLOR_MAP[st] || { color: 'default', label: st };
         return (
           <Tag color={conf.color} style={{ borderRadius: 6, fontWeight: 600 }}>
             {conf.label}
@@ -134,16 +145,12 @@ export default function JobsMonitorTab() {
       dataIndex: 'decision',
       key: 'decision',
       render: (dec: string, r: ActivityRecord) => {
-        let conf = DECISION_COLOR_MAP[dec];
-        if (!conf) {
-          if (dec === 'ACCEPTED' || dec === 'PASS') {
-            conf = r.primaryType === 'KOL'
-              ? { color: 'purple', label: 'Đạt chuẩn KOL' }
-              : { color: 'green', label: 'Đạt chuẩn Nhà sáng tạo' };
-          } else {
-            conf = { color: 'default', label: dec || 'Chờ đánh giá' };
-          }
-        }
+        const outcome = collectionOutcome(dec, r.primaryType);
+        const conf = outcome === 'accepted'
+          ? { color: 'green', label: `Đạt chuẩn ${dec === 'AUTO_ACCEPT_KOL' || r.primaryType === 'KOL' ? 'KOL' : 'Nhà sáng tạo'}` }
+          : outcome === 'review'
+            ? { color: 'warning', label: collectionOutcomeLabel(outcome) }
+            : DECISION_COLOR_MAP[dec] || { color: 'default', label: dec || 'Chờ đánh giá' };
         return (
           <Tag color={conf.color} style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}>
             {conf.label}
@@ -180,15 +187,18 @@ export default function JobsMonitorTab() {
 
   return (
     <div>
+      {loadError && <Alert type="error" showIcon style={{ marginBottom: 16 }}
+        message="Không tải được lịch sử thu thập" description={loadError} />}
+      <div style={{ marginBottom: 12 }}>Kết quả trong {items.length} hoạt động gần nhất · Chờ kiểm định: {reviewCount}. Hoàn tất thu thập không đồng nghĩa được chấp nhận.</div>
       {/* 4 Thẻ thống kê thời gian thực */}
       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
         <Col xs={12} sm={6}>
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-            <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>TỔNG NHÀ SÁNG TẠO ĐÃ THU THẬP</div>
+            <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>TỔNG TÀI KHOẢN THU THẬP</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: '#1E293B', marginTop: 4 }}>
               {totalCandidates}
             </div>
-            <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Lưu trữ trong hệ thống</div>
+            <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Bao gồm tài khoản chưa được chấp nhận</div>
           </Card>
         </Col>
 
@@ -204,11 +214,11 @@ export default function JobsMonitorTab() {
 
         <Col xs={12} sm={6}>
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-            <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>ĐÃ LƯU THÀNH CÔNG</div>
+            <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>ĐÃ CHẤP NHẬN</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: '#10B981', marginTop: 4 }}>
               {completedCount}
             </div>
-            <div style={{ fontSize: 11, color: '#10B981', marginTop: 2 }}>Đã hoàn tất trích xuất</div>
+            <div style={{ fontSize: 11, color: '#10B981', marginTop: 2 }}>Đã đạt điều kiện và phân loại</div>
           </Card>
         </Col>
 
@@ -237,7 +247,9 @@ export default function JobsMonitorTab() {
 
           <Select value={statusFilter} onChange={setStatusFilter} style={{ minWidth: 160 }}>
             <Select.Option value="all">Tất cả trạng thái quy trình</Select.Option>
-            <Select.Option value="INGESTED">Đã lưu hệ thống</Select.Option>
+            <Select.Option value="accepted">Đã chấp nhận</Select.Option>
+            <Select.Option value="review">Chờ kiểm định</Select.Option>
+            <Select.Option value="rejected">Từ chối</Select.Option>
             <Select.Option value="DEEP_CRAWLING">Đang cào dữ liệu</Select.Option>
             <Select.Option value="DEEP_CRAWL_QUEUED">Chờ cào sâu</Select.Option>
             <Select.Option value="PREFLIGHT_DONE">Đã sàng lọc sơ bộ</Select.Option>

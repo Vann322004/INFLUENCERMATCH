@@ -1,5 +1,6 @@
 export interface QualityItem {
   metricId: string;
+  creatorType?: 'KOC' | 'KOL' | string;
   creatorId: string;
   platform: 'tiktok' | 'instagram' | 'youtube' | 'facebook' | string;
   userName: string;

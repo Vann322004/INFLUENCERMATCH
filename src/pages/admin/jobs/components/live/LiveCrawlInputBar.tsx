@@ -36,7 +36,7 @@ export default function LiveCrawlInputBar({
     >
       <div style={{ marginBottom: 14 }}>
         <Text style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', display: 'block' }}>
-          Thu thập dữ liệu trực tiếp Nhà sáng tạo theo thời gian thực
+          Cào dữ liệu trực tiếp nhà sáng tạo theo thời gian thực
         </Text>
         <div style={{ fontSize: 12.5, color: '#64748B', marginTop: 3 }}>
           Nhập đường dẫn kênh hoặc tên người dùng (TikTok, Facebook, Instagram). Hệ thống sẽ trích xuất tức thì thông tin hồ sơ và số liệu bài đăng mới nhất.

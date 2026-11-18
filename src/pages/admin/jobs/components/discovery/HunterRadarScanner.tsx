@@ -3,6 +3,7 @@ import { Card, Progress, Tag, Spin, Alert, Button } from 'antd';
 import { SyncOutlined, ArrowRightOutlined, AuditOutlined } from '@ant-design/icons';
 
 interface HunterRadarScannerProps {
+  loading?: boolean;
   currentKeyword: string;
   progressPercent: number;
   scannedCount: number;
@@ -14,6 +15,7 @@ interface HunterRadarScannerProps {
 }
 
 export default function HunterRadarScanner({
+  loading = false,
   currentKeyword,
   progressPercent,
   scannedCount,
@@ -23,7 +25,7 @@ export default function HunterRadarScanner({
   logLines,
   onNavigateQuality,
 }: HunterRadarScannerProps) {
-  const isRunning = progressPercent > 0 && progressPercent < 100;
+  const isRunning = loading;
   const isDone = progressPercent === 100;
 
   return (
@@ -51,11 +53,12 @@ export default function HunterRadarScanner({
             </Tag>
           )}
         </div>
-        <span style={{ fontSize: 12, color: '#94A3B8' }}>{progressPercent}%</span>
+        <span style={{ fontSize: 12, color: '#94A3B8' }}>{isRunning ? 'Đang chờ phản hồi' : `${progressPercent}%`}</span>
       </div>
 
       <Progress
-        percent={progressPercent}
+        percent={isRunning ? 0 : progressPercent}
+        showInfo={!isRunning}
         status={isRunning ? 'active' : isDone && matchedCount > 0 ? 'success' : 'normal'}
         strokeColor={{ '0%': '#2563EB', '100%': '#10B981' }}
         style={{ marginBottom: 16 }}

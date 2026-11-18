@@ -1,10 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Row, Col, Select, Tag, Input, Slider, Button, Typography, Radio } from 'antd';
-import { AppstoreOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { Alert, Select, Tag, Input, Slider, Button } from 'antd';
 import type { Niche } from '../../../../../services/api/nicheService';
 
-const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
@@ -15,7 +13,6 @@ export interface HunterSetupCardProps {
   topicsManagementPath: string;
   onReloadTopics: () => void;
   mode: 'category' | 'custom';
-  onModeChange: (m: 'category' | 'custom') => void;
   platform: string;
   selectedTopic: string;
   activeKeywords: string[];
@@ -30,20 +27,12 @@ export interface HunterSetupCardProps {
   onStartHunting: () => void;
 }
 
-const TIER0_RULES = [
-  'Tối thiểu 7.000 người theo dõi (loại bỏ clone, seeding ảo)',
-  'Chặn tài khoản bán sỉ / shop thương mại (dropship, kho buôn)',
-  'Chống trùng lặp — chỉ nạp Nhà sáng tạo chưa có trong Database',
-];
-
 export default function HunterSetupCard({
   topics,
   topicsLoading,
   topicsError,
   topicsManagementPath,
-  onReloadTopics,
   mode,
-  onModeChange,
   platform,
   selectedTopic,
   activeKeywords,
@@ -58,10 +47,15 @@ export default function HunterSetupCard({
   onStartHunting,
 }: HunterSetupCardProps) {
   const [customInput, setCustomInput] = React.useState('');
+  const platforms = mode === 'category' ? ['ALL', 'TIKTOK', 'FACEBOOK'] : ['TIKTOK', 'FACEBOOK', 'INSTAGRAM'];
+  const effectivePlatform = platforms.includes(platform) ? platform : mode === 'category' ? 'ALL' : 'TIKTOK';
+  React.useEffect(() => {
+    if (effectivePlatform !== platform) onPlatformChange(effectivePlatform);
+  }, [effectivePlatform, platform, onPlatformChange]);
 
   const handleAddKeyword = () => {
     const kw = customInput.trim().replace(/^#/, '');
-    if (kw && !activeKeywords.includes(kw)) {
+    if (!loading && kw && activeKeywords.length < 30 && !activeKeywords.includes(kw)) {
       onKeywordsChange([...activeKeywords, kw]);
       setCustomInput('');
     }
@@ -71,227 +65,93 @@ export default function HunterSetupCard({
     onKeywordsChange(activeKeywords.filter((k) => k !== kw));
   };
 
-  return (
-    <Card
-      style={{
-        borderRadius: 12,
-        border: '1px solid #E2E8F0',
-        marginBottom: 20,
-        boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
-      }}
-      bodyStyle={{ padding: 24 }}
-    >
-      {/* Header & Mode Switcher */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          flexWrap: 'wrap',
-          gap: 16,
-          marginBottom: 20,
-          borderBottom: '1px solid #F1F5F9',
-          paddingBottom: 16,
-        }}
-      >
-        <div>
-          <Text style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', display: 'block' }}>
-            {mode === 'category' ? 'Thu thập Nhà sáng tạo Tự Động theo Lĩnh vực' : 'Thu thập Nhà sáng tạo theo Danh sách Tùy chọn'}
-          </Text>
-          <Text style={{ fontSize: 12.5, color: '#64748B' }}>
-            {mode === 'category'
-              ? 'Tự động quét mạng xã hội theo từ khóa, phát hiện Nhà sáng tạo mới và loại bỏ shop/clone theo chuẩn Tier-0.'
-              : 'Trích xuất song song nhiều Nhà sáng tạo cùng lúc từ danh sách username hoặc đường dẫn kênh.'}
-          </Text>
-        </div>
+  const accounts = customUsernames.split(/[\n,]+/).map(value => value.trim()).filter(Boolean);
+  const selected = topics.find(topic => topic.id === selectedTopic);
+  const blockedReason = loading ? '' : mode === 'category'
+    ? topicsLoading ? 'Đang tải danh sách lĩnh vực…'
+      : topicsError ? 'Tải lại lĩnh vực để tiếp tục.'
+      : !selected ? 'Chọn một lĩnh vực để bắt đầu.'
+      : !activeKeywords.length ? 'Thêm ít nhất một từ khóa để bắt đầu.' : ''
+    : !accounts.length ? 'Nhập ít nhất một tài khoản để bắt đầu.' : '';
 
-        <Radio.Group
-          value={mode}
-          onChange={(e) => onModeChange(e.target.value)}
-          buttonStyle="solid"
-          size="middle"
-        >
-          <Radio.Button value="category" style={{ fontWeight: 600 }}>
-            <AppstoreOutlined style={{ marginRight: 6 }} /> Theo Lĩnh vực
-          </Radio.Button>
-          <Radio.Button value="custom" style={{ fontWeight: 600 }}>
-            <UnorderedListOutlined style={{ marginRight: 6 }} /> Theo Danh sách tùy chọn
-          </Radio.Button>
-        </Radio.Group>
+  return <section className="collection-hunter-setup">
+    <div className="collection-config-main">
+      <header className="collection-config-title">
+        <h2>{mode === 'category' ? 'Thiết lập tìm kiếm' : 'Thêm tài khoản cần thu thập'}</h2>
+        <p>{mode === 'category' ? 'Tìm kênh mới theo lĩnh vực và từ khóa bạn chọn.' : 'Nhập một hoặc nhiều kênh trên cùng nền tảng.'}</p>
+      </header>
+
+      <div className="collection-platform-field">
+        <label htmlFor={`platform-${mode}`}>Nền tảng</label>
+        <Select id={`platform-${mode}`} aria-label="Nền tảng" disabled={loading} value={effectivePlatform}
+          onChange={onPlatformChange} size="large">
+          {mode === 'category' && <Option value="ALL">TikTok và Facebook</Option>}
+          <Option value="TIKTOK">TikTok</Option>
+          <Option value="FACEBOOK">Facebook</Option>
+          {mode === 'custom' && <Option value="INSTAGRAM">Instagram</Option>}
+        </Select>
       </div>
 
-      <Row gutter={[20, 20]}>
-        {/* 1. Nền tảng */}
-        <Col xs={24} sm={mode === 'category' ? 9 : 8}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-            Nền tảng quét
-          </div>
-          <Select value={platform} onChange={onPlatformChange} style={{ width: '100%' }} size="large">
-            <Option value="ALL">Tất cả nền tảng (TikTok + Facebook)</Option>
-            <Option value="TIKTOK">TikTok</Option>
-            <Option value="FACEBOOK">Facebook</Option>
-            <Option value="INSTAGRAM">Instagram</Option>
-          </Select>
-        </Col>
+      {mode === 'category' ? <>
+        <section className="collection-field-section">
+          <div className="collection-field-heading"><h3>Lĩnh vực</h3><Link to={topicsManagementPath}>Quản lý lĩnh vực ↗</Link></div>
+          {topicsLoading ? <p className="collection-field-help">Đang tải lĩnh vực…</p>
+            : topicsError ? <Alert type="error" showIcon title="Không tải được lĩnh vực" description={topicsError}
+              action={<Button disabled={loading} onClick={onReloadTopics}>Thử lại</Button>} />
+            : !topics.length ? <Alert type="info" showIcon title="Chưa có lĩnh vực đang bật"
+              description={<Link to={topicsManagementPath}>Thêm hoặc bật lĩnh vực để tìm kiếm</Link>} />
+            : <div className="collection-topic-grid">{topics.map(topic =>
+              <Button key={topic.id} className={topic.id === selectedTopic ? 'is-selected' : ''}
+                aria-pressed={topic.id === selectedTopic} disabled={loading} onClick={() => onSelectTopic(topic.id)}>
+                <span className="collection-topic-indicator" aria-hidden="true">{topic.id === selectedTopic ? '✓' : ''}</span>
+                <span>{topic.name}</span>
+              </Button>)}</div>}
+        </section>
 
-        {mode === 'category' ? (
-          <>
-            {/* 2. Lĩnh vực */}
-            <Col xs={24} sm={15}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-                Lĩnh vực thu thập Nhà sáng tạo
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                <Button size="small" onClick={onReloadTopics} loading={topicsLoading} disabled={loading}>Làm mới</Button>
-              </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {topicsLoading && <Text type="secondary">Đang tải lĩnh vực...</Text>}
-                {!topicsLoading && topicsError && <Text type="secondary">Không tải được danh sách lĩnh vực. Nhấn “Làm mới” để thử lại.</Text>}
-                {!topicsLoading && !topicsError && topics.length === 0 && <Text type="secondary">Chưa có lĩnh vực đang bật. <Link to={topicsManagementPath}>Đến trang quản lý lĩnh vực</Link> để thêm hoặc bật lĩnh vực và cấu hình từ khóa.</Text>}
-                {!topicsLoading && topics.map((t) => {
-                  const isSelected = selectedTopic === t.id;
-                  return (
-                    <Tag
-                      key={t.id}
-                      onClick={() => { if (!loading) onSelectTopic(t.id); }}
-                      style={{
-                        cursor: 'pointer',
-                        padding: '5px 12px',
-                        borderRadius: 20,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        background: isSelected ? '#EFF6FF' : '#F8FAFC',
-                        color: isSelected ? '#1E40AF' : '#64748B',
-                        border: isSelected ? '1.5px solid #2563EB' : '1px solid #E2E8F0',
-                      }}
-                    >
-                      {t.name}
-                    </Tag>
-                  );
-                })}
-              </div>
-              {!topicsLoading && !topicsError && topics.length > 0 && <Text type="secondary" style={{ fontSize: 12 }}>Chọn lĩnh vực để nạp bộ từ khóa gợi ý đã lưu.</Text>}
-            </Col>
-
-            {/* 3. Từ khóa */}
-            <Col span={24}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-                Từ khóa & Hashtag đang săn
-              </div>
-              <Text type="secondary" style={{ fontSize: 12 }}>Thay đổi tại đây chỉ áp dụng cho đợt săn này. Bộ từ khóa mặc định được cấu hình tại trang quản lý lĩnh vực.</Text>
-              <div
-                style={{
-                  padding: '10px 12px',
-                  background: '#F8FAFC',
-                  borderRadius: 8,
-                  border: '1px solid #E2E8F0',
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 6,
-                  alignItems: 'center',
-                  minHeight: 44,
-                }}
-              >
-                {activeKeywords.map((kw) => (
-                  <Tag
-                    key={kw}
-                    closable
-                    onClose={() => handleRemoveKeyword(kw)}
-                    style={{
-                      background: '#FFFFFF',
-                      border: '1px solid #CBD5E1',
-                      borderRadius: 6,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: '#334155',
-                      margin: 0,
-                    }}
-                  >
-                    #{kw}
-                  </Tag>
-                ))}
-                <Input
-                  size="small"
-                  placeholder="Thêm từ khóa..."
-                  value={customInput}
-                  onChange={(e) => setCustomInput(e.target.value)}
-                  onPressEnter={handleAddKeyword}
-                  bordered={false}
-                  style={{ width: 160, fontSize: 12, padding: '2px 4px' }}
-                />
-              </div>
-            </Col>
-          </>
-        ) : (
-          /* Chế độ nhập danh sách tùy chọn */
-          <Col xs={24} sm={16}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-              Danh sách username hoặc link Nhà sáng tạo (mỗi dòng hoặc dấu phẩy)
+        <section className="collection-field-section collection-keywords">
+          <div className="collection-field-heading"><h3>Từ khóa tìm kiếm</h3><span>{activeKeywords.length}/30</span></div>
+          <p className="collection-field-help">Từ khóa được gợi ý theo lĩnh vực. Có thể chỉnh cho lượt này.</p>
+          <div className="collection-keyword-editor">
+            <div className="collection-keyword-tags">
+              {activeKeywords.map(kw => <Tag key={kw} closable={!loading} onClose={() => handleRemoveKeyword(kw)}>#{kw}</Tag>)}
+              {!activeKeywords.length && <span className="collection-keyword-empty">Chưa có từ khóa. Thêm từ khóa bên dưới.</span>}
             </div>
-            <TextArea
-              rows={3}
-              placeholder={`Nhập danh sách Nhà sáng tạo cần thu thập, ví dụ:\n@schannelvn\n@duytham\nhttps://www.tiktok.com/@linh.beauty`}
-              value={customUsernames}
-              onChange={(e) => onCustomUsernamesChange(e.target.value)}
-              style={{ borderRadius: 8, fontSize: 12.5 }}
-            />
-          </Col>
-        )}
+            <div className="collection-keyword-entry">
+              <Input aria-label="Thêm từ khóa" variant="borderless" placeholder="Nhập từ khóa hoặc hashtag…"
+                value={customInput} disabled={loading || activeKeywords.length >= 30}
+                onChange={event => setCustomInput(event.target.value)} onPressEnter={handleAddKeyword} />
+              <Button type="text" onClick={handleAddKeyword}
+                disabled={loading || !customInput.trim().replace(/^#/, '') || activeKeywords.length >= 30}>+ Thêm</Button>
+            </div>
+          </div>
+        </section>
+      </> : <section className="collection-field-section">
+        <div className="collection-field-heading"><h3>Tài khoản hoặc đường dẫn kênh</h3><span>{accounts.length} kênh</span></div>
+        <p className="collection-field-help">Mỗi dòng một tài khoản, hoặc ngăn cách bằng dấu phẩy.</p>
+        <TextArea aria-label="Danh sách tài khoản" rows={7} disabled={loading} value={customUsernames}
+          placeholder={'@schannelvn\n@duytham\nhttps://www.tiktok.com/@linh.beauty'}
+          onChange={event => onCustomUsernamesChange(event.target.value)} />
+      </section>}
+    </div>
 
-        {/* 4. Tiêu chuẩn Tier-0 */}
-        <Col xs={24} md={14}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-            Bộ lọc Tier-0 (tự động áp dụng)
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {TIER0_RULES.map((rule, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 12.5, color: '#475569' }}>
-                <span style={{ color: '#10B981', fontWeight: 700, marginTop: 1, flexShrink: 0 }}>✓</span>
-                <span>{rule}</span>
-              </div>
-            ))}
-          </div>
-        </Col>
-
-        {/* 5. Số lượng mục tiêu + nút chạy */}
-        <Col xs={24} md={10}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-              Số kênh thử tối đa
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: '#1D4ED8' }}>{maxKocs}</span>
-            <span style={{ fontSize: 13, color: '#64748B' }}>Nhà sáng tạo</span>
-          </div>
-          <Slider
-            min={3}
-            max={20}
-            step={mode === 'custom' ? 1 : 5}
-            value={maxKocs}
-            onChange={onMaxKocsChange}
-            marks={{ 3: '3', 5: '5', 10: '10', 20: '20' }}
-            style={{ marginBottom: 24 }}
-          />
-          <Button
-            type="primary"
-            size="large"
-            onClick={onStartHunting}
-            loading={loading}
-            disabled={mode === 'category' && (topicsLoading || !topics.some(topic => topic.id === selectedTopic) || activeKeywords.length === 0)}
-            block
-            style={{
-              height: 44,
-              borderRadius: 8,
-              background: 'linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 100%)',
-              border: 'none',
-              fontWeight: 700,
-              fontSize: 14,
-              boxShadow: '0 3px 10px rgba(29, 78, 216,0.3)',
-            }}
-          >
-            {mode === 'category' ? 'Bắt đầu thu thập tự động' : 'Bắt đầu thu thập danh sách Nhà sáng tạo'}
-          </Button>
-        </Col>
-      </Row>
-    </Card>
-  );
+    <aside className="collection-config-sidebar">
+      <div className="collection-sidebar-heading"><span className="collection-sidebar-dot" /><h3>Phạm vi thu thập</h3></div>
+      <p className="collection-sidebar-copy">Chọn số kênh tối đa cho lượt này.</p>
+      <div className="collection-channel-count"><strong>{maxKocs}</strong><span>kênh / lượt</span></div>
+      <Slider aria-label="Số kênh thu thập tối đa" min={1} max={20} step={1}
+        marks={{ 1: '1', 5: '5', 10: '10', 15: '15', 20: '20' }} value={maxKocs} disabled={loading} onChange={onMaxKocsChange} />
+      <p className="collection-limit-note">{mode === 'category'
+        ? 'Số kênh thực tế phụ thuộc vào kết quả tìm kiếm phù hợp.'
+        : `Xử lý tối đa ${Math.min(accounts.length, maxKocs)} trong ${accounts.length} kênh đã nhập.`}</p>
+      <div className="collection-start-section">
+        <Button type="primary" size="large" block loading={loading} disabled={!!blockedReason} onClick={onStartHunting}>
+          {loading ? 'Đang thu thập…' : 'Bắt đầu thu thập'}
+        </Button>
+        <p className={blockedReason ? 'collection-start-hint' : 'collection-ready-hint'} aria-live="polite">
+          {blockedReason || (loading ? 'Kết quả sẽ hiển thị bên dưới khi hoàn tất.' : 'Đã đủ thông tin để bắt đầu.')}
+        </p>
+      </div>
+    </aside>
+  </section>;
 }
+

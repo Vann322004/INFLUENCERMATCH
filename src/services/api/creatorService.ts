@@ -1,6 +1,7 @@
 import { apiClient } from '../apiClient';
 import { shortlistService } from './shortlistService';
 import { createAdminQuery } from '../adminCache';
+import { assertContextFilteredDiscovery } from '../discoveryContract';
 import type { ApiResponse } from '../../types/api/common.types';
 import type {
   CreatorItem,
@@ -30,12 +31,12 @@ const getCreators = createAdminQuery('creators:list', async (): Promise<CreatorI
 
 export const creatorService = {
   /**
-   * Khám phá Creator cho chiến dịch qua 4-Stage Hybrid Discovery Pipeline
+   * Lọc Creator có sẵn trong DB theo ngữ cảnh chiến dịch, chưa chấm điểm AI.
    * Swagger Tag: "Creator Discovery"
    * GET /campaigns/{campaignId}/discovery
    * OperationId: discoverCreators
    * Summary: Discover creators for campaign
-   * Description: Executes the 4-Stage Hybrid Discovery Pipeline (Hard Filters + Semantic & FTS Search + Rank Fusion + Fallback) to find creators.
+   * AI scoring is available separately after the Brand selects its shortlist.
    * Query params: keyword, niche, minFollowers, maxFollowers, page, size
    */
   async discoverCreators(
@@ -46,7 +47,9 @@ export const creatorService = {
       `/campaigns/${campaignId}/discovery`,
       { params }
     );
-    return response.data?.data || (response.data as unknown as CreatorDiscoveryPageResponse);
+    const page = response.data?.data || (response.data as unknown as CreatorDiscoveryPageResponse);
+    assertContextFilteredDiscovery(page);
+    return page;
   },
   /**
    * Lấy danh sách toàn bộ creator công khai
