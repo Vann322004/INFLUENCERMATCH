@@ -6,7 +6,6 @@ const UPSTREAM_ORIGIN = `https://${UPSTREAM_HOST}`;
 const agent = new https.Agent({
   keepAlive: true,
   maxSockets: 50,
-  rejectUnauthorized: false,
 });
 
 // Only forward clean client headers; never forward Vercel/proxy headers like
@@ -21,6 +20,7 @@ const ALLOWED_REQUEST_HEADERS = new Set([
   'content-length',
   'content-type',
   'cookie',
+  'idempotency-key',
   'if-match',
   'if-none-match',
   'pragma',
@@ -51,7 +51,7 @@ export default function handler(req, res) {
     res.setHeader(
       'Access-Control-Allow-Headers',
       req.headers['access-control-request-headers'] ||
-        'Content-Type, Authorization, X-XSRF-TOKEN, X-CSRF-TOKEN, X-Requested-With, If-Match',
+        'Content-Type, Authorization, X-XSRF-TOKEN, X-CSRF-TOKEN, X-Requested-With, If-Match, Idempotency-Key',
     );
     res.statusCode = 204;
     res.end();
