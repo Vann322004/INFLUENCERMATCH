@@ -20,7 +20,7 @@ export default function DirectCrawlModal({
 }: DirectCrawlModalProps) {
   return (
     <Modal
-      title="Cào dữ liệu nhà sáng tạo trực tiếp"
+      title={initialResult ? 'Chi tiết kết quả thu thập' : 'Thu thập dữ liệu trực tiếp'}
       open={open}
       onCancel={onClose}
       footer={null}

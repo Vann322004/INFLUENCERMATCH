@@ -180,7 +180,7 @@ export default function LiveCrawlProfileCard({ result, engagementRate }: LiveCra
                 }}
               >
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', whiteSpace: 'nowrap' }}>
-                  SỐ BÀI ĐĂNG
+                  TỔNG BÀI TRÊN KÊNH
                 </div>
                 <div
                   style={{
@@ -224,7 +224,7 @@ export default function LiveCrawlProfileCard({ result, engagementRate }: LiveCra
                   {engagementRate > 0 ? `${engagementRate}%` : '—'}
                 </div>
                 <div style={{ fontSize: 10.5, color: '#15803D', marginTop: 2, whiteSpace: 'nowrap' }}>
-                  Trung bình
+                  {result.recent_posts?.length ? 'Trung bình bài đã thu thập' : 'Chưa có bài để tính'}
                 </div>
               </div>
             </Col>
@@ -236,10 +236,7 @@ export default function LiveCrawlProfileCard({ result, engagementRate }: LiveCra
               <strong>Mã tác giả:</strong> <Text code>{result.author_id || 'Chưa có'}</Text>
             </span>
             <span>
-              <strong>Thời gian cào:</strong> {new Date().toLocaleTimeString('vi-VN')}
-            </span>
-            <span>
-              <strong>Chế độ:</strong> Trực tiếp thời gian thực
+              <strong>Thời gian thu thập:</strong> {result.collected_at && !Number.isNaN(Date.parse(result.collected_at)) ? new Date(result.collected_at).toLocaleString('vi-VN') : 'Chưa có thời gian từ nguồn dữ liệu'}
             </span>
           </div>
         </Col>

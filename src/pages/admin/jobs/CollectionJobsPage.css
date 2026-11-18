@@ -1,0 +1,52 @@
+.collection-jobs-page { color: #0f172a; }
+.collection-jobs-page > .ant-card { border: 1px solid #e1e7f0; }
+.collection-jobs-page > .ant-card > .ant-card-body > .ant-tabs > .ant-tabs-nav { background: #f5f7fc !important; }
+.collection-jobs-page > .ant-card .ant-tabs-content-holder { background: #fff; }
+.collection-hunter-setup { display: grid; grid-template-columns: minmax(0, 1fr) 310px; max-width: 1440px; margin: 0 auto 12px; border: 1px solid #e0e6ef; border-radius: 12px; overflow: hidden; background: #fff; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+.collection-config-main { min-width: 0; padding: 28px 32px 32px; }
+.collection-config-title { margin-bottom: 24px; }
+.collection-config-title h2 { margin: 0 0 6px; color: #18283f; font-size: 18px; line-height: 1.5; font-weight: 650; }
+.collection-config-title p, .collection-field-help { font-size: 13px; color: #6b7b91; line-height: 1.65; margin: 0; }
+.collection-platform-field { display: grid; grid-template-columns: 120px minmax(0, 360px); gap: 16px; align-items: center; padding: 18px 20px; background: #f3f6fb; border-radius: 8px; }
+.collection-platform-field label { font-size: 13px; font-weight: 600; color: #334155; }
+.collection-platform-field .ant-select { width: 100%; }
+.collection-field-section { margin-top: 24px; }
+.collection-field-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.collection-field-heading h3, .collection-sidebar-heading h3 { margin: 0; font-size: 14px; color: #334155; font-weight: 650; }
+.collection-field-heading > a { font-size: 12px; color: #4f73b5; }
+.collection-field-heading > span { font-size: 12px; color: #8190a4; }
+.collection-topic-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.collection-topic-grid .ant-btn { height: auto; min-height: 44px; display: flex; justify-content: flex-start; white-space: normal; text-align: left; gap: 10px; padding: 11px 12px; border-radius: 8px; border-color: #e1e7ef; box-shadow: none; background: #fcfdff; color: #536278; font-size: 12px; line-height: 1.5; font-weight: 500; }
+.collection-topic-grid .ant-btn.is-selected { border-color: #85a9f5; background: #edf3ff; color: #1d4ed8; }
+.collection-topic-indicator { flex-shrink: 0; display: grid; place-items: center; width: 16px; height: 16px; border: 1px solid #cbd5e1; border-radius: 50%; font-size: 10px; color: white; background: #fff; }
+.collection-topic-grid .is-selected .collection-topic-indicator { background: #2563eb; border-color: #2563eb; }
+.collection-keywords .collection-field-heading { margin-bottom: 5px; }
+.collection-keyword-editor { border: 1px solid #dbe3ee; border-radius: 8px; overflow: hidden; margin-top: 12px; background: #fff; }
+.collection-keyword-tags { padding: 14px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 62px; }
+.collection-keyword-tags .ant-tag { margin: 0; border: 0; border-radius: 5px; padding: 3px 8px; background: #eaf0fb; color: #3b5b91; font-size: 12px; line-height: 22px; }
+.collection-keyword-empty { color: #8996a8; font-size: 12px; }
+.collection-keyword-entry { display: flex; gap: 8px; align-items: center; padding: 5px 8px; background: #f7f9fc; border-top: 1px solid #e9edf4; }
+.collection-keyword-entry .ant-input { min-width: 0; font-size: 13px; }
+.collection-keyword-entry .ant-btn { font-size: 12px; color: #3b68b5; }
+.collection-field-section > textarea { margin-top: 12px; font-size: 14px; line-height: 1.8; }
+.collection-config-sidebar { min-width: 0; padding: 30px 24px; background: #eff4fc; border-left: 1px solid #e0e7f2; }
+.collection-sidebar-heading { display: flex; align-items: center; gap: 9px; }
+.collection-sidebar-dot { width: 7px; height: 7px; border-radius: 50%; background: #2563eb; }
+.collection-sidebar-copy { font-size: 12px; line-height: 1.65; color: #6b7b91; margin: 10px 0 0; }
+.collection-channel-count { display: flex; align-items: baseline; gap: 10px; margin-top: 32px; }
+.collection-channel-count strong { color: #234f9e; font-size: 48px; line-height: 1.2; font-weight: 650; letter-spacing: -2px; }
+.collection-channel-count span { color: #71829b; font-size: 13px; }
+.collection-config-sidebar .ant-slider { margin: 22px 6px 32px; }
+.collection-config-sidebar .ant-slider-rail { background: #d6e0f0; }
+.collection-limit-note { font-size: 12px; line-height: 1.8; color: #718099; margin: 0; }
+.collection-start-section { margin-top: 30px; padding-top: 24px; border-top: 1px solid #d9e3f2; }
+.collection-start-section .ant-btn { height: 44px; font-size: 13px; font-weight: 600; border-radius: 8px; box-shadow: none; }
+.collection-start-section .ant-btn-primary:not(:disabled) { background: #2563eb; color: #fff; }
+.collection-start-section .ant-btn-primary:not(:disabled):hover { background: #1d4ed8; }
+.collection-start-section .ant-btn:disabled { background: #dce4f1; color: #7d8ba1; border-color: #dce4f1; }
+.collection-start-hint, .collection-ready-hint { font-size: 12px; line-height: 1.7; margin: 10px 0 0; color: #75849b; }
+.collection-ready-hint { color: #507663; }
+@media (min-width: 1600px) { .collection-config-main { padding: 30px 36px 36px; } .collection-hunter-setup { grid-template-columns: minmax(0, 1fr) 330px; } }
+@media (max-width: 900px) { .collection-hunter-setup { grid-template-columns: minmax(0, 1fr); } .collection-config-sidebar { border-left: none; border-top: 1px solid #e0e7f2; } .collection-channel-count { margin-top: 16px; } .collection-config-sidebar .ant-slider { max-width: 540px; } .collection-start-section { margin-top: 20px; } }
+@media (max-width: 600px) { .collection-config-main { padding: 20px 16px; } .collection-topic-grid { grid-template-columns: minmax(0, 1fr); } .collection-platform-field { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 14px; } .collection-config-sidebar { padding: 22px 16px; } .collection-field-heading > a { font-size: 11px; } }
+

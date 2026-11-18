@@ -1,10 +1,10 @@
 import { useCollectionState } from '../../../hooks/useCollectionState';
 import React, { useState } from 'react';
-import { Card, Button, Space, Tag, Tabs, message } from 'antd';
+import { Card, Button, Space, Tabs, message } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import AutoHunterTab from './components/discovery/AutoHunterTab';
-import LiveCrawlTab from './components/LiveCrawlTab';
 import JobsMonitorTab from './components/jobs/JobsMonitorTab';
+import './CollectionJobsPage.css';
 import { crawlerService } from '../../../services/api/crawlerService';
 
 export default function CollectionJobsPage() {
@@ -25,7 +25,7 @@ export default function CollectionJobsPage() {
   };
 
   return (
-    <div>
+    <div className="collection-jobs-page">
       {/* Header */}
       <div
         style={{
@@ -40,9 +40,7 @@ export default function CollectionJobsPage() {
         <div>
           <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 22, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span>Trung tâm Thu thập & Cào Dữ liệu</span>
-            <Tag color="purple" style={{ borderRadius: 6, fontWeight: 700 }}>
-              Tìm nhà sáng tạo thông minh
-            </Tag>
+
           </div>
           <div style={{ color: '#64748B', fontSize: 13, marginTop: 4 }}>
             Tự động săn lùng & phát hiện nhà sáng tạo mới theo chủ đề/hashtag, cào dữ liệu trực tiếp và giám sát các tác vụ nền.
@@ -81,25 +79,25 @@ export default function CollectionJobsPage() {
           items={[
             {
               key: 'hunter',
-              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Tìm & Thu thập nhà sáng tạo</span>,
+              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Tìm theo lĩnh vực</span>,
               children: (
                 <div style={{ padding: '24px 24px 32px' }}>
-                  <AutoHunterTab />
+                  <AutoHunterTab mode="category" />
                 </div>
               ),
             },
             {
               key: 'live',
-              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Thu thập trực tiếp</span>,
+              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Thu thập theo tài khoản</span>,
               children: (
                 <div style={{ padding: '24px 24px 32px' }}>
-                  <LiveCrawlTab />
+                  <AutoHunterTab mode="custom" />
                 </div>
               ),
             },
             {
               key: 'jobs',
-              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Tiến trình thu thập</span>,
+              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Lịch sử thu thập</span>,
               children: (
                 <div style={{ padding: '20px 20px 24px' }}>
                   <JobsMonitorTab />

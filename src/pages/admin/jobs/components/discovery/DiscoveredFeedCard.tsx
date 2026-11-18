@@ -252,7 +252,7 @@ export default function DiscoveredFeedCard({
               onClick={() => handleInspect(r)}
               style={{ borderRadius: 6 }}
             >
-              Cào sâu
+              Xem chi tiết
             </Button>
           )}
         </Space>

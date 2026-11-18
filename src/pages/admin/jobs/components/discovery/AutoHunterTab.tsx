@@ -5,7 +5,7 @@ import { useCollectionState } from '../../../../../hooks/useCollectionState';
 import type { LiveCrawlResult } from '../../../../../types/api/crawler.types';
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Alert, message, Table, Tag } from 'antd';
+import { Alert, Button, message, Table, Tag } from 'antd';
 import HunterSetupCard from './HunterSetupCard';
 import { nicheService, type Niche } from '../../../../../services/api/nicheService';
 import HunterRadarScanner from './HunterRadarScanner';
@@ -64,22 +64,21 @@ function isShopAccount(username: string, displayName?: string, bio?: string): bo
   return shopPatterns.some((pattern) => pattern.test(text));
 }
 
-export default function AutoHunterTab() {
-  const [mode, setMode] = useCollectionState<'category' | 'custom'>('hunter.mode', 'category');
-  const [platform, setPlatform] = useCollectionState<string>('hunter.platform', 'ALL');
+export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category' | 'custom' }) {
+  const [platform, setPlatform] = useCollectionState<string>(`hunter.${mode}.platform`, 'ALL');
   const [topics, setTopics] = useState<Niche[]>([]);
   const [topicsLoading, setTopicsLoading] = useState(true);
   const [topicsError, setTopicsError] = useState('');
   const [topicsVersion, setTopicsVersion] = useState(0);
-  const [selectedTopic, setSelectedTopic] = useCollectionState<string>('hunter.selectedTopic', '');
-  const [activeKeywords, setActiveKeywords] = useCollectionState<string[]>('hunter.activeKeywords', []);
-  const [customUsernames, setCustomUsernames] = useCollectionState<string>('hunter.customUsernames', '');
-  const [maxKocs, setMaxKocs] = useCollectionState<number>('hunter.maxKocs', 5);
-  const [loading, setLoading] = useCollectionState<boolean>('hunter.loading', false, false);
+  const [selectedTopic, setSelectedTopic] = useCollectionState<string>(`hunter.${mode}.selectedTopic`, '');
+  const [activeKeywords, setActiveKeywords] = useCollectionState<string[]>(`hunter.${mode}.activeKeywords`, []);
+  const [customUsernames, setCustomUsernames] = useCollectionState<string>(`hunter.${mode}.customUsernames`, '');
+  const [maxKocs, setMaxKocs] = useCollectionState<number>(`hunter.${mode}.maxKocs`, 5);
+  const [loading, setLoading] = useCollectionState<boolean>(`hunter.${mode}.loading`, false, false);
 
   // Radar state — driven bởi response thực từ API
-  const [currentKeyword, setCurrentKeyword] = useCollectionState<string>('hunter.currentKeyword', '');
-  const [progressPercent, setProgressPercent] = useCollectionState<number>('hunter.progressPercent', 0);
+  const [currentKeyword, setCurrentKeyword] = useCollectionState<string>(`hunter.${mode}.currentKeyword`, '');
+  const [progressPercent, setProgressPercent] = useCollectionState<number>(`hunter.${mode}.progressPercent`, 0);
   const [waitSeconds, setWaitSeconds] = useState(0);
   const [huntError, setHuntError] = useState('');
   useEffect(() => {
@@ -91,23 +90,24 @@ export default function AutoHunterTab() {
     return () => clearInterval(timer);
   }, [loading]);
 
-  const [scannedCount, setScannedCount] = useCollectionState<number>('hunter.scannedCount', 0);
-  const [filteredOutCount, setFilteredOutCount] = useCollectionState<number>('hunter.filteredOutCount', 0);
-  const [pendingReviewCount, setPendingReviewCount] = useCollectionState<number | null>('hunter.pendingReviewCount', null);
-  const [matchedCount, setMatchedCount] = useCollectionState<number>('hunter.matchedCount', 0);
-  const [logLines, setLogLines] = useCollectionState<string[]>('hunter.logLines', []);
+  const [scannedCount, setScannedCount] = useCollectionState<number>(`hunter.${mode}.scannedCount`, 0);
+  const [filteredOutCount, setFilteredOutCount] = useCollectionState<number>(`hunter.${mode}.filteredOutCount`, 0);
+  const [pendingReviewCount, setPendingReviewCount] = useCollectionState<number | null>(`hunter.${mode}.pendingReviewCount`, null);
+  const [matchedCount, setMatchedCount] = useCollectionState<number>(`hunter.${mode}.matchedCount`, 0);
+  const [logLines, setLogLines] = useCollectionState<string[]>(`hunter.${mode}.logLines`, []);
 
   // Discovered Feed
-  const [discoveredList, setDiscoveredList] = useCollectionState<DiscoveredKocItem[]>('hunter.discoveredList', []);
+  const [discoveredList, setDiscoveredList] = useCollectionState<DiscoveredKocItem[]>(`hunter.${mode}.discoveredList`, []);
   const [inspectModalOpen, setInspectModalOpen] = useState<boolean>(false);
   const [inspectUsername, setInspectUsername] = useState<string>('');
 
-  const [rawResults, setRawResults] = useCollectionState<LiveCrawlResult[]>('hunter.results', []);
+  const [rawResults, setRawResults] = useCollectionState<LiveCrawlResult[]>(`hunter.${mode}.results`, []);
   const feedRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
+    if (mode !== 'category') { setTopicsLoading(false); return; }
     let active = true;
     nicheService.list().then(rows => {
       if (!active) return;
@@ -132,7 +132,7 @@ export default function AutoHunterTab() {
       setTopicsError(`Không tải được lĩnh vực tìm nhà sáng tạo${status ? ` (HTTP ${status})` : ''}. ${detail}`);
     }).finally(() => { if (active) setTopicsLoading(false); });
     return () => { active = false; };
-  }, [topicsVersion]);
+  }, [topicsVersion, mode]);
 
   const reloadTopics = () => {
     setTopicsLoading(true);
@@ -213,7 +213,7 @@ export default function AutoHunterTab() {
     }, 60000);
 
     try {
-      const res = await crawlerService.batchCrawl({
+      const res = mode === 'custom' ? await crawlerService.collectAccounts(crawlPlatform, usernamesToCrawl, maxKocs) : await crawlerService.batchCrawl({
         platform: crawlPlatform,
         category: mode === 'category' ? categoryCode : undefined,
         keywords: mode === 'category' ? activeKeywords : undefined,
@@ -417,7 +417,6 @@ export default function AutoHunterTab() {
 
   return (
     <div>
-      {topicsError && <Alert type="error" showIcon title={topicsError} style={{ marginBottom: 16 }} />}
       <HunterSetupCard
         topics={topics}
         topicsLoading={topicsLoading}
@@ -425,7 +424,6 @@ export default function AutoHunterTab() {
         topicsManagementPath={`${location.pathname.startsWith('/data-manager') ? '/data-manager' : '/admin'}/data-sources`}
         onReloadTopics={reloadTopics}
         mode={mode}
-        onModeChange={setMode}
         platform={platform}
         selectedTopic={selectedTopic}
         activeKeywords={activeKeywords}
@@ -481,6 +479,8 @@ export default function AutoHunterTab() {
               { title: 'Lý do / chi tiết', key: 'reason', render: (_, row) =>
                 row.error || row.sync_error || (row.reason_codes?.length ? row.reason_codes.join(', ') :
                   row.decision === 'SKIP_INSUFFICIENT' ? 'Chưa đủ dữ liệu xác minh' : row.decision || 'Chưa có lý do từ crawler') },
+              { title: 'Thao tác', key: 'details', width: 120, render: (_, row) => <Button size="small"
+                disabled={row.status === 'error'} onClick={() => { setInspectUsername(row.username); setInspectModalOpen(true); }}>Xem chi tiết</Button> },
             ]} />
         </div>
       )}

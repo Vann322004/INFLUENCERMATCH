@@ -4,6 +4,31 @@ import { readFileSync } from 'node:fs';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
 
+test('account collection uses direct scraping for one account and batch for multiple accounts', async () => {
+  const calls = [];
+  const { crawlerService } = load('src/services/api/crawlerService.ts', 'crawlerService', {
+    invalidateDataManagerCacheForMutation() {},
+    invalidateAdminCacheForMutation() {},
+    requestCrawler: async (_, path, options) => {
+      calls.push({ path, body: JSON.parse(options.body) });
+      return path.endsWith('/test-scrape')
+        ? { status: 'success', platform: 'TIKTOK', username: 'alice', latency_ms: 250 }
+        : { status: 'success', results: [], summary: {} };
+    },
+  });
+  const single = await crawlerService.collectAccounts('TIKTOK', [' @alice ', '@alice'], 5);
+  assert.equal(calls[0].path, '/api/v1/crawl/test-scrape');
+  assert.equal(calls[0].body.profile_url, 'alice');
+  assert.equal(single.results[0].username, 'alice');
+  assert.equal(single.summary.total_requested, 1);
+  await crawlerService.collectAccounts('FACEBOOK', ['alice', 'bob', 'charlie'], 2);
+  assert.equal(calls[1].path, '/api/v1/crawl/batch-crawl');
+  assert.deepEqual(calls[1].body.usernames, ['alice', 'bob']);
+  assert.equal(calls[1].body.max_channels, 2);
+  await assert.rejects(crawlerService.collectAccounts('TIKTOK', ['  ', '@']), /tài khoản/);
+  assert.equal(calls.length, 2);
+});
+
 function load(file, exports, globals = {}) {
   const source = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8')
     .replace(/^import[\s\S]*?;\r?\n/gm, '')

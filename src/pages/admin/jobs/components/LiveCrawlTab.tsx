@@ -2,7 +2,7 @@ import { canQueueCollectionResult, collectionOutcome, collectionOutcomeLabel } f
 import { saveCollectionResults } from '../../../../services/collectionResults';
 import { useCollectionState } from '../../../../hooks/useCollectionState';
 import React, { useRef, useState } from 'react';
-import { Card, Button, Space, Tag, Typography, Spin, message } from 'antd';
+import { Alert, Card, Button, Space, Tag, Typography, Spin, message } from 'antd';
 import { crawlerService } from '../../../../services/api/crawlerService';
 import type { CrawlPlatform, LiveCrawlResult } from '../../../../types/api/crawler.types';
 import LiveCrawlInputBar from './live/LiveCrawlInputBar';
@@ -25,6 +25,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
   const [currentStep, setCurrentStep] = useCollectionState(`live.${defaultInput}.currentStep`, '', false);
   const [submitting, setSubmitting] = useState<'queue' | 'catalog' | null>(null);
   const submittingRef = useRef(false);
+  const [freshResult, setFreshResult] = useState(false);
 
   const handleInputChange = (val: string) => {
     setInputUrl(val);
@@ -52,6 +53,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
 
       const res = await crawlerService.testScrape(inputUrl, platform);
       setResult(res);
+      setFreshResult(true);
       saveCollectionResults([res], 'manual');
       const latencySec = res.latency_ms ? (res.latency_ms / 1000).toFixed(1) : '0.5';
       message.success(`Cào thành công @${res.username}! (${latencySec} giây)`);
@@ -73,13 +75,13 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
     if (!result || submittingRef.current || collectionOutcome(result.decision, result.primary_type) !== 'accepted') return;
     submittingRef.current = true;
     setSubmitting('catalog');
-    message.loading({ content: `Đang lưu hồ sơ @${result.username} vào hệ thống...`, key: 'import_catalog' });
+    message.loading({ content: `Đang gửi yêu cầu cào sâu @${result.username}...`, key: 'import_catalog' });
     try {
       await crawlerService.enqueueCandidate(result.platform as CrawlPlatform, result.username, true);
-      message.success({ content: `Đã đưa @${result.username} vào hàng đợi đồng bộ. Kiểm tra tiến trình để xác nhận kết quả lưu.`, key: 'import_catalog' });
+      message.success({ content: `Đã gửi yêu cầu cào sâu @${result.username}. Theo dõi kết quả tại Tiến trình thu thập.`, key: 'import_catalog' });
       if (onImportSuccess) onImportSuccess(result);
     } catch (err: any) {
-      message.error({ content: err.message || 'Lỗi khi lưu vào hệ thống', key: 'import_catalog' });
+      message.error({ content: err.message || 'Không gửi được yêu cầu cào sâu', key: 'import_catalog' });
     } finally {
       submittingRef.current = false;
       setSubmitting(null);
@@ -119,14 +121,17 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
   return (
     <div>
       {/* 1. Thanh tìm kiếm và chọn nền tảng */}
-      <LiveCrawlInputBar
+      {(!initialResult || freshResult) && <LiveCrawlInputBar
         inputUrl={inputUrl}
         platform={platform}
         loading={loading}
         onInputChange={handleInputChange}
         onPlatformChange={setPlatform}
         onCrawl={handleCrawl}
-      />
+      />}
+      {initialResult && !freshResult && <Alert type="info" showIcon
+        style={{ marginBottom: 16 }} title="Kết quả từ lượt thu thập trước"
+        description="Mở chi tiết không chạy thêm lượt thu thập. Chọn Thu thập lại để lấy dữ liệu mới; yêu cầu cào sâu được xử lý riêng qua hàng đợi." />}
 
       {/* 2. Trạng thái đang cào */}
       {loading && (
@@ -177,7 +182,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
                 Sao chép dữ liệu
               </Button>
               <Button onClick={handleCrawl} disabled={submitting !== null}>
-                Cào lại
+                Thu thập lại
               </Button>
               <Button
                 onClick={handleSendToQueue}
@@ -199,7 +204,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
                   borderRadius: 6,
                 }}
               >
-                Lưu vào Danh mục
+                Yêu cầu cào sâu
               </Button>
             </Space>
           </div>
