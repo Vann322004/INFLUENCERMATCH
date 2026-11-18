@@ -260,7 +260,7 @@ export default function RegisterPage() {
               Điều khoản
             </a>{' '}
             và{' '}
-            <a href="#privacy" className="register-legal-link" onClick={(e) => e.preventDefault()}>
+            <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="register-legal-link">
               Chính sách bảo mật
             </a>
           </Checkbox>

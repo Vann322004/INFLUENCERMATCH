@@ -55,7 +55,7 @@ export default function AuditLogPage() {
   };
 
   const columns: TableColumnsType<AuditLogItem> = [
-    { title: 'Thời gian', dataIndex: 'createdAt', render: value => <><span className="audit-cell-label" aria-hidden="true">Thời gian Backend</span><time>{auditTimestamp(value)}</time></> },
+    { title: 'Thời gian', dataIndex: 'createdAt', render: value => <><span className="audit-cell-label" aria-hidden="true">Thời gian Backend</span><time dateTime={value || undefined} title={value || undefined}>{auditTimestamp(value)}</time></> },
     { title: 'Người thực hiện', dataIndex: 'actorId', render: (value, log) => <>
       <span className="audit-cell-label" aria-hidden="true">Actor UUID</span><code>{value ?? '—'}</code>
       <span className="audit-cell-secondary">IP: {log.ip || '—'}</span>

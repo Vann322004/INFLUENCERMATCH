@@ -11,7 +11,6 @@ import {
   TransactionOutlined,
   FileTextOutlined,
   SafetyCertificateOutlined,
-  LineChartOutlined,
   TagOutlined,
 } from '@ant-design/icons';
 import { ADMIN_ROUTES, DATA_MANAGER_ROUTES } from '../../../constants/adminRoutes';
@@ -35,7 +34,6 @@ export const ROUTE_KEY_MAP: Record<string, string> = {
   '/admin/subscriptions':  'subscription-management',
   '/admin/payments':       'transaction-management',
   '/admin/audit':          'audit-logs',
-  '/admin/data-sources':   'system-monitoring',
   '/admin/jobs':           'system-monitoring',
   '/admin/data-quality':   'system-monitoring',
   '/admin/scoring':        'system-monitoring',
@@ -119,13 +117,6 @@ export const ADMIN_MENU_GROUPS: AdminMenuGroup[] = [
         icon: <FileTextOutlined style={{ fontSize: 18 }} />,
         path: ADMIN_ROUTES.AUDIT,
         code: 'AD-02',
-      },
-      {
-        key: 'system-monitoring',
-        label: 'Giám sát hệ thống',
-        icon: <LineChartOutlined style={{ fontSize: 18 }} />,
-        path: ADMIN_ROUTES.DATA_SOURCES,
-        code: 'AD-MON',
       },
     ],
   },

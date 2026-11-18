@@ -98,7 +98,7 @@ export default function GoogleRegistrationModal({ registration, sessionId, onClo
       <Form.Item name="accepted" valuePropName="checked" rules={[{
         validator: (_, checked) => checked ? Promise.resolve() : Promise.reject(new Error('Bạn cần đồng ý trước khi tạo tài khoản.')),
       }]}>
-        <Checkbox disabled={!policies}>Tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật.
+        <Checkbox disabled={!policies}>Tôi đồng ý với Điều khoản dịch vụ và <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Chính sách bảo mật</a>.
           {policies && <> (Điều khoản {policies.termsVersion} · Bảo mật {policies.privacyVersion})</>}
         </Checkbox>
       </Form.Item>

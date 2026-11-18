@@ -31,6 +31,7 @@ export interface ClaimResponse {
   // Evidence fields (private, only visible to admins)
   evidenceType?: string;
   evidenceUrl?: string;
+  evidenceUrls?: string[];
   evidenceNote?: string;
 }
 

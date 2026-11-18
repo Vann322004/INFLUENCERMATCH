@@ -8,7 +8,6 @@ export const ADMIN_ROUTES = {
   },
   CREATORS: '/admin/creators',
   CREATOR_CLAIMS: '/admin/creator-claims',
-  DATA_SOURCES: '/admin/data-sources',
   JOBS: '/admin/jobs',
   DATA_QUALITY: '/admin/data-quality',
   SCORING: '/admin/scoring',

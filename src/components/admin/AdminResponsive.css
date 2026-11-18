@@ -98,3 +98,11 @@
 .admin-mobile .dm-config-state .ant-result { padding: 24px 12px; }
 .admin-mobile .dm-config-state .ant-btn { min-height: 44px; height: auto; white-space: normal; }
 .admin-navigation-drawer .ant-drawer-close { min-width: 44px; min-height: 44px; }
+.dm-flow-highlights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:24px}
+.dm-flow-highlights article{padding:20px;border:1px solid #e4def2;border-radius:14px;background:linear-gradient(140deg,#faf8ff,#f3f0fa);min-width:0}
+.dm-flow-highlights strong{color:#39275f;font-size:15px}
+.dm-flow-highlights p{margin:10px 0 0;color:#647084;font-size:14px;line-height:1.65}
+.dm-flow-highlights a{display:inline-block;margin-top:12px;color:#6952ce;font-weight:500}
+.dm-flow-toolbar{display:flex;gap:12px;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap}
+.dm-flow-toolbar .ant-input-search{max-width:520px;flex:1 1 240px}
+@media(max-width:900px){.dm-flow-highlights{grid-template-columns:1fr}.dm-flow-highlights article{padding:16px}}

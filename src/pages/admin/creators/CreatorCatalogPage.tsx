@@ -1,23 +1,11 @@
 import React, { useState } from 'react';
 import { Tabs, Card } from 'antd';
-import {
-  UnorderedListOutlined, PlusCircleOutlined, IdcardOutlined,
-  CopyOutlined, GlobalOutlined, SyncOutlined,
-} from '@ant-design/icons';
+import { UnorderedListOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 import CreatorListTab       from './components/CreatorListTab';
-import AddImportTab         from './components/AddImportTab';
-import CreatorDetailTab     from './components/CreatorDetailTab';
-import DuplicatesMergeTab   from './components/DuplicatesMergeTab';
-import ExternalDiscoveredTab from './components/ExternalDiscoveredTab';
-import RefreshRequestTab    from './components/RefreshRequestTab';
 
 const TABS = [
   { key: 'list',       label: 'Danh sách Nhà sáng tạo',        icon: <UnorderedListOutlined />, component: <CreatorListTab /> },
-  { key: 'import',     label: 'Thêm mới / Nhập dữ liệu',      icon: <PlusCircleOutlined />,   component: <AddImportTab /> },
-  { key: 'detail',     label: 'Hồ sơ chi tiết & Kênh',       icon: <IdcardOutlined />,       component: <CreatorDetailTab /> },
-  { key: 'duplicates', label: 'Trùng lặp & Gộp định danh',   icon: <CopyOutlined />,         component: <DuplicatesMergeTab /> },
-  { key: 'external',   label: 'Khám phá dữ liệu ngoại vi',    icon: <GlobalOutlined />,       component: <ExternalDiscoveredTab /> },
-  { key: 'refresh',    label: 'Yêu cầu làm mới',              icon: <SyncOutlined />,         component: <RefreshRequestTab /> },
 ];
 
 export default function CreatorCatalogPage() {
@@ -31,8 +19,14 @@ export default function CreatorCatalogPage() {
           Quản trị Định danh Nhà sáng tạo
         </div>
         <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
-          Hồ sơ định danh duy nhất (Master Identity), hợp nhất tài khoản đa nền tảng và kiểm soát trùng lặp
+          Tra cứu hồ sơ kênh, đối chiếu định danh nền tảng và kiểm tra trạng thái xác minh.
         </div>
+      </div>
+
+      <div className="dm-flow-highlights">
+        <article><strong>Nhận diện đúng kênh</strong><p>Đối chiếu nền tảng, mã kênh và hồ sơ gốc; không suy đoán quyền sở hữu từ tên hiển thị.</p></article>
+        <article><strong>Phân biệt nguồn dữ liệu</strong><p>Tách hồ sơ công khai với kênh đã được cấp quyền, hiển thị trạng thái xác minh từ hệ thống.</p></article>
+        <article><strong>Xử lý định danh có kiểm soát</strong><p>Đối chiếu và xử lý hồ sơ trùng tại bước kiểm định dữ liệu.</p><Link to="/data-manager/data-quality">Mở kiểm định chất lượng →</Link></article>
       </div>
 
       <Card

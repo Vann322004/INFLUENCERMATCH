@@ -1,7 +1,7 @@
 /** Preserve timezone-less BE LocalDateTime; do not silently interpret it in the browser timezone. */
 export function auditTimestamp(value: string | null | undefined): string {
   if (!value) return '—';
-  return value.replace('T', ' ');
+  return value.replace('T', ' ').replace(/(\d{2}:\d{2}:\d{2})\.\d+/, '$1');
 }
 
 /** Display protection only. BE must sanitize payloads before persistence and return a safe DTO. */
