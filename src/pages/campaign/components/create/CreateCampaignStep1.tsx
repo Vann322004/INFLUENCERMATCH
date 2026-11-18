@@ -1,6 +1,49 @@
 import React from 'react';
-import { Row, Col, Input, Tag, Tooltip, Checkbox } from 'antd';
+import { Row, Col, Input, Select, Tag, Tooltip, Checkbox } from 'antd';
 import { LockOutlined, AimOutlined, ShoppingCartOutlined, MessageOutlined } from '@ant-design/icons';
+
+const CATEGORY_LABELS: Record<string, string> = {
+  beauty: 'Làm đẹp & Mỹ phẩm', skincare: 'Chăm sóc da', makeup: 'Trang điểm',
+  fashion: 'Thời trang', lifestyle: 'Phong cách sống', student_lifestyle: 'Đời sống học sinh, sinh viên',
+  food: 'Ẩm thực', travel: 'Du lịch', technology: 'Công nghệ', fitness: 'Thể hình',
+  health: 'Sức khỏe', education: 'Giáo dục', pets: 'Thú cưng', gaming: 'Trò chơi',
+};
+const categoryLabel = (value: string) => CATEGORY_LABELS[value.toLowerCase()] || value;
+const CAMPAIGN_CATEGORIES = [
+  'Làm đẹp & Mỹ phẩm', 'Thời trang & Phụ kiện', 'Ẩm thực',
+  'Du lịch', 'Công nghệ', 'Giải trí', 'Đời sống & Gia đình',
+];
+const CATEGORY_ALIASES: Record<string, string> = {
+  'Chăm sóc cá nhân và đời sống': 'Chăm sóc cá nhân',
+  'Thời trang': 'Thời trang & Phụ kiện',
+  'Chăm sóc da & Skincare': 'Chăm sóc da',
+  'Mỹ phẩm & Làm đẹp': 'Làm đẹp & Mỹ phẩm',
+  'Đời sống học sinh, sinh viên': 'Phong cách sống',
+};
+const canonicalCategory = (value: string) => {
+  const label = categoryLabel(value);
+  const normalized = (CATEGORY_ALIASES[label] || label).toLocaleLowerCase('vi');
+  if (/làm đẹp|mỹ phẩm|chăm sóc da|skincare|trang điểm|chăm sóc tóc|chăm sóc cá nhân/.test(normalized)) return 'Làm đẹp & Mỹ phẩm';
+  if (/thời trang|fashion/.test(normalized)) return 'Thời trang & Phụ kiện';
+  if (/ẩm thực|ăn uống|đồ ăn|food/.test(normalized)) return 'Ẩm thực';
+  if (/du lịch|travel/.test(normalized)) return 'Du lịch';
+  if (/công nghệ|điện thoại|gaming|trò chơi/.test(normalized)) return 'Công nghệ';
+  if (/giải trí|truyền thông/.test(normalized)) return 'Giải trí';
+  return 'Đời sống & Gia đình';
+};
+const GROUP_NICHES: Record<string, string[]> = {
+  'Làm đẹp & Mỹ phẩm': ['Chăm sóc da', 'Trang điểm', 'Chăm sóc tóc', 'Chăm sóc cá nhân'],
+  'Thời trang & Phụ kiện': ['Thời trang nữ', 'Thời trang nam', 'Giày dép', 'Phụ kiện thời trang'],
+  'Ẩm thực': ['Đồ ăn', 'Đồ uống', 'Đồ ăn vặt', 'Nấu ăn', 'Review nhà hàng'],
+  'Du lịch': ['Du lịch trải nghiệm', 'Review khách sạn', 'Du lịch & Ẩm thực'],
+  'Công nghệ': ['Điện thoại', 'Máy tính', 'Thiết bị công nghệ', 'Gaming'],
+  'Giải trí': ['Âm nhạc', 'Phim ảnh', 'Hài hước'],
+  'Đời sống & Gia đình': ['Đồ gia dụng', 'Mẹ & Bé', 'Sức khỏe', 'Thể thao', 'Giáo dục', 'Thú cưng', 'Phong cách sống'],
+};
+const groupForNiche = (value: string) => {
+  const label = CATEGORY_ALIASES[categoryLabel(value)] || categoryLabel(value);
+  return Object.keys(GROUP_NICHES).find(group => GROUP_NICHES[group].includes(label)) || canonicalCategory(value);
+};
 
 interface CreateCampaignStep1Props {
   campaignName: string;
@@ -48,6 +91,16 @@ export const CreateCampaignStep1: React.FC<CreateCampaignStep1Props> = ({
   toggleObjective,
   isAiAutofilled,
 }) => {
+  const selectedCategories = [...new Set(interests.split(',').map(value => value.trim()).filter(Boolean))];
+  const selectedGroups = [...new Set(selectedCategories.map(groupForNiche))];
+  const selectedNiches = selectedCategories.filter(value => !CAMPAIGN_CATEGORIES.includes(categoryLabel(value)));
+  const nicheOptions = [...new Set(selectedGroups.flatMap(group => GROUP_NICHES[group] || []))];
+  // Send specific niches when selected; broad group names must not weaken their filter.
+  const saveSelection = (groups: string[], niches: string[]) => setInterests(groups.flatMap(group => {
+    const specifics = niches.filter(value => groupForNiche(value) === group);
+    return specifics.length ? specifics : [group];
+  }).join(', '));
+
   return (
     <div className={`ccreate-card ${isAiAutofilled ? 'ai-highlight-card' : ''}`}>
       <div className="ccreate-card-header">
@@ -116,11 +169,41 @@ export const CreateCampaignStep1: React.FC<CreateCampaignStep1Props> = ({
           <div className="ccreate-field-label">
             <span>Ngành hàng & Sở thích liên quan (tùy chọn)</span>
           </div>
-          <Input
-            value={interests}
-            onChange={(e) => setInterests(e.target.value)}
-            placeholder="Ví dụ: Làm đẹp, Chăm sóc da, Skincare Routine, Thời trang công sở..."
-            style={{ borderRadius: 10, height: 40, fontSize: 13 }}
+          <Select
+            aria-label="Ngành hàng và sở thích liên quan"
+            mode="multiple"
+            value={selectedGroups}
+            onChange={(groups: string[]) => saveSelection(groups, selectedNiches)}
+            options={CAMPAIGN_CATEGORIES.map(value => ({ value, label: value }))}
+            showSearch
+            optionFilterProp="label"
+            allowClear
+            placeholder="Chọn ngành hàng liên quan đến sản phẩm"
+            notFoundContent="Không có ngành hàng phù hợp"
+            style={{ width: '100%', minHeight: 40, fontSize: 13 }}
+          />
+          <div style={{ fontSize: 12, color: '#64748B', marginTop: 6 }}>
+            Chọn nhóm ngành chung. Sản phẩm và brief giúp xác định chủ đề cụ thể để tìm creator phù hợp.
+          </div>
+          <div className="ccreate-field-label" style={{ marginTop: 16 }}>
+            <span>Niche cụ thể <span style={{ color: '#94A3B8', fontWeight: 400 }}>(không bắt buộc)</span></span>
+          </div>
+          <Select
+            aria-label="Niche cụ thể"
+            mode="multiple"
+            value={selectedNiches.map(value => ({ value, label: categoryLabel(value) }))}
+            labelInValue
+            onChange={(items: { value: string }[]) => saveSelection(selectedGroups, items.map(item => item.value))}
+            options={nicheOptions.map(label => ({
+              value: selectedNiches.find(value => categoryLabel(value) === label) || label,
+              label,
+            }))}
+            disabled={!selectedGroups.length}
+            showSearch
+            optionFilterProp="label"
+            allowClear
+            placeholder="Chọn chủ đề cụ thể trong nhóm ngành"
+            style={{ width: '100%', minHeight: 40 }}
           />
         </Col>
       </Row>

@@ -1,7 +1,8 @@
+import { canQueueCollectionResult, collectionOutcome, collectionOutcomeLabel } from '../../../../services/collectionDecision';
 import { saveCollectionResults } from '../../../../services/collectionResults';
 import { useCollectionState } from '../../../../hooks/useCollectionState';
-import React, { useState } from 'react';
-import { Card, Button, Space, Tag, Typography, Spin, message } from 'antd';
+import React, { useRef, useState } from 'react';
+import { Alert, Card, Button, Space, Tag, Typography, Spin, message } from 'antd';
 import { crawlerService } from '../../../../services/api/crawlerService';
 import type { CrawlPlatform, LiveCrawlResult } from '../../../../types/api/crawler.types';
 import LiveCrawlInputBar from './live/LiveCrawlInputBar';
@@ -19,9 +20,12 @@ interface LiveCrawlTabProps {
 export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initialResult }: LiveCrawlTabProps) {
   const [inputUrl, setInputUrl] = useCollectionState(`live.${defaultInput}.input`, defaultInput);
   const [platform, setPlatform] = useCollectionState<CrawlPlatform>(`live.${defaultInput}.platform`, (initialResult?.platform as CrawlPlatform) || 'TIKTOK');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useCollectionState(`live.${defaultInput}.loading`, false, false);
   const [result, setResult] = useCollectionState<LiveCrawlResult | null>(`live.${defaultInput}.result`, initialResult || null);
-  const [currentStep, setCurrentStep] = useState<string>('');
+  const [currentStep, setCurrentStep] = useCollectionState(`live.${defaultInput}.currentStep`, '', false);
+  const [submitting, setSubmitting] = useState<'queue' | 'catalog' | null>(null);
+  const submittingRef = useRef(false);
+  const [freshResult, setFreshResult] = useState(false);
 
   const handleInputChange = (val: string) => {
     setInputUrl(val);
@@ -33,8 +37,9 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
   };
 
   const handleCrawl = async () => {
+    if (loading) return;
     if (!inputUrl.trim()) {
-      message.warning('Vui lòng nhập đường dẫn kênh hoặc tên người dùng Nhà sáng tạo để thu thập');
+      message.warning('Vui lòng nhập đường dẫn kênh hoặc tên nhà sáng tạo để cào');
       return;
     }
 
@@ -43,11 +48,12 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
     setCurrentStep('Đang kết nối tới máy chủ cào dữ liệu...');
 
     try {
-      setTimeout(() => setCurrentStep('Đang bóc tách thông tin hồ sơ Nhà sáng tạo...'), 400);
+      setTimeout(() => setCurrentStep('Đang bóc tách thông tin hồ sơ nhà sáng tạo...'), 400);
       setTimeout(() => setCurrentStep('Đang trích xuất bài đăng gần nhất...'), 900);
 
       const res = await crawlerService.testScrape(inputUrl, platform);
       setResult(res);
+      setFreshResult(true);
       saveCollectionResults([res], 'manual');
       const latencySec = res.latency_ms ? (res.latency_ms / 1000).toFixed(1) : '0.5';
       message.success(`Cào thành công @${res.username}! (${latencySec} giây)`);
@@ -66,25 +72,35 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
   };
 
   const handleImportToCatalog = async () => {
-    if (!result) return;
-    message.loading({ content: `Đang lưu hồ sơ @${result.username} vào hệ thống...`, key: 'import_catalog' });
+    if (!result || submittingRef.current || collectionOutcome(result.decision, result.primary_type) !== 'accepted') return;
+    submittingRef.current = true;
+    setSubmitting('catalog');
+    message.loading({ content: `Đang gửi yêu cầu cào sâu @${result.username}...`, key: 'import_catalog' });
     try {
       await crawlerService.enqueueCandidate(result.platform as CrawlPlatform, result.username, true);
-      message.success({ content: `Đã đưa @${result.username} vào hàng đợi đồng bộ. Kiểm tra tiến trình để xác nhận kết quả lưu.`, key: 'import_catalog' });
+      message.success({ content: `Đã gửi yêu cầu cào sâu @${result.username}. Theo dõi kết quả tại Tiến trình thu thập.`, key: 'import_catalog' });
       if (onImportSuccess) onImportSuccess(result);
     } catch (err: any) {
-      message.error({ content: err.message || 'Lỗi khi lưu vào hệ thống', key: 'import_catalog' });
+      message.error({ content: err.message || 'Không gửi được yêu cầu cào sâu', key: 'import_catalog' });
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(null);
     }
   };
 
-  const handleSendToQuality = async () => {
-    if (!result) return;
-    message.loading({ content: `Đang gửi @${result.username} vào hàng đợi xử lý...`, key: 'send_quality' });
+  const handleSendToQueue = async () => {
+    if (!result || submittingRef.current || !canQueueCollectionResult(result)) return;
+    submittingRef.current = true;
+    setSubmitting('queue');
+    message.loading({ content: `Đang gửi @${result.username} vào hàng đợi xử lý...`, key: 'send_queue' });
     try {
       await crawlerService.enqueueCandidate(result.platform as CrawlPlatform, result.username, false);
-      message.success({ content: `Đã gửi yêu cầu xử lý @${result.username}. Hồ sơ chỉ vào danh sách kiểm định sau khi đồng bộ dữ liệu và đủ điều kiện.`, key: 'send_quality' });
+      message.success({ content: `Đã đưa @${result.username} vào hàng đợi. Theo dõi kết quả ở Tiến trình thu thập.`, key: 'send_queue' });
     } catch (err: any) {
-      message.error({ content: err.message || 'Lỗi khi đưa vào kiểm định', key: 'send_quality' });
+      message.error({ content: err.message || 'Lỗi khi gửi vào hàng đợi', key: 'send_queue' });
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(null);
     }
   };
 
@@ -98,29 +114,24 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
   const engagementRate = calculateEngagementRate();
 
   const getDecisionTag = (dec?: string, primaryType?: string) => {
-    if (dec === 'AUTO_ACCEPT_KOL' || primaryType === 'KOL') {
-      return <Tag color="purple" style={{ fontWeight: 700 }}>Đạt chuẩn KOL</Tag>;
-    }
-    if (dec === 'ACCEPTED' || dec === 'AUTO_ACCEPT_KOC' || dec === 'PASS') {
-      return <Tag color="success" style={{ fontWeight: 700 }}>Đạt chuẩn Nhà sáng tạo</Tag>;
-    }
-    if (dec === 'REJECTED' || dec === 'AUTO_REJECT' || dec === 'REJECT') {
-      return <Tag color="error" style={{ fontWeight: 700 }}>Từ chối (Bán hàng / Spam)</Tag>;
-    }
-    return <Tag color="warning" style={{ fontWeight: 600 }}>Chờ xem xét</Tag>;
+    const outcome = collectionOutcome(dec, primaryType);
+    return <Tag color={outcome === 'accepted' ? 'success' : outcome === 'rejected' ? 'error' : 'warning'}>{collectionOutcomeLabel(outcome)}</Tag>;
   };
 
   return (
     <div>
       {/* 1. Thanh tìm kiếm và chọn nền tảng */}
-      <LiveCrawlInputBar
+      {(!initialResult || freshResult) && <LiveCrawlInputBar
         inputUrl={inputUrl}
         platform={platform}
         loading={loading}
         onInputChange={handleInputChange}
         onPlatformChange={setPlatform}
         onCrawl={handleCrawl}
-      />
+      />}
+      {initialResult && !freshResult && <Alert type="info" showIcon
+        style={{ marginBottom: 16 }} title="Kết quả từ lượt thu thập trước"
+        description="Mở chi tiết không chạy thêm lượt thu thập. Chọn Thu thập lại để lấy dữ liệu mới; yêu cầu cào sâu được xử lý riêng qua hàng đợi." />}
 
       {/* 2. Trạng thái đang cào */}
       {loading && (
@@ -170,11 +181,13 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
               <Button onClick={handleCopyJson}>
                 Sao chép dữ liệu
               </Button>
-              <Button onClick={handleCrawl}>
-                Cào lại
+              <Button onClick={handleCrawl} disabled={submitting !== null}>
+                Thu thập lại
               </Button>
               <Button
-                onClick={handleSendToQuality}
+                onClick={handleSendToQueue}
+                loading={submitting === 'queue'}
+                disabled={submitting !== null || !canQueueCollectionResult(result)}
                 style={{ borderColor: '#F59E0B', color: '#D97706', fontWeight: 600 }}
               >
                 Gửi vào hàng đợi xử lý
@@ -182,6 +195,8 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
               <Button
                 type="primary"
                 onClick={handleImportToCatalog}
+                loading={submitting === 'catalog'}
+                disabled={submitting !== null || collectionOutcome(result.decision, result.primary_type) !== 'accepted'}
                 style={{
                   background: '#10B981',
                   border: 'none',
@@ -189,7 +204,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
                   borderRadius: 6,
                 }}
               >
-                Lưu vào Danh mục
+                Yêu cầu cào sâu
               </Button>
             </Space>
           </div>

@@ -24,13 +24,13 @@ export default defineConfig(({ mode }) => {
       '/crawler-api': {
         target: crawlerTarget,
         changeOrigin: true,
-        timeout: 240000,
+        timeout: 900000,
         rewrite: (path) => path.replace(/^\/crawler-api/, ''),
       },
       '/api/v1/crawl': {
         target: crawlerTarget,
         changeOrigin: true,
-        timeout: 240000,
+        timeout: 900000,
       },
       '/api/v1/monitor': {
         target: crawlerTarget,

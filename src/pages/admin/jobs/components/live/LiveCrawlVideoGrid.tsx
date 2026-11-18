@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Card, Typography } from 'antd';
+import { Alert, Row, Col, Card, Typography } from 'antd';
 import { EyeOutlined, LikeOutlined, MessageOutlined, ShareAltOutlined } from '@ant-design/icons';
 import type { LiveCrawlResult } from '../../../../../types/api/crawler.types';
 
@@ -23,6 +23,8 @@ export default function LiveCrawlVideoGrid({ result }: LiveCrawlVideoGridProps) 
         </Text>
       </div>
 
+      {!posts.length && <Alert type="warning" showIcon title="Chưa thu thập được bài đăng"
+        description="Lượt thu thập này chỉ có thông tin hồ sơ. Tổng số bài trên kênh không phải số bài đã thu thập; chưa đủ dữ liệu để tính tương tác." />}
       <Row gutter={[16, 16]}>
         {posts.map((post, idx) => (
           <Col xs={24} sm={12} md={8} lg={6} key={post.platformPostId || idx}>

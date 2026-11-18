@@ -30,7 +30,20 @@
 .quality-review-detail > .ant-btn { align-self: flex-start; max-width: 100%; }
 .quality-evidence { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
 .quality-review-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+.quality-review-drawer .ant-drawer-body { background: #f6f8fc; padding: 24px; }
+.quality-review-detail > .quality-creator { padding: 18px; background: white; border: 1px solid #e2e8f0; border-radius: 14px; }
+.quality-review-detail .ant-descriptions, .quality-review-detail > section { background: white; border-radius: 14px; }
+.quality-review-detail > section { padding: 20px; border: 1px solid #e2e8f0; }
+.quality-review-detail h5 { margin: 0 0 12px; }
+.quality-evidence { margin: 0; max-height: 240px; overflow: auto; }
+.quality-decision-toggle { display: flex; margin-bottom: 20px; }
+.quality-decision-toggle .ant-radio-button-wrapper { height: auto; min-height: 36px; white-space: normal; text-align: center; flex: 1; }
+.quality-decision-panel .ant-alert { margin-bottom: 20px; }
+.quality-decision-panel .ant-form-item:last-child { margin-bottom: 0; }
+.quality-review-drawer .ant-drawer-footer { padding: 16px 24px; background: white; }
 @media (max-width: 767px) {
+  .quality-review-drawer .ant-drawer-body { padding: 16px; }
+  .quality-review-detail > section { padding: 16px; }
   .quality-page-heading h3 { font-size: 22px; }
   .quality-workflow > .ant-card-body, .quality-review-list > .ant-card-body, .quality-collection-list > .ant-card-body { padding: 16px; }
   .quality-profile-cards { grid-template-columns: minmax(0, 1fr); }
