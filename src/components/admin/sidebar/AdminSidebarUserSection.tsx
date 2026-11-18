@@ -50,15 +50,7 @@ export default function AdminSidebarUserSection({
         <Dropdown menu={{ items: userDropdownItems }} placement="topRight" trigger={['click']}>
           <div>
             <ChatGptTooltip title={`${userName} (${roleLabel})`}>
-              <div
-                className="sidebar-rail-avatar-btn"
-                style={{
-                  background: isManager ? '#0EA5E9' : '#1D4ED8',
-                  boxShadow: isManager
-                    ? '0 2px 6px rgba(14, 165, 233, 0.35)'
-                    : '0 2px 6px rgba(29, 78, 216, 0.35)',
-                }}
-              >
+              <div className="sidebar-rail-avatar-btn">
                 {currentUser?.avatar ? (
                   <img
                     src={currentUser.avatar}
@@ -82,15 +74,7 @@ export default function AdminSidebarUserSection({
     <div className="sidebar-bottom-user-section">
       <Dropdown menu={{ items: userDropdownItems }} placement="topRight" trigger={['click']}>
         <div className="sidebar-user-info-row" style={{ cursor: 'pointer' }}>
-          <div
-            className="sidebar-user-avatar"
-            style={{
-              background: isManager ? '#0EA5E9' : '#1D4ED8',
-              boxShadow: isManager
-                ? '0 2px 6px rgba(14, 165, 233, 0.35)'
-                : '0 2px 6px rgba(29, 78, 216, 0.35)',
-            }}
-          >
+          <div className="sidebar-user-avatar">
             {currentUser?.avatar ? (
               <img
                 src={currentUser.avatar}
@@ -106,10 +90,7 @@ export default function AdminSidebarUserSection({
             <div className="sidebar-user-name">
               {userName}
             </div>
-            <div
-              className="sidebar-user-role"
-              style={{ color: isManager ? '#0284C7' : '#1D4ED8', fontWeight: 600 }}
-            >
+            <div className="sidebar-user-role">
               {roleLabel}
             </div>
           </div>

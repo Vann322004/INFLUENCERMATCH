@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Layout, Dropdown, Tooltip } from 'antd';
+import { Layout, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   LineChartOutlined,
@@ -12,24 +12,44 @@ import {
   SettingOutlined,
 } from '@ant-design/icons';
 import { authService } from '../../services/api/authService';
+import { SidebarToggleIcon, ChatGptTooltip } from '../admin/sidebar/AdminSidebarTooltip';
 
 const { Sider } = Layout;
 
 export const CREATOR_MENU_ITEMS = [
-  { key: 'dashboard', icon: <LineChartOutlined />, label: 'Tổng quan' },
-  { key: 'rate-card', icon: <DollarOutlined />, label: 'Bảng giá Rate Card' },
-  { key: 'social-accounts', icon: <ApiOutlined />, label: 'Kênh liên kết' },
-  { key: 'bookings', icon: <CalendarOutlined />, label: 'Hợp tác' },
+  { key: 'dashboard', icon: <LineChartOutlined style={{ fontSize: 18 }} />, label: 'Tổng quan' },
+  { key: 'rate-card', icon: <DollarOutlined style={{ fontSize: 18 }} />, label: 'Bảng giá Rate Card' },
+  { key: 'social-accounts', icon: <ApiOutlined style={{ fontSize: 18 }} />, label: 'Kênh liên kết' },
+  { key: 'bookings', icon: <CalendarOutlined style={{ fontSize: 18 }} />, label: 'Hợp tác' },
 ];
 
 /**
- * Sidebar Creator Portal — dùng chung class/hệ màu với AppSider (Brand)
- * để đồng bộ giao diện giữa các vai trò (Dark Slate / Royal Blue).
+ * Sidebar Creator Portal — đồng bộ 100% cấu trúc, hiệu ứng morph logo,
+ * ChatGptTooltip và trạng thái chọn với Brand, Data Manager và Admin.
  */
 export default function CreatorSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
+
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    const saved = localStorage.getItem('influencer_creator_sidebar_collapsed');
+    return saved !== null ? saved === 'true' : false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('influencer_creator_sidebar_collapsed', String(collapsed));
+  }, [collapsed]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'S' || e.key === 's')) {
+        e.preventDefault();
+        setCollapsed((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const currentUser = authService.getCurrentUser();
   const userName = currentUser?.fullName || currentUser?.email || 'Nhà sáng tạo';
@@ -57,7 +77,7 @@ export default function CreatorSidebar() {
   };
 
   const userDropdown: MenuProps['items'] = [
-    { key: 'profile', icon: <UserOutlined />, label: 'Hồ sơ Creator' },
+    { key: 'profile', icon: <UserOutlined />, label: 'Hồ sơ Creator', onClick: () => navigate('/creator/verification') },
     { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt tài khoản' },
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, danger: true, label: 'Đăng xuất', onClick: handleLogout },
@@ -69,33 +89,49 @@ export default function CreatorSidebar() {
       collapsedWidth={62}
       collapsed={collapsed}
       className="app-sider creator-desktop-sidebar"
-      style={{ position: 'sticky', top: 0, height: '100vh' }}
+      style={{ position: 'sticky', top: 0, height: '100dvh', maxHeight: '100dvh', overflow: 'hidden', flexShrink: 0, zIndex: 100 }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', alignItems: collapsed ? 'center' : 'stretch' }}>
-        <div>
-          {/* Logo + Brand (bấm để thu gọn / mở rộng giống sidebar Brand) */}
-          <div className="sidebar-expanded-header" style={collapsed ? { justifyContent: 'center', padding: 0 } : undefined}>
-            <Tooltip title={collapsed ? 'Mở thanh bên' : 'Thu gọn thanh bên'} placement={collapsed ? 'right' : 'bottom'}>
-              <div
-                className="sidebar-brand-btn"
-                role="button"
-                tabIndex={0}
-                onClick={() => setCollapsed((v) => !v)}
-                aria-label={collapsed ? 'Mở thanh bên' : 'Thu gọn thanh bên'}
-              >
-                <div className="sidebar-logo-icon-box">
-                  <img src="/logo.png" alt="InfluencerMatch Logo" className="sidebar-logo-img" />
-                </div>
-                {!collapsed && <span className="sidebar-brand-name">InfluencerMatch</span>}
-              </div>
-            </Tooltip>
-          </div>
+      {collapsed ? (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ marginBottom: 12 }}>
+              <ChatGptTooltip title="Mở thanh bên" shortcut="Ctrl+Shift+S">
+                <button
+                  type="button"
+                  className="sidebar-rail-logo-btn"
+                  onClick={() => setCollapsed(false)}
+                  aria-label="Mở thanh bên"
+                >
+                  <div className="sidebar-logo-icon-box">
+                    <img src="/logo.png" alt="InfluencerMatch Logo" className="sidebar-logo-img" />
+                    <span className="sidebar-toggle-glyph">
+                      <SidebarToggleIcon size={20} />
+                    </span>
+                  </div>
+                </button>
+              </ChatGptTooltip>
+            </div>
 
-          {/* Navigation */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: collapsed ? 6 : 4, alignItems: collapsed ? 'center' : 'stretch' }}>
-            {CREATOR_MENU_ITEMS.map((item) =>
-              collapsed ? (
-                <Tooltip key={item.key} title={item.label} placement="right">
+            <div
+              style={{
+                width: 32,
+                height: 1,
+                backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                marginBottom: 10,
+              }}
+            />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {CREATOR_MENU_ITEMS.map((item) => (
+                <ChatGptTooltip key={item.key} title={item.label}>
                   <button
                     type="button"
                     className={`sidebar-rail-btn ${activeKey === item.key ? 'active' : ''}`}
@@ -104,8 +140,56 @@ export default function CreatorSidebar() {
                   >
                     {item.icon}
                   </button>
-                </Tooltip>
-              ) : (
+                </ChatGptTooltip>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginTop: 'auto', paddingTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <Dropdown menu={{ items: userDropdown }} placement="topRight" trigger={['click']}>
+              <div>
+                <ChatGptTooltip title={`${userName} (Nhà sáng tạo)`}>
+                  <div className="sidebar-rail-avatar-btn">
+                    <span style={{ color: '#FFFFFF', fontWeight: 800, fontSize: 12 }}>
+                      {initials}
+                    </span>
+                  </div>
+                </ChatGptTooltip>
+              </div>
+            </Dropdown>
+          </div>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div>
+            <div className="sidebar-expanded-header">
+              <ChatGptTooltip title="Thu gọn thanh bên" shortcut="Ctrl+Shift+S" placement="bottom">
+                <button
+                  type="button"
+                  className="sidebar-brand-btn"
+                  onClick={() => setCollapsed(true)}
+                  aria-label="Thu gọn thanh bên"
+                >
+                  <div className="sidebar-logo-icon-box">
+                    <img src="/logo.png" alt="InfluencerMatch Logo" className="sidebar-logo-img" />
+                    <span className="sidebar-toggle-glyph">
+                      <SidebarToggleIcon size={20} />
+                    </span>
+                  </div>
+                  <span className="sidebar-brand-name">InfluencerMatch</span>
+                </button>
+              </ChatGptTooltip>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {CREATOR_MENU_ITEMS.map((item) => (
                 <div
                   key={item.key}
                   onClick={() => navigate(`/creator/${item.key}`)}
@@ -114,19 +198,12 @@ export default function CreatorSidebar() {
                   <span className="sidebar-nav-icon">{item.icon}</span>
                   <span className="sidebar-nav-label">{item.label}</span>
                 </div>
-              ),
-            )}
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* User card */}
-        <div className="sidebar-bottom-user-section" style={collapsed ? { padding: '8px 0', display: 'flex', justifyContent: 'center' } : undefined}>
-          <Dropdown menu={{ items: userDropdown }} placement="topRight" trigger={['click']}>
-            {collapsed ? (
-              <div className="sidebar-rail-avatar-btn" style={{ cursor: 'pointer' }}>
-                <span style={{ color: '#FFFFFF', fontWeight: 800, fontSize: 12.5 }}>{initials}</span>
-              </div>
-            ) : (
+          <div className="sidebar-bottom-user-section">
+            <Dropdown menu={{ items: userDropdown }} placement="topRight" trigger={['click']}>
               <div className="sidebar-user-info-row" style={{ cursor: 'pointer' }}>
                 <div className="sidebar-user-avatar">{initials}</div>
                 <div className="sidebar-user-details" style={{ flex: 1, minWidth: 0 }}>
@@ -135,10 +212,10 @@ export default function CreatorSidebar() {
                 </div>
                 <SettingOutlined style={{ fontSize: 14, color: '#94A3B8', marginLeft: 'auto', flexShrink: 0 }} />
               </div>
-            )}
-          </Dropdown>
+            </Dropdown>
+          </div>
         </div>
-      </div>
+      )}
     </Sider>
   );
 }
