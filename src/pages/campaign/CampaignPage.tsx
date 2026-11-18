@@ -173,7 +173,7 @@ export default function CampaignPage() {
             statusText = 'Bản nháp';
           } else if (c.status === 'READY_FOR_DISCOVERY') {
             statusType = 'ready';
-            statusText = 'Sẵn sàng tìm KOC';
+            statusText = 'Sẵn sàng tìm Nhà sáng tạo';
           } else if (c.status === 'COMPLETED') {
             statusType = 'completed';
             statusText = 'Đã hoàn thành';
@@ -338,7 +338,7 @@ export default function CampaignPage() {
         statusText = 'Bản nháp';
       } else if (editForm.status === 'READY_FOR_DISCOVERY') {
         statusType = 'ready';
-        statusText = 'Sẵn sàng tìm KOC';
+        statusText = 'Sẵn sàng tìm Nhà sáng tạo';
       } else if (editForm.status === 'COMPLETED') {
         statusType = 'completed';
         statusText = 'Đã hoàn thành';
@@ -455,7 +455,7 @@ export default function CampaignPage() {
       if (camp.status === 'READY_FOR_DISCOVERY') {
         tasks.push({
           id: `task_ready_${camp.id}`,
-          title: 'Sẵn sàng tìm kiếm KOC AI',
+          title: 'Sẵn sàng tìm kiếm Nhà sáng tạo AI',
           campaignName: camp.name,
           time: camp.updatedTime,
           icon: <ThunderboltOutlined />,
@@ -808,7 +808,7 @@ export default function CampaignPage() {
                   options={[
                     { value: 'latest', label: 'Mới nhất' },
                     { value: 'budget', label: 'Ngân sách' },
-                    { value: 'creators', label: 'Số lượng KOC' },
+                    { value: 'creators', label: 'Số lượng Nhà sáng tạo' },
                   ]}
                 />
 
@@ -851,7 +851,7 @@ export default function CampaignPage() {
                   {
                     key: 'discovery',
                     icon: <CompassOutlined />,
-                    label: 'Khám phá KOC AI',
+                    label: 'Khám phá Nhà sáng tạo AI',
                     onClick: () => {
                       sessionStorage.setItem('current_campaign_id', item.id);
                       localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', item.id);
@@ -1327,7 +1327,7 @@ export default function CampaignPage() {
                     />
                   </div>
 
-                  {/* Action Buttons: 🧭 Khám phá KOC AI (Nút chính) + Chi tiết */}
+                  {/* Action Buttons: 🧭 Khám phá Nhà sáng tạo AI (Nút chính) + Chi tiết */}
                   <div style={{ display: 'flex', gap: 8 }}>
                     <Button
                       type="primary"
@@ -1352,7 +1352,7 @@ export default function CampaignPage() {
                         gap: 5,
                       }}
                     >
-                      Khám phá KOC AI
+                      Khám phá Nhà sáng tạo AI
                     </Button>
 
                     <Button
@@ -1458,7 +1458,7 @@ export default function CampaignPage() {
                 onChange={(val) => setEditForm((prev) => ({ ...prev, status: val }))}
                 options={[
                   { value: 'ACTIVE', label: 'Đang triển khai' },
-                  { value: 'READY_FOR_DISCOVERY', label: 'Sẵn sàng tìm KOC' },
+                  { value: 'READY_FOR_DISCOVERY', label: 'Sẵn sàng tìm Nhà sáng tạo' },
                   { value: 'DRAFT', label: 'Bản nháp' },
                   { value: 'COMPLETED', label: 'Đã hoàn thành' },
                 ]}

@@ -121,7 +121,7 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
               navigate(`/discovery?campaignId=${cId}`, { state: { campaignId: cId } });
             }}
           >
-            Tìm kiếm KOC
+            Tìm kiếm Nhà sáng tạo
           </button>
 
           <button

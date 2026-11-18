@@ -237,7 +237,7 @@ const KNOWN_CREATORS: Record<string, any> = {
     priceMax: '22,000,000',
     priceUSD: '$850 USD',
     matchScore: 38,
-    bio: 'KOC chuyên sáng tạo nội dung Mỹ phẩm, Sức khỏe và Làm đẹp, chia sẻ trải nghiệm thực tế và đánh giá chất lượng.',
+    bio: 'Nhà sáng tạo nội dung Mỹ phẩm, Sức khỏe và Làm đẹp, chia sẻ trải nghiệm thực tế và đánh giá chất lượng.',
   },
   'c84cddd9-4ea5-4963-9b55-10981f152c46': {
     id: 'c84cddd9-4ea5-4963-9b55-10981f152c46',

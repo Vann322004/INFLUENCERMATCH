@@ -63,7 +63,7 @@ export const CreatorGridList: React.FC<CreatorGridListProps> = ({
       >
         <Spin size="large" />
         <div style={{ marginTop: 16, color: '#64748B', fontWeight: 500, fontSize: 14 }}>
-          Đang tải danh sách KOC từ hệ thống...
+          Đang tải danh sách Nhà sáng tạo từ hệ thống...
         </div>
       </Card>
     );
@@ -83,7 +83,7 @@ export const CreatorGridList: React.FC<CreatorGridListProps> = ({
       >
         <div style={{ fontSize: 44, marginBottom: 12 }}>🔍</div>
         <Title level={4} style={{ color: '#0F172A', marginBottom: 6 }}>
-          Không tìm thấy KOC phù hợp
+          Không tìm thấy Nhà sáng tạo phù hợp
         </Title>
         <Paragraph style={{ color: '#64748B', maxWidth: 440, margin: '0 auto 16px auto', fontSize: 13.5 }}>
           Hãy thử điều chỉnh lại từ khóa tìm kiếm hoặc bỏ bớt các tiêu chí lọc để xem thêm kết quả phù hợp.

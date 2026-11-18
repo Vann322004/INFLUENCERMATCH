@@ -42,7 +42,7 @@ function portalItemToClaimResponse(item: CreatorClaimItem): ClaimResponse {
     creatorAvatar:
       item.channelAvatar || 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=200',
     claimantId: 'usr_creator',
-    claimantName: item.claimantName || item.channelName || 'Châu Bùi (KOC)',
+    claimantName: item.claimantName || item.channelName || 'Châu Bùi (Nhà sáng tạo)',
     claimantEmail: item.claimantEmail || 'chaubui.official@influencermatch.vn',
     claimantAvatar: item.channelAvatar,
     status: item.status as ClaimStatus,
@@ -75,7 +75,7 @@ function normalizeBackendClaim(raw: any, localMatch?: ClaimResponse): ClaimRespo
     id: String(raw?.id ?? localMatch?.id ?? ''),
     creatorId: String(raw?.creatorId ?? localMatch?.creatorId ?? ''),
     creatorHandle: raw?.creatorHandle || localMatch?.creatorHandle || '@koc.official',
-    creatorName: raw?.creatorName || localMatch?.creatorName || 'KOC Chính Chủ',
+    creatorName: raw?.creatorName || localMatch?.creatorName || 'Nhà sáng tạo Chính Chủ',
     creatorPlatform: raw?.creatorPlatform || raw?.platform || localMatch?.creatorPlatform || 'TikTok',
     creatorFollowers: Number(raw?.creatorFollowers ?? localMatch?.creatorFollowers ?? 2450000),
     creatorAvatar:

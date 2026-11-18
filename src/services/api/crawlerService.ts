@@ -28,7 +28,7 @@ class CrawlerService {
   async testScrape(profileUrl: string, platform: CrawlPlatform = 'TIKTOK'): Promise<LiveCrawlResult> {
     const cleanInput = profileUrl.trim();
     if (!cleanInput) {
-      throw new Error('Vui lòng nhập đường dẫn kênh hoặc tên người dùng của KOC');
+      throw new Error('Vui lòng nhập đường dẫn kênh hoặc tên người dùng của Nhà sáng tạo');
     }
 
     return await this.requestCrawler<LiveCrawlResult>(

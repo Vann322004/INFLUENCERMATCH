@@ -595,10 +595,10 @@ export default function CampaignManagementPage() {
               </div>
               <div className="crm-completion-text">
                 <div className="crm-completion-title">
-                  🎉 Bước 5: Tiếp cận & Đàm phán Hợp tác KOC
+                  🎉 Bước 5: Tiếp cận & Đàm phán Hợp tác Nhà sáng tạo
                 </div>
                 <div className="crm-completion-desc">
-                  {confirmedCount > 0 ? `${confirmedCount} KOC đã chốt xác nhận. ` : ''}Chuyển sang trang CRM để theo dõi chi tiết hoặc quay lại danh sách chiến dịch.
+                  {confirmedCount > 0 ? `${confirmedCount} Nhà sáng tạo đã chốt xác nhận. ` : ''}Chuyển sang trang CRM để theo dõi chi tiết hoặc quay lại danh sách chiến dịch.
                 </div>
               </div>
             </div>
@@ -851,7 +851,7 @@ export default function CampaignManagementPage() {
               <div style={{ fontSize: 18, fontWeight: 800, color: '#1D4ED8' }}>
                 {pipelineCreators.length}
               </div>
-              <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>KOC trong Pipeline</div>
+              <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Nhà sáng tạo trong Pipeline</div>
             </div>
             <div>
               <div style={{ fontSize: 18, fontWeight: 800, color: '#10B981' }}>

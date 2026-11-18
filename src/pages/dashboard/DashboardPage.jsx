@@ -257,9 +257,9 @@ export default function DashboardPage() {
   const kpiCards = [
     {
       id: 'kpi_shortlist',
-      title: 'KOC trong Giỏ chọn lọc',
+      title: 'Nhà sáng tạo trong Giỏ chọn lọc',
       value: String(shortlistCount),
-      trend: shortlistCount > 0 ? `${shortlistCount} KOC sẵn sàng gửi lời mời` : 'Chưa có KOC trong giỏ',
+      trend: shortlistCount > 0 ? `${shortlistCount} Nhà sáng tạo sẵn sàng gửi lời mời` : 'Chưa có Nhà sáng tạo trong giỏ',
       icon: <StarOutlined style={{ color: '#2563EB' }} />,
       iconBg: '#EFF6FF',
       chartColor: '#60A5FA',
@@ -356,7 +356,7 @@ export default function DashboardPage() {
       acts.push({
         id: `act_sl_${item.id || item.creatorId || idx}`,
         type: 'shortlist',
-        title: `${item.creatorName || 'KOC'} đã lưu vào Giỏ chọn lọc`,
+        title: `${item.creatorName || 'Nhà sáng tạo'} đã lưu vào Giỏ chọn lọc`,
         campaign: item.campaignName ? `Chiến dịch: ${item.campaignName}` : 'Sẵn sàng gửi lời mời hợp tác',
         time: item.addedAt ? formatRelativeTime(item.addedAt) : `${(idx + 1) * 20} phút trước`,
         avatar: item.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${item.creatorName || idx}`,
@@ -373,7 +373,7 @@ export default function DashboardPage() {
         id: `act_camp_${camp.id || idx}`,
         type: 'campaign',
         title: isRunning ? `Chiến dịch "${camp.name}" đang vận hành` : `Đã tạo chiến dịch "${camp.name}"`,
-        campaign: camp.productService || 'Đang tìm kiếm & kết nối KOC',
+        campaign: camp.productService || 'Đang tìm kiếm & kết nối Nhà sáng tạo',
         time: camp.createdAt ? formatRelativeTime(camp.createdAt) : `${idx + 1} giờ trước`,
         avatar: camp.imageUrl || campaignThumbnails[idx % campaignThumbnails.length],
         icon: isRunning ? <CheckCircleOutlined style={{ color: '#10B981' }} /> : <RocketOutlined style={{ color: '#2563EB' }} />,

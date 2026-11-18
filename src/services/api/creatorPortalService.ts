@@ -125,7 +125,7 @@ export function mapBackendClaim(raw: any): CreatorClaimItem {
     creatorId: raw?.creatorId,
     platform: PLATFORM_LABEL[platformKey] ?? 'TikTok',
     handle: handle && !handle.startsWith('@') ? `@${handle}` : handle,
-    channelName: raw?.creatorName ?? raw?.channelName ?? raw?.displayName ?? (handle || 'Kênh KOC'),
+    channelName: raw?.creatorName ?? raw?.channelName ?? raw?.displayName ?? (handle || 'Kênh Nhà sáng tạo'),
     followers: Number(raw?.creatorFollowers ?? raw?.followers ?? 2450000),
     channelAvatar:
       raw?.creatorAvatar ??
@@ -594,7 +594,7 @@ export const creatorPortalService = {
           mergedMap.set(l.id, {
             ...l,
             ...existing,
-            channelName: existing.channelName !== 'Kênh KOC' ? existing.channelName : l.channelName,
+            channelName: existing.channelName !== 'Kênh Nhà sáng tạo' ? existing.channelName : l.channelName,
             handle: existing.handle || l.handle,
             platform: existing.platform || l.platform,
             followers: existing.followers || l.followers,

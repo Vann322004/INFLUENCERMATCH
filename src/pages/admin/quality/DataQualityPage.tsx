@@ -119,7 +119,7 @@ export default function DataQualityPage() {
     try {
       if (decision === 'approve') await dataQualityService.approve(selected.metricId, values.niche);
       else await dataQualityService.reject(selected.metricId, values.reason, values.reclassifiedType);
-      message.success(decision === 'approve' ? `Đã duyệt phân loại KOC cho @${selected.userName}.` : `Đã ghi nhận từ chối hồ sơ @${selected.userName}.`);
+      message.success(decision === 'approve' ? `Đã duyệt phân loại Nhà sáng tạo cho @${selected.userName}.` : `Đã ghi nhận từ chối hồ sơ @${selected.userName}.`);
       setDecision(null);
       setSelected(null);
       if (items.length === 1 && page > 1) setPage(current => current - 1);
@@ -144,7 +144,7 @@ export default function DataQualityPage() {
 
   return <div className="data-quality-page">
     <div className="quality-page-heading">
-      <div><Typography.Title level={3}>Kiểm định chất lượng KOC</Typography.Title>
+      <div><Typography.Title level={3}>Kiểm định chất lượng Nhà sáng tạo</Typography.Title>
         <Typography.Paragraph type="secondary">Xem dữ liệu thu thập, kiểm tra phân loại AI và ghi nhận quyết định cho từng hồ sơ.</Typography.Paragraph></div>
       <Button icon={<ReloadOutlined />} loading={loading} disabled={saving} onClick={() => setRefreshKey(current => current + 1)}>Làm mới</Button>
     </div>
@@ -154,7 +154,7 @@ export default function DataQualityPage() {
     <CrawlerReviewList refreshKey={refreshKey} />
     <Card className="quality-review-list">
       <div className="quality-list-heading"><div><Typography.Title level={4}>Hồ sơ chờ kiểm định</Typography.Title>
-        <Typography.Text type="secondary">Các bản thu thập mới nhất được AI phân loại KOC với độ tin cậy dưới 70%, chưa được kiểm định.</Typography.Text></div>
+        <Typography.Text type="secondary">Các bản thu thập mới nhất được AI phân loại Nhà sáng tạo với độ tin cậy dưới 70%, chưa được kiểm định.</Typography.Text></div>
         <Tag color="orange">{total === null ? 'Chưa tải dữ liệu' : `${total} hồ sơ`}</Tag></div>
       {error ? <Alert type="error" showIcon title="Không tải được danh sách kiểm định" description={error} action={<Button onClick={() => setRefreshKey(current => current + 1)}>Thử lại</Button>} />
         : loading ? <Skeleton active paragraph={{ rows: 6 }} />
@@ -168,8 +168,8 @@ export default function DataQualityPage() {
         </article>)}</div>}
       {!error && total !== null && total > 0 && <Pagination className="quality-pagination" current={page} pageSize={pageSize} total={total} showSizeChanger={false} disabled={loading || saving} onChange={setPage} showTotal={count => `${count} hồ sơ`} />}
     </Card>
-    <Drawer title="Kiểm định hồ sơ KOC" open={!!selected} onClose={() => { if (!saving && !decision) setSelected(null); }} size={screens.md ? 620 : '100%'}
-      footer={<div className="quality-review-actions"><Button danger icon={<CloseOutlined />} disabled={saving} onClick={() => startDecision('reject')}>Từ chối / Phân loại lại</Button><Button type="primary" icon={<CheckOutlined />} disabled={saving} onClick={() => startDecision('approve')}>Duyệt KOC</Button></div>}>
+    <Drawer title="Kiểm định hồ sơ Nhà sáng tạo" open={!!selected} onClose={() => { if (!saving && !decision) setSelected(null); }} size={screens.md ? 620 : '100%'}
+      footer={<div className="quality-review-actions"><Button danger icon={<CloseOutlined />} disabled={saving} onClick={() => startDecision('reject')}>Từ chối / Phân loại lại</Button><Button type="primary" icon={<CheckOutlined />} disabled={saving} onClick={() => startDecision('approve')}>Duyệt Nhà sáng tạo</Button></div>}>
       {selected && <div className="quality-review-detail">
         <CreatorIdentity item={selected} />
         {channelUrl(selected) ? <Button href={channelUrl(selected)} target="_blank" rel="noopener noreferrer" icon={<ExportOutlined />}>Mở kênh để đối chiếu</Button> : <Alert type="warning" title="Hồ sơ chưa có đường dẫn kênh hợp lệ." />}
@@ -182,7 +182,7 @@ export default function DataQualityPage() {
         <Alert type="info" showIcon title="Kiểm tra trước khi duyệt" description="Đối chiếu kênh và nội dung với ngành hàng được đề xuất. Nếu là tài khoản thương mại hoặc phân loại sai, chọn từ chối và ghi rõ lý do." />
       </div>}
     </Drawer>
-    <Modal title={decision === 'approve' ? 'Xác nhận duyệt KOC' : 'Từ chối hoặc phân loại lại'} open={!!decision} onCancel={() => { if (!saving) setDecision(null); }} onOk={submitDecision} confirmLoading={saving} okText={decision === 'approve' ? 'Xác nhận duyệt' : 'Xác nhận từ chối'} cancelText="Quay lại" cancelButtonProps={{ disabled: saving }} closable={!saving} maskClosable={!saving} okButtonProps={{ danger: decision === 'reject' }}>
+    <Modal title={decision === 'approve' ? 'Xác nhận duyệt Nhà sáng tạo' : 'Từ chối hoặc phân loại lại'} open={!!decision} onCancel={() => { if (!saving) setDecision(null); }} onOk={submitDecision} confirmLoading={saving} okText={decision === 'approve' ? 'Xác nhận duyệt' : 'Xác nhận từ chối'} cancelText="Quay lại" cancelButtonProps={{ disabled: saving }} closable={!saving} maskClosable={!saving} okButtonProps={{ danger: decision === 'reject' }}>
       <Typography.Paragraph>Hồ sơ: <strong>@{selected?.userName}</strong></Typography.Paragraph>
       <Form form={form} layout="vertical" disabled={saving}>
         {decision === 'approve' ? <>
@@ -192,7 +192,7 @@ export default function DataQualityPage() {
           {nichesError && <Typography.Paragraph type="secondary">{nichesError}</Typography.Paragraph>}
           <Typography.Paragraph type="secondary">Quyết định được lưu cho bản thu thập này; điểm tin cậy AI được giữ nguyên.</Typography.Paragraph>
         </> : <>
-          <Form.Item name="reclassifiedType" label="Kết quả phân loại" rules={[{ required: true }]}><Select options={[{ value: 'REJECTED', label: 'Không đủ điều kiện KOC' }, { value: 'BRAND', label: 'Tài khoản thương mại / Nhãn hàng' }, { value: 'KOL', label: 'Phân loại lại thành KOL' }]} /></Form.Item>
+          <Form.Item name="reclassifiedType" label="Kết quả phân loại" rules={[{ required: true }]}><Select options={[{ value: 'REJECTED', label: 'Không đủ điều kiện Nhà sáng tạo' }, { value: 'BRAND', label: 'Tài khoản thương mại / Nhãn hàng' }, { value: 'KOL', label: 'Phân loại lại thành KOL' }]} /></Form.Item>
           <Form.Item name="reason" label="Lý do từ chối" rules={[{ required: true, whitespace: true, message: 'Nhập lý do để lưu kết quả kiểm định.' }, { max: 255, message: 'Tối đa 255 ký tự.' }]}><Input.TextArea rows={3} maxLength={255} showCount placeholder="Ghi rõ kết quả đối chiếu nội dung kênh" /></Form.Item>
         </>}
       </Form>

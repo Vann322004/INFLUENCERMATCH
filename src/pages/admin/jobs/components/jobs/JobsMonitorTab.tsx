@@ -29,10 +29,10 @@ const STATUS_COLOR_MAP: Record<string, { color: string; label: string }> = {
 };
 
 const DECISION_COLOR_MAP: Record<string, { color: string; label: string }> = {
-  AUTO_ACCEPT_KOC:      { color: 'green',   label: 'Đạt chuẩn KOC' },
+  AUTO_ACCEPT_KOC:      { color: 'green',   label: 'Đạt chuẩn Nhà sáng tạo' },
   AUTO_ACCEPT_KOL:      { color: 'purple',  label: 'Đạt chuẩn KOL' },
-  ACCEPTED:             { color: 'green',   label: 'Đạt chuẩn KOC' },
-  PASS:                 { color: 'green',   label: 'Đạt chuẩn KOC' },
+  ACCEPTED:             { color: 'green',   label: 'Đạt chuẩn Nhà sáng tạo' },
+  PASS:                 { color: 'green',   label: 'Đạt chuẩn Nhà sáng tạo' },
   MANAGER_APPROVED:     { color: 'cyan',    label: 'Chuyên viên duyệt' },
   AUTO_REJECT:          { color: 'red',     label: 'Từ chối (Bán hàng / Spam)' },
   MANAGER_REJECTED:     { color: 'volcano', label: 'Chuyên viên từ chối' },
@@ -95,7 +95,7 @@ export default function JobsMonitorTab() {
       ),
     },
     {
-      title: 'Nhà sáng tạo (KOC)',
+      title: 'Nhà sáng tạo',
       key: 'creator',
       render: (_, r) => (
         <div>
@@ -139,7 +139,7 @@ export default function JobsMonitorTab() {
           if (dec === 'ACCEPTED' || dec === 'PASS') {
             conf = r.primaryType === 'KOL'
               ? { color: 'purple', label: 'Đạt chuẩn KOL' }
-              : { color: 'green', label: 'Đạt chuẩn KOC' };
+              : { color: 'green', label: 'Đạt chuẩn Nhà sáng tạo' };
           } else {
             conf = { color: 'default', label: dec || 'Chờ đánh giá' };
           }
@@ -161,7 +161,7 @@ export default function JobsMonitorTab() {
         const isKoc = type === 'KOC';
         return (
           <Tag color={isKol ? 'purple' : isKoc ? 'cyan' : 'default'} style={{ borderRadius: 6, fontWeight: 700 }}>
-            {isKol ? 'KOL' : isKoc ? 'KOC' : 'Chưa rõ'}
+            {isKol ? 'KOL' : isKoc ? 'Nhà sáng tạo' : 'Chưa rõ'}
           </Tag>
         );
       },
@@ -184,7 +184,7 @@ export default function JobsMonitorTab() {
       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
         <Col xs={12} sm={6}>
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-            <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>TỔNG KOC ĐÃ THU THẬP</div>
+            <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>TỔNG NHÀ SÁNG TẠO ĐÃ THU THẬP</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: '#1E293B', marginTop: 4 }}>
               {totalCandidates}
             </div>

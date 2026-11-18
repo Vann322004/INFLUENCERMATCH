@@ -522,7 +522,7 @@ export default function CampaignTable() {
         const actionMenuItems: MenuProps['items'] = [
           { key: 'view', icon: <EyeOutlined />, label: 'Xem chi tiết' },
           { key: 'edit', icon: <EditOutlined />, label: 'Chỉnh sửa' },
-          { key: 'discovery', icon: <CompassOutlined />, label: 'Khám phá KOC AI' },
+          { key: 'discovery', icon: <CompassOutlined />, label: 'Khám phá Nhà sáng tạo AI' },
           { type: 'divider' },
           { key: 'delete', icon: <DeleteOutlined />, danger: true, label: 'Xóa chiến dịch' },
         ];

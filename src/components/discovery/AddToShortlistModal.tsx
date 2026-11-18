@@ -145,7 +145,7 @@ export default function AddToShortlistModal({
   return (
     <Modal
       className="shortlist-modal"
-      title={<div className="shortlist-modal-heading"><h2>Lưu vào danh sách chọn</h2><p>Chọn chiến dịch và mức độ ưu tiên cho KOC.</p></div>}
+      title={<div className="shortlist-modal-heading"><h2>Lưu vào danh sách chọn</h2><p>Chọn chiến dịch và mức độ ưu tiên cho Nhà sáng tạo.</p></div>}
       open={open}
       onCancel={() => { if (!submitting) onClose(); }}
       footer={null}
@@ -157,10 +157,10 @@ export default function AddToShortlistModal({
     >
       {creator && <div className="shortlist-modal-creator">
         <Avatar size={48} src={creator.avatar}>{creator.name?.charAt(0)}</Avatar>
-        <div><strong>{creator.name}</strong><p>{creator.username ? `@${creator.username.replace(/^@+/, '')}` : 'KOC'}{creator.niche && ` · ${creator.niche}`}</p></div>
+        <div><strong>{creator.name}</strong><p>{creator.username ? `@${creator.username.replace(/^@+/, '')}` : 'Nhà sáng tạo'}{creator.niche && ` · ${creator.niche}`}</p></div>
       </div>}
       {campaignError ? <Alert type="error" title={campaignError} action={<Button onClick={() => setRetry(value => value + 1)}>Thử lại</Button>} /> : campaignOptions.length === 0 && !loadingCampaigns ? <>
-        <Alert type="info" showIcon title="Chưa có chiến dịch" description="Tạo chiến dịch để lưu và quản lý danh sách KOC phù hợp." />
+        <Alert type="info" showIcon title="Chưa có chiến dịch" description="Tạo chiến dịch để lưu và quản lý danh sách Nhà sáng tạo phù hợp." />
         <div className="shortlist-modal-actions"><Button onClick={onClose}>Đóng</Button><Button type="primary" icon={<RocketOutlined />} onClick={() => { onClose(); navigate('/campaigns/create'); }}>Tạo chiến dịch</Button></div>
       </> : <Form form={form} layout="vertical" initialValues={{ priority: 'HIGH' }} disabled={submitting}>
         <Form.Item name="campaignId" label="Chiến dịch" rules={[{ required: true, message: 'Vui lòng chọn chiến dịch' }]}>

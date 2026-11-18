@@ -25,7 +25,7 @@ export const CampaignCreatorsTab: React.FC<CampaignCreatorsTabProps> = ({
             Danh sách Nhà sáng tạo tham gia ({participatingCreators.length})
           </span>
           <div style={{ fontSize: 12.5, color: '#64748B', marginTop: 3 }}>
-            Quản lý thông tin, thỏa thuận chi phí và tiến độ bàn giao của từng KOC
+            Quản lý thông tin, thỏa thuận chi phí và tiến độ bàn giao của từng Nhà sáng tạo
           </div>
         </div>
         <Space>
@@ -37,7 +37,7 @@ export const CampaignCreatorsTab: React.FC<CampaignCreatorsTabProps> = ({
               navigate(`/discovery?campaignId=${resolvedId}`);
             }}
           >
-            Tìm thêm KOC
+            Tìm thêm Nhà sáng tạo
           </Button>
         </Space>
       </div>

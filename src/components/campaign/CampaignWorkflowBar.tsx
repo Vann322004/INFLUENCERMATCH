@@ -57,7 +57,7 @@ export default function CampaignWorkflowBar({
     {
       key: 'discovery',
       stepNum: 2,
-      title: 'Khám phá KOC',
+      title: 'Khám phá Nhà sáng tạo',
       path: '/creators',
     },
     {

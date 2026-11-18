@@ -33,7 +33,7 @@ export interface HunterSetupCardProps {
 const TIER0_RULES = [
   'Tối thiểu 7.000 người theo dõi (loại bỏ clone, seeding ảo)',
   'Chặn tài khoản bán sỉ / shop thương mại (dropship, kho buôn)',
-  'Chống trùng lặp — chỉ nạp KOC chưa có trong Database',
+  'Chống trùng lặp — chỉ nạp Nhà sáng tạo chưa có trong Database',
 ];
 
 export default function HunterSetupCard({
@@ -96,12 +96,12 @@ export default function HunterSetupCard({
       >
         <div>
           <Text style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', display: 'block' }}>
-            {mode === 'category' ? 'Săn KOC Tự Động theo Lĩnh vực' : 'Thu thập KOC theo Danh sách Tùy chọn'}
+            {mode === 'category' ? 'Thu thập Nhà sáng tạo Tự Động theo Lĩnh vực' : 'Thu thập Nhà sáng tạo theo Danh sách Tùy chọn'}
           </Text>
           <Text style={{ fontSize: 12.5, color: '#64748B' }}>
             {mode === 'category'
-              ? 'Tự động quét mạng xã hội theo từ khóa, phát hiện KOC mới và loại bỏ shop/clone theo chuẩn Tier-0.'
-              : 'Trích xuất song song nhiều KOC cùng lúc từ danh sách username hoặc đường dẫn kênh.'}
+              ? 'Tự động quét mạng xã hội theo từ khóa, phát hiện Nhà sáng tạo mới và loại bỏ shop/clone theo chuẩn Tier-0.'
+              : 'Trích xuất song song nhiều Nhà sáng tạo cùng lúc từ danh sách username hoặc đường dẫn kênh.'}
           </Text>
         </div>
 
@@ -139,7 +139,7 @@ export default function HunterSetupCard({
             {/* 2. Lĩnh vực */}
             <Col xs={24} sm={15}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-                Lĩnh vực săn KOC
+                Lĩnh vực thu thập Nhà sáng tạo
               </div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
                 <Button size="small" onClick={onReloadTopics} loading={topicsLoading} disabled={loading}>Làm mới</Button>
@@ -226,11 +226,11 @@ export default function HunterSetupCard({
           /* Chế độ nhập danh sách tùy chọn */
           <Col xs={24} sm={16}>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-              Danh sách username hoặc link KOC (mỗi dòng hoặc dấu phẩy)
+              Danh sách username hoặc link Nhà sáng tạo (mỗi dòng hoặc dấu phẩy)
             </div>
             <TextArea
               rows={3}
-              placeholder={`Nhập danh sách KOC cần cào, ví dụ:\n@schannelvn\n@duytham\nhttps://www.tiktok.com/@linh.beauty`}
+              placeholder={`Nhập danh sách Nhà sáng tạo cần thu thập, ví dụ:\n@schannelvn\n@duytham\nhttps://www.tiktok.com/@linh.beauty`}
               value={customUsernames}
               onChange={(e) => onCustomUsernamesChange(e.target.value)}
               style={{ borderRadius: 8, fontSize: 12.5 }}
@@ -260,7 +260,7 @@ export default function HunterSetupCard({
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <span style={{ fontSize: 24, fontWeight: 800, color: '#1D4ED8' }}>{maxKocs}</span>
-            <span style={{ fontSize: 13, color: '#64748B' }}>KOC</span>
+            <span style={{ fontSize: 13, color: '#64748B' }}>Nhà sáng tạo</span>
           </div>
           <Slider
             min={3}
@@ -288,7 +288,7 @@ export default function HunterSetupCard({
               boxShadow: '0 3px 10px rgba(29, 78, 216,0.3)',
             }}
           >
-            {mode === 'category' ? 'Bắt đầu săn KOC tự động' : 'Bắt đầu cào danh sách KOC'}
+            {mode === 'category' ? 'Bắt đầu thu thập tự động' : 'Bắt đầu thu thập danh sách Nhà sáng tạo'}
           </Button>
         </Col>
       </Row>

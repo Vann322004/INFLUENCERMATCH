@@ -283,7 +283,7 @@ export default function HeroLanding() {
   // Main lifecycle: scaling unit --u, entrance timeline, scroll crossfade, reveal observer, WebGL pond lens, Three.js 3D Koi
   useEffect(() => {
     const prevTitle = document.title;
-    document.title = 'InfluencerMatch — Nền tảng Kết nối KOC & Thương hiệu bằng AI';
+    document.title = 'InfluencerMatch — Nền tảng Kết nối Nhà sáng tạo & Thương hiệu bằng AI';
     // Respect the visitor’s motion preference.
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1281,7 +1281,7 @@ export default function HeroLanding() {
                   <circle cx="7" cy="7" r="4.8" stroke="currentColor" strokeWidth="1.4" />
                   <path d="M10.6 10.6L14 14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
                 </svg>
-                <span>Tìm kiếm KOC, chiến dịch...</span>
+                <span>Tìm kiếm Nhà sáng tạo, chiến dịch...</span>
                 <span className="nl-dash-kbd">⌘K</span>
               </div>
               <span className="nl-chip">
@@ -1336,7 +1336,7 @@ export default function HeroLanding() {
                   <svg viewBox="0 0 16 16" fill="none">
                     <path d="M3 4h10M3 8h7M3 12h9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                   </svg>
-                  <span>Giỏ Shortlist KOC</span>
+                  <span>Giỏ Shortlist Nhà sáng tạo</span>
                   <span className="nl-dash-count">16</span>
                 </div>
                 <div className="nl-dash-nav-item">
@@ -1357,7 +1357,7 @@ export default function HeroLanding() {
 
               <div className="nl-dash-main">
                 <div className="nl-dash-head">
-                  <div className="nl-dash-title">Hiệu suất chiến dịch &amp; KOC</div>
+                  <div className="nl-dash-title">Hiệu suất chiến dịch &amp; Nhà sáng tạo</div>
                   <span className="nl-chip up">▲ 24.6% so với kỳ trước</span>
                   <div className="nl-dash-seg">
                     <span>7 ngày</span>
@@ -1375,7 +1375,7 @@ export default function HeroLanding() {
                     { label: 'Tổng lượt tiếp cận (Reach)', val: '8,42M', chip: '+18%', up: true, color: 'var(--preview-chart-primary)', id: 'sp0' },
                     { label: 'Tỷ lệ tương tác (ER TB)', val: '6,8%', chip: '+1,4pt', up: true, color: 'var(--preview-chart-secondary)', id: 'sp1' },
                     { label: 'Ngân sách đã giải ngân', val: '184,2Tr', chip: '+12%', up: true, color: 'var(--preview-chart-primary)', id: 'sp2' },
-                    { label: 'KOC đang hợp tác', val: '24', chip: '+5', up: true, color: 'var(--preview-chart-secondary)', id: 'sp3' },
+                    { label: 'Nhà sáng tạo đang hợp tác', val: '24', chip: '+5', up: true, color: 'var(--preview-chart-secondary)', id: 'sp3' },
                   ].map((k, idx) => {
                     const sp = charts.sparks[idx];
                     return (
@@ -1503,7 +1503,7 @@ export default function HeroLanding() {
 
                   <div className="nl-chart-pane">
                     <div className="nl-pane-head">
-                      <span>Tỷ trọng nền tảng KOC</span>
+                      <span>Tỷ trọng nền tảng Nhà sáng tạo</span>
                     </div>
                     <div className="nl-bars-list">
                       {[
@@ -1538,7 +1538,7 @@ export default function HeroLanding() {
                 {/* Deals Table */}
                 <div className="nl-deals-table">
                   <div className="nl-deals-row head">
-                    <span>Đối tác KOC</span>
+                    <span>Đối tác Nhà sáng tạo</span>
                     <span>Nền tảng</span>
                     <span className="nl-col-hide-sm">Thù lao</span>
                     <span className="nl-col-hide-sm">Tương tác (ER)</span>

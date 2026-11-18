@@ -34,7 +34,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
 
   const handleCrawl = async () => {
     if (!inputUrl.trim()) {
-      message.warning('Vui lòng nhập đường dẫn kênh hoặc tên người dùng KOC để cào');
+      message.warning('Vui lòng nhập đường dẫn kênh hoặc tên người dùng Nhà sáng tạo để thu thập');
       return;
     }
 
@@ -43,7 +43,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
     setCurrentStep('Đang kết nối tới máy chủ cào dữ liệu...');
 
     try {
-      setTimeout(() => setCurrentStep('Đang bóc tách thông tin hồ sơ KOC...'), 400);
+      setTimeout(() => setCurrentStep('Đang bóc tách thông tin hồ sơ Nhà sáng tạo...'), 400);
       setTimeout(() => setCurrentStep('Đang trích xuất bài đăng gần nhất...'), 900);
 
       const res = await crawlerService.testScrape(inputUrl, platform);
@@ -102,7 +102,7 @@ export default function LiveCrawlTab({ onImportSuccess, defaultInput = '', initi
       return <Tag color="purple" style={{ fontWeight: 700 }}>Đạt chuẩn KOL</Tag>;
     }
     if (dec === 'ACCEPTED' || dec === 'AUTO_ACCEPT_KOC' || dec === 'PASS') {
-      return <Tag color="success" style={{ fontWeight: 700 }}>Đạt chuẩn KOC</Tag>;
+      return <Tag color="success" style={{ fontWeight: 700 }}>Đạt chuẩn Nhà sáng tạo</Tag>;
     }
     if (dec === 'REJECTED' || dec === 'AUTO_REJECT' || dec === 'REJECT') {
       return <Tag color="error" style={{ fontWeight: 700 }}>Từ chối (Bán hàng / Spam)</Tag>;

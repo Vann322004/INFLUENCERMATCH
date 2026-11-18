@@ -28,10 +28,10 @@ export default function AdminHeader({ title, mobile, menuOpen, onOpenMenu }: Adm
       return { current: 'Quản lý lĩnh vực' };
     }
     if (p.includes('/jobs')) {
-      return { current: 'Tiến trình thu thập & Săn KOC' };
+      return { current: 'Tiến trình thu thập & Khám phá Nhà sáng tạo' };
     }
     if (p.includes('/data-quality')) {
-      return { current: 'Kiểm định chất lượng KOC' };
+      return { current: 'Kiểm định chất lượng Nhà sáng tạo' };
     }
     if (p.includes('/scoring')) {
       return { current: 'Cấu hình gợi ý' };

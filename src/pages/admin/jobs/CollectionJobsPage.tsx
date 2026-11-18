@@ -32,10 +32,10 @@ export default function CollectionJobsPage() {
 
   const handleTriggerDbRefresh = async () => {
     setTriggerLoading(true);
-    message.loading({ content: 'Đang gửi lệnh làm mới dữ liệu KOC...', key: 'db_refresh' });
+    message.loading({ content: 'Đang gửi lệnh làm mới dữ liệu Nhà sáng tạo...', key: 'db_refresh' });
     try {
       const res = await crawlerService.triggerDbRefresh(25);
-      message.success({ content: res.message || 'Đã đưa 25 KOC vào hàng đợi làm mới!', key: 'db_refresh' });
+      message.success({ content: res.message || 'Đã đưa 25 Nhà sáng tạo vào hàng đợi làm mới!', key: 'db_refresh' });
       setActiveTab('jobs');
     } catch (err: any) {
       message.error({ content: err.message || 'Lỗi khi gửi yêu cầu làm mới dữ liệu', key: 'db_refresh' });
@@ -61,11 +61,11 @@ export default function CollectionJobsPage() {
           <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 22, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span>Trung tâm Thu thập & Cào Dữ liệu</span>
             <Tag color="purple" style={{ borderRadius: 6, fontWeight: 700 }}>
-              Săn tìm KOC thông minh
+              Khám phá Nhà sáng tạo thông minh
             </Tag>
           </div>
           <div style={{ color: '#64748B', fontSize: 13, marginTop: 4 }}>
-            Tự động săn lùng & phát hiện KOC mới theo chủ đề/hashtag, cào dữ liệu trực tiếp và giám sát các tác vụ nền.
+            Tự động thu thập & phát hiện Nhà sáng tạo mới theo chủ đề/hashtag, cào dữ liệu trực tiếp và giám sát các tác vụ nền.
           </div>
         </div>
 
@@ -76,7 +76,7 @@ export default function CollectionJobsPage() {
             loading={triggerLoading}
             style={{ borderRadius: 8, fontWeight: 600 }}
           >
-            Làm mới dữ liệu KOC
+            Làm mới dữ liệu Nhà sáng tạo
           </Button>
 
           <Button
@@ -114,7 +114,7 @@ export default function CollectionJobsPage() {
           items={[
             {
               key: 'hunter',
-              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Săn & Thu thập KOC</span>,
+              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Thu thập Nhà sáng tạo</span>,
               children: (
                 <div style={{ padding: '24px 24px 32px' }}>
                   <AutoHunterTab />
@@ -123,7 +123,7 @@ export default function CollectionJobsPage() {
             },
             {
               key: 'live',
-              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Cào trực tiếp KOC</span>,
+              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Thu thập trực tiếp Nhà sáng tạo</span>,
               children: (
                 <div style={{ padding: '24px 24px 32px' }}>
                   <LiveCrawlTab />
@@ -169,7 +169,7 @@ export default function CollectionJobsPage() {
 
           <Form.Item
             name="target"
-            label="Tên tài khoản / Đường dẫn KOC"
+            label="Tên tài khoản / Đường dẫn Nhà sáng tạo"
             rules={[{ required: true, message: 'Vui lòng nhập tên tài khoản' }]}
           >
             <Input prefix="@" placeholder="VD: linh.beauty hoặc schannelvn" />

@@ -64,7 +64,7 @@ export function useAutoHunter() {
         : status >= 500 ? 'Máy chủ gặp lỗi khi tải lĩnh vực. Vui lòng thử lại sau.'
         : error?.message === 'INVALID_CRAWL_FIELDS_RESPONSE' ? 'Dữ liệu lĩnh vực trả về không đúng định dạng.'
         : 'Không kết nối được API lĩnh vực. Vui lòng kiểm tra kết nối và thử lại.';
-      setTopicsError(`Không tải được lĩnh vực săn KOC${status ? ` (HTTP ${status})` : ''}. ${detail}`);
+      setTopicsError(`Không tải được lĩnh vực thu thập Nhà sáng tạo${status ? ` (HTTP ${status})` : ''}. ${detail}`);
     }).finally(() => { if (active) setTopicsLoading(false); });
     return () => { active = false; };
   }, [topicsVersion]);
@@ -103,7 +103,7 @@ export function useAutoHunter() {
         .filter(Boolean);
 
       if (usernamesToCrawl.length === 0) {
-        message.warning('Vui lòng nhập ít nhất 1 username hoặc link KOC!');
+        message.warning('Vui lòng nhập ít nhất 1 username hoặc link Nhà sáng tạo!');
         return;
       }
     } else {
@@ -112,7 +112,7 @@ export function useAutoHunter() {
         return;
       }
       if (activeKeywords.length === 0) {
-        message.warning('Vui lòng chọn hoặc nhập ít nhất 1 từ khóa để săn KOC!');
+        message.warning('Vui lòng chọn hoặc nhập ít nhất 1 từ khóa để tìm Nhà sáng tạo!');
         return;
       }
     }
@@ -131,7 +131,7 @@ export function useAutoHunter() {
 
     if (mode === 'custom') {
       setLogLines([
-        `[${now()}] Bắt đầu cào ${usernamesToCrawl.length} tài khoản KOC từ danh sách chỉ định...`,
+        `[${now()}] Bắt đầu cào ${usernamesToCrawl.length} tài khoản Nhà sáng tạo từ danh sách chỉ định...`,
         `[${now()}] Danh sách mục tiêu: ${usernamesToCrawl.slice(0, 5).join(', ')}${usernamesToCrawl.length > 5 ? '...' : ''}`,
       ]);
       setCurrentKeyword(usernamesToCrawl[0] || 'custom');
@@ -235,7 +235,7 @@ export function useAutoHunter() {
         setDiscoveredList(mappedList);
 
         const newLogs = [
-          `[${now()}] Đã xử lý ${res.results?.length ?? 0}/${totalReq} kênh yêu cầu; ${mappedList.length} KOC đạt chuẩn Tier-0. ${(res.results?.length ?? 0) < totalReq ? "Nguồn tìm kiếm chưa trả đủ kênh phù hợp." : ""}`,
+          `[${now()}] Đã xử lý ${res.results?.length ?? 0}/${totalReq} kênh yêu cầu; ${mappedList.length} Nhà sáng tạo đạt chuẩn Tier-0. ${(res.results?.length ?? 0) < totalReq ? "Nguồn tìm kiếm chưa trả đủ kênh phù hợp." : ""}`,
         ];
         if (shopFilteredCount > 0) {
           newLogs.push(`[${now()}] Đã loại bỏ ${shopFilteredCount} tài khoản Shop/Kho hàng: ${shopRemovedNames.join(', ')}`);
@@ -247,7 +247,7 @@ export function useAutoHunter() {
           newLogs.push(`[${now()}] Có ${totalExcluded} kênh cào lỗi hoặc bị lọc Tier-0. Chưa xác nhận có hồ sơ chờ kiểm định trên hệ thống.`);
         }
         setLogLines(newLogs);
-        message.success(`Đã thu thập ${mappedList.length} KOC; ${queuedCount} hồ sơ đã vào hàng đợi đồng bộ.`);
+        message.success(`Đã thu thập ${mappedList.length} Nhà sáng tạo; ${queuedCount} hồ sơ đã vào hàng đợi đồng bộ.`);
 
         if (totalExcluded > 0) {
           message.info({
@@ -284,7 +284,7 @@ export function useAutoHunter() {
         message.warning({
           content: (
             <span>
-              Không có KOC nào đạt chuẩn tự động (cào lỗi hoặc bị lọc {totalExcluded} kênh).{' '}
+              Không có Nhà sáng tạo nào đạt chuẩn tự động (cào lỗi hoặc bị lọc {totalExcluded} kênh).{' '}
               <a
                 onClick={handleNavigateQuality}
                 style={{ color: '#1D4ED8', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}

@@ -112,7 +112,7 @@ export const getDisplayBio = (creator: { bio?: string; categories?: string[]; na
     const cats = creator.categories && creator.categories.length > 0
       ? creator.categories.join(', ')
       : 'Làm đẹp & Đời sống';
-    return `KOC chuyên sáng tạo nội dung ${cats}, chia sẻ trải nghiệm thực tế và đánh giá chất lượng ✨`;
+    return `Nhà sáng tạo nội dung ${cats}, chia sẻ trải nghiệm thực tế và đánh giá chất lượng ✨`;
   }
   return rawBio;
 };

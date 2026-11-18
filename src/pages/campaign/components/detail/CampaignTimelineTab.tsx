@@ -42,7 +42,7 @@ export const CampaignTimelineTab: React.FC<CampaignTimelineTabProps> = ({ rawCam
               color: 'blue',
               children: (
                 <div>
-                  <div style={{ fontWeight: 600, color: '#0F172A' }}>Kích hoạt và kết nối KOC</div>
+                  <div style={{ fontWeight: 600, color: '#0F172A' }}>Kích hoạt và kết nối Nhà sáng tạo</div>
                   <div style={{ fontSize: 12, color: '#64748B' }}>
                     {startDateStr} • Đang triển khai gửi brief và đàm phán hợp đồng
                   </div>
