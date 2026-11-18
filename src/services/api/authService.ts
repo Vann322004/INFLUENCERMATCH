@@ -96,6 +96,17 @@ export const authService = {
     await apiClient.post('/auth/resend-verification', { email });
   },
 
+  async requestPasswordReset(email: string): Promise<void> {
+    const response = await cookieAuthClient.post('/auth/password-reset/request', { email });
+    if (response.status !== 202) throw new Error('Không nhận được phản hồi gửi mã hợp lệ.');
+  },
+
+  async confirmPasswordReset(email: string, otp: string, newPassword: string): Promise<void> {
+    const response = await cookieAuthClient.post('/auth/password-reset/confirm', { email, otp, newPassword });
+    if (response.status !== 204) throw new Error('Không nhận được xác nhận đặt lại mật khẩu.');
+    clearAuthSession();
+  },
+
   /**
    * Lấy thông tin chi tiết của người dùng hiện tại từ backend
    */

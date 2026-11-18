@@ -13,8 +13,8 @@ export default function AuthLayout({ children }) {
   const { pathname } = useLocation();
   const isLogin = pathname === '/login';
   const isRegister = pathname === '/register';
-  const isForgot = pathname === '/forgot-password';
-  const isAuthEntry = isLogin || isRegister || isForgot;
+  const isRecovery = pathname === '/forgot-password' || pathname === '/reset-password';
+  const isAuthEntry = isLogin || isRegister || isRecovery;
 
   const langMenuItems = [
     {
@@ -36,7 +36,7 @@ export default function AuthLayout({ children }) {
   ];
 
   return (
-    <div className={`al-root${isAuthEntry ? ' al-auth-entry' : ''}${isLogin ? ' al-login' : ''}${isRegister ? ' al-register' : ''}${isForgot ? ' al-forgot' : ''}`}>
+    <div className={`al-root${isAuthEntry ? ' al-auth-entry' : ''}${isLogin ? ' al-login' : ''}${isRegister ? ' al-register' : ''}${isRecovery ? ' al-forgot' : ''}`}>
       {/* ── Full-Viewport Looping Video Background ── */}
       <video
         className="al-bg-video"
