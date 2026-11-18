@@ -26,15 +26,22 @@
 .al-form-card .ant-form-item { margin-bottom:18px; }
 .al-form-card .ant-form-item-label { padding-bottom:8px; }
 .al-form-card .ant-form-item-label > label { font-size:14px; font-weight:500; color:#f1ecf8; height:auto; }
-.al-form-card :is(.ant-input-outlined,.ant-input-affix-wrapper) { min-height:48px; padding:11px 14px; border:1px solid #ffffff40; border-radius:12px; background:#ffffff12; color:#fff; font-size:15px; box-shadow:none; }
-.al-form-card .ant-input-affix-wrapper > input.ant-input { background:transparent; color:#fff; padding:0; min-height:0; font-size:inherit; }
-.al-form-card input::placeholder { color:#c7bed1; opacity:1; }
-.al-form-card :is(.ant-input-outlined,.ant-input-affix-wrapper):hover { border-color:#cdbef6; }
-.al-form-card :is(.ant-input-outlined:focus,.ant-input-affix-wrapper-focused) { border-color:#c7b5ff; box-shadow:0 0 0 3px #b69cff22; background:#ffffff18; }
-.al-form-card .ant-input-password-icon { color:#ddd6e8; }
+.al-form-card :is(.ant-input, .ant-input-outlined, .ant-input-affix-wrapper) { min-height:48px; padding:11px 14px; border:1px solid #ffffff40 !important; border-radius:12px; background:#ffffff14 !important; background-color:#ffffff14 !important; color:#fff !important; font-size:15px; box-shadow:none !important; }
+.al-form-card input::placeholder { color:#c7bed1 !important; opacity:1; }
+.al-form-card :is(.ant-input, .ant-input-outlined, .ant-input-affix-wrapper):hover { border-color:#cdbef6 !important; background:#ffffff1c !important; background-color:#ffffff1c !important; }
+.al-form-card :is(.ant-input:focus, .ant-input-outlined:focus, .ant-input-outlined:focus-within, .ant-input-affix-wrapper-focused) { border-color:#c7b5ff !important; box-shadow:0 0 0 3px #b69cff22 !important; background:#ffffff22 !important; background-color:#ffffff22 !important; }
+.al-form-card .ant-input-password-icon { color:#ddd6e8 !important; }
 .al-form-card .ant-form-item-explain-error { color:#ffc4cf; font-size:13px; line-height:1.5; }
-.al-form-card .ant-input-status-error,.al-form-card .ant-input-affix-wrapper-status-error { border-color:#ffb2c2; }
-.al-form-card input:-webkit-autofill { -webkit-text-fill-color:#fff; caret-color:#fff; transition:background-color 99999s ease-in-out 0s; }
+.al-form-card :is(.ant-input-status-error, .ant-input-affix-wrapper-status-error, .ant-input-outlined.ant-input-status-error:not(.ant-input-disabled), .ant-input-affix-wrapper.ant-input-affix-wrapper-status-error:not(.ant-input-affix-wrapper-disabled)),
+.al-form-card :is(.ant-input-status-error, .ant-input-affix-wrapper-status-error):is(:hover, :focus, :focus-within) { border-color:#ffb2c2 !important; background:#ffffff18 !important; background-color:#ffffff18 !important; color:#fff !important; }
+.al-form-card :is(.ant-input-disabled, .ant-input-affix-wrapper-disabled) { background:#ffffff0d !important; background-color:#ffffff0d !important; color:#ffffffb3 !important; }
+.al-form-card .ant-input-affix-wrapper > input.ant-input,
+.al-form-card .ant-input-affix-wrapper > input.ant-input:hover,
+.al-form-card .ant-input-affix-wrapper > input.ant-input:focus { background:transparent !important; background-color:transparent !important; border:none !important; box-shadow:none !important; color:#fff !important; padding:0; min-height:0; font-size:inherit; }
+.al-form-card input:-webkit-autofill,
+.al-form-card input:-webkit-autofill:hover,
+.al-form-card input:-webkit-autofill:focus,
+.al-form-card input:-webkit-autofill:active { -webkit-text-fill-color:#fff !important; caret-color:#fff !important; background-color:transparent !important; transition:background-color 999999s ease-in-out 0s, color 999999s ease-in-out 0s !important; }
 .al-form-card .ant-btn-primary { min-height:48px; height:auto; padding:12px 18px; background:#6952ce; border-color:#6952ce; border-radius:12px; color:#fff; font-size:15px; font-weight:600; box-shadow:0 6px 18px #24144926; white-space:normal; }
 .al-form-card .ant-btn-primary:not(:disabled):hover { background:#5943b8; border-color:#5943b8; }
 .al-form-card .ant-checkbox-wrapper { color:#eee9f5; font-size:13px; line-height:1.7; align-items:flex-start; }
