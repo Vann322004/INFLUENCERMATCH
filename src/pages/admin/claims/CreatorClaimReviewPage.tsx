@@ -34,18 +34,24 @@ function ClaimDetailDrawer({
 }) {
   const [detail, setDetail] = useState<ClaimResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [detailError, setDetailError] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
+    let active = true;
+    setDetail(null);
+    setDetailError(false);
     if (open && claim?.id) {
       setLoading(true);
       claimService.getClaimById(claim.id)
-        .then(setDetail)
-        .catch(() => setDetail(claim))
-        .finally(() => setLoading(false));
+        .then(value => { if (active) setDetail(value); })
+        .catch(() => { if (active) setDetailError(true); })
+        .finally(() => { if (active) setLoading(false); });
     } else {
       setDetail(null);
     }
-  }, [open, claim]);
+    return () => { active = false; };
+  }, [open, claim, retry]);
 
   const d = detail || claim;
   if (!d) return null;
@@ -65,7 +71,7 @@ function ClaimDetailDrawer({
       }
       destroyOnClose
       footer={
-        d.status === "PENDING" ? (
+        !detail || loading || detailError ? null : d.status === "PENDING" ? (
           <Space style={{ width: "100%", justifyContent: "flex-end" }}>
             <Button icon={<CloseCircleOutlined />} onClick={() => { onClose(); onReject(d); }}
               style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444", fontWeight: 700 }}>
@@ -88,7 +94,7 @@ function ClaimDetailDrawer({
     >
       {loading ? (
         <div style={{ textAlign: "center", padding: 60 }}><Spin size="large" /></div>
-      ) : (
+      ) : detailError ? <Alert type="error" title="Không tải được bằng chứng" description="Hãy tải lại hồ sơ trước khi quyết định." action={<Button onClick={() => setRetry(value => value + 1)}>Thử lại</Button>} /> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <Card size="small" bordered={false}
             style={{ background: "linear-gradient(135deg,#EFF6FF,#F0FDF4)", border: "1px solid #BFDBFE", borderRadius: 12 }}>
@@ -132,14 +138,14 @@ function ClaimDetailDrawer({
                     <Text style={{ fontSize: 13 }}>Loại: <strong>{d.evidenceType}</strong></Text>
                   </div>
                 )}
-                {d.evidenceUrl && (
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                {(d.evidenceUrls?.length ? d.evidenceUrls : d.evidenceUrl ? [d.evidenceUrl] : []).map(url => (
+                  <div key={url} style={{ display: "flex", gap: 8, alignItems: "center" }}>
                     <LinkOutlined style={{ color: "#2563EB" }} />
-                    <a href={d.evidenceUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: "#2563EB" }}>
-                      {d.evidenceUrl}
+                    <a key={url} href={url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: "#2563EB", overflowWrap: "anywhere" }}>
+                      {url}
                     </a>
                   </div>
-                )}
+                ))}
                 {d.evidenceNote && (
                   <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 8, padding: "10px 12px", fontSize: 13, color: "#334155", lineHeight: 1.6 }}>
                     {d.evidenceNote}
@@ -184,9 +190,9 @@ function ApproveModal({ claim, open, onClose, onDone }: { claim: ClaimResponse |
       setLoading(true);
       const updated = await claimService.reviewClaim(claim.id, {
         approved: true,
-        reason: note.trim() || "Đã duyệt bởi quản trị viên",
+        reason: note.trim(),
       });
-      message.success("Đã duyệt đơn và cấp Tích Xanh cho nhà sáng tạo.");
+      message.success("Đã ghi nhận quyết định xác minh quyền sở hữu kênh.");
       onDone(updated); onClose();
     } catch (err: any) {
       message.error(err?.response?.data?.message || "Không thể duyệt đơn. Backend chưa ghi nhận thay đổi, vui lòng thử lại.");
@@ -206,7 +212,7 @@ function ApproveModal({ claim, open, onClose, onDone }: { claim: ClaimResponse |
             </div>
           </div>
         )}
-        <div style={{ fontSize: 12.5, fontWeight: 600, color: "#334155", marginBottom: 6 }}>Ghi chú duyệt (tùy chọn)</div>
+        <div style={{ fontSize: 12.5, fontWeight: 600, color: "#334155", marginBottom: 6 }}>Lý do duyệt (bắt buộc)</div>
         <TextArea rows={3} value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} showCount
           placeholder="VD: Mã trong Bio khớp, kênh chính chủ..." style={{ resize: "none", marginBottom: 16 }} />
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
@@ -325,15 +331,14 @@ export default function CreatorClaimReviewPage() {
     } finally { setLoading(false); }
   }, [tab, statusFilter]);
 
-  useEffect(() => { setPage(1); fetchClaims(1); }, [tab, statusFilter]);
-  useEffect(() => { if (page > 1) fetchClaims(page); }, [page]);
+  useEffect(() => { setPage(1); void fetchClaims(1); }, [fetchClaims]);
 
   const handleActionDone = (updated: ClaimResponse) => {
-    setClaims(prev => prev.map(c => c.id === updated.id ? updated : c));
+    void fetchClaims(page);
   };
 
   const filtered = search
-    ? claims.filter(c => (c.creatorName || "").toLowerCase().includes(search.toLowerCase()) || (c.creatorHandle || "").toLowerCase().includes(search.toLowerCase()) || (c.claimantEmail || "").toLowerCase().includes(search.toLowerCase()))
+    ? claims.filter(c => [c.creatorId, c.claimantId, c.creatorName, c.creatorHandle, c.claimantEmail].some(value => value?.toLowerCase().includes(search.toLowerCase())))
     : claims;
 
   const pendingCount = claims.filter(c => c.status === "PENDING").length;
@@ -345,7 +350,8 @@ export default function CreatorClaimReviewPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Avatar src={r.creatorAvatar} icon={<UserOutlined />} size={36} style={{ border: "1.5px solid rgba(37,99,235,0.3)", flexShrink: 0 }} />
           <div>
-            <div style={{ fontWeight: 700, fontSize: 13, color: "#0F172A", lineHeight: 1.2 }}>{r.creatorName || r.creatorHandle || "Creator"}</div>
+            <div style={{ fontWeight: 700, fontSize: 13, color: "#0F172A", lineHeight: 1.2 }}>{r.creatorName || r.creatorHandle || "Kênh chưa có tên"}</div>
+            {!r.creatorName && !r.creatorHandle && <code style={{overflowWrap:'anywhere'}}>{r.creatorId}</code>}
             <div style={{ fontSize: 11, color: "#2563EB" }}>{r.creatorHandle}</div>
           </div>
         </div>
@@ -355,7 +361,7 @@ export default function CreatorClaimReviewPage() {
       title: "Người yêu cầu", key: "claimant", width: 180,
       render: (_, r) => (
         <div>
-          <div style={{ fontWeight: 600, fontSize: 12, color: "#334155" }}>{r.claimantName || "—"}</div>
+          <div style={{ fontWeight: 600, fontSize: 12, color: "#334155", overflowWrap:'anywhere' }}>{r.claimantName || r.claimantId || "—"}</div>
           <div style={{ fontSize: 11, color: "#64748B" }}>{r.claimantEmail || "—"}</div>
         </div>
       ),
@@ -419,7 +425,8 @@ export default function CreatorClaimReviewPage() {
     <Spin spinning={loading}>
       <Table
         columns={columns} dataSource={filtered} rowKey="id" size="middle"
-        pagination={{ current: page, pageSize: 10, total, onChange: setPage, showTotal: t => `${t} hồ sơ` }}
+        pagination={{ current: page, pageSize: 10, total, onChange: value => { setPage(value); void fetchClaims(value); }, showTotal: t => `${t} hồ sơ` }}
+        scroll={{x:900}}
         onRow={record => ({ onClick: () => { setSelectedClaim(record); setDrawerOpen(true); }, style: { cursor: "pointer" } })}
       />
     </Spin>
@@ -428,7 +435,7 @@ export default function CreatorClaimReviewPage() {
   const filterBar = (showStatus = false) => (
     <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
       <Input prefix={<SearchOutlined style={{ color: "#94A3B8" }} />}
-        placeholder="Tìm theo tên creator, email..."
+        placeholder="Tìm trong trang hiện tại theo kênh hoặc người yêu cầu"
         value={search} onChange={e => setSearch(e.target.value)}
         style={{ maxWidth: 340, borderRadius: 8 }} allowClear />
       {showStatus && (
@@ -448,14 +455,19 @@ export default function CreatorClaimReviewPage() {
         <div>
           <div style={{ color: "#0F172A", fontWeight: 800, fontSize: 20, display: "flex", alignItems: "center", gap: 10 }}>
             <SafetyCertificateOutlined style={{ color: "#2563EB" }} />
-            Kiểm duyệt đơn nhận kênh Nhà sáng tạo & Cấp Tích Xanh
+            Kiểm duyệt quyền sở hữu kênh
           </div>
           <div style={{ color: "#64748B", fontSize: 13, marginTop: 2 }}>
-            Xét duyệt yêu cầu xác minh quyền sở hữu kênh nhà sáng tạo
+            Đối chiếu bằng chứng, ghi nhận lý do và bảo vệ quyền sở hữu kênh trong InfluencerMatch.
           </div>
         </div>
       </div>
 
+      <div className="dm-flow-highlights">
+        <article><strong>Hai cách xác minh</strong><p>OAuth kiểm tra quyền quản lý qua nền tảng; bằng chứng thủ công được gửi vào hàng đợi xét duyệt.</p></article>
+        <article><strong>Quyết định có căn cứ</strong><p>Xem bằng chứng và ghi rõ lý do duyệt, từ chối hoặc thu hồi. Đây không phải tích xanh của mạng xã hội.</p></article>
+        <article><strong>Giữ dấu vết sở hữu</strong><p>BE lưu lịch sử xét duyệt; khi thu hồi, bằng chứng độc lập còn hiệu lực được kiểm tra trước khi bỏ liên kết.</p></article>
+      </div>
       {loadError && (
         <Alert
           type="error" showIcon style={{ marginBottom: 16, borderRadius: 10 }}

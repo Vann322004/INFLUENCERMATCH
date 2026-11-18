@@ -26,6 +26,7 @@ import CollaborationDetailPage from './pages/collaboration/CollaborationDetailPa
 import PerformancePage from './pages/performance/PerformancePage';
 import CampaignHistoryPage from './pages/history/CampaignHistoryPage';
 import LandingPage from './pages/landing/hero/HeroLanding';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import './styles/custom.css';
 import './components/layout/BrandResponsive.css';
 
@@ -159,6 +160,7 @@ export default function App() {
           {/* Public Landing Page / Homepage */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/landing" element={<LandingPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 
           {/* Auth Routes */}
           <Route
@@ -624,9 +626,8 @@ export default function App() {
             <Route path="accounts/:id" element={<AdminProtectedRoute requireAdmin><AccountDetailPage /></AdminProtectedRoute>} />
             {/* Phase 4 — Creator Catalog (Admin & Manager) */}
             <Route path="creators" element={<CreatorCatalogPage />} />
-            {/* Phase 5 — Data Sources (Admin & Manager) */}
-            <Route path="data-sources" element={<DataSourcesPage />} />
-            <Route path="taxonomy" element={<DataSourcesPage />} />
+            <Route path="data-sources" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="taxonomy" element={<Navigate to="/admin/dashboard" replace />} />
             {/* Phase 6 — Collection Jobs, Data Quality & Scoring Config */}
             <Route path="jobs" element={<CollectionJobsPage />} />
             <Route path="data-quality" element={<DataQualityPage />} />

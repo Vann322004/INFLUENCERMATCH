@@ -1,6 +1,7 @@
 // Types for Creator and Shortlist APIs based on OpenAPI specification
 
 export interface CreatorItem {
+  externalId?: string;
   id: string;
   creatorId: string;
   displayName: string;

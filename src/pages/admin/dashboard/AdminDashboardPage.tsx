@@ -184,8 +184,8 @@ const columns: TableColumnsType<AuditLogItem> = [
     width: '18%',
     render: (value: string) =>
       value ? (
-        <span style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>
-          {value.replace('T', ' ')}
+        <span title={value} style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>
+          {value.replace('T', ' ').replace(/(\d{2}:\d{2}:\d{2})\.\d+/, '$1')}
         </span>
       ) : (
         '—'
