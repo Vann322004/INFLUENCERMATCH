@@ -69,7 +69,7 @@ class CrawlerService {
           max_channels: maxChannels,
         }),
       },
-      180000 // 180s cho cào hàng loạt (đặc biệt khi chọn 10 - 20 kênh)
+      900000 // 15 minutes cho cào hàng loạt
     );
   }
 
@@ -113,7 +113,7 @@ class CrawlerService {
         method: 'POST',
         body: JSON.stringify({
           platform: platform.toUpperCase(),
-          username: username.replace(/^@+/, '').trim(),
+          username: username.trim().replace(/^@+/, '').trim(),
           force_deep_crawl: forceDeepCrawl,
         }),
       },

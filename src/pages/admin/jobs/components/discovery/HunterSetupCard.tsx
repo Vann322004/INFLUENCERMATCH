@@ -33,7 +33,7 @@ export interface HunterSetupCardProps {
 const TIER0_RULES = [
   'Tối thiểu 7.000 người theo dõi (loại bỏ clone, seeding ảo)',
   'Chặn tài khoản bán sỉ / shop thương mại (dropship, kho buôn)',
-  'Chống trùng lặp — chỉ nạp KOC chưa có trong Database',
+  'Chống trùng lặp — chỉ nạp nhà sáng tạo chưa có trong Database',
 ];
 
 export default function HunterSetupCard({
@@ -41,7 +41,6 @@ export default function HunterSetupCard({
   topicsLoading,
   topicsError,
   topicsManagementPath,
-  onReloadTopics,
   mode,
   onModeChange,
   platform,
@@ -96,12 +95,12 @@ export default function HunterSetupCard({
       >
         <div>
           <Text style={{ fontSize: 16, fontWeight: 800, color: '#0F172A', display: 'block' }}>
-            {mode === 'category' ? 'Săn KOC Tự Động theo Lĩnh vực' : 'Thu thập KOC theo Danh sách Tùy chọn'}
+            {mode === 'category' ? 'Tìm nhà sáng tạo tự động theo Lĩnh vực' : 'Thu thập nhà sáng tạo theo Danh sách Tùy chọn'}
           </Text>
           <Text style={{ fontSize: 12.5, color: '#64748B' }}>
             {mode === 'category'
-              ? 'Tự động quét mạng xã hội theo từ khóa, phát hiện KOC mới và loại bỏ shop/clone theo chuẩn Tier-0.'
-              : 'Trích xuất song song nhiều KOC cùng lúc từ danh sách username hoặc đường dẫn kênh.'}
+              ? 'Tự động quét mạng xã hội theo từ khóa, phát hiện nhà sáng tạo mới và loại bỏ shop/clone theo chuẩn Tier-0.'
+              : 'Trích xuất song song nhiều kênh cùng lúc từ danh sách username hoặc đường dẫn kênh.'}
           </Text>
         </div>
 
@@ -139,14 +138,13 @@ export default function HunterSetupCard({
             {/* 2. Lĩnh vực */}
             <Col xs={24} sm={15}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-                Lĩnh vực săn KOC
+                Lĩnh vực tìm nhà sáng tạo
               </div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                <Button size="small" onClick={onReloadTopics} loading={topicsLoading} disabled={loading}>Làm mới</Button>
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {topicsLoading && <Text type="secondary">Đang tải lĩnh vực...</Text>}
-                {!topicsLoading && topicsError && <Text type="secondary">Không tải được danh sách lĩnh vực. Nhấn “Làm mới” để thử lại.</Text>}
+                {!topicsLoading && topicsError && <Text type="secondary">Không tải được danh sách lĩnh vực. Tải lại trang để thử lại.</Text>}
                 {!topicsLoading && !topicsError && topics.length === 0 && <Text type="secondary">Chưa có lĩnh vực đang bật. <Link to={topicsManagementPath}>Đến trang quản lý lĩnh vực</Link> để thêm hoặc bật lĩnh vực và cấu hình từ khóa.</Text>}
                 {!topicsLoading && topics.map((t) => {
                   const isSelected = selectedTopic === t.id;
@@ -226,11 +224,11 @@ export default function HunterSetupCard({
           /* Chế độ nhập danh sách tùy chọn */
           <Col xs={24} sm={16}>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-              Danh sách username hoặc link KOC (mỗi dòng hoặc dấu phẩy)
+              Danh sách username hoặc link kênh (mỗi dòng hoặc dấu phẩy)
             </div>
             <TextArea
               rows={3}
-              placeholder={`Nhập danh sách KOC cần cào, ví dụ:\n@schannelvn\n@duytham\nhttps://www.tiktok.com/@linh.beauty`}
+              placeholder={`Nhập danh sách nhà sáng tạo cần cào, ví dụ:\n@schannelvn\n@duytham\nhttps://www.tiktok.com/@linh.beauty`}
               value={customUsernames}
               onChange={(e) => onCustomUsernamesChange(e.target.value)}
               style={{ borderRadius: 8, fontSize: 12.5 }}
@@ -260,7 +258,7 @@ export default function HunterSetupCard({
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <span style={{ fontSize: 24, fontWeight: 800, color: '#1D4ED8' }}>{maxKocs}</span>
-            <span style={{ fontSize: 13, color: '#64748B' }}>KOC</span>
+            <span style={{ fontSize: 13, color: '#64748B' }}>kênh</span>
           </div>
           <Slider
             min={3}
@@ -288,7 +286,7 @@ export default function HunterSetupCard({
               boxShadow: '0 3px 10px rgba(29, 78, 216,0.3)',
             }}
           >
-            {mode === 'category' ? 'Bắt đầu săn KOC tự động' : 'Bắt đầu cào danh sách KOC'}
+            {mode === 'category' ? 'Bắt đầu tìm nhà sáng tạo tự động' : 'Bắt đầu cào danh sách nhà sáng tạo'}
           </Button>
         </Col>
       </Row>

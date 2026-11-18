@@ -85,12 +85,12 @@ export default function DiscoveredFeedCard({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    message.success('Đã xuất danh sách KOC đạt chuẩn ra file CSV!');
+    message.success('Đã xuất danh sách nhà sáng tạo đạt chuẩn ra file CSV!');
   };
 
   const columns: TableColumnsType<DiscoveredKocItem> = [
     {
-      title: 'Nhà sáng tạo KOC',
+      title: 'Nhà sáng tạo',
       key: 'creator',
       width: 240,
       render: (_, r) => (
@@ -287,7 +287,7 @@ export default function DiscoveredFeedCard({
       >
         <div>
           <div style={{ fontSize: 15, fontWeight: 700, color: '#166534' }}>
-            Danh sách KOC đạt chuẩn Tier-0 ({discoveredList.length} tài khoản)
+            Danh sách nhà sáng tạo đạt chuẩn Tier-0 ({discoveredList.length} tài khoản)
           </div>
           <div style={{ fontSize: 12, color: '#15803D', marginTop: 2 }}>
             Tất cả tài khoản đều có tối thiểu 7.000 followers, đã tự động loại bỏ Shop thương mại và kho buôn.

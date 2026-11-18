@@ -51,6 +51,7 @@ export function filterDiscoveryCreators(creators: Creator[], filters: DiscoveryF
     if (filters.sortBy === 'engagement') return b.engagementValue - a.engagementValue;
     if (filters.sortBy === 'priceAsc') return (a.hasReportedPrice ? a.avgPriceValue : Infinity) - (b.hasReportedPrice ? b.avgPriceValue : Infinity);
     if (filters.sortBy === 'priceDesc') return (b.hasReportedPrice ? b.avgPriceValue : -Infinity) - (a.hasReportedPrice ? a.avgPriceValue : -Infinity);
-    return b.matchRate - a.matchRate;
+    // Keep the API's context-filtered retrieval order; shortlist AI scores belong to a later stage.
+    return 0;
   });
 }

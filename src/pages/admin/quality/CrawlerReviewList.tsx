@@ -1,3 +1,4 @@
+import { collectionOutcome } from '../../../services/collectionDecision';
 import { collectionIdentity, readCollectionResults, type CollectionResult } from '../../../services/collectionResults';
 import { useEffect, useState } from 'react';
 import { Alert, Button, Card, Select, Space, Table, Tag, Typography } from 'antd';
@@ -32,8 +33,8 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
 
   const records = new Map<string, CollectionResult>(local.map(row => [row.id, row]));
   const pending = (overview?.activities?.items || []).filter(item =>
-    /REVIEW|VERIFY|VERIFICATION/.test(`${item.decision} ${item.status}`.toUpperCase()));
-  for (const item of pending) {
+    collectionOutcome(item.decision, item.primaryType) === 'review');
+  for (const item of overview?.activities?.items || []) {
     const id = collectionIdentity(item.platform, item.username);
     const previous = records.get(id);
     const snapshot = overview?.crawled_data?.items?.find(row =>
@@ -52,7 +53,7 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
     };
     records.set(id, { id, result, sources: previous?.sources || [], savedAt: item.updatedAt || previous?.savedAt || '' });
   }
-  const rows = [...records.values()].filter(row => source === 'all' || row.sources.includes(source as 'manual' | 'automatic'))
+  const rows = [...records.values()].filter(row => collectionOutcome(row.result.decision, row.result.primary_type) === 'review' && (source === 'all' || row.sources.includes(source as 'manual' | 'automatic')))
     .sort((a, b) => b.savedAt.localeCompare(a.savedAt));
 
   if (!rows.length) {

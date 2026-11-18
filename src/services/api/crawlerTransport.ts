@@ -9,7 +9,7 @@ export async function requestCrawler<T>(baseUrl: string, endpoint: string, optio
     });
     const body = await response.json().catch(() => null);
     if (!response.ok) {
-      if ([502, 503, 504].includes(response.status)) {
+      if ([502, 503, 504].includes(response.status) && typeof body?.detail !== "string" && typeof body?.error !== "string") {
         throw new Error(`Dịch vụ thu thập tạm thời không kết nối được (HTTP ${response.status}). Vui lòng kiểm tra máy chủ crawler và cấu hình proxy.`);
       }
       const detail = body?.detail || body?.error;

@@ -20,7 +20,7 @@ export default function DirectCrawlModal({
 }: DirectCrawlModalProps) {
   return (
     <Modal
-      title="Cào dữ liệu KOC trực tiếp"
+      title="Cào dữ liệu nhà sáng tạo trực tiếp"
       open={open}
       onCancel={onClose}
       footer={null}

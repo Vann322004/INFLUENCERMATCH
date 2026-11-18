@@ -28,6 +28,9 @@ export interface LiveCrawlResult {
   is_verified?: boolean;
   decision?: 'ACCEPTED' | 'REJECTED' | 'REVIEW' | string;
   primary_type?: 'KOL' | 'KOC' | 'COMMERCE' | 'OTHER' | string;
+  database_synced?: boolean;
+  sync_error?: string | null;
+  reason_codes?: string[];
   latency_ms?: number;
   recent_posts?: CrawledRecentPost[];
   collected_at?: string;

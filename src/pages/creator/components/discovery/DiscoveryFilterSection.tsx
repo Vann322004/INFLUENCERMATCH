@@ -113,7 +113,7 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
                 onChange={onSortChange}
                 className="cdiscovery-sort-select"
                 options={[
-                  { value: 'match', label: 'Độ phù hợp (AI)' },
+                  { value: 'match', label: 'Độ liên quan' },
                   { value: 'followers', label: 'Lượt theo dõi' },
                   { value: 'engagement', label: 'Tỷ lệ tương tác' },
                   { value: 'priceAsc', label: 'Giá: Thấp đến cao' },
