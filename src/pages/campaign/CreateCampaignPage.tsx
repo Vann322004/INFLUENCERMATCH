@@ -1,9 +1,10 @@
-import React, { useSyncExternalStore } from 'react';
+import React, { useEffect, useSyncExternalStore } from 'react';
+import { campaignEditor } from '../../services/campaignContext';
 import { getAuthSessionId, subscribeAuthSession } from '../../services/authSession';
 import { Row, Col, Alert, Tag, Input, InputNumber, Button, ConfigProvider } from 'antd';
 import CampaignDeliverablesEditor from './components/create/CampaignDeliverablesEditor';
 import '../../components/layout/CampaignWorkflow.css';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 
 import CreateCampaignHeader from './components/create/CreateCampaignHeader';
 import CreateCampaignStepper from './components/create/CreateCampaignStepper';
@@ -20,26 +21,30 @@ import './CreateCampaignPage.css';
 export default function CreateCampaignPage() {
   const { id: paramId } = useParams<{ id?: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
-
-  // Nhận diện Edit Mode dựa trên URL param hoặc state
-  const resolvedCampaignId =
-    paramId ||
-    searchParams.get('id') ||
-    (location.state as any)?.campaignId ||
-    (location.state as any)?.id ||
-    null;
   const session = useSyncExternalStore(subscribeAuthSession, getAuthSessionId);
-  return <CampaignEditor key={session + ':' + (resolvedCampaignId || 'new')} resolvedCampaignId={resolvedCampaignId} locationState={location.state} />;
+  const context = location.state?.campaignEditContext;
+  const legacyId = paramId || searchParams.get('id') || searchParams.get('campaignId')
+    || (!context ? location.state?.campaignId || location.state?.id : null);
+  const resolvedCampaignId = legacyId || (context?.sessionId === session ? context.campaignId : null);
+  const step = Math.max(1, Math.min(3, Number(searchParams.get('step')) || 1));
+  useEffect(() => {
+    if (!legacyId) return;
+    const target = campaignEditor(legacyId, step);
+    navigate(target.path, { replace: true, state: target.state });
+  }, [legacyId, step, navigate]);
+  if (!resolvedCampaignId && location.pathname.includes('/edit')) return <Alert type="warning" title="Chưa chọn chiến dịch để chỉnh sửa" description="Mở chiến dịch từ danh sách để tiếp tục." action={<Button onClick={() => navigate('/campaigns')}>Danh sách chiến dịch</Button>} />;
+  return <CampaignEditor key={session + ':' + (resolvedCampaignId || 'new')} resolvedCampaignId={resolvedCampaignId} />;
 }
 
-function CampaignEditor({ resolvedCampaignId, locationState }: { resolvedCampaignId: string | null; locationState: unknown }) {
+function CampaignEditor({ resolvedCampaignId }: { resolvedCampaignId: string | null }) {
+  const navigate = useNavigate();
   const isEditMode = Boolean(resolvedCampaignId);
 
   const form = useCreateCampaignForm({
     resolvedCampaignId,
     isEditMode,
-    locationState,
   });
 
   return (
@@ -58,7 +63,10 @@ function CampaignEditor({ resolvedCampaignId, locationState }: { resolvedCampaig
         onStepClick={(step) => {
           if (step > form.currentStep && form.campaignStatus === 'DRAFT') { void form.handleNextStep(); return; }
           form.setCurrentStep(step);
-          if (resolvedCampaignId) window.history.replaceState(window.history.state, '', '/campaigns/' + resolvedCampaignId + '/edit?step=' + step);
+          if (resolvedCampaignId) {
+            const target = campaignEditor(resolvedCampaignId, step);
+            navigate(target.path, { replace: true, state: target.state });
+          }
           form.scrollToTop();
         }}
       />

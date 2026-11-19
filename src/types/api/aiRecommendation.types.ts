@@ -13,6 +13,19 @@ export interface ScoreBreakdownDto {
   semanticMatchScore?: number | null;
   nicheMatchScore?: number | null;
   finalScore?: number | null;        // Điểm tổng hợp theo thang 0–100
+  m1Availability?: string | null;
+  rScore?: number | null;
+  tScore?: number | null;
+  kScore?: number | null;
+  eligibleEvaluatedCollaborations?: number | null;
+  distinctBrandCount?: number | null;
+  maxBrandShare?: number | null;
+  m4LearnedScore?: number | null;
+  m4ExplicitScore?: number | null;
+  m4EffectiveScore?: number | null;
+  m4Source?: string | null;
+  confidenceScore?: number | null;
+  confidenceTier?: string | null;
 }
 
 export interface ReasoningCardDto {
@@ -20,6 +33,8 @@ export interface ReasoningCardDto {
   reasons: string[];          // Danh sách gạch đầu dòng lý do
   explanationAvailable: boolean;
   evidenceWarnings?: string[]; // Cảnh báo dữ liệu (thiếu metric, provisional...)
+  confidenceScore?: number | null;
+  confidenceTier?: string | null;
 }
 
 export type PriceStatus =
@@ -52,6 +67,33 @@ export interface CreatorRecommendationItemDto {
   isProvisional?: boolean;
   claimed?: boolean;
   inShortlist?: boolean;
+  recommendationTier?: string | null;
+}
+
+export interface ExcludedCandidate {
+  creatorId: string;
+  masterId?: string | null;
+  platform?: string;
+  displayName?: string;
+  userName?: string;
+  avatarUrl?: string;
+  exclusionType?: string;
+  reasons?: string[];
+  message?: string;
+}
+
+export interface RecommendationRunMetadata {
+  scoringAsOf?: string;
+  historyCutoff?: string;
+  effectiveWeights?: number[] | null;
+  criticWeights?: number[] | null;
+  businessWeights?: number[] | null;
+  lambdaUsed?: number | null;
+  weightingMode?: string;
+  rankingMode?: string;
+  mainPoolSize?: number;
+  provisionalPoolSize?: number;
+  excludedCount?: number;
 }
 
 export interface RecommendationResponseDto {
@@ -61,10 +103,14 @@ export interface RecommendationResponseDto {
   totalCandidates: number;
   recommendations: CreatorRecommendationItemDto[];
   provisionalRecommendations?: CreatorRecommendationItemDto[];
+  excludedCandidates?: ExcludedCandidate[];
+  runMetadata?: RecommendationRunMetadata | null;
 }
 
 export interface RecommendationRun {
   scoringSnapshot?: CreatorRecommendationItemDto[] | null;
+  runMetadata?: RecommendationRunMetadata | null;
+  excludedCandidates?: ExcludedCandidate[];
   id: string;
   campaignId?: string;
   brandProfileId?: string;

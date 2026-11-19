@@ -124,6 +124,11 @@
 .rec-detail-drawer .ant-drawer-title { font-size: 15px; }
 .rec-detail-drawer .ant-drawer-body { padding: 24px; }
 .rec-card-detail { padding: 0; border: 0; border-radius: 0; }
+.rec-run-metadata { margin-top: 20px; }
+.recommendation-page .ant-tabs-content-holder { min-width: 0; }
+.rec-card-detail .rec-breakdown > div { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.rec-card-detail .rec-breakdown dd { overflow-wrap: anywhere; }
+.rec-detail-drawer .rec-run-metadata .rec-breakdown > div { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .rec-detail-drawer :is(p,li,dt,dd,h3) { overflow-wrap: anywhere; }
 .rec-detail-drawer .rec-card-actions .ant-btn { min-width: 0; height: auto; white-space: normal; }
 @media (max-width: 575px) { .rec-detail-drawer .ant-drawer-body { padding: 16px; } }
