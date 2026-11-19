@@ -790,7 +790,7 @@ export default function CampaignManagementPage() {
               type="primary"
               htmlType="submit"
               style={{
-                background: 'linear-gradient(135deg, #1E40AF 0%, #1D4ED8 100%)',
+                background: 'linear-gradient(135deg, #5B21B6 0%, #6D28D9 100%)',
                 fontWeight: 700,
               }}
             >
@@ -848,7 +848,7 @@ export default function CampaignManagementPage() {
             }}
           >
             <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#1D4ED8' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#6D28D9' }}>
                 {pipelineCreators.length}
               </div>
               <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Nhà sáng tạo trong Pipeline</div>

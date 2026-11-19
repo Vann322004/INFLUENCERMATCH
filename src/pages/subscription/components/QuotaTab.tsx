@@ -25,8 +25,8 @@ export default function QuotaTab({ quotas, subInfo, loading, onGoToPlans }: Quot
       {/* Quota overview alert */}
       <div
         style={{
-          background: '#EFF6FF',
-          border: '1px solid #BFDBFE',
+          background: '#F3E8FF',
+          border: '1px solid #DDD6FE',
           borderRadius: 12,
           padding: '14px 18px',
           display: 'flex',
@@ -38,14 +38,14 @@ export default function QuotaTab({ quotas, subInfo, loading, onGoToPlans }: Quot
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <InfoCircleOutlined style={{ fontSize: 20, color: '#2563EB' }} />
+          <InfoCircleOutlined style={{ fontSize: 20, color: '#7C3AED' }} />
           <div>
             <div style={{ fontWeight: 700, color: '#1E3A8A', fontSize: 13.5 }}>
               {subInfo.isActive
                 ? `Chu kỳ hạn mức của bạn được làm mới vào ngày ${subInfo.renewalDate}`
                 : 'Bạn đang dùng gói trải nghiệm cơ bản, chưa kích hoạt chu kỳ trả phí'}
             </div>
-            <div style={{ color: '#3B82F6', fontSize: 12 }}>
+            <div style={{ color: '#8B5CF6', fontSize: 12 }}>
               Các chỉ số chưa dùng hết trong tháng sẽ không được cộng dồn sang chu kỳ tiếp theo.
             </div>
           </div>
@@ -53,7 +53,7 @@ export default function QuotaTab({ quotas, subInfo, loading, onGoToPlans }: Quot
         <Button
           type="primary"
           size="middle"
-          style={{ background: '#2563EB', fontWeight: 600, borderRadius: 8 }}
+          style={{ background: '#7C3AED', fontWeight: 600, borderRadius: 8 }}
           onClick={onGoToPlans}
         >
           Nâng gói để tăng quota

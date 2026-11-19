@@ -50,7 +50,7 @@ const formatRelativeTime = (dateStr) => {
 };
 
 // Mini Sparkline Vertical Bar Chart Component
-const MiniBarChart = ({ color = '#2563EB' }) => (
+const MiniBarChart = ({ color = '#7C3AED' }) => (
   <svg width="44" height="26" viewBox="0 0 44 26" fill="none" style={{ flexShrink: 0 }}>
     <rect x="2" y="15" width="4.5" height="11" rx="2.25" fill={color} fillOpacity="0.25" />
     <rect x="10" y="11" width="4.5" height="15" rx="2.25" fill={color} fillOpacity="0.4" />
@@ -260,27 +260,27 @@ export default function DashboardPage() {
       title: 'Nhà sáng tạo trong Giỏ chọn lọc',
       value: String(shortlistCount),
       trend: shortlistCount > 0 ? `${shortlistCount} Nhà sáng tạo sẵn sàng gửi lời mời` : 'Chưa có Nhà sáng tạo trong giỏ',
-      icon: <StarOutlined style={{ color: '#2563EB' }} />,
-      iconBg: '#EFF6FF',
-      chartColor: '#60A5FA',
+      icon: <StarOutlined style={{ color: '#7C3AED' }} />,
+      iconBg: '#F3E8FF',
+      chartColor: '#8B5CF6',
     },
     {
       id: 'kpi_campaigns',
       title: 'Chiến dịch đang chạy',
       value: String(activeCampaigns.length),
       trend: activeCampaigns.length > 0 ? `${activeCampaigns.length} chiến dịch hoạt động` : 'Chưa có chiến dịch chạy',
-      icon: <RocketOutlined style={{ color: '#059669' }} />,
-      iconBg: '#ECFDF5',
-      chartColor: '#10B981',
+      icon: <RocketOutlined style={{ color: '#D97706' }} />,
+      iconBg: '#FEF3C7',
+      chartColor: '#8B5CF6',
     },
     {
       id: 'kpi_reach',
       title: 'Tổng lượt tiếp cận',
       value: fmtNum(totalReach),
       trend: totalReach > 0 ? 'Ước tính từ các chiến dịch' : 'Chưa có dữ liệu tiếp cận',
-      icon: <BarChartOutlined style={{ color: '#0284C7' }} />,
-      iconBg: '#F0F9FF',
-      chartColor: '#38BDF8',
+      icon: <BarChartOutlined style={{ color: '#7C3AED' }} />,
+      iconBg: '#F3E8FF',
+      chartColor: '#7C3AED',
     },
   ];
 
@@ -376,8 +376,8 @@ export default function DashboardPage() {
         campaign: camp.productService || 'Đang tìm kiếm & kết nối Nhà sáng tạo',
         time: camp.createdAt ? formatRelativeTime(camp.createdAt) : `${idx + 1} giờ trước`,
         avatar: camp.imageUrl || campaignThumbnails[idx % campaignThumbnails.length],
-        icon: isRunning ? <CheckCircleOutlined style={{ color: '#10B981' }} /> : <RocketOutlined style={{ color: '#2563EB' }} />,
-        iconBg: isRunning ? '#ECFDF5' : '#EFF6FF',
+        icon: isRunning ? <CheckCircleOutlined style={{ color: '#10B981' }} /> : <RocketOutlined style={{ color: '#7C3AED' }} />,
+        iconBg: isRunning ? '#ECFDF5' : '#F3E8FF',
         timestamp: camp.createdAt ? new Date(camp.createdAt).getTime() : Date.now() - (idx + 1) * 7200000,
       });
     });
@@ -446,14 +446,14 @@ export default function DashboardPage() {
 
     if (total === 0) {
       return [
-        { label: 'TikTok', percent: 0, color: '#2563EB' },
+        { label: 'TikTok', percent: 0, color: '#7C3AED' },
         { label: 'Instagram', percent: 0, color: '#06B6D4' },
         { label: 'Facebook', percent: 0, color: '#10B981' },
       ];
     }
 
     return [
-      { label: 'TikTok', percent: Math.round(((counts.TIKTOK || 0) / total) * 100), color: '#2563EB' },
+      { label: 'TikTok', percent: Math.round(((counts.TIKTOK || 0) / total) * 100), color: '#7C3AED' },
       { label: 'Instagram', percent: Math.round(((counts.INSTAGRAM || 0) / total) * 100), color: '#06B6D4' },
       { label: 'Facebook', percent: Math.round(((counts.FACEBOOK || 0) / total) * 100), color: '#10B981' },
     ];
@@ -562,11 +562,11 @@ export default function DashboardPage() {
                     width: 26,
                     height: 26,
                     borderRadius: 7,
-                    background: '#EFF6FF',
+                    background: '#F3E8FF',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#1D4ED8',
+                    color: '#6D28D9',
                     fontSize: 13,
                   }}
                 >
@@ -581,7 +581,7 @@ export default function DashboardPage() {
               <Button
                 type="link"
                 onClick={() => navigate('/campaigns')}
-                style={{ color: '#1D4ED8', fontWeight: 700, fontSize: 12.5, padding: 0 }}
+                style={{ color: '#6D28D9', fontWeight: 700, fontSize: 12.5, padding: 0 }}
               >
                 Xem tất cả <RightOutlined style={{ fontSize: 9, marginLeft: 2 }} />
               </Button>
@@ -643,13 +643,13 @@ export default function DashboardPage() {
                             c.status === 'running'
                               ? '#ECFDF5'
                               : c.status === 'completed'
-                              ? '#EFF6FF'
+                              ? '#F3E8FF'
                               : '#FEF3C7',
                           color:
                             c.status === 'running'
                               ? '#059669'
                               : c.status === 'completed'
-                              ? '#2563EB'
+                              ? '#7C3AED'
                               : '#D97706',
                         }}
                       >
@@ -665,7 +665,7 @@ export default function DashboardPage() {
                       <Progress
                         percent={c.progress}
                         showInfo={false}
-                        strokeColor={c.status === 'completed' ? '#2563EB' : c.status === 'pending' ? '#F59E0B' : '#2563EB'}
+                        strokeColor={c.status === 'completed' ? '#7C3AED' : c.status === 'pending' ? '#F59E0B' : '#7C3AED'}
                         railColor="#F1F5F9"
                         size="small"
                         style={{ margin: 0 }}
@@ -692,7 +692,7 @@ export default function DashboardPage() {
                     size="small"
                     icon={<PlusOutlined />}
                     onClick={() => navigate('/campaigns/create')}
-                    style={{ background: '#1D4ED8', borderColor: '#1D4ED8', borderRadius: 6, fontSize: 12, height: 32 }}
+                    style={{ background: '#6D28D9', borderColor: '#6D28D9', borderRadius: 6, fontSize: 12, height: 32 }}
                   >
                     Tạo chiến dịch mới
                   </Button>
@@ -733,7 +733,7 @@ export default function DashboardPage() {
               <Button
                 type="link"
                 onClick={() => navigate('/crm')}
-                style={{ color: '#1D4ED8', fontWeight: 700, fontSize: 12.5, padding: 0 }}
+                style={{ color: '#6D28D9', fontWeight: 700, fontSize: 12.5, padding: 0 }}
               >
                 Xem tất cả <RightOutlined style={{ fontSize: 9, marginLeft: 2 }} />
               </Button>
@@ -884,14 +884,14 @@ export default function DashboardPage() {
                     <svg viewBox="0 0 500 160" style={{ width: '100%', height: 140 }} preserveAspectRatio="none">
                       <defs>
                         <linearGradient id="areaGradSmooth2" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#60A5FA" stopOpacity="0.4" />
+                          <stop offset="0%" stopColor="#A78BFA" stopOpacity="0.4" />
                           <stop offset="60%" stopColor="#C084FC" stopOpacity="0.1" />
                           <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
                         </linearGradient>
                         <linearGradient id="lineGradSmooth2" x1="0" y1="0" x2="1" y2="0">
-                          <stop offset="0%" stopColor="#2563EB" />
-                          <stop offset="50%" stopColor="#2563EB" />
-                          <stop offset="100%" stopColor="#3B82F6" />
+                          <stop offset="0%" stopColor="#7C3AED" />
+                          <stop offset="50%" stopColor="#7C3AED" />
+                          <stop offset="100%" stopColor="#8B5CF6" />
                         </linearGradient>
                       </defs>
 
@@ -914,8 +914,8 @@ export default function DashboardPage() {
                         strokeLinecap="round"
                       />
 
-                      <circle cx="240" cy="65" r="4" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2" />
-                      <circle cx="380" cy="42" r="4" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2" />
+                      <circle cx="240" cy="65" r="4" fill="#7C3AED" stroke="#FFFFFF" strokeWidth="2" />
+                      <circle cx="380" cy="42" r="4" fill="#7C3AED" stroke="#FFFFFF" strokeWidth="2" />
                     </svg>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#94A3B8', marginTop: 3 }}>
@@ -941,7 +941,7 @@ export default function DashboardPage() {
                 >
                   <div style={{ position: 'relative', width: 95, height: 95, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <svg viewBox="0 0 140 140" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-                      <circle cx="70" cy="70" r="45" fill="transparent" stroke="#2563EB" strokeWidth="14" strokeDasharray="155.5 127.24" strokeDashoffset="0" strokeLinecap="round" />
+                      <circle cx="70" cy="70" r="45" fill="transparent" stroke="#7C3AED" strokeWidth="14" strokeDasharray="155.5 127.24" strokeDashoffset="0" strokeLinecap="round" />
                       <circle cx="70" cy="70" r="45" fill="transparent" stroke="#06B6D4" strokeWidth="14" strokeDasharray="84.82 197.92" strokeDashoffset="-159" strokeLinecap="round" />
                       <circle cx="70" cy="70" r="45" fill="transparent" stroke="#10B981" strokeWidth="14" strokeDasharray="42.41 240.33" strokeDashoffset="-247" strokeLinecap="round" />
                     </svg>
@@ -1000,7 +1000,7 @@ export default function DashboardPage() {
               <Button
                 type="link"
                 onClick={() => navigate('/campaigns')}
-                style={{ color: '#1D4ED8', fontWeight: 700, fontSize: 12.5, padding: 0 }}
+                style={{ color: '#6D28D9', fontWeight: 700, fontSize: 12.5, padding: 0 }}
               >
                 Xem tất cả <RightOutlined style={{ fontSize: 9, marginLeft: 2 }} />
               </Button>

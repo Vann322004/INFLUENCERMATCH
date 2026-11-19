@@ -23,8 +23,8 @@
 .audit-filter-form input { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
 .audit-filter-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .audit-page .ant-btn { min-height: 40px; height: auto; white-space: normal; }
-.audit-page .ant-btn-primary { color: #fff; background: #1D4ED8; border-color: #1D4ED8; }
-.audit-page .ant-btn-primary:not(:disabled):hover { color: #fff; background: #1E40AF; border-color: #1E40AF; }
+.audit-page .ant-btn-primary { color: #fff; background: #6D28D9; border-color: #6D28D9; }
+.audit-page .ant-btn-primary:not(:disabled):hover { color: #fff; background: #5B21B6; border-color: #5B21B6; }
 .audit-page .ant-btn-primary:disabled { color: #94a3b8; background: #f1f5f9; border-color: #e2e8f0; }
 .audit-page .ant-btn-text { color: #64748b; border-color: transparent; }
 .audit-monitor-overview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
@@ -32,12 +32,12 @@
 .audit-overview-health { background: #f8f9ff; border-color: #e4e7fb; }
 .audit-overview-card h3, .audit-metric-heading h3 { margin: 0; color: #64748b; font-size: 13px; font-weight: 500; }
 .audit-overview-value { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; margin: 10px 0 8px; line-height: 1.5; }
-.audit-status-dot { flex: 0 0 7px; height: 7px; border-radius: 50%; background: #2563EB; }
+.audit-status-dot { flex: 0 0 7px; height: 7px; border-radius: 50%; background: #7C3AED; }
 .audit-monitor-caption { font-size: 12px; color: #64748b; line-height: 1.7; margin: 0; }
 .audit-health-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
 .audit-metric-card { min-width: 0; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; flex-direction: column; }
 .audit-metric-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; min-height: 25px; }
-.audit-status-pill { padding: 3px 9px; border-radius: 6px; background: #EFF6FF; color: #1D4ED8; font-size: 11px; font-weight: 600; }
+.audit-status-pill { padding: 3px 9px; border-radius: 6px; background: #F3E8FF; color: #6D28D9; font-size: 11px; font-weight: 600; }
 .audit-metric-unit { font-size: 11px; color: #94a3b8; }
 .audit-metric-value { font-size: clamp(24px, 2.5vw, 30px); letter-spacing: -.5px; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1.4; margin: 24px 0 4px; }
 .audit-metric-value > span { font-size: 14px; font-weight: 400; color: #64748b; letter-spacing: 0; }

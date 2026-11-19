@@ -95,7 +95,7 @@ export const IdentityTable: React.FC<IdentityTableProps> = ({
       width: 160,
       render: (_, r) => {
         const pct = Math.round(r.matchScore * 100);
-        const color = pct >= 90 ? '#10B981' : pct >= 80 ? '#F59E0B' : '#2563EB';
+        const color = pct >= 90 ? '#10B981' : pct >= 80 ? '#F59E0B' : '#7C3AED';
         return (
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 2 }}>
@@ -137,8 +137,8 @@ export const IdentityTable: React.FC<IdentityTableProps> = ({
             icon={<SwapOutlined />}
             onClick={() => onOpenCompare(r)}
             style={{
-              background: '#2563EB',
-              borderColor: '#2563EB',
+              background: '#7C3AED',
+              borderColor: '#7C3AED',
               fontWeight: 600,
               fontSize: 12.5,
               borderRadius: 7,
@@ -180,8 +180,8 @@ export const IdentityTable: React.FC<IdentityTableProps> = ({
             width: 52,
             height: 52,
             borderRadius: '50%',
-            background: '#EFF6FF',
-            color: '#2563EB',
+            background: '#F3E8FF',
+            color: '#7C3AED',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',

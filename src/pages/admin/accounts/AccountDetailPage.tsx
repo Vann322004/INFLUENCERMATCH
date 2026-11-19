@@ -23,8 +23,8 @@ const STATUS_CONFIG: Record<AdminUserStatus, { label: string; color: string }> =
 };
 
 const ROLE_COLOR: Record<AdminUserRole, string> = {
-  super_admin: '#2563EB',
-  admin:       '#2563EB',
+  super_admin: '#7C3AED',
+  admin:       '#7C3AED',
   manager:     '#06B6D4',
   brand:       '#0EA5E9',
   creator:     '#10B981',
@@ -74,7 +74,7 @@ export default function AccountDetailPage() {
   }
 
   const statusCfg = (account.status && STATUS_CONFIG[account.status]) || STATUS_CONFIG['active'];
-  const roleColor = (account.role && ROLE_COLOR[account.role]) || '#2563EB';
+  const roleColor = (account.role && ROLE_COLOR[account.role]) || '#7C3AED';
 
   const handleLockDone = (accId: string, newStatus: AdminUserStatus) => {
     setAccount(prev => prev ? { ...prev, status: newStatus } : prev);
@@ -112,7 +112,7 @@ export default function AccountDetailPage() {
             <Avatar
               src={account.avatar}
               size={80}
-              style={{ border: '3px solid rgba(37, 99, 235,0.4)', marginBottom: 14 }}
+              style={{ border: '3px solid rgba(124, 58, 237,0.4)', marginBottom: 14 }}
             />
             <Title level={4} style={{ color: '#0F172A', margin: '0 0 4px', fontWeight: 800 }}>
               {account.name}
@@ -144,7 +144,7 @@ export default function AccountDetailPage() {
                 { icon: <GlobalOutlined />, label: 'IP cuối', value: account.ip },
               ].map(item => (
                 <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ color: '#2563EB', fontSize: 14, width: 18 }}>{item.icon}</span>
+                  <span style={{ color: '#7C3AED', fontSize: 14, width: 18 }}>{item.icon}</span>
                   <div>
                     <div style={{ color: '#64748B', fontSize: 10, fontWeight: 600, lineHeight: 1 }}>{item.label}</div>
                     <div style={{ color: '#334155', fontSize: 12.5, fontWeight: 600 }}>{item.value}</div>
@@ -160,7 +160,7 @@ export default function AccountDetailPage() {
               <Button
                 block
                 icon={<EditOutlined />}
-                style={{ background: 'rgba(37, 99, 235,0.12)', border: '1px solid rgba(37, 99, 235,0.25)', color: '#60A5FA', fontWeight: 600 }}
+                style={{ background: 'rgba(124, 58, 237,0.12)', border: '1px solid rgba(124, 58, 237,0.25)', color: '#A78BFA', fontWeight: 600 }}
               >
                 Chỉnh sửa thông tin
               </Button>

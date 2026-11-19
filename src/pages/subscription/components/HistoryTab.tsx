@@ -98,7 +98,7 @@ export default function HistoryTab({ invoices, loading, onViewInvoice, onRetryPa
             <Button
               size="small"
               type="primary"
-              style={{ background: '#2563EB', fontSize: 12, borderRadius: 6, fontWeight: 600 }}
+              style={{ background: '#7C3AED', fontSize: 12, borderRadius: 6, fontWeight: 600 }}
               onClick={() => onRetryPayment?.(record)}
             >
               Thanh toán lại

@@ -34,7 +34,7 @@ export default function AdminSidebarHeader({ collapsed, onToggle, toggleLabel = 
           style={{
             width: 32,
             height: 1,
-            backgroundColor: 'rgba(29, 78, 216, 0.12)',
+            backgroundColor: 'rgba(109, 40, 217, 0.12)',
             marginBottom: 8,
           }}
         />

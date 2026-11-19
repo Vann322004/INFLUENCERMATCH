@@ -59,7 +59,7 @@ export const CreateCampaignStep3: React.FC<CreateCampaignStep3Props> = ({
             formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
             parser={(value) => value?.replace(/\$\s?|(,*)/g, '') as any}
             style={{ width: '100%', borderRadius: 10, height: 42, lineHeight: '40px', fontSize: 14, fontWeight: 700 }}
-            suffix={<span style={{ color: '#1D4ED8', fontWeight: 700 }}>VNĐ</span>}
+            suffix={<span style={{ color: '#6D28D9', fontWeight: 700 }}>VNĐ</span>}
           />
         </Col>
 
@@ -94,7 +94,7 @@ export const CreateCampaignStep3: React.FC<CreateCampaignStep3Props> = ({
           </div>
           <div className="ccreate-overview-item">
             <span className="ccreate-overview-item-label">Ngân sách & Thời lượng</span>
-            <span className="ccreate-overview-item-val" style={{ color: '#1D4ED8' }}>
+            <span className="ccreate-overview-item-val" style={{ color: '#6D28D9' }}>
               {(budgetTotal / 1000000).toFixed(1)} Triệu VNĐ • {campaignDuration === '2_weeks' ? '2 tuần' : campaignDuration === '4_weeks' ? '4 tuần' : campaignDuration === '8_weeks' ? '8 tuần' : 'Theo ngày đã chọn'}
             </span>
           </div>

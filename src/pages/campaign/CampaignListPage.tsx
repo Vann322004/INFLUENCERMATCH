@@ -48,7 +48,7 @@ function getStatusConfig(status: DisplayCampaign['status']) {
     case 'ready_for_discovery':
       return { color: '#0284C7', bg: '#F0F9FF', dot: '#0284C7', icon: <ThunderboltOutlined />, label: 'Sẵn sàng đề xuất' };
     case 'draft':
-      return { color: '#2563EB', bg: '#EFF6FF', dot: '#2563EB', icon: <EditOutlined />, label: 'Bản nháp' };
+      return { color: '#7C3AED', bg: '#F3E8FF', dot: '#7C3AED', icon: <EditOutlined />, label: 'Bản nháp' };
     case 'completed':
       return { color: '#64748B', bg: '#F1F5F9', dot: '#94A3B8', icon: <CheckCircleOutlined />, label: 'Hoàn thành' };
     default:
@@ -216,7 +216,7 @@ export default function CampaignListPage() {
       {/* ── Summary Stats Row ── */}
       <div className="clist-stats-row">
         <div className="clist-stat-card">
-          <div className="clist-stat-icon" style={{ background: '#EFF6FF', color: '#2563EB' }}>
+          <div className="clist-stat-icon" style={{ background: '#F3E8FF', color: '#7C3AED' }}>
             <ThunderboltOutlined />
           </div>
           <div>
@@ -381,7 +381,7 @@ export default function CampaignListPage() {
                           ? '#F43F5E'
                           : budgetPct > 60
                           ? '#F59E0B'
-                          : '#2563EB'
+                          : '#7C3AED'
                       }
                       railColor="#F1F5F9"
                       size="small"
@@ -413,7 +413,7 @@ export default function CampaignListPage() {
                             navigate('/creators?autoRun=true', { state: { campaignId: campaign.id } });
                           }}
                           style={{
-                            background: '#2563EB',
+                            background: '#7C3AED',
                             borderRadius: 6,
                             fontSize: 12,
                             fontWeight: 600,

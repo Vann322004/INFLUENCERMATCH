@@ -112,7 +112,7 @@
 }
 
 .quality-row.is-selected-row > td:first-child {
-  box-shadow: inset 3px 0 0 #2563eb;
+  box-shadow: inset 3px 0 0 #7C3AED;
 }
 
 .quality-creator {
@@ -278,7 +278,7 @@
 .quality-card-select-hint {
   font-size: 12px;
   font-weight: 600;
-  color: #2563eb;
+  color: #7C3AED;
 }
 
 .quality-pagination {
@@ -454,12 +454,12 @@
 }
 
 .quality-start-section .ant-btn-primary:not(:disabled):not(.ant-btn-dangerous) {
-  background: #2563eb;
+  background: #7C3AED;
   color: #fff;
 }
 
 .quality-start-section .ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):hover {
-  background: #1d4ed8;
+  background: #6D28D9;
 }
 
 .quality-start-section .ant-btn:disabled {

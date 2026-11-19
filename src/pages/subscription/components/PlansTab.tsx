@@ -58,7 +58,7 @@ export default function PlansTab({
             buttonDisabled = true;
             buttonText = 'Gói hiện tại của bạn';
             statusTag = (
-              <Tag color="#2563EB" style={{ borderRadius: 999, fontWeight: 700, margin: 0 }}>
+              <Tag color="#7C3AED" style={{ borderRadius: 999, fontWeight: 700, margin: 0 }}>
                 {isTrial ? 'Đang dùng thử' : 'Đang dùng'}
               </Tag>
             );
@@ -153,14 +153,14 @@ export default function PlansTab({
                             : isTrial && !buttonDisabled
                               ? '#059669'
                               : plan.popular
-                                ? '#2563EB'
+                                ? '#7C3AED'
                                 : '#FFFFFF',
                           borderColor: buttonDisabled
                             ? '#E2E8F0'
                             : isTrial && !buttonDisabled
                               ? '#059669'
                               : plan.popular
-                                ? '#2563EB'
+                                ? '#7C3AED'
                                 : '#CBD5E1',
                           color: buttonDisabled
                             ? '#94A3B8'
@@ -185,7 +185,7 @@ export default function PlansTab({
                         {feat.included ? (
                           <CheckCircleFilled
                             style={{
-                              color: feat.highlight ? '#2563EB' : '#10B981',
+                              color: feat.highlight ? '#7C3AED' : '#10B981',
                               fontSize: 15,
                               marginTop: 2,
                               flexShrink: 0,
@@ -198,7 +198,7 @@ export default function PlansTab({
                         )}
                         <span
                           style={{
-                            color: feat.included ? (feat.highlight ? '#1E40AF' : '#334155') : '#94A3B8',
+                            color: feat.included ? (feat.highlight ? '#5B21B6' : '#334155') : '#94A3B8',
                             fontWeight: feat.highlight ? 700 : 400,
                             textDecoration: feat.included ? 'none' : 'line-through',
                           }}

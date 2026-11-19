@@ -62,7 +62,7 @@ function ClaimDetailDrawer({
       open={open} onClose={onClose} width={600}
       title={
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <FileSearchOutlined style={{ color: "#2563EB", fontSize: 18 }} />
+          <FileSearchOutlined style={{ color: "#7C3AED", fontSize: 18 }} />
           <span style={{ fontWeight: 700 }}>Chi tiết hồ sơ xác minh</span>
           <Tag icon={st.icon} style={{ background: st.color + "18", border: `1px solid ${st.color}40`, color: st.color, borderRadius: 20, fontWeight: 700, fontSize: 11 }}>
             {st.label}
@@ -97,15 +97,15 @@ function ClaimDetailDrawer({
       ) : detailError ? <Alert type="error" title="Không tải được bằng chứng" description="Hãy tải lại hồ sơ trước khi quyết định." action={<Button onClick={() => setRetry(value => value + 1)}>Thử lại</Button>} /> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <Card size="small" bordered={false}
-            style={{ background: "linear-gradient(135deg,#EFF6FF,#F0FDF4)", border: "1px solid #BFDBFE", borderRadius: 12 }}>
+            style={{ background: "linear-gradient(135deg,#F3E8FF,#F0FDF4)", border: "1px solid #DDD6FE", borderRadius: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <Avatar src={d.creatorAvatar} size={48} icon={<UserOutlined />}
-                style={{ border: "2px solid #3B82F6", flexShrink: 0 }} />
+                style={{ border: "2px solid #8B5CF6", flexShrink: 0 }} />
               <div>
                 <div style={{ fontWeight: 700, fontSize: 15, color: "#0F172A" }}>
                   {d.creatorName || d.creatorHandle || "Creator"}
                 </div>
-                <div style={{ color: "#2563EB", fontSize: 12, fontWeight: 600 }}>{d.creatorHandle}</div>
+                <div style={{ color: "#7C3AED", fontSize: 12, fontWeight: 600 }}>{d.creatorHandle}</div>
                 {d.creatorFollowers && (
                   <div style={{ color: "#64748B", fontSize: 11 }}>{d.creatorFollowers.toLocaleString()} followers</div>
                 )}
@@ -134,14 +134,14 @@ function ClaimDetailDrawer({
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {d.evidenceType && (
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <IdcardOutlined style={{ color: "#2563EB" }} />
+                    <IdcardOutlined style={{ color: "#7C3AED" }} />
                     <Text style={{ fontSize: 13 }}>Loại: <strong>{d.evidenceType}</strong></Text>
                   </div>
                 )}
                 {(d.evidenceUrls?.length ? d.evidenceUrls : d.evidenceUrl ? [d.evidenceUrl] : []).map(url => (
                   <div key={url} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <LinkOutlined style={{ color: "#2563EB" }} />
-                    <a key={url} href={url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: "#2563EB", overflowWrap: "anywhere" }}>
+                    <LinkOutlined style={{ color: "#7C3AED" }} />
+                    <a key={url} href={url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: "#7C3AED", overflowWrap: "anywhere" }}>
                       {url}
                     </a>
                   </div>
@@ -348,11 +348,11 @@ export default function CreatorClaimReviewPage() {
       title: "Creator", key: "creator", width: 200,
       render: (_, r) => (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Avatar src={r.creatorAvatar} icon={<UserOutlined />} size={36} style={{ border: "1.5px solid rgba(37,99,235,0.3)", flexShrink: 0 }} />
+          <Avatar src={r.creatorAvatar} icon={<UserOutlined />} size={36} style={{ border: "1.5px solid rgba(124, 58, 237,0.3)", flexShrink: 0 }} />
           <div>
             <div style={{ fontWeight: 700, fontSize: 13, color: "#0F172A", lineHeight: 1.2 }}>{r.creatorName || r.creatorHandle || "Kênh chưa có tên"}</div>
             {!r.creatorName && !r.creatorHandle && <code style={{overflowWrap:'anywhere'}}>{r.creatorId}</code>}
-            <div style={{ fontSize: 11, color: "#2563EB" }}>{r.creatorHandle}</div>
+            <div style={{ fontSize: 11, color: "#7C3AED" }}>{r.creatorHandle}</div>
           </div>
         </div>
       ),
@@ -393,7 +393,7 @@ export default function CreatorClaimReviewPage() {
           <Tooltip title="Xem bằng chứng">
             <Button size="small" icon={<EyeOutlined />}
               onClick={e => { e.stopPropagation(); setSelectedClaim(record); setDrawerOpen(true); }}
-              style={{ background: "rgba(37, 99, 235,0.1)", border: "1px solid rgba(37, 99, 235,0.2)", color: "#60A5FA" }} />
+              style={{ background: "rgba(124, 58, 237,0.1)", border: "1px solid rgba(124, 58, 237,0.2)", color: "#A78BFA" }} />
           </Tooltip>
           {record.status === "PENDING" && (
             <>
@@ -454,7 +454,7 @@ export default function CreatorClaimReviewPage() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
           <div style={{ color: "#0F172A", fontWeight: 800, fontSize: 20, display: "flex", alignItems: "center", gap: 10 }}>
-            <SafetyCertificateOutlined style={{ color: "#2563EB" }} />
+            <SafetyCertificateOutlined style={{ color: "#7C3AED" }} />
             Kiểm duyệt quyền sở hữu kênh
           </div>
           <div style={{ color: "#64748B", fontSize: 13, marginTop: 2 }}>

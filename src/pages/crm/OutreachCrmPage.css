@@ -30,7 +30,7 @@
 }
 
 .crm-breadcrumb .breadcrumb-link:hover {
-  color: #2563EB;
+  color: #7C3AED;
 }
 
 .crm-breadcrumb .breadcrumb-current {
@@ -213,7 +213,7 @@
 
 .subtab-btn.active {
   background: #FFFFFF;
-  color: #1D4ED8;
+  color: #6D28D9;
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -228,8 +228,8 @@
 }
 
 .subtab-count-pill.highlight {
-  background: #EFF6FF;
-  color: #1D4ED8;
+  background: #F3E8FF;
+  color: #6D28D9;
 }
 
 /* ==========================================================================
@@ -357,7 +357,7 @@
 
 .crm-tone-pill.active {
   background: #FFFFFF;
-  color: #1D4ED8;
+  color: #6D28D9;
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
 }
@@ -591,8 +591,8 @@
 }
 
 .kanban-card:hover {
-  border-color: #BFDBFE;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+  border-color: #DDD6FE;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.08);
 }
 
 .kanban-card-top {
@@ -700,12 +700,12 @@
 }
 
 .btn-kanban-next-stage {
-  background: #EFF6FF;
-  border: 1px solid #BFDBFE;
+  background: #F3E8FF;
+  border: 1px solid #DDD6FE;
   border-radius: 6px;
   font-size: 10.5px;
   font-weight: 700;
-  color: #1D4ED8;
+  color: #6D28D9;
   padding: 3px 8px;
   cursor: pointer;
   display: inline-flex;
@@ -714,7 +714,7 @@
 }
 
 .btn-kanban-next-stage:hover {
-  background: #1D4ED8;
+  background: #6D28D9;
   color: #FFFFFF;
 }
 

@@ -45,7 +45,7 @@
 .admin-navigation-drawer .sidebar-brand-btn { min-height: 44px; }
 .admin-workspace :is(button, a, input, [tabindex]):focus-visible,
 .admin-navigation-drawer :is(button, a, input, [tabindex]):focus-visible {
-  outline: 2px solid var(--im-primary, #2563eb);
+  outline: 2px solid var(--im-primary, #7C3AED);
   outline-offset: 3px;
 }
 .dm-title-row { flex-wrap: wrap; }

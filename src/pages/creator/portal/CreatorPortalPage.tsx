@@ -6,7 +6,6 @@ import {
   Tag,
   Button,
   Avatar,
-  Badge,
   Modal,
   Form,
   Input,
@@ -22,7 +21,6 @@ import {
   Tooltip,
 } from 'antd';
 import {
-  LineChartOutlined,
   SafetyCertificateOutlined,
   ApiOutlined,
   DollarOutlined,
@@ -40,7 +38,6 @@ import {
   CheckOutlined,
   StarFilled,
   GlobalOutlined,
-  TeamOutlined,
   VideoCameraOutlined,
   FireOutlined,
 } from '@ant-design/icons';
@@ -365,161 +362,192 @@ export default function CreatorPortalPage() {
       {/* ========================================================================= */}
       {activeTab === 'reach' && (
         <div className="creator-studio-stack">
-          {/* 1. Modern Creator Profile Studio Card */}
-          <Card bordered={false} className="creator-hero-card">
-            <div className="creator-hero-inner">
-              <div className="creator-hero-left">
-                <div className="creator-avatar-ring-wrap">
-                  <Avatar
-                    size={76}
-                    src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&auto=format&fit=crop&q=80"
-                    className="creator-hero-avatar"
-                  />
-                  <span
-                    className={`creator-status-dot ${isVerified ? 'verified' : 'unverified'}`}
-                    title={isVerified ? 'Đã xác minh Tích Xanh' : 'Chưa xác minh Tích Xanh'}
-                  />
-                </div>
+          {/* 1. Pastel Lavender Wave Hero Banner matching Admin Mockup 1:1 */}
+          <header className="creator-hero-banner">
+            <svg
+              className="creator-hero-waves"
+              viewBox="0 0 700 260"
+              fill="none"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M120 260 C 260 150, 360 220, 490 110 C 575 40, 645 65, 700 20 L 700 260 Z"
+                fill="url(#creatorWave1)"
+              />
+              <path
+                d="M240 260 C 370 180, 470 215, 580 125 C 635 80, 675 95, 700 65 L 700 260 Z"
+                fill="url(#creatorWave2)"
+              />
+              <defs>
+                <linearGradient id="creatorWave1" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#DDD6FE" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor="#C4B5FD" stopOpacity="0.65" />
+                </linearGradient>
+                <linearGradient id="creatorWave2" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#C4B5FD" stopOpacity="0.35" />
+                  <stop offset="100%" stopColor="#A78BFA" stopOpacity="0.45" />
+                </linearGradient>
+              </defs>
+            </svg>
 
-                <div className="creator-hero-info">
-                  <div className="creator-hero-name-row">
-                    <h1 className="creator-hero-name">Châu Bùi (Chau Bui Official)</h1>
-                    {isVerified ? (
-                      <Tag color="success" icon={<CheckCircleFilled />} className="creator-badge-pill">
-                        Đã cấp Tích Xanh
-                      </Tag>
-                    ) : (
-                      <Tag color="processing" icon={<SafetyCertificateOutlined />} className="creator-badge-pill">
-                        Chưa xác minh kênh
-                      </Tag>
-                    )}
-                    <Tag color="blue" className="creator-badge-pill">
-                      <StarFilled style={{ fontSize: 11, marginRight: 4 }} />
-                      Điểm uy tín AI: 98.5%
-                    </Tag>
-                  </div>
-
-                  <p className="creator-hero-bio">
-                    Nhà sáng tạo nội dung Thời trang, Phong cách sống & Làm đẹp cao cấp • Hồ sơ hiển thị công khai trên Creator Catalog cho Doanh nghiệp.
-                  </p>
-
-                  <div className="creator-hero-chips">
-                    <span className="creator-meta-chip">
-                      <GlobalOutlined /> Thời trang & High Fashion
-                    </span>
-                    <span className="creator-meta-chip">
-                      <strong>TikTok:</strong> @chaukikii (2.45M)
-                    </span>
-                    <span className="creator-meta-chip">
-                      <strong>Instagram:</strong> @chaubui_ (3.2M)
-                    </span>
-                    <span className="creator-meta-chip">
-                      <strong>Kênh đã nối:</strong> {connectedChannelsCount}/{channels.length} nền tảng
-                    </span>
-                  </div>
-                </div>
+            <div className="creator-hero-left">
+              <div className="creator-avatar-ring-wrap">
+                <Avatar
+                  size={78}
+                  src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&auto=format&fit=crop&q=80"
+                  className="creator-hero-avatar"
+                />
+                <span
+                  className={`creator-status-dot ${isVerified ? 'verified' : 'unverified'}`}
+                  title={isVerified ? 'Đã xác minh Tích Xanh' : 'Chưa xác minh Tích Xanh'}
+                />
               </div>
 
-              <div className="creator-hero-actions">
-                <Button
-                  icon={<IdcardOutlined />}
-                  onClick={() => handleTabChange('verification')}
-                  className="creator-secondary-btn"
-                >
-                  Hồ sơ eKYC
-                </Button>
-                <Button
-                  icon={<DollarOutlined />}
-                  onClick={() => handleTabChange('ratecard')}
-                  className="creator-secondary-btn"
-                >
-                  Bảng giá ({rateCards.length})
-                </Button>
-                <Button
-                  type="primary"
-                  icon={<SafetyCertificateOutlined />}
-                  onClick={handleOpenClaimModal}
-                  className="creator-primary-btn"
-                >
-                  Nộp đơn Claim Tích Xanh
-                </Button>
+              <div className="creator-hero-info">
+                <div className="creator-hero-status-row">
+                  <span className="creator-live-pill">
+                    <span className="creator-live-dot" />
+                    {isVerified ? 'Đã cấp Tích Xanh' : 'Đang hoạt động'}
+                  </span>
+                  <span className="creator-lavender-pill">
+                    <StarFilled style={{ fontSize: 11, color: '#6D28D9', marginRight: 5 }} />
+                    Điểm uy tín AI: 98.5%
+                  </span>
+                </div>
+
+                <h1 className="creator-editorial-title">
+                  Châu Bùi <span className="creator-editorial-italic">Creator Studio</span>
+                </h1>
+
+                <p className="creator-hero-bio">
+                  Nhà sáng tạo nội dung Thời trang, Phong cách sống & Làm đẹp cao cấp • Hồ sơ hiển thị công khai trên Creator Catalog cho Doanh nghiệp.
+                </p>
+
+                <div className="creator-hero-chips">
+                  <span className="creator-meta-chip">
+                    <GlobalOutlined /> Thời trang & High Fashion
+                  </span>
+                  <span className="creator-meta-chip">
+                    <strong>TikTok:</strong> @chaukikii (2.45M)
+                  </span>
+                  <span className="creator-meta-chip">
+                    <strong>Instagram:</strong> @chaubui_ (3.2M)
+                  </span>
+                  <span className="creator-meta-chip">
+                    <strong>Kênh đã nối:</strong> {connectedChannelsCount}/{channels.length} nền tảng
+                  </span>
+                </div>
               </div>
             </div>
-          </Card>
 
-          {/* 2. 4 Core KPI Bento Cards */}
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} className="creator-kpi-card">
-                <div className="creator-kpi-top">
-                  <span className="creator-kpi-label">Tổng Reach (30 ngày)</span>
-                  <div className="creator-kpi-icon-box blue">
-                    <EyeOutlined />
+            <div className="creator-hero-actions">
+              <Button
+                icon={<IdcardOutlined />}
+                onClick={() => handleTabChange('verification')}
+                className="creator-secondary-btn"
+              >
+                Hồ sơ eKYC
+              </Button>
+              <Button
+                icon={<DollarOutlined />}
+                onClick={() => handleTabChange('ratecard')}
+                className="creator-secondary-btn"
+              >
+                Bảng giá ({rateCards.length})
+              </Button>
+              <Button
+                type="primary"
+                icon={<SafetyCertificateOutlined />}
+                onClick={handleOpenClaimModal}
+                className="creator-primary-btn"
+              >
+                Nộp đơn Claim Tích Xanh
+              </Button>
+            </div>
+          </header>
+
+          {/* 2. 4 Core KPI Bento Cards (Left-Icon Layout matching Admin Mockup 1:1) */}
+          <div className="creator-bento-grid-4">
+            <section className="creator-bento-card">
+              <div className="creator-bento-row">
+                <div className="creator-bento-icon purple">
+                  <EyeOutlined />
+                </div>
+                <div className="creator-bento-body">
+                  <span className="creator-bento-label">Tổng Reach (30 ngày)</span>
+                  <p className="creator-bento-value">
+                    {(metrics.totalReach30d / 1000000).toFixed(2)}M
+                  </p>
+                  <div>
+                    <span className="creator-growth-pill">
+                      ↗ +{metrics.reachGrowthMoM}% tháng này
+                    </span>
                   </div>
                 </div>
-                <div className="creator-kpi-value">
-                  {(metrics.totalReach30d / 1000000).toFixed(2)}M
-                </div>
-                <div className="creator-kpi-foot positive">
-                  <RiseOutlined /> +{metrics.reachGrowthMoM}% so với tháng trước
-                </div>
-              </Card>
-            </Col>
+              </div>
+            </section>
 
-            <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} className="creator-kpi-card">
-                <div className="creator-kpi-top">
-                  <span className="creator-kpi-label">Lượt hiển thị (Impressions)</span>
-                  <div className="creator-kpi-icon-box indigo">
-                    <GlobalOutlined />
+            <section className="creator-bento-card">
+              <div className="creator-bento-row">
+                <div className="creator-bento-icon purple">
+                  <GlobalOutlined />
+                </div>
+                <div className="creator-bento-body">
+                  <span className="creator-bento-label">Lượt hiển thị (Impressions)</span>
+                  <p className="creator-bento-value">
+                    {(metrics.totalImpressions / 1000000).toFixed(2)}M
+                  </p>
+                  <div>
+                    <span className="creator-bento-badge">
+                      {connectedChannelsCount} kênh đang đồng bộ
+                    </span>
                   </div>
                 </div>
-                <div className="creator-kpi-value">
-                  {(metrics.totalImpressions / 1000000).toFixed(2)}M
-                </div>
-                <div className="creator-kpi-foot">
-                  Tổng hợp từ {connectedChannelsCount} kênh đang đồng bộ
-                </div>
-              </Card>
-            </Col>
+              </div>
+            </section>
 
-            <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} className="creator-kpi-card">
-                <div className="creator-kpi-top">
-                  <span className="creator-kpi-label">Tổng lượt xem Video</span>
-                  <div className="creator-kpi-icon-box sky">
-                    <VideoCameraOutlined />
+            <section className="creator-bento-card">
+              <div className="creator-bento-row">
+                <div className="creator-bento-icon amber">
+                  <VideoCameraOutlined />
+                </div>
+                <div className="creator-bento-body">
+                  <span className="creator-bento-label">Tổng lượt xem Video</span>
+                  <p className="creator-bento-value">
+                    {(metrics.totalVideoViews / 1000000).toFixed(2)}M
+                  </p>
+                  <div>
+                    <span className="creator-bento-badge">
+                      TB {metrics.avgViewsPerPost.toLocaleString('vi-VN')} views/video
+                    </span>
                   </div>
                 </div>
-                <div className="creator-kpi-value accent">
-                  {(metrics.totalVideoViews / 1000000).toFixed(2)}M
-                </div>
-                <div className="creator-kpi-foot">
-                  Trung bình {metrics.avgViewsPerPost.toLocaleString('vi-VN')} views / video
-                </div>
-              </Card>
-            </Col>
+              </div>
+            </section>
 
-            <Col xs={24} sm={12} lg={6}>
-              <Card bordered={false} className="creator-kpi-card">
-                <div className="creator-kpi-top">
-                  <span className="creator-kpi-label">Tỷ lệ tương tác (ER%)</span>
-                  <div className="creator-kpi-icon-box emerald">
-                    <FireOutlined />
+            <section className="creator-bento-card">
+              <div className="creator-bento-row">
+                <div className="creator-bento-icon purple">
+                  <FireOutlined />
+                </div>
+                <div className="creator-bento-body">
+                  <span className="creator-bento-label">Tỷ lệ tương tác (ER%)</span>
+                  <p className="creator-bento-value">
+                    {metrics.avgEngagementRate}%
+                  </p>
+                  <div>
+                    <span className="creator-growth-pill">
+                      Top 15% Nhà sáng tạo
+                    </span>
                   </div>
                 </div>
-                <div className="creator-kpi-value accent">
-                  {metrics.avgEngagementRate}%
-                </div>
-                <div className="creator-kpi-foot positive">
-                  Top 15% Nhà sáng tạo ngành Thời trang
-                </div>
-              </Card>
-            </Col>
-          </Row>
+              </div>
+            </section>
+          </div>
 
           {/* 3. Analytics Row: 6-Month Growth + Audience Demographics */}
-          <Row gutter={[16, 16]}>
+          <Row gutter={[18, 18]}>
             <Col xs={24} lg={14}>
               <Card
                 bordered={false}
@@ -530,7 +558,9 @@ export default function CreatorPortalPage() {
                       <div className="creator-card-title">Biểu đồ Tăng trưởng Reach & Views (6 tháng)</div>
                       <div className="creator-card-subtitle">Số liệu tự động đồng bộ qua OAuth từ các kênh đã liên kết</div>
                     </div>
-                    <Tag color="blue" style={{ borderRadius: 999, fontWeight: 600 }}>Cập nhật hôm nay</Tag>
+                    <Tag color="purple" style={{ borderRadius: 999, fontWeight: 700, margin: 0 }}>
+                      Cập nhật hôm nay
+                    </Tag>
                   </div>
                 }
               >
@@ -544,10 +574,10 @@ export default function CreatorPortalPage() {
                           <span className="creator-trend-month">Tháng {item.month}</span>
                           <div className="creator-trend-numbers">
                             <span>
-                              Reach: <strong style={{ color: '#0F172A' }}>{(item.reach / 1000000).toFixed(2)}M</strong>
+                              Reach: <strong style={{ color: '#1E1B4B' }}>{(item.reach / 1000000).toFixed(2)}M</strong>
                             </span>
                             <span>
-                              Views: <strong style={{ color: '#2563EB' }}>{(item.views / 1000000).toFixed(2)}M</strong>
+                              Views: <strong style={{ color: '#7C3AED' }}>{(item.views / 1000000).toFixed(2)}M</strong>
                             </span>
                           </div>
                         </div>
@@ -585,9 +615,9 @@ export default function CreatorPortalPage() {
               >
                 {/* Gender Split */}
                 <div style={{ marginBottom: 18 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 700, color: '#0F172A', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 700, color: '#1E1B4B', marginBottom: 6 }}>
                     <span>Phân bổ giới tính</span>
-                    <span style={{ color: '#64748B', fontWeight: 600 }}>
+                    <span style={{ color: '#6B7280', fontWeight: 600 }}>
                       Nữ {metrics.audienceDemographics.femalePct}% • Nam {metrics.audienceDemographics.malePct}%
                     </span>
                   </div>
@@ -595,13 +625,13 @@ export default function CreatorPortalPage() {
                     <div
                       style={{
                         flex: metrics.audienceDemographics.femalePct,
-                        background: 'linear-gradient(90deg, #1E40AF 0%, #2563EB 100%)',
+                        background: 'linear-gradient(90deg, #6D28D9 0%, #8B5CF6 100%)',
                       }}
                     />
                     <div
                       style={{
                         flex: metrics.audienceDemographics.malePct,
-                        background: '#93C5FD',
+                        background: '#D8B4FE',
                       }}
                     />
                   </div>
@@ -609,17 +639,23 @@ export default function CreatorPortalPage() {
 
                 {/* Age brackets */}
                 <div style={{ marginBottom: 18 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1E1B4B', marginBottom: 8 }}>
                     Độ tuổi chủ đạo
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {metrics.audienceDemographics.ageGroups.map((g, idx) => (
                       <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
-                        <span style={{ color: '#475569', fontWeight: 600, width: 54 }}>{g.age}</span>
+                        <span style={{ color: '#4B5563', fontWeight: 600, width: 54 }}>{g.age}</span>
                         <div style={{ flex: 1 }}>
-                          <Progress percent={g.pct} size="small" strokeColor="#2563EB" showInfo={false} />
+                          <Progress
+                            percent={g.pct}
+                            size="small"
+                            strokeColor="#7C3AED"
+                            railColor="#F3E8FF"
+                            showInfo={false}
+                          />
                         </div>
-                        <span style={{ fontWeight: 700, color: '#0F172A', width: 38, textAlign: 'right' }}>
+                        <span style={{ fontWeight: 700, color: '#1E1B4B', width: 38, textAlign: 'right' }}>
                           {g.pct}%
                         </span>
                       </div>
@@ -629,7 +665,7 @@ export default function CreatorPortalPage() {
 
                 {/* Top Cities */}
                 <div>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1E1B4B', marginBottom: 8 }}>
                     Tỉnh / Thành phố tập trung người xem
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -646,14 +682,14 @@ export default function CreatorPortalPage() {
           </Row>
 
           {/* 4. Quick Workspace Overview: Linked Channels & Active Rate Cards */}
-          <Row gutter={[16, 16]}>
+          <Row gutter={[18, 18]}>
             <Col xs={24} lg={12}>
               <Card
                 bordered={false}
                 className="creator-section-card"
                 title={<span className="creator-card-title">Kênh mạng xã hội đang liên kết ({connectedChannelsCount}/{channels.length})</span>}
                 extra={
-                  <Button type="link" size="small" onClick={() => handleTabChange('social')} style={{ fontWeight: 700, padding: 0 }}>
+                  <Button type="link" size="small" onClick={() => handleTabChange('social')} style={{ fontWeight: 700, color: '#7C3AED', padding: 0 }}>
                     Quản lý kênh →
                   </Button>
                 }
@@ -665,12 +701,12 @@ export default function CreatorPortalPage() {
                         <Avatar size={40} src={ch.avatarUrl} />
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>{ch.displayName}</span>
-                            <Tag style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>
+                            <span style={{ fontWeight: 700, color: '#1E1B4B', fontSize: 13.5 }}>{ch.displayName}</span>
+                            <Tag color="purple" style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>
                               {ch.platform}
                             </Tag>
                           </div>
-                          <div style={{ fontSize: 12, color: '#64748B' }}>
+                          <div style={{ fontSize: 12, color: '#6B7280' }}>
                             {ch.handle} • <strong>{(ch.followers / 1000).toLocaleString('vi-VN')}K</strong> followers
                           </div>
                         </div>
@@ -690,7 +726,7 @@ export default function CreatorPortalPage() {
                 className="creator-section-card"
                 title={<span className="creator-card-title">Gói dịch vụ Rate Card nổi bật ({rateCards.length} gói)</span>}
                 extra={
-                  <Button type="link" size="small" onClick={() => handleTabChange('ratecard')} style={{ fontWeight: 700, padding: 0 }}>
+                  <Button type="link" size="small" onClick={() => handleTabChange('ratecard')} style={{ fontWeight: 700, color: '#7C3AED', padding: 0 }}>
                     Chỉnh sửa bảng giá →
                   </Button>
                 }
@@ -699,14 +735,14 @@ export default function CreatorPortalPage() {
                   {rateCards.slice(0, 3).map((pkg) => (
                     <div key={pkg.id} className="creator-mini-row">
                       <div style={{ minWidth: 0, flex: 1, paddingRight: 12 }}>
-                        <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontWeight: 700, color: '#1E1B4B', fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {pkg.name}
                         </div>
-                        <div style={{ fontSize: 12, color: '#64748B' }}>
+                        <div style={{ fontSize: 12, color: '#6B7280' }}>
                           {pkg.platform} • {pkg.format} • Bàn giao {pkg.turnaroundDays} ngày
                         </div>
                       </div>
-                      <div style={{ fontWeight: 800, color: '#2563EB', fontSize: 14, whiteSpace: 'nowrap' }}>
+                      <div style={{ fontWeight: 800, color: '#6D28D9', fontSize: 14, whiteSpace: 'nowrap' }}>
                         {pkg.priceVnd.toLocaleString('vi-VN')} ₫
                       </div>
                     </div>
@@ -741,31 +777,59 @@ export default function CreatorPortalPage() {
           </div>
 
           {/* Summary Strip */}
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={8}>
-              <Card bordered={false} className="creator-kpi-card compact">
-                <div className="creator-kpi-label">Tổng số gói đang niêm yết</div>
-                <div className="creator-kpi-value">{rateCards.length} gói dịch vụ</div>
-              </Card>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Card bordered={false} className="creator-kpi-card compact">
-                <div className="creator-kpi-label">Mức báo giá trung bình</div>
-                <div className="creator-kpi-value accent">{avgRateCardPrice.toLocaleString('vi-VN')} ₫</div>
-              </Card>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Card bordered={false} className="creator-kpi-card compact">
-                <div className="creator-kpi-label">Trạng thái trên Creator Catalog</div>
-                <div className="creator-kpi-value" style={{ fontSize: 18, color: '#10B981', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <CheckCircleFilled /> Đang hiển thị công khai
+          <div className="creator-bento-grid-3">
+            <section className="creator-bento-card">
+              <div className="creator-bento-row">
+                <div className="creator-bento-icon purple">
+                  <DollarOutlined />
                 </div>
-              </Card>
-            </Col>
-          </Row>
+                <div className="creator-bento-body">
+                  <span className="creator-bento-label">Tổng số gói đang niêm yết</span>
+                  <p className="creator-bento-value">{rateCards.length} gói</p>
+                  <div>
+                    <span className="creator-bento-badge">Trên Creator Catalog</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="creator-bento-card">
+              <div className="creator-bento-row">
+                <div className="creator-bento-icon amber">
+                  <StarFilled />
+                </div>
+                <div className="creator-bento-body">
+                  <span className="creator-bento-label">Mức báo giá trung bình</span>
+                  <p className="creator-bento-value" style={{ fontSize: 24 }}>
+                    {avgRateCardPrice.toLocaleString('vi-VN')} ₫
+                  </p>
+                  <div>
+                    <span className="creator-bento-badge">Giá niêm yết công khai</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="creator-bento-card">
+              <div className="creator-bento-row">
+                <div className="creator-bento-icon purple">
+                  <CheckCircleFilled />
+                </div>
+                <div className="creator-bento-body">
+                  <span className="creator-bento-label">Trạng thái hiển thị</span>
+                  <p className="creator-bento-value" style={{ fontSize: 22 }}>
+                    Công khai
+                  </p>
+                  <div>
+                    <span className="creator-growth-pill">● Sẵn sàng nhận Booking</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
 
           {/* Rate Cards Grid */}
-          <Row gutter={[16, 16]} className="rate-card-grid">
+          <Row gutter={[18, 18]} className="rate-card-grid">
             {rateCards.map((pkg) => (
               <Col xs={24} md={12} lg={8} key={pkg.id}>
                 <Card
@@ -780,7 +844,7 @@ export default function CreatorPortalPage() {
                   )}
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <Tag color="blue" style={{ fontWeight: 700, borderRadius: 6, padding: '2px 10px', margin: 0 }}>
+                    <Tag color="purple" style={{ fontWeight: 700, borderRadius: 6, padding: '2px 10px', margin: 0 }}>
                       {pkg.platform} • {pkg.format}
                     </Tag>
                     <Space size={4}>
@@ -793,37 +857,37 @@ export default function CreatorPortalPage() {
                     </Space>
                   </div>
 
-                  <div style={{ fontWeight: 800, fontSize: 16, color: '#0F172A', lineHeight: 1.35, marginBottom: 8 }}>
+                  <div style={{ fontWeight: 800, fontSize: 16, color: '#1E1B4B', lineHeight: 1.35, marginBottom: 8 }}>
                     {pkg.name}
                   </div>
 
-                  <div style={{ fontSize: 26, fontWeight: 900, color: '#2563EB', fontVariantNumeric: 'tabular-nums', marginBottom: 12 }}>
-                    {pkg.priceVnd.toLocaleString('vi-VN')} <span style={{ fontSize: 14, fontWeight: 700, color: '#64748B' }}>VNĐ</span>
+                  <div style={{ fontSize: 26, fontWeight: 900, color: '#6D28D9', fontVariantNumeric: 'tabular-nums', marginBottom: 12 }}>
+                    {pkg.priceVnd.toLocaleString('vi-VN')} <span style={{ fontSize: 14, fontWeight: 700, color: '#6B7280' }}>VNĐ</span>
                   </div>
 
-                  <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, marginBottom: 16 }}>
                     {pkg.description}
                   </div>
 
-                  <div style={{ flex: 1, background: '#F8FAFC', borderRadius: 10, padding: '12px 14px', border: '1px solid #F1F5F9' }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 700, color: '#334155', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.02em' }}>
+                  <div style={{ flex: 1, background: '#FAF7FF', borderRadius: 12, padding: '12px 14px', border: '1px solid #EDE9FE' }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 700, color: '#4C1D95', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.02em' }}>
                       Hạng mục bàn giao
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {pkg.deliverables.map((d, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12.5, color: '#334155' }}>
-                          <CheckOutlined style={{ color: '#2563EB', fontSize: 12, marginTop: 3, flexShrink: 0 }} />
+                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12.5, color: '#374151' }}>
+                          <CheckOutlined style={{ color: '#7C3AED', fontSize: 12, marginTop: 3, flexShrink: 0 }} />
                           <span>{d}</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <Divider style={{ margin: '14px 0 12px' }} />
+                  <Divider style={{ margin: '14px 0 12px', borderColor: '#F3E8FF' }} />
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#64748B' }}>
-                    <span>Thời gian giao: <strong style={{ color: '#0F172A' }}>{pkg.turnaroundDays} ngày</strong></span>
-                    <span>Bản quyền hình ảnh: <strong style={{ color: '#0F172A' }}>{pkg.usageRightsDays} ngày</strong></span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6B7280' }}>
+                    <span>Thời gian giao: <strong style={{ color: '#1E1B4B' }}>{pkg.turnaroundDays} ngày</strong></span>
+                    <span>Bản quyền hình ảnh: <strong style={{ color: '#1E1B4B' }}>{pkg.usageRightsDays} ngày</strong></span>
                   </div>
                 </Card>
               </Col>
@@ -864,72 +928,98 @@ export default function CreatorPortalPage() {
           </div>
 
           {/* Summary KPI Strip */}
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={8}>
-              <Card bordered={false} className="creator-kpi-card compact">
-                <div className="creator-kpi-label">Kênh mạng xã hội đã kết nối</div>
-                <div className="creator-kpi-value">{connectedChannelsCount} / {channels.length} kênh</div>
-              </Card>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Card bordered={false} className="creator-kpi-card compact">
-                <div className="creator-kpi-label">Tổng người theo dõi đa kênh</div>
-                <div className="creator-kpi-value accent">{(totalFollowersCount / 1000000).toFixed(2)}M Followers</div>
-              </Card>
-            </Col>
-            <Col xs={24} sm={8}>
-              <Card bordered={false} className="creator-kpi-card compact">
-                <div className="creator-kpi-label">Đơn xác minh quyền sở hữu (Claim)</div>
-                <div className="creator-kpi-value" style={{ fontSize: 18 }}>
-                  {claims.length} đơn đã gửi ({claims.filter((c) => c.status === 'PENDING').length} chờ duyệt)
+          <div className="creator-bento-grid-3">
+            <section className="creator-bento-card">
+              <div className="creator-bento-row">
+                <div className="creator-bento-icon purple">
+                  <ApiOutlined />
                 </div>
-              </Card>
-            </Col>
-          </Row>
+                <div className="creator-bento-body">
+                  <span className="creator-bento-label">Kênh mạng xã hội đã kết nối</span>
+                  <p className="creator-bento-value">{connectedChannelsCount} / {channels.length}</p>
+                  <div>
+                    <span className="creator-bento-badge">Đồng bộ OAuth tự động</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="creator-bento-card">
+              <div className="creator-bento-row">
+                <div className="creator-bento-icon amber">
+                  <GlobalOutlined />
+                </div>
+                <div className="creator-bento-body">
+                  <span className="creator-bento-label">Tổng người theo dõi đa kênh</span>
+                  <p className="creator-bento-value">{(totalFollowersCount / 1000000).toFixed(2)}M</p>
+                  <div>
+                    <span className="creator-bento-badge">Followers chính chủ</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="creator-bento-card">
+              <div className="creator-bento-row">
+                <div className="creator-bento-icon purple">
+                  <SafetyCertificateOutlined />
+                </div>
+                <div className="creator-bento-body">
+                  <span className="creator-bento-label">Đơn xác minh quyền sở hữu</span>
+                  <p className="creator-bento-value">{claims.length} đơn</p>
+                  <div>
+                    <span className="creator-growth-pill">
+                      {claims.filter((c) => c.status === 'PENDING').length} đơn đang chờ duyệt
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
 
           {/* Connected Channels Grid */}
-          <Row gutter={[16, 16]}>
+          <Row gutter={[18, 18]}>
             {channels.map((ch) => (
               <Col xs={24} sm={12} key={ch.id}>
                 <Card
                   bordered={false}
                   className="creator-channel-card"
                   style={{
-                    border: ch.connected ? '1.5px solid #BFDBFE' : '1px solid #E2E8F0',
+                    border: ch.connected ? '1.5px solid #C4B5FD' : '1px solid #E9D5FF',
                   }}
-                  bodyStyle={{ padding: '20px' }}
+                  bodyStyle={{ padding: '22px' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <Avatar size={48} src={ch.avatarUrl} style={{ border: '2px solid #E2E8F0' }} />
+                      <Avatar size={48} src={ch.avatarUrl} style={{ border: '2px solid #E9D5FF' }} />
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontWeight: 800, fontSize: 15, color: '#0F172A' }}>{ch.displayName}</span>
-                          {ch.connected && <CheckCircleFilled style={{ color: '#2563EB' }} />}
+                          <span style={{ fontWeight: 800, fontSize: 15, color: '#1E1B4B' }}>{ch.displayName}</span>
+                          {ch.connected && <CheckCircleFilled style={{ color: '#7C3AED' }} />}
                         </div>
-                        <div style={{ fontSize: 12.5, color: '#64748B' }}>{ch.handle}</div>
+                        <div style={{ fontSize: 12.5, color: '#6B7280' }}>{ch.handle}</div>
                       </div>
                     </div>
 
                     <Tag
-                      color={ch.connected ? 'blue' : 'default'}
+                      color={ch.connected ? 'purple' : 'default'}
                       style={{ textTransform: 'uppercase', fontWeight: 700, borderRadius: 6, margin: 0 }}
                     >
                       {ch.platform}
                     </Tag>
                   </div>
 
-                  <div style={{ background: '#F8FAFC', padding: '12px 14px', borderRadius: 10, border: '1px solid #F1F5F9', marginBottom: 16 }}>
+                  <div style={{ background: '#FAF7FF', padding: '12px 14px', borderRadius: 12, border: '1px solid #EDE9FE', marginBottom: 16 }}>
                     <Row gutter={12}>
                       <Col span={12}>
-                        <div style={{ fontSize: 11.5, color: '#64748B' }}>Người theo dõi</div>
-                        <div style={{ fontSize: 17, fontWeight: 800, color: '#0F172A', marginTop: 2 }}>
+                        <div style={{ fontSize: 11.5, color: '#6B7280' }}>Người theo dõi</div>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: '#1E1B4B', marginTop: 2 }}>
                           {(ch.followers / 1000).toLocaleString('vi-VN')}K
                         </div>
                       </Col>
                       <Col span={12}>
-                        <div style={{ fontSize: 11.5, color: '#64748B' }}>Tỷ lệ tương tác (ER%)</div>
-                        <div style={{ fontSize: 17, fontWeight: 800, color: '#2563EB', marginTop: 2 }}>
+                        <div style={{ fontSize: 11.5, color: '#6B7280' }}>Tỷ lệ tương tác (ER%)</div>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: '#6D28D9', marginTop: 2 }}>
                           {(ch.engagementRate * 100).toFixed(1)}%
                         </div>
                       </Col>
@@ -937,7 +1027,7 @@ export default function CreatorPortalPage() {
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <div style={{ fontSize: 12, color: ch.connected ? '#059669' : '#94A3B8', fontWeight: 600 }}>
+                    <div style={{ fontSize: 12, color: ch.connected ? '#15803D' : '#9CA3AF', fontWeight: 600 }}>
                       {ch.connected ? `● Đã đồng bộ • ${ch.syncStatus}` : '○ Chưa kết nối OAuth'}
                     </div>
 
@@ -946,7 +1036,7 @@ export default function CreatorPortalPage() {
                       danger={ch.connected}
                       loading={syncingChannel === ch.id}
                       onClick={() => handleToggleChannel(ch)}
-                      style={{ borderRadius: 8, fontWeight: 600 }}
+                      style={{ borderRadius: 10, fontWeight: 600 }}
                     >
                       {ch.connected ? 'Ngắt kết nối' : 'Kết nối kênh'}
                     </Button>
@@ -956,14 +1046,14 @@ export default function CreatorPortalPage() {
             ))}
           </Row>
 
-          {/* Claim History right on the same page so KOC always sees submitted claims */}
+          {/* Claim History */}
           <Card
             bordered={false}
             className="creator-section-card"
             title={
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <SafetyCertificateOutlined style={{ color: '#2563EB', fontSize: 18 }} />
+                  <SafetyCertificateOutlined style={{ color: '#7C3AED', fontSize: 18 }} />
                   <span className="creator-card-title">Lịch sử & Trạng thái Đơn Claim Tích Xanh ({claims.length})</span>
                 </div>
                 <Button size="small" onClick={() => void reloadMyClaims()} loading={claimsLoading}>
@@ -993,11 +1083,11 @@ export default function CreatorPortalPage() {
               {claims.map((claim) => (
                 <div key={claim.id} className="creator-claim-item-row">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                    <Avatar size={46} src={claim.channelAvatar} style={{ border: '2px solid #E2E8F0', flexShrink: 0 }} />
+                    <Avatar size={46} src={claim.channelAvatar} style={{ border: '2px solid #E9D5FF', flexShrink: 0 }} />
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: 800, fontSize: 14.5, color: '#0F172A' }}>{claim.channelName}</span>
-                        <Tag color="blue" style={{ margin: 0, fontWeight: 600 }}>{claim.platform}</Tag>
+                        <span style={{ fontWeight: 800, fontSize: 14.5, color: '#1E1B4B' }}>{claim.channelName}</span>
+                        <Tag color="purple" style={{ margin: 0, fontWeight: 600 }}>{claim.platform}</Tag>
                         {claim.status === 'APPROVED' && (
                           <Tag color="success" icon={<CheckCircleFilled />} style={{ margin: 0, fontWeight: 700 }}>Đã duyệt</Tag>
                         )}
@@ -1011,21 +1101,21 @@ export default function CreatorPortalPage() {
                           <Tag color="default" icon={<CloseCircleOutlined />} style={{ margin: 0 }}>Đã thu hồi</Tag>
                         )}
                       </div>
-                      <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>
+                      <div style={{ fontSize: 12, color: '#6B7280', marginTop: 3 }}>
                         Handle: <strong>{claim.handle}</strong> • {(claim.followers / 1000).toLocaleString('vi-VN')}K Followers
                       </div>
-                      <div style={{ fontSize: 12, color: '#475569', marginTop: 4, background: '#F8FAFC', padding: '4px 10px', borderRadius: 6, border: '1px solid #F1F5F9' }}>
+                      <div style={{ fontSize: 12, color: '#4B5563', marginTop: 4, background: '#FFFFFF', padding: '4px 10px', borderRadius: 6, border: '1px solid #EDE9FE' }}>
                         Minh chứng: {claim.evidenceNote}
                       </div>
                     </div>
                   </div>
 
                   <div className="creator-claim-item-right" style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 11.5, color: '#64748B', fontWeight: 600 }}>
+                    <div style={{ fontSize: 11.5, color: '#6B7280', fontWeight: 600 }}>
                       Ngày gửi: {new Date(claim.submittedAt).toLocaleDateString('vi-VN')}
                     </div>
                     {claim.adminNote && (
-                      <div style={{ fontSize: 11.5, color: claim.status === 'APPROVED' ? '#059669' : '#DC2626', marginTop: 4 }}>
+                      <div style={{ fontSize: 11.5, color: claim.status === 'APPROVED' ? '#15803D' : '#DC2626', marginTop: 4 }}>
                         {claim.adminNote}
                       </div>
                     )}
@@ -1063,7 +1153,7 @@ export default function CreatorPortalPage() {
             title={
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <IdcardOutlined style={{ color: '#2563EB', fontSize: 18 }} />
+                  <IdcardOutlined style={{ color: '#7C3AED', fontSize: 18 }} />
                   <span className="creator-card-title">Thông tin Căn Cước Công Dân (eKYC)</span>
                 </div>
                 {verification.status === 'VERIFIED' ? (
@@ -1090,7 +1180,7 @@ export default function CreatorPortalPage() {
                 <Tag color="success">Đã tải lên hợp lệ</Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Xác thực khuôn mặt">
-                <Tag color="blue">Khớp sinh trắc học 97.4%</Tag>
+                <Tag color="purple">Khớp sinh trắc học 97.4%</Tag>
               </Descriptions.Item>
             </Descriptions>
           </Card>
@@ -1106,7 +1196,7 @@ export default function CreatorPortalPage() {
       <Modal
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 800 }}>
-            <DollarOutlined style={{ color: '#2563EB' }} />
+            <DollarOutlined style={{ color: '#7C3AED' }} />
             <span>{editingRateCard ? 'Chỉnh sửa Gói Báo giá' : 'Thêm Gói Báo giá Mới (Rate Card)'}</span>
           </div>
         }
@@ -1189,7 +1279,7 @@ export default function CreatorPortalPage() {
       <Modal
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 800 }}>
-            <SafetyCertificateOutlined style={{ color: '#2563EB' }} />
+            <SafetyCertificateOutlined style={{ color: '#7C3AED' }} />
             <span>Nộp Đơn Claim Kênh & Nhận Tích Xanh Nhà sáng tạo</span>
           </div>
         }
@@ -1239,7 +1329,7 @@ export default function CreatorPortalPage() {
 
           {/* Phương thức Xác thực Claim */}
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#1E1B4B', marginBottom: 8 }}>
               Chọn phương thức xác thực quyền sở hữu:
             </div>
 
@@ -1250,14 +1340,14 @@ export default function CreatorPortalPage() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <ThunderboltOutlined style={{ color: '#2563EB', fontSize: 16 }} />
-                    <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
+                    <ThunderboltOutlined style={{ color: '#7C3AED', fontSize: 16 }} />
+                    <span style={{ fontWeight: 700, fontSize: 13.5, color: '#1E1B4B' }}>
                       Mã bảo mật trong Tiểu sử (Bio Code)
                     </span>
                   </div>
-                  <Tag color="blue" style={{ fontWeight: 700, borderRadius: 12 }}>Tự động • Khuyên dùng</Tag>
+                  <Tag color="purple" style={{ fontWeight: 700, borderRadius: 12 }}>Tự động • Khuyên dùng</Tag>
                 </div>
-                <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
                   Chèn mã xác thực vào Bio kênh trong 24h. Hệ thống sẽ quét tự động và đối chiếu khi duyệt tích xanh.
                 </div>
 
@@ -1273,12 +1363,12 @@ export default function CreatorPortalPage() {
                           navigator.clipboard.writeText(generatedBioCode);
                           message.success('Đã sao chép mã bảo mật: ' + generatedBioCode);
                         }}
-                        style={{ background: '#2563EB', borderRadius: 6, fontSize: 11, fontWeight: 700 }}
+                        style={{ background: '#7C3AED', borderRadius: 6, fontSize: 11, fontWeight: 700 }}
                       >
                         Sao chép mã
                       </Button>
                     </div>
-                    <div style={{ fontSize: 11.5, color: '#475569' }}>
+                    <div style={{ fontSize: 11.5, color: '#4B5563' }}>
                       Dán mã <strong>{generatedBioCode}</strong> vào phần Bio TikTok/IG của bạn, sau đó bấm <em>"Gửi đơn Claim Tích Xanh"</em> bên dưới.
                     </div>
                   </div>
@@ -1291,14 +1381,14 @@ export default function CreatorPortalPage() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <ApiOutlined style={{ color: '#2563EB', fontSize: 16 }} />
-                    <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
+                    <ApiOutlined style={{ color: '#7C3AED', fontSize: 16 }} />
+                    <span style={{ fontWeight: 700, fontSize: 13.5, color: '#1E1B4B' }}>
                       Ủy quyền trực tiếp qua OAuth (Fast-track)
                     </span>
                   </div>
                   <Tag color="green" style={{ fontWeight: 700, borderRadius: 12 }}>30 giây</Tag>
                 </div>
-                <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
                   Đăng nhập tài khoản mạng xã hội chính thức để cấp quyền phân tích số liệu tự động.
                 </div>
 
@@ -1308,7 +1398,7 @@ export default function CreatorPortalPage() {
                       type="default"
                       icon={<LinkOutlined />}
                       block
-                      style={{ borderRadius: 8, height: 36, fontWeight: 600, borderColor: '#2563EB', color: '#2563EB' }}
+                      style={{ borderRadius: 8, height: 36, fontWeight: 600, borderColor: '#7C3AED', color: '#7C3AED' }}
                       onClick={(e) => {
                         e.stopPropagation();
                         message.info('Đang mở cổng ủy quyền OAuth...');
@@ -1326,11 +1416,11 @@ export default function CreatorPortalPage() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <SafetyCertificateOutlined style={{ color: '#D97706', fontSize: 16 }} />
-                  <span style={{ fontWeight: 700, fontSize: 13.5, color: '#0F172A' }}>
+                  <span style={{ fontWeight: 700, fontSize: 13.5, color: '#1E1B4B' }}>
                     Minh chứng ảnh chụp màn hình quyền Quản trị (Admin Evidence)
                   </span>
                 </div>
-                <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
                   Nộp ảnh chụp màn hình trang Creator Center / Meta Business Suite chứng minh quyền quản trị.
                 </div>
 
@@ -1358,7 +1448,7 @@ export default function CreatorPortalPage() {
       <Modal
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 800 }}>
-            <IdcardOutlined style={{ color: '#2563EB' }} />
+            <IdcardOutlined style={{ color: '#7C3AED' }} />
             <span>Cập nhật Hồ sơ Căn Cước Công Dân (eKYC)</span>
           </div>
         }

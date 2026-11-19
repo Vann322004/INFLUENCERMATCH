@@ -37,7 +37,7 @@ export default function RetryCancelActions({ job, onViewDetail, onRetry, onCance
             <Button
               size="small"
               icon={<RedoOutlined />}
-              style={{ borderRadius: 6, color: '#2563EB', borderColor: '#BFDBFE' }}
+              style={{ borderRadius: 6, color: '#7C3AED', borderColor: '#DDD6FE' }}
             />
           </Tooltip>
         </Popconfirm>

@@ -1,34 +1,110 @@
 /* ==========================================================================
-   AdminSidebarNav.css - Chuẩn hóa giao diện Sidebar Admin 100% Menu Phẳng
-   Đồng bộ hoàn toàn với Layout & Format của Brand Workspace (Stripe/Attio Style)
-   Tối giản: KHÔNG CÓ TIÊU ĐỀ CHỮ CỒNG KỀNH, NGĂN CÁCH BẰNG DIVIDER TINH TẾ
+   AdminSidebarNav.css — Floating Dark Violet Admin Sidebar & Top Glass Header
+   Matching Reference Mockup (Deep Plum Violet + Glowing Lavender Pill)
    ========================================================================== */
 
+/* ── Floating Dark Violet Sidebar in Admin Workspace ── */
+.admin-workspace .app-sider,
+.admin-navigation-drawer .ant-drawer-content {
+  background: linear-gradient(180deg, #231433 0%, #341E4E 54%, #492A6D 100%) !important;
+  border-right: none !important;
+}
+
+.admin-workspace > .app-sider {
+  margin: 10px 0 10px 10px !important;
+  height: calc(100dvh - 20px) !important;
+  max-height: calc(100dvh - 20px) !important;
+  border-radius: 22px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 18px 42px rgba(28, 14, 48, 0.28) !important;
+}
+
+.admin-workspace > .app-sider .ant-layout-sider-children {
+  height: 100% !important;
+  padding: 16px 12px !important;
+}
+
+.admin-workspace .sidebar-brand-name,
+.admin-navigation-drawer .sidebar-brand-name {
+  color: #FFFFFF !important;
+}
+
+.admin-workspace .sidebar-brand-btn:hover,
+.admin-workspace .sidebar-rail-logo-btn:hover,
+.admin-navigation-drawer .sidebar-brand-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.admin-workspace .sidebar-brand-btn:hover .sidebar-brand-name {
+  color: #E9D5FF !important;
+}
+
+.admin-workspace .sidebar-toggle-glyph {
+  color: #C4B5FD !important;
+}
+
+/* ── Top Glass Header & Admin Top User Pill ── */
+.admin-workspace .admin-glass-header.app-header {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  padding: 12px 24px 4px 24px !important;
+  height: auto !important;
+  min-height: 54px !important;
+}
+
+.admin-top-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(216, 180, 254, 0.5);
+  box-shadow: 0 4px 14px rgba(109, 40, 217, 0.06);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  color: #1E1B4B;
+  font-family: inherit;
+}
+
+.admin-top-user-pill:hover {
+  background: #FFFFFF;
+  border-color: #C084FC;
+  box-shadow: 0 6px 18px rgba(109, 40, 217, 0.12);
+}
+
+.admin-top-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1E1B4B;
+}
+
+/* ── Navigation Wrapper & Dividers ── */
 .admin-nav-fixed-wrapper {
   flex: 1;
-  overflow: hidden; /* Cố định cứng, không cuộn */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 0 0 12px 0;
+  padding: 2px 0 12px 0;
   user-select: none;
 }
 
-/* ── Group Divider (Đường phân cách mảnh giữa các nhóm chức năng) ── */
 .admin-nav-divider {
   height: 1px;
-  background-color: #E2E8F0;
+  background-color: rgba(255, 255, 255, 0.11);
   margin: 8px 8px;
 }
 
-/* ── Menu Items Stack ── */
 .admin-nav-items-stack {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-/* ── Level 1 Item (Menu trực tiếp phẳng — đồng bộ 100% với Brand & Creator) ── */
+/* ── Level 1 Menu Items ── */
 .admin-nav-item {
   display: flex;
   align-items: center;
@@ -39,9 +115,9 @@
   border-radius: 12px;
   font-size: 13.5px;
   font-weight: 600;
-  color: #334155;
+  color: rgba(243, 236, 255, 0.84);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s ease;
   position: relative;
   text-decoration: none;
   box-sizing: border-box;
@@ -50,17 +126,17 @@
 }
 
 .admin-nav-item:hover {
-  background: #EFF6FF !important;
-  color: #2563EB !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #FFFFFF !important;
 }
 
-/* Level 1 Active State (Royal Blue Solid Pill — đồng bộ hoàn toàn với Brand & Creator) */
+/* Active State: Glowing Lavender-Purple Pill matching Mockup */
 .admin-nav-item.active {
-  background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%) !important;
+  background: linear-gradient(135deg, #A370FF 0%, #7C4DFF 100%) !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
   border: none !important;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+  box-shadow: 0 8px 20px rgba(124, 77, 255, 0.42) !important;
 }
 
 .admin-nav-icon {
@@ -68,18 +144,14 @@
   align-items: center;
   justify-content: center;
   font-size: 18px;
-  color: #64748B;
+  color: rgba(226, 212, 255, 0.78);
   flex-shrink: 0;
-  transition: color 0.15s ease;
+  transition: color 0.18s ease;
 }
 
 .admin-nav-item:hover .admin-nav-icon,
 .admin-nav-item:hover .admin-nav-icon svg,
-.admin-nav-item:hover .admin-nav-icon .anticon {
-  color: #2563EB !important;
-  stroke: #2563EB !important;
-}
-
+.admin-nav-item:hover .admin-nav-icon .anticon,
 .admin-nav-item.active .admin-nav-icon,
 .admin-nav-item.active .admin-nav-icon svg,
 .admin-nav-item.active .admin-nav-icon .anticon {
@@ -95,7 +167,7 @@
   letter-spacing: -0.01em;
 }
 
-/* ── Chế độ Rail (Thu gọn 62px) ── */
+/* ── Collapsed Rail Mode (62px) ── */
 .admin-nav-rail-container {
   display: flex;
   flex-direction: column;
@@ -108,6 +180,49 @@
 .admin-rail-divider {
   width: 24px;
   height: 1px;
-  background-color: rgba(148, 163, 184, 0.2);
+  background-color: rgba(255, 255, 255, 0.14);
   margin: 6px auto;
+}
+
+.admin-workspace .sidebar-rail-btn {
+  color: rgba(243, 236, 255, 0.82);
+}
+
+.admin-workspace .sidebar-rail-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+}
+
+.admin-workspace .sidebar-rail-btn.active {
+  background: linear-gradient(135deg, #A370FF 0%, #7C4DFF 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 16px rgba(124, 77, 255, 0.42);
+}
+
+/* ── Bottom User Card inside Dark Violet Sidebar ── */
+.admin-workspace .sidebar-bottom-user-section,
+.admin-navigation-drawer .sidebar-bottom-user-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.admin-workspace .sidebar-user-info-row:hover,
+.admin-navigation-drawer .sidebar-user-info-row:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.admin-workspace .sidebar-user-avatar,
+.admin-workspace .sidebar-rail-avatar-btn,
+.admin-navigation-drawer .sidebar-user-avatar {
+  background: linear-gradient(135deg, #A370FF 0%, #7C4DFF 100%) !important;
+  box-shadow: 0 4px 12px rgba(124, 77, 255, 0.4) !important;
+}
+
+.admin-workspace .sidebar-user-name,
+.admin-navigation-drawer .sidebar-user-name {
+  color: #FFFFFF !important;
+}
+
+.admin-workspace .sidebar-user-role,
+.admin-navigation-drawer .sidebar-user-role {
+  color: rgba(226, 212, 255, 0.78) !important;
 }

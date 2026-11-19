@@ -94,7 +94,7 @@ export default function CreatorHeader({ title }: CreatorHeaderProps) {
             style={{
               width: 36,
               height: 36,
-              background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
+              background: 'linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%)',
               borderRadius: 10,
               display: 'flex',
               alignItems: 'center',
@@ -109,7 +109,7 @@ export default function CreatorHeader({ title }: CreatorHeaderProps) {
             <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A', lineHeight: 1.2 }}>
               InfluencerMatch
             </div>
-            <div style={{ fontSize: 11, color: '#2563EB', fontWeight: 600 }}>
+            <div style={{ fontSize: 11, color: '#7C3AED', fontWeight: 600 }}>
               Creator Studio
             </div>
           </div>
@@ -144,13 +144,13 @@ export default function CreatorHeader({ title }: CreatorHeaderProps) {
             <Avatar
               size={36}
               icon={<UserOutlined />}
-              style={{ background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)' }}
+              style={{ background: 'linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%)' }}
             />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {currentUser?.fullName || currentUser?.email || 'Nhà sáng tạo'}
               </div>
-              <div style={{ fontSize: 11, color: '#2563EB', fontWeight: 600 }}>
+              <div style={{ fontSize: 11, color: '#7C3AED', fontWeight: 600 }}>
                 Nhà sáng tạo (Creator)
               </div>
             </div>

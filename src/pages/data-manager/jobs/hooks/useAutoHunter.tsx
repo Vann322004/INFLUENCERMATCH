@@ -254,7 +254,7 @@ export function useAutoHunter() {
                 Có {totalExcluded} kênh chưa đạt tự động.{' '}
                 <a
                   onClick={handleNavigateQuality}
-                  style={{ color: '#1D4ED8', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
+                  style={{ color: '#6D28D9', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
                 >
                   Mở danh sách kiểm định trên hệ thống →
                 </a>
@@ -285,7 +285,7 @@ export function useAutoHunter() {
               Không có Nhà sáng tạo nào đạt chuẩn tự động (cào lỗi hoặc bị lọc {totalExcluded} kênh).{' '}
               <a
                 onClick={handleNavigateQuality}
-                style={{ color: '#1D4ED8', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
+                style={{ color: '#6D28D9', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
               >
                 Mở danh sách kiểm định trên hệ thống →
               </a>

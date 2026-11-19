@@ -118,7 +118,7 @@ export default function AddToShortlistModal({
           <span>
             {result.action === 'ALREADY_EXISTS' ? 'Kênh đã có trong danh sách chọn: ' : result.action === 'RESTORED' ? 'Đã khôi phục kênh: ' : 'Đã thêm kênh: '}<b>{creator.name}</b>{' '}
             <a
-              style={{ fontWeight: 700, marginLeft: 8, color: '#1D4ED8', textDecoration: 'underline' }}
+              style={{ fontWeight: 700, marginLeft: 8, color: '#6D28D9', textDecoration: 'underline' }}
               onClick={() => {
                 rememberCampaign(values.campaignId);
                 navigate('/creators/shortlist', { state: { campaignId: values.campaignId } });

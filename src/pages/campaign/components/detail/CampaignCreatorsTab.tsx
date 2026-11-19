@@ -31,7 +31,7 @@ export const CampaignCreatorsTab: React.FC<CampaignCreatorsTabProps> = ({
         <Space>
           <Button
             type="primary"
-            style={{ background: '#1D4ED8', borderRadius: 8, height: 36, fontWeight: 600 }}
+            style={{ background: '#6D28D9', borderRadius: 8, height: 36, fontWeight: 600 }}
             onClick={() => {
               sessionStorage.setItem('current_campaign_id', resolvedId);
               navigate(`/discovery?campaignId=${resolvedId}`);

@@ -65,7 +65,7 @@ export default function HunterRadarScanner({
         <div className="collection-radar-title-group">
           <div className="collection-radar-title-row">
             {isRunning ? (
-              <Spin indicator={<SyncOutlined spin style={{ fontSize: 15, color: '#2563eb' }} />} />
+              <Spin indicator={<SyncOutlined spin style={{ fontSize: 15, color: '#7C3AED' }} />} />
             ) : (
               <span
                 className={`collection-radar-status-dot ${
@@ -97,7 +97,7 @@ export default function HunterRadarScanner({
           percent={displayPercent}
           showInfo={false}
           status={errorMessage ? 'exception' : isRunning ? 'active' : isDone ? 'success' : 'normal'}
-          strokeColor={errorMessage ? '#dc2626' : isDone ? '#10b981' : '#2563eb'}
+          strokeColor={errorMessage ? '#dc2626' : isDone ? '#10b981' : '#7C3AED'}
           trailColor="#e2e8f0"
           size={['100%', 8]}
         />

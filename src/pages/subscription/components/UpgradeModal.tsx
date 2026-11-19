@@ -35,7 +35,7 @@ export default function UpgradeModal({
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 17, fontWeight: 700 }}>
           <SafetyCertificateFilled
-            style={{ color: isFreeOrTrial ? '#2563EB' : '#10B981' }}
+            style={{ color: isFreeOrTrial ? '#7C3AED' : '#10B981' }}
           />
           {isFreeOrTrial
             ? 'Kích hoạt Gói Dùng thử (Miễn phí 0 ₫)'
@@ -70,7 +70,7 @@ export default function UpgradeModal({
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#7C3AED' }}>
                 {formatVND(plan.priceMonthly)}
               </div>
             </div>
@@ -82,10 +82,10 @@ export default function UpgradeModal({
             <Alert
               type="info"
               showIcon
-              icon={<InfoCircleOutlined style={{ color: '#2563EB', fontSize: 18 }} />}
+              icon={<InfoCircleOutlined style={{ color: '#7C3AED', fontSize: 18 }} />}
               message="Chính sách dùng thử miễn phí"
               description="Mỗi tài khoản Brand chỉ được đăng ký gói dùng thử 1 lần duy nhất trong toàn bộ vòng đời tài khoản. Khi kích hoạt thành công, bạn sẽ nhận được đầy đủ hạn mức trải nghiệm của gói này."
-              style={{ marginBottom: 20, borderRadius: 10, background: '#EFF6FF', border: '1px solid #BFDBFE' }}
+              style={{ marginBottom: 20, borderRadius: 10, background: '#F3E8FF', border: '1px solid #DDD6FE' }}
             />
 
             <div
