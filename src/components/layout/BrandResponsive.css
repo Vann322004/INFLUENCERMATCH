@@ -2,7 +2,7 @@
 .brand-content { container: brand / inline-size; }
 .brand-workspace .app-page-wrapper,
 .brand-workspace .app-page-wrapper > * { min-width: 0; max-width: 100%; box-sizing: border-box; }
-.brand-workspace .app-header-inner { min-width: 0; gap: 16px; }
+.brand-workspace .app-header-inner { min-width: 0; max-width: 100%; width: 100%; gap: 16px; }
 .brand-workspace .header-breadcrumbs { min-width: 0; flex: 1; }
 .brand-workspace .header-breadcrumbs > .ant-btn,
 .brand-workspace .header-breadcrumbs > .anticon { flex-shrink: 0; }

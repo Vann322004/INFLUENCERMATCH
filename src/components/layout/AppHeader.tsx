@@ -76,7 +76,7 @@ export default function AppHeader({ onOpenNavigation }: { onOpenNavigation?: () 
 
   return (
     <Header className="app-header">
-      <div className="app-header-inner">
+      <div className="app-header-inner" style={{ width: '100%', maxWidth: '100%' }}>
         {/* Left: Breadcrumbs */}
         <div className="header-breadcrumbs">
           {onOpenNavigation && <Button type="text" icon={<MenuOutlined />}
