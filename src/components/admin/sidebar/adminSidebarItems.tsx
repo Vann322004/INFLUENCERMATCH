@@ -12,6 +12,7 @@ import {
   FileTextOutlined,
   SafetyCertificateOutlined,
   TagOutlined,
+  LineChartOutlined,
 } from '@ant-design/icons';
 import { ADMIN_ROUTES, DATA_MANAGER_ROUTES } from '../../../constants/adminRoutes';
 

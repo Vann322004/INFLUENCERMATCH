@@ -236,9 +236,8 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
     try {
       const res = mode === 'custom' ? await crawlerService.collectAccounts(crawlPlatform, usernamesToCrawl, maxKocs) : await crawlerService.batchCrawl({
         platform: crawlPlatform,
-        category: mode === 'category' ? categoryCode : undefined,
-        keywords: mode === 'category' ? activeKeywords : undefined,
-        usernames: mode === 'custom' ? usernamesToCrawl : undefined,
+        category: categoryCode,
+        keywords: activeKeywords,
         maxChannels: maxKocs,
       });
 
