@@ -55,7 +55,7 @@ export interface GoogleRegistration {
 }
 
 export type GoogleRegistrationRequest = Pick<RegisterRequest,
-  'fullName' | 'phoneNumber' | 'policyAcceptance'> & { sessionId: string; businessName: string };
+  'fullName' | 'password' | 'phoneNumber' | 'policyAcceptance'> & { sessionId: string };
 
 export type GoogleLoginResult = GoogleRegistration | (LoginResponse & { status: 'AUTHENTICATED' });
 

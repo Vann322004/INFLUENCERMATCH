@@ -5,7 +5,13 @@ import type { GoogleRegistration, LoginResponse } from '../../types/api/auth.typ
 import { googleErrorMessage } from './GoogleIdentityButton';
 
 type Policies = Awaited<ReturnType<typeof authService.getPolicies>>;
-type RegistrationFields = { fullName: string; businessName: string; phoneNumber: string; accepted: boolean };
+type RegistrationFields = {
+  fullName: string;
+  phoneNumber: string;
+  password: string;
+  confirmPassword: string;
+  accepted: boolean;
+};
 
 export default function GoogleRegistrationModal({ registration, sessionId, onClose, onSuccess }: {
   registration: GoogleRegistration;
@@ -48,8 +54,8 @@ export default function GoogleRegistrationModal({ registration, sessionId, onClo
       const result = await authService.completeGoogleRegistration({
         sessionId: registration.sessionId,
         fullName: values.fullName.trim(),
-        businessName: values.businessName.trim(),
         phoneNumber: values.phoneNumber.trim(),
+        password: values.password,
         policyAcceptance: { ...policies, acceptedTerms: true, acceptedPrivacy: true },
       }, sessionId);
       if (result.status === 'AUTHENTICATED') onSuccess(result);
@@ -85,15 +91,30 @@ export default function GoogleRegistrationModal({ registration, sessionId, onClo
       <Form.Item name="fullName" label="Họ tên" rules={[{ required: true, whitespace: true, message: 'Nhập họ tên.' }]}>
         <Input maxLength={150} autoComplete="name" />
       </Form.Item>
-      <Form.Item name="businessName" label="Tên thương hiệu" rules={[{ required: true, whitespace: true, message: 'Nhập tên thương hiệu.' }]}>
-        <Input maxLength={200} autoComplete="organization" />
-      </Form.Item>
       <Form.Item name="phoneNumber" label="Số điện thoại" rules={[{
         pattern: /^(0\d{9,10}|\+[1-9]\d{7,14})$/,
         required: true, transform: (value?: string) => value?.replace(/[\s().-]/g, ''),
         message: 'Nhập số Việt Nam bắt đầu bằng 0 hoặc số quốc tế bắt đầu bằng +.',
       }]}>
         <Input maxLength={30} autoComplete="tel" inputMode="tel" />
+      </Form.Item>
+      <Form.Item name="password" label="Mật khẩu" rules={[
+        { required: true, whitespace: true, min: 8, message: 'Nhập mật khẩu có ít nhất 8 ký tự.' },
+        { validator: (_, value) => !value || new TextEncoder().encode(value).length <= 72
+          ? Promise.resolve()
+          : Promise.reject(new Error('Mật khẩu không được vượt quá 72 byte UTF-8.')) },
+      ]}>
+        <Input.Password autoComplete="new-password" />
+      </Form.Item>
+      <Form.Item name="confirmPassword" label="Xác nhận mật khẩu" dependencies={['password']} rules={[
+        { required: true, message: 'Vui lòng xác nhận mật khẩu.' },
+        ({ getFieldValue }) => ({
+          validator: (_, value) => !value || value === getFieldValue('password')
+            ? Promise.resolve()
+            : Promise.reject(new Error('Mật khẩu xác nhận không khớp.')),
+        }),
+      ]}>
+        <Input.Password autoComplete="new-password" />
       </Form.Item>
       <Form.Item name="accepted" valuePropName="checked" rules={[{
         validator: (_, checked) => checked ? Promise.resolve() : Promise.reject(new Error('Bạn cần đồng ý trước khi tạo tài khoản.')),
