@@ -1,4 +1,5 @@
 import CrawlerReviewList from './CrawlerReviewList';
+import BatchAuditTab from './components/BatchAuditTab';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -107,7 +108,7 @@ export default function DataQualityPage() {
   const { message } = App.useApp();
   const screens = Grid.useBreakpoint();
 
-  const [activeTab, setActiveTab] = useState<'pending' | 'crawler'>('pending');
+  const [activeTab, setActiveTab] = useState<'pending' | 'crawler' | 'batch-audit'>('pending');
   const [items, setItems] = useState<QualityItem[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [page, setPage] = useState(1);
@@ -375,7 +376,7 @@ export default function DataQualityPage() {
       >
         <Tabs
           activeKey={activeTab}
-          onChange={(k) => setActiveTab(k as 'pending' | 'crawler')}
+          onChange={(k) => setActiveTab(k as 'pending' | 'crawler' | 'batch-audit')}
           size="middle"
           tabBarStyle={{
             padding: '0 20px',
@@ -733,6 +734,19 @@ export default function DataQualityPage() {
               children: (
                 <div style={{ padding: '24px 24px 32px' }}>
                   <CrawlerReviewList refreshKey={refreshKey} />
+                </div>
+              ),
+            },
+            {
+              key: 'batch-audit',
+              label: (
+                <span style={{ fontWeight: 700, fontSize: 14 }}>
+                  ⚡ Thẩm định & Làm sạch DB (Batch)
+                </span>
+              ),
+              children: (
+                <div style={{ padding: '24px 24px 32px' }}>
+                  <BatchAuditTab />
                 </div>
               ),
             },

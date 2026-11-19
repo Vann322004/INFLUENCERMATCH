@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal, Button, Tag, Row, Col, message } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import type { PaymentInvoice } from '../../../types/api/subscription.types';
 import { formatVND } from './HistoryTab';
+import { downloadReceipt } from '../downloadReceipt';
 
 interface InvoiceModalProps {
   open: boolean;
@@ -19,11 +20,12 @@ export default function InvoiceModal({
   storedUser,
   onCancel,
 }: InvoiceModalProps) {
+  const [downloading, setDownloading] = useState(false);
   if (!invoice) return null;
 
   return (
     <Modal
-      title="Hóa đơn điện tử VAT"
+      title="Biên lai thanh toán"
       open={open}
       onCancel={onCancel}
       footer={[
@@ -35,9 +37,19 @@ export default function InvoiceModal({
           type="primary"
           icon={<DownloadOutlined />}
           style={{ background: '#2563EB' }}
-          onClick={() => message.success('Đang tải hóa đơn PDF về máy...')}
+          loading={downloading}
+          onClick={async () => {
+            setDownloading(true);
+            try {
+              await downloadReceipt(invoice, { currentBrand, storedUser });
+            } catch {
+              message.error('Không thể tải biên lai PDF. Vui lòng thử lại.');
+            } finally {
+              setDownloading(false);
+            }
+          }}
         >
-          Tải PDF
+          Tải biên lai PDF
         </Button>,
       ]}
       width={580}
@@ -53,13 +65,15 @@ export default function InvoiceModal({
           }}
         >
           <div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB' }}>INFLUENCERMATCH CORP</div>
-            <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>Mã số thuế: 0109887766</div>
-            <div style={{ fontSize: 12, color: '#64748B' }}>Tòa nhà TechHub, Q.1, TP. Hồ Chí Minh</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.3px' }}>
+              <span style={{ color: '#2563EB' }}>InfluencerMatch</span> Platform
+            </div>
+            <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>Hệ thống quản trị và kết nối Influencer</div>
+            <div style={{ fontSize: 12, color: '#94A3B8' }}>Xác nhận thanh toán dịch vụ trực tuyến</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <Tag color="success" style={{ fontWeight: 700, borderRadius: 6, margin: 0 }}>
-              ĐÃ THANH TOÁN
+            <Tag color={invoice.status === 'success' ? 'success' : invoice.status === 'pending' ? 'warning' : 'error'} style={{ fontWeight: 700, borderRadius: 6, margin: 0 }}>
+              {invoice.statusText}
             </Tag>
             <div style={{ fontSize: 12, fontFamily: 'monospace', color: '#475569', marginTop: 4 }}>
               {invoice.code}
@@ -85,13 +99,13 @@ export default function InvoiceModal({
             </Col>
             <Col span={12} style={{ textAlign: 'right' }}>
               <div style={{ fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', fontWeight: 600 }}>
-                Ngày phát hành:
+                Ngày thanh toán:
               </div>
               <div style={{ fontWeight: 600, color: '#0F172A', marginTop: 2 }}>
                 {invoice.date}
               </div>
               <div style={{ fontSize: 12, color: '#64748B' }}>
-                PTTT: {invoice.method}
+                Phương thức: {invoice.method}
               </div>
             </Col>
           </Row>
@@ -109,7 +123,7 @@ export default function InvoiceModal({
             }}
           >
             <span>Nội dung dịch vụ</span>
-            <span>Thành tiền</span>
+            <span>Số tiền</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -132,7 +146,7 @@ export default function InvoiceModal({
             alignItems: 'center',
           }}
         >
-          <span style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>Tổng cộng thanh toán (VAT 10%):</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Tổng số tiền thanh toán:</span>
           <span style={{ fontSize: 20, fontWeight: 800, color: '#2563EB' }}>
             {formatVND(invoice.amount)}
           </span>

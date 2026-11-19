@@ -340,7 +340,10 @@ export default function SubscriptionPage() {
         planName: payment.planName,
         date: new Date(payment.paidAt || payment.createdAt).toLocaleString('vi-VN'),
         billingPeriod: payment.startDate && payment.expirationDate
-          ? `${payment.startDate} – ${payment.expirationDate}` : '—',
+          ? [payment.startDate, payment.expirationDate]
+            .map(date => date.replace(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/, '$3/$2/$1'))
+            .join(' – ')
+          : '—',
         amount: Number(payment.amount), currency: payment.currency,
         method: payment.gateway,
         status: payment.status === 'PAID' ? 'success' : payment.status === 'PENDING' ? 'pending' : 'failed',
@@ -531,6 +534,8 @@ export default function SubscriptionPage() {
               ),
               children: (
                 <HistoryTab
+                  currentBrand={currentBrand}
+                  storedUser={storedUser}
                   invoices={invoices}
                   loading={historyLoading}
                   page={historyPage}

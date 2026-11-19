@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Table, Tag, Button, Space, Typography, message, Alert } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { HistoryOutlined, DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
 import type { PaymentInvoice } from '../../../types/api/subscription.types';
+import { downloadReceipt, type ReceiptCustomer } from '../downloadReceipt';
 
 const { Text } = Typography;
 
@@ -11,7 +12,7 @@ export const formatVND = (val: number) => {
   return `${val.toLocaleString('vi-VN')}\u00A0₫`;
 };
 
-interface HistoryTabProps {
+interface HistoryTabProps extends ReceiptCustomer {
   invoices: PaymentInvoice[];
   loading: boolean;
   page: number;
@@ -22,7 +23,8 @@ interface HistoryTabProps {
   onViewInvoice: (invoice: PaymentInvoice) => void;
 }
 
-export default function HistoryTab({ invoices, loading, onViewInvoice, page, total, error, onRetry, onPageChange }: HistoryTabProps) {
+export default function HistoryTab({ invoices, loading, onViewInvoice, page, total, error, onRetry, onPageChange, currentBrand, storedUser }: HistoryTabProps) {
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const invoiceColumns: ColumnsType<PaymentInvoice> = [
     {
       title: 'Mã giao dịch',
@@ -95,14 +97,25 @@ export default function HistoryTab({ invoices, loading, onViewInvoice, page, tot
             icon={<FileTextOutlined />}
             onClick={() => onViewInvoice(record)}
           >
-            Xem HĐ
+            Xem biên lai
           </Button>
           <Button
             size="small"
             type="text"
             icon={<DownloadOutlined />}
-            onClick={() => {
-              message.success(`Đang tải hóa đơn ${record.code}.pdf về máy...`);
+            title="Tải biên lai PDF"
+            aria-label="Tải biên lai PDF"
+            loading={downloadingId === record.id}
+            disabled={downloadingId !== null}
+            onClick={async () => {
+              setDownloadingId(record.id);
+              try {
+                await downloadReceipt(record, { currentBrand, storedUser });
+              } catch {
+                message.error('Không thể tải biên lai PDF. Vui lòng thử lại.');
+              } finally {
+                setDownloadingId(null);
+              }
             }}
           />
         </Space>
