@@ -110,16 +110,20 @@ export default function PlansTab({
               <div className={`pricing-card ${plan.popular ? 'popular' : ''}`}>
                 {plan.badge && <div className="popular-badge">{plan.badge}</div>}
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                <div className="pricing-card-header">
+                  <h3 className="pricing-plan-title">
                     {plan.name}
                   </h3>
-                  {statusTag}
+                  <div className="pricing-tag-wrapper">
+                    {statusTag}
+                  </div>
                 </div>
 
-                <p style={{ color: '#64748B', fontSize: 12.5, minHeight: 38, marginTop: 6, lineHeight: 1.4 }}>
-                  {plan.subtitle}
-                </p>
+                <div className="pricing-subtitle-wrapper">
+                  <p className="pricing-subtitle-text">
+                    {plan.subtitle}
+                  </p>
+                </div>
 
                 <div className="price-wrapper">
                   <span className="price-amount">
@@ -131,76 +135,79 @@ export default function PlansTab({
                   </span>
                 </div>
 
-                <Tooltip title={buttonTooltip}>
-                  <div>
-                    <Button
-                      type={isCurrent ? 'default' : (plan.popular || isTrial) && !buttonDisabled ? 'primary' : 'default'}
-                      size="large"
-                      block
-                      disabled={buttonDisabled}
-                      onClick={() => onUpgrade(plan)}
-                      style={{
-                        height: 42,
-                        borderRadius: 10,
-                        fontWeight: 700,
-                        background: buttonDisabled
-                          ? '#F1F5F9'
-                          : isTrial && !buttonDisabled
-                            ? '#059669'
-                            : plan.popular
-                              ? '#2563EB'
-                              : '#FFFFFF',
-                        borderColor: buttonDisabled
-                          ? '#E2E8F0'
-                          : isTrial && !buttonDisabled
-                            ? '#059669'
-                            : plan.popular
-                              ? '#2563EB'
-                              : '#CBD5E1',
-                        color: buttonDisabled
-                          ? '#94A3B8'
-                          : isTrial || plan.popular
-                            ? '#FFFFFF'
-                            : '#1E293B',
-                        marginBottom: 20,
-                      }}
-                    >
-                      {buttonText}
-                    </Button>
-                  </div>
-                </Tooltip>
-
-                <div style={{ borderTop: '1px solid #EEF0F6', paddingTop: 16, flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Tính năng bao gồm:
-                  </div>
-                  {plan.features.map((feat, idx) => (
-                    <div className="feature-row" key={idx}>
-                      {feat.included ? (
-                        <CheckCircleFilled
-                          style={{
-                            color: feat.highlight ? '#2563EB' : '#10B981',
-                            fontSize: 15,
-                            marginTop: 2,
-                            flexShrink: 0,
-                          }}
-                        />
-                      ) : (
-                        <CloseCircleFilled
-                          style={{ color: '#CBD5E1', fontSize: 15, marginTop: 2, flexShrink: 0 }}
-                        />
-                      )}
-                      <span
+                <div className="pricing-action-wrapper">
+                  <Tooltip title={buttonTooltip}>
+                    <div style={{ width: '100%' }}>
+                      <Button
+                        type={isCurrent ? 'default' : (plan.popular || isTrial) && !buttonDisabled ? 'primary' : 'default'}
+                        size="large"
+                        block
+                        disabled={buttonDisabled}
+                        onClick={() => onUpgrade(plan)}
                         style={{
-                          color: feat.included ? (feat.highlight ? '#1E40AF' : '#334155') : '#94A3B8',
-                          fontWeight: feat.highlight ? 700 : 400,
-                          textDecoration: feat.included ? 'none' : 'line-through',
+                          height: 42,
+                          borderRadius: 10,
+                          fontWeight: 700,
+                          background: buttonDisabled
+                            ? '#F1F5F9'
+                            : isTrial && !buttonDisabled
+                              ? '#059669'
+                              : plan.popular
+                                ? '#2563EB'
+                                : '#FFFFFF',
+                          borderColor: buttonDisabled
+                            ? '#E2E8F0'
+                            : isTrial && !buttonDisabled
+                              ? '#059669'
+                              : plan.popular
+                                ? '#2563EB'
+                                : '#CBD5E1',
+                          color: buttonDisabled
+                            ? '#94A3B8'
+                            : isTrial || plan.popular
+                              ? '#FFFFFF'
+                              : '#1E293B',
                         }}
                       >
-                        {feat.text}
-                      </span>
+                        {buttonText}
+                      </Button>
                     </div>
-                  ))}
+                  </Tooltip>
+                </div>
+
+                <div className="pricing-features-section">
+                  <div className="pricing-features-heading">
+                    Tính năng bao gồm:
+                  </div>
+                  <div className="pricing-features-list">
+                    {plan.features.map((feat, idx) => (
+                      <div className="feature-row" key={idx}>
+                        {feat.included ? (
+                          <CheckCircleFilled
+                            style={{
+                              color: feat.highlight ? '#2563EB' : '#10B981',
+                              fontSize: 15,
+                              marginTop: 2,
+                              flexShrink: 0,
+                            }}
+                          />
+                        ) : (
+                          <CloseCircleFilled
+                            style={{ color: '#CBD5E1', fontSize: 15, marginTop: 2, flexShrink: 0 }}
+                          />
+                        )}
+                        <span
+                          style={{
+                            color: feat.included ? (feat.highlight ? '#1E40AF' : '#334155') : '#94A3B8',
+                            fontWeight: feat.highlight ? 700 : 400,
+                            textDecoration: feat.included ? 'none' : 'line-through',
+                          }}
+                        >
+                          {feat.text}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </Col>
