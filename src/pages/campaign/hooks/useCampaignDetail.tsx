@@ -270,11 +270,15 @@ export function useCampaignDetail() {
           message.success({ content: 'Chiến dịch đã được kích hoạt thành công!', key: 'act_camp' });
         } catch (error: any) {
           console.error('Lỗi khi kích hoạt chiến dịch:', error);
-          const errMsg =
+          let errMsg =
             error?.response?.data?.detail ||
             error?.response?.data?.message ||
             'Không thể kích hoạt chiến dịch';
-          message.error({ content: errMsg, key: 'act_camp' });
+          const fieldErrors = error?.response?.data?.fieldErrors;
+          if (fieldErrors?.deliverables) {
+            errMsg = 'Chiến dịch chưa có ấn phẩm bàn giao (Deliverables). Vui lòng vào Chỉnh sửa để thêm ít nhất 1 ấn phẩm trước khi kích hoạt.';
+          }
+          message.error({ content: errMsg, key: 'act_camp', duration: 5 });
         }
       },
     });

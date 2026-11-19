@@ -69,6 +69,20 @@ export default function handler(req, res) {
   }
   parsedUrl.searchParams.delete('__proxy_path');
 
+  // Opening the AI endpoint in a browser should lead to its UI. API clients
+  // keep receiving the upstream response, including authentication errors.
+  if (
+    req.method === 'GET' &&
+    targetPathname === '/api/v1/ai/campaign-autofill' &&
+    req.headers.accept?.includes('text/html')
+  ) {
+    res.statusCode = 302;
+    res.setHeader('Location', '/campaigns/create');
+    res.setHeader('Cache-Control', 'no-store');
+    res.end();
+    return;
+  }
+
   const search = parsedUrl.searchParams.toString();
   const upstreamPath = search ? `${targetPathname}?${search}` : targetPathname;
 
