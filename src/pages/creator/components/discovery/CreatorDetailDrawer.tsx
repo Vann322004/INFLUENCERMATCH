@@ -22,7 +22,7 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
   onOpenShortlist, showMatch = true, actionLabel, actionDisabled,
 }) => {
   const hasMatch = showMatch && matchedCampaign && creator && Number.isFinite(creator.matchRate)
-    && (creator.matchRate > 0 || !!creator.matchReason?.trim());
+    && creator.matchRate > 0;
   const bio = creator?.bio?.trim();
   const hasBio = !!bio && !/^(creator|koc|kol)$/i.test(bio);
   const categories = [...new Set(creator?.categories.filter(Boolean) ?? [])];
@@ -55,6 +55,7 @@ export const CreatorDetailDrawer: React.FC<CreatorDetailDrawerProps> = ({
         <section className="creator-profile-section"><h3>Giới thiệu</h3><p>{hasBio ? bio : 'Chưa có giới thiệu về kênh.'}</p></section>
         <section className="creator-profile-section"><h3>Lĩnh vực nội dung</h3>{categories.length ? <div className="creator-profile-categories">{categories.map(category => <Tag key={category}>{category}</Tag>)}</div> : <p>Chưa có thông tin lĩnh vực.</p>}</section>
         <section className="creator-profile-section"><h3>Địa điểm</h3><p>{creator.location || 'Chưa có thông tin địa điểm.'}</p></section>
+        {creator.isSimilarFallback && creator.matchReason && <section className="creator-profile-section"><h3>Gần phù hợp</h3><p>{creator.matchReason}</p></section>}
 
         {hasMatch && <section className="creator-profile-section creator-profile-match"><h3>Đánh giá với chiến dịch</h3><p className="creator-profile-campaign">{matchedCampaign.name}</p><div><span>Điểm phù hợp</span><strong>{creator.matchRate.toLocaleString('vi-VN', { maximumFractionDigits: 2 })} / 100</strong></div>{creator.matchReason && <p>{creator.matchReason}</p>}</section>}
       </div>}

@@ -85,7 +85,7 @@ export const mapApiCreatorToUi = (item: any): Creator => {
     isSimilarFallback,
     matchRate: 0,
     matchLevel: 'medium',
-    matchReason: '',
+    matchReason: item.reason || item.matchReason || '',
     platforms: [platformLower],
     categories: categoriesList.slice(0, 3),
     sourceCategories: String(item.niche || item.category || '').split(/[,;]/).map(value => value.trim()).filter(Boolean),

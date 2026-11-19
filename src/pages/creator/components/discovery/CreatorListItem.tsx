@@ -54,9 +54,12 @@ export const CreatorListItem: React.FC<CreatorListItemProps> = ({
                     <CheckCircleFilled style={{ color: '#3B82F6', fontSize: 13 }} />
                   )}
                   {creator.isSimilarFallback && (
-                    <Tag color="orange" style={{ borderRadius: 999, fontSize: 10, padding: '0 6px', margin: '0 0 0 4px', lineHeight: '18px', fontWeight: 500 }}>
-                      Expanded
+                    <Tag color="orange" title={creator.matchReason} style={{ borderRadius: 999, fontSize: 10, padding: '0 6px', margin: '0 0 0 4px', lineHeight: '18px', fontWeight: 500 }}>
+                      Gần phù hợp
                     </Tag>
+                  )}
+                  {creator.isSimilarFallback && creator.matchReason && (
+                    <span style={{ color: '#9A3412', fontSize: 12 }}>{creator.matchReason}</span>
                   )}
                   {matchedCampaign && creator.matchRate > 0 ? (
                     <span className="cdiscovery-match-tag-pill">

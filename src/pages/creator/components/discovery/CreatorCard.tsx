@@ -74,8 +74,8 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
                 <CheckCircleFilled style={{ color: '#3B82F6', fontSize: 13 }} />
               )}
               {creator.isSimilarFallback && (
-                <Tag color="orange" style={{ borderRadius: 999, fontSize: 10, padding: '0 6px', margin: '0 0 0 4px', lineHeight: '18px', fontWeight: 500 }}>
-                  Expanded
+                <Tag color="orange" title={creator.matchReason} style={{ borderRadius: 999, fontSize: 10, padding: '0 6px', margin: '0 0 0 4px', lineHeight: '18px', fontWeight: 500 }}>
+                  Gần phù hợp
                 </Tag>
               )}
             </div>
@@ -213,6 +213,9 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
       <div className="cdiscovery-card-bio-text" title={getDisplayBio(creator)}>
         {getDisplayBio(creator)}
       </div>
+      {creator.isSimilarFallback && creator.matchReason && (
+        <p style={{ color: '#9A3412', fontSize: 12, margin: '0 0 8px' }}>{creator.matchReason}</p>
+      )}
 
       {/* Hàng 5: 2 Nút hành động ở chân thẻ */}
       <div className="cdiscovery-card-actions-row">

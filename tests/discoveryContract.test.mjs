@@ -18,6 +18,14 @@ test('current database-filtered results and an empty result set are accepted', (
   context.check({ content: [] });
 });
 
+test('progressive candidates require a disclosed expansion reason', () => {
+  const expanded = { creatorId: 'nearby', aiScoreAvailable: false,
+    discoveryPolicyVersion: 'progressive-v3', isSimilarFallback: true, expansionReasons: ['LOCATION'] };
+  context.check({ content: [expanded] });
+  assert.throws(() => context.check({ content: [{ ...expanded, expansionReasons: [] }] }));
+  assert.throws(() => context.check({ content: [{ ...expanded, discoveryPolicyVersion: 'context-db-v2' }] }));
+});
+
 test('invalid or mixed-version data is rejected instead of merged with a catalogue fallback', () => {
   assert.throws(() => context.check(null));
   assert.throws(() => context.check({ items: [] }));

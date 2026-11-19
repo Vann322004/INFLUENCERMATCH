@@ -74,8 +74,10 @@ export function useDiscoveryCreators({
           const response = await creatorService.discoverCreators(matchedCampaign.id, {
             keyword: submittedSearch || undefined,
             niche: selectedCategory !== 'all' ? selectedCategory : undefined,
-            minFollowers: requestedRange?.minFollowers ?? matchedCampaign.followerMin,
-            maxFollowers: requestedRange ? requestedRange.maxFollowers : matchedCampaign.followerMax,
+            // Only explicit UI filters are hard constraints; campaign bounds can be
+            // relaxed by the progressive discovery pipeline when results are sparse.
+            minFollowers: requestedRange?.minFollowers,
+            maxFollowers: requestedRange?.maxFollowers,
             page: 0,
             size: limit,
           });
