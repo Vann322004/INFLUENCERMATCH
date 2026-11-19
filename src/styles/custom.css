@@ -232,9 +232,9 @@ body {
 }
 
 .sidebar-brand-name {
-  font-weight: 800;
+  font-weight: 500;
   font-size: 16px;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.1px;
   color: #0F172A;
   white-space: nowrap;
   overflow: hidden;
