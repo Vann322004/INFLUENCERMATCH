@@ -467,3 +467,23 @@
     padding: 8px 10px;
   }
 }
+.execution-draft-video {
+  display: grid;
+  gap: 8px;
+  max-width: 100%;
+  margin-block: 8px;
+  overflow-wrap: anywhere;
+}
+
+.execution-draft-video input,
+.execution-draft-video video {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.execution-draft-video video {
+  width: min(100%, 540px);
+  max-height: 420px;
+  background: #0f172a;
+  border-radius: 8px;
+}

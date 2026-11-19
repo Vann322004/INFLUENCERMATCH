@@ -2,7 +2,7 @@ import { Alert, App, Button, Card, Collapse, Descriptions, Empty, Form, Input, M
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BarChartOutlined, FileDoneOutlined, VideoCameraOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import { collaborationService } from '../../services/api/collaborationService';
+import { collaborationService, uploadDraftVideo, type VideoUploadGrant } from '../../services/api/collaborationService';
 import { getErrorMessage } from '../../services/apiClient';
 import type {
   CollaborationDetail, CollaborationStatus, Deliverable, ExecutionSnapshot,
@@ -16,6 +16,7 @@ import {
 import type { FinanceForm, LegacyPlanForm, OutcomeForm } from './ExecutionForms';
 import { FeesOverview, HttpsLink, OutcomeTable } from './OperationsTables';
 import { acceptanceReadiness, sortDeliverables } from './collaborationProgress';
+import { DraftVideoField, DraftVideoPlayer } from './DraftVideo';
 import './CollaborationPage.css';
 
 type StatusTone = 'gray' | 'blue' | 'orange' | 'green' | 'red';
@@ -156,7 +157,7 @@ function OutcomeHistory({ snapshot, brand, label }: {
   }]} />;
 }
 
-function DeliverableHistory({ unit }: { unit: Deliverable }) {
+function DeliverableHistory({ collaborationId, unit }: { collaborationId: string; unit: Deliverable }) {
   if (!unit.submissions.length) return <Typography.Text type="secondary">Chưa có bản nháp</Typography.Text>;
   return <Collapse items={[...unit.submissions].reverse().map(submission => {
     const decision = unit.reviews.find(r => r.submissionRevision === submission.revision);
@@ -165,7 +166,10 @@ function DeliverableHistory({ unit }: { unit: Deliverable }) {
       key: submission.id,
       label: `Bản ${submission.revision} · ${submission.source === 'CREATOR_PORTAL' ? 'Creator nộp' : 'Brand nhập thay'} · ${formatDate(submission.createdAt)}`,
       children: <Space orientation="vertical">
-        <HttpsLink url={submission.url}>Mở bản nháp</HttpsLink>
+        {submission.videoFileName
+          ? <DraftVideoPlayer name={submission.videoFileName} size={submission.videoSizeBytes}
+            request={signal => collaborationService.video(collaborationId, unit.id, submission.id, signal)} />
+          : submission.url && <HttpsLink url={submission.url}>Mở bản nháp</HttpsLink>}
         {submission.sourceDescription && <span>{submission.sourceDescription}</span>}
         {decision && <div>
           <strong>{decision.decision === 'APPROVE' ? 'Đã duyệt' : 'Yêu cầu chỉnh sửa'}</strong>
@@ -208,6 +212,10 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
   const [conflict, setConflict] = useState(false);
   const [failure, setFailure] = useState('');
   const [refreshed, setRefreshed] = useState(false);
+  const [videoFile, setVideoFile] = useState<File>();
+  const [uploadPercent, setUploadPercent] = useState<number>();
+  const videoUpload = useRef<{ revision: number; file: File; grant: VideoUploadGrant; uploaded: boolean }>(null);
+  const uploadRequest = useRef<AbortController>(null);
   const attempt = useRef<{ fingerprint: string; key: string } | null>(null);
   const pending = useRef(false);
   const [selectedUnitId, setSelectedUnitId] = useState<string>();
@@ -245,6 +253,8 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
     return () => { current = false; };
   }, [read]);
 
+  useEffect(() => () => uploadRequest.current?.abort(), []);
+
   const latest = snapshot?.outcomeRevisions[snapshot.outcomeRevisions.length - 1];
   const accepted = snapshot?.acceptances.find(a => !a.reopenedAt);
   const awaitingReview = snapshot?.status === 'AWAITING_REVIEW';
@@ -270,6 +280,9 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
 
   const startAction = useCallback((next: Action) => {
     attempt.current = null;
+    videoUpload.current = null;
+    setVideoFile(undefined);
+    setUploadPercent(undefined);
     setFailure('');
     setConflict(false);
     setRefreshed(false);
@@ -316,9 +329,32 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
   }
 
   const allowed = !!(action && snapshot && actionStillValid(snapshot, action));
+  const videoSubmission = action?.kind === 'submit' && snapshot?.videoSubmissionRequired;
+
+  async function prepareDraft(unit: Deliverable, file: File) {
+    const controller = new AbortController();
+    uploadRequest.current = controller;
+    let saved = videoUpload.current;
+    if (!saved || saved.revision !== unit.revision || saved.file !== file
+        || (!saved.uploaded && Date.parse(saved.grant.expiresAt) <= Date.now())) {
+      const grant = await collaborationService.prepareVideo(id, unit.id, {
+        expectedRevision: unit.revision, fileName: file.name, sizeBytes: file.size,
+      }, controller.signal);
+      saved = { revision: unit.revision, file, grant, uploaded: false };
+      videoUpload.current = saved;
+    }
+    if (!saved.uploaded) {
+      setUploadPercent(0);
+      await uploadDraftVideo(saved.grant, file, setUploadPercent, controller.signal);
+      saved.uploaded = true;
+    }
+    setUploadPercent(100);
+    return saved.grant.uploadId;
+  }
 
   async function submit(values: ActionValues) {
-    if (!snapshot || !action || !allowed || conflict || pending.current || loading) return;
+    if (!snapshot || !action || !allowed || conflict || pending.current || loading
+        || (videoSubmission && !videoFile)) return;
     pending.current = true;
     setBusy(true);
     setFailure('');
@@ -350,11 +386,9 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
           break;
         }
         case 'submit': {
-          const body = {
-            expectedRevision: unit!.revision,
-            url: values.url.trim(),
-            source: 'CREATOR_PORTAL' as const,
-          };
+          const body = videoSubmission && videoFile
+            ? { expectedRevision: unit!.revision, uploadId: await prepareDraft(unit!, videoFile) }
+            : { expectedRevision: unit!.revision, url: values.url.trim(), source: 'CREATOR_PORTAL' as const };
           result = await collaborationService.submit(id, unit!.id, body, keyFor(body));
           break;
         }
@@ -417,7 +451,11 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
         }
       }
       if (result) setSnapshot(result);
-      message.success('Đã lưu thay đổi.');
+      message.success(action.kind === 'submit' ? 'Đã nộp bản nháp.' : 'Đã lưu thay đổi.');
+      if (action.kind === 'submit') {
+        setVideoFile(undefined);
+        videoUpload.current = null;
+      }
       setAction(undefined);
       await read();
     } catch (error) {
@@ -425,6 +463,8 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
       setConflict(changed);
       setFailure(getErrorMessage(error, 'Thao tác chưa thành công. Vui lòng thử lại.'));
     } finally {
+      uploadRequest.current = null;
+      setUploadPercent(undefined);
       pending.current = false;
       setBusy(false);
     }
@@ -432,6 +472,8 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
 
   function closeAction() {
     if (pending.current) return;
+    setVideoFile(undefined);
+    videoUpload.current = null;
     setAction(undefined);
   }
 
@@ -486,7 +528,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
       <div><strong>Checklist nghiệm thu</strong>
         <ul>{unit.acceptanceChecklist.map(item => <li key={item}>{item}</li>)}</ul>
       </div>
-      <DeliverableHistory unit={unit} />
+      <DeliverableHistory collaborationId={id} unit={unit} />
       {!splitView && buttons}
     </section>;
   }
@@ -645,12 +687,14 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
       : action.kind === 'outcome' ? (action.editing ? 'Chỉnh sửa kết quả bài đăng' : 'Nhập kết quả bài đăng') : actionLabels[action.kind]}
       okText={actionLabels[action.kind]} cancelText="Đóng"
       onCancel={closeAction} confirmLoading={busy}
-      okButtonProps={{ htmlType: 'submit', form: 'collaboration-execution-form', disabled: !allowed || conflict || loading }} cancelButtonProps={{ disabled: busy }}
+      okButtonProps={{ htmlType: 'submit', form: 'collaboration-execution-form',
+        disabled: !allowed || conflict || loading || (videoSubmission && !videoFile) }} cancelButtonProps={{ disabled: busy }}
       closable={!busy} mask={{ closable: !busy }} keyboard={!busy}
       width={['outcome', 'finance', 'setup'].includes(action.kind) ? 780 : 540}>
       <Form<ActionValues> id="collaboration-execution-form" layout="vertical" onFinish={submit} disabled={busy}
         onKeyDown={event => {
-          if (event.key === 'Enter' && event.target instanceof HTMLInputElement) event.preventDefault();
+          if (event.key === 'Enter' && event.target instanceof HTMLInputElement
+              && event.target.type !== 'file') event.preventDefault();
         }}
         initialValues={action.kind === 'outcome' && action.unit ? initialOutcome(measurementFor(latest?.payload, action.unit))
           : action.kind === 'finance' ? initialFinance(latest?.payload) : undefined}>
@@ -662,6 +706,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
               setFailure('');
               setRefreshed(true);
               attempt.current = null;
+              videoUpload.current = null;
             }
           }}>Tải bản mới</Button> : undefined} />}
         {refreshed && <Alert showIcon type={allowed ? 'info' : 'warning'} title={allowed
@@ -672,7 +717,9 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
         {['cancel', 'changes', 'exception', 'reopen'].includes(action.kind) && (
           <Form.Item name="reason" label="Lý do" rules={[requiredText]}><Input.TextArea maxLength={action.kind === 'cancel' ? 1000 : 2000} /></Form.Item>
         )}
-        {['submit', 'publish'].includes(action.kind) && (
+        {videoSubmission && <DraftVideoField file={videoFile} disabled={busy} percent={uploadPercent}
+          onChange={file => { setVideoFile(file); setFailure(''); videoUpload.current = null; }} />}
+        {(action.kind === 'publish' || (action.kind === 'submit' && !videoSubmission)) && (
           <Form.Item name="url" label={action.kind === 'submit' ? 'Link bản nháp' : 'Link bài đăng'} rules={[requiredText, httpsRule]}>
             <Input maxLength={2000} placeholder="https://…" />
           </Form.Item>

@@ -1,6 +1,6 @@
 import apiClient from '../apiClient';
 import type { ApiResponse, PageResponse } from '../../types/api/common.types';
-import type { CollaborationStatus } from '../../types/api/collaboration.types';
+import type { CollaborationStatus, VideoPlayback } from '../../types/api/collaboration.types';
 import type {
   BriefPreview, DuplicateBriefRequest, DuplicateBriefResult, HistoryCampaignItem,
   HistoryCollaborationDetail, HistoryCollaborationItem, HistoryContext, HistoryDetail, HistoryFilters,
@@ -20,6 +20,8 @@ export const campaignHistoryService = {
     get<PageResponse<HistoryCollaborationItem>>(`/campaigns/${id}/history/collaborations`, signal, { page, size: 20, status }),
   collaboration: (id: string, collaborationId: string, signal: AbortSignal) =>
     get<HistoryCollaborationDetail>(`/campaigns/${id}/history/collaborations/${collaborationId}`, signal),
+  collaborationVideo: (id: string, collaborationId: string, unit: string, submission: string, signal: AbortSignal) =>
+    get<VideoPlayback>(`/campaigns/${id}/history/collaborations/${collaborationId}/deliverables/${unit}/submissions/${submission}/video`, signal),
   preview: (id: string, contextId: string | undefined, signal: AbortSignal) =>
     get<BriefPreview>(`/campaigns/${id}/duplicate-brief/preview`, signal, { contextId }),
   async duplicate(id: string, payload: DuplicateBriefRequest, key: string) {
