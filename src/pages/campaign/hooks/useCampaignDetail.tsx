@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { campaignEditor } from '../../../services/campaignContext';
 import { Modal, message } from 'antd';
 import type { MenuProps } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
@@ -344,13 +345,8 @@ export function useCampaignDetail() {
   const handleNavigateToEdit = () => {
     const targetId = resolvedId || rawCampaign?.id || campaign?.id;
     if (targetId) {
-      navigate(`/campaigns/${targetId}/edit`, {
-        state: {
-          campaignId: targetId,
-          campaign: rawCampaign,
-          campaignData: rawCampaign,
-        },
-      });
+      const target = campaignEditor(targetId);
+      navigate(target.path, { state: target.state });
     } else {
       navigate('/campaigns');
     }

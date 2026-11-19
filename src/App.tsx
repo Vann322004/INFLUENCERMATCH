@@ -278,6 +278,10 @@ export default function App() {
 
           {/* Edit Campaign Routes */}
           <Route
+            path="/campaigns/edit"
+            element={<MainLayout><CreateCampaignPage /></MainLayout>}
+          />
+          <Route
             path="/campaigns/:id/edit"
             element={
               <MainLayout>

@@ -162,10 +162,13 @@ export const campaignService = {
   /**
    * Tự động điền thông tin chiến dịch bằng Gemini AI
    * POST /ai/campaign-autofill
-   * Tự động kích hoạt Smart Fallback nếu Backend chưa cấu hình GEMINI_API_KEY
+   * Chỉ sử dụng kết quả thật từ Backend; không tự thử lại khi lỗi.
    */
-  async autofillCampaign(prompt: string): Promise<CampaignAutofillResponse> {
-    const response = await apiClient.post<ApiResponse<CampaignAutofillResponse>>('/ai/campaign-autofill', { productDescription: prompt, prompt });
+  async autofillCampaign(prompt: string, signal?: AbortSignal): Promise<CampaignAutofillResponse> {
+    const response = await apiClient.post<ApiResponse<CampaignAutofillResponse>>('/ai/campaign-autofill', { prompt }, {
+      timeout: 60_000,
+      signal,
+    });
     if (!response.data?.data) throw new Error('No campaign draft returned by the server.');
     return response.data.data;
   },

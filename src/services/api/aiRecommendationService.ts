@@ -27,6 +27,7 @@ export const aiRecommendationService = {
     const response = await apiClient.post('/campaigns/' + campaignId + '/ai-recommendations', null, { signal: options?.signal, headers, params: { limit, displayMode: options?.displayMode, candidateSource: options?.candidateSource ?? 'SHORTLIST', creatorIds: options?.creatorIds?.length ? options.creatorIds.join(',') : undefined } });
     const data = response.data?.data;
     if (response.data?.success === false || data?.campaignId !== campaignId || !Array.isArray(data.recommendations) || !Array.isArray(data.provisionalRecommendations)) throw new Error('Phản hồi gợi ý không hợp lệ.');
+    if (data.excludedCandidates != null && !Array.isArray(data.excludedCandidates)) throw new Error('Danh sách kênh bị loại không hợp lệ.');
     if (options?.creatorIds?.length && [...data.recommendations, ...data.provisionalRecommendations].some(item => !options.creatorIds!.includes(item.creatorId))) throw new Error('Máy chủ trả về kênh ngoài lựa chọn. Cần cập nhật Backend hỗ trợ creatorIds trước khi chạy lại.');
     return data;
   },
@@ -92,7 +93,7 @@ export const aiRecommendationService = {
    */
   async getRecommendationRuns(campaignId: string): Promise<RecommendationRun[]> {
     const response = await apiClient.get('/campaigns/' + campaignId + '/ai-recommendations/runs'); const data = response.data?.data;
-    if (response.data?.success === false || !Array.isArray(data) || data.some(row => row.campaignId !== campaignId)) throw new Error('Không thể đọc lịch sử gợi ý.');
+    if (response.data?.success === false || !Array.isArray(data) || data.some(row => row.campaignId !== campaignId || (row.scoringSnapshot != null && !Array.isArray(row.scoringSnapshot)) || (row.excludedCandidates != null && !Array.isArray(row.excludedCandidates)))) throw new Error('Không thể đọc lịch sử gợi ý.');
     return data;
   },
 

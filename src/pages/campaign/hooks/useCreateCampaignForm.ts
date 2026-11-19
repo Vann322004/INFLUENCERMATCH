@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { rememberCampaign } from '../../../services/campaignContext';
+import { rememberCampaign, campaignEditor } from '../../../services/campaignContext';
 import { App } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../../services/api/campaignService';
@@ -9,16 +9,18 @@ import type { CampaignObjective, CampaignPlatform, CampaignPlanningFields, Campa
 interface UseCreateCampaignFormProps {
   resolvedCampaignId: string | null;
   isEditMode: boolean;
-  locationState: any;
 }
 
 export function useCreateCampaignForm({
   resolvedCampaignId,
   isEditMode,
-  locationState,
 }: UseCreateCampaignFormProps) {
   const { message } = App.useApp();
   const navigate = useNavigate();
+  const navigateToEditor = (id: string, step: number) => {
+    const target = campaignEditor(id, step);
+    navigate(target.path, { replace: true, state: target.state });
+  };
 
   // Wizard Step State (1: Thông tin chiến dịch, 2: Yêu cầu creator, 3: Chỉ số & ngân sách)
   const [currentStep, setCurrentStep] = useState<number>(() => Math.max(1, Math.min(3, Number(new URLSearchParams(window.location.search).get('step')) || 1)));
@@ -47,6 +49,12 @@ export function useCreateCampaignForm({
   const [selectedObjectives, setSelectedObjectives] = useState<string[]>([]);
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const aiRequest = useRef<AbortController | null>(null);
+  useEffect(() => {
+    return () => {
+      aiRequest.current?.abort();
+    };
+  }, [resolvedCampaignId]);
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
   const [isAiAutofilled, setIsAiAutofilled] = useState<boolean>(false);
 
@@ -251,7 +259,7 @@ export function useCreateCampaignForm({
     return () => {
       isMounted = false;
     };
-  }, [isEditMode, resolvedCampaignId, locationState]);
+  }, [isEditMode, resolvedCampaignId]);
 
   const toggleObjective = (id: string) => {
     if (isEditMode && campaignStatus !== 'DRAFT') return;
@@ -290,12 +298,15 @@ export function useCreateCampaignForm({
   };
 
   const handleAiSuggest = async (overridePrompt?: string) => {
-    if (isAiLoading || isLoadingCampaign || loadError || (isEditMode && campaignStatus !== 'DRAFT')) return;
+    if (aiRequest.current || isAiLoading || isLoadingCampaign || loadError || (isEditMode && campaignStatus !== 'DRAFT')) return;
     const prompt = (typeof overridePrompt === 'string' ? overridePrompt : aiPrompt).trim();
     if (prompt.length < 10) { message.warning('Nhập mô tả tối thiểu 10 ký tự.'); return; }
+    const controller = new AbortController();
+    aiRequest.current = controller;
     setIsAiLoading(true);
     try {
-      const result = await campaignService.autofillCampaign(prompt);
+      const result = await campaignService.autofillCampaign(prompt, controller.signal);
+      if (controller.signal.aborted) return;
       if (result.name != null) setCampaignName(result.name);
       if (result.productService != null) setProduct(result.productService);
       if (result.objective) setSelectedObjectives([({ CONVERSION: 'sales', ENGAGEMENT: 'engagement', TRAFFIC: 'traffic', AWARENESS: 'awareness' } as Record<string, string>)[result.objective]]);
@@ -320,8 +331,18 @@ export function useCreateCampaignForm({
       if (result.creatorFeeMax != null) setCreatorFeeMax(result.creatorFeeMax);
       setAiExplanation(result.aiExplanation ?? null); setIsAiAutofilled(true);
       message.info('Đã nhận gợi ý. Rà soát nội dung và lưu bản nháp để ghi nhận thay đổi.');
-    } catch (error) { message.error(getErrorMessage(error)); }
-    finally { setIsAiLoading(false); }
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      const code = (error as { code?: string })?.code;
+      message.error(code === 'ECONNABORTED' || code === 'ETIMEDOUT'
+        ? 'AI phản hồi quá lâu. Bạn có thể tiếp tục điền thủ công hoặc thử lại sau.'
+        : getErrorMessage(error));
+    } finally {
+      if (aiRequest.current === controller) {
+        aiRequest.current = null;
+        setIsAiLoading(false);
+      }
+    }
   };
 
   const buildCampaignPayload = (): any => {
@@ -428,7 +449,7 @@ export function useCreateCampaignForm({
   const persistDraft = () => { if (!draftRequest.current) { setIsSavingDraft(true); draftRequest.current = writeDraft().finally(() => { draftRequest.current = null; setIsSavingDraft(false); }); } return draftRequest.current; };
   const saveDraft = async () => {
     if (saving.current) return; saving.current = true; setIsSavingDraft(true);
-    try { const result = await persistDraft(); message.success('Đã lưu bản nháp.'); navigate('/campaigns/' + result.id + '/edit?step=' + currentStep, { replace: true }); }
+    try { const result = await persistDraft(); message.success('Đã lưu bản nháp.'); navigateToEditor(result.id, currentStep); }
     catch (error) { message.error(getErrorMessage(error, 'Không thể lưu bản nháp.')); }
     finally { saving.current = false; setIsSavingDraft(false); }
   };
@@ -451,7 +472,7 @@ export function useCreateCampaignForm({
         message.warning('Vui lòng chọn ít nhất 1 mục tiêu chiến dịch!');
         return;
       }
-      try { const result = await persistDraft(); navigate('/campaigns/' + result.id + '/edit?step=2', { replace: true }); setCurrentStep(2); } catch (error) { message.error(getErrorMessage(error, 'Không thể lưu bước này.')); return; }
+      try { const result = await persistDraft(); navigateToEditor(result.id, 2); setCurrentStep(2); } catch (error) { message.error(getErrorMessage(error, 'Không thể lưu bước này.')); return; }
       scrollToTop();
       message.success('Đã chuyển sang Bước 2: Yêu cầu creator!');
     } else if (currentStep === 2) {
@@ -475,7 +496,7 @@ export function useCreateCampaignForm({
         message.warning('Vui lòng nhập tóm tắt yêu cầu sáng tạo (Creator Brief)!');
         return;
       }
-      try { const result = await persistDraft(); navigate('/campaigns/' + result.id + '/edit?step=3', { replace: true }); setCurrentStep(3); } catch (error) { message.error(getErrorMessage(error, 'Không thể lưu bước này.')); return; }
+      try { const result = await persistDraft(); navigateToEditor(result.id, 3); setCurrentStep(3); } catch (error) { message.error(getErrorMessage(error, 'Không thể lưu bước này.')); return; }
       scrollToTop();
       message.success('Đã chuyển sang Bước 3: Chỉ số & ngân sách!');
     } else if (currentStep === 3) {
@@ -504,7 +525,7 @@ export function useCreateCampaignForm({
   const handlePrevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
-      if (savedId.current) navigate('/campaigns/' + savedId.current + '/edit?step=' + (currentStep - 1), { replace: true });
+      if (savedId.current) navigateToEditor(savedId.current, currentStep - 1);
       scrollToTop();
     }
   };

@@ -1,4 +1,10 @@
-import { getStoredUser } from './authSession';
+import { getStoredUser, getAuthSessionId } from './authSession';
+export function campaignEditor(id: string, step = 1) {
+  return {
+    path: '/campaigns/edit?step=' + Math.max(1, Math.min(3, step)),
+    state: { campaignEditContext: { sessionId: getAuthSessionId(), campaignId: id } },
+  };
+}
 const key = () => `im_campaign:${getStoredUser()?.id ?? 'anonymous'}`;
 const pointers = new Map<string, string>();
 export const activeCampaignId = () => { try { return sessionStorage.getItem(key()) || pointers.get(key()) || ''; } catch { return pointers.get(key()) || ''; } };
