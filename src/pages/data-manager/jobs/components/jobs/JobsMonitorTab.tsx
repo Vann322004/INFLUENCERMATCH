@@ -97,7 +97,7 @@ export default function JobsMonitorTab() {
       dataIndex: 'id',
       key: 'id',
       render: (id: string) => (
-        <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#2563EB' }}>
+        <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#7C3AED' }}>
           #{id.slice(0, 8)}...
         </span>
       ),
@@ -110,7 +110,7 @@ export default function JobsMonitorTab() {
           <div style={{ fontWeight: 700, color: '#0F172A' }}>
             {r.displayName || `@${r.username}`}
           </div>
-          <div style={{ fontSize: 11, color: '#2563EB' }}>@{r.username}</div>
+          <div style={{ fontSize: 11, color: '#7C3AED' }}>@{r.username}</div>
         </div>
       ),
     },
@@ -206,10 +206,10 @@ export default function JobsMonitorTab() {
         <Col xs={12} sm={6}>
           <Card bordered={false} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>ĐANG XỬ LÝ</div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#3B82F6', marginTop: 4 }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: '#8B5CF6', marginTop: 4 }}>
               {activeCount}
             </div>
-            <div style={{ fontSize: 11, color: '#3B82F6', marginTop: 2 }}>Đang cào dữ liệu / trong hàng đợi</div>
+            <div style={{ fontSize: 11, color: '#8B5CF6', marginTop: 2 }}>Đang cào dữ liệu / trong hàng đợi</div>
           </Card>
         </Col>
 

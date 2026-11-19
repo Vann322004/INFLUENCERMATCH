@@ -62,7 +62,7 @@ export const CompareConflictDrawer: React.FC<CompareConflictDrawerProps> = ({
     <Drawer
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <EyeOutlined style={{ color: '#2563EB', fontSize: 18 }} />
+          <EyeOutlined style={{ color: '#7C3AED', fontSize: 18 }} />
           <span style={{ fontWeight: 800, fontSize: 16 }}>Đối chiếu & Hợp nhất Thực thể Creator</span>
         </div>
       }
@@ -90,12 +90,12 @@ export const CompareConflictDrawer: React.FC<CompareConflictDrawerProps> = ({
             loading={merging}
             onClick={handleMerge}
             style={{
-              background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+              background: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)',
               border: 'none',
               fontWeight: 700,
               borderRadius: 8,
               fontSize: 13,
-              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+              boxShadow: '0 2px 6px rgba(124, 58, 237, 0.25)',
             }}
           >
             Xác nhận Hợp nhất Hồ sơ
@@ -107,14 +107,14 @@ export const CompareConflictDrawer: React.FC<CompareConflictDrawerProps> = ({
         {/* Top Match Score Banner */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%)',
+            background: 'linear-gradient(135deg, #F3E8FF 0%, #F0FDF4 100%)',
             padding: '16px 20px',
             borderRadius: 12,
-            border: '1px solid #BFDBFE',
+            border: '1px solid #DDD6FE',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <span style={{ fontWeight: 700, fontSize: 14.5, color: '#1E40AF' }}>
+            <span style={{ fontWeight: 700, fontSize: 14.5, color: '#5B21B6' }}>
               {selectedConflict.conflictLabel}
             </span>
             <span style={{ fontSize: 18, fontWeight: 900, color: '#059669' }}>
@@ -143,7 +143,7 @@ export const CompareConflictDrawer: React.FC<CompareConflictDrawerProps> = ({
               bordered
               style={{
                 borderRadius: 10,
-                borderColor: masterProfileId === selectedConflict.profileA.id ? '#2563EB' : '#E2E8F0',
+                borderColor: masterProfileId === selectedConflict.profileA.id ? '#7C3AED' : '#E2E8F0',
                 background: masterProfileId === selectedConflict.profileA.id ? '#F8FAFC' : '#FFFFFF',
               }}
             >
@@ -154,7 +154,7 @@ export const CompareConflictDrawer: React.FC<CompareConflictDrawerProps> = ({
                 <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A', marginTop: 8 }}>
                   {selectedConflict.profileA.displayName}
                 </div>
-                <div style={{ fontSize: 12, color: '#1D4ED8', fontWeight: 600 }}>@{selectedConflict.profileA.userName}</div>
+                <div style={{ fontSize: 12, color: '#6D28D9', fontWeight: 600 }}>@{selectedConflict.profileA.userName}</div>
               </div>
 
               <Descriptions size="small" column={1} bordered>
@@ -194,7 +194,7 @@ export const CompareConflictDrawer: React.FC<CompareConflictDrawerProps> = ({
               bordered
               style={{
                 borderRadius: 10,
-                borderColor: masterProfileId === selectedConflict.profileB.id ? '#2563EB' : '#E2E8F0',
+                borderColor: masterProfileId === selectedConflict.profileB.id ? '#7C3AED' : '#E2E8F0',
                 background: masterProfileId === selectedConflict.profileB.id ? '#F8FAFC' : '#FFFFFF',
               }}
             >
@@ -205,7 +205,7 @@ export const CompareConflictDrawer: React.FC<CompareConflictDrawerProps> = ({
                 <div style={{ fontWeight: 800, fontSize: 15, color: '#0F172A', marginTop: 8 }}>
                   {selectedConflict.profileB.displayName}
                 </div>
-                <div style={{ fontSize: 12, color: '#1D4ED8', fontWeight: 600 }}>@{selectedConflict.profileB.userName}</div>
+                <div style={{ fontSize: 12, color: '#6D28D9', fontWeight: 600 }}>@{selectedConflict.profileB.userName}</div>
               </div>
 
               <Descriptions size="small" column={1} bordered>
@@ -253,8 +253,8 @@ export const CompareConflictDrawer: React.FC<CompareConflictDrawerProps> = ({
               style={{
                 padding: '10px 14px',
                 borderRadius: 8,
-                border: masterProfileId === selectedConflict.profileA.id ? '2px solid #2563EB' : '1px solid #E2E8F0',
-                background: masterProfileId === selectedConflict.profileA.id ? '#EFF6FF' : '#FFFFFF',
+                border: masterProfileId === selectedConflict.profileA.id ? '2px solid #7C3AED' : '1px solid #E2E8F0',
+                background: masterProfileId === selectedConflict.profileA.id ? '#F3E8FF' : '#FFFFFF',
                 width: '100%',
               }}
             >
@@ -268,7 +268,7 @@ export const CompareConflictDrawer: React.FC<CompareConflictDrawerProps> = ({
                   ({(selectedConflict.profileA.followers / 1000).toLocaleString()}K followers)
                 </span>
                 {masterProfileId === selectedConflict.profileA.id && (
-                  <CheckCircleFilled style={{ color: '#2563EB', marginLeft: 'auto' }} />
+                  <CheckCircleFilled style={{ color: '#7C3AED', marginLeft: 'auto' }} />
                 )}
               </div>
             </Radio>
@@ -278,8 +278,8 @@ export const CompareConflictDrawer: React.FC<CompareConflictDrawerProps> = ({
               style={{
                 padding: '10px 14px',
                 borderRadius: 8,
-                border: masterProfileId === selectedConflict.profileB.id ? '2px solid #2563EB' : '1px solid #E2E8F0',
-                background: masterProfileId === selectedConflict.profileB.id ? '#EFF6FF' : '#FFFFFF',
+                border: masterProfileId === selectedConflict.profileB.id ? '2px solid #7C3AED' : '1px solid #E2E8F0',
+                background: masterProfileId === selectedConflict.profileB.id ? '#F3E8FF' : '#FFFFFF',
                 width: '100%',
               }}
             >
@@ -293,7 +293,7 @@ export const CompareConflictDrawer: React.FC<CompareConflictDrawerProps> = ({
                   ({(selectedConflict.profileB.followers / 1000).toLocaleString()}K followers)
                 </span>
                 {masterProfileId === selectedConflict.profileB.id && (
-                  <CheckCircleFilled style={{ color: '#2563EB', marginLeft: 'auto' }} />
+                  <CheckCircleFilled style={{ color: '#7C3AED', marginLeft: 'auto' }} />
                 )}
               </div>
             </Radio>

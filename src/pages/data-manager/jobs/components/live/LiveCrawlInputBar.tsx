@@ -81,10 +81,10 @@ export default function LiveCrawlInputBar({
               width: '100%',
               height: 40,
               borderRadius: 8,
-              background: '#1D4ED8',
+              background: '#6D28D9',
               border: 'none',
               fontWeight: 600,
-              boxShadow: '0 2px 8px rgba(29, 78, 216, 0.25)',
+              boxShadow: '0 2px 8px rgba(109, 40, 217, 0.25)',
             }}
           >
             Cào trực tiếp ngay

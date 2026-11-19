@@ -36,7 +36,7 @@ export default function InvoiceModal({
           key="download"
           type="primary"
           icon={<DownloadOutlined />}
-          style={{ background: '#2563EB' }}
+          style={{ background: '#7C3AED' }}
           loading={downloading}
           onClick={async () => {
             setDownloading(true);
@@ -66,7 +66,7 @@ export default function InvoiceModal({
         >
           <div>
             <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.3px' }}>
-              <span style={{ color: '#2563EB' }}>InfluencerMatch</span> Platform
+              <span style={{ color: '#7C3AED' }}>InfluencerMatch</span> Platform
             </div>
             <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>Hệ thống quản trị và kết nối Influencer</div>
             <div style={{ fontSize: 12, color: '#94A3B8' }}>Xác nhận thanh toán dịch vụ trực tuyến</div>
@@ -147,7 +147,7 @@ export default function InvoiceModal({
           }}
         >
           <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Tổng số tiền thanh toán:</span>
-          <span style={{ fontSize: 20, fontWeight: 800, color: '#2563EB' }}>
+          <span style={{ fontSize: 20, fontWeight: 800, color: '#7C3AED' }}>
             {formatVND(invoice.amount)}
           </span>
         </div>

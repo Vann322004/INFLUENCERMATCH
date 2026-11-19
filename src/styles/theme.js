@@ -1,18 +1,18 @@
 export const themeConfig = {
   token: {
-    colorPrimary: '#2563EB',
-    colorPrimaryHover: '#1D4ED8',
-    colorLink: '#2563EB',
-    colorLinkHover: '#1D4ED8',
+    colorPrimary: '#7C3AED',
+    colorPrimaryHover: '#6D28D9',
+    colorLink: '#7C3AED',
+    colorLinkHover: '#6D28D9',
     borderRadius: 12,
     fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-    colorTextHeading: '#0F172A',
+    colorTextHeading: '#1E1B4B',
     colorTextBody: '#475569',
     colorBgContainer: '#ffffff',
   },
   components: {
     Button: {
-      colorPrimary: '#2563EB',
+      colorPrimary: '#7C3AED',
       algorithm: true,
       fontWeight: 700,
       borderRadiusLG: 12,
@@ -20,16 +20,16 @@ export const themeConfig = {
     },
     Input: {
       paddingBlockLG: 12,
-      activeBorderColor: '#2563EB',
-      hoverBorderColor: '#3B82F6',
+      activeBorderColor: '#7C3AED',
+      hoverBorderColor: '#8B5CF6',
       borderRadiusLG: 12,
-      colorBgContainer: '#F8FAFC',
+      colorBgContainer: '#FAF5FF',
     },
     Card: {
-      borderRadiusLG: 24,
+      borderRadiusLG: 22,
     },
     Checkbox: {
-      colorPrimary: '#2563EB',
-    }
+      colorPrimary: '#7C3AED',
+    },
   },
 };

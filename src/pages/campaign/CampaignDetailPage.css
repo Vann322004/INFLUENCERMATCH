@@ -116,9 +116,9 @@
 }
 
 .cdetail-hero-status-tag.completed {
-  background: #EFF6FF;
-  color: #1D4ED8;
-  border: 1px solid #BFDBFE;
+  background: #F3E8FF;
+  color: #6D28D9;
+  border: 1px solid #DDD6FE;
 }
 
 .cdetail-hero-status-tag.draft {
@@ -154,9 +154,9 @@
 }
 
 .cdetail-hero-tag.highlight {
-  background: #EFF6FF;
-  border-color: #BFDBFE;
-  color: #1D4ED8;
+  background: #F3E8FF;
+  border-color: #DDD6FE;
+  color: #6D28D9;
   font-weight: 700;
 }
 
@@ -168,9 +168,9 @@
 }
 
 .cdetail-hero-tag.tech {
-  background: #EFF6FF;
-  color: #2563EB;
-  border-color: #BFDBFE;
+  background: #F3E8FF;
+  color: #7C3AED;
+  border-color: #DDD6FE;
   font-weight: 700;
 }
 
@@ -238,14 +238,14 @@
 }
 
 .cdetail-hero-btn.primary-action {
-  background: #1D4ED8;
-  border: 1px solid #1D4ED8;
+  background: #6D28D9;
+  border: 1px solid #6D28D9;
   color: #FFFFFF;
 }
 
 .cdetail-hero-btn.primary-action:hover {
-  background: #1E40AF;
-  border-color: #1E40AF;
+  background: #5B21B6;
+  border-color: #5B21B6;
 }
 
 .cdetail-hero-btn.secondary {
@@ -382,7 +382,7 @@
 
 .cdetail-metric-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #1D4ED8 0%, #2563EB 100%);
+  background: linear-gradient(90deg, #6D28D9 0%, #7C3AED 100%);
   border-radius: 999px;
   transition: width 0.4s ease;
 }
@@ -390,7 +390,7 @@
 .cdetail-metric-progress-label {
   font-size: 11px;
   font-weight: 700;
-  color: #1D4ED8;
+  color: #6D28D9;
 }
 
 /* Sparklines for Card 2 & 3 */
@@ -404,7 +404,7 @@
 .cdetail-sparkline-bar {
   width: 4px;
   border-radius: 2px;
-  background: linear-gradient(180deg, #60A5FA 0%, #2563EB 100%);
+  background: linear-gradient(180deg, #A78BFA 0%, #7C3AED 100%);
   opacity: 0.85;
 }
 
@@ -484,9 +484,9 @@
 
 .cdetail-seg-tab-btn.active {
   background: #FFFFFF;
-  color: #1D4ED8;
+  color: #6D28D9;
   font-weight: 700;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(29, 78, 216, 0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(109, 40, 217, 0.04);
 }
 
 /* ==========================================================================
@@ -586,8 +586,8 @@
 
 .cdetail-action-step-item:hover {
   background: #FFFFFF;
-  border-color: #60A5FA;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
+  border-color: #A78BFA;
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.1);
   transform: translateY(-2px);
 }
 
@@ -752,9 +752,9 @@
 .cdetail-product-tag {
   font-size: 10px;
   font-weight: 700;
-  color: #1D4ED8;
-  background: #EFF6FF;
-  border: 1px solid #DBEAFE;
+  color: #6D28D9;
+  background: #F3E8FF;
+  border: 1px solid #E9D5FF;
   padding: 1px 7px;
   border-radius: 4px;
 }
@@ -815,9 +815,9 @@
 .cdetail-deliv-badge {
   font-size: 11px;
   font-weight: 700;
-  color: #1D4ED8;
-  background: #EFF6FF;
-  border: 1px solid #BFDBFE;
+  color: #6D28D9;
+  background: #F3E8FF;
+  border: 1px solid #DDD6FE;
   padding: 2px 8px;
   border-radius: 4px;
   white-space: nowrap;
@@ -926,7 +926,7 @@
 .cdetail-creators-link {
   font-size: 12.5px;
   font-weight: 600;
-  color: #1D4ED8;
+  color: #6D28D9;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -934,7 +934,7 @@
 }
 
 .cdetail-creators-link:hover {
-  color: #1E40AF;
+  color: #5B21B6;
   text-decoration: underline;
 }
 
@@ -1107,19 +1107,19 @@
 }
 
 .cdetail-count-badge {
-  background: #EFF6FF;
-  color: #1D4ED8;
+  background: #F3E8FF;
+  color: #6D28D9;
   font-size: 11px;
   font-weight: 800;
   padding: 1px 8px;
   border-radius: 999px;
-  border: 1px solid #DBEAFE;
+  border: 1px solid #E9D5FF;
 }
 
 .cdetail-sidebar-link {
   font-size: 12.5px;
   font-weight: 600;
-  color: #1D4ED8;
+  color: #6D28D9;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1346,8 +1346,8 @@
 }
 
 .cdetail-finance-tile.committed {
-  background: #EFF6FF;
-  border: 1px solid #DBEAFE;
+  background: #F3E8FF;
+  border: 1px solid #E9D5FF;
 }
 
 .cdetail-finance-tile.paid {
@@ -1367,7 +1367,7 @@
 }
 
 .cdetail-finance-tile.committed .cdetail-finance-lbl {
-  color: #1E40AF;
+  color: #5B21B6;
 }
 
 .cdetail-finance-tile.paid .cdetail-finance-lbl {
@@ -1387,7 +1387,7 @@
 }
 
 .cdetail-finance-tile.committed .cdetail-finance-val {
-  color: #1D4ED8;
+  color: #6D28D9;
 }
 
 .cdetail-finance-tile.paid .cdetail-finance-val {

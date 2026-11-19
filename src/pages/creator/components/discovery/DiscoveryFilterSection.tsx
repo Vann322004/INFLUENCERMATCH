@@ -150,7 +150,7 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
               onChange={onPlatformChange}
               className={`cdiscovery-pill-select ${selectedPlatform !== 'all' ? 'has-value' : ''}`}
               popupMatchSelectWidth={false}
-              suffixIcon={<DownOutlined style={{ fontSize: 10, color: selectedPlatform !== 'all' ? '#1D4ED8' : '#94A3B8' }} />}
+              suffixIcon={<DownOutlined style={{ fontSize: 10, color: selectedPlatform !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
               options={[
                 { value: 'all', label: 'Nền tảng: Tất cả' },
                 { value: 'tiktok', label: 'TikTok' },
@@ -167,7 +167,7 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
               onChange={onCategoryChange}
               className={`cdiscovery-pill-select ${selectedCategory !== 'all' ? 'has-value' : ''}`}
               popupMatchSelectWidth={false}
-              suffixIcon={<DownOutlined style={{ fontSize: 10, color: selectedCategory !== 'all' ? '#1D4ED8' : '#94A3B8' }} />}
+              suffixIcon={<DownOutlined style={{ fontSize: 10, color: selectedCategory !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
               options={[
                 { value: 'all', label: 'Ngành hàng: Tất cả' },
                 ...categoriesList.map((c) => ({ value: c, label: c })),
@@ -180,7 +180,7 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
               onChange={onFollowerTierChange}
               className={`cdiscovery-pill-select ${followerTier !== 'all' ? 'has-value' : ''}`}
               popupMatchSelectWidth={false}
-              suffixIcon={<DownOutlined style={{ fontSize: 10, color: followerTier !== 'all' ? '#1D4ED8' : '#94A3B8' }} />}
+              suffixIcon={<DownOutlined style={{ fontSize: 10, color: followerTier !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
               options={[
                 { value: 'all', label: 'Quy mô: Tất cả' },
                 { value: 'nano', label: 'Nano (< 50K)' },
@@ -196,7 +196,7 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
               onChange={onEngagementTierChange}
               className={`cdiscovery-pill-select ${engagementTier !== 'all' ? 'has-value' : ''}`}
               popupMatchSelectWidth={false}
-              suffixIcon={<DownOutlined style={{ fontSize: 10, color: engagementTier !== 'all' ? '#1D4ED8' : '#94A3B8' }} />}
+              suffixIcon={<DownOutlined style={{ fontSize: 10, color: engagementTier !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
               options={[
                 { value: 'all', label: 'Tương tác: Tất cả' },
                 { value: 'high', label: 'Tương tác cao (≥ 5%)' },
@@ -212,7 +212,7 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
               onChange={onAudienceAgeChange}
               className={`cdiscovery-pill-select ${audienceAge !== 'all' ? 'has-value' : ''}`}
               popupMatchSelectWidth={false}
-              suffixIcon={<DownOutlined style={{ fontSize: 10, color: audienceAge !== 'all' ? '#1D4ED8' : '#94A3B8' }} />}
+              suffixIcon={<DownOutlined style={{ fontSize: 10, color: audienceAge !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
               options={[
                 { value: 'all', label: 'Độ tuổi: Tất cả' },
                 { value: '18-24', label: '18 – 24 tuổi' },
@@ -229,7 +229,7 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
               onChange={onAudienceGenderChange}
               className={`cdiscovery-pill-select ${audienceGender !== 'all' ? 'has-value' : ''}`}
               popupMatchSelectWidth={false}
-              suffixIcon={<DownOutlined style={{ fontSize: 10, color: audienceGender !== 'all' ? '#1D4ED8' : '#94A3B8' }} />}
+              suffixIcon={<DownOutlined style={{ fontSize: 10, color: audienceGender !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
               options={[
                 { value: 'all', label: 'Giới tính: Tất cả' },
                 { value: 'female', label: 'Nữ giới (> 60%)' },
@@ -246,7 +246,7 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
               onChange={onPriceTierChange}
               className={`cdiscovery-pill-select ${priceTier !== 'all' ? 'has-value' : ''}`}
               popupMatchSelectWidth={false}
-              suffixIcon={<DownOutlined style={{ fontSize: 10, color: priceTier !== 'all' ? '#1D4ED8' : '#94A3B8' }} />}
+              suffixIcon={<DownOutlined style={{ fontSize: 10, color: priceTier !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
               options={[
                 { value: 'all', label: 'Báo giá: Tất cả' },
                 { value: 'low', label: 'Dưới $500' },

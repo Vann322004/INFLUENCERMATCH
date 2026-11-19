@@ -124,7 +124,7 @@ export default function CreatorSidebar() {
               style={{
                 width: 32,
                 height: 1,
-                backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                backgroundColor: 'rgba(124, 58, 237, 0.12)',
                 marginBottom: 10,
               }}
             />

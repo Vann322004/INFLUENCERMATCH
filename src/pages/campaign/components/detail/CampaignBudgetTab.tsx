@@ -95,7 +95,7 @@ export const CampaignBudgetTab: React.FC<CampaignBudgetTabProps> = ({
               title: 'Chi phí thỏa thuận',
               dataIndex: 'fee',
               key: 'fee',
-              render: (fee) => <span style={{ fontWeight: 700, color: '#1D4ED8' }}>{fee}</span>,
+              render: (fee) => <span style={{ fontWeight: 700, color: '#6D28D9' }}>{fee}</span>,
             },
             {
               title: 'Phương thức',
@@ -121,7 +121,7 @@ export const CampaignBudgetTab: React.FC<CampaignBudgetTabProps> = ({
                 <Button
                   size="small"
                   type="link"
-                  style={{ color: '#1D4ED8', fontWeight: 600, padding: 0 }}
+                  style={{ color: '#6D28D9', fontWeight: 600, padding: 0 }}
                   onClick={() => {
                     Modal.info({
                       title: `Ủy nhiệm chi: ${record.name}`,

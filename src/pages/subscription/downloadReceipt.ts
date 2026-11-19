@@ -94,12 +94,12 @@ export async function downloadReceipt(invoice: PaymentInvoice, customer: Receipt
   y += 6;
   if (y > 146) { pdf.addPage(); y = 24; }
 
-  pdf.setFillColor('#EFF6FF');
+  pdf.setFillColor('#F3E8FF');
   pdf.roundedRect(20, y, 170, 22, 3, 3, 'F');
   const totalLabel = invoice.status === 'success' ? 'TỔNG ĐÃ THANH TOÁN' : 'TỔNG SỐ TIỀN GIAO DỊCH';
-  text(totalLabel, 26, y + 9, 78, 9, true, '#1E40AF');
+  text(totalLabel, 26, y + 9, 78, 9, true, '#5B21B6');
   text(invoice.currency || 'VND', 26, y + 16, 78, 8, false, '#64748B');
-  text(amount, 184, y + 14, 75, 18, true, '#2563EB', 'right');
+  text(amount, 184, y + 14, 75, 18, true, '#7C3AED', 'right');
   y += 31;
   text('Biên lai ghi nhận thông tin giao dịch dịch vụ trên InfluencerMatch.', 20, y, 170, 9, false, '#64748B');
   text('Chứng từ này không thay thế hóa đơn giá trị gia tăng.', 20, y + 7, 170, 9, false, '#64748B');

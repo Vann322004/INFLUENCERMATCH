@@ -108,8 +108,18 @@ function MainLayout({ children }: {
   if (['CREATOR', 'INFLUENCER'].includes(role)) return <Navigate to="/creator/dashboard" replace />;
   if (role !== 'BRAND') return <Navigate to="/login" replace />;
   return (
-    <Layout className="brand-workspace" hasSider={!mobile} style={{ minHeight: '100vh', maxHeight: '100vh', overflow: 'hidden', width: '100%' }}>
-      {/* Light Linear Gradient Sidebar */}
+    <Layout
+      className="brand-workspace"
+      hasSider={!mobile}
+      style={{
+        minHeight: '100vh',
+        maxHeight: '100vh',
+        overflow: 'hidden',
+        width: '100%',
+        background: 'linear-gradient(135deg, #F4ECFF 0%, #FAF5FF 48%, #EFE4FF 100%)',
+      }}
+    >
+      {/* Floating Plum-Violet Sidebar */}
       {mobile ? <Drawer title="Điều hướng" placement="left" size="min(280px, 88vw)"
         open={menuOpen} onClose={() => setMenuOpen(false)} styles={{ body: { padding: 0 } }} destroyOnHidden>
         <AppSider inDrawer />
@@ -119,7 +129,7 @@ function MainLayout({ children }: {
       <Layout
         className="brand-main"
         style={{
-          background: '#F5F6FA',
+          background: 'transparent',
           height: '100vh',
           overflowY: 'auto',
           overflowX: 'hidden',
@@ -134,7 +144,7 @@ function MainLayout({ children }: {
         <Content
           className="brand-content"
           style={{
-            background: '#F5F6FA',
+            background: 'transparent',
             padding: mobile ? '12px 12px 24px' : '12px 24px 32px',
             overflow: 'visible',
             boxSizing: 'border-box',

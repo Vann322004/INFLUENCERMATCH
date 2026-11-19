@@ -410,7 +410,7 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
                   >
                     {profile.website && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                        <GlobalOutlined style={{ color: '#2563EB' }} /> {profile.website}
+                        <GlobalOutlined style={{ color: '#7C3AED' }} /> {profile.website}
                       </span>
                     )}
                     {profile.location && (
@@ -420,7 +420,7 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
                     )}
                     {profile.preferredPlatforms.length > 0 && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                        <ShareAltOutlined style={{ color: '#2563EB' }} /> Nền tảng: {profile.preferredPlatforms.join(', ')}
+                        <ShareAltOutlined style={{ color: '#7C3AED' }} /> Nền tảng: {profile.preferredPlatforms.join(', ')}
                       </span>
                     )}
                   </div>
@@ -665,10 +665,10 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
                                       padding: '12px 16px',
                                       borderRadius: 10,
                                       border: profile.preferredPlatforms.includes(item.value)
-                                        ? '1.5px solid #2563EB'
+                                        ? '1.5px solid #7C3AED'
                                         : '1px solid #E2E8F0',
                                       background: profile.preferredPlatforms.includes(item.value)
-                                        ? '#EFF6FF'
+                                        ? '#F3E8FF'
                                         : '#FFFFFF',
                                       transition: 'all 0.2s',
                                     }}

@@ -16,7 +16,7 @@ export const CampaignGuidelinesTab: React.FC<CampaignGuidelinesTabProps> = ({ ra
       <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 10, border: '1px solid #E2E8F0' }}>
           <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 13 }}>Quy định gắn hashtag bắt buộc</div>
-          <div style={{ fontSize: 13, color: '#1D4ED8', fontWeight: 600, marginTop: 4 }}>
+          <div style={{ fontSize: 13, color: '#6D28D9', fontWeight: 600, marginTop: 4 }}>
             {rawCampaign?.name
               ? `#${rawCampaign.name.replace(/[^a-zA-Z0-9\u00C0-\u024F\u1EA0-\u1EF9]/g, '')} #InfluencerMatch #Campaign`
               : '#InfluencerMatch #BrandCampaign #Campaign2026'}

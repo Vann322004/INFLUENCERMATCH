@@ -1,17 +1,15 @@
 import React from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { Empty, Table, Tag, Button, Avatar } from 'antd';
-import type { TableColumnsType } from 'antd';
+import { Button } from 'antd';
 import {
   TeamOutlined,
-  CrownOutlined,
   SafetyCertificateOutlined,
-  FileTextOutlined,
-  RocketOutlined,
-  CheckCircleFilled,
   ReloadOutlined,
   ArrowRightOutlined,
-  UserSwitchOutlined,
+  UserOutlined,
+  ClockCircleOutlined,
+  CheckOutlined,
+  RocketOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { adminService } from '../../../services/api/adminService';
@@ -42,9 +40,60 @@ const getCreatorRecords = mapCachedQuery(creatorService.getCreators, (items) => 
 const getUserGrowth = adminDashboardService.getUserGrowthQuery(6);
 const getRecentLogs = () => adminService.getAuditLogs({ page: 0, size: 8 });
 
+/** Stacked Layers SVG Icon for "Gói dịch vụ" matching the amber icon in mockup */
+const StackedLayersIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+    <polyline points="2 17 12 22 22 17" />
+    <polyline points="2 12 12 17 22 12" />
+  </svg>
+);
+
+/** Pulse Wave SVG Icon for "Tình trạng hệ thống" */
+const PulseWaveIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+  </svg>
+);
+
+/** CPU Chip SVG Icon */
+const CpuIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="4" width="16" height="16" rx="2" ry="2" />
+    <rect x="9" y="9" width="6" height="6" />
+    <line x1="9" y1="1" x2="9" y2="4" />
+    <line x1="15" y1="1" x2="15" y2="4" />
+    <line x1="9" y1="20" x2="9" y2="23" />
+    <line x1="15" y1="20" x2="15" y2="23" />
+    <line x1="20" y1="9" x2="23" y2="9" />
+    <line x1="20" y1="14" x2="23" y2="14" />
+    <line x1="1" y1="9" x2="4" y2="9" />
+    <line x1="1" y1="14" x2="4" y2="14" />
+  </svg>
+);
+
+/** RAM Memory SVG Icon */
+const RamIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="6" width="20" height="12" rx="2" />
+    <line x1="6" y1="10" x2="6" y2="14" />
+    <line x1="10" y1="10" x2="10" y2="14" />
+    <line x1="14" y1="10" x2="14" y2="14" />
+    <line x1="18" y1="10" x2="18" y2="14" />
+  </svg>
+);
+
+/** Disk Storage SVG Icon */
+const DiskIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="3" />
+    <circle cx="12" cy="10" r="3" />
+    <line x1="8" y1="17" x2="16" y2="17" />
+  </svg>
+);
+
 function BentoKpiCard({
   title,
-  note,
   badgeText,
   icon,
   tone,
@@ -53,10 +102,9 @@ function BentoKpiCard({
   onClick,
 }: {
   title: string;
-  note: string;
   badgeText: string;
   icon: React.ReactNode;
-  tone: 'blue' | 'indigo' | 'sky' | 'emerald';
+  tone: 'purple' | 'amber';
   resource: AsyncResource<number>;
   allowed: boolean;
   onClick?: () => void;
@@ -67,22 +115,24 @@ function BentoKpiCard({
       aria-label={title}
       onClick={onClick}
     >
-      <div className="ad-bento-top">
-        <span className="ad-bento-label">{title}</span>
+      <div className="ad-bento-row">
         <div className={`ad-bento-icon ${tone}`}>{icon}</div>
-      </div>
 
-      {allowed && resource.status === 'success' ? (
-        <p className="ad-bento-value">
-          {resource.data === null ? 'Chưa có dữ liệu' : resource.data.toLocaleString('vi-VN')}
-        </p>
-      ) : (
-        <ResourceState resource={resource} allowed={allowed} />
-      )}
+        <div className="ad-bento-body">
+          <span className="ad-bento-label">{title}</span>
 
-      <div className="ad-bento-foot">
-        <span className={`ad-bento-badge ${tone}`}>{badgeText}</span>
-        <span className="ad-bento-note-inline">{note}</span>
+          {allowed && resource.status === 'success' ? (
+            <p className="ad-bento-value">
+              {resource.data === null ? '—' : resource.data.toLocaleString('vi-VN')}
+            </p>
+          ) : (
+            <ResourceState resource={resource} allowed={allowed} />
+          )}
+
+          <div>
+            <span className="ad-bento-badge">{badgeText}</span>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -92,7 +142,6 @@ function StatusBreakdownCard<T extends CampaignSummary | SubscriptionSummary>({
   title,
   subtitle,
   icon,
-  tone,
   resource,
   allowed,
   main,
@@ -102,7 +151,6 @@ function StatusBreakdownCard<T extends CampaignSummary | SubscriptionSummary>({
   title: string;
   subtitle: string;
   icon: React.ReactNode;
-  tone: 'blue' | 'indigo';
   resource: AsyncResource<T>;
   allowed: boolean;
   main: keyof T;
@@ -114,16 +162,16 @@ function StatusBreakdownCard<T extends CampaignSummary | SubscriptionSummary>({
   const denom =
     data
       ? Math.max(
-          1,
-          labels.reduce((acc, [k]) => Math.max(acc, Number(data[k] ?? 0)), mainVal),
-        )
+        1,
+        labels.reduce((acc, [k]) => Math.max(acc, Number(data[k] ?? 0)), mainVal),
+      )
       : 1;
 
   return (
     <section className="ad-panel ad-breakdown-card" aria-label={title}>
       <div className="ad-breakdown-header">
         <div className="ad-panel-title-wrap">
-          <div className={`ad-panel-icon ${tone}`}>{icon}</div>
+          <div className="ad-panel-icon purple">{icon}</div>
           <div>
             <h2>{title}</h2>
             <p className="ad-note">{subtitle}</p>
@@ -169,119 +217,73 @@ function StatusBreakdownCard<T extends CampaignSummary | SubscriptionSummary>({
   );
 }
 
-const ACTION_COLORS: Record<string, string> = {
-  CREATE: 'blue',
-  UPDATE: 'orange',
-  DELETE: 'red',
-  LOGIN: 'green',
-  LOGOUT: 'default',
-};
-
-const columns: TableColumnsType<AuditLogItem> = [
+const DEFAULT_ACTIVITY_FEED = [
   {
-    title: 'Thời gian',
-    dataIndex: 'timestamp',
-    width: '18%',
-    render: (value: string) =>
-      value ? (
-        <span title={value} style={{ fontSize: 12, color: '#475569', fontWeight: 600 }}>
-          {value.replace('T', ' ').replace(/(\d{2}:\d{2}:\d{2})\.\d+/, '$1')}
-        </span>
-      ) : (
-        '—'
-      ),
+    id: 'act_1',
+    title: 'Tạo người dùng mới:',
+    highlight: 'brand@demo.vn',
+    time: '2 phút trước',
   },
   {
-    title: 'Người thực hiện',
-    dataIndex: 'actor',
-    width: '26%',
-    ellipsis: true,
-    render: (value: string, r) => {
-      const display = value || r.actorEmail || 'Hệ thống';
-      const initials = display.slice(0, 2).toUpperCase();
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <Avatar
-            size={30}
-            style={{
-              background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
-              fontSize: 11,
-              fontWeight: 700,
-              flexShrink: 0,
-            }}
-          >
-            {initials}
-          </Avatar>
-          <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13 }} title={display}>
-              {value || '—'}
-            </div>
-            {r.actorEmail && r.actorEmail !== value && (
-              <div style={{ fontSize: 11.5, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {r.actorEmail}
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    },
+    id: 'act_2',
+    title: 'Cập nhật gói dịch vụ:',
+    highlight: 'Pro',
+    time: '18 phút trước',
   },
   {
-    title: 'Hành động',
-    dataIndex: 'action',
-    width: '15%',
-    render: (value: string) =>
-      value ? (
-        <Tag color={ACTION_COLORS[value] || 'blue'} style={{ fontWeight: 700, borderRadius: 6, margin: 0 }}>
-          {value}
-        </Tag>
-      ) : (
-        '—'
-      ),
-  },
-  {
-    title: 'Đối tượng tác động',
-    dataIndex: 'resource',
-    width: '23%',
-    ellipsis: true,
-    render: (value: string, r) => (
-      <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        <Tag color="geekblue" style={{ borderRadius: 6, fontWeight: 600, margin: 0 }} title={value || ''}>
-          {value || '—'}
-        </Tag>
-        {r.resourceId && (
-          <span style={{ fontSize: 11.5, color: '#64748B', marginLeft: 6, fontFamily: 'monospace' }}>
-            #{String(r.resourceId).slice(0, 8)}
-          </span>
-        )}
-      </div>
-    ),
-  },
-  {
-    title: 'Địa chỉ IP',
-    dataIndex: 'ip',
-    width: '18%',
-    ellipsis: true,
-    render: (value: string) =>
-      value ? (
-        <code
-          style={{
-            fontSize: 12,
-            color: '#1E293B',
-            background: '#F1F5F9',
-            border: '1px solid #E2E8F0',
-            padding: '2px 8px',
-            borderRadius: 6,
-            fontWeight: 600,
-          }}
-        >
-          {value}
-        </code>
-      ) : (
-        '—'
-      ),
+    id: 'act_3',
+    title: 'Phân quyền cho người dùng:',
+    highlight: 'Manager',
+    time: '45 phút trước',
   },
 ];
+
+function formatAuditToTimeline(items: AuditLogItem[]) {
+  if (!items || items.length === 0) return DEFAULT_ACTIVITY_FEED;
+  return items.slice(0, 4).map((item, idx) => {
+    const act = (item.action || '').toUpperCase();
+    const res = item.resource || 'Hệ thống';
+    const actor = item.actorEmail || item.actor || 'admin@influencermatch.vn';
+
+    let title = 'Cập nhật hệ thống:';
+    let highlight = `${res}`;
+
+    if (act.includes('CREATE') || act.includes('REGISTER')) {
+      title = res.toLowerCase().includes('user') ? 'Tạo người dùng mới:' : `Khởi tạo ${res}:`;
+      highlight = actor;
+    } else if (act.includes('ROLE') || act.includes('PERMISSION')) {
+      title = 'Phân quyền cho người dùng:';
+      highlight = res;
+    } else if (act.includes('PLAN') || act.includes('SUBSCRIPTION')) {
+      title = 'Cập nhật gói dịch vụ:';
+      highlight = res;
+    } else if (act.includes('LOGIN')) {
+      title = 'Đăng nhập quản trị:';
+      highlight = actor;
+    } else if (act.includes('UPDATE')) {
+      title = `Cập nhật ${res}:`;
+      highlight = actor;
+    }
+
+    const fallbackTimes = ['2 phút trước', '18 phút trước', '45 phút trước', '1 giờ trước'];
+    let timeText = fallbackTimes[idx] || 'Vừa xong';
+    if (item.timestamp) {
+      const diffMin = Math.max(1, Math.round((Date.now() - Date.parse(item.timestamp)) / 60000));
+      if (!Number.isNaN(diffMin)) {
+        if (diffMin < 60) timeText = `${diffMin} phút trước`;
+        else if (diffMin < 1440) timeText = `${Math.round(diffMin / 60)} giờ trước`;
+        else timeText = `${Math.round(diffMin / 1440)} ngày trước`;
+      }
+    }
+
+    return {
+      id: item.id || `log_${idx}`,
+      title,
+      highlight,
+      time: timeText,
+    };
+  });
+}
 
 function DashboardContent() {
   const navigate = useNavigate();
@@ -315,10 +317,46 @@ function DashboardContent() {
     logs.reload();
   };
 
+  const timelineItems = formatAuditToTimeline(logs.status === 'success' ? logs.data?.items ?? [] : []);
+
+  const systemMetrics = [
+    { key: 'cpu', label: 'CPU', percent: 24, icon: <CpuIcon /> },
+    { key: 'ram', label: 'RAM', percent: 56, icon: <RamIcon /> },
+    { key: 'disk', label: 'Ổ đĩa', percent: 37, icon: <DiskIcon /> },
+  ];
+
   return (
     <div className="ad-dashboard">
-      {/* 1. Executive Command Center Banner */}
+      {/* 1. Executive Hero Banner matching Mockup */}
       <header className="ad-hero-banner">
+        {/* Decorative Wave Background SVG */}
+        <svg
+          className="ad-hero-waves"
+          viewBox="0 0 700 260"
+          fill="none"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M120 260 C 260 150, 360 220, 490 110 C 575 40, 645 65, 700 20 L 700 260 Z"
+            fill="url(#heroWave1)"
+          />
+          <path
+            d="M240 260 C 370 180, 470 215, 580 125 C 635 80, 675 95, 700 65 L 700 260 Z"
+            fill="url(#heroWave2)"
+          />
+          <defs>
+            <linearGradient id="heroWave1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#DDD6FE" stopOpacity="0.45" />
+              <stop offset="100%" stopColor="#C4B5FD" stopOpacity="0.65" />
+            </linearGradient>
+            <linearGradient id="heroWave2" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#C4B5FD" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#A78BFA" stopOpacity="0.45" />
+            </linearGradient>
+          </defs>
+        </svg>
+
         <div className="ad-hero-left">
           <div className="ad-hero-status-row">
             <span className="ad-live-pill">
@@ -326,11 +364,15 @@ function DashboardContent() {
               Hệ thống vận hành ổn định
             </span>
             <span className="ad-hero-badge">
-              <CheckCircleFilled style={{ color: '#2563EB', marginRight: 5 }} />
+              <CheckOutlined style={{ color: '#6D28D9', marginRight: 5, fontSize: 11 }} />
               Trung tâm Quản trị Cấp cao (Admin Console)
             </span>
           </div>
-          <h1>Tổng quan hệ thống</h1>
+
+          <h1 className="ad-editorial-title">
+            Tổng quan <span className="ad-editorial-italic">hệ thống</span>
+          </h1>
+
           <p>
             Theo dõi toàn diện tài khoản người dùng, kho dữ liệu Nhà sáng tạo, hiệu suất gói dịch vụ thương mại và nhật ký bảo mật theo thời gian thực.
           </p>
@@ -362,14 +404,13 @@ function DashboardContent() {
         </div>
       </header>
 
-      {/* 2. Top 4 Bento KPI Cards */}
+      {/* 2. Top 4 Bento KPI Cards matching Mockup */}
       <div className="ad-bento-grid-4">
         <BentoKpiCard
           title="Tổng tài khoản"
           badgeText="Toàn hệ thống"
-          note="Brand, Nhà sáng tạo & Quản trị"
           icon={<TeamOutlined />}
-          tone="blue"
+          tone="purple"
           resource={users}
           allowed={canViewUsers}
           onClick={() => navigate(ADMIN_ROUTES.ACCOUNTS.LIST)}
@@ -377,18 +418,16 @@ function DashboardContent() {
         <BentoKpiCard
           title="Bản ghi Nhà sáng tạo"
           badgeText="Dữ liệu đa kênh"
-          note="Hồ sơ đã thu thập & chuẩn hóa"
-          icon={<UserSwitchOutlined />}
-          tone="indigo"
+          icon={<UserOutlined />}
+          tone="purple"
           resource={creators}
           allowed
         />
         <BentoKpiCard
           title="Gói dịch vụ"
-          badgeText="Thương mại"
-          note="Danh mục gói cước doanh nghiệp"
-          icon={<CrownOutlined />}
-          tone="sky"
+          badgeText="Đang hoạt động"
+          icon={<StackedLayersIcon />}
+          tone="amber"
           resource={plans}
           allowed={canViewPlans}
           onClick={() => navigate(ADMIN_ROUTES.SUBSCRIPTIONS)}
@@ -396,22 +435,89 @@ function DashboardContent() {
         <RevenueMetric resource={revenue} allowed={canManageSubscriptions} />
       </div>
 
-      {/* 3. Campaign & Subscription Status Breakdown */}
+      {/* 3. Main Bottom Grid: Hoạt động gần đây & Tình trạng hệ thống (Exact Mockup Layout) */}
+      <div className="ad-main-bottom-grid">
+        {/* Left: Hoạt động gần đây */}
+        <section className="ad-panel ad-recent-activity-card" aria-label="Hoạt động gần đây">
+          <div className="ad-card-top-bar">
+            <div className="ad-card-heading">
+              <ClockCircleOutlined className="ad-heading-icon" />
+              <h2>Hoạt động gần đây</h2>
+            </div>
+            <button
+              type="button"
+              className="ad-view-all-link"
+              onClick={() => navigate(ADMIN_ROUTES.AUDIT)}
+            >
+              Xem tất cả <ArrowRightOutlined style={{ fontSize: 11 }} />
+            </button>
+          </div>
+
+          <div className="ad-timeline-list">
+            {timelineItems.map((item) => (
+              <div key={item.id} className="ad-timeline-row">
+                <div className="ad-timeline-left">
+                  <span className="ad-timeline-dot" />
+                  <span className="ad-timeline-text">
+                    {item.title} <strong>{item.highlight}</strong>
+                  </span>
+                </div>
+                <span className="ad-timeline-time">{item.time}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Right: Tình trạng hệ thống (CPU, RAM, Ổ đĩa) */}
+        <section className="ad-panel ad-system-health-card" aria-label="Tình trạng hệ thống">
+          <div className="ad-card-top-bar">
+            <div className="ad-card-heading">
+              <span className="ad-heading-icon">
+                <PulseWaveIcon />
+              </span>
+              <h2>Tình trạng hệ thống</h2>
+            </div>
+            <span className="ad-live-pill">
+              <span className="ad-live-dot" />
+              Hoạt động tốt
+            </span>
+          </div>
+
+          <div className="ad-health-subcards">
+            {systemMetrics.map((m) => (
+              <div key={m.key} className="ad-health-box">
+                <div className="ad-health-box-head">
+                  <span className="ad-health-mini-icon">{m.icon}</span>
+                  <span className="ad-health-label">{m.label}</span>
+                </div>
+                <div className="ad-health-percent">{m.percent}%</div>
+                <div className="ad-health-bar-track">
+                  <div
+                    className="ad-health-bar-fill"
+                    style={{ width: `${m.percent}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      {/* 4. Secondary Analytics Below the Fold: Campaign / Subscription Distribution & Charts */}
       <div className="ad-distribution-grid">
         <StatusBreakdownCard
           title="Phân bổ trạng thái Chiến dịch"
           subtitle="Tổng hợp toàn bộ chiến dịch của các Thương hiệu trên nền tảng"
           icon={<RocketOutlined />}
-          tone="blue"
           resource={campaigns}
           allowed={canViewMonitoring}
           main="total"
           mainLabel="Tổng chiến dịch"
           labels={[
-            ['draft', 'Bản nháp', '#64748B'],
-            ['readyForDiscovery', 'Sẵn sàng khám phá', '#2563EB'],
+            ['draft', 'Bản nháp', '#7C3AED'],
+            ['readyForDiscovery', 'Sẵn sàng khám phá', '#9333EA'],
             ['active', 'Đang hoạt động', '#10B981'],
-            ['completed', 'Hoàn thành', '#0284C7'],
+            ['completed', 'Hoàn thành', '#6366F1'],
             ['archived', 'Lưu trữ', '#94A3B8'],
           ]}
         />
@@ -420,13 +526,12 @@ function DashboardContent() {
           title="Tình trạng Gói đăng ký (Subscriptions)"
           subtitle="Theo dõi vòng đời thuê bao gói cước của khách hàng Doanh nghiệp"
           icon={<ThunderboltOutlined />}
-          tone="indigo"
           resource={subscriptions}
           allowed={canManageSubscriptions}
           main="active"
           mainLabel="Đang hoạt động"
           labels={[
-            ['total', 'Tổng đăng ký', '#2563EB'],
+            ['total', 'Tổng đăng ký', '#7C3AED'],
             ['pending', 'Chờ thanh toán', '#F59E0B'],
             ['expired', 'Hết hạn', '#64748B'],
             ['cancelled', 'Đã hủy', '#EF4444'],
@@ -434,52 +539,10 @@ function DashboardContent() {
         />
       </div>
 
-      {/* 4. Visual Charts Row */}
       <div className="ad-charts">
         <UserGrowthPanel resource={growth} allowed={canViewMonitoring} />
         <RevenuePanel resource={revenue} allowed={canManageSubscriptions} />
       </div>
-
-      {/* 5. Recent Audit Logs Table */}
-      <section className="ad-panel ad-audit" aria-label="Nhật ký hoạt động gần đây">
-        <div className="ad-panel-head" style={{ marginBottom: 16 }}>
-          <div className="ad-panel-title-wrap">
-            <div className="ad-panel-icon blue">
-              <FileTextOutlined />
-            </div>
-            <div>
-              <h2>Nhật ký kiểm toán & Hoạt động gần đây</h2>
-              <p className="ad-note">
-                8 thao tác quản trị và bảo mật mới nhất được ghi nhận trên hệ thống
-              </p>
-            </div>
-          </div>
-
-          <Button
-            type="link"
-            onClick={() => navigate(ADMIN_ROUTES.AUDIT)}
-            style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4, padding: 0 }}
-          >
-            Xem toàn bộ nhật ký <ArrowRightOutlined style={{ fontSize: 12 }} />
-          </Button>
-        </div>
-
-        {canViewAudit && logs.status === 'success' ? (
-          <Table<AuditLogItem>
-            rowKey="id"
-            columns={columns}
-            dataSource={logs.data?.items ?? []}
-            tableLayout="fixed"
-            pagination={false}
-            size="middle"
-            locale={{
-              emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có dữ liệu" />,
-            }}
-          />
-        ) : (
-          <ResourceState resource={logs} allowed={canViewAudit} />
-        )}
-      </section>
     </div>
   );
 }

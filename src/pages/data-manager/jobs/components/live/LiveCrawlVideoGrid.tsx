@@ -89,7 +89,7 @@ export default function LiveCrawlVideoGrid({ result }: LiveCrawlVideoGridProps) 
                   <LikeOutlined style={{ color: '#E11D48' }} /> {(post.likes || 0).toLocaleString()}
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <MessageOutlined style={{ color: '#3B82F6' }} /> {(post.comments || 0).toLocaleString()}
+                  <MessageOutlined style={{ color: '#8B5CF6' }} /> {(post.comments || 0).toLocaleString()}
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <ShareAltOutlined style={{ color: '#10B981' }} /> {(post.shares || 0).toLocaleString()}
@@ -107,10 +107,10 @@ export default function LiveCrawlVideoGrid({ result }: LiveCrawlVideoGridProps) 
                     textAlign: 'center',
                     fontSize: 11.5,
                     fontWeight: 600,
-                    color: '#2563EB',
+                    color: '#7C3AED',
                     padding: '4px 0',
                     borderRadius: 6,
-                    background: '#EFF6FF',
+                    background: '#F3E8FF',
                   }}
                 >
                   Xem bài đăng trên {result.platform} ↗

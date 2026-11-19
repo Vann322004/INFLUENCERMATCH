@@ -33,7 +33,7 @@ export const IdentityStatsCards: React.FC<IdentityStatsCardsProps> = ({
           style={{
             fontSize: 22,
             fontWeight: 800,
-            color: pendingConflictsCount > 0 ? '#2563EB' : '#0F172A',
+            color: pendingConflictsCount > 0 ? '#7C3AED' : '#0F172A',
             marginTop: 2,
           }}
         >

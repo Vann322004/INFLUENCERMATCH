@@ -38,7 +38,7 @@ export default function LiveCrawlProfileCard({ result, engagementRate }: LiveCra
                 height: 72,
                 borderRadius: '50%',
                 objectFit: 'cover',
-                border: '2px solid #EFF6FF',
+                border: '2px solid #F3E8FF',
                 flexShrink: 0,
               }}
             />
@@ -49,7 +49,7 @@ export default function LiveCrawlProfileCard({ result, engagementRate }: LiveCra
                 </Title>
                 {result.is_verified && (
                   <Tooltip title="Tài khoản đã xác minh chính chủ">
-                    <SafetyCertificateOutlined style={{ color: '#2563EB', fontSize: 16 }} />
+                    <SafetyCertificateOutlined style={{ color: '#7C3AED', fontSize: 16 }} />
                   </Tooltip>
                 )}
                 <Tag color="geekblue" style={{ borderRadius: 4, fontWeight: 600, fontSize: 11, margin: 0 }}>
@@ -57,7 +57,7 @@ export default function LiveCrawlProfileCard({ result, engagementRate }: LiveCra
                 </Tag>
               </div>
 
-              <div style={{ color: '#1D4ED8', fontWeight: 600, fontSize: 13, marginTop: 2 }}>
+              <div style={{ color: '#6D28D9', fontWeight: 600, fontSize: 13, marginTop: 2 }}>
                 @{result.username}
               </div>
 
@@ -186,7 +186,7 @@ export default function LiveCrawlProfileCard({ result, engagementRate }: LiveCra
                   style={{
                     fontSize: 19,
                     fontWeight: 800,
-                    color: '#2563EB',
+                    color: '#7C3AED',
                     marginTop: 4,
                     whiteSpace: 'nowrap',
                   }}

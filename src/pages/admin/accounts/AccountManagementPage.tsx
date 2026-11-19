@@ -31,7 +31,7 @@ const STATUS_CONFIG: Record<AdminUserStatus, { label: string; color: string; bg:
 
 const ROLE_CONFIG: Record<AdminUserRole, { label: string; color: string; icon: React.ReactNode }> = {
   super_admin: { label: 'Quản trị viên cấp cao', color: '#0F172A', icon: <SafetyCertificateOutlined /> },
-  admin:       { label: 'Quản trị viên',         color: '#2563EB', icon: <CrownOutlined /> },
+  admin:       { label: 'Quản trị viên',         color: '#7C3AED', icon: <CrownOutlined /> },
   manager:     { label: 'Quản lý',               color: '#06B6D4', icon: <ControlOutlined /> },
   brand:       { label: 'Doanh nghiệp',           color: '#0EA5E9', icon: <TeamOutlined /> },
   creator:     { label: 'Nhà sáng tạo',           color: '#10B981', icon: <UserOutlined /> },
@@ -126,7 +126,7 @@ export default function AccountManagementPage() {
       key: 'account',
       render: (_, r) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Avatar src={r.avatar} size={36} style={{ border: '1.5px solid rgba(37, 99, 235,0.3)', flexShrink: 0 }} />
+          <Avatar src={r.avatar} size={36} style={{ border: '1.5px solid rgba(124, 58, 237,0.3)', flexShrink: 0 }} />
           <div>
             <div style={{ color: '#0F172A', fontWeight: 700, fontSize: 13.5, lineHeight: 1.25 }}>{r.name}</div>
             <div style={{ color: '#64748B', fontSize: 12, lineHeight: 1.25, marginTop: 2 }}>{r.email}</div>
@@ -200,7 +200,7 @@ export default function AccountManagementPage() {
               size="small"
               icon={<EyeOutlined />}
               onClick={() => navigate(`/admin/accounts/${record.id}`)}
-              style={{ background: 'rgba(37, 99, 235,0.1)', border: '1px solid rgba(37, 99, 235,0.2)', color: '#60A5FA' }}
+              style={{ background: 'rgba(124, 58, 237,0.1)', border: '1px solid rgba(124, 58, 237,0.2)', color: '#A78BFA' }}
             />
           </Tooltip>
           <Dropdown menu={{ items: rowActions(record) }} trigger={['click']} placement="bottomRight">
@@ -216,7 +216,7 @@ export default function AccountManagementPage() {
   ];
 
   const statCards = [
-    { label: 'Tổng tài khoản', value: stats.total, color: '#2563EB', icon: <TeamOutlined /> },
+    { label: 'Tổng tài khoản', value: stats.total, color: '#7C3AED', icon: <TeamOutlined /> },
     { label: 'Đang hoạt động', value: stats.active, color: '#10B981', icon: <UnlockOutlined /> },
     { label: 'Đã khóa', value: stats.locked, color: '#EF4444', icon: <LockOutlined /> },
     { label: 'Chờ duyệt', value: stats.pending, color: '#F59E0B', icon: <UserOutlined /> },
@@ -248,7 +248,7 @@ export default function AccountManagementPage() {
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => setCreateOpen(true)}
-              style={{ background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)', border: 'none', fontWeight: 700 }}
+              style={{ background: 'linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%)', border: 'none', fontWeight: 700 }}
             >
               Tạo Quản trị / Quản lý
             </Button>

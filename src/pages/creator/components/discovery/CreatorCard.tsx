@@ -71,7 +71,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
             <div className="cdiscovery-card-name-title">
               <span>{creator.name}</span>
               {creator.isVerified && (
-                <CheckCircleFilled style={{ color: '#3B82F6', fontSize: 13 }} />
+                <CheckCircleFilled style={{ color: '#8B5CF6', fontSize: 13 }} />
               )}
               {creator.isSimilarFallback && (
                 <Tag color="orange" title={creator.matchReason} style={{ borderRadius: 999, fontSize: 10, padding: '0 6px', margin: '0 0 0 4px', lineHeight: '18px', fontWeight: 500 }}>

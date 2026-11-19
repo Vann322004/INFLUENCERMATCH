@@ -16,7 +16,7 @@
 .shortlist-modal .ant-form-item-extra { padding-top: 8px; font-size: 12px; color: #64748b; }
 .shortlist-priority { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; }
 .shortlist-priority .shortlist-priority-option { margin: 0; padding: 14px 10px; align-items: flex-start; border: 1px solid #e2e8f0; border-radius: 10px; transition: border-color .15s, background .15s; }
-.shortlist-priority .ant-radio-wrapper-checked { border-color: #2563EB; background: #f5f5ff; }
+.shortlist-priority .ant-radio-wrapper-checked { border-color: #7C3AED; background: #f5f5ff; }
 .shortlist-priority-option strong { display: block; font-size: 12px; font-weight: 500; line-height: 1.6; white-space: nowrap; }
 .shortlist-priority-option span span { display: block; margin-top: 4px; font-size: 11px; color: #64748b; }
 .shortlist-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #e2e8f0; }

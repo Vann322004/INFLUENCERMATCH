@@ -380,7 +380,7 @@ export default function CampaignTable() {
                 marginBottom: 3,
                 transition: 'color 0.2s',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#2563EB')}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#7C3AED')}
               onMouseLeave={(e) => (e.currentTarget.style.color = '#0F172A')}
             >
               {record.title}
@@ -419,8 +419,8 @@ export default function CampaignTable() {
 
         if (record.status === 'draft') {
           color = 'processing';
-          bg = '#EFF6FF';
-          text = '#1D4ED8';
+          bg = '#F3E8FF';
+          text = '#6D28D9';
         } else if (record.status === 'completed') {
           color = 'default';
           bg = '#F1F5F9';
@@ -670,7 +670,7 @@ export default function CampaignTable() {
       <Modal
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 700 }}>
-            <EditOutlined style={{ color: '#2563EB' }} />
+            <EditOutlined style={{ color: '#7C3AED' }} />
             <span>Chỉnh sửa thông tin chiến dịch</span>
           </div>
         }

@@ -51,20 +51,20 @@ export default function AdminLoginPage() {
       <div style={{
         position: 'absolute', top: '20%', left: '15%',
         width: 400, height: 400,
-        background: 'radial-gradient(circle, rgba(37, 99, 235,0.15) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(124, 58, 237,0.15) 0%, transparent 70%)',
         borderRadius: '50%', pointerEvents: 'none',
       }} />
       <div style={{
         position: 'absolute', bottom: '15%', right: '10%',
         width: 300, height: 300,
-        background: 'radial-gradient(circle, rgba(37, 99, 235,0.12) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(124, 58, 237,0.12) 0%, transparent 70%)',
         borderRadius: '50%', pointerEvents: 'none',
       }} />
 
       {/* Grid pattern overlay */}
       <div style={{
         position: 'absolute', inset: 0,
-        backgroundImage: `linear-gradient(rgba(37, 99, 235,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(37, 99, 235,0.03) 1px, transparent 1px)`,
+        backgroundImage: `linear-gradient(rgba(124, 58, 237,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(124, 58, 237,0.03) 1px, transparent 1px)`,
         backgroundSize: '40px 40px',
         pointerEvents: 'none',
       }} />
@@ -75,10 +75,10 @@ export default function AdminLoginPage() {
           width: 420,
           background: 'rgba(30, 41, 59, 0.8)',
           backdropFilter: 'blur(24px)',
-          border: '1px solid rgba(37, 99, 235,0.2)',
+          border: '1px solid rgba(124, 58, 237,0.2)',
           borderRadius: 24,
           padding: '40px 36px',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(37, 99, 235,0.1)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(124, 58, 237,0.1)',
           position: 'relative',
           zIndex: 1,
         }}
@@ -89,13 +89,13 @@ export default function AdminLoginPage() {
             style={{
               width: 64,
               height: 64,
-              background: 'linear-gradient(135deg, #2563EB 0%, #2563EB 100%)',
+              background: 'linear-gradient(135deg, #7C3AED 0%, #7C3AED 100%)',
               borderRadius: 18,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 16px',
-              boxShadow: '0 8px 32px rgba(37, 99, 235,0.4)',
+              boxShadow: '0 8px 32px rgba(124, 58, 237,0.4)',
             }}
           >
             <SafetyCertificateOutlined style={{ fontSize: 30, color: '#fff' }} />
@@ -103,15 +103,15 @@ export default function AdminLoginPage() {
           <div style={{ fontWeight: 800, fontSize: 22, color: '#F1F5F9', letterSpacing: 0.5 }}>
             Admin Panel
           </div>
-          <div style={{ color: '#2563EB', fontSize: 11, fontWeight: 700, letterSpacing: 2, marginTop: 4 }}>
+          <div style={{ color: '#7C3AED', fontSize: 11, fontWeight: 700, letterSpacing: 2, marginTop: 4 }}>
             INFLUENCERMATCH SYSTEM
           </div>
           <div
             style={{
               marginTop: 10,
               padding: '5px 12px',
-              background: 'rgba(37, 99, 235,0.1)',
-              border: '1px solid rgba(37, 99, 235,0.2)',
+              background: 'rgba(124, 58, 237,0.1)',
+              border: '1px solid rgba(124, 58, 237,0.2)',
               borderRadius: 20,
               display: 'inline-block',
               color: '#A5B4FC',
@@ -137,12 +137,12 @@ export default function AdminLoginPage() {
             rules={[{ required: true, message: 'Vui lòng nhập email' }]}
           >
             <Input
-              prefix={<MailOutlined style={{ color: '#2563EB' }} />}
+              prefix={<MailOutlined style={{ color: '#7C3AED' }} />}
               placeholder="admin@influencermatch.vn"
               size="large"
               style={{
                 background: 'rgba(15,23,42,0.6)',
-                border: '1px solid rgba(37, 99, 235,0.25)',
+                border: '1px solid rgba(124, 58, 237,0.25)',
                 borderRadius: 12,
                 color: '#F1F5F9',
                 height: 48,
@@ -157,13 +157,13 @@ export default function AdminLoginPage() {
             style={{ marginBottom: 12 }}
           >
             <Input.Password
-              prefix={<LockOutlined style={{ color: '#2563EB' }} />}
+              prefix={<LockOutlined style={{ color: '#7C3AED' }} />}
               placeholder="••••••••"
               size="large"
               iconRender={(visible) => visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />}
               style={{
                 background: 'rgba(15,23,42,0.6)',
-                border: '1px solid rgba(37, 99, 235,0.25)',
+                border: '1px solid rgba(124, 58, 237,0.25)',
                 borderRadius: 12,
                 color: '#F1F5F9',
                 height: 48,
@@ -186,14 +186,14 @@ export default function AdminLoginPage() {
               loading={loading}
               icon={loading ? <Spin size="small" /> : <ThunderboltOutlined />}
               style={{
-                background: 'linear-gradient(135deg, #2563EB 0%, #2563EB 100%)',
+                background: 'linear-gradient(135deg, #7C3AED 0%, #7C3AED 100%)',
                 border: 'none',
                 borderRadius: 12,
                 height: 50,
                 fontWeight: 700,
                 fontSize: 15,
                 letterSpacing: 0.5,
-                boxShadow: '0 8px 24px rgba(37, 99, 235,0.35)',
+                boxShadow: '0 8px 24px rgba(124, 58, 237,0.35)',
               }}
             >
               {loading ? 'Đang xác thực...' : 'Đăng nhập Admin'}
@@ -206,8 +206,8 @@ export default function AdminLoginPage() {
           style={{
             marginTop: 20,
             padding: '10px 14px',
-            background: 'rgba(37, 99, 235,0.08)',
-            border: '1px solid rgba(37, 99, 235,0.15)',
+            background: 'rgba(124, 58, 237,0.08)',
+            border: '1px solid rgba(124, 58, 237,0.15)',
             borderRadius: 10,
             textAlign: 'center',
           }}

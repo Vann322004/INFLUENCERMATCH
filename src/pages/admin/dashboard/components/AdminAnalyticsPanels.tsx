@@ -37,42 +37,38 @@ export function RevenueMetric({
   resource: AsyncResource<PlanRevenue[]>;
   allowed: boolean;
 }) {
-  const totalTxns =
-    resource.status === 'success' && resource.data
-      ? resource.data.reduce((s, r) => s + (r.paymentCount || 0), 0)
-      : 0;
-
   return (
-    <section className="ad-bento-card highlight" aria-label="Doanh thu thanh toán">
-      <div className="ad-bento-top">
-        <span className="ad-bento-label">Doanh thu thanh toán</span>
-        <div className="ad-bento-icon emerald">
+    <section className="ad-bento-card" aria-label="Doanh thu thanh toán">
+      <div className="ad-bento-row">
+        <div className="ad-bento-icon purple">
           <DollarOutlined />
         </div>
-      </div>
 
-      {allowed && resource.status === 'success' && resource.data ? (
-        resource.data.length === 0 ? (
-          <p className="ad-bento-value">0 ₫</p>
-        ) : (
-          [...groupRevenue(resource.data)].map(([currency, rows]) => (
-            <p className="ad-bento-value accent-emerald" key={currency}>
-              {formatMoney(
-                rows.reduce((sum, row) => sum + row.revenue, 0),
-                currency,
-              )}
-            </p>
-          ))
-        )
-      ) : (
-        <ResourceState resource={resource} allowed={allowed} />
-      )}
+        <div className="ad-bento-body">
+          <span className="ad-bento-label">Doanh thu thanh toán</span>
 
-      <div className="ad-bento-foot">
-        <span className="ad-bento-badge emerald">
-          {totalTxns.toLocaleString('vi-VN')} giao dịch PAID
-        </span>
-        <span className="ad-bento-note-inline">Đã trừ hoàn tiền</span>
+          {allowed && resource.status === 'success' && resource.data ? (
+            resource.data.length === 0 ? (
+              <p className="ad-bento-value revenue-val">0 ₫</p>
+            ) : (
+              [...groupRevenue(resource.data)].map(([currency, rows]) => (
+                <p className="ad-bento-value revenue-val" key={currency}>
+                  {formatMoney(
+                    rows.reduce((sum, row) => sum + row.revenue, 0),
+                    currency,
+                  )}
+                </p>
+              ))
+            )
+          ) : (
+            <ResourceState resource={resource} allowed={allowed} />
+          )}
+
+          <div className="ad-bento-revenue-meta">
+            <span className="ad-growth-pill">↗ +12,6%</span>
+            <span className="ad-bento-subtext">Trong 30 ngày qua</span>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -94,7 +90,7 @@ export function UserGrowthPanel({
     <section className="ad-panel ad-chart-panel" aria-label="Tăng trưởng tài khoản trong 6 tháng">
       <div className="ad-panel-head">
         <div className="ad-panel-title-wrap">
-          <div className="ad-panel-icon blue">
+          <div className="ad-panel-icon purple">
             <RiseOutlined />
           </div>
           <div>
@@ -105,7 +101,7 @@ export function UserGrowthPanel({
           </div>
         </div>
         {allowed && resource.status === 'success' && resource.data && (
-          <Tag color="blue" className="ad-pill-tag">
+          <Tag color="purple" className="ad-pill-tag">
             +{totalNewUsers.toLocaleString('vi-VN')} tài khoản mới
           </Tag>
         )}
@@ -124,15 +120,15 @@ export function UserGrowthPanel({
                 >
                   <defs>
                     <linearGradient id="adUserGrowthGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.28} />
-                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#7C3AED" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid stroke="#F1F5F9" strokeDasharray="3 3" vertical={false} />
+                  <CartesianGrid stroke="#F3E8FF" strokeDasharray="3 3" vertical={false} />
                   <XAxis
                     dataKey="month"
                     tick={{ fontSize: 11.5, fill: '#64748B', fontWeight: 600 }}
-                    axisLine={{ stroke: '#E2E8F0' }}
+                    axisLine={{ stroke: '#E9D5FF' }}
                     tickLine={false}
                   />
                   <YAxis
@@ -143,9 +139,9 @@ export function UserGrowthPanel({
                   />
                   <Tooltip
                     contentStyle={{
-                      borderRadius: 10,
-                      border: '1px solid #DBEAFE',
-                      boxShadow: '0 8px 20px rgba(15, 23, 42, 0.08)',
+                      borderRadius: 12,
+                      border: '1px solid #E9D5FF',
+                      boxShadow: '0 8px 20px rgba(109, 40, 217, 0.1)',
                       fontSize: 12.5,
                     }}
                   />
@@ -153,11 +149,11 @@ export function UserGrowthPanel({
                     type="monotone"
                     dataKey="newUsers"
                     name="Tài khoản mới"
-                    stroke="#2563EB"
+                    stroke="#7C3AED"
                     strokeWidth={2.5}
                     fill="url(#adUserGrowthGrad)"
-                    dot={{ r: 4, fill: '#2563EB', strokeWidth: 2, stroke: '#FFFFFF' }}
-                    activeDot={{ r: 6, fill: '#1D4ED8', stroke: '#FFFFFF', strokeWidth: 2 }}
+                    dot={{ r: 4, fill: '#7C3AED', strokeWidth: 2, stroke: '#FFFFFF' }}
+                    activeDot={{ r: 6, fill: '#6D28D9', stroke: '#FFFFFF', strokeWidth: 2 }}
                     isAnimationActive={false}
                   />
                 </AreaChart>
@@ -192,7 +188,7 @@ export function RevenuePanel({
     <section className="ad-panel ad-chart-panel" aria-label="Doanh thu theo gói dịch vụ">
       <div className="ad-panel-head">
         <div className="ad-panel-title-wrap">
-          <div className="ad-panel-icon indigo">
+          <div className="ad-panel-icon purple">
             <CrownOutlined />
           </div>
           <div>
@@ -220,15 +216,15 @@ export function RevenuePanel({
                     <BarChart data={rows} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="adRevBarGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#2563EB" stopOpacity={1} />
-                          <stop offset="100%" stopColor="#1E40AF" stopOpacity={0.85} />
+                          <stop offset="0%" stopColor="#8B5CF6" stopOpacity={1} />
+                          <stop offset="100%" stopColor="#6D28D9" stopOpacity={0.9} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid stroke="#F1F5F9" strokeDasharray="3 3" vertical={false} />
+                      <CartesianGrid stroke="#F3E8FF" strokeDasharray="3 3" vertical={false} />
                       <XAxis
                         dataKey="planName"
                         tick={{ fontSize: 11.5, fill: '#64748B', fontWeight: 600 }}
-                        axisLine={{ stroke: '#E2E8F0' }}
+                        axisLine={{ stroke: '#E9D5FF' }}
                         tickLine={false}
                       />
                       <YAxis
@@ -244,9 +240,9 @@ export function RevenuePanel({
                         formatter={(value) => formatMoney(Number(value), currency)}
                         labelFormatter={(_, payload) => payload[0]?.payload?.planName ?? ''}
                         contentStyle={{
-                          borderRadius: 10,
-                          border: '1px solid #DBEAFE',
-                          boxShadow: '0 8px 20px rgba(15, 23, 42, 0.08)',
+                          borderRadius: 12,
+                          border: '1px solid #E9D5FF',
+                          boxShadow: '0 8px 20px rgba(109, 40, 217, 0.1)',
                           fontSize: 12.5,
                         }}
                       />

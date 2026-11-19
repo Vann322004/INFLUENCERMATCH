@@ -1,12 +1,17 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Layout, Button } from 'antd';
-import { MenuOutlined, HomeOutlined, RightOutlined } from '@ant-design/icons';
+import {
+  MenuOutlined,
+  HomeOutlined,
+  RightOutlined,
+} from '@ant-design/icons';
 import NotificationBell from '../layout/NotificationBell';
 import { ADMIN_ROUTES, DATA_MANAGER_ROUTES } from '../../constants/adminRoutes';
 import { authService } from '../../services/api/authService';
 
 const { Header } = Layout;
+
 interface AdminHeaderProps {
   title?: string;
   mobile?: boolean;
@@ -18,7 +23,6 @@ export default function AdminHeader({ title, mobile, menuOpen, onOpenMenu }: Adm
   const location = useLocation();
   const isManager = authService.isManager();
 
-  // Dynamic Breadcrumb Computation matching Brand Header
   const getPageInfo = () => {
     const p = location.pathname;
     if (title) {
@@ -28,7 +32,7 @@ export default function AdminHeader({ title, mobile, menuOpen, onOpenMenu }: Adm
       return { current: 'Quản lý lĩnh vực' };
     }
     if (p.includes('/jobs')) {
-      return { current: 'Tiến trình thu thập & Tìm nhà sáng tạo' };
+      return { current: 'Tiến trình thu thập & Khám phá Nhà sáng tạo' };
     }
     if (p.includes('/data-quality')) {
       return { current: 'Kiểm định chất lượng Nhà sáng tạo' };
@@ -63,30 +67,37 @@ export default function AdminHeader({ title, mobile, menuOpen, onOpenMenu }: Adm
   const pageInfo = getPageInfo();
 
   return (
-    <>
-      <Header className="app-header">
-        <div className="app-header-inner" style={{ maxWidth: '100%' }}>
-          {mobile && <Button className="admin-menu-trigger" aria-label="Mở menu điều hướng" aria-expanded={menuOpen}
-            aria-controls="admin-navigation" icon={<MenuOutlined />} onClick={onOpenMenu} />}
-          {/* Left: Breadcrumbs matching Brand layout */}
-          <nav className="header-breadcrumbs" aria-label="Đường dẫn">
-            <Link
-              className="header-bc-root"
-              to={isManager ? DATA_MANAGER_ROUTES.DASHBOARD : ADMIN_ROUTES.DASHBOARD}
-            >
-              <HomeOutlined style={{ marginRight: 4, fontSize: 12 }} />
-              Trang chủ
-            </Link>
-            <RightOutlined style={{ fontSize: 9, color: '#94A3B8' }} />
+    <Header className="app-header admin-glass-header">
+      <div className="app-header-inner" style={{ maxWidth: '100%' }}>
+        {mobile && (
+          <Button
+            className="admin-menu-trigger"
+            aria-label="Mở menu điều hướng"
+            aria-expanded={menuOpen}
+            aria-controls="admin-navigation"
+            icon={<MenuOutlined />}
+            onClick={onOpenMenu}
+          />
+        )}
 
-            <span className="header-bc-current" aria-current="page">{pageInfo.current}</span>
-          </nav>
+        {/* Left: Breadcrumbs */}
+        <nav className="header-breadcrumbs" aria-label="Đường dẫn">
+          <Link
+            className="header-bc-root"
+            to={isManager ? DATA_MANAGER_ROUTES.DASHBOARD : ADMIN_ROUTES.DASHBOARD}
+          >
+            <HomeOutlined style={{ marginRight: 5, fontSize: 13 }} />
+            Trang chủ
+          </Link>
+          <RightOutlined style={{ fontSize: 9, color: '#94A3B8' }} />
+          <span className="header-bc-current" aria-current="page">
+            {pageInfo.current}
+          </span>
+        </nav>
 
-          {/* Right: Standalone Notification Action Bell */}
-          <NotificationBell />
-        </div>
-      </Header>
-
-    </>
+        {/* Right: Standalone Notification Bell */}
+        <NotificationBell />
+      </div>
+    </Header>
   );
 }

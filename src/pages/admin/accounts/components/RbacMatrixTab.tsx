@@ -68,7 +68,7 @@ const ROLE_OPTIONS = [
   { value: 'BRAND', label: 'Doanh nghiệp (BRAND)', icon: <TeamOutlined />, color: '#0EA5E9' },
   { value: 'CREATOR', label: 'Nhà sáng tạo (CREATOR)', icon: <UserOutlined />, color: '#10B981' },
   { value: 'DATA_MANAGER', label: 'Quản trị Dữ liệu (DATA_MANAGER)', icon: <ControlOutlined />, color: '#F59E0B' },
-  { value: 'ADMIN', label: 'Quản trị Cấp cao (ADMIN - Bất biến)', icon: <CrownOutlined />, color: '#2563EB' },
+  { value: 'ADMIN', label: 'Quản trị Cấp cao (ADMIN - Bất biến)', icon: <CrownOutlined />, color: '#7C3AED' },
 ];
 
 function loadStoredHistory(): Record<string, RbacVersionRecord[]> {
@@ -584,7 +584,7 @@ export default function RbacMatrixTab() {
               disabled={isImmutableAdmin}
               onChange={() => handleToggle(r.permission, isCurrentEnabled)}
               style={{
-                background: isCurrentEnabled ? '#2563EB' : undefined,
+                background: isCurrentEnabled ? '#7C3AED' : undefined,
               }}
             />
           </Space>
@@ -709,7 +709,7 @@ export default function RbacMatrixTab() {
               onClick={handleSaveChanges}
               style={{
                 borderRadius: 8,
-                background: hasPendingChanges ? '#2563EB' : undefined,
+                background: hasPendingChanges ? '#7C3AED' : undefined,
                 fontWeight: 700,
               }}
             >
@@ -734,13 +734,13 @@ export default function RbacMatrixTab() {
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
             <Space size={8}>
-              <HistoryOutlined style={{ color: '#2563EB', fontSize: 16 }} />
+              <HistoryOutlined style={{ color: '#7C3AED', fontSize: 16 }} />
               <span style={{ fontWeight: 700, fontSize: 14, color: '#0F172A' }}>
                 Lịch sử Phiên bản Phân quyền ({selectedRole})
               </span>
               <Badge
                 count={`${roleHistory.length} version`}
-                style={{ backgroundColor: '#EFF6FF', color: '#2563EB', fontWeight: 700, boxShadow: 'none' }}
+                style={{ backgroundColor: '#F3E8FF', color: '#7C3AED', fontWeight: 700, boxShadow: 'none' }}
               />
             </Space>
             <Text style={{ fontSize: 12, color: '#64748B' }}>
@@ -776,7 +776,7 @@ export default function RbacMatrixTab() {
                       borderRadius: 10,
                       padding: '12px 14px',
                       background: isLatest ? '#F8FAFC' : '#FFFFFF',
-                      border: isLatest ? '1.5px solid #2563EB' : '1px solid #E2E8F0',
+                      border: isLatest ? '1.5px solid #7C3AED' : '1px solid #E2E8F0',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
@@ -919,7 +919,7 @@ export default function RbacMatrixTab() {
         title={
           inspectVersion ? (
             <Space>
-              <SafetyCertificateOutlined style={{ color: '#2563EB' }} />
+              <SafetyCertificateOutlined style={{ color: '#7C3AED' }} />
               <span>
                 Chi tiết Phiên bản v{inspectVersion.versionNumber} — Vai trò {inspectVersion.role}
               </span>
@@ -941,7 +941,7 @@ export default function RbacMatrixTab() {
                 icon={<RollbackOutlined />}
                 loading={saving}
                 onClick={() => requestRollbackWithPassword(inspectVersion)}
-                style={{ background: '#2563EB', fontWeight: 700 }}
+                style={{ background: '#7C3AED', fontWeight: 700 }}
               >
                 Khôi phục về Phiên bản v{inspectVersion.versionNumber}
               </Button>
@@ -1087,7 +1087,7 @@ export default function RbacMatrixTab() {
         width={480}
         title={
           <Space>
-            <LockOutlined style={{ color: '#2563EB' }} />
+            <LockOutlined style={{ color: '#7C3AED' }} />
             <span>Xác thực Mật khẩu Quản trị viên</span>
           </Space>
         }
@@ -1110,7 +1110,7 @@ export default function RbacMatrixTab() {
             icon={<SaveOutlined />}
             loading={saving}
             onClick={() => void handleConfirmPasswordAndSave()}
-            style={{ background: '#2563EB', fontWeight: 700 }}
+            style={{ background: '#7C3AED', fontWeight: 700 }}
           >
             {pendingRollbackTarget
               ? `Xác nhận Khôi phục v${pendingRollbackTarget.versionNumber}`

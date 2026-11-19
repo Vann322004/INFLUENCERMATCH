@@ -228,7 +228,7 @@ export default function SubscriptionPage() {
             used: usedCamp,
             total: totalCamp,
             unit: 'chiến dịch',
-            color: '#2563EB',
+            color: '#7C3AED',
             description: 'Số lượng chiến dịch Influencer marketing đang vận hành',
           },
           {
@@ -237,7 +237,7 @@ export default function SubscriptionPage() {
             used: usedReco,
             total: totalReco,
             unit: 'lượt',
-            color: '#3B82F6',
+            color: '#8B5CF6',
             description: 'Lượt gợi ý Creator phù hợp từ mô hình AI Search',
           },
           {
@@ -273,7 +273,7 @@ export default function SubscriptionPage() {
             used: usedCamp,
             total: 0,
             unit: 'chiến dịch',
-            color: '#2563EB',
+            color: '#7C3AED',
             description: 'Đăng ký gói dịch vụ để bắt đầu tạo chiến dịch',
           },
           {
@@ -282,7 +282,7 @@ export default function SubscriptionPage() {
             used: 0,
             total: 0,
             unit: 'lượt',
-            color: '#3B82F6',
+            color: '#8B5CF6',
             description: 'Đăng ký gói dịch vụ để mở khóa tìm kiếm Creator',
           },
           {

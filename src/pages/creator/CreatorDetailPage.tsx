@@ -100,8 +100,8 @@ const CREATOR_DATA = {
       value: '126.6K',
       trend: '+12.4% so với tháng trước',
       footer: '58.5% TikTok • 41.5% IG',
-      icon: <UserOutlined style={{ color: '#1D4ED8' }} />,
-      iconBg: '#EFF6FF',
+      icon: <UserOutlined style={{ color: '#6D28D9' }} />,
+      iconBg: '#F3E8FF',
     },
     {
       key: 'views',
@@ -136,18 +136,18 @@ const CREATOR_DATA = {
       value: '3.5M – 5.0M ₫',
       trend: '~ $140 – $200 USD',
       footer: '1 video ngắn / bài đăng',
-      icon: <DollarOutlined style={{ color: '#1D4ED8' }} />,
+      icon: <DollarOutlined style={{ color: '#6D28D9' }} />,
       iconBg: '#F3E8FF',
     },
   ],
   demographics: {
     sampleSize: '126.5k người theo dõi',
     gender: [
-      { label: 'Nữ', percent: 88, color: '#1D4ED8' },
-      { label: 'Nam', percent: 12, color: '#93C5FD' },
+      { label: 'Nữ', percent: 88, color: '#6D28D9' },
+      { label: 'Nam', percent: 12, color: '#C4B5FD' },
     ],
     age: [
-      { label: '18–24 (Gen Z)', percent: 64, color: '#2563EB' },
+      { label: '18–24 (Gen Z)', percent: 64, color: '#7C3AED' },
       { label: '25–34 (Millennials)', percent: 26, color: '#A5B4FC' },
     ],
     locations: [
@@ -411,8 +411,8 @@ export default function CreatorDetailPage() {
               value: followersFmt,
               trend: '+12.4% so với tháng trước',
               footer: `Nền tảng chính: ${(src.platform || 'TIKTOK').toUpperCase()}`,
-              icon: <UserOutlined style={{ color: '#1D4ED8' }} />,
-              iconBg: '#EFF6FF',
+              icon: <UserOutlined style={{ color: '#6D28D9' }} />,
+              iconBg: '#F3E8FF',
             },
             {
               key: 'views',
@@ -447,7 +447,7 @@ export default function CreatorDetailPage() {
               value: `${src.priceMin || '5.0M'} – ${src.priceMax || '8.0M'} ₫`,
               trend: `~ ${src.priceUSD || '$200 – $320 USD'}`,
               footer: '1 video ngắn / bài đăng',
-              icon: <DollarOutlined style={{ color: '#1D4ED8' }} />,
+              icon: <DollarOutlined style={{ color: '#6D28D9' }} />,
               iconBg: '#F3E8FF',
             },
           ],
@@ -468,7 +468,7 @@ export default function CreatorDetailPage() {
   const moreMenuItems: MenuProps['items'] = [
     {
       key: 'claim',
-      icon: <SafetyCertificateOutlined style={{ color: '#1D4ED8' }} />,
+      icon: <SafetyCertificateOutlined style={{ color: '#6D28D9' }} />,
       label: 'Xác minh sở hữu kênh (Claim)',
       onClick: () => setClaimModalOpen(true),
     },
@@ -518,7 +518,7 @@ export default function CreatorDetailPage() {
           </div>
 
           <div className="cdetail-hero-date-chip">
-            <CalendarOutlined style={{ color: '#1D4ED8' }} />
+            <CalendarOutlined style={{ color: '#6D28D9' }} />
             <span>{creator.lastActive}</span>
           </div>
         </div>
@@ -802,7 +802,7 @@ export default function CreatorDetailPage() {
                   <Button
                     type="primary"
                     size="small"
-                    style={{ background: '#1D4ED8', borderRadius: 6, fontWeight: 600 }}
+                    style={{ background: '#6D28D9', borderRadius: 6, fontWeight: 600 }}
                     onClick={() => setShortlistModalOpen(true)}
                   >
                     Chọn gói này
@@ -853,7 +853,7 @@ export default function CreatorDetailPage() {
                 Hệ thống AI đối soát 5 trọng số mô hình đối chiếu với chiến dịch
               </p>
             </div>
-            <span style={{ fontSize: 18, fontWeight: 800, color: '#1D4ED8' }}>
+            <span style={{ fontSize: 18, fontWeight: 800, color: '#6D28D9' }}>
               {creator.matchScore}/100
             </span>
           </div>
@@ -932,7 +932,7 @@ export default function CreatorDetailPage() {
             </Form.Item>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
               <Button onClick={() => setInviteModalOpen(false)}>Hủy</Button>
-              <Button type="primary" htmlType="submit" style={{ background: '#1D4ED8' }}>
+              <Button type="primary" htmlType="submit" style={{ background: '#6D28D9' }}>
                 Gửi lời mời ngay
               </Button>
             </div>
@@ -979,7 +979,7 @@ export default function CreatorDetailPage() {
             </Form.Item>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <Button onClick={() => setClaimModalOpen(false)}>Hủy</Button>
-              <Button type="primary" htmlType="submit" loading={claimSubmitting} style={{ background: '#1D4ED8' }}>
+              <Button type="primary" htmlType="submit" loading={claimSubmitting} style={{ background: '#6D28D9' }}>
                 Gửi xác minh
               </Button>
             </div>

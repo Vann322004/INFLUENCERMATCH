@@ -24,7 +24,7 @@ export default function RevenueReportCard({ report, loading, error, groupBy, onG
           <XAxis dataKey="period" tickFormatter={value => groupBy === 'month' ? String(value).slice(0, 7) : String(value).slice(5)} />
           <YAxis tickFormatter={value => Number(value) >= 1e6 ? `${Number(value) / 1e6}tr` : Number(value).toLocaleString('vi-VN')} />
           <Tooltip formatter={value => [`${Number(value).toLocaleString('vi-VN')} đ`, 'Doanh thu']} />
-          <Area isAnimationActive={false} type="monotone" dataKey="revenue" stroke="#2563EB" fill="#DBEAFE" strokeWidth={2} />
+          <Area isAnimationActive={false} type="monotone" dataKey="revenue" stroke="#7C3AED" fill="#E9D5FF" strokeWidth={2} />
         </AreaChart></ResponsiveContainer></div> : <Empty description="Chưa có dữ liệu doanh thu" />}</Spin>}
   </Card>;
 }

@@ -537,7 +537,7 @@ export default function CampaignPage() {
           icon={<PlusOutlined />}
           onClick={() => navigate('/campaigns/create')}
           style={{
-            background: 'linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%)',
+            background: 'linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%)',
             border: 'none',
             borderRadius: 11,
             height: 38,
@@ -545,7 +545,7 @@ export default function CampaignPage() {
             fontSize: 13.5,
             padding: '0 20px',
             color: '#FFFFFF',
-            boxShadow: '0 4px 12px rgba(29, 78, 216, 0.25)',
+            boxShadow: '0 4px 12px rgba(109, 40, 217, 0.25)',
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
@@ -569,11 +569,11 @@ export default function CampaignPage() {
                     width: 38,
                     height: 38,
                     borderRadius: 10,
-                    background: '#EFF6FF',
+                    background: '#F3E8FF',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#1D4ED8',
+                    color: '#6D28D9',
                     fontSize: 17,
                     flexShrink: 0,
                   }}
@@ -598,14 +598,14 @@ export default function CampaignPage() {
                 <svg width="55" height="26" viewBox="0 0 55 26" fill="none">
                   <defs>
                     <linearGradient id="purpleAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#60A5FA" stopOpacity="0.4" />
-                      <stop offset="100%" stopColor="#60A5FA" stopOpacity="0.0" />
+                      <stop offset="0%" stopColor="#A78BFA" stopOpacity="0.4" />
+                      <stop offset="100%" stopColor="#A78BFA" stopOpacity="0.0" />
                     </linearGradient>
                   </defs>
                   <path
                     d="M0 20 C 12 20, 18 16, 28 14 C 38 12, 46 6, 55 4"
                     fill="none"
-                    stroke="#1D4ED8"
+                    stroke="#6D28D9"
                     strokeWidth="2.2"
                     strokeLinecap="round"
                   />
@@ -991,7 +991,7 @@ export default function CampaignPage() {
                             style={{
                               width: `${item.progressPercent}%`,
                               height: '100%',
-                              background: '#1D4ED8',
+                              background: '#6D28D9',
                               borderRadius: 999,
                             }}
                           />
@@ -1066,7 +1066,7 @@ export default function CampaignPage() {
                   type="primary"
                   icon={<PlusOutlined />}
                   onClick={() => navigate('/campaigns/create')}
-                  style={{ background: '#1D4ED8', borderRadius: 8, height: 36, fontWeight: 600, marginTop: 4 }}
+                  style={{ background: '#6D28D9', borderRadius: 8, height: 36, fontWeight: 600, marginTop: 4 }}
                 >
                   Tạo chiến dịch mới
                 </Button>
@@ -1123,8 +1123,8 @@ export default function CampaignPage() {
               </span>
               <span
                 style={{
-                  background: '#EFF6FF',
-                  color: '#1D4ED8',
+                  background: '#F3E8FF',
+                  color: '#6D28D9',
                   fontSize: 11,
                   fontWeight: 800,
                   padding: '1px 7px',
@@ -1207,7 +1207,7 @@ export default function CampaignPage() {
                 style={{
                   fontSize: 12,
                   fontWeight: 700,
-                  color: '#1D4ED8',
+                  color: '#6D28D9',
                   cursor: 'pointer',
                 }}
                 onClick={() => {
@@ -1315,20 +1315,20 @@ export default function CampaignPage() {
                   <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 9, padding: '8px 12px', marginBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5, fontSize: 11.5 }}>
                       <span style={{ color: '#64748B', fontWeight: 500 }}>Tiến độ hoàn thành</span>
-                      <span style={{ fontWeight: 700, color: '#1D4ED8' }}>{campaigns[0].progressPercent}%</span>
+                      <span style={{ fontWeight: 700, color: '#6D28D9' }}>{campaigns[0].progressPercent}%</span>
                     </div>
                     <Progress
                       percent={campaigns[0].progressPercent}
                       showInfo={false}
-                      strokeColor="#1D4ED8"
+                      strokeColor="#6D28D9"
                       railColor="#E2E8F0"
                       size="small"
                       style={{ margin: 0 }}
                     />
                   </div>
 
-                  {/* Action Buttons: 🧭 Khám phá Nhà sáng tạo AI (Nút chính) + Chi tiết */}
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  {/* Action Buttons: 🧭 Khám phá AI (Nút chính) + Chi tiết */}
+                  <div style={{ display: 'flex', gap: 8, width: '100%', minWidth: 0 }}>
                     <Button
                       type="primary"
                       icon={<CompassOutlined />}
@@ -1339,33 +1339,39 @@ export default function CampaignPage() {
                       }}
                       style={{
                         flex: 1,
+                        minWidth: 0,
                         height: 36,
+                        padding: '0 10px',
                         borderRadius: 9,
                         fontWeight: 700,
-                        fontSize: 12.5,
-                        background: 'linear-gradient(135deg, #1D4ED8 0%, #2563EB 100%)',
-                        borderColor: '#1D4ED8',
-                        boxShadow: '0 2px 8px rgba(29, 78, 216, 0.25)',
+                        fontSize: 12,
+                        background: 'linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%)',
+                        borderColor: '#6D28D9',
+                        boxShadow: '0 2px 8px rgba(109, 40, 217, 0.25)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: 5,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      Khám phá Nhà sáng tạo AI
+                      Tìm Nhà sáng tạo
                     </Button>
 
                     <Button
                       icon={<EyeOutlined />}
                       onClick={() => handleOpenDetail(campaigns[0])}
                       style={{
+                        flexShrink: 0,
                         height: 36,
                         borderRadius: 9,
                         fontWeight: 600,
-                        fontSize: 12.5,
+                        fontSize: 12,
                         color: '#475569',
                         borderColor: '#CBD5E1',
-                        padding: '0 12px',
+                        padding: '0 10px',
                       }}
                     >
                       Chi tiết
@@ -1384,7 +1390,7 @@ export default function CampaignPage() {
                   size="small"
                   icon={<PlusOutlined />}
                   onClick={() => navigate('/campaigns/create')}
-                  style={{ background: '#1D4ED8', borderRadius: 6, fontSize: 12, height: 30, marginTop: 4 }}
+                  style={{ background: '#6D28D9', borderRadius: 6, fontSize: 12, height: 30, marginTop: 4 }}
                 >
                   Tạo chiến dịch
                 </Button>
@@ -1414,8 +1420,8 @@ export default function CampaignPage() {
         destroyOnHidden
         okButtonProps={{
           style: {
-            background: '#1D4ED8',
-            borderColor: '#1D4ED8',
+            background: '#6D28D9',
+            borderColor: '#6D28D9',
             borderRadius: 8,
             height: 38,
             fontWeight: 600,

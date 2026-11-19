@@ -66,12 +66,12 @@ p {
 }
 
 a {
-  color: #1d4ed8;
+  color: #6D28D9;
   text-underline-offset: 0.18em;
 }
 
 a:focus-visible {
-  outline: 2px solid #1d4ed8;
+  outline: 2px solid #6D28D9;
   outline-offset: 3px;
 }
 
@@ -102,6 +102,6 @@ ul {
 blockquote {
   margin-inline: 0;
   padding: 0.65rem 1rem;
-  border-inline-start: 3px solid #2563eb;
-  background: #eff6ff;
+  border-inline-start: 3px solid #7C3AED;
+  background: #F3E8FF;
 }

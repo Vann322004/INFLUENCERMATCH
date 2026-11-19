@@ -31,7 +31,7 @@ export default function CrawlerTrendsPanel() {
               <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
               <Tooltip labelFormatter={label => 'Ngày ' + String(label)} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Line type="linear" dataKey="ingestedCount" name="Đã thu thập" stroke="#2563EB" strokeWidth={2} dot={false} isAnimationActive={false} />
+              <Line type="linear" dataKey="ingestedCount" name="Đã thu thập" stroke="#7C3AED" strokeWidth={2} dot={false} isAnimationActive={false} />
               <Line type="linear" dataKey="successCount" name="Thành công" stroke="#64748B" strokeDasharray="6 3" strokeWidth={2} dot={false} isAnimationActive={false} />
               <Line type="linear" dataKey="failedCount" name="Thất bại" stroke="#A5B4FC" strokeDasharray="2 3" strokeWidth={2} dot={false} isAnimationActive={false} />
             </LineChart>

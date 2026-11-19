@@ -47,7 +47,7 @@ export default function SystemMonitoringPanel({ allowed }: { allowed: boolean })
           <div className="audit-metric-heading"><h3>JVM Heap</h3><span className="audit-metric-unit">Bộ nhớ</span></div>
           <p className="audit-metric-value" title={`${data.jvm.usedMemoryBytes} bytes`}>{mb(data.jvm.usedMemoryBytes)} <span>MB</span></p>
           <p className="audit-monitor-caption">Đã sử dụng / {mb(data.jvm.maxMemoryBytes)} MB tối đa</p>
-          {data.jvm.maxMemoryBytes > 0 && <Progress percent={ratio(data.jvm.usedMemoryBytes, data.jvm.maxMemoryBytes)} showInfo={false} strokeColor="#2563EB" trailColor="#EFF6FF" size="small" />}
+          {data.jvm.maxMemoryBytes > 0 && <Progress percent={ratio(data.jvm.usedMemoryBytes, data.jvm.maxMemoryBytes)} showInfo={false} strokeColor="#7C3AED" trailColor="#F3E8FF" size="small" />}
           <div className="audit-metric-footnote"><span>Đơn vị hiển thị</span><p>1 MB = 1.000.000 bytes</p></div>
         </article>
         <article className="audit-metric-card">
@@ -55,7 +55,7 @@ export default function SystemMonitoringPanel({ allowed }: { allowed: boolean })
           {pool ? <>
             <p className="audit-metric-value">{pool.activeConnections ?? '—'} <span>/ {pool.maximumPoolSize ?? '—'}</span></p>
             <p className="audit-monitor-caption">Đang sử dụng / tối đa</p>
-            {pool.activeConnections != null && pool.maximumPoolSize != null && pool.maximumPoolSize > 0 && <Progress percent={ratio(pool.activeConnections, pool.maximumPoolSize)} showInfo={false} strokeColor="#2563EB" trailColor="#EFF6FF" size="small" />}
+            {pool.activeConnections != null && pool.maximumPoolSize != null && pool.maximumPoolSize > 0 && <Progress percent={ratio(pool.activeConnections, pool.maximumPoolSize)} showInfo={false} strokeColor="#7C3AED" trailColor="#F3E8FF" size="small" />}
             <dl className="audit-pool-details"><div><dt>Nhàn rỗi</dt><dd>{pool.idleConnections ?? '—'}</dd></div>
               <div><dt>Tổng kết nối</dt><dd>{pool.totalConnections ?? '—'}</dd></div>
               <div><dt>Luồng đang chờ</dt><dd>{pool.threadsAwaitingConnection ?? '—'}</dd></div></dl>

@@ -104,7 +104,7 @@ export default function DashboardLayout({ children }) {
           <span>Tin nhắn</span>
           <Badge
             count={currentUser.unreadMessages || 3}
-            style={{ backgroundColor: '#2563EB', color: '#fff' }}
+            style={{ backgroundColor: '#7C3AED', color: '#fff' }}
           />
         </div>
       ),
@@ -119,7 +119,7 @@ export default function DashboardLayout({ children }) {
         theme="light"
         className="antd-custom-sider"
         style={{
-          background: 'linear-gradient(180deg, #FFFFFF 0%, #FAF5FF 40%, #EFF6FF 75%, #DBEAFE 100%)',
+          background: 'linear-gradient(180deg, #FFFFFF 0%, #FAF5FF 40%, #F3E8FF 75%, #E9D5FF 100%)',
           borderRight: '1px solid #E2E8F0',
           height: '100vh',
           boxSizing: 'border-box',
@@ -189,11 +189,11 @@ export default function DashboardLayout({ children }) {
             size="small"
             bordered={false}
             style={{
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, #F5F3FF 60%, #EFF6FF 100%)',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, #F5F3FF 60%, #F3E8FF 100%)',
               border: '1px solid #DDD6FE',
               borderRadius: 16,
               textAlign: 'center',
-              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.08)',
+              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.08)',
             }}
             bodyStyle={{ padding: '10px 8px' }}
           >
@@ -204,7 +204,7 @@ export default function DashboardLayout({ children }) {
               <Avatar
                 size={38}
                 src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-                style={{ border: '2px solid #2563EB' }}
+                style={{ border: '2px solid #7C3AED' }}
               />
             </div>
             <div style={{ fontSize: 9.5, color: '#64748B', marginBottom: 8 }}>
@@ -217,7 +217,7 @@ export default function DashboardLayout({ children }) {
               block
               icon={<ArrowRightOutlined />}
               style={{
-                background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
                 fontWeight: 700,
                 fontSize: 11,
                 height: 26,
@@ -283,7 +283,7 @@ export default function DashboardLayout({ children }) {
                 }}
                 className="antd-header-profile-hover"
               >
-                <Avatar size={36} style={{ border: '1.5px solid #E2E8F0', flexShrink: 0, backgroundColor: '#2563EB' }}>
+                <Avatar size={36} style={{ border: '1.5px solid #E2E8F0', flexShrink: 0, backgroundColor: '#7C3AED' }}>
                   {(currentUser?.fullName || currentUser?.email || 'U').charAt(0).toUpperCase()}
                 </Avatar>
                 <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>

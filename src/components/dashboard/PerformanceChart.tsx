@@ -18,7 +18,7 @@ export default function PerformanceChart() {
   const [timeRange, setTimeRange] = useState('30d');
 
   const series = [
-    { key: 'reach', name: 'Tiếp cận', color: '#2563EB' },
+    { key: 'reach', name: 'Tiếp cận', color: '#7C3AED' },
     { key: 'engagement', name: 'Tương tác', color: '#38BDF8' },
     { key: 'conversion', name: 'Chuyển đổi', color: '#F43F5E' },
     { key: 'cost', name: 'Chi phí', color: '#10B981' },
@@ -51,8 +51,8 @@ export default function PerformanceChart() {
               width: 28,
               height: 28,
               borderRadius: 6,
-              background: '#EFF6FF',
-              color: '#2563EB',
+              background: '#F3E8FF',
+              color: '#7C3AED',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -110,8 +110,8 @@ export default function PerformanceChart() {
           >
             <defs>
               <linearGradient id="colorReach" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
+                <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#7C3AED" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="colorEngagement" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#38BDF8" stopOpacity={0.25} />
@@ -164,7 +164,7 @@ export default function PerformanceChart() {
             <Area
               type="monotone"
               dataKey="reach"
-              stroke="#2563EB"
+              stroke="#7C3AED"
               strokeWidth={2.5}
               fillOpacity={1}
               fill="url(#colorReach)"

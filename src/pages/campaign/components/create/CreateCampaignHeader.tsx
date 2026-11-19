@@ -28,7 +28,7 @@ export const CreateCampaignHeader: React.FC<CreateCampaignHeaderProps> = ({
               type="text"
               icon={<ArrowLeftOutlined />}
               onClick={() => navigate(resolvedCampaignId ? `/campaigns/${resolvedCampaignId}` : '/campaigns')}
-              style={{ padding: '4px 8px', borderRadius: 8, color: '#1D4ED8', fontWeight: 600, fontSize: 13 }}
+              style={{ padding: '4px 8px', borderRadius: 8, color: '#6D28D9', fontWeight: 600, fontSize: 13 }}
             >
               Quay lại chi tiết
             </Button>

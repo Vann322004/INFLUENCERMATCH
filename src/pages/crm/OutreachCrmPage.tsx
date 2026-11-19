@@ -459,8 +459,8 @@ export default function OutreachCrmPage() {
 
   // Kanban Stage Moving
   const stages: { key: KanbanCreator['stage']; title: string; color: string; count: number }[] = [
-    { key: 'found', title: '1. Mới tìm thấy', color: '#2563EB', count: pipelineCreators.filter((c) => c.stage === 'found').length },
-    { key: 'review', title: '2. Đang xem xét', color: '#3B82F6', count: pipelineCreators.filter((c) => c.stage === 'review').length },
+    { key: 'found', title: '1. Mới tìm thấy', color: '#7C3AED', count: pipelineCreators.filter((c) => c.stage === 'found').length },
+    { key: 'review', title: '2. Đang xem xét', color: '#8B5CF6', count: pipelineCreators.filter((c) => c.stage === 'review').length },
     { key: 'contacted', title: '3. Đã liên hệ', color: '#F59E0B', count: pipelineCreators.filter((c) => c.stage === 'contacted').length },
     { key: 'negotiating', title: '4. Đang thương lượng', color: '#EC4899', count: pipelineCreators.filter((c) => c.stage === 'negotiating').length },
     { key: 'confirmed', title: '5. Đã xác nhận', color: '#10B981', count: pipelineCreators.filter((c) => c.stage === 'confirmed').length },
@@ -606,12 +606,12 @@ export default function OutreachCrmPage() {
             type="primary"
             icon={<PlusOutlined />}
             style={{
-              background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
+              background: 'linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%)',
               borderRadius: 8,
               height: 38,
               fontWeight: 600,
               border: 'none',
-              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
+              boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
             }}
             onClick={() => setCreateInviteModalOpen(true)}
           >
@@ -623,7 +623,7 @@ export default function OutreachCrmPage() {
       {/* 2. Funnel Summary Stats Banner */}
       <div className="crm-stats-banner">
         <div className="stat-card">
-          <div className="stat-icon-wrap" style={{ background: '#EFF6FF', color: '#2563EB' }}>
+          <div className="stat-icon-wrap" style={{ background: '#F3E8FF', color: '#7C3AED' }}>
             <UserOutlined />
           </div>
           <div className="stat-info">
@@ -633,7 +633,7 @@ export default function OutreachCrmPage() {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon-wrap" style={{ background: '#EFF6FF', color: '#2563EB' }}>
+          <div className="stat-icon-wrap" style={{ background: '#F3E8FF', color: '#7C3AED' }}>
             <MailOutlined />
           </div>
           <div className="stat-info">
@@ -706,7 +706,7 @@ export default function OutreachCrmPage() {
           <div className="email-composer-card">
             <div className="composer-header">
               <div className="composer-title">
-                <MailOutlined style={{ color: '#1D4ED8', fontSize: 16 }} />
+                <MailOutlined style={{ color: '#6D28D9', fontSize: 16 }} />
                 <span>Soạn Email Tiếp Cận Creator</span>
               </div>
             </div>
@@ -736,13 +736,13 @@ export default function OutreachCrmPage() {
                       width: 32,
                       height: 32,
                       borderRadius: 9,
-                      background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
+                      background: 'linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: '#FFFFFF',
                       fontSize: 16,
-                      boxShadow: '0 2px 8px rgba(37, 99, 235, 0.28)',
+                      boxShadow: '0 2px 8px rgba(124, 58, 237, 0.28)',
                     }}
                   >
                     <RobotOutlined />
@@ -781,14 +781,14 @@ export default function OutreachCrmPage() {
                     onClick={handleGenerateAiEmail}
                     icon={<ThunderboltOutlined />}
                     style={{
-                      background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
+                      background: 'linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%)',
                       borderRadius: 8,
                       fontSize: 12.5,
                       fontWeight: 600,
                       border: 'none',
                       height: 32,
                       padding: '0 14px',
-                      boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
+                      boxShadow: '0 2px 8px rgba(124, 58, 237, 0.25)',
                     }}
                   >
                     {aiGenerating ? 'Đang viết...' : 'Tạo thư mẫu'}
@@ -834,12 +834,12 @@ export default function OutreachCrmPage() {
                   type="primary"
                   icon={<SendOutlined />}
                   style={{
-                    background: '#1D4ED8',
+                    background: '#6D28D9',
                     borderRadius: 8,
                     height: 38,
                     fontWeight: 600,
                     border: 'none',
-                    boxShadow: '0 2px 8px rgba(29, 78, 216, 0.3)',
+                    boxShadow: '0 2px 8px rgba(109, 40, 217, 0.3)',
                   }}
                   onClick={handleSendEmail}
                 >
@@ -894,7 +894,7 @@ export default function OutreachCrmPage() {
                       {renderEmailStatusTag(item.status, item.openedCount)}
                       {item.lastOpenedAt && (
                         <span className="last-opened-info">
-                          <EyeOutlined style={{ color: '#3B82F6', marginRight: 4 }} />
+                          <EyeOutlined style={{ color: '#8B5CF6', marginRight: 4 }} />
                           Mở gần nhất: {item.lastOpenedAt}
                         </span>
                       )}
@@ -948,7 +948,7 @@ export default function OutreachCrmPage() {
             <div className="controls-right">
               <span style={{ fontSize: 12, color: '#64748B' }}>
                 Tổng giá trị dự kiến:{' '}
-                <strong style={{ color: '#1D4ED8', fontSize: 14 }}>68.500.000 ₫</strong>
+                <strong style={{ color: '#6D28D9', fontSize: 14 }}>68.500.000 ₫</strong>
               </span>
             </div>
           </div>
@@ -1002,7 +1002,7 @@ export default function OutreachCrmPage() {
                             <span className="k-lbl">Tương tác</span>
                           </div>
                           <div>
-                            <span className="k-val" style={{ color: '#1D4ED8' }}>{creator.fee}</span>
+                            <span className="k-val" style={{ color: '#6D28D9' }}>{creator.fee}</span>
                             <span className="k-lbl">Chi phí</span>
                           </div>
                         </div>
@@ -1101,7 +1101,7 @@ export default function OutreachCrmPage() {
                       </div>
                     </td>
                     <td>
-                      <div style={{ fontWeight: 800, fontSize: 13, color: '#1D4ED8' }}>{inv.fee}</div>
+                      <div style={{ fontWeight: 800, fontSize: 13, color: '#6D28D9' }}>{inv.fee}</div>
                       {inv.counterFee && (
                         <div style={{ fontSize: 11, color: '#D97706', fontWeight: 600 }}>
                           (Đề xuất: {inv.counterFee})
@@ -1304,7 +1304,7 @@ export default function OutreachCrmPage() {
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
             <Button onClick={() => setCreateInviteModalOpen(false)}>Hủy</Button>
-            <Button type="primary" htmlType="submit" style={{ background: '#1D4ED8', borderRadius: 8 }}>
+            <Button type="primary" htmlType="submit" style={{ background: '#6D28D9', borderRadius: 8 }}>
               Phát hành Thư mời chính thức
             </Button>
           </div>
@@ -1337,7 +1337,7 @@ export default function OutreachCrmPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
-              <div><strong>Thù lao đề xuất:</strong> <span style={{ color: '#1D4ED8', fontWeight: 700 }}>{detailInviteModal.fee}</span></div>
+              <div><strong>Thù lao đề xuất:</strong> <span style={{ color: '#6D28D9', fontWeight: 700 }}>{detailInviteModal.fee}</span></div>
               {detailInviteModal.counterFee && (
                 <div style={{ color: '#D97706' }}>
                   <strong>Creator đề xuất lại:</strong> {detailInviteModal.counterFee}
