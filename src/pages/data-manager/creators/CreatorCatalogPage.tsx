@@ -7,9 +7,8 @@ import { creatorCatalogService as api } from '../../../services/api/creatorCatal
 import type { CatalogMaster, CatalogAccount, CatalogFilters, IdentityEvent, HistoryFilters, VerificationStatus } from '../../../services/api/creatorCatalogService';
 import { useAsyncResource } from '../../../hooks/useAsyncResource';
 import type { AsyncResource } from '../../../hooks/useAsyncResource';
-import { auditTimestamp } from '../audit/auditDisplay';
+import { auditTimestamp } from '../../admin/audit/auditDisplay';
 import './CreatorCatalogPage.css';
-
 const platformOptions = ['FACEBOOK', 'INSTAGRAM', 'TIKTOK', 'YOUTUBE'].map(value => ({value,label:value}));
 const verificationLabels: Record<VerificationStatus,string> = {
  VERIFIED:'Đã xác minh trên InfluencerMatch', UNVERIFIED:'Chưa xác minh',
@@ -161,12 +160,12 @@ export default function CreatorCatalogPage() {
  ...(canCatalog?[{key:'masters',label:'Hồ sơ nhà sáng tạo',children:<MasterList onOpen={setSelected} />},{key:'unclaimed',label:'Kênh chưa liên kết',children:<Accounts />}]:[]),
  ...(canHistory?[{key:'history',label:'Lịch sử định danh',children:<History />}]:[]),
  ];
- return <div className="creator-catalog">
- <header className="catalog-header"><h1>Định danh Nhà sáng tạo</h1><p>Một hồ sơ, các kênh được đối chiếu rõ ràng. Tra cứu thông tin và kết quả xác minh; không thay đổi quyền sở hữu tại đây.</p></header>
- {canCatalog && <Summary />}
- {tabs.length?<div className="catalog-panel"><Tabs destroyOnHidden items={tabs} /></div>:<Alert type="warning" showIcon title="Bạn chưa có quyền tra cứu danh mục hoặc lịch sử định danh." />}
- <Drawer open={!!selected} onClose={()=>setSelected(null)} title="Chi tiết hồ sơ định danh" size="min(1080px, 100vw)" destroyOnHidden className="catalog-detail">
- {selected && <MasterDetail key={selected} id={selected} canHistory={canHistory} />}
- </Drawer>
- </div>;
+  return <div className="creator-catalog">
+  <header className="catalog-header"><h1>Quản lý Định danh Nhà sáng tạo</h1><p>Một hồ sơ, các kênh được đối chiếu rõ ràng. Tra cứu thông tin và kết quả xác minh; không thay đổi quyền sở hữu tại đây.</p></header>
+  {canCatalog && <Summary />}
+  {tabs.length?<div className="catalog-panel"><Tabs destroyOnHidden items={tabs} /></div>:<Alert type="warning" showIcon title="Bạn chưa có quyền tra cứu danh mục hoặc lịch sử định danh." />}
+  <Drawer open={!!selected} onClose={()=>setSelected(null)} title="Chi tiết hồ sơ định danh" size="min(1080px, 100vw)" destroyOnHidden className="catalog-detail">
+  {selected && <MasterDetail key={selected} id={selected} canHistory={canHistory} />}
+  </Drawer>
+  </div>;
 }

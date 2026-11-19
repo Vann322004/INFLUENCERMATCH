@@ -13,6 +13,7 @@ import DiscoveredFeedCard, { type DiscoveredKocItem } from './DiscoveredFeedCard
 import DirectCrawlModal from '../DirectCrawlModal';
 import { crawlerService } from '../../../../../services/api/crawlerService';
 import { dataQualityService } from '../../../../../services/api/dataQualityService';
+import { DATA_MANAGER_ROUTES } from '../../../../../constants/adminRoutes';
 import type { CrawlPlatform } from '../../../../../types/api/crawler.types';
 
 // Kiểm tra tài khoản shop, bán sỉ, kho hàng
@@ -160,10 +161,7 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
   };
 
   const handleNavigateQuality = () => {
-    const target = location.pathname.startsWith('/data-manager')
-      ? '/data-manager/data-quality'
-      : '/admin/data-quality';
-    navigate(target);
+    navigate(DATA_MANAGER_ROUTES.DATA_QUALITY);
   };
 
   const handleSelectTopic = (topicId: string) => {
@@ -445,7 +443,7 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
         topics={topics}
         topicsLoading={topicsLoading}
         topicsError={topicsError}
-        topicsManagementPath={`${location.pathname.startsWith('/data-manager') ? '/data-manager' : '/admin'}/data-sources`}
+        topicsManagementPath={DATA_MANAGER_ROUTES.TAXONOMY}
         onReloadTopics={reloadTopics}
         mode={mode}
         platform={platform}

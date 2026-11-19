@@ -23,7 +23,8 @@ import {
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { ExportOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { DATA_MANAGER_ROUTES } from '../../../constants/adminRoutes';
 import { dataQualityService } from '../../../services/api/dataQualityService';
 import { nicheService } from '../../../services/api/nicheService';
 import type { QualityItem } from './types';
@@ -105,8 +106,6 @@ function CreatorIdentity({ item, showRole = false }: { item: QualityItem; showRo
 export default function DataQualityPage() {
   const { message } = App.useApp();
   const screens = Grid.useBreakpoint();
-  const location = useLocation();
-  const basePath = location.pathname.startsWith('/data-manager') ? '/data-manager' : '/admin';
 
   const [activeTab, setActiveTab] = useState<'pending' | 'crawler'>('pending');
   const [items, setItems] = useState<QualityItem[]>([]);
@@ -444,7 +443,7 @@ export default function DataQualityPage() {
                           <Skeleton active paragraph={{ rows: 6 }} />
                         ) : !items.length ? (
                           <Empty description="Không có hồ sơ đang chờ kiểm định">
-                            <Link to={`${basePath}/jobs`}>Đến trang thu thập dữ liệu</Link>
+                            <Link to={DATA_MANAGER_ROUTES.JOBS}>Đến trang thu thập dữ liệu</Link>
                           </Empty>
                         ) : !visibleItems.length ? (
                           <Empty description="Không tìm thấy hồ sơ khớp bộ lọc hiện tại.">
@@ -627,7 +626,7 @@ export default function DataQualityPage() {
                                     {!nichesLoading && !nichesError && !niches.length && (
                                       <p className="quality-niche-fallback">
                                         Chưa có ngành hàng. Kiểm tra tại{' '}
-                                        <Link to={`${basePath}/taxonomy`}>Quản lý lĩnh vực</Link>.
+                                        <Link to={DATA_MANAGER_ROUTES.TAXONOMY}>Quản lý lĩnh vực</Link>.
                                       </p>
                                     )}
                                     {nichesError && (

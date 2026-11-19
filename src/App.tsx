@@ -33,18 +33,20 @@ import './components/layout/BrandResponsive.css';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
 import AdminDashboardPage from './pages/admin/dashboard/AdminDashboardPage';
-import DataManagerDashboardPage from './pages/admin/dashboard/DataManagerDashboardPage';
 import AccountManagementPage from './pages/admin/accounts/AccountManagementPage';
 import AccountDetailPage from './pages/admin/accounts/AccountDetailPage';
-import CreatorCatalogPage from './pages/admin/creators/CreatorCatalogPage';
-import DataSourcesPage from './pages/admin/datasources/DataSourcesPage';
-import CollectionJobsPage from './pages/admin/jobs/CollectionJobsPage';
-import ScoringConfigPage from './pages/admin/scoring/ScoringConfigPage';
 import SubscriptionPlansPage from './pages/admin/subscriptions/SubscriptionPlansPage';
 import PaymentsPage from './pages/admin/payments/PaymentsPage';
 import AuditLogPage from './pages/admin/audit/AuditLogPage';
-import CreatorClaimReviewPage from './pages/admin/claims/CreatorClaimReviewPage';
-import DataQualityPage from './pages/admin/quality/DataQualityPage';
+
+// ── Data Manager Imports ─────────────────────────────
+import DataManagerDashboardPage from './pages/data-manager/dashboard/DataManagerDashboardPage';
+import CreatorCatalogPage from './pages/data-manager/creators/CreatorCatalogPage';
+import CreatorClaimReviewPage from './pages/data-manager/claims/CreatorClaimReviewPage';
+import CollectionJobsPage from './pages/data-manager/jobs/CollectionJobsPage';
+import DataQualityPage from './pages/data-manager/quality/DataQualityPage';
+import DataSourcesPage from './pages/data-manager/datasources/DataSourcesPage';
+import ScoringConfigPage from './pages/data-manager/scoring/ScoringConfigPage';
 
 // ── Creator Actor Imports ──────────────────────────────
 import CreatorLayout from './components/creator/CreatorLayout';
@@ -622,21 +624,11 @@ export default function App() {
             {/* Phase 3 — Account Management (Admin only) */}
             <Route path="accounts" element={<AdminProtectedRoute requireAdmin><AccountManagementPage /></AdminProtectedRoute>} />
             <Route path="accounts/:id" element={<AdminProtectedRoute requireAdmin><AccountDetailPage /></AdminProtectedRoute>} />
-            {/* Phase 4 — Creator Catalog (Admin & Manager) */}
-            <Route path="creators" element={<CreatorCatalogPage />} />
-            <Route path="data-sources" element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="taxonomy" element={<Navigate to="/admin/dashboard" replace />} />
-            {/* Phase 6 — Collection Jobs, Data Quality & Scoring Config */}
-            <Route path="jobs" element={<CollectionJobsPage />} />
-            <Route path="data-quality" element={<DataQualityPage />} />
-            <Route path="scoring" element={<ScoringConfigPage />} />
             {/* Phase 7 — Subscriptions & Payments (Admin only) */}
             <Route path="subscriptions" element={<AdminProtectedRoute requireAdmin><SubscriptionPlansPage /></AdminProtectedRoute>} />
             <Route path="payments" element={<AdminProtectedRoute requireAdmin><PaymentsPage /></AdminProtectedRoute>} />
             {/* Phase 8 — Audit Log (Admin only) */}
             <Route path="audit" element={<AdminProtectedRoute requireAdmin><AuditLogPage /></AdminProtectedRoute>} />
-            {/* Phase 9 — Creator Claim Review (Admin & Manager) */}
-            <Route path="creator-claims" element={<CreatorClaimReviewPage />} />
           </Route>
 
           {/* ── Data Manager Dedicated Routes (/data-manager/*) ─── */}
@@ -649,14 +641,14 @@ export default function App() {
             }
           >
             <Route index element={<Navigate to="/data-manager/dashboard" replace />} />
+            <Route path="dashboard" element={<DataManagerDashboardPage />} />
+            <Route path="creators" element={<CreatorCatalogPage />} />
+            <Route path="creator-claims" element={<CreatorClaimReviewPage />} />
             <Route path="jobs" element={<CollectionJobsPage />} />
             <Route path="data-quality" element={<DataQualityPage />} />
             <Route path="data-sources" element={<DataSourcesPage />} />
             <Route path="taxonomy" element={<DataSourcesPage />} />
             <Route path="scoring" element={<ScoringConfigPage />} />
-            <Route path="creators" element={<CreatorCatalogPage />} />
-            <Route path="creator-claims" element={<CreatorClaimReviewPage />} />
-            <Route path="dashboard" element={<DataManagerDashboardPage />} />
           </Route>
 
           {/* ── Creator Actor Routes (/creator/*) ──────────── */}
