@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Button, Tag, Row, Col, message } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
-import type { PaymentInvoice } from '../../../data/mockData';
+import type { PaymentInvoice } from '../../../types/api/subscription.types';
 import { formatVND } from './HistoryTab';
 
 interface InvoiceModalProps {

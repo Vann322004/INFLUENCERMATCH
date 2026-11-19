@@ -1,7 +1,7 @@
 import React from 'react';
 import { Row, Col, Button, Tag, Progress, Spin } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import type { QuotaMetric } from '../../../data/mockData';
+import type { QuotaMetric } from '../../../types/api/subscription.types';
 import type { SubInfoData } from './CurrentPlanBanner';
 
 interface QuotaTabProps {

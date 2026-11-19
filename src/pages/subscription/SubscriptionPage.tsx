@@ -3,7 +3,7 @@ import { Typography, Card, Tabs, message, Alert, Button } from 'antd';
 import { CrownOutlined, PieChartOutlined, HistoryOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
-import type { SubscriptionPlan, QuotaMetric, PaymentInvoice } from '../../data/mockData';
+import type { SubscriptionPlan, QuotaMetric, PaymentInvoice } from '../../types/api/subscription.types';
 import { subscriptionService } from '../../services/api/subscriptionService';
 import { brandService } from '../../services/api/brandService';
 import type { PlanResponse, SubscriptionResponse } from '../../types/api/subscription.types';

@@ -8,7 +8,7 @@ import {
   QrcodeOutlined,
   CheckOutlined,
 } from '@ant-design/icons';
-import type { SubscriptionPlan } from '../../../data/mockData';
+import type { SubscriptionPlan } from '../../../types/api/subscription.types';
 import { formatVND } from './HistoryTab';
 
 interface UpgradeModalProps {

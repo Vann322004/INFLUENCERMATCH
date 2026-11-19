@@ -1,7 +1,7 @@
 import React from 'react';
 import { Row, Col, Button, Tag, Tooltip, Spin } from 'antd';
 import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
-import type { SubscriptionPlan } from '../../../data/mockData';
+import type { SubscriptionPlan } from '../../../types/api/subscription.types';
 
 interface PlansTabProps {
   plans: SubscriptionPlan[];
