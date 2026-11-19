@@ -66,6 +66,8 @@ export function googleErrorMessage(error: unknown, fallback: string) {
       return 'Email này đã có tài khoản. Hãy đăng nhập bằng mật khẩu, rồi liên kết Google trong Hồ sơ thương hiệu.';
     case 'EMAIL_NOT_VERIFIED':
       return 'Hãy xác minh email của tài khoản hiện có trước khi liên kết Google.';
+    case 'IDENTITY_MISMATCH':
+      return 'Hãy chọn tài khoản Google có cùng email với tài khoản Brand đang đăng nhập.';
     case 'GOOGLE_LOGIN_REPLAY':
       return 'Phiên Google đã được sử dụng. Vui lòng thử lại.';
     default:

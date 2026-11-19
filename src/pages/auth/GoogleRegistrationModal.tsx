@@ -65,6 +65,10 @@ export default function GoogleRegistrationModal({ registration, sessionId, onClo
         form.setFieldValue('accepted', false);
         setReload(value => value + 1);
         setError('Điều khoản hoặc chính sách đã thay đổi. Vui lòng xem và xác nhận lại.');
+      } else if (code === 'EMAIL_ALREADY_EXISTS' || code === 'GOOGLE_LOGIN_REPLAY') {
+        form.setFieldsValue({ password: '', confirmPassword: '' });
+        setExpired(true);
+        setError('Phiên đăng ký có thể đã hoàn tất. Hãy mở phiên Google mới để đăng nhập.');
       } else {
         setError(googleErrorMessage(cause, 'Chưa thể hoàn tất đăng ký Google.'));
       }
@@ -76,10 +80,10 @@ export default function GoogleRegistrationModal({ registration, sessionId, onClo
 
   return <Modal title="Hoàn tất đăng ký Brand" open onCancel={onClose}
     closable={!busy} keyboard={!busy} mask={{ closable: !busy }}
-    cancelText={expired ? 'Quay lại đăng nhập' : 'Hủy'} cancelButtonProps={{ disabled: busy }}
+    cancelText={expired ? 'Thử lại bằng Google' : 'Hủy'} cancelButtonProps={{ disabled: busy }}
     okText="Tạo tài khoản" confirmLoading={busy}
     okButtonProps={{ disabled: !policies || expired }} onOk={() => form.submit()}>
-    {expired && <Alert type="warning" showIcon title="Phiên đăng ký đã hết hạn. Hãy chọn lại tài khoản Google." />}
+    {expired && !error && <Alert type="warning" showIcon title="Phiên đăng ký đã hết hạn. Hãy chọn lại tài khoản Google." />}
     {error && <Alert type="error" showIcon title={error} />}
     {policyError && <Alert type="warning" showIcon title="Chưa tải được phiên bản điều khoản và chính sách."
       action={<Button size="small" onClick={() => setReload(value => value + 1)}>Tải lại</Button>} />}

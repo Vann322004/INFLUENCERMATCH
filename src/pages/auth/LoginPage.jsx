@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { App, Form, Input, Button, Checkbox } from 'antd';
+import { Alert, App, Form, Input, Button, Checkbox } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
@@ -9,6 +9,7 @@ import { hasDeferredBrandOnboarding } from '../../services/brandOnboarding';
 import { getErrorMessage, getAuthSessionId } from '../../services/apiClient';
 import GoogleIdentityButton, { googleErrorMessage } from './GoogleIdentityButton';
 import GoogleRegistrationModal from './GoogleRegistrationModal';
+import GoogleLinkModal from '../brand/GoogleLinkModal';
 import './LoginPage.css';
 
 export default function LoginPage() {
@@ -18,6 +19,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const [registration, setRegistration] = useState(null);
+  const [linkRequired, setLinkRequired] = useState(false);
+  const [googleLink, setGoogleLink] = useState(null);
   const [googleAttempt, setGoogleAttempt] = useState(0);
   const pending = useRef(false);
   const startGoogle = useCallback(async (signal) => {
@@ -55,8 +58,8 @@ export default function LoginPage() {
     }
   };
 
-  const onFinish = async (values) => {
-    if (pending.current || registration) return;
+  const signIn = async (values, linkGoogle = false) => {
+    if (pending.current || registration || googleLink) return;
     pending.current = true;
     setLoading(true);
     try {
@@ -65,14 +68,48 @@ export default function LoginPage() {
         password: values.password,
       });
 
+      if (linkGoogle && loginData.user?.role === 'BRAND') {
+        const sessionId = getAuthSessionId();
+        const link = { user: loginData.user, sessionId };
+        try {
+          const challenge = await authService.startGoogleLink(values.password, sessionId);
+          if (getAuthSessionId() === sessionId) {
+            setGoogleLink({ ...link, initialStep: { challenge, sessionId } });
+          }
+        } catch (error) {
+          if (getAuthSessionId() === sessionId) {
+            setGoogleLink({ ...link, initialError: googleErrorMessage(error, 'Chưa thể bắt đầu liên kết Google.') });
+          }
+        }
+        return;
+      }
+
       message.success(`Đăng nhập thành công! Xin chào ${loginData.user?.fullName || loginData.user?.email}`);
       await redirectByRole(loginData.user);
     } catch (error) {
       message.error(getErrorMessage(error, 'Đăng nhập thất bại! Vui lòng kiểm tra lại email và mật khẩu.'));
     } finally {
+      if (linkGoogle) form.setFieldValue('password', '');
       pending.current = false;
       setLoading(false);
     }
+  };
+
+  const linkExistingGoogle = async () => {
+    let values;
+    try {
+      values = await form.validateFields(['email', 'password']);
+    } catch {
+      return;
+    }
+    await signIn(values, true);
+  };
+
+  const closeGoogleLink = () => {
+    const link = googleLink;
+    setGoogleLink(null);
+    setLinkRequired(false);
+    if (link && getAuthSessionId() === link.sessionId) void redirectByRole(link.user);
   };
 
   const finishGoogleLogin = (result) => {
@@ -81,15 +118,20 @@ export default function LoginPage() {
   };
 
   const onGoogleCredential = async (challenge, credential, sessionId) => {
-    if (pending.current || registration) return;
+    if (pending.current || registration || googleLink) return;
     pending.current = true;
     setLoading(true);
     try {
       const result = await authService.loginWithGoogle(challenge.sessionId, credential, sessionId);
+      setLinkRequired(false);
       if (result.status === 'REGISTRATION_REQUIRED') setRegistration({ result, sessionId });
       else finishGoogleLogin(result);
     } catch (error) {
-      message.error(googleErrorMessage(error, 'Đăng nhập Google không thành công. Vui lòng thử lại.'));
+      if (error?.response?.data?.code === 'GOOGLE_ACCOUNT_LINK_REQUIRED') {
+        setLinkRequired(true);
+      } else {
+        message.error(googleErrorMessage(error, 'Đăng nhập Google không thành công. Vui lòng thử lại.'));
+      }
       setGoogleAttempt(value => value + 1);
     } finally {
       pending.current = false;
@@ -110,7 +152,7 @@ export default function LoginPage() {
         form={form}
         name="login_form"
         layout="vertical"
-        onFinish={onFinish}
+        onFinish={values => void signIn(values)}
         initialValues={{ remember: true }}
         requiredMark={false}
         size="large"
@@ -163,6 +205,14 @@ export default function LoginPage() {
           </Link>
         </div>
 
+        {linkRequired && !googleLink && <Alert type="info" showIcon
+          title="Email Google này đã có tài khoản"
+          description="Nhập email và mật khẩu của Brand ở trên, rồi chọn Liên kết Google để dùng Google từ lần sau."
+          style={{ marginBottom: 16 }}
+          action={<Button size="small" disabled={loading} onClick={() => void linkExistingGoogle()}>
+            Liên kết Google
+          </Button>} />}
+
         {/* ── Submit Button with Arrow Icon ── */}
         <Form.Item className="login-submit-field">
           <Button
@@ -187,12 +237,14 @@ export default function LoginPage() {
       </div>
 
       <div className="google-login-control">
-        {!registration && <GoogleIdentityButton key={googleAttempt}
+        {!registration && !googleLink && <GoogleIdentityButton key={googleAttempt}
           start={startGoogle} onCredential={onGoogleCredential} disabled={loading} />}
       </div>
       {registration && <GoogleRegistrationModal registration={registration.result} sessionId={registration.sessionId}
         onClose={() => { setRegistration(null); setGoogleAttempt(value => value + 1); }}
         onSuccess={finishGoogleLogin} />}
+      {googleLink && <GoogleLinkModal initialStep={googleLink.initialStep}
+        initialError={googleLink.initialError} closeLabel="Tiếp tục vào tài khoản" onClose={closeGoogleLink} />}
 
       {/* ── Footer Registration Banner (Matching Mockup grey pill box) ── */}
       <div className="login-register-banner">

@@ -5,11 +5,18 @@ import { getAuthSessionId } from '../../services/apiClient';
 import type { GoogleChallenge } from '../../types/api/auth.types';
 import GoogleIdentityButton, { googleErrorMessage } from '../auth/GoogleIdentityButton';
 
-export default function GoogleLinkModal({ onClose }: { onClose: () => void }) {
+type LinkStep = { challenge: GoogleChallenge; sessionId: string };
+
+export default function GoogleLinkModal({ onClose, initialStep, initialError = '', closeLabel = 'Đóng' }: {
+  onClose: () => void;
+  initialStep?: LinkStep;
+  initialError?: string;
+  closeLabel?: string;
+}) {
   const [form] = Form.useForm<{ password: string }>();
   const { message } = App.useApp();
-  const [step, setStep] = useState<{ challenge: GoogleChallenge; sessionId: string }>();
-  const [error, setError] = useState('');
+  const [step, setStep] = useState(initialStep);
+  const [error, setError] = useState(initialError);
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
 
@@ -37,7 +44,7 @@ export default function GoogleLinkModal({ onClose }: { onClose: () => void }) {
   }
 
   async function confirm(challenge: GoogleChallenge, credential: string, sessionId: string) {
-    if (!step || pending.current) return;
+    if (!step || pending.current || sessionId !== getAuthSessionId()) return;
     pending.current = true;
     setBusy(true);
     setError('');
@@ -56,7 +63,7 @@ export default function GoogleLinkModal({ onClose }: { onClose: () => void }) {
 
   return <Modal open title="Liên kết tài khoản Google" onCancel={onClose}
     closable={!busy} keyboard={!busy} mask={{ closable: !busy }}
-    footer={<Button disabled={busy} onClick={onClose}>Đóng</Button>}>
+    footer={<Button disabled={busy} onClick={onClose}>{closeLabel}</Button>}>
     {error && <Alert showIcon type="error" title={error} />}
     {step ? <>
       <p>Chọn tài khoản Google có cùng email với tài khoản Brand.</p>
