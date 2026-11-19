@@ -256,8 +256,8 @@ export default function RegisterPage() {
         >
           <Checkbox className="luxe-checkbox">
             Tôi đồng ý với{' '}
-            <a href="#terms" className="register-legal-link" onClick={(e) => e.preventDefault()}>
-              Điều khoản
+            <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="register-legal-link">
+              Điều khoản dịch vụ
             </a>{' '}
             và{' '}
             <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="register-legal-link">

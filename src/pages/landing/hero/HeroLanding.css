@@ -1836,6 +1836,12 @@ body:has(.nl-page),
   color: #bfb6d5;
 }
 
+.nl-legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
 /* ==========================================================================
    12. Small Screens (max-width: 820px)
    ========================================================================== */
@@ -2089,11 +2095,6 @@ body:has(.nl-page),
     align-items: flex-start;
     gap: 10px;
     font-size: 12px;
-  }
-
-  .nl-legal-links {
-    flex-wrap: wrap;
-    gap: 16px;
   }
 
 }

@@ -1784,7 +1784,10 @@ export default function HeroLanding() {
 
             <div className="nl-legal-bar">
               <span>© 2026 InfluencerMatch. Bảo lưu mọi quyền.</span>
-              <a href="/privacy-policy">Chính sách bảo mật</a>
+              <div className="nl-legal-links">
+                <a href="/terms-of-service">Điều khoản dịch vụ</a>
+                <a href="/privacy-policy">Chính sách bảo mật</a>
+              </div>
             </div>
             <div className="nl-footer-signature" aria-hidden="true">InfluencerMatch</div>
 
