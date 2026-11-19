@@ -26,20 +26,6 @@ export interface CreatorIdentityVerification {
   rejectReason?: string;
 }
 
-export interface CreatorSocialChannel {
-  id: string;
-  platform: 'tiktok' | 'instagram' | 'youtube' | 'facebook';
-  handle: string;
-  displayName: string;
-  profileUrl: string;
-  avatarUrl: string;
-  followers: number;
-  engagementRate: number;
-  connected: boolean;
-  connectedAt?: string;
-  syncStatus: 'SYNCED' | 'SYNCING' | 'EXPIRED';
-}
-
 export interface CreatorRateCardPackage {
   id: string;
   platform: 'TIKTOK' | 'INSTAGRAM' | 'YOUTUBE' | 'MULTI_PLATFORM';
@@ -85,66 +71,6 @@ export interface CreatorBookingItem {
   brandContactEmail: string;
 }
 
-export interface CreatorClaimItem {
-  id: string;
-  creatorId?: string;
-  platform: 'TikTok' | 'Instagram' | 'YouTube';
-  handle: string;
-  channelName: string;
-  followers: number;
-  channelAvatar: string;
-  claimantName?: string;
-  claimantEmail?: string;
-  evidenceType?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVOKED';
-  submittedAt: string;
-  reviewedAt?: string;
-  reviewedBy?: string;
-  evidenceNote: string;
-  evidenceUrl?: string;
-  adminNote?: string;
-}
-
-const PLATFORM_LABEL: Record<string, CreatorClaimItem['platform']> = {
-  TIKTOK: 'TikTok',
-  INSTAGRAM: 'Instagram',
-  YOUTUBE: 'YouTube',
-};
-
-/** Chuẩn hóa một đơn claim từ backend (GET /creator-claims/me) sang CreatorClaimItem */
-export function mapBackendClaim(raw: any): CreatorClaimItem {
-  const rawStatus = String(raw?.status ?? 'PENDING').toUpperCase();
-  const status: CreatorClaimItem['status'] =
-    rawStatus === 'APPROVED' || rawStatus === 'REJECTED' || rawStatus === 'REVOKED' ? rawStatus : 'PENDING';
-  const platformKey = String(raw?.creatorPlatform ?? raw?.platform ?? 'TIKTOK').toUpperCase();
-  const handle = String(raw?.creatorHandle ?? raw?.handle ?? raw?.username ?? '@chaukikii');
-  const noteStr = String(raw?.evidenceNote ?? raw?.note ?? '');
-  const evidenceUrl = raw?.evidenceUrl ?? (Array.isArray(raw?.evidenceUrls) ? raw.evidenceUrls[0] : undefined);
-  return {
-    id: String(raw?.id ?? raw?.claimId ?? ''),
-    creatorId: raw?.creatorId,
-    platform: PLATFORM_LABEL[platformKey] ?? 'TikTok',
-    handle: handle && !handle.startsWith('@') ? `@${handle}` : handle,
-    channelName: raw?.creatorName ?? raw?.channelName ?? raw?.displayName ?? (handle || 'Kênh Nhà sáng tạo'),
-    followers: Number(raw?.creatorFollowers ?? raw?.followers ?? 2450000),
-    channelAvatar:
-      raw?.creatorAvatar ??
-      raw?.channelAvatar ??
-      'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400',
-    claimantName: raw?.claimantName,
-    claimantEmail: raw?.claimantEmail,
-    evidenceType: raw?.evidenceType,
-    status,
-    submittedAt: raw?.submittedAt ?? raw?.createdAt ?? new Date().toISOString(),
-    reviewedAt: raw?.reviewedAt,
-    reviewedBy: raw?.reviewedBy,
-    evidenceNote: noteStr,
-    evidenceUrl,
-    adminNote: raw?.reason ?? raw?.revokeReason ?? raw?.adminNote ?? raw?.reviewNote,
-  };
-}
-
-// Dữ liệu mẫu khởi tạo cho Châu Bùi (Demo Creator)
 const STORAGE_PREFIX = 'im_creator_portal_';
 
 const DEFAULT_VERIFICATION: CreatorIdentityVerification = {
@@ -161,60 +87,6 @@ const DEFAULT_VERIFICATION: CreatorIdentityVerification = {
   status: 'VERIFIED',
   verifiedAt: '2026-10-15T14:30:00Z',
 };
-
-const DEFAULT_CHANNELS: CreatorSocialChannel[] = [
-  {
-    id: 'ch_1',
-    platform: 'instagram',
-    handle: '@chaubui_',
-    displayName: 'Châu Bùi',
-    profileUrl: 'https://instagram.com/chaubui_',
-    avatarUrl: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400',
-    followers: 3200000,
-    engagementRate: 0.052,
-    connected: true,
-    connectedAt: '2026-10-01T08:00:00Z',
-    syncStatus: 'SYNCED',
-  },
-  {
-    id: 'ch_2',
-    platform: 'tiktok',
-    handle: '@chaukikii',
-    displayName: 'Châu Bùi Official',
-    profileUrl: 'https://tiktok.com/@chaukikii',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
-    followers: 2450000,
-    engagementRate: 0.078,
-    connected: true,
-    connectedAt: '2026-10-05T10:30:00Z',
-    syncStatus: 'SYNCED',
-  },
-  {
-    id: 'ch_3',
-    platform: 'youtube',
-    handle: '@ChauBuiOfficial',
-    displayName: 'Châu Bùi Official',
-    profileUrl: 'https://youtube.com/@ChauBuiOfficial',
-    avatarUrl: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400',
-    followers: 685000,
-    engagementRate: 0.064,
-    connected: true,
-    connectedAt: '2026-10-12T16:00:00Z',
-    syncStatus: 'SYNCED',
-  },
-  {
-    id: 'ch_4',
-    platform: 'facebook',
-    handle: 'chaubuiofficial',
-    displayName: 'Châu Bùi (Fanpage)',
-    profileUrl: 'https://facebook.com/chaubuiofficial',
-    avatarUrl: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400',
-    followers: 1120000,
-    engagementRate: 0.041,
-    connected: false,
-    syncStatus: 'EXPIRED',
-  },
-];
 
 const DEFAULT_RATE_CARDS: CreatorRateCardPackage[] = [
   {
@@ -358,33 +230,6 @@ const DEFAULT_BOOKINGS: CreatorBookingItem[] = [
   },
 ];
 
-const DEFAULT_CLAIMS: CreatorClaimItem[] = [
-  {
-    id: 'clm_c_01',
-    platform: 'Instagram',
-    handle: '@chaubui_',
-    channelName: 'Châu Bùi (Official Instagram)',
-    followers: 3200000,
-    channelAvatar: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400',
-    status: 'APPROVED',
-    submittedAt: '2026-10-01T09:30:00Z',
-    evidenceNote: 'Xác minh tài khoản Instagram có tích xanh chính chủ qua Instagram Graph API token.',
-    adminNote: 'Đã xác minh đối chiếu giấy tờ tùy thân CCCD trùng khớp. Cấp huy hiệu Verified Creator.',
-  },
-  {
-    id: 'clm_c_02',
-    platform: 'TikTok',
-    handle: '@chaukikii',
-    channelName: 'Châu Bùi TikTok',
-    followers: 2450000,
-    channelAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
-    status: 'PENDING',
-    submittedAt: '2026-10-25T16:20:00Z',
-    evidenceNote: 'Đính kèm ảnh chụp màn hình TikTok Studio Creator Center và mã xác minh số điện thoại chính chủ.',
-    adminNote: 'Đang trong hàng đợi kiểm định của Data Manager.',
-  },
-];
-
 export const creatorPortalService = {
   /** 1. Lấy thông tin xác minh hồ sơ */
   getVerification(): CreatorIdentityVerification {
@@ -407,33 +252,6 @@ export const creatorPortalService = {
       localStorage.setItem(STORAGE_PREFIX + 'verification', JSON.stringify(updated));
     } catch {}
     return updated;
-  },
-
-  /** 2. Lấy danh sách kênh mạng xã hội */
-  getChannels(): CreatorSocialChannel[] {
-    try {
-      const saved = localStorage.getItem(STORAGE_PREFIX + 'channels');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return DEFAULT_CHANNELS;
-  },
-
-  /** 2b. Kết nối hoặc ngắt kết nối kênh */
-  toggleChannelConnection(channelId: string, connect: boolean): CreatorSocialChannel[] {
-    const list = this.getChannels().map((ch) =>
-      ch.id === channelId
-        ? {
-            ...ch,
-            connected: connect,
-            connectedAt: connect ? new Date().toISOString() : undefined,
-            syncStatus: connect ? ('SYNCED' as const) : ('EXPIRED' as const),
-          }
-        : ch
-    );
-    try {
-      localStorage.setItem(STORAGE_PREFIX + 'channels', JSON.stringify(list));
-    } catch {}
-    return list;
   },
 
   /** 3. Lấy bảng giá Rate Card */
@@ -497,39 +315,6 @@ export const creatorPortalService = {
     return updated;
   },
 
-  /** 6. Lấy danh sách Claim kênh KOC */
-  getClaims(): CreatorClaimItem[] {
-    try {
-      const saved = localStorage.getItem(STORAGE_PREFIX + 'claims');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return DEFAULT_CLAIMS;
-  },
-
-  /** 6b. Nộp yêu cầu Claim kênh mới */
-  submitClaim(payload: Omit<CreatorClaimItem, 'id' | 'status' | 'submittedAt'> & { id?: string }): CreatorClaimItem {
-    const current = this.getClaims();
-    const newClaim: CreatorClaimItem = {
-      ...payload,
-      id: payload.id || 'clm_c_' + Date.now(),
-      status: 'PENDING',
-      submittedAt: new Date().toISOString(),
-    };
-    const filtered = current.filter((c) => c.id !== newClaim.id);
-    const updated = [newClaim, ...filtered];
-    try {
-      localStorage.setItem(STORAGE_PREFIX + 'claims', JSON.stringify(updated));
-    } catch {}
-    return newClaim;
-  },
-
-  /** 7. Sinh mã bảo mật Bio ngẫu nhiên cho Claim */
-  generateBioVerificationCode(handle: string): string {
-    const cleanHandle = (handle || 'koc').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 4);
-    const rand = Math.floor(100000 + Math.random() * 900000);
-    return `IM-${cleanHandle}-${rand}`;
-  },
-
   /** 8. Backend API: Lấy thông tin Profile (GET /creators/portal/profile) */
   async fetchProfileApi(): Promise<any> {
     try {
@@ -551,61 +336,6 @@ export const creatorPortalService = {
     } catch (err) {
       console.warn('[creatorPortalService.updateProfileApi] API error or unauthorized:', err);
       return null;
-    }
-  },
-
-  /** 9. Backend API: Lấy danh sách kênh mạng xã hội đã liên kết (GET /creators/portal/accounts) */
-  async fetchLinkedAccountsApi(): Promise<any[]> {
-    try {
-      const response = await apiClient.get('/creators/portal/accounts');
-      const items = response.data?.data || response.data || [];
-      return Array.isArray(items) ? items : [];
-    } catch (err) {
-      console.warn('[creatorPortalService.fetchLinkedAccountsApi] API error or unauthorized:', err);
-      return [];
-    }
-  },
-
-  /** 10. Backend API: Nộp đơn Claim quyền sở hữu (POST /creators/{id}/claim) */
-  async submitClaimApi(creatorId: string, payload: { evidenceUrls: string[]; note: string }): Promise<any> {
-    const response = await apiClient.post(`/creators/${creatorId}/claim`, payload);
-    return response.data?.data || response.data;
-  },
-
-  /**
-   * 11. Backend API: Lấy danh sách Claim của tôi (GET /creator-claims/me)
-   * Hợp nhất với dữ liệu đồng bộ localStorage để hiển thị tức thì đơn vừa nộp & trạng thái duyệt.
-   */
-  async fetchMyClaimsApi(): Promise<CreatorClaimItem[] | null> {
-    const localList = this.getClaims();
-    try {
-      const response = await apiClient.get('/creator-claims/me');
-      const data = response.data?.data || response.data;
-      const items = data?.content || data?.items || (Array.isArray(data) ? data : []);
-      const backendList = (Array.isArray(items) ? items : []).map(mapBackendClaim);
-      if (backendList.length === 0) return localList;
-      const mergedMap = new Map<string, CreatorClaimItem>();
-      backendList.forEach((b) => mergedMap.set(b.id, b));
-      localList.forEach((l) => {
-        if (!mergedMap.has(l.id)) {
-          mergedMap.set(l.id, l);
-        } else {
-          const existing = mergedMap.get(l.id)!;
-          mergedMap.set(l.id, {
-            ...l,
-            ...existing,
-            channelName: existing.channelName !== 'Kênh Nhà sáng tạo' ? existing.channelName : l.channelName,
-            handle: existing.handle || l.handle,
-            platform: existing.platform || l.platform,
-            followers: existing.followers || l.followers,
-            channelAvatar: existing.channelAvatar || l.channelAvatar,
-          });
-        }
-      });
-      return Array.from(mergedMap.values());
-    } catch (err) {
-      console.warn('[creatorPortalService.fetchMyClaimsApi] API error or unauthorized, using synced local claims:', err);
-      return localList;
     }
   },
 };

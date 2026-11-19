@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 import https from 'https'
+import { channelOAuthReturn } from './api/proxy.js'
 
 const keepAliveAgent = new https.Agent({
   keepAlive: true,
@@ -70,6 +71,16 @@ export default defineConfig(({ mode }) => {
         secure: false,
         cookieDomainRewrite: '',
         configure: (proxy) => {
+          proxy.on('proxyRes', (upstream, req) => {
+            const url = new URL(req.url || '/', 'http://localhost');
+            const location = channelOAuthReturn(req, url.pathname, url.searchParams, upstream.statusCode);
+            if (!location) return;
+            upstream.statusCode = 303;
+            upstream.statusMessage = 'See Other';
+            upstream.headers.location = location;
+            upstream.headers['cache-control'] = 'no-store';
+            upstream.headers['referrer-policy'] = 'no-referrer';
+          });
           proxy.on('proxyReq', (proxyReq) => {
             // Match the upstream origin for requests forwarded by the local dev proxy.
             proxyReq.setHeader('Origin', 'https://api.influencermatch.site');

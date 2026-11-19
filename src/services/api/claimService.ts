@@ -45,11 +45,26 @@ const submitClaim = async (creatorId: string, payload: { evidenceUrls?: string[]
   const response = await apiClient.post('/creators/' + encodeURIComponent(creatorId) + '/claim', payload);
   return normalize(response.data?.data ?? response.data);
 };
-const getMyClaims = async (): Promise<ClaimResponse[]> => {
-  const response = await apiClient.get('/creator-claims/me');
-  const data = response.data?.data ?? response.data;
-  const list = data?.items ?? data?.content ?? data;
-  if (!Array.isArray(list)) throw new Error('Danh sách yêu cầu nhận kênh không hợp lệ.');
-  return list.map(normalize);
+const getMyClaims = async (page: number, signal?: AbortSignal) => {
+  const response = await apiClient.get('/creator-claims/me', { params: { page, size: 10 }, signal });
+  const result = readPage<unknown>(response.data);
+  return { ...result, items: result.items.map(normalize) };
 };
-export const claimService = { getClaims, getClaimById, reviewClaim, revokeClaim, submitClaim, getMyClaims };
+
+export interface ClaimChannel {
+  id: string;
+  platform: string;
+  externalId: string;
+  userName: string;
+  displayName?: string | null;
+  profileUrl?: string | null;
+}
+
+const lookupChannels = async (platform: string, q: string, signal?: AbortSignal): Promise<ClaimChannel[]> => {
+  const response = await apiClient.get('/creator-claims/channels/lookup', { params: { platform, q }, signal });
+  const items = response.data?.data;
+  if (!Array.isArray(items)) throw new Error('Danh sách kênh không hợp lệ.');
+  return items;
+};
+
+export const claimService = { getClaims, getClaimById, reviewClaim, revokeClaim, submitClaim, getMyClaims, lookupChannels };

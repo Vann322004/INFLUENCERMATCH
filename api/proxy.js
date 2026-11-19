@@ -3,6 +3,12 @@ import https from 'node:https';
 const UPSTREAM_HOST = 'api.influencermatch.site';
 const UPSTREAM_ORIGIN = `https://${UPSTREAM_HOST}`;
 
+const channelOAuthCallbacks = new Set([
+  '/api/v1/integrations/meta/callback',
+  '/api/v1/integrations/instagram/callback',
+  '/api/v1/integrations/tiktok/callback',
+]);
+
 const agent = new https.Agent({
   keepAlive: true,
   maxSockets: 50,
@@ -38,6 +44,16 @@ export const config = {
   },
 };
 export const maxDuration = 60;
+
+export function channelOAuthReturn(req, pathname, params, upstreamStatus) {
+  if (req.method !== 'GET' || !channelOAuthCallbacks.has(pathname)
+      || !/\btext\/html\b/i.test(req.headers.accept || '')
+      || (req.headers['sec-fetch-mode'] && req.headers['sec-fetch-mode'] !== 'navigate')) return null;
+
+  // UI hints only. The portal reads its bound session before showing a result.
+  const outcome = params.get('error') === 'access_denied' ? 'cancelled' : upstreamStatus === 409 ? 'conflict' : 'return';
+  return '/creator/social-accounts?oauth=' + outcome;
+}
 
 export default function handler(req, res) {
   // Handle CORS preflight directly if browser sends OPTIONS
@@ -86,6 +102,17 @@ export default function handler(req, res) {
 
   const search = parsedUrl.searchParams.toString();
   const upstreamPath = search ? `${targetPathname}?${search}` : targetPathname;
+  const isChannelOAuthNavigation = channelOAuthReturn(req, targetPathname, parsedUrl.searchParams);
+
+  const returnToChannels = (upstreamStatus) => {
+    if (res.writableEnded) return;
+    res.writeHead(303, {
+      Location: channelOAuthReturn(req, targetPathname, parsedUrl.searchParams, upstreamStatus),
+      'Cache-Control': 'no-store',
+      'Referrer-Policy': 'no-referrer',
+    });
+    res.end();
+  };
 
   // Build clean upstream headers without `forwarded` or `x-forwarded-*`
   const headers = {
@@ -116,6 +143,12 @@ export default function handler(req, res) {
   };
 
   const proxyReq = https.request(options, (proxyRes) => {
+    if (isChannelOAuthNavigation) {
+      proxyRes.once('end', () => returnToChannels(proxyRes.statusCode));
+      proxyRes.once('error', () => returnToChannels());
+      proxyRes.resume();
+      return;
+    }
     res.statusCode = proxyRes.statusCode || 502;
     res.setHeader('X-Proxy-Upstream', UPSTREAM_HOST);
 
@@ -145,7 +178,14 @@ export default function handler(req, res) {
     proxyRes.pipe(res);
   });
 
+  if (isChannelOAuthNavigation) {
+    proxyReq.setTimeout(30000, () => proxyReq.destroy());
+  }
   proxyReq.on('error', (err) => {
+    if (isChannelOAuthNavigation) {
+      returnToChannels();
+      return;
+    }
     if (!res.headersSent) {
       res.statusCode = 502;
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
