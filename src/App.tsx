@@ -142,7 +142,7 @@ function MainLayout({ children }: {
             width: '100%',
           }}
         >
-          <div className="app-page-wrapper">
+          <div className="app-page-wrapper" style={{ width: '100%', maxWidth: '100%' }}>
             {children}
           </div>
         </Content>

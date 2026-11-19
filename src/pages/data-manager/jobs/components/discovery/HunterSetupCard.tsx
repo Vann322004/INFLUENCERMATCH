@@ -39,6 +39,7 @@ export default function HunterSetupCard({
   topicsLoading,
   topicsError,
   topicsManagementPath,
+  onReloadTopics,
   mode,
   platform,
   selectedTopic,

@@ -2,7 +2,7 @@ import React from 'react';
 import { Table, Tag, Button, Space, Typography, message, Alert } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { HistoryOutlined, DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
-import type { PaymentInvoice } from '../../../data/mockData';
+import type { PaymentInvoice } from '../../../types/api/subscription.types';
 
 const { Text } = Typography;
 

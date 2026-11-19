@@ -3,7 +3,7 @@ import { Typography, Card, Tabs, message, Alert, Button } from 'antd';
 import { CrownOutlined, PieChartOutlined, HistoryOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
-import type { SubscriptionPlan, QuotaMetric, PaymentInvoice } from '../../data/mockData';
+import type { SubscriptionPlan, QuotaMetric, PaymentInvoice } from '../../types/api/subscription.types';
 import { subscriptionService } from '../../services/api/subscriptionService';
 import { brandService } from '../../services/api/brandService';
 import type { PlanResponse, SubscriptionResponse } from '../../types/api/subscription.types';
@@ -75,6 +75,7 @@ export default function SubscriptionPage() {
   const [subInfo, setSubInfo] = useState<SubInfoData>({
     currentPlanName: '',
     renewalDate: '',
+    totalDays: 30,
     daysRemaining: 0,
     isActive: false,
     usedCampaigns: 0,
@@ -195,6 +196,7 @@ export default function SubscriptionPage() {
           month: '2-digit',
           year: 'numeric',
         });
+        const durationDays = activeSub.plan?.durationDays || 30;
         const totalCamp = quotaTotal(activeSub.plan?.campaignQuota, (activeSub as any).campaignQuota);
         const usedCamp = activeSub.usedCampaignQuota || 0;
         const totalReco = quotaTotal(activeSub.plan?.recommendationQuota, (activeSub as any).recommendationQuota);
@@ -205,6 +207,7 @@ export default function SubscriptionPage() {
         setSubInfo({
           currentPlanName: planName,
           renewalDate,
+          totalDays: durationDays,
           daysRemaining,
           isActive: activeSub.status === 'ACTIVE',
           usedCampaigns: usedCamp,

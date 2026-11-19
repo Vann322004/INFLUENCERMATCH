@@ -146,6 +146,45 @@ class CrawlerService {
       15000
     );
   }
+
+  /**
+   * Thẩm định & Tái phân loại Creator hàng loạt trong DB (POST /api/v1/quality/batch-reclassify)
+   */
+  async batchReclassify(payload: {
+    limit?: number;
+    offset?: number;
+    platform?: string;
+    category?: string;
+    dry_run?: boolean;
+    auto_quarantine?: boolean;
+  } = {}): Promise<any> {
+    return await this.requestCrawler<any>(
+      '/api/v1/quality/batch-reclassify',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          limit: payload.limit ?? 20,
+          offset: payload.offset ?? 0,
+          platform: payload.platform || undefined,
+          category: payload.category || undefined,
+          dry_run: payload.dry_run ?? false,
+          auto_quarantine: payload.auto_quarantine ?? true,
+        }),
+      },
+      60000
+    );
+  }
+
+  /**
+   * Lấy báo cáo thẩm định DB gần nhất (GET /api/v1/quality/audit-report)
+   */
+  async getAuditReport(): Promise<any> {
+    return await this.requestCrawler<any>(
+      '/api/v1/quality/audit-report',
+      {},
+      15000
+    );
+  }
 }
 
 export const crawlerService = new CrawlerService();
