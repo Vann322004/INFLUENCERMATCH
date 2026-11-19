@@ -28,7 +28,7 @@ export default function CreatorCatalogPage() {
       {/* Page Header */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ color: '#0F172A', fontWeight: 800, fontSize: 20 }}>
-          Quản trị Định danh Nhà sáng tạo
+          Quản lý Định danh Nhà sáng tạo
         </div>
         <div style={{ color: '#64748B', fontSize: 13, marginTop: 2 }}>
           Hồ sơ định danh duy nhất (Master Identity), hợp nhất tài khoản đa nền tảng và kiểm soát trùng lặp

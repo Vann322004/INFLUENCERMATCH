@@ -1,5 +1,5 @@
 import apiClient from '../apiClient';
-import type { QualityItem } from '../../pages/admin/quality/types';
+import type { QualityItem } from '../../pages/data-manager/quality/types';
 
 export interface QualityPage {
   items: QualityItem[];

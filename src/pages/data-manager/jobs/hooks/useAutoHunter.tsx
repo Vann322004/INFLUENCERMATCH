@@ -6,6 +6,7 @@ import { useCollectionState } from '../../../../hooks/useCollectionState';
 import { nicheService, type Niche } from '../../../../services/api/nicheService';
 import { crawlerService } from '../../../../services/api/crawlerService';
 import { dataQualityService } from '../../../../services/api/dataQualityService';
+import { DATA_MANAGER_ROUTES } from '../../../../constants/adminRoutes';
 import type { CrawlPlatform, LiveCrawlResult } from '../../../../types/api/crawler.types';
 import type { DiscoveredKocItem } from '../components/discovery/DiscoveredFeedCard';
 import { filterTier0Candidates } from '../utils/hunterTier0Filter';
@@ -76,10 +77,7 @@ export function useAutoHunter() {
   };
 
   const handleNavigateQuality = () => {
-    const target = location.pathname.startsWith('/data-manager')
-      ? '/data-manager/data-quality'
-      : '/admin/data-quality';
-    navigate(target);
+    navigate(DATA_MANAGER_ROUTES.DATA_QUALITY);
   };
 
   const handleSelectTopic = (topicId: string) => {

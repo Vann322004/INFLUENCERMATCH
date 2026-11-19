@@ -6,6 +6,7 @@ import { CheckOutlined, ReloadOutlined, CheckCircleOutlined } from '@ant-design/
 import type { QualityItem } from '../../types';
 import { PLATFORM_COLOR_MAP } from '../../types';
 import { creatorService } from '../../../../../services/api/creatorService';
+import { DATA_MANAGER_ROUTES } from '../../../../../constants/adminRoutes';
 
 interface QualityRowDraft {
   niche: string;
@@ -306,7 +307,7 @@ export const QualityTable: React.FC<QualityTableProps> = ({
         </div>
         <Button
           type="primary"
-          onClick={() => navigate('/admin/jobs')}
+          onClick={() => navigate(DATA_MANAGER_ROUTES.JOBS)}
           style={{
             background: '#1D4ED8',
             borderRadius: 8,

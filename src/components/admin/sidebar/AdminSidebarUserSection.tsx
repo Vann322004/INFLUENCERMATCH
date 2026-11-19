@@ -34,11 +34,11 @@ export default function AdminSidebarUserSection({
   };
 
   const initials = getInitials();
-  const userName = currentUser?.name || currentUser?.fullName || (isManager ? 'Quản lý vận hành' : 'Quản trị viên');
-  const roleLabel = currentUser?.roleLabel || (isManager ? 'Quản lý vận hành' : 'Quản trị viên cấp cao');
+  const userName = currentUser?.name || currentUser?.fullName || (isManager ? 'Quản lý dữ liệu' : 'Quản trị viên');
+  const roleLabel = currentUser?.roleLabel || (isManager ? 'Quản lý dữ liệu' : 'Quản trị viên cấp cao');
 
   const userDropdownItems: MenuProps['items'] = [
-    { key: 'profile', icon: <UserOutlined />, label: isManager ? 'Hồ sơ Quản lý' : 'Hồ sơ Quản trị viên' },
+    { key: 'profile', icon: <UserOutlined />, label: isManager ? 'Hồ sơ Quản lý dữ liệu' : 'Hồ sơ Quản trị viên' },
     { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt hệ thống' },
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, danger: true, label: 'Đăng xuất', onClick: onLogout },
