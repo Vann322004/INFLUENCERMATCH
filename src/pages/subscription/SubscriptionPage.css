@@ -10,24 +10,29 @@
 
 /* Header Banner */
 .sub-current-card {
-  background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #1E40AF 100%);
-  border-radius: 16px;
+  background: #FFFFFF;
+  border-radius: 14px;
   padding: 24px 28px;
-  color: #FFFFFF;
-  box-shadow: 0 10px 25px -5px rgba(67, 56, 202, 0.35);
+  color: #0F172A;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
   position: relative;
   overflow: hidden;
 }
 
-.sub-current-card::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 320px;
-  height: 320px;
-  background: radial-gradient(circle, rgba(236, 72, 153, 0.25) 0%, rgba(255, 255, 255, 0) 70%);
-  pointer-events: none;
+.sub-current-card-loading {
+  text-align: center;
+  padding: 36px 0;
+  color: #64748B;
+}
+
+.sub-cycle-box {
+  background: #F8FAFC;
+  border-radius: 12px;
+  padding: 16px 18px;
+  border: 1px solid #E2E8F0;
+  width: 100%;
+  max-width: 340px;
 }
 
 /* Plans Switcher */
