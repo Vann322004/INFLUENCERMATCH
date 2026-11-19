@@ -480,6 +480,15 @@
   color: #507663;
 }
 
+.quality-batch-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.quality-batch-filters { display: block; padding: 18px; }
+.quality-batch-audit .ant-btn-primary { background: #2459cf; box-shadow: none; }
+.quality-batch-audit > .ant-row { margin-bottom: 20px; }
+.quality-batch-empty { padding: 36px 20px; text-align: center; border-top: 1px solid #e2e8f0; }
+.quality-batch-empty h3 { margin: 0 0 8px; font-size: 15px; font-weight: 600; color: #334155; }
+.quality-batch-empty p { margin: 0 0 6px; font-size: 13px; color: #6b7b91; }
+.quality-batch-empty > span { color: #8793a4; font-size: 12px; }
+
 .quality-crawler-box {
   max-width: 1440px;
   margin: 0 auto 12px;

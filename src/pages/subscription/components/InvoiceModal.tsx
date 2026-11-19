@@ -21,7 +21,7 @@ export default function InvoiceModal({
   onCancel,
 }: InvoiceModalProps) {
   const [downloading, setDownloading] = useState(false);
-  if (!invoice) return null;
+  if (!invoice || invoice.status !== 'success') return null;
 
   return (
     <Modal

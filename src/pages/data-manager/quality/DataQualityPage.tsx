@@ -23,7 +23,7 @@ import {
   Typography,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { ExportOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { ExportOutlined, SearchOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { DATA_MANAGER_ROUTES } from '../../../constants/adminRoutes';
 import { dataQualityService } from '../../../services/api/dataQualityService';
@@ -357,7 +357,6 @@ export default function DataQualityPage() {
 
         <Space wrap>
           <Button
-            icon={<ReloadOutlined />}
             loading={loading}
             disabled={saving}
             onClick={() => setRefreshKey((current) => current + 1)}
@@ -730,7 +729,7 @@ export default function DataQualityPage() {
             },
             {
               key: 'crawler',
-              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Dữ liệu vừa thu thập</span>,
+              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Hồ sơ cần đối chiếu</span>,
               children: (
                 <div style={{ padding: '24px 24px 32px' }}>
                   <CrawlerReviewList refreshKey={refreshKey} />
@@ -741,7 +740,7 @@ export default function DataQualityPage() {
               key: 'batch-audit',
               label: (
                 <span style={{ fontWeight: 700, fontSize: 14 }}>
-                  ⚡ Thẩm định & Làm sạch DB (Batch)
+                  Kiểm định hàng loạt
                 </span>
               ),
               children: (

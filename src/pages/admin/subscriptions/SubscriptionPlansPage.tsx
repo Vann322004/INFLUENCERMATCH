@@ -1,576 +1,129 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Row, Col, Button, Tag, Typography, Spin, message, Popconfirm, Empty, Tooltip, Alert } from 'antd';
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  CheckCircleOutlined,
-  DollarCircleOutlined,
-  AppstoreOutlined,
-  ReloadOutlined,
-  AimOutlined,
-  RobotOutlined,
-  UsergroupAddOutlined,
-  ClockCircleOutlined,
-} from '@ant-design/icons';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Button, Tag, Typography, Spin, message, Empty, Alert, Pagination, Table } from 'antd';
 import { subscriptionService } from '../../../services/api/subscriptionService';
 import { adminService } from '../../../services/api/adminService';
+import { authService } from '../../../services/api/authService';
 import { createAdminQuery } from '../../../services/adminCache';
+import type { PageResponse } from '../../../types/api/common.types';
 import type { PlanResponse, PlanCreateRequest, PlanUpdateRequest } from '../../../types/api/subscription.types';
 import CreateEditPlanForm from './components/CreateEditPlanForm';
 import ActivateStopToggle from './components/ActivateStopToggle';
+import './SubscriptionPlansPage.css';
 
-const { Text, Title } = Typography;
-const planCatalogQuery = subscriptionService.getPlansPageQuery(0, 50);
-const planStatsQuery = createAdminQuery('plans:payment-stats', () => adminService.getTransactionStats(), { ttl: 30_000, tags: ['admin-billing'] });
-
-interface PaymentStats {
-  totalRevenue: number;
-  paidCount: number;
-  totalCount: number;
-  totalPending?: number;
-  totalRefunded?: number;
+const statsQuery = createAdminQuery('plans:payment-stats', () => adminService.getTransactionStats(), { ttl: 30_000, tags: ['admin-billing'] });
+type PaymentStats = Awaited<ReturnType<typeof adminService.getTransactionStats>>;
+function explain(error: unknown, fallback: string) {
+  const err = error as { response?: { status?: number; data?: { detail?: string; message?: string } }; message?: string };
+  if (err.response?.status === 401) return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+  if (err.response?.status === 403) return 'Bạn không có quyền thực hiện thao tác này.';
+  return err.response?.data?.detail || err.response?.data?.message || err.message || fallback;
 }
 
 export default function SubscriptionPlansPage() {
-  const [plans, setPlans] = useState<PlanResponse[]>(() => planCatalogQuery.peek()?.value.items ?? []);
-  const [stats, setStats] = useState<PaymentStats | null>(() => planStatsQuery.peek()?.value ?? null);
-  const [loading, setLoading] = useState<boolean>(() => !planCatalogQuery.peek() || !planStatsQuery.peek());
-  const [saving, setSaving] = useState<boolean>(false);
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(8);
+  const [catalog, setCatalog] = useState<PageResponse<PlanResponse> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [revision, setRevision] = useState(0);
+  const [stats, setStats] = useState<PaymentStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<PlanResponse | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
-
-  const fetchPlansAndStats = useCallback(async (force = false) => {
-    if (force) { subscriptionService.clearPlansCache(); planStatsQuery.invalidate(); }
-    setLoading(!planCatalogQuery.peek() || !planStatsQuery.peek());
-    setAuthError(null);
-    try {
-      const [plansData, statsData] = await Promise.all([
-        subscriptionService.getPlans(0, 50),
-        planStatsQuery().catch((err: unknown) => {
-          console.warn('[SubscriptionPlansPage] API /admin/payments/stats:', err);
-          return null;
-        }),
-      ]);
-
-      if (Array.isArray(plansData)) {
-        setPlans(plansData);
-      } else {
-        setPlans([]);
-      }
-
-      setStats(statsData);
-    } catch (err: any) {
-      console.error('[SubscriptionPlansPage] Lỗi gọi API backend:', err);
-      if (err?.response?.status === 401) {
-        setAuthError('Yêu cầu xác thực (401 Unauthorized): Cần có token Admin hợp lệ để truy cập API máy chủ. Vui lòng đăng nhập lại tài khoản Admin.');
-        message.error('Lỗi 401: Phiên đăng nhập chưa được xác thực hoặc token đã hết hạn!');
-      } else {
-        message.error(err?.response?.data?.message || err?.message || 'Không thể tải danh sách gói dịch vụ từ máy chủ.');
-      }
-      setPlans([]);
-      setStats(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  const lock = useRef(false);
+  const canManage = authService.getCurrentUser()?.permissions?.includes('MANAGE_PLAN') ?? false;
   useEffect(() => {
-    fetchPlansAndStats();
-  }, [fetchPlansAndStats]);
+    let active = true;
+    setLoading(true); setError('');
+    subscriptionService.getPlansPage(page, size).then(result => {
+      if (!active) return;
+      if (result.totalPages > 0 && page >= result.totalPages) { setPage(result.totalPages - 1); return; }
+      setCatalog(result);
+    }).catch(err => { if (active) setError(explain(err, 'Không tải được danh mục gói dịch vụ.')); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [page, size, revision]);
 
-  const activePlansCount = plans.filter((p) => p.status === 'ACTIVE').length;
-
-  const handleStatusChange = async (planId: string, newStatus: 'ACTIVE' | 'INACTIVE') => {
-    const target = plans.find((p) => p.id === planId);
-    if (!target) return;
-
+  const statsRequest = useRef(0);
+  const fetchStats = useCallback(async (force = false) => {
+    const request = ++statsRequest.current;
+    setStatsLoading(true); setStatsError('');
+    if (force) statsQuery.invalidate();
+    try { const data = await statsQuery(); if (request === statsRequest.current) setStats(data); }
+    catch (err) { if (request === statsRequest.current) { setStats(null); setStatsError(explain(err, 'Không tải được thống kê.')); } }
+    finally { if (request === statsRequest.current) setStatsLoading(false); }
+  }, []);
+  useEffect(() => { fetchStats(); return () => { ++statsRequest.current; }; }, [fetchStats]);
+  const refresh = () => { subscriptionService.clearPlansCache(); setRevision(value => value + 1); };
+  const changeStatus = async (id: string, status: 'ACTIVE' | 'INACTIVE') => {
+    if (lock.current || !canManage) return;
+    lock.current = true; setBusyId(id);
     try {
-      await subscriptionService.updatePlan(planId, {
-        planName: target.planName,
-        price: target.price,
-        currency: target.currency || 'VND',
-        durationDays: target.durationDays,
-        campaignQuota: target.campaignQuota,
-        recommendationQuota: target.recommendationQuota,
-        refreshQuota: target.refreshQuota,
-        description: target.description,
-        status: newStatus,
-      });
-
-      setPlans((prev) =>
-        prev.map((p) => (p.id === planId ? { ...p, status: newStatus } : p))
-      );
-      message.success(
-        newStatus === 'ACTIVE'
-          ? `Đã kích hoạt mở bán gói "${target.planName}"!`
-          : `Đã tạm dừng gói "${target.planName}".`
-      );
-    } catch (err: any) {
-      message.error(err?.response?.data?.message || 'Không thể cập nhật trạng thái gói.');
-    }
+      if (status === 'INACTIVE') await subscriptionService.deletePlan(id);
+      else await subscriptionService.updatePlan(id, { status });
+      message.success(status === 'ACTIVE' ? 'Đã mở bán gói dịch vụ.' : 'Đã ngừng bán gói dịch vụ.');
+      refresh();
+    } catch (err) { message.error(explain(err, 'Không cập nhật được trạng thái gói.')); throw err; }
+    finally { lock.current = false; setBusyId(null); }
   };
-
-  const handleOpenCreate = () => {
-    setEditingPlan(null);
-    setFormOpen(true);
-  };
-
-  const handleOpenEdit = (plan: PlanResponse) => {
-    setEditingPlan(plan);
-    setFormOpen(true);
-  };
-
-  const handleDeletePlan = async (planId: string) => {
+  const savePlan = async (payload: PlanCreateRequest | PlanUpdateRequest, id?: string) => {
+    if (lock.current || !canManage) throw new Error('Không thể lưu gói lúc này.');
+    lock.current = true; setSaving(true);
     try {
-      await subscriptionService.deletePlan(planId);
-      message.success('Đã tạm dừng và cập nhật trạng thái gói dịch vụ!');
-      fetchPlansAndStats();
-    } catch (err: any) {
-      message.error(err?.response?.data?.message || 'Lỗi khi xóa gói dịch vụ.');
-    }
+      if (id) await subscriptionService.updatePlan(id, payload as PlanUpdateRequest);
+      else await subscriptionService.createPlan(payload as PlanCreateRequest);
+      message.success(id ? 'Đã cập nhật gói dịch vụ.' : 'Đã tạo gói dịch vụ.');
+      setFormOpen(false); refresh();
+    } catch (err) { message.error(explain(err, 'Không lưu được gói dịch vụ.')); throw err; }
+    finally { lock.current = false; setSaving(false); }
   };
-
-  const handleSavePlan = async (payload: PlanCreateRequest | PlanUpdateRequest, planId?: string) => {
-    setSaving(true);
-    try {
-      if (planId) {
-        await subscriptionService.updatePlan(planId, payload as PlanUpdateRequest);
-        message.success(`Đã cập nhật thông tin gói "${payload.planName}" thành công!`);
-      } else {
-        await subscriptionService.createPlan(payload as PlanCreateRequest);
-        message.success(`Đã tạo mới gói dịch vụ "${payload.planName}" thành công!`);
-      }
-      setFormOpen(false);
-      fetchPlansAndStats();
-    } catch (err: any) {
-      message.error(err?.response?.data?.message || 'Không thể lưu gói dịch vụ. Vui lòng thử lại.');
-      throw err;
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const formatCurrency = (val: number) => {
-    if (val >= 1e9) return `${(val / 1e9).toFixed(1)} tỷ VNĐ`;
-    if (val >= 1e6) return `${(val / 1e6).toFixed(1)} triệu VNĐ`;
-    if (val > 0) return `${val.toLocaleString('vi-VN')} đ`;
-    return '0 đ';
-  };
-
-  return (
-    <div style={{ padding: '4px 0 24px' }}>
-      {/* Tiêu đề trang & Nút thêm mới */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 12,
-          marginBottom: 20,
-        }}
-      >
-        <div>
-          <Title level={4} style={{ margin: 0, color: '#0F172A', fontWeight: 800 }}>
-            Quản Lý Gói Dịch Vụ & Hạn Mức
-          </Title>
-          <Text style={{ color: '#64748B', fontSize: 13, display: 'block', marginTop: 2 }}>
-            Quản trị biểu phí, chu kỳ, hạn mức sử dụng (Quota) và trạng thái mở bán các gói thuê bao dành cho nhãn hàng (Brand).
-          </Text>
-        </div>
-
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => fetchPlansAndStats(true)}
-            loading={loading}
-            style={{ borderRadius: 8 }}
-          >
-            Làm mới
-          </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleOpenCreate}
-            style={{
-              background: 'linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 100%)',
-              border: 'none',
-              borderRadius: 8,
-              fontWeight: 700,
-            }}
-          >
-            Tạo gói mới
-          </Button>
-        </div>
+  const plans = catalog?.items ?? [];
+  const activeCount = plans.filter(plan => plan.status === 'ACTIVE').length;
+  const inactiveCount = plans.filter(plan => plan.status === 'INACTIVE').length;
+  const otherCount = plans.length - activeCount - inactiveCount;
+  const ready = !loading && !error && catalog !== null;
+  const money = (value: number, currency = 'VND') => new Intl.NumberFormat('vi-VN', { style: 'currency', currency }).format(value);
+  return <div className="admin-plans-page">
+    <header className="admin-plans-header">
+      <div><Typography.Title level={4}>Quản lý gói dịch vụ</Typography.Title><p>Quản lý giá, thời hạn, hạn mức sử dụng và trạng thái mở bán.</p></div>
+      <div className="admin-plans-header-actions">
+        <Button loading={loading} onClick={() => { refresh(); fetchStats(true); }}>Làm mới</Button>
+        {canManage && <Button type="primary" disabled={saving || busyId !== null} onClick={() => { setEditingPlan(null); setFormOpen(true); }}>Tạo gói mới</Button>}
       </div>
-
-      {/* Thông báo lỗi xác thực nếu có */}
-      {authError && (
-        <Alert
-          type="error"
-          showIcon
-          message="Yêu cầu đăng nhập xác thực (401 Unauthorized)"
-          description={authError}
-          style={{ marginBottom: 20, borderRadius: 10 }}
-          action={
-            <Button size="small" type="primary" danger onClick={() => { window.location.href = '/login'; }}>
-              Đăng nhập tài khoản Admin
-            </Button>
-          }
-        />
-      )}
-
-      {/* KPI Thống kê Tổng quan (dữ liệu thật từ backend API) */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={8}>
-          <Card
-            bordered={false}
-            style={{
-              borderRadius: 12,
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-            }}
-            styles={{ body: { padding: '16px 20px' } }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ color: '#64748B', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px' }}>
-                TỔNG SỐ GÓI DỊCH VỤ
-              </span>
-              <AppstoreOutlined style={{ color: '#2563EB', fontSize: 16 }} />
-            </div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: '#0F172A', marginTop: 6 }}>
-              {plans.length} gói
-            </div>
-            <div style={{ fontSize: 12, color: '#10B981', marginTop: 2, fontWeight: 600 }}>
-              {activePlansCount} gói đang mở bán ({plans.length - activePlansCount} tạm dừng)
-            </div>
-          </Card>
-        </Col>
-
-        <Col xs={24} sm={8}>
-          <Card
-            bordered={false}
-            style={{
-              borderRadius: 12,
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-            }}
-            styles={{ body: { padding: '16px 20px' } }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ color: '#64748B', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px' }}>
-                TỔNG DOANH THU THANH TOÁN
-              </span>
-              <DollarCircleOutlined style={{ color: '#10B981', fontSize: 16 }} />
-            </div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: '#10B981', marginTop: 6 }}>
-              {stats ? formatCurrency(stats.totalRevenue) : '—'}
-            </div>
-            <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
-              Thu từ giao dịch thanh toán VNPAY thực tế
-            </div>
-          </Card>
-        </Col>
-
-        <Col xs={24} sm={8}>
-          <Card
-            bordered={false}
-            style={{
-              borderRadius: 12,
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-            }}
-            styles={{ body: { padding: '16px 20px' } }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ color: '#64748B', fontSize: 11, fontWeight: 700, letterSpacing: '0.5px' }}>
-                GIAO DỊCH THÀNH CÔNG
-              </span>
-              <CheckCircleOutlined style={{ color: '#2563EB', fontSize: 16 }} />
-            </div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: '#2563EB', marginTop: 6 }}>
-              {stats ? `${stats.paidCount} giao dịch` : '—'}
-            </div>
-            <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
-              {stats ? stats.totalCount ? `Trên tổng số ${stats.totalCount} lượt giao dịch phát sinh` : 'Chưa có giao dịch phát sinh' : 'Chưa tải được thống kê'}
-            </div>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Danh sách thẻ gói dịch vụ */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '80px 0' }}>
-          <Spin size="large" />
-          <div style={{ marginTop: 12, color: '#64748B', fontSize: 13 }}>Đang tải danh mục gói dịch vụ từ máy chủ...</div>
-        </div>
-      ) : plans.length === 0 ? (
-        <Card style={{ borderRadius: 12, textAlign: 'center', padding: '40px 0' }}>
-          <Empty description="Chưa có gói dịch vụ nào trên hệ thống">
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreate} style={{ borderRadius: 8 }}>
-              Tạo gói dịch vụ đầu tiên
-            </Button>
-          </Empty>
-        </Card>
-      ) : (
-        <Row gutter={[20, 20]}>
-          {plans.map((plan) => {
-            const isHighlight =
-              plan.planName.toLowerCase().includes('pro') ||
-              plan.planName.toLowerCase().includes('enterprise');
-            const isActive = plan.status === 'ACTIVE';
-
-            return (
-              <Col xs={24} sm={12} lg={6} key={plan.id}>
-                <Card
-                  bordered={false}
-                  style={{
-                    borderRadius: 14,
-                    border: isHighlight ? '1.5px solid #2563EB' : '1px solid #E2E8F0',
-                    boxShadow: isHighlight
-                      ? '0 6px 20px rgba(37, 99, 235,0.12)'
-                      : '0 2px 8px rgba(0,0,0,0.03)',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative',
-                    transition: 'all 0.2s ease',
-                  }}
-                  styles={{
-                    body: {
-                      padding: '20px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      flex: 1,
-                    },
-                  }}
-                >
-                  {/* Tiêu đề & Trạng thái */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      marginBottom: 10,
-                      gap: 8,
-                    }}
-                  >
-                    <div>
-                      <span
-                        style={{
-                          fontWeight: 800,
-                          fontSize: 18,
-                          color: '#0F172A',
-                          display: 'block',
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        {plan.planName}
-                      </span>
-                    </div>
-                    {isActive ? (
-                      <Tag
-                        color="success"
-                        style={{
-                          borderRadius: 6,
-                          fontWeight: 700,
-                          fontSize: 11,
-                          margin: 0,
-                          padding: '2px 8px',
-                        }}
-                      >
-                        Đang mở bán
-                      </Tag>
-                    ) : (
-                      <Tag
-                        color="default"
-                        style={{
-                          borderRadius: 6,
-                          fontWeight: 600,
-                          fontSize: 11,
-                          margin: 0,
-                          padding: '2px 8px',
-                        }}
-                      >
-                        Tạm dừng
-                      </Tag>
-                    )}
-                  </div>
-
-                  {/* Mô tả gói */}
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: '#64748B',
-                      marginBottom: 14,
-                      minHeight: 36,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {plan.description || 'Gói dịch vụ chính thức từ hệ thống InfluencerMatch'}
-                  </div>
-
-                  {/* Đơn giá & Chu kỳ */}
-                  <div
-                    style={{
-                      marginBottom: 16,
-                      padding: '12px',
-                      borderRadius: 10,
-                      background: isHighlight ? '#EFF6FF' : '#F8FAFC',
-                      border: isHighlight ? '1px solid #BFDBFE' : '1px solid #E2E8F0',
-                    }}
-                  >
-                    <div style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', lineHeight: 1.2 }}>
-                      {plan.price === 0 ? (
-                        <span style={{ color: '#059669' }}>Miễn phí</span>
-                      ) : (
-                        `${plan.price.toLocaleString('vi-VN')} đ`
-                      )}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
-                      Chu kỳ sử dụng: <strong>{plan.durationDays} ngày</strong>
-                    </div>
-                  </div>
-
-                  {/* Hạn mức sử dụng (Quotas) */}
-                  <div style={{ flex: 1, marginBottom: 16 }}>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: '#94A3B8',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        marginBottom: 10,
-                      }}
-                    >
-                      Hạn mức sử dụng (Quota):
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          fontSize: 12,
-                          color: '#334155',
-                        }}
-                      >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <AimOutlined style={{ color: '#2563EB' }} />
-                          <span>Chiến dịch tối đa:</span>
-                        </span>
-                        <strong style={{ color: '#0F172A' }}>{plan.campaignQuota} chiến dịch</strong>
-                      </div>
-
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          fontSize: 12,
-                          color: '#334155',
-                        }}
-                      >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <RobotOutlined style={{ color: '#0EA5E9' }} />
-                          <span>Gợi ý AI Match:</span>
-                        </span>
-                        <strong style={{ color: '#0F172A' }}>{plan.recommendationQuota} lượt</strong>
-                      </div>
-
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          fontSize: 12,
-                          color: '#334155',
-                        }}
-                      >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <UsergroupAddOutlined style={{ color: '#10B981' }} />
-                          <span>Làm mới Creator:</span>
-                        </span>
-                        <strong style={{ color: '#0F172A' }}>{plan.refreshQuota} người/tháng</strong>
-                      </div>
-
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          fontSize: 12,
-                          color: '#334155',
-                        }}
-                      >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <ClockCircleOutlined style={{ color: '#F59E0B' }} />
-                          <span>Thời hạn gói:</span>
-                        </span>
-                        <strong style={{ color: '#0F172A' }}>{plan.durationDays} ngày</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Hành động dưới chân thẻ */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      paddingTop: 12,
-                      borderTop: '1px solid #F1F5F9',
-                      gap: 8,
-                    }}
-                  >
-                    <ActivateStopToggle plan={plan} onStatusChange={handleStatusChange} />
-
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <Button
-                        size="small"
-                        icon={<EditOutlined />}
-                        onClick={() => handleOpenEdit(plan)}
-                        style={{ borderRadius: 6 }}
-                      >
-                        Sửa
-                      </Button>
-                      <Popconfirm
-                        title="Tạm dừng gói dịch vụ này?"
-                        description="Gói dịch vụ sẽ bị chuyển sang trạng thái tạm dừng mở bán."
-                        onConfirm={() => handleDeletePlan(plan.id)}
-                        okText="Tạm dừng"
-                        cancelText="Hủy"
-                      >
-                        <Tooltip title="Ngưng mở bán">
-                          <Button
-                            size="small"
-                            danger
-                            icon={<DeleteOutlined />}
-                            style={{ borderRadius: 6 }}
-                          />
-                        </Tooltip>
-                      </Popconfirm>
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-            );
-          })}
-        </Row>
-      )}
-
-      {/* Drawer Tạo / Chỉnh sửa Gói */}
-      <CreateEditPlanForm
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        plan={editingPlan}
-        onSave={handleSavePlan}
-        saving={saving}
-      />
+    </header>
+    <div className="admin-plans-stats">
+      <section><span>Tổng số gói trong danh mục</span><strong>{ready ? catalog.totalElements.toLocaleString('vi-VN') : '—'}</strong>
+        <small>{ready ? `Trang này: ${activeCount} đang mở bán · ${inactiveCount} ngừng bán${otherCount ? ` · ${otherCount} trạng thái khác` : ''}` : 'Đang chờ dữ liệu danh mục'}</small></section>
+      <section><span>Tổng doanh thu thanh toán</span><strong>{!statsLoading && stats ? money(stats.totalRevenue) : '—'}</strong><small>Toàn hệ thống · Theo thống kê thanh toán</small></section>
+      <section><span>Giao dịch thành công</span><strong>{!statsLoading && stats ? stats.paidCount.toLocaleString('vi-VN') : '—'}</strong><small>{stats ? `Toàn hệ thống · Trên ${stats.totalCount.toLocaleString('vi-VN')} giao dịch` : 'Theo thống kê thanh toán'}</small></section>
     </div>
-  );
+    {statsError && <Alert type="warning" title="Chưa tải được thống kê thanh toán" description={statsError} action={<Button onClick={() => fetchStats(true)} loading={statsLoading}>Thử lại thống kê</Button>} />}
+    <p className="admin-plans-impact">Thay đổi gói chỉ áp dụng cho lượt đăng ký mới. Thuê bao đang hoạt động giữ nguyên giá, thời hạn và hạn mức đã đăng ký.</p>
+    {loading ? <div className="admin-plans-loading" role="status"><Spin /><span>Đang tải danh sách gói dịch vụ…</span></div>
+      : error ? <Alert type="error" title="Không tải được danh sách gói" description={error} action={<Button onClick={refresh}>Thử lại</Button>} />
+      : !plans.length ? <Empty description="Chưa có gói dịch vụ trong danh mục." />
+      : <div className="admin-plans-table"><Table<PlanResponse>
+        rowKey="id" dataSource={plans} pagination={false} scroll={{ x: 1150 }}
+        columns={[
+          { title: 'Gói dịch vụ', key: 'name', width: 260, render: (_, plan) => <div className="admin-plan-table-name"><strong>{plan.planName}</strong><p title={plan.description}>{plan.description || 'Chưa có mô tả'}</p></div> },
+          { title: 'Giá / chu kỳ', key: 'price', width: 170, render: (_, plan) => <div className="admin-plan-table-price"><strong>{plan.price === 0 ? 'Miễn phí' : money(plan.price, plan.currency || 'VND')}</strong><span>{plan.durationDays} ngày</span></div> },
+          { title: 'Chiến dịch', dataIndex: 'campaignQuota', align: 'right', width: 100, render: (value: number) => value.toLocaleString('vi-VN') },
+          { title: 'Lượt gợi ý', dataIndex: 'recommendationQuota', align: 'right', width: 100, render: (value: number) => value.toLocaleString('vi-VN') },
+          { title: 'Lượt làm mới', dataIndex: 'refreshQuota', align: 'right', width: 110, render: (value: number) => value.toLocaleString('vi-VN') },
+          { title: 'Thuê bao hoạt động', dataIndex: 'activeSubscriptionCount', align: 'right', width: 140, render: (value?: number) => value == null ? '—' : value.toLocaleString('vi-VN') },
+          { title: 'Mở bán', key: 'status', width: 170, render: (_, plan) => canManage && ['ACTIVE', 'INACTIVE'].includes(plan.status)
+            ? <ActivateStopToggle plan={plan} onStatusChange={changeStatus} loading={busyId === plan.id} disabled={saving || busyId !== null || loading} />
+            : <Tag color={plan.status === 'ACTIVE' ? 'success' : 'default'}>{plan.status === 'ACTIVE' ? 'Đang mở bán' : plan.status === 'INACTIVE' ? 'Ngừng bán' : plan.status}</Tag> },
+          { title: '', key: 'actions', width: 110, render: (_, plan) => canManage ? <Button disabled={saving || busyId !== null || loading} onClick={() => { setEditingPlan(plan); setFormOpen(true); }}>Chỉnh sửa</Button> : null },
+        ]}
+      /></div>}
+    {ready && catalog.totalElements > 0 && <Pagination className="admin-plans-pagination" current={page + 1} pageSize={size} total={catalog.totalElements} showSizeChanger pageSizeOptions={[8, 16, 24]} disabled={busyId !== null || saving}
+      locale={{ items_per_page: '/ trang', jump_to: 'Đến trang', page: '', prev_page: 'Trang trước', next_page: 'Trang sau', prev_5: 'Lùi 5 trang', next_5: 'Tiến 5 trang' }}
+      showTotal={(total, range) => `${range[0]}–${range[1]} / ${total} gói`}
+      onChange={(next, nextSize) => { setPage(nextSize === size ? next - 1 : 0); setSize(nextSize); }} />}
+    <CreateEditPlanForm open={formOpen} onClose={() => { if (!saving) setFormOpen(false); }} plan={editingPlan} onSave={savePlan} saving={saving} />
+  </div>;
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Button, Tag, Tooltip, Spin } from 'antd';
+import { Button, Tag, Tooltip, Spin } from 'antd';
 import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import type { SubscriptionPlan } from '../../../types/api/subscription.types';
 
@@ -41,7 +41,7 @@ export default function PlansTab({
 
   return (
     <div style={{ marginTop: 16 }}>
-      <Row gutter={[20, 20]} align="stretch" justify="center">
+      <div className="subscription-catalog-grid">
         {plans.map((plan) => {
           const isCurrent = plan.isCurrent;
           const isFree = plan.name === 'FREE';
@@ -106,7 +106,7 @@ export default function PlansTab({
           }
 
           return (
-            <Col xs={24} sm={12} lg={plans.length >= 4 ? 6 : plans.length === 3 ? 8 : 12} key={plan.id}>
+            <div className="subscription-catalog-item" key={plan.id}>
               <div className={`pricing-card ${plan.popular ? 'popular' : ''}`}>
                 {plan.badge && <div className="popular-badge">{plan.badge}</div>}
 
@@ -210,10 +210,10 @@ export default function PlansTab({
                   </div>
                 </div>
               </div>
-            </Col>
+            </div>
           );
         })}
-      </Row>
+      </div>
     </div>
   );
 }

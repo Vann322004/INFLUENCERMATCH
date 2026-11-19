@@ -4,7 +4,7 @@ import { CrownOutlined, PieChartOutlined, HistoryOutlined } from '@ant-design/ic
 import { useNavigate } from 'react-router-dom';
 
 import type { SubscriptionPlan, QuotaMetric, PaymentInvoice } from '../../types/api/subscription.types';
-import { subscriptionService } from '../../services/api/subscriptionService';
+import { subscriptionService, PLAN_CATALOG_CHANGED } from '../../services/api/subscriptionService';
 import { brandService } from '../../services/api/brandService';
 import type { PlanResponse, SubscriptionResponse } from '../../types/api/subscription.types';
 import type { BrandResponse } from '../../types/api/brand.types';
@@ -38,13 +38,17 @@ const mapPlans = (rawList: PlanResponse[], activePlanId?: string): SubscriptionP
         subtitle,
         priceMonthly: p.price,
         priceYearly: p.price,
+        durationDays: p.durationDays,
+        campaignQuota: p.campaignQuota,
+        recommendationQuota: p.recommendationQuota,
+        refreshQuota: p.refreshQuota,
         isCurrent: Boolean(activePlanId && p.id === activePlanId),
         popular: isPopular,
         badge: isPopular ? 'Khuyên Dùng • Phổ Biến' : undefined,
         features: [
           { text: `Tối đa ${p.campaignQuota} chiến dịch hoạt động`, included: true },
-          { text: `Khám phá ${p.recommendationQuota} Creator / tháng`, included: true },
-          { text: `Làm mới số liệu (Refresh) ${p.refreshQuota} Creator / tháng`, included: true },
+          { text: `${p.recommendationQuota} lượt gợi ý nhà sáng tạo / chu kỳ`, included: true },
+          { text: `${p.refreshQuota} lượt làm mới dữ liệu / chu kỳ`, included: true },
           { text: `Thời hạn chu kỳ: ${p.durationDays} ngày`, included: true },
         ],
       };
@@ -61,6 +65,7 @@ const mapPlans = (rawList: PlanResponse[], activePlanId?: string): SubscriptionP
 export default function SubscriptionPage() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState<boolean>(true);
+  const [plansError, setPlansError] = useState('');
   const [loadingSubInfo, setLoadingSubInfo] = useState<boolean>(true);
   const activePlanIdRef = useRef<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('plans');
@@ -299,30 +304,45 @@ export default function SubscriptionPage() {
     }
   }, []);
 
+  const catalogRequest = useRef(0);
+  const loadCatalog = useCallback(async () => {
+    const request = ++catalogRequest.current;
+    try {
+      const list = await subscriptionService.getAvailablePlans();
+      if (!isMountedRef.current || request !== catalogRequest.current) return;
+      setPlans(mapPlans(list, activePlanIdRef.current || undefined));
+      setPlansError('');
+    } catch (err) {
+      if (isMountedRef.current && request === catalogRequest.current) setPlansError(getErrorMessage(err, 'Không tải được danh sách gói mới nhất.'));
+    } finally {
+      if (isMountedRef.current && request === catalogRequest.current) setLoadingPlans(false);
+    }
+  }, []);
+
   useEffect(() => {
     isMountedRef.current = true;
-
-    // 1. Pipeline A: Fetch plans immediately and independently
-    subscriptionService
-      .getPlans()
-      .then((remotePlans) => {
-        if (!isMountedRef.current) return;
-        const rawList = Array.isArray(remotePlans) ? remotePlans : [];
-        setPlans(mapPlans(rawList, activePlanIdRef.current || undefined));
-        setLoadingPlans(false);
-      })
-      .catch((err) => {
-        console.warn('[SubscriptionPage] Không thể lấy plans từ API:', err);
-        if (isMountedRef.current) setLoadingPlans(false);
-      });
+    loadCatalog();
+    const refresh = () => { if (document.visibilityState === 'visible') loadCatalog(); };
+    const changed = (event: StorageEvent) => { if (event.key === PLAN_CATALOG_CHANGED) refresh(); };
+    window.addEventListener('focus', refresh);
+    window.addEventListener(PLAN_CATALOG_CHANGED, refresh);
+    window.addEventListener('storage', changed);
+    document.addEventListener('visibilitychange', refresh);
+    const timer = window.setInterval(refresh, 60000);
 
     // 2. Load active subscription
     loadSubscriptionData();
 
     return () => {
       isMountedRef.current = false;
+      ++catalogRequest.current;
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener(PLAN_CATALOG_CHANGED, refresh);
+      window.removeEventListener('storage', changed);
+      document.removeEventListener('visibilitychange', refresh);
     };
-  }, [loadSubscriptionData]);
+  }, [loadSubscriptionData, loadCatalog]);
 
   // History comes from actual payment records, not subscription state or current plan price.
   useEffect(() => {
@@ -499,6 +519,8 @@ export default function SubscriptionPage() {
                 </span>
               ),
               children: (
+                <>
+                {plansError && <Alert type="warning" title="Chưa cập nhật được danh sách gói" description={plansError} action={<Button onClick={() => { setLoadingPlans(true); loadCatalog(); }}>Thử lại</Button>} />}
                 <PlansTab
                   plans={plans}
                   loading={loadingPlans}
@@ -507,6 +529,7 @@ export default function SubscriptionPage() {
                   currentPlanName={subInfo.currentPlanName}
                   onUpgrade={handleOpenUpgrade}
                 />
+                </>
               ),
             },
             {

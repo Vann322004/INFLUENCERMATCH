@@ -86,10 +86,10 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
   return (
     <section className="quality-crawler-box">
       <header className="quality-config-title">
-        <h2>Dữ liệu vừa thu thập cần xem xét</h2>
+        <h2>Đối chiếu dữ liệu hồ sơ</h2>
         <p>
-          Tổng hợp kết quả thu thập từ nguồn thủ công và tự động. Hồ sơ đã đồng bộ và đủ điều kiện sẽ xuất hiện trong
-          tab Hồ sơ chờ kiểm định.
+          Chỉ hiển thị nhà sáng tạo cần xem xét thêm. Mở hồ sơ để đối chiếu thông tin tài khoản và bài viết đã thu thập
+          trước khi kiểm định. Hồ sơ đã đồng bộ và đủ điều kiện nằm trong tab Hồ sơ chờ kiểm định.
         </p>
       </header>
 
@@ -103,8 +103,8 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
           style={{ width: 220 }}
           options={[
             { value: 'all', label: 'Tất cả nguồn' },
-            { value: 'manual', label: 'Cào thủ công' },
-            { value: 'automatic', label: 'Cào tự động' },
+            { value: 'manual', label: 'Thu thập thủ công' },
+            { value: 'automatic', label: 'Thu thập tự động' },
           ]}
         />
       </div>
@@ -122,7 +122,7 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
       {loading && !rows.length ? (
         <Skeleton active paragraph={{ rows: 5 }} />
       ) : !rows.length ? (
-        <Empty description="Chưa có dữ liệu vừa thu thập cần xem xét từ nguồn này." />
+        <Empty description="Không có hồ sơ cần đối chiếu từ nguồn này." />
       ) : (
         <Table
           loading={loading}
@@ -141,12 +141,20 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
             },
             { title: 'Nền tảng', render: (_, row) => row.result.platform },
             {
+              title: 'Người theo dõi',
+              render: (_, row) => row.result.followers == null ? 'Chưa có dữ liệu' : row.result.followers.toLocaleString('vi-VN'),
+            },
+            {
+              title: 'Bài viết đã thu thập',
+              render: (_, row) => row.result.recent_posts == null ? 'Chưa có dữ liệu' : `${row.result.recent_posts.length} bài`,
+            },
+            {
               title: 'Nguồn',
               render: (_, row) =>
                 row.sources.length ? (
                   row.sources.map((value) => (
                     <Tag key={value} color={value === 'manual' ? 'blue' : 'purple'}>
-                      {value === 'manual' ? 'Cào thủ công' : 'Cào tự động'}
+                      {value === 'manual' ? 'Thu thập thủ công' : 'Thu thập tự động'}
                     </Tag>
                   ))
                 ) : (
@@ -154,14 +162,14 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
                 ),
             },
             {
-              title: 'Trạng thái',
-              render: (_, row) => <Tag color="orange">{row.result.decision || 'Chưa đánh giá'}</Tag>,
+              title: 'Yêu cầu xem xét',
+              render: () => <Tag color="orange">Cần đối chiếu</Tag>,
             },
             {
               title: 'Thao tác',
               align: 'right',
               render: (_, row) => (
-                <Button onClick={() => setSelected(row.result)}>Xem dữ liệu đã cào</Button>
+                <Button onClick={() => setSelected(row.result)}>Đối chiếu hồ sơ</Button>
               ),
             },
           ]}

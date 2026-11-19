@@ -1,0 +1,39 @@
+.admin-plans-page { padding: 4px 0 24px; color: #182230; }
+.admin-plans-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+.admin-plans-header .ant-typography { margin: 0; font-weight: 650; }
+.admin-plans-header p { margin: 5px 0 0; color: #667085; font-size: 13px; }
+.admin-plans-header-actions { display: flex; gap: 8px; }
+.admin-plans-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+.admin-plans-stats section { display: flex; flex-direction: column; gap: 8px; padding: 18px 20px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
+.admin-plans-stats section > span { color: #667085; font-size: 12px; }
+.admin-plans-stats strong { font-size: 24px; font-weight: 650; overflow-wrap: anywhere; }
+.admin-plans-stats small { font-size: 12px; color: #667085; line-height: 1.6; }
+.admin-plans-impact { color: #667085; font-size: 13px; line-height: 1.7; margin: 20px 0; }
+.admin-plans-loading { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 72px 16px; color: #667085; }
+.admin-plans-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
+.admin-plan-card { display: flex; flex-direction: column; min-width: 0; border: 1px solid #e2e8f0; border-radius: 10px; padding: 22px; background: #fff; }
+.admin-plan-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; min-height: 54px; }
+.admin-plan-title h2 { margin: 0; font-size: 18px; line-height: 1.5; font-weight: 650; overflow-wrap: anywhere; }
+.admin-plan-title .ant-tag { margin: 3px 0 0; flex-shrink: 0; }
+.admin-plan-description { margin: 8px 0 20px; color: #667085; font-size: 13px; line-height: 1.65; min-height: 44px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.admin-plan-price { display: flex; flex-direction: column; gap: 6px; padding: 18px 0; border-block: 1px solid #edf0f3; margin-top: auto; }
+.admin-plan-price strong { font-size: 25px; line-height: 1.3; font-weight: 650; overflow-wrap: anywhere; }
+.admin-plan-price span { font-size: 12px; color: #667085; }
+.admin-plan-quotas { display: grid; gap: 14px; margin: 20px 0 24px; }
+.admin-plan-quotas > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; font-size: 13px; line-height: 1.5; }
+.admin-plan-quotas dt { color: #667085; }
+.admin-plan-quotas dd { margin: 0; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.admin-plan-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 16px; border-top: 1px solid #edf0f3; }
+.admin-plan-actions > span { font-size: 12px; color: #667085; }
+.admin-plans-pagination { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.admin-plans-table { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: #fff; }
+.admin-plans-table .ant-table-thead > tr > th { background: #f8fafc; color: #667085; font-size: 12px; font-weight: 500; }
+.admin-plans-table .ant-table-tbody > tr > td { padding-block: 20px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.admin-plan-table-name strong { color: #182230; font-size: 14px; font-weight: 650; }
+.admin-plan-table-name p { margin: 5px 0 0; font-size: 12px; line-height: 1.6; color: #667085; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.admin-plan-table-price { display: flex; flex-direction: column; gap: 5px; }
+.admin-plan-table-price strong { color: #182230; font-weight: 600; white-space: nowrap; }
+.admin-plan-table-price span { color: #667085; font-size: 12px; }
+@media (min-width: 1700px) { .admin-plans-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 1100px) { .admin-plans-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .admin-plans-grid, .admin-plans-stats { grid-template-columns: minmax(0, 1fr); } .admin-plan-card { padding: 18px; } .admin-plan-title { min-height: auto; } }

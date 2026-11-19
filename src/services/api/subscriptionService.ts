@@ -51,7 +51,27 @@ const getPlansPageQuery = (page = 0, size = 1) => createAdminQuery(`plans:${page
   return readPage<PlanResponse>(response.data);
 }, { ttl: 5 * 60_000, tags: ['admin-plans'] });
 
+export const PLAN_CATALOG_CHANGED = 'im-plan-catalog-changed';
+function notifyPlanCatalogChanged() {
+  window.dispatchEvent(new Event(PLAN_CATALOG_CHANGED));
+  try { localStorage.setItem(PLAN_CATALOG_CHANGED, crypto.randomUUID()); } catch { /* Refresh on focus remains available. */ }
+}
+
 export const subscriptionService = {
+  /** Fetch every catalog page fresh; the storefront must not reuse an old admin/session snapshot. */
+  async getAvailablePlans(): Promise<PlanResponse[]> {
+    const plans: PlanResponse[] = [];
+    let page = 0;
+    let totalPages = 1;
+    do {
+      const response = await apiClient.get('/plans', { params: { page, size: 100, sortBy: 'id', direction: 'ASC' } });
+      const result = readPage<PlanResponse>(response.data);
+      plans.push(...result.items);
+      totalPages = result.totalPages;
+      page++;
+    } while (page < totalPages);
+    return [...new Map(plans.filter(plan => plan.status === 'ACTIVE').map(plan => [plan.id, plan])).values()];
+  },
   async getPaymentHistory(page = 0, size = 10, signal?: AbortSignal): Promise<BrandPaymentPage> {
     const response = await apiClient.get<ApiResponse<BrandPaymentPage>>('/billing/payments', {
       params: { page, size }, signal,
@@ -138,17 +158,19 @@ export const subscriptionService = {
    * Create a new plan (Admin).
    */
   async createPlan(payload: PlanCreateRequest): Promise<PlanResponse> {
-    subscriptionService.clearPlansCache();
     const response = await apiClient.post<ApiResponse<PlanResponse>>('/plans', payload);
+    subscriptionService.clearPlansCache();
+    notifyPlanCatalogChanged();
     return response.data.data;
   },
 
   /**
    * Update an existing plan (Admin).
    */
-  async updatePlan(id: string, payload: PlanUpdateRequest): Promise<PlanResponse> {
-    subscriptionService.clearPlansCache();
+  async updatePlan(id: string, payload: Partial<PlanUpdateRequest>): Promise<PlanResponse> {
     const response = await apiClient.put<ApiResponse<PlanResponse>>(`/plans/${id}`, payload);
+    subscriptionService.clearPlansCache();
+    notifyPlanCatalogChanged();
     return response.data.data;
   },
 
@@ -156,8 +178,9 @@ export const subscriptionService = {
    * Delete a plan by ID (Admin).
    */
   async deletePlan(id: string): Promise<void> {
-    subscriptionService.clearPlansCache();
     await apiClient.delete(`/plans/${id}`);
+    subscriptionService.clearPlansCache();
+    notifyPlanCatalogChanged();
   },
 
   /**

@@ -57,7 +57,7 @@ export default function JobsMonitorTab() {
       setOverview(data);
       setLoadError('');
     } catch (err: any) {
-      setLoadError(err.message || 'Unable to load collection history');
+      setLoadError(err.message || 'Không tải được nhật ký thu thập');
       message.error(err.message || 'Không thể tải dữ liệu giám sát từ máy chủ');
     } finally {
       setLoading(false);
@@ -125,14 +125,11 @@ export default function JobsMonitorTab() {
       ),
     },
     {
-      title: 'Trạng thái quy trình',
+      title: 'Tiến trình thu thập',
       dataIndex: 'status',
       key: 'status',
-      render: (st: string, record) => {
-        const outcome = collectionOutcome(record.decision, record.primaryType);
-        const conf = outcome !== 'pending'
-          ? { color: outcome === 'accepted' ? 'success' : outcome === 'rejected' ? 'error' : 'warning', label: collectionOutcomeLabel(outcome) }
-          : STATUS_COLOR_MAP[st] || { color: 'default', label: st };
+      render: (st: string) => {
+        const conf = STATUS_COLOR_MAP[st] || { color: 'default', label: st || 'Chưa rõ tiến trình' };
         return (
           <Tag color={conf.color} style={{ borderRadius: 6, fontWeight: 600 }}>
             {conf.label}
@@ -141,7 +138,7 @@ export default function JobsMonitorTab() {
       },
     },
     {
-      title: 'Đánh giá chất lượng',
+      title: 'Kết quả sàng lọc',
       dataIndex: 'decision',
       key: 'decision',
       render: (dec: string, r: ActivityRecord) => {
@@ -187,8 +184,12 @@ export default function JobsMonitorTab() {
 
   return (
     <div>
+      <header className="quality-config-title">
+        <h2>Nhật ký thu thập</h2>
+        <p>Theo dõi tiến trình xử lý, kết quả sàng lọc và thời gian cập nhật của từng tác vụ. Dữ liệu tự làm mới sau mỗi 15 giây.</p>
+      </header>
       {loadError && <Alert type="error" showIcon style={{ marginBottom: 16 }}
-        message="Không tải được lịch sử thu thập" description={loadError} />}
+        message="Không tải được nhật ký thu thập" description={loadError} />}
       <div style={{ marginBottom: 12 }}>Kết quả trong {items.length} hoạt động gần nhất · Chờ kiểm định: {reviewCount}. Hoàn tất thu thập không đồng nghĩa được chấp nhận.</div>
       {/* 4 Thẻ thống kê thời gian thực */}
       <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>

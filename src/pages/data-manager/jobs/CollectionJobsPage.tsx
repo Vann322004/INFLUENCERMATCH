@@ -97,7 +97,7 @@ export default function CollectionJobsPage() {
             },
             {
               key: 'jobs',
-              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Lịch sử thu thập</span>,
+              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Nhật ký thu thập</span>,
               children: (
                 <div style={{ padding: '20px 20px 24px' }}>
                   <JobsMonitorTab />

@@ -90,36 +90,43 @@ export default function HistoryTab({ invoices, loading, onViewInvoice, page, tot
       title: 'Thao tác',
       key: 'actions',
       align: 'right',
-      render: (_, record: PaymentInvoice) => (
-        <Space size={8}>
-          <Button
-            size="small"
-            icon={<FileTextOutlined />}
-            onClick={() => onViewInvoice(record)}
-          >
-            Xem biên lai
-          </Button>
-          <Button
-            size="small"
-            type="text"
-            icon={<DownloadOutlined />}
-            title="Tải biên lai PDF"
-            aria-label="Tải biên lai PDF"
-            loading={downloadingId === record.id}
-            disabled={downloadingId !== null}
-            onClick={async () => {
-              setDownloadingId(record.id);
-              try {
-                await downloadReceipt(record, { currentBrand, storedUser });
-              } catch {
-                message.error('Không thể tải biên lai PDF. Vui lòng thử lại.');
-              } finally {
-                setDownloadingId(null);
-              }
-            }}
-          />
-        </Space>
-      ),
+      render: (_, record: PaymentInvoice) => {
+        // Chỉ giao dịch đã thanh toán thành công mới có biên lai thanh toán
+        if (record.status !== 'success') {
+          return <span style={{ color: '#94A3B8', fontSize: 13 }}>—</span>;
+        }
+
+        return (
+          <Space size={8}>
+            <Button
+              size="small"
+              icon={<FileTextOutlined />}
+              onClick={() => onViewInvoice(record)}
+            >
+              Xem biên lai
+            </Button>
+            <Button
+              size="small"
+              type="text"
+              icon={<DownloadOutlined />}
+              title="Tải biên lai PDF"
+              aria-label="Tải biên lai PDF"
+              loading={downloadingId === record.id}
+              disabled={downloadingId !== null}
+              onClick={async () => {
+                setDownloadingId(record.id);
+                try {
+                  await downloadReceipt(record, { currentBrand, storedUser });
+                } catch {
+                  message.error('Không thể tải biên lai PDF. Vui lòng thử lại.');
+                } finally {
+                  setDownloadingId(null);
+                }
+              }}
+            />
+          </Space>
+        );
+      },
     },
   ];
 

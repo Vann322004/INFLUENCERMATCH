@@ -340,7 +340,7 @@ export default function PaymentsPage() {
           <Card bordered={false} loading={reportLoading} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>DOANH THU THỰC NHẬN</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#10B981', marginTop: 4 }}>
-              {stats.totalRevenue >= 1e6 ? `${(stats.totalRevenue / 1e6).toFixed(2)} tr` : `${stats.totalRevenue.toLocaleString('vi-VN')} đ`}
+              {stats.totalRevenue.toLocaleString('vi-VN')} đ
             </div>
             <div style={{ fontSize: 11, color: '#10B981', marginTop: 2 }}>{stats.paidCount} giao dịch thành công</div>
           </Card>
@@ -350,7 +350,7 @@ export default function PaymentsPage() {
           <Card bordered={false} loading={reportLoading} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>ĐANG CHỜ THANH TOÁN</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#3B82F6', marginTop: 4 }}>
-              {stats.totalPending >= 1e6 ? `${(stats.totalPending / 1e6).toFixed(2)} tr` : `${stats.totalPending.toLocaleString('vi-VN')} đ`}
+              {stats.totalPending.toLocaleString('vi-VN')} đ
             </div>
             <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{stats.pendingCount} đơn chờ xác nhận từ gateway</div>
           </Card>
@@ -360,7 +360,7 @@ export default function PaymentsPage() {
           <Card bordered={false} loading={reportLoading} style={{ borderRadius: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', height: '100%' }}>
             <div style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>TIỀN ĐÃ HOÀN TRẢ</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#EF4444', marginTop: 4 }}>
-              {stats.totalRefunded >= 1e6 ? `${(stats.totalRefunded / 1e6).toFixed(2)} tr` : `${stats.totalRefunded.toLocaleString('vi-VN')} đ`}
+              {stats.totalRefunded.toLocaleString('vi-VN')} đ
             </div>
             <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{stats.refundedCount} giao dịch hoàn trả</div>
           </Card>

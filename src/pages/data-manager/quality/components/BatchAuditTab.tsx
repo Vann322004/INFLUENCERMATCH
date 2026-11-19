@@ -7,7 +7,6 @@ import {
   Card,
   Checkbox,
   Col,
-  Empty,
   InputNumber,
   Row,
   Select,
@@ -20,21 +19,6 @@ import {
   Typography,
   message,
 } from 'antd';
-import {
-  ArrowRightOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleOutlined,
-  DatabaseOutlined,
-  ExclamationCircleOutlined,
-  ExperimentOutlined,
-  PlayCircleOutlined,
-  RedoOutlined,
-  SafetyCertificateOutlined,
-  ShopOutlined,
-  ThunderboltOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
 import { crawlerService } from '../../../../services/api/crawlerService';
 import { PLATFORM_COLOR_MAP } from '../types';
 
@@ -151,8 +135,7 @@ export default function BatchAuditTab() {
             <Avatar
               size={36}
               style={{ backgroundColor: r.isJunk ? '#ff4d4f' : '#1890ff' }}
-              icon={r.isJunk ? <ShopOutlined /> : <UserOutlined />}
-            />
+            >{(r.displayName || r.username || '?').charAt(0).toUpperCase()}</Avatar>
             <div>
               <Space orientation="horizontal" size={4}>
                 <Text strong style={{ fontSize: 13 }}>
@@ -171,7 +154,7 @@ export default function BatchAuditTab() {
       },
     },
     {
-      title: 'Followers',
+      title: 'Người theo dõi',
       dataIndex: 'followers',
       key: 'followers',
       width: 110,
@@ -182,35 +165,35 @@ export default function BatchAuditTab() {
       ),
     },
     {
-      title: 'Kết luận thẩm định AI',
+      title: 'Kết quả kiểm định',
       key: 'verdict',
       width: 180,
       render: (_: any, r: AuditItem) => {
         if (r.status === 'VALID_KOC') {
           return (
-            <Tag color="success" icon={<CheckCircleOutlined />}>
-              KOC Đạt chuẩn
+            <Tag color="success">
+              Người tiêu dùng có ảnh hưởng
             </Tag>
           );
         }
         if (r.status === 'VALID_KOL') {
           return (
-            <Tag color="purple" icon={<SafetyCertificateOutlined />}>
-              KOL Sức ảnh hưởng
+            <Tag color="purple">
+              Người có sức ảnh hưởng
             </Tag>
           );
         }
         return (
-          <Tooltip title={`Lý do: ${(r.reasonCodes || []).join(', ') || 'Tài khoản bán sỉ/lẻ/catalog'}`}>
-            <Tag color="error" icon={<CloseCircleOutlined />}>
-              Shop / Rác / Spam
+          <Tooltip title={`Lý do: ${(r.reasonCodes || []).join(', ') || 'Tài khoản bán hàng hoặc giới thiệu sản phẩm'}`}>
+            <Tag color="error">
+              Bán hàng / Nội dung rác
             </Tag>
           </Tooltip>
         );
       },
     },
     {
-      title: 'Điểm tin cậy (Confidence)',
+      title: 'Điểm tin cậy',
       key: 'confidence',
       width: 200,
       render: (_: any, r: AuditItem) => {
@@ -220,7 +203,7 @@ export default function BatchAuditTab() {
         return (
           <Space orientation="horizontal" size={6}>
             <Text type="secondary" style={{ fontSize: 12 }}>{oldPct}%</Text>
-            <ArrowRightOutlined style={{ fontSize: 10, color: '#bfbfbf' }} />
+            <span style={{ color: '#8c8c8c' }}>→</span>
             <Text strong style={{ fontSize: 13, color: newPct >= 70 ? '#52c41a' : newPct >= 40 ? '#faad14' : '#ff4d4f' }}>
               {newPct}%
             </Text>
@@ -251,10 +234,10 @@ export default function BatchAuditTab() {
       width: 170,
       render: (act: string) => {
         if (act === 'UPDATED_JAVA_BACKEND') {
-          return <Tag color="cyan">Đã đồng bộ Java & BKAI</Tag>;
+          return <Tag color="cyan">Đã đồng bộ dữ liệu</Tag>;
         }
         if (act === 'QUARANTINED_IN_STAGING') {
-          return <Tag color="volcano">Đã cô lập (Staging)</Tag>;
+          return <Tag color="volcano">Đã chuyển vào vùng cách ly</Tag>;
         }
         return <Tag color="default">Chạy thử nghiệm</Tag>;
       },
@@ -262,22 +245,17 @@ export default function BatchAuditTab() {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Panel điều phối */}
-      <Card
-        title={
-          <Space>
-            <ThunderboltOutlined style={{ color: '#1890ff' }} />
-            <span>Điều phối Thẩm định & Tái phân loại dữ liệu DB (Batch Auto-Audit)</span>
-          </Space>
-        }
-        extra={
-          <Button icon={<RedoOutlined />} onClick={fetchLatestReport} loading={loading} size="small">
+    <section className="quality-crawler-box quality-batch-audit">
+      <header className="quality-config-title quality-batch-header">
+        <div>
+          <h2>Kiểm định hàng loạt</h2>
+          <p>Kiểm tra và phân loại lại các hồ sơ đã lưu. Chọn phạm vi và số lượng hồ sơ cho mỗi đợt.</p>
+        </div>
+          <Button onClick={fetchLatestReport} loading={loading}>
             Làm mới báo cáo
           </Button>
-        }
-        style={{ borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
-      >
+      </header>
+      <div className="quality-filter-box quality-batch-filters">
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <Row gutter={[16, 16]} align="middle">
             <Col xs={24} sm={12} md={6}>
@@ -285,7 +263,7 @@ export default function BatchAuditTab() {
                 <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
                   Số lượng mỗi đợt:
                 </Text>
-                <Select value={limit} onChange={setLimit} style={{ width: '100%' }}>
+                <Select size="large" value={limit} onChange={setLimit} style={{ width: '100%' }}>
                   <Select.Option value={10}>10 hồ sơ (Rất nhẹ)</Select.Option>
                   <Select.Option value={20}>20 hồ sơ (Khuyến nghị)</Select.Option>
                   <Select.Option value={50}>50 hồ sơ</Select.Option>
@@ -297,17 +275,18 @@ export default function BatchAuditTab() {
             <Col xs={24} sm={12} md={6}>
               <div>
                 <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
-                  Dịch chuyển (Offset hiện tại):
+                  Số hồ sơ bỏ qua:
                 </Text>
                 <Space.Compact style={{ width: '100%' }}>
                   <InputNumber
+                    size="large"
                     min={0}
                     value={offset}
                     onChange={(v) => setOffset(v || 0)}
                     style={{ width: '70%' }}
                   />
-                  <Button onClick={() => setOffset(0)} style={{ width: '30%' }}>
-                    Reset
+                  <Button size="large" onClick={() => setOffset(0)} style={{ width: '30%' }}>
+                    Đặt lại
                   </Button>
                 </Space.Compact>
               </div>
@@ -318,10 +297,9 @@ export default function BatchAuditTab() {
                 <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
                   Nền tảng:
                 </Text>
-                <Select value={platform} onChange={setPlatform} style={{ width: '100%' }}>
+                <Select size="large" value={platform} onChange={setPlatform} style={{ width: '100%' }}>
                   <Select.Option value="ALL">Tất cả nền tảng</Select.Option>
                   <Select.Option value="TIKTOK">TikTok</Select.Option>
-                  <Select.Option value="YOUTUBE">YouTube</Select.Option>
                   <Select.Option value="FACEBOOK">Facebook</Select.Option>
                   <Select.Option value="INSTAGRAM">Instagram</Select.Option>
                 </Select>
@@ -333,13 +311,13 @@ export default function BatchAuditTab() {
                 <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
                   Ngành hàng:
                 </Text>
-                <Select value={category} onChange={setCategory} style={{ width: '100%' }}>
+                <Select size="large" value={category} onChange={setCategory} style={{ width: '100%' }}>
                   <Select.Option value="ALL">Tất cả ngành hàng</Select.Option>
-                  <Select.Option value="Beauty">Làm đẹp (Beauty)</Select.Option>
-                  <Select.Option value="Fashion">Thời trang (Fashion)</Select.Option>
-                  <Select.Option value="Food">Ẩm thực (Food)</Select.Option>
-                  <Select.Option value="Tech">Công nghệ (Tech)</Select.Option>
-                  <Select.Option value="Lifestyle">Đời sống (Lifestyle)</Select.Option>
+                  <Select.Option value="Beauty">Làm đẹp</Select.Option>
+                  <Select.Option value="Fashion">Thời trang</Select.Option>
+                  <Select.Option value="Food">Ẩm thực</Select.Option>
+                  <Select.Option value="Tech">Công nghệ</Select.Option>
+                  <Select.Option value="Lifestyle">Đời sống</Select.Option>
                 </Select>
               </div>
             </Col>
@@ -349,16 +327,16 @@ export default function BatchAuditTab() {
             <Col xs={24} md={14}>
               <Space wrap size="large">
                 <Checkbox checked={dryRun} onChange={(e) => setDryRun(e.target.checked)}>
-                  <Tooltip title="Chỉ quét phân tích và tính toán thống kê, không sửa dữ liệu thật và không gửi sang Java Backend">
-                    <Text strong>Chạy thử nghiệm (Dry Run)</Text>
+                  <Tooltip title="Chỉ phân tích và thống kê, không thay đổi hoặc đồng bộ dữ liệu.">
+                    <Text strong>Chạy thử nghiệm</Text>
                   </Tooltip>
                 </Checkbox>
                 <Checkbox
                   checked={autoQuarantine}
                   onChange={(e) => setAutoQuarantine(e.target.checked)}
                 >
-                  <Tooltip title="Tự động cô lập các tài khoản bán sỉ/lẻ, spam reup vào Staging và gắn cờ loại trừ">
-                    <Text>Tự động cô lập Shop/Rác</Text>
+                  <Tooltip title="Chuyển tài khoản bán hàng, nội dung rác hoặc đăng lại vào vùng cách ly và đánh dấu loại trừ.">
+                    <Text>Tự động cách ly tài khoản không phù hợp</Text>
                   </Tooltip>
                 </Checkbox>
               </Space>
@@ -368,25 +346,22 @@ export default function BatchAuditTab() {
               <Space wrap>
                 <Button
                   type="primary"
-                  icon={<PlayCircleOutlined />}
                   loading={loading}
                   onClick={() => handleRunAudit(offset)}
-                  style={{ background: dryRun ? '#722ed1' : '#1890ff' }}
                 >
-                  {dryRun ? `Chạy thử ${limit} hồ sơ (Offset: ${offset})` : `Quét & Thẩm định ${limit} hồ sơ`}
+                  {dryRun ? `Chạy thử ${limit} hồ sơ` : `Kiểm định ${limit} hồ sơ`}
                 </Button>
                 <Button
-                  icon={<ArrowRightOutlined />}
                   disabled={loading}
                   onClick={() => handleRunAudit(offset + limit)}
                 >
-                  Quét tiếp lô sau (+{limit})
+                  Kiểm định đợt tiếp theo (+{limit})
                 </Button>
               </Space>
             </Col>
           </Row>
         </Space>
-      </Card>
+      </div>
 
       {error && <Alert type="error" message={error} showIcon closable />}
 
@@ -401,7 +376,6 @@ export default function BatchAuditTab() {
                 <Statistic
                   title="Tổng hồ sơ đã quét"
                   value={report.totalAudited}
-                  prefix={<DatabaseOutlined style={{ color: '#1890ff' }} />}
                 />
               </Card>
             </Col>
@@ -416,7 +390,6 @@ export default function BatchAuditTab() {
                     color: report.cleanRate >= 75 ? '#52c41a' : report.cleanRate >= 50 ? '#faad14' : '#ff4d4f',
                     fontWeight: 'bold',
                   }}
-                  prefix={report.cleanRate >= 75 ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}
                 />
               </Card>
             </Col>
@@ -424,10 +397,9 @@ export default function BatchAuditTab() {
             <Col xs={12} sm={8} md={5}>
               <Card size="small" style={{ borderRadius: 10, textAlign: 'center' }}>
                 <Statistic
-                  title="KOC Hợp lệ"
+                  title="Người tiêu dùng có ảnh hưởng"
                   value={report.kocCount}
                   valueStyle={{ color: '#52c41a' }}
-                  prefix={<UserOutlined />}
                 />
               </Card>
             </Col>
@@ -435,10 +407,9 @@ export default function BatchAuditTab() {
             <Col xs={12} sm={8} md={5}>
               <Card size="small" style={{ borderRadius: 10, textAlign: 'center' }}>
                 <Statistic
-                  title="KOL Sức ảnh hưởng"
+                  title="Người có sức ảnh hưởng"
                   value={report.kolCount}
                   valueStyle={{ color: '#722ed1' }}
-                  prefix={<SafetyCertificateOutlined />}
                 />
               </Card>
             </Col>
@@ -446,10 +417,9 @@ export default function BatchAuditTab() {
             <Col xs={12} sm={8} md={5}>
               <Card size="small" style={{ borderRadius: 10, textAlign: 'center' }}>
                 <Statistic
-                  title="Shop / Rác bị loại"
+                  title="Tài khoản không phù hợp"
                   value={report.junkOrShopCount}
                   valueStyle={{ color: '#ff4d4f' }}
-                  prefix={<ShopOutlined />}
                 />
               </Card>
             </Col>
@@ -474,24 +444,19 @@ export default function BatchAuditTab() {
               dataSource={report.items || []}
               columns={columns}
               rowKey="creatorId"
-              pagination={{ pageSize: 10, showSizeChanger: true }}
+              pagination={{ pageSize: 10, showSizeChanger: true, locale: { items_per_page: '/ trang', jump_to: 'Đến trang', page: '', prev_page: 'Trang trước', next_page: 'Trang sau', prev_5: 'Lùi 5 trang', next_5: 'Tiến 5 trang' } }}
               scroll={{ x: 1000 }}
               size="middle"
             />
           </Card>
         </>
       ) : (
-        <Card style={{ borderRadius: 12, textAlign: 'center', padding: '40px 0' }}>
-          <Empty
-            description={
-              <span>
-                Chưa có báo cáo thẩm định nào trong phiên này.<br />
-                Hãy nhấn nút <strong>"Bắt đầu quét & Thẩm định"</strong> ở trên để AI tiến hành lọc rác và phân loại lại KOC/KOL.
-              </span>
-            }
-          />
-        </Card>
+        <div className="quality-batch-empty" role="status">
+          <h3>Chưa có kết quả kiểm định</h3>
+          <p>Chọn phạm vi ở trên rồi nhấn <strong>Kiểm định {limit} hồ sơ</strong> để bắt đầu.</p>
+          <span>Kết quả và chi tiết từng hồ sơ sẽ hiển thị tại đây.</span>
+        </div>
       )}
-    </div>
+    </section>
   );
 }

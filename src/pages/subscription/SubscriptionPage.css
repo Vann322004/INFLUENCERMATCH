@@ -50,6 +50,11 @@
   .sub-plan-cycle { padding: 18px 0 0; border-left: 0; border-top: 1px solid #EAECF0; }
 }
 
+.subscription-catalog-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 20px; align-items: stretch; }
+.subscription-catalog-item { min-width: 0; display: flex; }
+.subscription-catalog-item > .pricing-card { width: 100%; min-width: 0; box-sizing: border-box; }
+@media (max-width: 540px) { .subscription-catalog-grid { grid-template-columns: minmax(0, 1fr); } }
+
 /* Plans Switcher */
 .billing-switcher-wrapper {
   display: flex;

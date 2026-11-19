@@ -10,6 +10,7 @@ export interface PlanResponse {
   description?: string;
   status: 'ACTIVE' | 'INACTIVE' | string;
   createdAt?: string;
+  activeSubscriptionCount?: number;
 }
 
 export interface PlanCreateRequest {
@@ -80,6 +81,10 @@ export interface BrandPaymentPage {
 
 // UI Subscription Plan Types (used by Subscription Page)
 export interface SubscriptionPlan {
+  durationDays?: number;
+  campaignQuota?: number;
+  recommendationQuota?: number;
+  refreshQuota?: number;
   id: string;
   name: string;
   subtitle: string;

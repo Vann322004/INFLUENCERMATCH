@@ -5,26 +5,29 @@ import type { PlanResponse } from '../../../../types/api/subscription.types';
 
 interface Props {
   plan: PlanResponse;
-  onStatusChange: (planId: string, newStatus: 'ACTIVE' | 'INACTIVE') => void;
+  onStatusChange: (planId: string, newStatus: 'ACTIVE' | 'INACTIVE') => Promise<void>;
   loading?: boolean;
+  disabled?: boolean;
 }
 
-export default function ActivateStopToggle({ plan, onStatusChange, loading = false }: Props) {
+export default function ActivateStopToggle({ plan, onStatusChange, loading = false, disabled = false }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const isActive = plan.status === 'ACTIVE';
 
-  const handleToggle = (checked: boolean) => {
+  const handleToggle = async (checked: boolean) => {
     if (!checked) {
       // Khi tạm dừng gói, hiển thị modal xác nhận tiếng Việt
       setConfirmOpen(true);
     } else {
-      onStatusChange(plan.id, 'ACTIVE');
+      try { await onStatusChange(plan.id, 'ACTIVE'); } catch { /* Parent displays the API error. */ }
     }
   };
 
-  const handleConfirmStop = () => {
-    onStatusChange(plan.id, 'INACTIVE');
-    setConfirmOpen(false);
+  const handleConfirmStop = async () => {
+    try {
+      await onStatusChange(plan.id, 'INACTIVE');
+      setConfirmOpen(false);
+    } catch { /* Keep the dialog open so the user can retry. */ }
   };
 
   return (
@@ -34,11 +37,12 @@ export default function ActivateStopToggle({ plan, onStatusChange, loading = fal
           <Switch
             checked={isActive}
             loading={loading}
+            disabled={disabled}
             onChange={handleToggle}
             style={{ background: isActive ? '#10B981' : undefined }}
           />
           <span style={{ fontSize: 12, fontWeight: 600, color: isActive ? '#059669' : '#64748B' }}>
-            {isActive ? 'Đang mở bán' : 'Tạm dừng'}
+            {isActive ? 'Đang mở bán' : 'Ngừng bán'}
           </span>
         </div>
       </Tooltip>
@@ -51,12 +55,15 @@ export default function ActivateStopToggle({ plan, onStatusChange, loading = fal
           </div>
         }
         open={confirmOpen}
-        onCancel={() => setConfirmOpen(false)}
+        onCancel={() => { if (!loading) setConfirmOpen(false); }}
         onOk={handleConfirmStop}
         okText="Tạm dừng gói"
-        okButtonProps={{ danger: true }}
+        confirmLoading={loading}
+        okButtonProps={{ danger: true, disabled: disabled && !loading }}
+        cancelButtonProps={{ disabled: loading }}
         cancelText="Hủy bỏ"
       >
+        {plan.activeSubscriptionCount != null && <p>{plan.activeSubscriptionCount} thuê bao đang hoạt động sử dụng gói này.</p>}
         <p style={{ marginTop: 12, color: '#475569', fontSize: 13, lineHeight: 1.6 }}>
           Khi tạm dừng, nhãn hàng mới sẽ không thể nhìn thấy hoặc đăng ký gói dịch vụ này nữa.
           Các tài khoản đã đăng ký trước đó vẫn duy trì quyền lợi cho đến hết thời hạn chu kỳ.

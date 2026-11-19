@@ -1,0 +1,40 @@
+.plan-form-drawer .ant-drawer-content-wrapper { max-width: 100vw; }
+.plan-form-drawer .ant-drawer-header { padding: 22px 28px; border-color: #eaecf0; }
+.plan-form-drawer .ant-drawer-body { padding: 24px 28px 12px; }
+.plan-form-heading > span { font-size: 18px; font-weight: 650; color: #182230; }
+.plan-form-heading p { margin: 5px 0 0; color: #667085; font-size: 13px; font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
+.plan-form-impact { margin-bottom: 24px; }
+.plan-form-section + .plan-form-section { border-top: 1px solid #eaecf0; margin-top: 24px; padding-top: 22px; }
+.plan-form-section h3 { margin: 0 0 18px; color: #344054; font-size: 14px; font-weight: 650; }
+.plan-edit-form .ant-form-item { margin-bottom: 18px; }
+.plan-edit-form .ant-form-item-label > label { font-size: 13px; font-weight: 500; color: #344054; }
+.plan-edit-form .ant-input-number { width: 100%; }
+.plan-edit-form .ant-input, .plan-edit-form .ant-input-number, .plan-edit-form .ant-select-selector { border-radius: 7px; font-size: 14px; }
+.plan-edit-form .ant-form-item-extra { margin-top: 6px; color: #7b8798; font-size: 12px; }
+.plan-form-optional { color: #98a2b3; font-size: 12px; font-weight: 400; margin-left: 8px; }
+.plan-form-price-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 20px; }
+.plan-form-presets { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: -4px; }
+.plan-form-presets > span { color: #667085; font-size: 12px; margin-right: 4px; }
+.plan-form-presets .ant-btn { font-size: 12px; height: 28px; box-shadow: none; }
+.plan-form-section-note { color: #667085; font-size: 12px; line-height: 1.6; margin: -10px 0 6px; }
+.plan-form-quota-row { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 20px; padding: 16px 0; align-items: start; }
+.plan-form-quota-row + .plan-form-quota-row { border-top: 1px solid #f0f2f5; }
+.plan-form-quota-row label { display: block; padding-top: 4px; color: #344054; font-size: 13px; font-weight: 500; }
+.plan-form-quota-row p { margin: 5px 0 0; color: #7b8798; font-size: 12px; line-height: 1.6; }
+.plan-form-quota-input { display: grid; grid-template-columns: minmax(0, 1fr) 54px; align-items: start; gap: 10px; }
+.plan-form-quota-input .ant-form-item { margin: 0; }
+.plan-form-quota-input > span { padding-top: 10px; color: #667085; font-size: 12px; }
+.plan-form-drawer .ant-drawer-footer { padding: 16px 28px; border-color: #eaecf0; }
+.plan-form-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.plan-form-summary { color: #667085; font-size: 12px; }
+.plan-form-summary strong { color: #344054; font-size: 14px; font-weight: 600; }
+.plan-form-footer-buttons { display: flex; gap: 8px; }
+.plan-form-footer-buttons .ant-btn { height: 38px; padding-inline: 18px; border-radius: 6px; box-shadow: none; }
+@media (max-width: 480px) {
+  .plan-form-drawer .ant-drawer-header, .plan-form-drawer .ant-drawer-footer { padding: 18px; }
+  .plan-form-drawer .ant-drawer-body { padding: 20px 18px; }
+  .plan-form-price-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .plan-form-quota-row { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .plan-form-quota-input { grid-template-columns: minmax(0, 1fr) 60px; }
+  .plan-form-footer-buttons { margin-left: auto; }
+}
