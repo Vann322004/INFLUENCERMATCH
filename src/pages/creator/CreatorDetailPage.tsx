@@ -17,7 +17,7 @@ import {
 import type { MenuProps } from 'antd';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { creatorService } from '../../services/api/creatorService';
-import { claimService } from '../../services/api/claimService';
+import { authService } from '../../services/api/authService';
 import AddToShortlistModal from '../../components/discovery/AddToShortlistModal';
 import {
   ArrowLeftOutlined,
@@ -334,9 +334,9 @@ export default function CreatorDetailPage() {
   const [isSaved, setIsSaved] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [shortlistModalOpen, setShortlistModalOpen] = useState(false);
-  const [claimModalOpen, setClaimModalOpen] = useState(false);
-  const [claimSubmitting, setClaimSubmitting] = useState(false);
-  const [claimForm] = Form.useForm();
+  const signedInUser = authService.getCurrentUser();
+  const canClaim = signedInUser?.role === 'CREATOR' && signedInUser.status === 'ACTIVE'
+    && signedInUser.permissions?.includes('CLAIM_CREATOR_PROFILE');
 
   // Nạp dữ liệu Creator từ backend + cache
   useEffect(() => {
@@ -466,13 +466,12 @@ export default function CreatorDetailPage() {
   }, [activeCreatorId, routeCreator]);
 
   const moreMenuItems: MenuProps['items'] = [
-    {
+    ...(canClaim ? [{
       key: 'claim',
       icon: <SafetyCertificateOutlined style={{ color: '#1D4ED8' }} />,
-      label: 'Xác minh sở hữu kênh (Claim)',
-      onClick: () => setClaimModalOpen(true),
-    },
-    { type: 'divider' },
+      label: 'Gửi bằng chứng thủ công',
+      onClick: () => navigate('/creator/social-accounts?claim=new'),
+    }] : []),
     {
       key: 'share',
       icon: <ShareAltOutlined />,
@@ -934,53 +933,6 @@ export default function CreatorDetailPage() {
               <Button onClick={() => setInviteModalOpen(false)}>Hủy</Button>
               <Button type="primary" htmlType="submit" style={{ background: '#1D4ED8' }}>
                 Gửi lời mời ngay
-              </Button>
-            </div>
-          </Form>
-        </div>
-      </Modal>
-
-      {/* Modal: Xác minh sở hữu kênh (Claim) */}
-      <Modal
-        title="Xác minh sở hữu hồ sơ (Claim Profile)"
-        open={claimModalOpen}
-        onCancel={() => setClaimModalOpen(false)}
-        footer={null}
-        width={500}
-      >
-        <div style={{ marginTop: 14 }}>
-          <p style={{ fontSize: 13, color: '#64748B', marginBottom: 14 }}>
-            Nếu bạn là chủ sở hữu hoặc quản lý của kênh @{creator.username}, vui lòng cung cấp bằng chứng để claim hồ sơ.
-          </p>
-          <Form
-            form={claimForm}
-            layout="vertical"
-            onFinish={async (values) => {
-              try {
-                setClaimSubmitting(true);
-                await claimService.submitClaim(creator.id, {
-                  evidenceUrls: values.evidenceUrls ? values.evidenceUrls.split('\n').filter(Boolean) : [],
-                  note: values.note,
-                });
-                message.success('Đã gửi yêu cầu xác minh sở hữu kênh thành công!');
-                setClaimModalOpen(false);
-              } catch (err: any) {
-                message.error('Không thể gửi yêu cầu xác minh. Vui lòng thử lại sau.');
-              } finally {
-                setClaimSubmitting(false);
-              }
-            }}
-          >
-            <Form.Item label="Liên kết bằng chứng sở hữu" name="evidenceUrls" rules={[{ required: true, message: 'Vui lòng nhập link bằng chứng!' }]}>
-              <Input.TextArea rows={3} placeholder="Link bài post xác nhận, ảnh chụp màn hình quản trị kênh..." />
-            </Form.Item>
-            <Form.Item label="Ghi chú thêm" name="note">
-              <Input.TextArea rows={2} placeholder="Thông tin liên hệ bổ sung..." />
-            </Form.Item>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <Button onClick={() => setClaimModalOpen(false)}>Hủy</Button>
-              <Button type="primary" htmlType="submit" loading={claimSubmitting} style={{ background: '#1D4ED8' }}>
-                Gửi xác minh
               </Button>
             </div>
           </Form>

@@ -3,6 +3,11 @@ import https from 'node:https';
 const UPSTREAM_HOST = 'api.influencermatch.site';
 const UPSTREAM_ORIGIN = `https://${UPSTREAM_HOST}`;
 
+const channelOAuthCallbacks = new Set([
+  '/api/v1/integrations/meta/callback',
+  '/api/v1/integrations/instagram/callback',
+]);
+
 const agent = new https.Agent({
   keepAlive: true,
   maxSockets: 50,
@@ -71,6 +76,20 @@ export default function handler(req, res) {
 
   const search = parsedUrl.searchParams.toString();
   const upstreamPath = search ? `${targetPathname}?${search}` : targetPathname;
+  const isChannelOAuthNavigation = req.method === 'GET'
+    && channelOAuthCallbacks.has(targetPathname)
+    && /\btext\/html\b/i.test(req.headers.accept || '')
+    && (!req.headers['sec-fetch-mode'] || req.headers['sec-fetch-mode'] === 'navigate');
+
+  const returnToChannels = () => {
+    if (res.writableEnded) return;
+    res.writeHead(303, {
+      Location: '/creator/social-accounts?oauth=return',
+      'Cache-Control': 'no-store',
+      'Referrer-Policy': 'no-referrer',
+    });
+    res.end();
+  };
 
   // Build clean upstream headers without `forwarded` or `x-forwarded-*`
   const headers = {
@@ -101,6 +120,12 @@ export default function handler(req, res) {
   };
 
   const proxyReq = https.request(options, (proxyRes) => {
+    if (isChannelOAuthNavigation) {
+      proxyRes.once('end', returnToChannels);
+      proxyRes.once('error', returnToChannels);
+      proxyRes.resume();
+      return;
+    }
     res.statusCode = proxyRes.statusCode || 502;
     res.setHeader('X-Proxy-Upstream', UPSTREAM_HOST);
 
@@ -130,7 +155,14 @@ export default function handler(req, res) {
     proxyRes.pipe(res);
   });
 
+  if (isChannelOAuthNavigation) {
+    proxyReq.setTimeout(30000, () => proxyReq.destroy());
+  }
   proxyReq.on('error', (err) => {
+    if (isChannelOAuthNavigation) {
+      returnToChannels();
+      return;
+    }
     if (!res.headersSent) {
       res.statusCode = 502;
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
