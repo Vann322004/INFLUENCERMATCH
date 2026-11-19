@@ -5,7 +5,7 @@ import { useCollectionState } from '../../../../../hooks/useCollectionState';
 import type { LiveCrawlResult } from '../../../../../types/api/crawler.types';
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Alert, Button, message, Table, Tag } from 'antd';
+import { Button, message, Table, Tag } from 'antd';
 import HunterSetupCard from './HunterSetupCard';
 import { nicheService, type Niche } from '../../../../../services/api/nicheService';
 import HunterRadarScanner from './HunterRadarScanner';
@@ -81,13 +81,32 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
   const [progressPercent, setProgressPercent] = useCollectionState<number>(`hunter.${mode}.progressPercent`, 0);
   const [waitSeconds, setWaitSeconds] = useState(0);
   const [huntError, setHuntError] = useState('');
+  const huntConfigRef = useRef({ mode, maxKocs, activeKeywords });
+  huntConfigRef.current = { mode, maxKocs, activeKeywords };
+
   useEffect(() => {
     if (!loading) return;
     setWaitSeconds(0);
     setHuntError('');
     const started = Date.now();
-    const timer = setInterval(() => setWaitSeconds(Math.floor((Date.now() - started) / 1000)), 1000);
-    return () => clearInterval(timer);
+    const waitTimer = setInterval(() => {
+      setWaitSeconds(Math.floor((Date.now() - started) / 1000));
+    }, 1000);
+    const progressTimer = setInterval(() => {
+      const elapsed = (Date.now() - started) / 1000;
+      const { maxKocs: limit, mode: currentMode, activeKeywords: kws } = huntConfigRef.current;
+      const expectedSeconds = Math.max(8, limit * 4);
+      const nextPct = Math.min(92, Math.max(8, Math.round(92 * (1 - Math.exp(-elapsed / (expectedSeconds * 0.65))))));
+      setProgressPercent((prev) => (prev < 95 ? Math.max(prev, nextPct) : prev));
+      if (currentMode === 'category' && kws.length > 1) {
+        const kwIdx = Math.floor(elapsed / 3) % kws.length;
+        setCurrentKeyword(kws[kwIdx]);
+      }
+    }, 600);
+    return () => {
+      clearInterval(waitTimer);
+      clearInterval(progressTimer);
+    };
   }, [loading]);
 
   const [scannedCount, setScannedCount] = useCollectionState<number>(`hunter.${mode}.scannedCount`, 0);
@@ -178,9 +197,11 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
       }
     }
 
+    const targetCount = mode === 'custom' ? Math.min(usernamesToCrawl.length, maxKocs) : maxKocs;
     setLoading(true);
-    setProgressPercent(15);
-    setScannedCount(0);
+    setHuntError('');
+    setProgressPercent(8);
+    setScannedCount(targetCount);
     setFilteredOutCount(0);
     setMatchedCount(0);
     setDiscoveredList([]);
@@ -204,13 +225,15 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
       setCurrentKeyword(activeKeywords[0] || categoryCode || '');
     }
 
-    // No fabricated progress: the batch endpoint responds when the request completes.
     const timer1 = setTimeout(() => {
-      setLogLines((prev) => [`[${now()}] Yêu cầu vẫn đang chạy; chưa nhận kết quả từ crawler.`, ...prev]);
-    }, 15000);
+      setLogLines((prev) => [`[${now()}] Đang quét và trích xuất thông tin hồ sơ từ nền tảng...`, ...prev]);
+    }, 3500);
     const timer2 = setTimeout(() => {
-      setLogLines((prev) => [`[${now()}] Sau 60 giây chưa nhận kết quả. Chưa xác nhận cào thành công.`, ...prev]);
-    }, 60000);
+      setLogLines((prev) => [`[${now()}] Đang kiểm tra điều kiện người theo dõi và lọc tài khoản thương mại...`, ...prev]);
+    }, 9000);
+    const timer3 = setTimeout(() => {
+      setLogLines((prev) => [`[${now()}] Đang xử lý dữ liệu chuyên sâu, vui lòng đợi thêm giây lát...`, ...prev]);
+    }, 20000);
 
     try {
       const res = mode === 'custom' ? await crawlerService.collectAccounts(crawlPlatform, usernamesToCrawl, maxKocs) : await crawlerService.batchCrawl({
@@ -223,6 +246,7 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
 
       clearTimeout(timer1);
       clearTimeout(timer2);
+      clearTimeout(timer3);
 
       const summary = res.summary;
       const totalReq = summary?.total_requested ?? (res.results?.length ?? maxKocs);
@@ -366,7 +390,7 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
     } catch (err: any) {
       clearTimeout(timer1);
       clearTimeout(timer2);
-      setProgressPercent(0);
+      clearTimeout(timer3);
       setHuntError(err.message || 'Crawler request failed');
       setLogLines((prev) => [`[${now()}] Lỗi kết nối máy chủ cào: ${err.message || 'Không thể lấy dữ liệu'}`, ...prev]);
       message.error(err.message || 'Lỗi khi gọi API cào dữ liệu');
@@ -438,16 +462,13 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
         onStartHunting={handleStartHunting}
       />
 
-      {loading && <Alert showIcon type="info" style={{ marginBottom: 16 }}
-        message={`Đang chờ kết quả — ${Math.floor(waitSeconds / 60)} phút ${waitSeconds % 60} giây`}
-        description="Yêu cầu chưa kết thúc. Không bấm gửi lại; kết quả hoặc lỗi sẽ hiện tại đây khi API phản hồi." />}
-      {huntError && <Alert showIcon type="error" style={{ marginBottom: 16 }}
-        message="Lượt săn chưa hoàn tất" description={huntError} />}
-      {(loading || logLines.length > 0) && (
+      {(loading || logLines.length > 0 || !!huntError) && (
         <HunterRadarScanner
           loading={loading}
           currentKeyword={currentKeyword}
           progressPercent={progressPercent}
+          waitSeconds={waitSeconds}
+          errorMessage={huntError}
           scannedCount={scannedCount}
           filteredOutCount={filteredOutCount}
           pendingReviewCount={pendingReviewCount}

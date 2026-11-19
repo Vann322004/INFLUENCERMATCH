@@ -6,6 +6,13 @@ import type { Niche } from '../../../../../services/api/nicheService';
 const { Option } = Select;
 const { TextArea } = Input;
 
+const PLATFORM_LABELS: Record<string, string> = {
+  ALL: 'TikTok & Facebook',
+  TIKTOK: 'TikTok',
+  FACEBOOK: 'Facebook',
+  INSTAGRAM: 'Instagram',
+};
+
 export interface HunterSetupCardProps {
   topics: Niche[];
   topicsLoading: boolean;
@@ -67,6 +74,7 @@ export default function HunterSetupCard({
 
   const accounts = customUsernames.split(/[\n,]+/).map(value => value.trim()).filter(Boolean);
   const selected = topics.find(topic => topic.id === selectedTopic);
+  const platformLabel = PLATFORM_LABELS[effectivePlatform] || effectivePlatform;
   const blockedReason = loading ? '' : mode === 'category'
     ? topicsLoading ? 'Đang tải danh sách lĩnh vực…'
       : topicsError ? 'Tải lại lĩnh vực để tiếp tục.'
@@ -135,14 +143,60 @@ export default function HunterSetupCard({
     </div>
 
     <aside className="collection-config-sidebar">
-      <div className="collection-sidebar-heading"><span className="collection-sidebar-dot" /><h3>Phạm vi thu thập</h3></div>
-      <p className="collection-sidebar-copy">Chọn số kênh tối đa cho lượt này.</p>
-      <div className="collection-channel-count"><strong>{maxKocs}</strong><span>kênh / lượt</span></div>
-      <Slider aria-label="Số kênh thu thập tối đa" min={1} max={20} step={1}
-        marks={{ 1: '1', 5: '5', 10: '10', 15: '15', 20: '20' }} value={maxKocs} disabled={loading} onChange={onMaxKocsChange} />
-      <p className="collection-limit-note">{mode === 'category'
-        ? 'Số kênh thực tế phụ thuộc vào kết quả tìm kiếm phù hợp.'
-        : `Xử lý tối đa ${Math.min(accounts.length, maxKocs)} trong ${accounts.length} kênh đã nhập.`}</p>
+      <div className="collection-sidebar-body">
+        <div className="collection-sidebar-heading">
+          <h3>Phạm vi thu thập</h3>
+          <p className="collection-sidebar-copy">Chọn số kênh tối đa cho lượt này.</p>
+        </div>
+
+        <div className="collection-scope-card">
+          <div className="collection-channel-row">
+            <span className="collection-channel-label">Số kênh tối đa</span>
+            <div className="collection-channel-count"><strong>{maxKocs}</strong><span>kênh / lượt</span></div>
+          </div>
+          <Slider
+            aria-label="Số kênh thu thập tối đa"
+            min={1}
+            max={20}
+            step={1}
+            marks={{ 1: '1', 5: '5', 10: '10', 15: '15', 20: '20' }}
+            value={maxKocs}
+            disabled={loading}
+            onChange={onMaxKocsChange}
+          />
+        </div>
+
+        <div className="collection-summary-list">
+          <div className="collection-summary-row">
+            <span>Nền tảng</span>
+            <strong>{platformLabel}</strong>
+          </div>
+          {mode === 'category' ? <>
+            <div className="collection-summary-row">
+              <span>Lĩnh vực</span>
+              <strong>{selected?.name || 'Chưa chọn'}</strong>
+            </div>
+            <div className="collection-summary-row">
+              <span>Từ khóa</span>
+              <strong>{activeKeywords.length} từ khóa</strong>
+            </div>
+          </> : <>
+            <div className="collection-summary-row">
+              <span>Đã nhập</span>
+              <strong>{accounts.length} tài khoản</strong>
+            </div>
+            <div className="collection-summary-row">
+              <span>Sẽ xử lý</span>
+              <strong>{Math.min(accounts.length, maxKocs)} kênh</strong>
+            </div>
+          </>}
+        </div>
+
+        <p className="collection-limit-note">{mode === 'category'
+          ? 'Số kênh thực tế phụ thuộc vào kết quả tìm kiếm phù hợp.'
+          : `Xử lý tối đa ${Math.min(accounts.length, maxKocs)} trong ${accounts.length} kênh đã nhập.`}</p>
+      </div>
+
       <div className="collection-start-section">
         <Button type="primary" size="large" block loading={loading} disabled={!!blockedReason} onClick={onStartHunting}>
           {loading ? 'Đang thu thập…' : 'Bắt đầu thu thập'}

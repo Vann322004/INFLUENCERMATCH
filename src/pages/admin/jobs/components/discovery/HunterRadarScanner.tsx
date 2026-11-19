@@ -1,11 +1,13 @@
 import React from 'react';
-import { Card, Progress, Tag, Spin, Alert, Button } from 'antd';
-import { SyncOutlined, ArrowRightOutlined, AuditOutlined } from '@ant-design/icons';
+import { Progress, Spin, Button } from 'antd';
+import { SyncOutlined, ArrowRightOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 
 interface HunterRadarScannerProps {
   loading?: boolean;
   currentKeyword: string;
   progressPercent: number;
+  waitSeconds?: number;
+  errorMessage?: string;
   scannedCount: number;
   filteredOutCount: number;
   pendingReviewCount: number | null;
@@ -14,10 +16,29 @@ interface HunterRadarScannerProps {
   onNavigateQuality?: () => void;
 }
 
+function getStageText(progressPercent: number): string {
+  if (progressPercent < 30) return 'Đang kết nối và tìm kiếm kênh phù hợp';
+  if (progressPercent < 65) return 'Đang trích xuất hồ sơ và dữ liệu bài đăng';
+  return 'Đang lọc điều kiện và tổng hợp danh sách';
+}
+
+function renderLogLine(line: string) {
+  const match = line.match(/^(\[[^\]]+\])\s*(.*)$/);
+  if (!match) return <span>{line}</span>;
+  return (
+    <>
+      <span className="collection-log-time">{match[1]}</span>
+      <span>{match[2]}</span>
+    </>
+  );
+}
+
 export default function HunterRadarScanner({
   loading = false,
   currentKeyword,
   progressPercent,
+  waitSeconds = 0,
+  errorMessage = '',
   scannedCount,
   filteredOutCount,
   pendingReviewCount,
@@ -26,177 +47,116 @@ export default function HunterRadarScanner({
   onNavigateQuality,
 }: HunterRadarScannerProps) {
   const isRunning = loading;
-  const isDone = progressPercent === 100;
+  const isDone = !isRunning && !errorMessage && progressPercent === 100;
+  const displayPercent = isRunning ? Math.max(8, progressPercent) : progressPercent;
+  const formattedTime = `${Math.floor(waitSeconds / 60)}:${String(waitSeconds % 60).padStart(2, '0')}`;
+
+  const title = isRunning
+    ? 'Đang thu thập dữ liệu nhà sáng tạo…'
+    : errorMessage
+      ? 'Quá trình thu thập bị gián đoạn'
+      : isDone
+        ? 'Hoàn tất thu thập dữ liệu'
+        : 'Tiến trình thu thập';
 
   return (
-    <Card
-      style={{
-        borderRadius: 12,
-        border: '1px solid #DBEAFE',
-        background: '#FAFAFE',
-        marginBottom: 20,
-      }}
-      bodyStyle={{ padding: '20px 24px' }}
-    >
-      {/* Top bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <section className="collection-radar-card" aria-live="polite">
+      <div className="collection-radar-header">
+        <div className="collection-radar-title-group">
+          <div className="collection-radar-title-row">
+            {isRunning ? (
+              <Spin indicator={<SyncOutlined spin style={{ fontSize: 15, color: '#2563eb' }} />} />
+            ) : (
+              <span
+                className={`collection-radar-status-dot ${
+                  errorMessage ? 'is-error' : isDone ? 'is-done' : ''
+                }`}
+                aria-hidden="true"
+              />
+            )}
+            <h3>{title}</h3>
+          </div>
           {isRunning && (
-            <Spin indicator={<SyncOutlined spin style={{ fontSize: 16, color: '#2563EB' }} />} />
-          )}
-          <span style={{ fontWeight: 700, fontSize: 14, color: '#1E293B' }}>
-            {isRunning ? 'Đang cào dữ liệu từ các kênh...' : isDone ? 'Hoàn tất quét dữ liệu' : 'Tiến trình quét'}
-          </span>
-          {isRunning && currentKeyword && (
-            <Tag color="geekblue" style={{ borderRadius: 20, fontWeight: 600, fontSize: 11.5 }}>
-              #{currentKeyword}
-            </Tag>
+            <div className="collection-radar-meta">
+              <span>{getStageText(progressPercent)}</span>
+              {currentKeyword && <span className="collection-radar-keyword">#{currentKeyword}</span>}
+            </div>
           )}
         </div>
-        <span style={{ fontSize: 12, color: '#94A3B8' }}>{isRunning ? 'Đang chờ phản hồi' : `${progressPercent}%`}</span>
+
+        <div className="collection-radar-right">
+          {isRunning && <span className="collection-radar-timer">{formattedTime}</span>}
+          <span className={`collection-radar-percent ${errorMessage ? 'is-error' : isDone ? 'is-done' : ''}`}>
+            {displayPercent}%
+          </span>
+        </div>
       </div>
 
-      <Progress
-        percent={isRunning ? 0 : progressPercent}
-        showInfo={!isRunning}
-        status={isRunning ? 'active' : isDone && matchedCount > 0 ? 'success' : 'normal'}
-        strokeColor={{ '0%': '#2563EB', '100%': '#10B981' }}
-        style={{ marginBottom: 16 }}
-      />
-
-      {/* Stats row */}
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-        <StatBadge label="Tổng số yêu cầu" value={scannedCount} unit="kênh" color="#2563EB" />
-        <StatBadge
-          label="Cào lỗi / Bị lọc Tier-0"
-          value={filteredOutCount}
-          unit="kênh"
-          color="#F59E0B"
+      <div className="collection-radar-progress">
+        <Progress
+          percent={displayPercent}
+          showInfo={false}
+          status={errorMessage ? 'exception' : isRunning ? 'active' : isDone ? 'success' : 'normal'}
+          strokeColor={errorMessage ? '#dc2626' : isDone ? '#10b981' : '#2563eb'}
+          trailColor="#e2e8f0"
+          size={['100%', 8]}
         />
-        <StatBadge label="Cào thành công" value={matchedCount} unit="tài khoản" color="#10B981" />
       </div>
 
-      {/* Alert banner to navigate to Data Quality if there are accounts needing review */}
-      {isDone && filteredOutCount > 0 && (
-        <Alert
-          type="warning"
-          showIcon
-          icon={<AuditOutlined style={{ color: '#D97706', fontSize: 18 }} />}
-          style={{
-            marginBottom: 16,
-            borderRadius: 10,
-            border: '1px solid #FDE68A',
-            background: '#FFFBEB',
-            padding: '12px 16px',
-          }}
-          message={
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 13.5, color: '#92400E' }}>
-                  Có {filteredOutCount} kênh cào lỗi hoặc chưa đạt bộ lọc Tier-0
-                </div>
-                <div style={{ fontSize: 12, color: '#B45309', marginTop: 2 }}>
-                  Số kênh bị lọc không phải số hồ sơ chờ kiểm định. Chỉ hồ sơ đã có dữ liệu trên hệ thống và đủ điều kiện mới xuất hiện ở trang kiểm định.
-                </div>
-              </div>
-              {onNavigateQuality && (
-                <Button
-                  type="primary"
-                  icon={<ArrowRightOutlined />}
-                  onClick={onNavigateQuality}
-                  style={{
-                    background: 'linear-gradient(135deg, #1D4ED8 0%, #1D4ED8 100%)',
-                    border: 'none',
-                    fontWeight: 700,
-                    borderRadius: 8,
-                    height: 36,
-                    padding: '0 16px',
-                    boxShadow: '0 2px 6px rgba(29, 78, 216, 0.25)',
-                  }}
-                >
-                  {pendingReviewCount === null ? 'Mở danh sách kiểm định' : `Kiểm định chất lượng (${pendingReviewCount})`}
-                </Button>
-              )}
-            </div>
-          }
-        />
+      {errorMessage && (
+        <div className="collection-radar-error" role="alert">
+          <ExclamationCircleOutlined className="collection-radar-error-icon" />
+          <span>{errorMessage}</span>
+        </div>
       )}
 
-      {/* Log stream */}
+      <div className="collection-radar-stats">
+        <div className="collection-radar-stat">
+          <span className="collection-radar-stat-label">Số kênh yêu cầu</span>
+          <div className="collection-radar-stat-value">
+            <strong>{scannedCount}</strong>
+            <span>kênh</span>
+          </div>
+        </div>
+        <div className="collection-radar-stat">
+          <span className="collection-radar-stat-label">Không đạt / Lỗi thu thập</span>
+          <div className="collection-radar-stat-value is-muted">
+            <strong>{filteredOutCount}</strong>
+            <span>kênh</span>
+          </div>
+        </div>
+        <div className="collection-radar-stat">
+          <span className="collection-radar-stat-label">Nhà sáng tạo đạt chuẩn</span>
+          <div className="collection-radar-stat-value is-success">
+            <strong>{matchedCount}</strong>
+            <span>tài khoản</span>
+          </div>
+        </div>
+      </div>
+
+      {isDone && !errorMessage && filteredOutCount > 0 && (
+        <div className="collection-radar-review-bar">
+          <div className="collection-radar-review-copy">
+            <strong>Có {filteredOutCount} kênh thu thập lỗi hoặc chưa đạt bộ lọc Tier-0</strong>
+            <span>Chỉ hồ sơ đủ dữ liệu và hợp lệ mới được chuyển sang danh sách chờ kiểm định.</span>
+          </div>
+          {onNavigateQuality && (
+            <Button type="default" icon={<ArrowRightOutlined />} onClick={onNavigateQuality}>
+              {pendingReviewCount === null ? 'Kiểm định chất lượng' : `Kiểm định chất lượng (${pendingReviewCount})`}
+            </Button>
+          )}
+        </div>
+      )}
+
       {logLines.length > 0 && (
-        <div
-          style={{
-            background: '#F1F5F9',
-            borderRadius: 8,
-            border: '1px solid #E2E8F0',
-            padding: '10px 14px',
-            fontFamily: 'Consolas, "Courier New", monospace',
-            fontSize: 11.5,
-            color: '#475569',
-            lineHeight: 1.7,
-            maxHeight: 110,
-            overflowY: 'auto',
-          }}
-        >
+        <div className="collection-radar-logs">
           {logLines.map((line, i) => (
-            <div key={i} style={{ color: i === 0 ? '#1E293B' : '#94A3B8' }}>{line}</div>
+            <div key={i} className={`collection-radar-log-line ${i === 0 ? 'is-latest' : ''}`}>
+              {renderLogLine(line)}
+            </div>
           ))}
         </div>
       )}
-    </Card>
-  );
-}
-
-function StatBadge({
-  label,
-  value,
-  unit,
-  color,
-  clickable,
-  onClick,
-  actionHint,
-}: {
-  label: string;
-  value: number;
-  unit: string;
-  color: string;
-  clickable?: boolean;
-  onClick?: () => void;
-  actionHint?: string;
-}) {
-  return (
-    <div
-      onClick={clickable ? onClick : undefined}
-      style={{
-        flex: '1 1 140px',
-        background: '#FFFFFF',
-        border: `1px solid ${color}40`,
-        borderRadius: 10,
-        padding: '10px 14px',
-        cursor: clickable ? 'pointer' : 'default',
-        transition: 'all 0.2s ease',
-        boxShadow: clickable ? '0 1px 3px rgba(0,0,0,0.04)' : 'none',
-      }}
-      onMouseEnter={(e) => {
-        if (clickable) {
-          e.currentTarget.style.borderColor = color;
-          e.currentTarget.style.transform = 'translateY(-1px)';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (clickable) {
-          e.currentTarget.style.borderColor = `${color}40`;
-          e.currentTarget.style.transform = 'none';
-        }
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 20, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
-        {actionHint && (
-          <span style={{ fontSize: 11, fontWeight: 600, color: '#1D4ED8' }}>{actionHint}</span>
-        )}
-      </div>
-      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>{label} ({unit})</div>
-    </div>
+    </section>
   );
 }
