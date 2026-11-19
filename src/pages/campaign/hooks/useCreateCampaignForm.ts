@@ -49,6 +49,12 @@ export function useCreateCampaignForm({
   const [selectedObjectives, setSelectedObjectives] = useState<string[]>([]);
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const aiRequest = useRef<AbortController | null>(null);
+  useEffect(() => {
+    return () => {
+      aiRequest.current?.abort();
+    };
+  }, [resolvedCampaignId]);
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
   const [isAiAutofilled, setIsAiAutofilled] = useState<boolean>(false);
 
@@ -292,12 +298,15 @@ export function useCreateCampaignForm({
   };
 
   const handleAiSuggest = async (overridePrompt?: string) => {
-    if (isAiLoading || isLoadingCampaign || loadError || (isEditMode && campaignStatus !== 'DRAFT')) return;
+    if (aiRequest.current || isAiLoading || isLoadingCampaign || loadError || (isEditMode && campaignStatus !== 'DRAFT')) return;
     const prompt = (typeof overridePrompt === 'string' ? overridePrompt : aiPrompt).trim();
     if (prompt.length < 10) { message.warning('Nhập mô tả tối thiểu 10 ký tự.'); return; }
+    const controller = new AbortController();
+    aiRequest.current = controller;
     setIsAiLoading(true);
     try {
-      const result = await campaignService.autofillCampaign(prompt);
+      const result = await campaignService.autofillCampaign(prompt, controller.signal);
+      if (controller.signal.aborted) return;
       if (result.name != null) setCampaignName(result.name);
       if (result.productService != null) setProduct(result.productService);
       if (result.objective) setSelectedObjectives([({ CONVERSION: 'sales', ENGAGEMENT: 'engagement', TRAFFIC: 'traffic', AWARENESS: 'awareness' } as Record<string, string>)[result.objective]]);
@@ -322,8 +331,18 @@ export function useCreateCampaignForm({
       if (result.creatorFeeMax != null) setCreatorFeeMax(result.creatorFeeMax);
       setAiExplanation(result.aiExplanation ?? null); setIsAiAutofilled(true);
       message.info('Đã nhận gợi ý. Rà soát nội dung và lưu bản nháp để ghi nhận thay đổi.');
-    } catch (error) { message.error(getErrorMessage(error)); }
-    finally { setIsAiLoading(false); }
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      const code = (error as { code?: string })?.code;
+      message.error(code === 'ECONNABORTED' || code === 'ETIMEDOUT'
+        ? 'AI phản hồi quá lâu. Bạn có thể tiếp tục điền thủ công hoặc thử lại sau.'
+        : getErrorMessage(error));
+    } finally {
+      if (aiRequest.current === controller) {
+        aiRequest.current = null;
+        setIsAiLoading(false);
+      }
+    }
   };
 
   const buildCampaignPayload = (): any => {

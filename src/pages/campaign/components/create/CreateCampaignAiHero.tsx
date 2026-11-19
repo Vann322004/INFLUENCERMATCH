@@ -39,6 +39,8 @@ export const CreateCampaignAiHero: React.FC<CreateCampaignAiHeroProps> = ({
       {/* AI Input Row */}
       <div className="ccreate-ai-input-wrap">
         <Input
+          disabled={isAiLoading}
+          maxLength={1000}
           value={aiPrompt}
           onChange={(e) => setAiPrompt(e.target.value)}
           placeholder="Ví dụ: Dòng kem chống nắng nâng tone kiềm dầu cho học sinh sinh viên, giá dưới 200k..."
@@ -64,6 +66,7 @@ export const CreateCampaignAiHero: React.FC<CreateCampaignAiHeroProps> = ({
             type="button"
             key={idx}
             className="ccreate-ai-sample-chip"
+            disabled={isAiLoading}
             onClick={() => {
               setAiPrompt(item.prompt);
               onAiSuggest(item.prompt);
