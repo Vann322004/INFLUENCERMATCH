@@ -4,13 +4,46 @@ import type { ApiResponse, PageResponse } from '../../types/api/common.types';
 import type { CampaignResponse } from '../../types/api/campaign.types';
 import type {
   CollaborationDetail, CollaborationSummary, ExecutionSnapshot,
-  LegacyPlan, Measurement, OutcomeValues, PendingAssignment, ReviewValues,
+  LegacyPlan, Measurement, OutcomeValues, PendingAssignment, ReviewValues, VideoPlayback,
 } from '../../types/api/collaboration.types';
 
 type Revision = { expectedRevision: number };
 type SubmissionRevision = Revision & { submissionRevision: number };
 type OutcomeRevision = Revision & { outcomeRevision: number };
-type Submission = Revision & { url: string; source: 'CREATOR_PORTAL' };
+type Submission = Revision & ({ url: string; source: 'CREATOR_PORTAL' } | { uploadId: string });
+export interface VideoUploadGrant extends VideoPlayback {
+  uploadId: string;
+  headers: Record<string, string>;
+}
+
+export function uploadDraftVideo(grant: VideoUploadGrant, file: File, onProgress: (percent: number) => void,
+  signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    const upload = new XMLHttpRequest();
+    const abort = () => upload.abort();
+    if (signal.aborted) {
+      reject(new DOMException('Upload cancelled', 'AbortError'));
+      return;
+    }
+    upload.open('PUT', grant.url);
+    upload.timeout = 30 * 60 * 1000;
+    for (const [name, value] of Object.entries(grant.headers)) upload.setRequestHeader(name, value);
+    upload.upload.onprogress = event => {
+      if (event.lengthComputable) onProgress(Math.floor(event.loaded / event.total * 100));
+    };
+    upload.onload = () => {
+      // A delayed retry can reach R2 after the original bytes were stored. The BE
+      // will verify the existing object before it accepts the submission.
+      if ((upload.status >= 200 && upload.status < 300) || upload.status === 412) resolve();
+      else reject(new Error('Không tải được video. Vui lòng thử lại.'));
+    };
+    upload.onerror = upload.ontimeout = () => reject(new Error('Kết nối tải video bị gián đoạn. Vui lòng thử lại.'));
+    upload.onabort = () => reject(new DOMException('Upload cancelled', 'AbortError'));
+    upload.onloadend = () => signal.removeEventListener('abort', abort);
+    signal.addEventListener('abort', abort, { once: true });
+    upload.send(file);
+  });
+}
 type Decision = SubmissionRevision & {
   decision: 'APPROVE' | 'REQUEST_CHANGES'; completedChecklist: string[]; reason?: string;
 };
@@ -63,6 +96,13 @@ export const collaborationService = {
     );
   },
   setup: writer<Revision & LegacyPlan>(id => `/collaborations/${id}/execution-plan`),
+  async prepareVideo(id: string, unit: string, body: Revision & { fileName: string; sizeBytes: number }, signal: AbortSignal) {
+    return (await apiClient.post<ApiResponse<VideoUploadGrant>>(
+      `/collaborations/${id}/deliverables/${unit}/submission-uploads`, body, { signal },
+    )).data.data;
+  },
+  video: (id: string, unit: string, submission: string, signal?: AbortSignal) =>
+    get<VideoPlayback>(`/collaborations/${id}/deliverables/${unit}/submissions/${submission}/video`, undefined, signal),
   submit: deliverableWriter<Submission>('submissions'),
   decide: deliverableWriter<Decision>('review'),
   publish: deliverableWriter<Publication>('publication'),

@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { campaignHistoryService } from '../../services/api/campaignHistoryService';
 import type { HistoryAgreement, HistoryChannel, HistoryCollaborationDetail } from '../../types/api/campaignHistory.types';
 import type { Deliverable, OutcomeRevision } from '../../types/api/collaboration.types';
+import { DraftVideoPlayer } from '../collaboration/DraftVideo';
 import { ChannelNames, Facts } from './HistoryFacts';
 import { collaborationStates, deliverableStates, EvidenceLink, historyDate, historyMoney, historyNumber,
   HistoryReadState, provenanceLabel, StatusTag, useHistoryRead } from './historyView';
@@ -34,7 +35,9 @@ function Agreement({ agreement, channels }: { agreement: HistoryAgreement; chann
   </Card>;
 }
 
-function ExecutionDeliverable({ unit, channels }: { unit: Deliverable; channels: HistoryChannel[] }) {
+function ExecutionDeliverable({ unit, channels, campaignId, collaborationId }: {
+  unit: Deliverable; channels: HistoryChannel[]; campaignId: string; collaborationId: string;
+}) {
   return <div className="history-stack">
     <Facts items={[
       { label: 'Kênh hiện tại', value: <ChannelNames channels={channelsFor(channels, unit.creatorId)} /> },
@@ -49,7 +52,10 @@ function ExecutionDeliverable({ unit, channels }: { unit: Deliverable; channels:
         <div>
           <strong>Bản {submission.revision}</strong> · {historyDate(submission.createdAt, true)} · {provenanceLabel(submission.source)}
           {submission.sourceDescription && <p>{submission.sourceDescription}</p>}
-          <EvidenceLink url={submission.url} label="Mở bản nháp" />
+          {submission.videoFileName
+            ? <DraftVideoPlayer name={submission.videoFileName} size={submission.videoSizeBytes}
+              request={signal => campaignHistoryService.collaborationVideo(campaignId, collaborationId, unit.id, submission.id, signal)} />
+            : <EvidenceLink url={submission.url} label="Mở bản nháp" />}
         </div>
         {review && <div>
           <strong>{review.decision === 'APPROVE' ? 'Đã duyệt' : 'Yêu cầu sửa'}</strong> · {historyDate(review.createdAt, true)}
@@ -107,7 +113,7 @@ function Outcome({ outcome, units, accepted }: { outcome: OutcomeRevision; units
   </div>;
 }
 
-function CollaborationContent({ detail }: { detail: HistoryCollaborationDetail }) {
+function CollaborationContent({ detail, campaignId }: { detail: HistoryCollaborationDetail; campaignId: string }) {
   const { collaboration, execution, agreedProposal, legacyOutcome } = detail;
   const { currentChannels: channels } = collaboration;
   const { deliverables, outcomeRevisions, acceptances, review } = execution;
@@ -129,7 +135,7 @@ function CollaborationContent({ detail }: { detail: HistoryCollaborationDetail }
       {deliverables.length ? <Collapse items={deliverables.map(unit => ({
         key: unit.id,
         label: <Space wrap><strong>{unit.contentType}</strong><StatusTag state={unit.status} labels={deliverableStates} /></Space>,
-        children: <ExecutionDeliverable unit={unit} channels={channels} />,
+        children: <ExecutionDeliverable unit={unit} channels={channels} campaignId={campaignId} collaborationId={collaboration.id} />,
       }))} /> : <p className="history-muted">Chưa có bản lưu ấn phẩm.</p>}
     </Card>
     <Card className="history-proof-card" title="Outcome đã nghiệm thu">
@@ -173,7 +179,7 @@ export default function HistoryCollaboration({ campaignId, collaborationId, onCl
     [campaignId, collaborationId]);
   const { result, retry } = useHistoryRead(load);
   return <Drawer open size="min(840px, 100vw)" title="Lịch sử hợp tác" onClose={onClose}>
-    {result.status === 'ready' ? <CollaborationContent detail={result.data} />
+    {result.status === 'ready' ? <CollaborationContent detail={result.data} campaignId={campaignId} />
       : <HistoryReadState result={result} retry={retry} missing="Không tìm thấy hợp tác trong chiến dịch này." />}
   </Drawer>;
 }

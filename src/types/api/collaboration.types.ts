@@ -37,7 +37,9 @@ export interface CollaborationDetail extends Omit<CollaborationSummary, 'hasOutc
 export interface DeliverableSubmission {
   id: string;
   revision: number;
-  url: string;
+  url?: string | null;
+  videoFileName?: string | null;
+  videoSizeBytes?: number | null;
   source: 'CREATOR_PORTAL' | 'BRAND_EXTERNAL';
   sourceDescription?: string | null;
   createdAt: string;
@@ -157,6 +159,7 @@ export interface ExecutionSnapshot {
   currency?: string | null;
   executionSource: string;
   executionRevision: number;
+  videoSubmissionRequired?: boolean;
   dealId?: string;
   dealRevision?: number;
   assignmentStatus?: 'READY' | 'WAITING_FOR_VERIFICATION' | 'WAITING_FOR_ACCEPTANCE' | 'NO_CONFIRMED_PROPOSAL';
@@ -164,6 +167,11 @@ export interface ExecutionSnapshot {
   outcomeRevisions: OutcomeRevision[];
   acceptances: Acceptance[];
   review?: FinalReview | null;
+}
+
+export interface VideoPlayback {
+  url: string;
+  expiresAt: string;
 }
 
 export interface LegacyPlan {
