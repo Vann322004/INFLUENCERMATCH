@@ -21,9 +21,10 @@ interface HistoryTabProps extends ReceiptCustomer {
   onRetry: () => void;
   onPageChange: (page: number) => void;
   onViewInvoice: (invoice: PaymentInvoice) => void;
+  onRetryPayment?: (invoice: PaymentInvoice) => void;
 }
 
-export default function HistoryTab({ invoices, loading, onViewInvoice, page, total, error, onRetry, onPageChange, currentBrand, storedUser }: HistoryTabProps) {
+export default function HistoryTab({ invoices, loading, onViewInvoice, onRetryPayment, page, total, error, onRetry, onPageChange, currentBrand, storedUser }: HistoryTabProps) {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const invoiceColumns: ColumnsType<PaymentInvoice> = [
     {
@@ -91,6 +92,20 @@ export default function HistoryTab({ invoices, loading, onViewInvoice, page, tot
       key: 'actions',
       align: 'right',
       render: (_, record: PaymentInvoice) => {
+        // Nếu giao dịch đang chờ thanh toán -> cung cấp nút "Thanh toán lại"
+        if (record.status === 'pending') {
+          return (
+            <Button
+              size="small"
+              type="primary"
+              style={{ background: '#2563EB', fontSize: 12, borderRadius: 6, fontWeight: 600 }}
+              onClick={() => onRetryPayment?.(record)}
+            >
+              Thanh toán lại
+            </Button>
+          );
+        }
+
         // Chỉ giao dịch đã thanh toán thành công mới có biên lai thanh toán
         if (record.status !== 'success') {
           return <span style={{ color: '#94A3B8', fontSize: 13 }}>—</span>;

@@ -570,6 +570,17 @@ export default function SubscriptionPage() {
                     setSelectedInvoice(invoice);
                     setIsInvoiceModalOpen(true);
                   }}
+                  onRetryPayment={(invoice) => {
+                    const matchedPlan = plans.find(
+                      (p) => p.name.trim().toUpperCase() === invoice.planName.trim().toUpperCase()
+                    );
+                    if (matchedPlan) {
+                      setSelectedPlanForUpgrade(matchedPlan);
+                      setIsUpgradeModalOpen(true);
+                    } else {
+                      setActiveTab('plans');
+                    }
+                  }}
                 />
               ),
             },

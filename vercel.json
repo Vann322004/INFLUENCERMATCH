@@ -1,6 +1,22 @@
 {
   "rewrites": [
     {
+      "source": "/crawler-api/:path*",
+      "destination": "/api/crawlerProxy?__path=:path*"
+    },
+    {
+      "source": "/api/v1/crawl/:path*",
+      "destination": "/api/crawlerProxy?__path=api/v1/crawl/:path*"
+    },
+    {
+      "source": "/api/v1/quality/:path*",
+      "destination": "/api/crawlerProxy?__path=api/v1/quality/:path*"
+    },
+    {
+      "source": "/api/v1/monitor/:path*",
+      "destination": "/api/crawlerProxy?__path=api/v1/monitor/:path*"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/proxy?__proxy_path=:path*"
     },
