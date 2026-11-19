@@ -37,6 +37,7 @@ export const config = {
     externalResolver: true,
   },
 };
+export const maxDuration = 60;
 
 export default function handler(req, res) {
   // Handle CORS preflight directly if browser sends OPTIONS
