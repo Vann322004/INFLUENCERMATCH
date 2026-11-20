@@ -62,12 +62,7 @@ function getBudgetPercent(spent: number): number {
   return Math.min(Math.round((spent / budget) * 100), 100);
 }
 
-const DEFAULT_THUMBNAILS = [
-  'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=100&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=100&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=100&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=100&auto=format&fit=crop&q=80',
-];
+
 
 export default function CampaignListPage() {
   const navigate = useNavigate();
@@ -98,7 +93,7 @@ export default function CampaignListPage() {
       try {
         const data = await campaignService.getCampaigns();
         if (isMounted) {
-          const mapped: DisplayCampaign[] = data.map((c: CampaignResponse, idx: number) => {
+          const mapped: DisplayCampaign[] = data.map((c: CampaignResponse) => {
             const rawStatus = (c.status || 'DRAFT').toUpperCase();
             let uiStatus: DisplayCampaign['status'] = 'draft';
             let statusText = 'Bản nháp';
@@ -128,7 +123,7 @@ export default function CampaignListPage() {
               id: c.id,
               title: c.name || 'Chiến dịch không tên',
               tags,
-              thumbnail: DEFAULT_THUMBNAILS[idx % DEFAULT_THUMBNAILS.length],
+              thumbnail: c.imageUrl || '',
               status: uiStatus,
               statusText,
               creatorsCount: 0,
@@ -312,13 +307,13 @@ export default function CampaignListPage() {
                 <div key={campaign.id} className="clist-card">
                   {/* Card Header */}
                   <div className="clist-card-header">
-                    <img
+                    {campaign.thumbnail ? <img
                       src={campaign.thumbnail}
                       alt={campaign.title}
                       className="clist-card-thumb"
                       style={{ cursor: 'pointer' }}
                       onClick={() => handleOpenDetail(campaign.id)}
-                    />
+                    /> : <div className="clist-card-thumb" aria-label="Chưa có ảnh chiến dịch" style={{ display: 'grid', placeItems: 'center', background: '#f3eef9', color: '#64748b', fontSize: 11 }}>Chưa có ảnh</div>}
                     <div className="clist-card-meta">
                       <div className="clist-card-title-row">
                         <h3

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Input, Button, Alert, Tag, Spin } from 'antd';
-import { ThunderboltFilled, RobotOutlined } from '@ant-design/icons';
+import { Input, Button, Spin, Popover } from 'antd';
+import { ThunderboltFilled } from '@ant-design/icons';
 import { AI_SAMPLE_PROMPTS } from './createCampaignConstants';
 
 interface CreateCampaignAiHeroProps {
@@ -17,7 +17,6 @@ export const CreateCampaignAiHero: React.FC<CreateCampaignAiHeroProps> = ({
   setAiPrompt,
   isAiLoading,
   aiExplanation,
-  setAiExplanation,
   onAiSuggest,
 }) => {
   return (
@@ -30,7 +29,7 @@ export const CreateCampaignAiHero: React.FC<CreateCampaignAiHeroProps> = ({
           <div>
             <span className="ccreate-ai-hero-title">Trợ lý AI Chiến dịch</span>
             <span className="ccreate-ai-hero-sub" style={{ marginLeft: 8 }}>
-              Tự động phân tích brief, trích xuất mục tiêu & đề xuất cấu hình phù hợp
+              Mô tả ý tưởng để nhận đề xuất cho chiến dịch
             </span>
           </div>
         </div>
@@ -39,13 +38,13 @@ export const CreateCampaignAiHero: React.FC<CreateCampaignAiHeroProps> = ({
       {/* AI Input Row */}
       <div className="ccreate-ai-input-wrap">
         <Input
+          aria-label="Mô tả chiến dịch cho AI"
           disabled={isAiLoading}
           maxLength={1000}
           value={aiPrompt}
           onChange={(e) => setAiPrompt(e.target.value)}
-          placeholder="Ví dụ: Dòng kem chống nắng nâng tone kiềm dầu cho học sinh sinh viên, giá dưới 200k..."
+          placeholder="Quảng bá [sản phẩm] cho [khách hàng], mục tiêu [mục tiêu], ngân sách [số tiền]…"
           className="ccreate-ai-input-field"
-          onPressEnter={() => onAiSuggest()}
         />
         <Button
           type="primary"
@@ -60,20 +59,22 @@ export const CreateCampaignAiHero: React.FC<CreateCampaignAiHeroProps> = ({
 
       {/* Sample Prompt Chips */}
       <div className="ccreate-ai-samples-strip">
-        <span className="ccreate-ai-samples-label">Gợi ý mẫu:</span>
+        <button type="button" className="ccreate-ai-sample-chip" disabled={isAiLoading}
+          onClick={() => setAiPrompt('Quảng bá kem chống nắng kiềm dầu giá dưới 200.000đ cho sinh viên, mục tiêu tăng nhận diện trên TikTok, tổng ngân sách 15 triệu đồng, hợp tác với 3 nhà sáng tạo để thực hiện tổng cộng 3 video đánh giá trong 4 tuần. Nhấn mạnh lớp nền tự nhiên, không cam kết điều trị da.')}>
+          Kem chống nắng cho sinh viên
+        </button>
         {AI_SAMPLE_PROMPTS.map((item, idx) => (
+          <Popover key={idx} trigger="click" placement="bottomLeft" title="Cấu trúc một câu mô tả"
+            content={<p style={{ width: 'min(320px, calc(100vw - 64px))', margin: 0, lineHeight: 1.6 }}>{item.prompt}</p>}>
           <button
             type="button"
             key={idx}
             className="ccreate-ai-sample-chip"
             disabled={isAiLoading}
-            onClick={() => {
-              setAiPrompt(item.prompt);
-              onAiSuggest(item.prompt);
-            }}
           >
             {item.label}
           </button>
+          </Popover>
         ))}
       </div>
 
@@ -97,51 +98,11 @@ export const CreateCampaignAiHero: React.FC<CreateCampaignAiHeroProps> = ({
         </div>
       )}
 
-      {/* AI Explanation Alert nếu có */}
       {aiExplanation && !isAiLoading && (
-        <Alert
-          style={{
-            borderRadius: 12,
-            border: '1px solid #C4B5FD',
-            background: 'linear-gradient(135deg, #FDF4FF 0%, #F5F3FF 50%, #EDE9FE 100%)',
-            padding: '10px 16px',
-          }}
-          title={
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontWeight: 700, color: '#5B21B6', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-                <RobotOutlined style={{ fontSize: 15, color: '#6D28D9' }} /> Chiến lược phân tích từ AI
-              </span>
-              <Button
-                type="text"
-                size="small"
-                onClick={() => setAiExplanation(null)}
-                style={{ color: '#6D28D9', fontWeight: 600, fontSize: 11.5 }}
-              >
-                Đóng
-              </Button>
-            </div>
-          }
-          description={
-            <div>
-              <p style={{ margin: '2px 0 8px 0', fontSize: 12.5, color: '#4C1D95', lineHeight: 1.5 }}>
-                {aiExplanation}
-              </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                <Tag style={{ background: '#FFFFFF', borderColor: '#DDD6FE', color: '#6D28D9', fontSize: 11, borderRadius: 6, fontWeight: 600 }}>
-                  ✓ Bước 1: Tên, Sản phẩm & Mục tiêu
-                </Tag>
-                <Tag style={{ background: '#FFFFFF', borderColor: '#DDD6FE', color: '#6D28D9', fontSize: 11, borderRadius: 6, fontWeight: 600 }}>
-                  ✓ Bước 2: Nền tảng, Niche & Độ tuổi
-                </Tag>
-                <Tag style={{ background: '#FFFFFF', borderColor: '#DDD6FE', color: '#6D28D9', fontSize: 11, borderRadius: 6, fontWeight: 600 }}>
-                  ✓ Bước 3: Ngân sách & Thời gian
-                </Tag>
-              </div>
-            </div>
-          }
-          type="info"
-          showIcon={false}
-        />
+        <details className="ccreate-ai-explanation">
+          <summary>Chi tiết đề xuất</summary>
+          <p>{aiExplanation}</p>
+        </details>
       )}
     </div>
   );

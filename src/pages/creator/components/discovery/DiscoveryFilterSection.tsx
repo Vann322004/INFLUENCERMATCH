@@ -18,6 +18,7 @@ interface DiscoveryFilterSectionProps {
   viewMode: 'grid' | 'list';
   onViewModeChange: (mode: 'grid' | 'list') => void;
   selectedPlatform: string;
+  campaignPlatforms?: string[];
   onPlatformChange: (value: string) => void;
   selectedCategory: string;
   onCategoryChange: (value: string) => void;
@@ -30,9 +31,6 @@ interface DiscoveryFilterSectionProps {
   onAudienceAgeChange: (value: string) => void;
   audienceGender: string;
   onAudienceGenderChange: (value: string) => void;
-  priceTier: string;
-  priceFilterAvailable?: boolean;
-  onPriceTierChange: (value: string) => void;
   activeFiltersCount: number;
   onResetFilters: () => void;
 }
@@ -46,6 +44,7 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
   viewMode,
   onViewModeChange,
   selectedPlatform,
+  campaignPlatforms,
   onPlatformChange,
   selectedCategory,
   onCategoryChange,
@@ -54,13 +53,6 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
   onFollowerTierChange,
   engagementTier,
   onEngagementTierChange,
-  audienceAge,
-  onAudienceAgeChange,
-  audienceGender,
-  onAudienceGenderChange,
-  priceTier,
-  priceFilterAvailable = false,
-  onPriceTierChange,
   activeFiltersCount,
   onResetFilters,
 }) => {
@@ -75,7 +67,7 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
         onClick={() => setIsFilterExpanded(!isFilterExpanded)}
       >
         <span className="cdiscovery-filter-card-title">
-          Tìm kiếm & Bộ lọc {isFilterExpanded ? <DownOutlined style={{ fontSize: 12, marginLeft: 4 }} /> : <UpOutlined style={{ fontSize: 12, marginLeft: 4 }} />}
+          Tìm kiếm & Bộ lọc {isFilterExpanded ? <UpOutlined style={{ fontSize: 12, marginLeft: 4 }} /> : <DownOutlined style={{ fontSize: 12, marginLeft: 4 }} />}
         </span>
         <span className="cdiscovery-filter-toggle-icon">
           {isFilterExpanded ? 'Thu gọn' : 'Mở rộng'}
@@ -116,8 +108,6 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
                   { value: 'match', label: 'Độ liên quan' },
                   { value: 'followers', label: 'Lượt theo dõi' },
                   { value: 'engagement', label: 'Tỷ lệ tương tác' },
-                  { value: 'priceAsc', label: 'Giá: Thấp đến cao' },
-                  { value: 'priceDesc', label: 'Giá: Cao đến thấp' },
                 ]}
               />
             </div>
@@ -145,127 +135,75 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
           {/* Dòng 2: Thanh bộ lọc tinh gọn, sang trọng (Pills Filter Capsules) */}
           <div className="cdiscovery-filter-pills-row">
             {/* 1. Nền tảng */}
-            <Select
+            {campaignPlatforms?.length !== 1 && <div className="cdiscovery-filter-field"><span className="cdiscovery-filter-field-label">Nền tảng</span><Select
               value={selectedPlatform}
               onChange={onPlatformChange}
               className={`cdiscovery-pill-select ${selectedPlatform !== 'all' ? 'has-value' : ''}`}
-              popupMatchSelectWidth={false}
+              popupMatchSelectWidth
               suffixIcon={<DownOutlined style={{ fontSize: 10, color: selectedPlatform !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
               options={[
-                { value: 'all', label: 'Nền tảng: Tất cả' },
+                { value: 'all', label: 'Tất cả' },
                 { value: 'tiktok', label: 'TikTok' },
                 { value: 'instagram', label: 'Instagram' },
                 { value: 'youtube', label: 'YouTube' },
                 { value: 'facebook', label: 'Facebook' },
                 { value: 'x', label: 'X (Twitter)' },
-              ]}
-            />
+              ].filter(option => option.value === 'all' || !campaignPlatforms?.length || campaignPlatforms.includes(option.value))}
+            /></div>}
 
             {/* 2. Ngành hàng */}
-            <Select
+            <div className="cdiscovery-filter-field"><span className="cdiscovery-filter-field-label">Ngành hàng</span><Select
               value={selectedCategory}
               onChange={onCategoryChange}
               className={`cdiscovery-pill-select ${selectedCategory !== 'all' ? 'has-value' : ''}`}
               popupMatchSelectWidth={false}
               suffixIcon={<DownOutlined style={{ fontSize: 10, color: selectedCategory !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
               options={[
-                { value: 'all', label: 'Ngành hàng: Tất cả' },
+                { value: 'all', label: 'Tất cả' },
                 ...categoriesList.map((c) => ({ value: c, label: c })),
               ]}
-            />
+            /></div>
 
             {/* 3. Lượt theo dõi / Quy mô */}
-            <Select
+            <div className="cdiscovery-filter-field"><span className="cdiscovery-filter-field-label">Người theo dõi</span><Select
               value={followerTier}
               onChange={onFollowerTierChange}
               className={`cdiscovery-pill-select ${followerTier !== 'all' ? 'has-value' : ''}`}
               popupMatchSelectWidth={false}
               suffixIcon={<DownOutlined style={{ fontSize: 10, color: followerTier !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
               options={[
-                { value: 'all', label: 'Quy mô: Tất cả' },
-                { value: 'nano', label: 'Nano (< 50K)' },
-                { value: 'micro', label: 'Micro (50K – 200K)' },
-                { value: 'macro', label: 'Macro (200K – 500K)' },
-                { value: 'mega', label: 'Mega (500K+)' },
+                { value: 'all', label: 'Tất cả' },
+                { value: 'nano', label: 'Dưới 50 nghìn' },
+                { value: 'micro', label: '50 – dưới 200 nghìn' },
+                { value: 'macro', label: '200 – dưới 500 nghìn' },
+                { value: 'mega', label: 'Từ 500 nghìn' },
               ]}
-            />
+            /></div>
 
             {/* 4. Tỷ lệ tương tác */}
-            <Select
+            <div className="cdiscovery-filter-field"><span className="cdiscovery-filter-field-label">Tỷ lệ tương tác</span><Select
               value={engagementTier}
               onChange={onEngagementTierChange}
               className={`cdiscovery-pill-select ${engagementTier !== 'all' ? 'has-value' : ''}`}
               popupMatchSelectWidth={false}
               suffixIcon={<DownOutlined style={{ fontSize: 10, color: engagementTier !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
               options={[
-                { value: 'all', label: 'Tương tác: Tất cả' },
-                { value: 'high', label: 'Tương tác cao (≥ 5%)' },
+                { value: 'all', label: 'Tất cả' },
+                { value: 'high', label: 'Cao (≥ 5%)' },
                 { value: 'vhigh', label: 'Rất cao (≥ 8%)' },
               ]}
-            />
-
-            {/* 5. Độ tuổi khán giả */}
-            <Select
-              value={audienceAge}
-              disabled
-              title="API chưa cung cấp dữ liệu độ tuổi khán giả để lọc."
-              onChange={onAudienceAgeChange}
-              className={`cdiscovery-pill-select ${audienceAge !== 'all' ? 'has-value' : ''}`}
-              popupMatchSelectWidth={false}
-              suffixIcon={<DownOutlined style={{ fontSize: 10, color: audienceAge !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
-              options={[
-                { value: 'all', label: 'Độ tuổi: Tất cả' },
-                { value: '18-24', label: '18 – 24 tuổi' },
-                { value: '25-34', label: '25 – 34 tuổi' },
-                { value: '35+', label: '35+ tuổi' },
-              ]}
-            />
-
-            {/* 6. Giới tính khán giả */}
-            <Select
-              value={audienceGender}
-              disabled
-              title="API chưa cung cấp tỷ lệ giới tính khán giả để lọc."
-              onChange={onAudienceGenderChange}
-              className={`cdiscovery-pill-select ${audienceGender !== 'all' ? 'has-value' : ''}`}
-              popupMatchSelectWidth={false}
-              suffixIcon={<DownOutlined style={{ fontSize: 10, color: audienceGender !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
-              options={[
-                { value: 'all', label: 'Giới tính: Tất cả' },
-                { value: 'female', label: 'Nữ giới (> 60%)' },
-                { value: 'male', label: 'Nam giới (> 60%)' },
-                { value: 'balanced', label: 'Cân bằng (50/50)' },
-              ]}
-            />
-
-            {/* 7. Mức ngân sách / Báo giá */}
-            <Select
-              value={priceTier}
-              disabled={!priceFilterAvailable}
-              title={priceFilterAvailable ? undefined : 'Chưa có dữ liệu báo giá để lọc.'}
-              onChange={onPriceTierChange}
-              className={`cdiscovery-pill-select ${priceTier !== 'all' ? 'has-value' : ''}`}
-              popupMatchSelectWidth={false}
-              suffixIcon={<DownOutlined style={{ fontSize: 10, color: priceTier !== 'all' ? '#6D28D9' : '#94A3B8' }} />}
-              options={[
-                { value: 'all', label: 'Báo giá: Tất cả' },
-                { value: 'low', label: 'Dưới $500' },
-                { value: 'mid', label: '$500 – $1,000' },
-                { value: 'high', label: 'Trên $1,000' },
-              ]}
-            />
+            /></div>
 
             {/* Nút đặt lại nhanh nếu có bộ lọc */}
-            {activeFiltersCount > 0 && (
               <Button
                 type="link"
                 size="small"
                 onClick={onResetFilters}
+                disabled={activeFiltersCount === 0}
                 className="cdiscovery-filter-reset-btn"
               >
-                <CloseOutlined style={{ fontSize: 10 }} /> Đặt lại ({activeFiltersCount})
+                <CloseOutlined style={{ fontSize: 10 }} /> Đặt lại{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
               </Button>
-            )}
           </div>
         </>
       )}

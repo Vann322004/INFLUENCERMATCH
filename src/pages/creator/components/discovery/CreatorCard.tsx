@@ -51,6 +51,8 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
         <div className="cdiscovery-card-left-group">
           <input
             type="checkbox"
+            disabled={creator.saved}
+            title={creator.saved ? 'Đã lưu trong chiến dịch này' : 'Chọn kênh'}
             checked={isSelected}
             onChange={(e) => {
               e.stopPropagation();
@@ -230,7 +232,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({
           className={`cdiscovery-btn-shortlist-card ${creator.saved ? 'saved' : ''}`}
           onClick={(e) => onOpenShortlist(creator, e)}
         >
-          {creator.saved ? '✓ Đã lưu danh sách' : '+ Lưu vào danh sách'}
+          {creator.saved ? 'Xem trong danh sách chọn' : '+ Lưu vào danh sách'}
         </Button>
       </div>
     </div>

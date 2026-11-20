@@ -1,40 +1,11 @@
-import React from 'react';
 import type { CampaignResponse } from '../../../../types/api/campaign.types';
-
-interface CampaignGuidelinesTabProps {
-  rawCampaign: CampaignResponse | null;
-}
-
-export const CampaignGuidelinesTab: React.FC<CampaignGuidelinesTabProps> = ({ rawCampaign }) => {
-  return (
-    <div className="cdetail-card-modern">
-      <div className="cdetail-card-header">
-        <span className="cdetail-card-title">
-          Hồ sơ yêu cầu & Hướng dẫn sáng tạo (Brief)
-        </span>
-      </div>
-      <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 10, border: '1px solid #E2E8F0' }}>
-          <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 13 }}>Quy định gắn hashtag bắt buộc</div>
-          <div style={{ fontSize: 13, color: '#6D28D9', fontWeight: 600, marginTop: 4 }}>
-            {rawCampaign?.name
-              ? `#${rawCampaign.name.replace(/[^a-zA-Z0-9\u00C0-\u024F\u1EA0-\u1EF9]/g, '')} #InfluencerMatch #Campaign`
-              : '#InfluencerMatch #BrandCampaign #Campaign2026'}
-          </div>
-        </div>
-        <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 10, border: '1px solid #E2E8F0' }}>
-          <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 13 }}>Thông điệp then chốt (Key Messages)</div>
-          <div style={{ fontSize: 13, color: '#475569', marginTop: 4, lineHeight: 1.6 }}>
-            {rawCampaign?.description || 'Truyền tải thông điệp thương hiệu tự nhiên, chân thực và hướng đến đúng nhóm khách hàng mục tiêu.'}
-          </div>
-        </div>
-        <div style={{ background: '#F8FAFC', padding: '14px 18px', borderRadius: 10, border: '1px solid #E2E8F0' }}>
-          <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 13 }}>Yêu cầu kiểm duyệt nội dung</div>
-          <div style={{ fontSize: 13, color: '#475569', marginTop: 4, lineHeight: 1.6 }}>
-            Nhà sáng tạo cần gửi kịch bản trước khi quay 3 ngày và gửi video bản xem trước ít nhất 48 giờ trước thời điểm đăng tải để nhãn hàng duyệt.
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+export const CampaignGuidelinesTab = ({ rawCampaign }: { rawCampaign: CampaignResponse | null }) => (
+  <div className="cdetail-card-modern">
+    <div className="cdetail-card-header"><span className="cdetail-card-title">Yêu cầu hợp tác</span></div>
+    <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{rawCampaign?.brief || 'Chưa có yêu cầu hợp tác được lưu.'}</p>
+    <div className="cdetail-card-header"><span className="cdetail-card-title">Ấn phẩm bàn giao</span></div>
+    {rawCampaign?.deliverables?.length ? rawCampaign.deliverables.map((d, index) => (
+      <div className="cdetail-ops-row" key={index}><span>{d.platform} · {d.contentType}</span><span>Số lượng: {d.quantity}</span></div>
+    )) : <p>Chưa thiết lập ấn phẩm bàn giao.</p>}
+  </div>
+);

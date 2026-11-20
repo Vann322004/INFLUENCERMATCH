@@ -2,20 +2,8 @@ import React from 'react';
 
 export const AI_SAMPLE_PROMPTS = [
   {
-    label: 'Kem chống nắng nâng tone HS-SV (<200k)',
-    prompt: 'Dòng kem chống nắng nâng tone kiềm dầu cho học sinh sinh viên, giá dưới 200k',
-  },
-  {
-    label: 'Serum B5 phục hồi da dầu mụn',
-    prompt: 'Quảng bá serum B5 phục hồi da dầu mụn dành cho giới trẻ 18-24 tuổi trên TikTok và Instagram, ngân sách 20 triệu',
-  },
-  {
-    label: 'Củ sạc nhanh GaN 65W công nghệ',
-    prompt: 'Tìm kiếm creator review củ sạc nhanh công nghệ GaN 65W cho người trẻ và game thủ 18-35 tuổi, ngân sách 30 triệu trên TikTok và Facebook',
-  },
-  {
-    label: 'Thời trang dạo phố OOTD hè',
-    prompt: 'Quảng bá BST thời trang dạo phố năng động hè cho nữ giới 18-24 tuổi tại Hà Nội và TP.HCM, ngân sách 20 triệu trên Instagram và TikTok',
+    label: 'Cấu trúc gợi ý',
+    prompt: 'Quảng bá [sản phẩm] cho [khách hàng], nhằm [mục tiêu], trên [nền tảng], với tổng ngân sách [số tiền], trong [thời gian].',
   },
 ];
 

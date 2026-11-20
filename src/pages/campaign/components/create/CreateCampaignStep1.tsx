@@ -1,5 +1,6 @@
-import React from 'react';
-import { Row, Col, Input, Select, Tag, Tooltip, Checkbox } from 'antd';
+import React, { useRef, useState } from 'react';
+import { Row, Col, Input, Select, Tag, Tooltip, Checkbox, Button } from 'antd';
+import type { RefSelectProps } from 'antd';
 import { LockOutlined, AimOutlined, ShoppingCartOutlined, MessageOutlined } from '@ant-design/icons';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -91,6 +92,20 @@ export const CreateCampaignStep1: React.FC<CreateCampaignStep1Props> = ({
   toggleObjective,
   isAiAutofilled,
 }) => {
+  const [openPicker, setOpenPicker] = useState<'groups' | 'topics' | null>(null);
+  const groupsRef = useRef<RefSelectProps>(null);
+  const topicsRef = useRef<RefSelectProps>(null);
+  const finishSelection = (picker: 'groups' | 'topics') => {
+    setOpenPicker(null);
+    (picker === 'groups' ? groupsRef : topicsRef).current?.focus();
+  };
+  const pickerFooter = (menu: React.ReactNode, picker: 'groups' | 'topics', count: number) => <>
+    {menu}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 8px', borderTop: '1px solid #eee' }}>
+      <span style={{ fontSize: 12 }}>Đã chọn {count} mục</span>
+      <Button type="primary" size="small" onClick={() => finishSelection(picker)}>Xong</Button>
+    </div>
+  </>;
   const selectedCategories = [...new Set(interests.split(',').map(value => value.trim()).filter(Boolean))];
   const selectedGroups = [...new Set(selectedCategories.map(groupForNiche))];
   const selectedNiches = selectedCategories.filter(value => !CAMPAIGN_CATEGORIES.includes(categoryLabel(value)));
@@ -165,13 +180,19 @@ export const CreateCampaignStep1: React.FC<CreateCampaignStep1Props> = ({
           )}
         </Col>
 
-        <Col xs={24}>
+        <Col xs={24} md={12}>
           <div className="ccreate-field-label">
-            <span>Ngành hàng & Sở thích liên quan (tùy chọn)</span>
+            <span>Ngành hàng <span className="req">*</span></span>
           </div>
           <Select
-            aria-label="Ngành hàng và sở thích liên quan"
+            aria-label="Ngành hàng"
+            ref={groupsRef}
+            open={openPicker === 'groups'}
+            onOpenChange={open => setOpenPicker(current => open ? 'groups' : current === 'groups' ? null : current)}
+            popupRender={menu => pickerFooter(menu, 'groups', selectedGroups.length)}
             mode="multiple"
+            maxTagCount="responsive"
+            listHeight={224}
             value={selectedGroups}
             onChange={(groups: string[]) => saveSelection(groups, selectedNiches)}
             options={CAMPAIGN_CATEGORIES.map(value => ({ value, label: value }))}
@@ -182,15 +203,20 @@ export const CreateCampaignStep1: React.FC<CreateCampaignStep1Props> = ({
             notFoundContent="Không có ngành hàng phù hợp"
             style={{ width: '100%', minHeight: 40, fontSize: 13 }}
           />
-          <div style={{ fontSize: 12, color: '#64748B', marginTop: 6 }}>
-            Chọn nhóm ngành chung. Sản phẩm và brief giúp xác định chủ đề cụ thể để tìm creator phù hợp.
-          </div>
-          <div className="ccreate-field-label" style={{ marginTop: 16 }}>
-            <span>Niche cụ thể <span style={{ color: '#94A3B8', fontWeight: 400 }}>(không bắt buộc)</span></span>
+        </Col>
+        <Col xs={24} md={12}>
+          <div className="ccreate-field-label">
+            <span>Chủ đề cụ thể <span style={{ fontWeight: 400 }}>(tùy chọn)</span></span>
           </div>
           <Select
-            aria-label="Niche cụ thể"
+            aria-label="Chủ đề cụ thể"
+            ref={topicsRef}
+            open={openPicker === 'topics'}
+            onOpenChange={open => setOpenPicker(current => open ? 'topics' : current === 'topics' ? null : current)}
+            popupRender={menu => pickerFooter(menu, 'topics', selectedNiches.length)}
             mode="multiple"
+            maxTagCount="responsive"
+            listHeight={224}
             value={selectedNiches.map(value => ({ value, label: categoryLabel(value) }))}
             labelInValue
             onChange={(items: { value: string }[]) => saveSelection(selectedGroups, items.map(item => item.value))}
@@ -202,11 +228,12 @@ export const CreateCampaignStep1: React.FC<CreateCampaignStep1Props> = ({
             showSearch
             optionFilterProp="label"
             allowClear
-            placeholder="Chọn chủ đề cụ thể trong nhóm ngành"
+            placeholder={selectedGroups.length ? 'Chọn chủ đề trong ngành hàng' : 'Chọn ngành hàng trước'}
             style={{ width: '100%', minHeight: 40 }}
           />
         </Col>
       </Row>
+
 
       {/* Phần 2: Mục tiêu chiến dịch */}
       <div className="ccreate-sub-section">

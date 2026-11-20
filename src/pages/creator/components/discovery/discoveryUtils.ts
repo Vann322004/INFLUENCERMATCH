@@ -2,6 +2,18 @@ import type { Creator, BrandCampaignItem, DiscoveryCache } from './types';
 import { DOMAIN_CLUSTERS, STOP_WORDS } from './types';
 import type { CampaignResponse } from '../../../../types/api/campaign.types';
 
+// Stock photos and generated placeholders are not channel profile photos.
+export const creatorProfileImage = (value: unknown): string => {
+  if (typeof value !== 'string' || !value.trim()) return '';
+  try {
+    const url = new URL(value.trim(), window.location.origin);
+    if (!['http:', 'https:'].includes(url.protocol)) return '';
+    const placeholders = ['ui-avatars.com', 'unsplash.com', 'pravatar.cc', 'randomuser.me'];
+    if (placeholders.some(host => url.hostname === host || url.hostname.endsWith('.' + host))) return '';
+    return url.href;
+  } catch { return ''; }
+};
+
 // Hàm chuyển đổi Creator từ Backend sang format hiển thị trên giao diện
 export const mapApiCreatorToUi = (item: any): Creator => {
   const followersNum = item.followers ?? item.follower_count ?? item.followerCount ?? item.followersCount ?? 0;
@@ -37,9 +49,8 @@ export const mapApiCreatorToUi = (item: any): Creator => {
 
   const cleanUsername = (item.userName || item.user_name || item.username || '').replace(/^@+/, '');
   const cleanName = item.displayName || item.display_name || item.name || cleanUsername || 'Creator';
-  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=4F46E5&color=fff&size=150&bold=true`;
   const avatarRaw = item.avatarUrl || item.avatar_url || item.avatar;
-  const avatarUrl = avatarRaw && avatarRaw.trim() !== '' ? avatarRaw : fallbackAvatar;
+  const avatarUrl = creatorProfileImage(avatarRaw);
   const isVerified = Boolean(item.verifiedByInfluencerMatch ?? item.verified ?? item.is_verified ?? item.isVerified);
   const isSimilarFallback = Boolean(item.isSimilarFallback ?? item.isExpandedMatch ?? item.is_fallback ?? item.expandedMatch);
   const priceSource = item.priceSource || item.feeSource || item.fee_source || (item.rateCard ? 'RATE_CARD' : 'ESTIMATED');
@@ -300,6 +311,7 @@ export const mapApiCampaignToItem = (c: CampaignResponse | any): BrandCampaignIt
 
   return {
     id: c.id,
+    channels: Array.isArray(c.platforms) ? c.platforms.map((platform: string) => platform.toLowerCase()) : [],
     targetCreatorCount: Number(c.targetCreatorCount || c.creatorQuantity) || 1,
     name: c.name,
     tag,

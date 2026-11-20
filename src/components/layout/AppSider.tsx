@@ -359,7 +359,7 @@ export default function AppSider({ collapsed: initialCollapsed = false, inDrawer
                       <SidebarToggleIcon size={20} />
                     </span>
                   </div>
-                  <span className="sidebar-brand-name">InfluencerMatch</span>
+                  <span className="sidebar-brand-name">Influencer<span className="sidebar-brand-match">Match</span></span>
                 </div>
               </ChatGptTooltip>
             </div>

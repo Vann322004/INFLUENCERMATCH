@@ -9,7 +9,7 @@ export interface CampaignCreatorRow {
   name: string;
   username: string;
   avatar: string;
-  platform: 'instagram' | 'tiktok';
+  platform: string;
   followers: string;
   fee: string;
   stageText: string;

@@ -2,14 +2,15 @@ import React from 'react';
 import { Tag, Avatar } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { InstagramOutlined } from '@ant-design/icons';
-import type { CampaignCreatorRow, CampaignDetailCacheEntry } from './campaignDetailTypes';
+import type { CampaignCreatorRow } from './campaignDetailTypes';
 
 // ── Bộ chuyển dịch & chuẩn hóa Tiếng Việt ──
 export const translateObjective = (obj?: string): string => {
-  if (!obj) return 'NHẬN DIỆN THƯƠNG HIỆU';
+  if (!obj) return 'Chưa thiết lập';
   const upper = obj.toUpperCase();
   if (upper.includes('AWARE')) return 'NHẬN DIỆN THƯƠNG HIỆU';
-  if (upper.includes('CONVERT') || upper.includes('SALE')) return 'CHUYỂN ĐỔI BÁN HÀNG';
+  if (upper === 'CONVERSION' || upper.includes('CONVERT') || upper.includes('SALE')) return 'CHUYỂN ĐỔI BÁN HÀNG';
+  if (upper === 'TRAFFIC') return 'TĂNG LƯỢT TRUY CẬP';
   if (upper.includes('ENGAGE')) return 'TĂNG TƯƠNG TÁC';
   if (upper.includes('CONSIDER')) return 'CÂN NHẮC MUA HÀNG';
   return obj;
@@ -41,13 +42,6 @@ export const getNicheClass = (niche?: string): string => {
   return '';
 };
 
-export const VERIFIED_CREATOR_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=120&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
-];
 
 export const getStageInfo = (stage?: string) => {
   switch (stage) {
@@ -78,7 +72,7 @@ export const getStageInfo = (stage?: string) => {
 };
 
 // Global In-Memory Cache (loại bỏ hoàn toàn reload flash và giật lag khi chuyển trang qua lại)
-export const campaignDetailCache = new Map<string, CampaignDetailCacheEntry>();
+
 
 export const getCreatorTableColumns = (): ColumnsType<CampaignCreatorRow> => [
   {
@@ -107,9 +101,9 @@ export const getCreatorTableColumns = (): ColumnsType<CampaignCreatorRow> => [
             <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
             </svg>
-          ) : (
+          ) : platform === 'instagram' ? (
             <InstagramOutlined style={{ fontSize: 12, color: '#E1306C' }} />
-          )}
+          ) : null}
           {platform.toUpperCase()}
         </span>
       );

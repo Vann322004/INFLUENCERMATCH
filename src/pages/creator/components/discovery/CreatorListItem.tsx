@@ -33,6 +33,8 @@ export const CreatorListItem: React.FC<CreatorListItemProps> = ({
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <input
               type="checkbox"
+              disabled={creator.saved}
+              title={creator.saved ? 'Đã lưu trong chiến dịch này' : 'Chọn kênh'}
               checked={isSelected}
               onChange={(e) => {
                 e.stopPropagation();
@@ -127,7 +129,7 @@ export const CreatorListItem: React.FC<CreatorListItemProps> = ({
               className="cdiscovery-btn-shortlist-card"
               onClick={(e) => onOpenShortlist(creator, e)}
             >
-              {creator.saved ? '✓ Đã lưu danh sách' : '+ Lưu vào danh sách'}
+              {creator.saved ? 'Xem trong danh sách chọn' : '+ Lưu vào danh sách'}
             </Button>
           </Space>
         </Col>

@@ -5,6 +5,7 @@ import type { Creator, BrandCampaignItem } from '../components/discovery/types';
 import { mapApiCreatorToUi } from '../components/discovery/discoveryUtils';
 import { followerRange } from '../components/discovery/discoveryFilters';
 import { creatorService } from '../../../services/api/creatorService';
+import { shortlistService } from '../../../services/api/shortlistService';
 
 interface UseDiscoveryCreatorsOptions {
   loadingCampaigns: boolean;
@@ -84,7 +85,23 @@ export function useDiscoveryCreators({
           const raw: any = response;
           const rows = Array.isArray(raw) ? raw : raw?.content ?? raw?.items ?? raw?.candidates;
           if (!Array.isArray(rows)) throw new Error('Dữ liệu gợi ý Creator không đúng định dạng.');
-          result = rows.slice(0, limit).map((item) => {
+          const allRows = [...rows];
+          const totalPages = Number(raw.totalPages ?? (raw.totalElements != null ? Math.ceil(raw.totalElements / (raw.size || limit)) : 1));
+          if (!Number.isSafeInteger(totalPages) || totalPages < 0) throw new Error('Invalid discovery pagination.');
+          for (let page = 1; page < totalPages; page++) {
+            if (!active || version !== requestVersion.current) return;
+            const next = await creatorService.discoverCreators(matchedCampaign.id, {
+              keyword: submittedSearch || undefined,
+              niche: selectedCategory !== 'all' ? selectedCategory : undefined,
+              minFollowers: requestedRange?.minFollowers,
+              maxFollowers: requestedRange?.maxFollowers,
+              page, size: limit,
+            });
+            const nextRows = next.content ?? next.items ?? next.candidates;
+            if (!Array.isArray(nextRows)) throw new Error('Invalid discovery page response.');
+            allRows.push(...nextRows);
+          }
+          result = allRows.map((item) => {
             const base = mapApiCreatorToUi(item);
             const rawScore = item.matchScore ?? item.finalScore ?? item.score ?? item.hybridScore;
             const score = typeof rawScore === 'number' && Number.isFinite(rawScore)
@@ -102,7 +119,13 @@ export function useDiscoveryCreators({
         }
 
         if (!active || version !== requestVersion.current) return;
-        setCreators(result);
+        if (matchedCampaign) {
+          const shortlist = await shortlistService.all(matchedCampaign.id);
+          if (!active || version !== requestVersion.current) return;
+          const saved = new Set(shortlist.filter(item => item.status !== 'REMOVED').map(item => item.creatorId));
+          result = result.map(creator => ({ ...creator, saved: saved.has(creator.id) }));
+        }
+        setCreators([...new Map(result.map(creator => [creator.id, creator])).values()]);
         if (onResetPagination) onResetPagination();
       } catch (error: any) {
         if (!active || version !== requestVersion.current) return;

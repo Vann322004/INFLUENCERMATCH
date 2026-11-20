@@ -60,7 +60,7 @@ export const mapApiCampaignToUi = (c: CampaignResponse): Campaign => {
       c.objective || 'Mục tiêu chung',
       ...(c.platforms || []).filter((p) => p.toUpperCase() !== 'YOUTUBE').map((p) => p.toLowerCase()),
     ],
-    thumbnail: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=100&auto=format&fit=crop&q=80',
+    thumbnail: c.imageUrl || '',
     status: statusMap[c.status] || 'draft',
     statusText: statusTextMap[c.status] || c.status,
     creatorsCount: 0,
@@ -367,9 +367,9 @@ export default function CampaignTable() {
           <Avatar
             shape="square"
             size={42}
-            src={record.thumbnail}
+            src={record.thumbnail || undefined}
             style={{ borderRadius: 8, flexShrink: 0 }}
-          />
+          >{record.title?.slice(0, 1)}</Avatar>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span
               style={{

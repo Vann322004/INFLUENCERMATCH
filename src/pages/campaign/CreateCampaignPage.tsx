@@ -1,7 +1,7 @@
 import React, { useEffect, useSyncExternalStore } from 'react';
 import { campaignEditor } from '../../services/campaignContext';
 import { getAuthSessionId, subscribeAuthSession } from '../../services/authSession';
-import { Row, Col, Alert, Tag, Input, InputNumber, Button, ConfigProvider } from 'antd';
+import { Row, Col, Alert, Tag, Input, InputNumber, Button, ConfigProvider, Select } from 'antd';
 import CampaignDeliverablesEditor from './components/create/CampaignDeliverablesEditor';
 import '../../components/layout/CampaignWorkflow.css';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
@@ -81,6 +81,7 @@ function CampaignEditor({ resolvedCampaignId }: { resolvedCampaignId: string | n
             {/* Edit Mode Alert Banner */}
             {isEditMode && (
               <Alert
+                className="ccreate-edit-notice"
                 title={
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                     <div style={{ fontSize: 13, color: '#1E293B', lineHeight: 1.5 }}>
@@ -112,17 +113,21 @@ function CampaignEditor({ resolvedCampaignId }: { resolvedCampaignId: string | n
             )}
 
             {/* AI Assistant Hero Card */}
-            <CreateCampaignAiHero
+            {form.currentStep === 1 && (!isEditMode || form.campaignStatus === 'DRAFT') && <CreateCampaignAiHero
               aiPrompt={form.aiPrompt}
               setAiPrompt={form.setAiPrompt}
               isAiLoading={form.isAiLoading}
               aiExplanation={form.aiExplanation}
               setAiExplanation={form.setAiExplanation}
               onAiSuggest={form.handleAiSuggest}
-            />
+            />}
+            {form.currentStep > 1 && form.isAiAutofilled && (
+              <p className="ad-note" role="status">Có nội dung AI đề xuất. Vui lòng kiểm tra và chỉnh sửa trước khi lưu.</p>
+            )}
 
             {/* Step 1: Thông tin & Mục tiêu */}
             {form.currentStep === 1 && (
+              <>
               <CreateCampaignStep1
                 campaignName={form.campaignName}
                 setCampaignName={form.setCampaignName}
@@ -135,6 +140,13 @@ function CampaignEditor({ resolvedCampaignId }: { resolvedCampaignId: string | n
                 toggleObjective={form.toggleObjective}
                 isAiAutofilled={form.isAiAutofilled}
               />
+              <section className="workflow-panel" style={{ marginTop: 16 }}>
+                <label htmlFor="campaign-image-url">Ảnh chiến dịch (không bắt buộc)</label>
+                <Input id="campaign-image-url" type="url" maxLength={2048} value={form.imageUrl}
+                  onChange={event => form.setImageUrl(event.target.value)} placeholder="https://…"
+                  style={{ marginTop: 8 }} />
+              </section>
+              </>
             )}
 
             {/* Step 2: Yêu cầu Creator & Chân dung khán giả */}
@@ -161,6 +173,12 @@ function CampaignEditor({ resolvedCampaignId }: { resolvedCampaignId: string | n
                 setCreatorBrief={form.setCreatorBrief}
                 isAiAutofilled={form.isAiAutofilled}
               />
+              <section className="ccreate-card ccreate-audience-description">
+                <label htmlFor="campaign-audience-description">Mô tả khán giả mong muốn (tùy chọn)</label>
+                <Input.TextArea id="campaign-audience-description" rows={3} value={form.audienceDescription}
+                  onChange={event => form.setAudienceDescription(event.target.value)}
+                  placeholder="Mỗi nhóm một dòng, ví dụ: Sinh viên quan tâm mỹ phẩm bình dân" />
+              </section>
               <CampaignDeliverablesEditor value={form.deliverables} onChange={form.setDeliverables} platforms={form.selectedPlatforms} />
               </>
             )}
@@ -171,8 +189,6 @@ function CampaignEditor({ resolvedCampaignId }: { resolvedCampaignId: string | n
               <CreateCampaignStep3
                 budgetTotal={form.budgetTotal}
                 setBudgetTotal={form.setBudgetTotal}
-                campaignDuration={form.campaignDuration}
-                setCampaignDuration={form.setCampaignDuration}
                 campaignName={form.campaignName}
                 product={form.product}
                 selectedPlatforms={form.selectedPlatforms}
@@ -182,13 +198,30 @@ function CampaignEditor({ resolvedCampaignId }: { resolvedCampaignId: string | n
                 selectedGender={form.selectedGender}
                 locationState={form.formLocation}
                 isAiAutofilled={form.isAiAutofilled}
-              />
-              <div className="ccreate-card workflow-fields">
-                <label>Ngày bắt đầu<Input type="date" value={form.savedStartDate || new Date().toISOString().slice(0, 10)} onChange={e => form.setSavedStartDate(e.target.value)} /></label>
+                startDate={form.savedStartDate || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`}
+                endDate={form.savedEndDate}
+                brief={form.creatorBrief}
+                deliverables={form.deliverables}
+              >
+              <div className="workflow-fields" style={{ marginTop: 20 }}>
+                <label>Ngày bắt đầu<Input type="date" value={form.savedStartDate || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`} onChange={e => form.setSavedStartDate(e.target.value)} /></label>
                 <label>Ngày kết thúc<Input type="date" value={form.savedEndDate} onChange={e => form.setSavedEndDate(e.target.value)} /></label>
-                <label>Phí tối thiểu mỗi nhà sáng tạo<InputNumber min={0} value={form.creatorFeeMin} onChange={value => form.setCreatorFeeMin(value ?? undefined)} /></label>
-                <label>Phí tối đa mỗi nhà sáng tạo<InputNumber min={0} value={form.creatorFeeMax} onChange={value => form.setCreatorFeeMax(value ?? undefined)} /></label>
+                <label>Chọn nhanh thời lượng (tùy chọn)<Select value={form.campaignDuration || undefined} placeholder="Chọn thời lượng" onChange={form.setCampaignDuration} options={[{ value: '2_weeks', label: '2 tuần' }, { value: '4_weeks', label: '4 tuần' }, { value: '8_weeks', label: '8 tuần' }]} /></label>
               </div>
+              <div className="workflow-fields" style={{ marginTop: 20 }}>
+                <label>Phí dự kiến / nhà sáng tạo — từ<InputNumber<number> min={0} precision={0} step={500000} controls={false}
+                  value={form.creatorFeeMin} placeholder="Không bắt buộc" suffix="₫"
+                  formatter={value => value == null ? '' : `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                  parser={value => Number((value ?? '').replace(/\./g, ''))}
+                  onChange={value => form.setCreatorFeeMin(value != null && value >= 0 && Number.isSafeInteger(value) ? value : undefined)} /></label>
+                <label>Đến<InputNumber<number> min={0} precision={0} step={500000} controls={false}
+                  value={form.creatorFeeMax} placeholder="Không bắt buộc" suffix="₫"
+                  formatter={value => value == null ? '' : `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                  parser={value => Number((value ?? '').replace(/\./g, ''))}
+                  onChange={value => form.setCreatorFeeMax(value != null && value >= 0 && Number.isSafeInteger(value) ? value : undefined)} /></label>
+              </div>
+              <p className="ad-note">Khoảng phí cho một nhà sáng tạo, có thể để trống. Phí chính thức được chốt khi thỏa thuận.</p>
+              </CreateCampaignStep3>
               </>
             )}
           </div>

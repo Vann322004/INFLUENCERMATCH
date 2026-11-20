@@ -183,7 +183,7 @@ export default function CreatorSidebar() {
                       <SidebarToggleIcon size={20} />
                     </span>
                   </div>
-                  <span className="sidebar-brand-name">InfluencerMatch</span>
+                  <span className="sidebar-brand-name">Influencer<span className="sidebar-brand-match">Match</span></span>
                 </button>
               </ChatGptTooltip>
             </div>

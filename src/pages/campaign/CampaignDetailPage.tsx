@@ -1,5 +1,5 @@
 import React from 'react';
-import { Spin } from 'antd';
+import { Alert, Button, Spin } from 'antd';
 import './CampaignDetailPage.css';
 import { useCampaignDetail } from './hooks/useCampaignDetail';
 import { useCampaignWorkspace } from '../../hooks/useCampaignWorkspace';
@@ -25,6 +25,7 @@ export default function CampaignDetailPage() {
     activeTab,
     setActiveTab,
     isCancelModalOpen,
+    activationNeedsDeliverables, editDeliverables,
     setIsCancelModalOpen,
     cancelReason,
     setCancelReason,
@@ -38,6 +39,7 @@ export default function CampaignDetailPage() {
     shortlistCount,
     isOverTarget,
     isLoadingDetail,
+    loadError, relatedErrors, reload, collaborationsError,
     handleActivate,
     handleComplete,
     handleConfirmCancel,
@@ -47,19 +49,30 @@ export default function CampaignDetailPage() {
   } = useCampaignDetail();
 
   return (
-    <div className="campaign-detail-container" style={{ maxWidth: 1400, margin: '0 auto', padding: '0 16px 40px' }}>
+    <div className="campaign-detail-container" style={{ maxWidth: 1400, width: '100%', minWidth: 0, margin: '0 auto', padding: '0 0 24px' }}>
       {/* Workspace Workflow Bar for End-to-End navigation */}
-      <div style={{ marginBottom: 16 }}>
-        <CampaignWorkspaceBar workspace={workspace} />
-      </div>
+      {!workspace.id && (
+        <div style={{ marginBottom: 16 }}>
+          <CampaignWorkspaceBar workspace={workspace} />
+        </div>
+      )}
 
-      {isLoadingDetail && !rawCampaign ? (
+      {relatedErrors.length > 0 && <Alert type="warning" title="Không tải được một số dữ liệu ngân sách, danh sách đã chọn hoặc hợp tác." action={<Button onClick={reload}>Thử lại</Button>} />}
+      {loadError ? <Alert type="error" title="Không tải được chiến dịch" description={loadError} action={<Button onClick={reload}>Thử lại</Button>} /> : !resolvedId ? null : isLoadingDetail && !rawCampaign ? (
         <div style={{ padding: '60px 0', textAlign: 'center' }}>
           <Spin size="large" tip="Đang tải dữ liệu chiến dịch..." />
         </div>
       ) : (
         <>
           {/* 1. Header Banner */}
+          {activationNeedsDeliverables && <Alert
+            type="warning"
+            showIcon
+            title="Cần bổ sung ấn phẩm bàn giao trước khi kích hoạt"
+            description="Thêm nền tảng, loại nội dung và số lượng, sau đó lưu chiến dịch."
+            action={rawCampaign?.status === 'DRAFT' ? <Button type="primary" onClick={editDeliverables}>Bổ sung ấn phẩm</Button> : undefined}
+            style={{ marginBottom: 16 }}
+          />}
           <CampaignHeroBanner
             campaignTitle={campaignTitle}
             rawCampaign={rawCampaign}
@@ -91,7 +104,7 @@ export default function CampaignDetailPage() {
           <CampaignDetailNavTabs
             activeTab={activeTab}
             setActiveTab={setActiveTab}
-            creatorsCount={confirmedCreatorCount || participatingCreators.length}
+            creatorsCount={participatingCreators.length}
           />
 
           {/* 4. Tab Content Area */}
@@ -106,13 +119,13 @@ export default function CampaignDetailPage() {
               />
             )}
 
-            {activeTab === 'creators' && (
+            {activeTab === 'creators' && (collaborationsError ? <Alert type="error" title="Không tải được danh sách hợp tác" action={<Button onClick={reload}>Thử lại</Button>} /> : (
               <CampaignCreatorsTab
                 participatingCreators={participatingCreators}
                 creatorColumns={creatorColumns}
                 resolvedId={resolvedId}
               />
-            )}
+            ))}
 
             {activeTab === 'budget' && (
               <CampaignBudgetTab
@@ -122,6 +135,7 @@ export default function CampaignDetailPage() {
                 confirmedCreatorCount={confirmedCreatorCount}
                 participatingCreators={participatingCreators}
                 campaignTitle={campaignTitle}
+                collaborationsError={collaborationsError}
               />
             )}
 

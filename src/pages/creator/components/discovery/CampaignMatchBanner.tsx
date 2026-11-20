@@ -1,45 +1,34 @@
 import React from 'react';
-import { Button, Select } from 'antd';
-import { RobotOutlined, CompassOutlined } from '@ant-design/icons';
+import { Select } from 'antd';
+import { CompassOutlined } from '@ant-design/icons';
 import type { BrandCampaignItem } from './types';
 
 interface CampaignMatchBannerProps {
   matchedCampaign: BrandCampaignItem | null;
-  filteredCount: number;
   campaignsList: BrandCampaignItem[];
   selectedCampaignId: string | null;
   onSelectCampaign: (campaignId: string) => void;
-  onClearMatch?: () => void;
 }
 
 export const CampaignMatchBanner: React.FC<CampaignMatchBannerProps> = ({
   matchedCampaign,
-  filteredCount,
   campaignsList,
   selectedCampaignId,
   onSelectCampaign,
-  onClearMatch,
 }) => {
   if (matchedCampaign) {
     return (
       <section className="cdiscovery-campaign-summary">
-        <div className="cdiscovery-campaign-summary-icon"><RobotOutlined /></div>
         <div className="cdiscovery-campaign-summary-copy">
-          <span className="cdiscovery-campaign-eyebrow">GỢI Ý CREATOR · BƯỚC 2</span>
+          <span className="cdiscovery-campaign-eyebrow">CHIẾN DỊCH ĐANG KHÁM PHÁ</span>
           <h2>{matchedCampaign.name}</h2>
-          <p>Cần tuyển <strong>{matchedCampaign.targetCreatorCount || 1} Creator</strong>
-            <span className="cdiscovery-summary-dot">·</span>
-            Top 50 gợi ý ({filteredCount} hồ sơ hiện có). Chọn Creator phù hợp để đưa vào shortlist.</p>
-        </div>
-        <div className="cdiscovery-campaign-summary-actions">
-          {campaignsList.length > 1 && <Select aria-label="Đổi chiến dịch" style={{ width: 200 }}
-            value={selectedCampaignId || undefined} onChange={onSelectCampaign}
-            options={campaignsList.map(c => ({ value: c.id, label: c.name }))} />}
-          {onClearMatch && <Button onClick={onClearMatch}>Bỏ chọn chiến dịch</Button>}
+          <p>{matchedCampaign.targetCreatorCount != null ? `Mục tiêu: ${matchedCampaign.targetCreatorCount} nhà sáng tạo. ` : ''}Khám phá và lưu kênh vào danh sách của chiến dịch này.</p>
         </div>
       </section>
     );
   }
+
+  if (selectedCampaignId) return null;
 
   return (
     <div
@@ -59,7 +48,7 @@ export const CampaignMatchBanner: React.FC<CampaignMatchBannerProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <CompassOutlined style={{ fontSize: 18, color: '#7C3AED' }} />
         <div style={{ fontSize: 13, color: '#475569' }}>
-          <strong>Gợi ý thông minh theo Chiến dịch:</strong> Vui lòng chọn chiến dịch mục tiêu để AI xếp hạng Top Nhà sáng tạo phù hợp nhất.
+          Chọn chiến dịch để khám phá và lưu các kênh phù hợp với yêu cầu.
         </div>
       </div>
       {campaignsList.length > 0 && (
