@@ -18,7 +18,8 @@ export default function CollaborationDetailPage({ brand }: { brand: boolean }) {
 }
 
 function Detail({ id, brand }: { id: string; brand: boolean }) {
-  const { state } = useLocation();
+  const { state, search } = useLocation();
+  const showResults = new URLSearchParams(search).get('tab') === 'kpi';
   const navigate = useNavigate();
   const permissions = useCollaborationPermissions();
   const page = useRef<HTMLElement>(null);
@@ -75,7 +76,7 @@ function Detail({ id, brand }: { id: string; brand: boolean }) {
         : error ? (error.retryable
           ? <RetryAlert error={error.message} retry={() => setRefresh(value => value + 1)} />
           : <Alert showIcon type="error" title={error.message} />)
-          : detail ? <CollaborationExecutionPanel summary={detail} brand={brand} permissions={permissions}
+          : detail ? <CollaborationExecutionPanel summary={detail} brand={brand} permissions={permissions} showResults={showResults}
             onReviewCompleted={returnAfterReview} />
             : <Spin />}
   </main>;

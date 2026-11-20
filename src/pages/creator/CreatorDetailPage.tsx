@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Alert, Button, Card, Empty, Spin, Tabs, Tag } from 'antd';
-import { ArrowLeftOutlined, ExportOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ExportOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { creatorService } from '../../services/api/creatorService';
 import { shortlistService } from '../../services/api/shortlistService';
+import { authService } from '../../services/api/authService';
 import { activeCampaignId } from '../../services/campaignContext';
 import { getStoredUser } from '../../services/authSession';
 import type { CreatorDetail } from '../../types/api/creator.types';
@@ -34,6 +35,10 @@ export default function CreatorDetailPage() {
   const [shortlistError, setShortlistError] = useState(false);
   const [shortlistOpen, setShortlistOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+
+  const signedInUser = authService.getCurrentUser();
+  const canClaim = signedInUser?.role === 'CREATOR' && signedInUser.status === 'ACTIVE'
+    && signedInUser.permissions?.includes('CLAIM_CREATOR_PROFILE');
 
   useEffect(() => {
     if (!creatorId) return;
@@ -98,6 +103,11 @@ export default function CreatorDetailPage() {
         </div>
         <div className="creator-detail-live-actions">
           {profileLink && <Button href={profileLink} target="_blank" rel="noopener noreferrer" icon={<ExportOutlined />}>Mở kênh</Button>}
+          {canClaim && (
+            <Button icon={<SafetyCertificateOutlined style={{ color: '#1D4ED8' }} />} onClick={() => navigate('/creator/social-accounts?claim=new')}>
+              Gửi bằng chứng thủ công
+            </Button>
+          )}
           <Button type="primary" disabled={Boolean(campaignId) && saved === null} onClick={() => saved && campaignId
             ? navigate('/creators/shortlist', { state: { campaignId } }) : setShortlistOpen(true)}>
             {saved ? 'Xem trong danh sách chọn' : 'Lưu vào danh sách'}</Button>

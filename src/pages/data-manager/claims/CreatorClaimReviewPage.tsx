@@ -282,7 +282,7 @@ function RevokeModal({ claim, open, onClose, onDone }: { claim: ClaimResponse | 
   return (
     <Modal open={open} onCancel={onClose} footer={null} width={480}
       title={<div style={{ display: "flex", alignItems: "center", gap: 8 }}><StopOutlined style={{ color: "#EF4444", fontSize: 18 }} /><span style={{ fontWeight: 700 }}>Thu hồi quyền sở hữu</span></div>}>
-      <Alert type="error" showIcon message="Thu hồi sẽ xóa quyền sở hữu và ẩn bảng giá dịch vụ của nhà sáng tạo này." style={{ margin: "12px 0 16px" }} />
+      <Alert type="warning" showIcon message="Bằng chứng thủ công của đơn này sẽ bị thu hồi. Quyền sở hữu được giữ nếu kênh còn bằng chứng xác minh độc lập hợp lệ." style={{ margin: "12px 0 16px" }} />
       <Form form={form} layout="vertical">
         <Form.Item name="reason" label="Lý do thu hồi *" rules={[{ required: true, message: "Vui lòng nhập lý do thu hồi" }]}>
           <TextArea rows={4} placeholder="Phát hiện gian lận / Mất quyền sở hữu kênh / ..." style={{ resize: "none" }} />

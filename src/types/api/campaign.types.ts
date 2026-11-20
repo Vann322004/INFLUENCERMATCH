@@ -93,6 +93,10 @@ export interface CampaignResponse extends CampaignPlanningFields {
 }
 
 export type RelationshipStage =
+  | 'NEGOTIATING'
+  | 'CONFIRMED'
+  | 'DECLINED'
+  | 'CANCELLED'
   | 'SHORTLISTED'
   | 'CONTACTED'
   | 'INTERESTED'
@@ -102,6 +106,8 @@ export type RelationshipStage =
 
 export interface RelationshipDto {
   id: string;
+  dealId?: string | null;
+  collaborationId?: string | null;
   campaignId: string;
   creatorId: string;
   creatorName: string;
