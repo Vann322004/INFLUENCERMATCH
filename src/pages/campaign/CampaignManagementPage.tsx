@@ -22,11 +22,11 @@ import {
   RocketOutlined,
   BarChartOutlined,
   PlusOutlined,
-  HomeOutlined,
 } from '@ant-design/icons';
 import { campaignService } from '../../services/api/campaignService';
 import type { CampaignResponse, RelationshipDto, RelationshipStage } from '../../types/api/campaign.types';
 import AiRecommendationTab from '../../components/campaign/AiRecommendationTab';
+import { getErrorMessage } from '../../services/apiClient';
 import './CampaignManagementPage.css';
 import { getAuthSessionId, subscribeAuthSession } from '../../services/authSession';
 
@@ -41,7 +41,10 @@ export interface PipelineCreator {
   fee: string;
   matchScore: number;
   tags?: string;
-  stage: 'found' | 'review' | 'contacted' | 'negotiating' | 'confirmed';
+  stage: 'found' | 'review' | 'contacted' | 'negotiating' | 'confirmed' | 'completed' | 'closed';
+  relationshipStage?: RelationshipStage;
+  dealId?: string | null;
+  collaborationId?: string | null;
   note?: string;
 }
 
@@ -50,8 +53,12 @@ const stageBackendToUi: Record<RelationshipStage, PipelineCreator['stage']> = {
   CONTACTED: 'contacted',
   INTERESTED: 'review',
   COLLABORATING: 'negotiating',
-  COMPLETED: 'confirmed',
-  NOT_INTERESTED: 'found',
+  NEGOTIATING: 'negotiating',
+  CONFIRMED: 'confirmed',
+  COMPLETED: 'completed',
+  NOT_INTERESTED: 'closed',
+  DECLINED: 'closed',
+  CANCELLED: 'closed',
 };
 
 const stageUiToBackend: Record<PipelineCreator['stage'], RelationshipStage> = {
@@ -59,7 +66,9 @@ const stageUiToBackend: Record<PipelineCreator['stage'], RelationshipStage> = {
   review: 'INTERESTED',
   contacted: 'CONTACTED',
   negotiating: 'COLLABORATING',
-  confirmed: 'COMPLETED',
+  confirmed: 'CONFIRMED',
+  completed: 'COMPLETED',
+  closed: 'CANCELLED',
 };
 
 export default function CampaignManagementPage() {
@@ -79,7 +88,7 @@ export default function CampaignManagementPage() {
   const [sortBy, setSortBy] = useState<'default' | 'match' | 'followers' | 'engagement'>('default');
   const [filterMinScore, setFilterMinScore] = useState<number>(0);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
+  const [movingRelationship, setMovingRelationship] = useState<string>();
 
   // Tab: 'kanban' (Outreach CRM) vs 'recommendation' (Four-Memory)
   const isRecView =
@@ -164,7 +173,10 @@ export default function CampaignManagementPage() {
                 engagement: '4.8%',
                 fee: feeText,
                 matchScore: 90,
-                stage: stageBackendToUi[r.stage] || 'found',
+                stage: stageBackendToUi[r.stage],
+                relationshipStage: r.stage,
+                dealId: r.dealId,
+                collaborationId: r.collaborationId,
                 note: r.notes || (r.lastContactAt ? `Liên hệ: ${new Date(r.lastContactAt).toLocaleDateString('vi-VN')}` : undefined),
               };
             });
@@ -277,7 +289,7 @@ export default function CampaignManagementPage() {
     },
     {
       key: 'confirmed',
-      title: 'Đã xác nhận',
+      title: 'Đã xác nhận thỏa thuận',
       icon: '',
       headerClass: 'stage-confirmed',
       count: pipelineCreators.filter((c) => c.stage === 'confirmed').length,
@@ -286,35 +298,46 @@ export default function CampaignManagementPage() {
       actionText: 'Hoàn thành',
       actionClass: 'btn-action-confirmed',
     },
+    {
+      key: 'completed',
+      title: 'Hợp tác hoàn tất', icon: '', budget: '',
+      headerClass: 'stage-confirmed',
+      count: pipelineCreators.filter(c => c.stage === 'completed').length,
+    },
+    {
+      key: 'closed',
+      title: 'Không tiếp tục', icon: '', budget: '',
+      headerClass: 'stage-found',
+      count: pipelineCreators.filter(c => c.stage === 'closed').length,
+    },
   ];
 
-  // Move creator to next stage
-  const handleAdvanceStage = async (creatorId: string, currentStage: PipelineCreator['stage']) => {
-    const stageFlow: Record<string, PipelineCreator['stage']> = {
-      found: 'review',
-      review: 'contacted',
-      contacted: 'negotiating',
-      negotiating: 'confirmed',
-    };
+  async function advanceRelationship(creator: PipelineCreator) {
+    if (!campaign || !creator.relationshipStage || creator.dealId || movingRelationship) return;
+    const next = { SHORTLISTED: 'CONTACTED', CONTACTED: 'NEGOTIATING' } as Partial<Record<RelationshipStage, RelationshipStage>>;
+    const stage = next[creator.relationshipStage];
+    if (!stage) return;
 
-    const next = stageFlow[currentStage];
-    if (next && campaign?.id) {
-      const backendStage = stageUiToBackend[next];
-      try {
-        await campaignService.updateRelationshipStage(campaign.id, creatorId, backendStage);
-        setPipelineCreators((prev) =>
-          prev.map((c) => (c.id === creatorId ? { ...c, stage: next } : c))
-        );
-        message.success('Đã cập nhật trạng thái pipeline trên máy chủ thành công!');
-      } catch {
-        // Optimistic fallback for frontend UX
-        setPipelineCreators((prev) =>
-          prev.map((c) => (c.id === creatorId ? { ...c, stage: next } : c))
-        );
-        message.info('Đã lưu trạng thái cục bộ.');
+    setMovingRelationship(creator.id);
+    try {
+      const updated = await campaignService.updateRelationshipStage(campaign.id, creator.id, stage);
+      if (updated?.id !== creator.id || !stageBackendToUi[updated.stage]) {
+        throw new Error('Máy chủ chưa xác nhận trạng thái quan hệ mới.');
       }
+      setPipelineCreators(rows => rows.map(row => row.id === updated.id ? {
+        ...row,
+        stage: stageBackendToUi[updated.stage],
+        relationshipStage: updated.stage,
+        dealId: updated.dealId,
+        collaborationId: updated.collaborationId,
+      } : row));
+      message.success('Đã cập nhật trạng thái quan hệ.');
+    } catch (error) {
+      message.error(getErrorMessage(error, 'Không chuyển được trạng thái quan hệ.'));
+    } finally {
+      setMovingRelationship(undefined);
     }
-  };
+  }
 
   const renderPlatformBadge = (platform: PipelineCreator['platform']) => {
     switch (platform) {
@@ -699,28 +722,14 @@ export default function CampaignManagementPage() {
                               </div>
                             )}
 
-                            {/* Bottom Action Button: Nếu ở cột Đã xác nhận thì hiện nút Hoàn tất & Về Trang chủ */}
-                            {stg.key === 'confirmed' ? (
-                              <Button
-                                type="primary"
-                                className="btn-kcard-action btn-action-collab-next"
-                                icon={<CheckCircleFilled />}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setIsFinishModalOpen(true);
-                                }}
-                              >
-                                ✓ Đã chốt ➔ Hoàn tất
-                              </Button>
-                            ) : stg.nextStage ? (
-                              <Button
-                                className={`btn-kcard-action ${stg.actionClass}`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAdvanceStage(c.id, c.stage);
-                                }}
-                              >
-                                {stg.actionText}
+                            {c.collaborationId ? <Button
+                              href={'/collaboration/' + c.collaborationId}>
+                              Xem hợp tác
+                            </Button> : !c.dealId && (c.relationshipStage === 'SHORTLISTED' || c.relationshipStage === 'CONTACTED') ? (
+                              <Button className={'btn-kcard-action ' + stg.actionClass}
+                                loading={movingRelationship === c.id} disabled={!!movingRelationship && movingRelationship !== c.id}
+                                onClick={() => void advanceRelationship(c)}>
+                                {c.relationshipStage === 'SHORTLISTED' ? 'Ghi nhận đã tiếp cận' : 'Bắt đầu đàm phán'}
                               </Button>
                             ) : null}
                           </div>
@@ -800,122 +809,6 @@ export default function CampaignManagementPage() {
         </Form>
       </Modal>
 
-      {/* Modal Chúc mừng Hoàn tất Quy trình Chiến dịch & Quay về Trang chủ */}
-      <Modal
-        open={isFinishModalOpen}
-        onCancel={() => setIsFinishModalOpen(false)}
-        footer={null}
-        width={500}
-        centered
-      >
-        <div style={{ textAlign: 'center', padding: '16px 8px 8px 8px' }}>
-          <div
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
-              color: '#059669',
-              fontSize: 34,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px auto',
-              boxShadow: '0 4px 16px rgba(16, 185, 129, 0.2)',
-            }}
-          >
-            🎉
-          </div>
-
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', marginBottom: 8 }}>
-            Hoàn tất quy trình Chiến dịch!
-          </h2>
-
-          <p style={{ fontSize: 13.5, color: '#64748B', lineHeight: 1.6, maxWidth: 420, margin: '0 auto 20px auto' }}>
-            Chúc mừng bạn đã hoàn thành trọn vẹn 5 bước từ <strong>Tạo Brief ➔ Khám phá ➔ Shortlist ➔ Đề xuất AI ➔ Tiếp cận & Đàm phán (CRM)</strong> cho chiến dịch <strong>"{campaign?.name || 'Chiến dịch'}"</strong>.
-          </p>
-
-          <div
-            style={{
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              borderRadius: 14,
-              padding: '14px 18px',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 12,
-              marginBottom: 24,
-            }}
-          >
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#6D28D9' }}>
-                {pipelineCreators.length}
-              </div>
-              <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Nhà sáng tạo trong Pipeline</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#10B981' }}>
-                {confirmedCount}
-              </div>
-              <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Đã chốt xác nhận</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#F59E0B' }}>
-                {pipelineCreators.length > 0 ? `${pipelineCreators.length * 120}K+` : '0'}
-              </div>
-              <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Reach dự kiến</div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Button
-              type="primary"
-              size="large"
-              icon={<HomeOutlined />}
-              onClick={() => {
-                setIsFinishModalOpen(false);
-                message.success('Đã hoàn tất quy trình chiến dịch thành công!');
-                navigate('/dashboard');
-              }}
-              style={{
-                background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
-                borderRadius: 10,
-                fontWeight: 700,
-                height: 44,
-                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-                border: 'none',
-              }}
-            >
-              Về Trang chủ (Dashboard)
-            </Button>
-
-            <Button
-              size="large"
-              onClick={() => {
-                setIsFinishModalOpen(false);
-                navigate('/campaigns');
-              }}
-              style={{
-                borderRadius: 10,
-                fontWeight: 600,
-                height: 40,
-                color: '#334155',
-              }}
-            >
-              Xem danh sách tất cả Chiến dịch
-            </Button>
-
-            <Button
-              type="link"
-              size="small"
-              onClick={() => setIsFinishModalOpen(false)}
-              style={{ color: '#94A3B8', marginTop: 4 }}
-            >
-              Ở lại trang này để tiếp tục theo dõi
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

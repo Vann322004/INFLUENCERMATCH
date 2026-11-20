@@ -196,11 +196,12 @@ const tabs = [
 
 type CollaborationTab = typeof tabs[number]['value'];
 
-export default function CollaborationExecutionPanel({ summary, brand, permissions, onReviewCompleted }: {
+export default function CollaborationExecutionPanel({ summary, brand, permissions, onReviewCompleted, showResults }: {
   summary: CollaborationDetail;
   brand: boolean;
   permissions: ReadonlySet<string>;
   onReviewCompleted: (campaignId: string) => void;
+  showResults?: boolean;
 }) {
   const id = summary.id;
   const { message } = App.useApp();
@@ -219,7 +220,8 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
   const attempt = useRef<{ fingerprint: string; key: string } | null>(null);
   const pending = useRef(false);
   const [selectedUnitId, setSelectedUnitId] = useState<string>();
-  const [tab, setTab] = useState<CollaborationTab>('progress');
+  const [tab, setTab] = useState<CollaborationTab>(showResults ? 'kpi' : 'progress');
+  useEffect(() => { if (showResults) setTab('kpi'); }, [showResults]);
   const legacyOutcome = snapshot?.executionSource === 'LEGACY' && snapshot.status === 'COMPLETED'
     ? summary.outcome : undefined;
   const manage = brand && permissions.has('MANAGE_OWN_COLLABORATION');

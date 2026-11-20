@@ -530,15 +530,15 @@
   overflow: hidden;
 }
 
-/* Kanban Board: 5 Columns chia đều 100% diện tích trang */
 .kanban-board-container {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(180px, 1fr);
   gap: 10px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  overflow-x: hidden; /* TUYỆT ĐỐI KHÔNG CÓ THANH KÉO NGANG */
+  overflow-x: auto;
   padding-bottom: 12px;
 }
 

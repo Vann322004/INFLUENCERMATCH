@@ -14,6 +14,7 @@ import {
   Segmented,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { getErrorMessage } from '../../services/apiClient';
 import {
   MailOutlined,
   SendOutlined,
@@ -75,7 +76,10 @@ interface KanbanCreator {
   engagement: string;
   fee: string;
   matchScore: number;
-  stage: 'found' | 'review' | 'contacted' | 'negotiating' | 'confirmed';
+  stage: 'found' | 'review' | 'contacted' | 'negotiating' | 'confirmed' | 'completed' | 'closed';
+  relationshipStage: RelationshipStage;
+  dealId?: string | null;
+  collaborationId?: string | null;
   lastActivity: string;
   note: string;
   tags: string[];
@@ -166,16 +170,17 @@ const stageMapToKanban: Record<RelationshipStage, KanbanCreator['stage']> = {
   INTERESTED: 'review',
   CONTACTED: 'contacted',
   COLLABORATING: 'negotiating',
-  COMPLETED: 'confirmed',
-  NOT_INTERESTED: 'review',
+  NEGOTIATING: 'negotiating',
+  CONFIRMED: 'confirmed',
+  COMPLETED: 'completed',
+  NOT_INTERESTED: 'closed',
+  DECLINED: 'closed',
+  CANCELLED: 'closed',
 };
 
-const stageMapFromKanban: Record<KanbanCreator['stage'], RelationshipStage> = {
-  found: 'SHORTLISTED',
-  review: 'INTERESTED',
-  contacted: 'CONTACTED',
-  negotiating: 'COLLABORATING',
-  confirmed: 'COMPLETED',
+const allowedNextStage: Partial<Record<RelationshipStage, RelationshipStage>> = {
+  SHORTLISTED: 'CONTACTED',
+  CONTACTED: 'NEGOTIATING',
 };
 
 const REALISTIC_PORTRAITS = [
@@ -240,6 +245,9 @@ const mapRelationshipToKanban = (r: RelationshipDto): KanbanCreator => {
     fee: feeText,
     matchScore: 90,
     stage: stageMapToKanban[r.stage] || 'found',
+    relationshipStage: r.stage,
+    dealId: r.dealId,
+    collaborationId: r.collaborationId,
     lastActivity: r.lastContactAt ? new Date(r.lastContactAt).toLocaleDateString('vi-VN') : 'Mới cập nhật',
     note: r.notes || '',
     tags: ['KOL', 'Hợp tác'],
@@ -366,6 +374,7 @@ export default function OutreachCrmPage() {
 
   // Tab 2: Relationship CRM State
   const [pipelineCreators, setPipelineCreators] = useState<KanbanCreator[]>([]);
+  const [movingRelationship, setMovingRelationship] = useState<string>();
   const [crmLoading, setCrmLoading] = useState(false);
   const [crmSearch, setCrmSearch] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
@@ -463,24 +472,27 @@ export default function OutreachCrmPage() {
     { key: 'review', title: '2. Đang xem xét', color: '#8B5CF6', count: pipelineCreators.filter((c) => c.stage === 'review').length },
     { key: 'contacted', title: '3. Đã liên hệ', color: '#F59E0B', count: pipelineCreators.filter((c) => c.stage === 'contacted').length },
     { key: 'negotiating', title: '4. Đang thương lượng', color: '#EC4899', count: pipelineCreators.filter((c) => c.stage === 'negotiating').length },
-    { key: 'confirmed', title: '5. Đã xác nhận', color: '#10B981', count: pipelineCreators.filter((c) => c.stage === 'confirmed').length },
+    { key: 'confirmed', title: 'Đã xác nhận thỏa thuận', color: '#10B981', count: pipelineCreators.filter((c) => c.stage === 'confirmed').length },
+    { key: 'completed', title: 'Hợp tác hoàn tất', color: '#10B981', count: pipelineCreators.filter((c) => c.stage === 'completed').length },
+    { key: 'closed', title: 'Không tiếp tục', color: '#64748B', count: pipelineCreators.filter((c) => c.stage === 'closed').length },
   ];
 
-  const handleMoveStage = async (creatorId: string, currentStage: KanbanCreator['stage']) => {
-    const stageOrder: KanbanCreator['stage'][] = ['found', 'review', 'contacted', 'negotiating', 'confirmed'];
-    const currentIndex = stageOrder.indexOf(currentStage);
-    if (currentIndex < stageOrder.length - 1) {
-      const nextStage = stageOrder[currentIndex + 1];
-      const apiStage = stageMapFromKanban[nextStage];
-      try {
-        await campaignService.updateRelationshipStage(selectedCampaign, creatorId, apiStage).catch(() => {});
-      } catch (err) {
-        console.error(err);
+  const handleMoveStage = async (creator: KanbanCreator) => {
+    const next = allowedNextStage[creator.relationshipStage];
+    if (!selectedCampaign || !next || creator.dealId || movingRelationship) return;
+    setMovingRelationship(creator.id);
+    try {
+      const result = await campaignService.updateRelationshipStage(selectedCampaign, creator.id, next);
+      if (result?.id !== creator.id || !stageMapToKanban[result.stage]) {
+        throw new Error('Máy chủ chưa xác nhận trạng thái quan hệ mới.');
       }
-      setPipelineCreators((prev) =>
-        prev.map((c) => (c.id === creatorId ? { ...c, stage: nextStage, lastActivity: `Vừa chuyển sang ${stages.find((s) => s.key === nextStage)?.title}` } : c))
-      );
-      message.success(`Đã chuyển Creator sang bước: ${stages.find((s) => s.key === nextStage)?.title}`);
+      const updated = mapRelationshipToKanban(result);
+      setPipelineCreators(rows => rows.map(row => row.id === updated.id ? updated : row));
+      message.success('Đã cập nhật trạng thái quan hệ.');
+    } catch (error) {
+      message.error(getErrorMessage(error, 'Không chuyển được trạng thái quan hệ.'));
+    } finally {
+      setMovingRelationship(undefined);
     }
   };
 
@@ -1026,10 +1038,13 @@ export default function OutreachCrmPage() {
                             <EditOutlined /> Nhật ký
                           </button>
 
-                          {stage.key !== 'confirmed' && (
+                          {creator.collaborationId ? (
+                            <Button size="small" href={'/collaboration/' + creator.collaborationId}>Xem hợp tác</Button>
+                          ) : !creator.dealId && allowedNextStage[creator.relationshipStage] && (
                             <button
                               className="btn-kanban-next-stage"
-                              onClick={() => handleMoveStage(creator.id, creator.stage)}
+                              disabled={!!movingRelationship}
+                              onClick={() => void handleMoveStage(creator)}
                             >
                               Chuyển tiếp <ArrowRightOutlined />
                             </button>
