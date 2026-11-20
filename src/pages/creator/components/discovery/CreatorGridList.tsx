@@ -31,7 +31,6 @@ interface CreatorGridListProps {
 export const CreatorGridList: React.FC<CreatorGridListProps> = ({
   loading,
   isMatching,
-  creators,
   paginatedCreators,
   totalCount,
   viewMode,
@@ -83,10 +82,10 @@ export const CreatorGridList: React.FC<CreatorGridListProps> = ({
       >
         <div style={{ fontSize: 44, marginBottom: 12 }}>🔍</div>
         <Title level={4} style={{ color: '#0F172A', marginBottom: 6 }}>
-          Không tìm thấy Nhà sáng tạo phù hợp
+          Chưa tìm thấy kênh phù hợp trong dữ liệu hiện có
         </Title>
         <Paragraph style={{ color: '#64748B', maxWidth: 440, margin: '0 auto 16px auto', fontSize: 13.5 }}>
-          Hãy thử điều chỉnh lại từ khóa tìm kiếm hoặc bỏ bớt các tiêu chí lọc để xem thêm kết quả phù hợp.
+          Bạn có thể kiểm tra từ khóa hoặc điều chỉnh bộ lọc. Không cần đổi ngành hàng sang lĩnh vực không phù hợp chỉ để có kết quả.
         </Paragraph>
         <Button
           type="primary"
@@ -99,11 +98,19 @@ export const CreatorGridList: React.FC<CreatorGridListProps> = ({
     );
   }
 
+  const groups = [
+    { key: 'matched', title: matchedCampaign ? 'Phù hợp yêu cầu' : 'Nhà sáng tạo', items: paginatedCreators.filter(creator => !creator.isSimilarFallback) },
+    { key: 'expanded', title: 'Kết quả mở rộng', items: paginatedCreators.filter(creator => creator.isSimilarFallback) },
+  ];
   return (
     <>
+      {groups.map(group => group.items.length > 0 && <section key={group.key} className="cdiscovery-result-group">
+      <header className="cdiscovery-result-group-heading">
+        <h3>{group.title}</h3><span>{group.items.length} kênh trên trang này</span>
+      </header>
       {viewMode === 'grid' ? (
         <div className="cdiscovery-cards-grid">
-          {paginatedCreators.map((creator, index) => (
+          {group.items.map((creator, index) => (
             <CreatorCard
               key={creator.id}
               creator={creator}
@@ -122,7 +129,7 @@ export const CreatorGridList: React.FC<CreatorGridListProps> = ({
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {paginatedCreators.map((creator, index) => (
+          {group.items.map((creator, index) => (
             <CreatorListItem
               key={creator.id}
               creator={creator}
@@ -137,6 +144,7 @@ export const CreatorGridList: React.FC<CreatorGridListProps> = ({
         </div>
       )}
 
+      </section>)}
       {/* Phân trang chân trang */}
       <div className="cdiscovery-pagination-row">
         <div className="cdiscovery-pagination-count">

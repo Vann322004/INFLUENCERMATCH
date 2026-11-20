@@ -1,29 +1,22 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { campaignEditor } from '../../../services/campaignContext';
-import { Modal, message } from 'antd';
+import { activeCampaignId, campaignEditor, rememberCampaign } from '../../../services/campaignContext';
+import { App } from 'antd';
+import { getErrorMessage } from '../../../services/apiClient';
 import type { MenuProps } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import { campaignService } from '../../../services/api/campaignService';
-import { creatorService } from '../../../services/api/creatorService';
 import { dealService } from '../../../services/api/dealService';
 import type { CooperationBudget } from '../../../services/api/dealService';
 import { collaborationService } from '../../../services/api/collaborationService';
 import { shortlistService } from '../../../services/api/shortlistService';
 import type { CampaignResponse } from '../../../types/api/campaign.types';
-import { mapApiCampaignToUi } from '../../../components/dashboard/CampaignTable';
-import type { Campaign } from '../../../data/mockData';
-import type { CampaignItemUI } from '../campaignLegacy.types';
 import type { CampaignCreatorRow, CampaignStatusType } from '../components/detail/campaignDetailTypes';
 import type { CampaignDetailTabKey } from '../components/detail/CampaignDetailNavTabs';
-import {
-  campaignDetailCache,
-  getStageInfo,
-  getCreatorTableColumns,
-  VERIFIED_CREATOR_AVATARS,
-} from '../components/detail/campaignDetailUtils';
+import { getCreatorTableColumns } from '../components/detail/campaignDetailUtils';
 
 export function useCampaignDetail() {
+  const { message, modal: Modal } = App.useApp();
   const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,112 +24,33 @@ export function useCampaignDetail() {
   // Nhận diện ID từ params, navigation state hoặc sessionStorage
   const resolvedId =
     paramId ||
+    new URLSearchParams(location.search).get('campaignId') ||
     (location.state as any)?.id ||
     (location.state as any)?.campaignId ||
-    sessionStorage.getItem('current_campaign_id') ||
+    activeCampaignId() ||
     '';
 
   // Cập nhật sessionStorage khi có paramId mà không gây remount lặp
   useEffect(() => {
     if (paramId) {
-      sessionStorage.setItem('current_campaign_id', paramId);
+      rememberCampaign(paramId);
     }
   }, [paramId]);
 
   // Trích xuất campaign data đã được truyền từ trang danh sách hoặc sessionStorage
-  const passedItem: CampaignItemUI | null = useMemo(() => {
-    const fromState = (location.state as any)?.item || (location.state as any)?.campaignData;
-    if (fromState) return fromState;
-    try {
-      const raw = sessionStorage.getItem('current_campaign_data');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && (parsed.id === resolvedId || !resolvedId)) return parsed;
-      }
-    } catch {}
-    return null;
-  }, [location.state, resolvedId]);
-
-  const cached = campaignDetailCache.get(resolvedId);
-
-  // Khởi tạo state tức thì (0ms) từ Cache hoặc Passed Data để không bao giờ bị chớp màn hình rỗng
-  const [rawCampaign, setRawCampaign] = useState<CampaignResponse | null>(() => {
-    if (cached) return cached.rawCampaign;
-    if (passedItem) {
-      return {
-        id: passedItem.id || resolvedId,
-        name: passedItem.name,
-        description:
-          (passedItem as any).description ||
-          (passedItem as any).subtitle ||
-          'Chiến dịch quảng bá thương hiệu và phát triển thị phần cùng cộng đồng Creator.',
-        productService: (passedItem as any).productService || 'Sản phẩm & Dịch vụ chính',
-        objective: ((passedItem as any).objective as any) || 'AWARENESS',
-        budgetMin: passedItem.budgetRaw ? Math.round(passedItem.budgetRaw * 0.75) : 50000000,
-        budgetMax: passedItem.budgetRaw || 80000000,
-        platforms: passedItem.platforms || ['TIKTOK', 'INSTAGRAM'],
-        niches: passedItem.niches || ['Beauty', 'Skincare', 'Lifestyle'],
-        targetAudiences: ['Nữ 18–28', 'Dân văn phòng', 'Học sinh sinh viên'],
-        locations: ['Thành phố Hồ Chí Minh', 'Hà Nội'],
-        followerMin: (passedItem as any).followerMin !== undefined ? Number((passedItem as any).followerMin) : 50000,
-        followerMax: (passedItem as any).followerMax !== undefined ? Number((passedItem as any).followerMax) : undefined,
-        startDate: '2026-10-26',
-        endDate: '2026-12-25',
-        status: (passedItem.status as any) || 'ACTIVE',
-        brandId: '',
-        createdAt: '2026-10-15T08:00:00.000Z',
-      };
-    }
-    return null;
-  });
-
-  const [campaign, setCampaign] = useState<Campaign | null>(() => {
-    if (cached) return cached.campaign;
-    if (passedItem) {
-      return {
-        id: passedItem.id || resolvedId,
-        title: passedItem.name || 'Chiến dịch trọng điểm 2026',
-        tags: passedItem.niches || ['AWARENESS', 'TikTok', 'Instagram'],
-        thumbnail:
-          passedItem.thumbnail ||
-          'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80',
-        status:
-          passedItem.status === 'COMPLETED'
-            ? 'completed'
-            : passedItem.status === 'DRAFT'
-            ? 'draft'
-            : 'running',
-        statusText: passedItem.statusText || 'Đang triển khai',
-        creatorsCount: passedItem.creatorsCount || 0,
-        reach: '50K+',
-        reachNumber: 50000,
-        engagement: '4.5% – 8.0%',
-        engagementNumber: 6.2,
-        spent: passedItem.budgetFormatted || '80.000.000 đ',
-        spentNumber: passedItem.budgetRaw || 80000000,
-        date: passedItem.dateRange || '26/10/2026 – 25/12/2026',
-      };
-    }
-    return null;
-  });
-
-  const [participatingCreators, setParticipatingCreators] = useState<CampaignCreatorRow[]>(() => {
-    if (cached) return cached.participatingCreators;
-    return [];
-  });
-
-  const [currentStatus, setCurrentStatus] = useState<CampaignStatusType>(() => {
-    if (cached) return cached.currentStatus;
-    if (passedItem?.status === 'COMPLETED') return 'completed';
-    if (passedItem?.status === 'DRAFT') return 'draft';
-    return 'running';
-  });
-
+  const [rawCampaign, setRawCampaign] = useState<CampaignResponse | null>(null);
+  const [participatingCreators, setParticipatingCreators] = useState<CampaignCreatorRow[]>([]);
+  const [currentStatus, setCurrentStatus] = useState<CampaignStatusType>('draft');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [relatedErrors, setRelatedErrors] = useState<string[]>([]);
+  const [collaborationsError, setCollaborationsError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [activeTab, setActiveTab] = useState<CampaignDetailTabKey>('overview');
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [activationNeedsDeliverables, setActivationNeedsDeliverables] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cooperationBudget, setCooperationBudget] = useState<CooperationBudget | null>(null);
-  const [shortlistCount, setShortlistCount] = useState<number>(0);
+  const [shortlistCount, setShortlistCount] = useState<number | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(true);
 
   // Fetch dữ liệu từ API thật của Backend: Campaign, Budget, Shortlist, Collaborations
@@ -146,6 +60,11 @@ export function useCampaignDetail() {
     let isMounted = true;
     const loadCampaign = async () => {
       setIsLoadingDetail(true);
+      setLoadError(null); setRelatedErrors([]);
+      setActivationNeedsDeliverables(false);
+      setCollaborationsError(null);
+      setRawCampaign(null); setParticipatingCreators([]);
+      setCooperationBudget(null); setShortlistCount(null);
       try {
         const [campaignRes, budgetRes, shortlistRes, collabsRes] = await Promise.allSettled([
           campaignService.getCampaignById(resolvedId),
@@ -154,6 +73,10 @@ export function useCampaignDetail() {
           collaborationService.listBrand(resolvedId),
         ]);
 
+        if (!isMounted) return;
+        if (campaignRes.status === 'rejected') throw campaignRes.reason;
+        setCollaborationsError(collabsRes.status === 'rejected' ? getErrorMessage(collabsRes.reason) : null);
+        setRelatedErrors([budgetRes, shortlistRes, collabsRes].flatMap(result => result.status === 'rejected' ? [getErrorMessage(result.reason)] : []));
         const data = campaignRes.status === 'fulfilled' ? campaignRes.value : null;
         const budgetData = budgetRes.status === 'fulfilled' ? budgetRes.value : null;
         const shortlistData = shortlistRes.status === 'fulfilled' ? shortlistRes.value : null;
@@ -163,17 +86,15 @@ export function useCampaignDetail() {
           setCooperationBudget(budgetData);
         }
         if (shortlistData && isMounted) {
-          setShortlistCount(shortlistData.totalElements ?? 0);
+          setShortlistCount(shortlistData.totalElements ?? null);
         }
 
         let newStatus: CampaignStatusType = 'running';
         if (data && isMounted) {
           setRawCampaign(data);
-          const mappedUi = mapApiCampaignToUi(data);
-          setCampaign(mappedUi);
 
           if (data.status === 'COMPLETED') newStatus = 'completed';
-          else if (data.status === 'DRAFT') newStatus = 'draft';
+          else if (data.status === 'DRAFT' || data.status === 'READY_FOR_DISCOVERY') newStatus = 'draft';
           else if (data.status === 'ARCHIVED') newStatus = 'cancelled';
           setCurrentStatus(newStatus);
         }
@@ -182,6 +103,8 @@ export function useCampaignDetail() {
         // Tuyệt đối không trộn Shortlist hay Relationship nháp
         if (isMounted) {
           const statusMap: Record<string, { text: string; color: string; deliverable: string; delColor: string }> = {
+            PLANNED: { text: 'Đã lên kế hoạch', color: '#7C3AED', deliverable: 'Chưa bắt đầu', delColor: 'default' },
+            AWAITING_REVIEW: { text: 'Chờ đánh giá', color: '#7C3AED', deliverable: 'Chờ đánh giá kết quả', delColor: 'default' },
             CONFIRMED: { text: 'Đã xác nhận', color: '#10B981', deliverable: 'Chờ lên nội dung', delColor: 'blue' },
             IN_PROGRESS: { text: 'Đang thực hiện', color: '#8B5CF6', deliverable: 'Đang sản xuất', delColor: 'processing' },
             CONTENT_SUBMITTED: { text: 'Đã nộp bài', color: '#F59E0B', deliverable: 'Chờ duyệt nội dung', delColor: 'warning' },
@@ -195,17 +118,17 @@ export function useCampaignDetail() {
             const st = statusMap[c.status] || {
               text: c.status || 'Đang hợp tác',
               color: '#7C3AED',
-              deliverable: c.hasReview ? 'Đã duyệt bài' : c.hasOutcome ? 'Đã đo lường' : 'Đang xử lý',
+              deliverable: c.hasReview ? 'Đã có đánh giá' : c.hasOutcome ? 'Đã có kết quả' : 'Chưa có dữ liệu',
               delColor: 'default',
             };
             return {
               id: c.id,
               name: c.creatorName || c.channelName || `Nhà sáng tạo #${idx + 1}`,
-              username: c.channelName ? `@${c.channelName.replace(/^@+/, '')}` : (c.creatorName ? `@${c.creatorName.toLowerCase().replace(/\s+/g, '')}` : '—'),
-              avatar: c.avatarUrl || VERIFIED_CREATOR_AVATARS[idx % VERIFIED_CREATOR_AVATARS.length],
-              platform: (c.platform?.toLowerCase() === 'instagram' ? 'instagram' : 'tiktok') as 'instagram' | 'tiktok',
+              username: c.channels?.map(channel => channel.username).filter(Boolean).join(', ') || '—',
+              avatar: c.avatarUrl || '',
+              platform: c.platform?.toLowerCase() || '—',
               followers: '—',
-              fee: c.agreedFee != null ? `${c.agreedFee.toLocaleString('vi-VN')} ₫` : 'Chưa có',
+              fee: c.agreedFee != null && c.currency ? `${c.agreedFee.toLocaleString('vi-VN')} ${c.currency}` : 'Chưa có dữ liệu',
               stageText: st.text,
               stageColor: st.color,
               deliverableStatus: st.deliverable,
@@ -215,17 +138,10 @@ export function useCampaignDetail() {
 
           setParticipatingCreators(currentCreators);
 
-          if (data) {
-            campaignDetailCache.set(resolvedId, {
-              rawCampaign: data,
-              campaign: mapApiCampaignToUi(data),
-              participatingCreators: currentCreators,
-              currentStatus: newStatus,
-              timestamp: Date.now(),
-            });
-          }
+
         }
       } catch (err) {
+        if (isMounted) setLoadError(getErrorMessage(err));
         console.warn('Lỗi khi tải chi tiết chiến dịch:', err);
       } finally {
         if (isMounted) setIsLoadingDetail(false);
@@ -236,24 +152,43 @@ export function useCampaignDetail() {
     return () => {
       isMounted = false;
     };
-  }, [resolvedId]);
+  }, [resolvedId, reloadKey]);
 
-  const campaignTitle = rawCampaign?.name || passedItem?.name || 'Chiến dịch';
+  const campaignTitle = rawCampaign?.name || 'Chiến dịch';
   const totalBudget = cooperationBudget?.totalBudget ?? (rawCampaign?.totalBudget ?? rawCampaign?.budgetMax ?? null);
-  const allocatedBudget = cooperationBudget?.committedBudget ?? 0;
-  const remainingBudget = cooperationBudget?.remainingBudget ?? (totalBudget != null ? Math.max(0, totalBudget - allocatedBudget) : 0);
+  const allocatedBudget = cooperationBudget?.committedBudget ?? null;
+  const remainingBudget = cooperationBudget?.remainingBudget ?? null;
   const campaignBudgetFormatted = totalBudget != null ? `${totalBudget.toLocaleString('vi-VN')} ₫` : 'Chưa thiết lập';
-  const progressPercent = totalBudget && totalBudget > 0 ? Math.min(100, Math.round((allocatedBudget / totalBudget) * 100)) : 0;
-  const confirmedCreatorCount = cooperationBudget?.confirmedCreatorCount ?? participatingCreators.length;
-  const targetCreatorCount = rawCampaign?.targetCreatorCount ?? 1;
-  const isOverTarget = confirmedCreatorCount > targetCreatorCount;
+  const progressPercent = totalBudget != null && totalBudget > 0 && allocatedBudget != null ? Math.min(100, Math.round((allocatedBudget / totalBudget) * 100)) : null;
+  const confirmedCreatorCount = cooperationBudget?.confirmedCreatorCount ?? null;
+  const targetCreatorCount = rawCampaign?.targetCreatorCount ?? null;
+  const isOverTarget = confirmedCreatorCount != null && targetCreatorCount != null && confirmedCreatorCount > targetCreatorCount;
 
   // Handle Lifecycle actions
   const handleActivate = () => {
+    if (!resolvedId || !rawCampaign) return;
+    if (rawCampaign.status === 'DRAFT' && !rawCampaign.niches?.length) {
+      Modal.confirm({
+        title: 'Cần chọn ngành hàng trước khi chốt chiến dịch',
+        content: 'Chọn ngành liên quan trực tiếp đến sản phẩm. Chủ đề cụ thể vẫn là tùy chọn.',
+        okText: 'Chọn ngành hàng', cancelText: 'Để sau',
+        onOk: () => {
+          const target = campaignEditor(resolvedId, 1);
+          navigate(target.path, { state: target.state });
+        },
+      });
+      return;
+    }
+    if (rawCampaign.status === 'DRAFT' && !rawCampaign.deliverables?.length) {
+      setActivationNeedsDeliverables(true);
+      return;
+    }
     Modal.confirm({
-      title: 'Kích hoạt chiến dịch ngay?',
+      title: rawCampaign.status === 'DRAFT' ? 'Chốt yêu cầu và kích hoạt chiến dịch?' : 'Bắt đầu triển khai chiến dịch?',
       content:
-        'Chiến dịch sẽ được kích hoạt trên hệ thống và chuyển sang trạng thái sẵn sàng để liên hệ, đàm phán với Creator.',
+        rawCampaign.status === 'DRAFT'
+          ? 'Sau khi chốt, bạn không thể sửa yêu cầu chiến dịch. Hệ thống sẽ kiểm tra điều kiện trước khi kích hoạt.'
+          : 'Chuyển sang giai đoạn triển khai để thực hiện các hợp tác. Yêu cầu chiến dịch vẫn được giữ nguyên.',
       okText: 'Kích hoạt ngay',
       cancelText: 'Hủy',
       okButtonProps: { style: { background: '#10B981', borderColor: '#10B981' } },
@@ -263,9 +198,7 @@ export function useCampaignDetail() {
           if (resolvedId) {
             const updated = await campaignService.activateCampaign(resolvedId);
             if (updated) {
-              setRawCampaign(updated);
-              setCampaign(mapApiCampaignToUi(updated));
-            }
+              setRawCampaign(updated);            }
           }
           setCurrentStatus('running');
           message.success({ content: 'Chiến dịch đã được kích hoạt thành công!', key: 'act_camp' });
@@ -277,7 +210,9 @@ export function useCampaignDetail() {
             'Không thể kích hoạt chiến dịch';
           const fieldErrors = error?.response?.data?.fieldErrors;
           if (fieldErrors?.deliverables) {
-            errMsg = 'Chiến dịch chưa có ấn phẩm bàn giao (Deliverables). Vui lòng vào Chỉnh sửa để thêm ít nhất 1 ấn phẩm trước khi kích hoạt.';
+            message.destroy('act_camp');
+            setActivationNeedsDeliverables(true);
+            return;
           }
           message.error({ content: errMsg, key: 'act_camp', duration: 5 });
         }
@@ -289,7 +224,7 @@ export function useCampaignDetail() {
     Modal.confirm({
       title: 'Xác nhận hoàn thành chiến dịch?',
       content:
-        'Đóng chiến dịch và lưu trữ toàn bộ chỉ số KPI, chi phí thực tế vào Lịch sử chiến dịch.',
+        'Yêu cầu hoàn thành chiến dịch. Hệ thống sẽ kiểm tra điều kiện và các hợp tác liên quan.',
       okText: 'Hoàn thành chiến dịch',
       cancelText: 'Hủy',
       okButtonProps: { style: { background: '#6D28D9', borderColor: '#6D28D9' } },
@@ -299,9 +234,7 @@ export function useCampaignDetail() {
           if (resolvedId) {
             const updated = await campaignService.updateStatus(resolvedId, 'COMPLETED');
             if (updated) {
-              setRawCampaign(updated);
-              setCampaign(mapApiCampaignToUi(updated));
-            }
+              setRawCampaign(updated);            }
           }
           setCurrentStatus('completed');
           message.success({
@@ -321,29 +254,21 @@ export function useCampaignDetail() {
   };
 
   const handleConfirmCancel = async () => {
-    if (!cancelReason.trim()) {
-      message.warning('Vui lòng nhập lý do hủy chiến dịch!');
-      return;
-    }
     try {
       message.loading({ content: 'Đang lưu trữ chiến dịch...', key: 'arch_camp' });
       if (resolvedId) {
-        await campaignService.archiveCampaign(resolvedId).catch(() => {});
-        await campaignService.updateStatus(resolvedId, 'ARCHIVED').catch(() => {});
-      }
+        const updated = await campaignService.archiveCampaign(resolvedId);
+        setRawCampaign(updated);      }
       setCurrentStatus('cancelled');
       setIsCancelModalOpen(false);
       message.success({ content: 'Chiến dịch đã được lưu trữ thành công.', key: 'arch_camp' });
     } catch (err: any) {
-      console.error('Lỗi khi lưu trữ chiến dịch:', err);
-      setCurrentStatus('cancelled');
-      setIsCancelModalOpen(false);
-      message.success({ content: 'Chiến dịch đã được lưu trữ thành công.', key: 'arch_camp' });
+      message.error({ content: getErrorMessage(err), key: 'arch_camp' });
     }
   };
 
   const handleNavigateToEdit = () => {
-    const targetId = resolvedId || rawCampaign?.id || campaign?.id;
+    const targetId = resolvedId || rawCampaign?.id;
     if (targetId) {
       const target = campaignEditor(targetId);
       navigate(target.path, { state: target.state });
@@ -355,19 +280,16 @@ export function useCampaignDetail() {
   const moreMenuItems: MenuProps['items'] = [
     {
       key: 'edit',
-      label: 'Chỉnh sửa thông tin chiến dịch',
+      label: rawCampaign?.status === 'DRAFT' ? 'Chỉnh sửa yêu cầu' : 'Xem yêu cầu',
       icon: <EditOutlined />,
-      onClick: handleNavigateToEdit,
+      onClick: () => rawCampaign?.status === 'DRAFT' ? handleNavigateToEdit() : setActiveTab('guidelines'),
     },
-    {
-      type: 'divider',
-    },
-    {
+    ...(rawCampaign?.status === 'DRAFT' ? [{
       key: 'archive',
-      label: 'Lưu trữ & Hủy chiến dịch',
+      label: 'Lưu trữ chiến dịch',
       danger: true,
       onClick: () => setIsCancelModalOpen(true),
-    },
+    }] : []),
   ];
 
   const creatorColumns = useMemo(() => getCreatorTableColumns(), []);
@@ -375,12 +297,17 @@ export function useCampaignDetail() {
   return {
     resolvedId,
     rawCampaign,
-    campaign,
     participatingCreators,
     currentStatus,
     activeTab,
     setActiveTab,
     isCancelModalOpen,
+    activationNeedsDeliverables,
+    editDeliverables: () => {
+      if (!resolvedId || rawCampaign?.status !== 'DRAFT') return;
+      const target = campaignEditor(resolvedId, 2);
+      navigate(target.path, { state: target.state });
+    },
     setIsCancelModalOpen,
     cancelReason,
     setCancelReason,
@@ -395,7 +322,9 @@ export function useCampaignDetail() {
     targetCreatorCount,
     shortlistCount,
     isOverTarget,
-    isLoadingDetail,
+    isLoadingDetail, collaborationsError,
+    loadError, relatedErrors,
+    reload: () => setReloadKey(value => value + 1),
     handleActivate,
     handleComplete,
     handleConfirmCancel,

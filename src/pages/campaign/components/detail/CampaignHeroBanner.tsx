@@ -3,6 +3,7 @@ import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import { ArrowLeftOutlined, EllipsisOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { rememberCampaign, campaignPath, campaignEditor } from '../../../../services/campaignContext';
 import type { CampaignResponse } from '../../../../types/api/campaign.types';
 
 import type { CampaignStatusType, CampaignDetailTabKey } from './campaignDetailTypes';
@@ -57,29 +58,32 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
               ? 'Hoàn thành'
               : currentStatus === 'cancelled'
               ? 'Đã lưu trữ'
-              : 'Bản nháp'}
+              : rawCampaign?.status === 'READY_FOR_DISCOVERY' ? 'Sẵn sàng lựa chọn' : 'Bản nháp'}
           </span>
         </div>
 
         <div className="cdetail-hero-date-chip">
           <span>Thời gian:</span>
           <strong>
-            {rawCampaign?.startDate ? new Date(rawCampaign.startDate).toLocaleDateString('vi-VN') : '26/10/2026'}
+            {rawCampaign?.startDate ? new Date(rawCampaign.startDate).toLocaleDateString('vi-VN') : 'Chưa thiết lập'}
             {' – '}
-            {rawCampaign?.endDate ? new Date(rawCampaign.endDate).toLocaleDateString('vi-VN') : '25/12/2026'}
+            {rawCampaign?.endDate ? new Date(rawCampaign.endDate).toLocaleDateString('vi-VN') : 'Chưa thiết lập'}
           </strong>
         </div>
       </div>
 
       {/* Main Title, Description & Categorization Tags */}
       <div className="cdetail-hero-meta">
+        {rawCampaign?.imageUrl && <img src={rawCampaign.imageUrl} alt="Ảnh chiến dịch" referrerPolicy="no-referrer"
+          style={{ display: 'block', width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 12, marginBottom: 20 }}
+          onLoad={event => { event.currentTarget.style.display = 'block'; }}
+          onError={event => { event.currentTarget.style.display = 'none'; }} />}
         <h1 className="cdetail-hero-title">
           {campaignTitle}
         </h1>
 
         <p className="cdetail-hero-desc">
-          {rawCampaign?.description ||
-            'Chiến dịch ra mắt sản phẩm hè 2026, tiếp cận tệp khách hàng tiềm năng qua các nền tảng mạng xã hội.'}
+          {rawCampaign?.brief || rawCampaign?.productService || ''}
         </p>
 
         <div className="cdetail-hero-badge-row">
@@ -87,13 +91,8 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
             {translateObjective(rawCampaign?.objective)}
           </span>
 
-          {((rawCampaign?.platforms && rawCampaign.platforms.length > 0)
-            ? rawCampaign.platforms
-            : (['TIKTOK', 'INSTAGRAM'] as any[])
-          )
-            .filter((p: any) => String(p).toUpperCase() !== 'YOUTUBE')
-            .map((p: any) => {
-              const name = String(p).toUpperCase() === 'TIKTOK' ? 'TikTok' : 'Instagram';
+          {(rawCampaign?.platforms ?? []).map((p) => {
+              const name = ({ TIKTOK: 'TikTok', INSTAGRAM: 'Instagram', YOUTUBE: 'YouTube', FACEBOOK: 'Facebook', THREADS: 'Threads', TWITTER: 'X' } as Record<string, string>)[p] || p;
               return (
                 <span key={p} className="cdetail-hero-tag">
                   {name}
@@ -101,7 +100,7 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
               );
             })}
 
-          {(rawCampaign?.niches || ['Beauty', 'Skincare', 'Lifestyle']).map((n) => (
+          {(rawCampaign?.niches || []).map((n) => (
             <span key={n} className="cdetail-hero-tag">
               {translateNiche(n)}
             </span>
@@ -110,15 +109,28 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
       </div>
 
       {/* Actions Toolbar */}
+      <p className="cdetail-hero-desc">
+        {rawCampaign?.status === 'DRAFT' ? 'Bạn có thể chỉnh sửa yêu cầu trước khi bắt đầu đánh giá.'
+          : rawCampaign?.status === 'READY_FOR_DISCOVERY' ? 'Yêu cầu đã được chốt. Bạn có thể tiếp tục lựa chọn và đánh giá các kênh.'
+          : rawCampaign?.status === 'ACTIVE' ? 'Theo dõi các thỏa thuận và tiến độ hợp tác. Yêu cầu chiến dịch đã được chốt.'
+          : rawCampaign?.status === 'COMPLETED' ? 'Chiến dịch đã kết thúc. Bạn có thể xem lại thông tin và kết quả.'
+          : 'Chiến dịch đã được lưu trữ và không thể tiếp tục chỉnh sửa.'}
+      </p>
       <div className="cdetail-hero-toolbar">
         <div className="cdetail-hero-actions-group">
+          <button type="button" className="cdetail-hero-btn secondary" onClick={() => setActiveTab('guidelines')}>Xem yêu cầu</button>
+          {rawCampaign?.status === 'DRAFT' && <button type="button" className="cdetail-hero-btn secondary" onClick={() => {
+            const target = campaignEditor(resolvedId);
+            navigate(target.path, { state: target.state });
+          }}>Chỉnh sửa yêu cầu</button>}
+          {['COMPLETED', 'ARCHIVED'].includes(rawCampaign?.status ?? '') ? <button type="button" className="cdetail-hero-btn primary-action" onClick={() => navigate('/campaigns/create')}>Tạo chiến dịch mới</button> : <>
           <button
             type="button"
             className="cdetail-hero-btn primary-action"
             onClick={() => {
-              const cId = resolvedId || 'camp_sg2026';
-              sessionStorage.setItem('current_campaign_id', cId);
-              navigate(`/discovery?campaignId=${cId}`, { state: { campaignId: cId } });
+              if (!resolvedId) return;
+              rememberCampaign(resolvedId);
+              navigate(campaignPath('/discovery', resolvedId));
             }}
           >
             Tìm kiếm Nhà sáng tạo
@@ -128,22 +140,23 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
             type="button"
             className="cdetail-hero-btn secondary"
             onClick={() => {
-              sessionStorage.setItem('current_campaign_id', resolvedId);
-              navigate('/crm');
+              rememberCampaign(resolvedId);
+              navigate(campaignPath('/crm', resolvedId));
             }}
           >
             Tiến độ hợp tác
           </button>
+          </>}
 
           <button
             type="button"
             className="cdetail-hero-btn secondary"
             onClick={() => setActiveTab('budget')}
           >
-            Chi phí & Thanh toán
+            Ngân sách & thỏa thuận
           </button>
 
-          {currentStatus === 'draft' && (
+          {(rawCampaign?.status === 'DRAFT' || rawCampaign?.status === 'READY_FOR_DISCOVERY') && (
             <button
               type="button"
               className="cdetail-hero-btn success"
@@ -153,7 +166,7 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
             </button>
           )}
 
-          {currentStatus !== 'completed' && currentStatus !== 'draft' && currentStatus !== 'cancelled' && (
+          {rawCampaign?.status === 'ACTIVE' && (
             <button
               type="button"
               className="cdetail-hero-btn secondary"

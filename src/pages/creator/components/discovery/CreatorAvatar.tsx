@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Avatar } from 'antd';
+import { creatorProfileImage } from './discoveryUtils';
 
 interface CreatorAvatarProps {
   src?: string;
@@ -10,26 +11,23 @@ interface CreatorAvatarProps {
 
 export const CreatorAvatar: React.FC<CreatorAvatarProps> = ({ src, name, size = 48, style }) => {
   const cleanName = name || 'Creator';
-  const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName)}&background=4F46E5&color=fff&size=150&bold=true`;
-  const initial = cleanName.trim().charAt(0).toUpperCase() || 'C';
+  const imageUrl = creatorProfileImage(src);
+  const [failedUrl, setFailedUrl] = useState('');
+  const words = cleanName.trim().split(/\s+/).filter(Boolean);
+  const initial = (words.length > 1 ? words[0][0] + words[words.length - 1][0] : cleanName.trim().slice(0, 2)).toLocaleUpperCase('vi-VN') || 'C';
 
   return (
     <Avatar
       src={
-        src ? (
+        imageUrl && imageUrl !== failedUrl ? (
           <img
-            src={src}
+            src={imageUrl}
             alt={cleanName}
             referrerPolicy="no-referrer"
-            onError={(e) => {
-              const img = e.currentTarget;
-              if (img.src !== fallbackUrl) {
-                img.src = fallbackUrl;
-              }
-            }}
+            onError={() => setFailedUrl(imageUrl)}
           />
         ) : (
-          fallbackUrl
+          undefined
         )
       }
       size={size}

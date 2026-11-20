@@ -1,4 +1,5 @@
-import { App, Avatar, Button, Checkbox, Dropdown } from 'antd';
+import { App, Button, Checkbox, Dropdown } from 'antd';
+import CreatorAvatar from './discovery/CreatorAvatar';
 import { CheckCircleFilled, MoreOutlined } from '@ant-design/icons';
 import type { ShortlistRecord } from '../../../types/api/shortlist.types';
 import { shortlistLabel, shortlistNumber } from './shortlistDisplay';
@@ -54,15 +55,16 @@ export default function ShortlistCreatorCard({
   const removed = item.status === 'REMOVED';
   const date = item.addedAt ? new Date(item.addedAt) : null;
   const addedDate = date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString('vi-VN') : null;
+  const sourceLabel = item.source === 'MANUAL_DISCOVERY' ? 'Từ Khám phá' : ['AI_RECOMMENDATION', 'AI_RECOMMENDED'].includes(item.source ?? '') ? 'Từ Gợi ý AI' : null;
 
   return (
     <article className={'sl-channel-card' + (checked ? ' is-selected' : '')}>
       <div className="sl-channel-topline">
-        <div className="sl-channel-labels">{item.platform && <span className="sl-channel-platform">{item.platform}</span>}<span>{shortlistLabel(item.status)}</span></div>
+        <div className="sl-channel-labels">{item.platform && <span className="sl-channel-platform">{item.platform}</span>}<span>{shortlistLabel(item.status)}</span>{sourceLabel && <span className="sl-channel-source">{sourceLabel}</span>}</div>
         <Checkbox checked={checked} disabled={removed || busy} aria-label={'Chọn ' + (item.creatorName || 'kênh chưa có tên')} onChange={event => onToggle(event.target.checked)} />
       </div>
       <header className="sl-channel-identity">
-        <Avatar size={48} src={item.avatarUrl || undefined}>{item.creatorName?.charAt(0)}</Avatar>
+        <CreatorAvatar size={44} src={item.avatarUrl || undefined} name={item.creatorName || undefined} />
         <div className="sl-channel-author">
           <h3><button type="button" onClick={onView}>{item.creatorName || 'Kênh chưa có tên'}</button>{item.verifiedByInfluencerMatch && <CheckCircleFilled title="Đã xác minh" />}</h3>
           <p>{item.userName ? '@' + item.userName.replace(/^@+/, '') : 'Chưa có tên tài khoản'}</p>
@@ -81,14 +83,17 @@ export default function ShortlistCreatorCard({
         }}><Button type="text" icon={<MoreOutlined />} aria-label={'Thao tác với ' + (item.creatorName || 'kênh')} /></Dropdown>
       </header>
       <div className="sl-channel-categories">{categories.length ? categories.map(category => <span key={category}>{category}</span>) : <span className="sl-channel-missing">Chưa có ngành hàng</span>}</div>
-      {hasBio && <p className="sl-channel-bio" title={bio}>{bio}</p>}
       <dl className="sl-channel-metrics">
-        <div><dt>Người theo dõi</dt><dd>{shortlistNumber(item.followers)}</dd></div>
+        <div><dt>Người theo dõi</dt><dd title={shortlistNumber(item.followers)}>{formatFollowers(item.followers)}</dd></div>
         <div><dt>Tỷ lệ tương tác</dt><dd>{formatEngagement(item.engagementRate)}</dd></div>
       </dl>
-      <div className="sl-channel-fee"><span>Báo giá tham khảo</span><strong>{formatFee(item)}</strong><small>{item.actualFee != null ? 'Báo giá đã ghi nhận' : item.estimatedFeeMin != null || item.estimatedFeeMax != null ? 'Khoảng giá ước tính' : 'Chưa có thông tin chi phí'}</small></div>
-      <div className="sl-channel-context"><span>Ưu tiên <strong>{shortlistLabel(item.priority)}</strong></span>{addedDate && <span>Lưu ngày {addedDate}</span>}</div>
-      {item.note?.trim() ? <div className="sl-channel-note"><span>Ghi chú</span><p>{item.note}</p></div> : !removed && <button type="button" className="sl-channel-add-note" disabled={busy} onClick={onEdit}>Thêm ghi chú</button>}
+      <div className="sl-channel-fee"><span>{item.actualFee != null ? 'Phí đã ghi nhận' : 'Khoảng phí ước tính'}</span><strong>{formatFee(item)}</strong></div>
+      <div className="sl-channel-context"><button type="button" className={`sl-channel-priority sl-channel-priority-${item.priority.toLowerCase()}`} disabled={busy || removed} onClick={onEdit}>Ưu tiên: <strong>{shortlistLabel(item.priority)}</strong></button>{addedDate && <span>Lưu {addedDate}</span>}</div>
+      {hasBio && <details className="sl-channel-description"><summary>Giới thiệu kênh</summary><p>{bio}</p></details>}
+      <div className="sl-channel-note">
+        <div className="sl-channel-note-heading"><span>Ghi chú lựa chọn</span>{!removed && <button type="button" disabled={busy} onClick={onEdit}>{item.note?.trim() ? 'Chỉnh sửa' : 'Thêm ghi chú'}</button>}</div>
+        {item.note?.trim() ? <details><summary>{item.note}</summary><p>{item.note}</p></details> : <p className="sl-channel-note-empty">Chưa có ghi chú.</p>}
+      </div>
       <footer className="sl-channel-actions"><Button onClick={onView}>Xem hồ sơ</Button>{removed ? <Button disabled={busy} onClick={onRestore}>Khôi phục</Button> : <Button className="sl-channel-select" disabled={busy} onClick={() => onToggle(!checked)}>{checked ? 'Bỏ chọn kênh' : 'Chọn để gợi ý'}</Button>}</footer>
     </article>
   );

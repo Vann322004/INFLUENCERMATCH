@@ -1,12 +1,11 @@
-import React, { useState, useMemo } from 'react';
-import { Alert, Button, ConfigProvider, message } from 'antd';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Alert, Button, ConfigProvider, Tabs, message } from 'antd';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 
 import type { Creator, BrandCampaignItem } from './components/discovery/types';
 import { loadCachedDiscovery } from './components/discovery/discoveryUtils';
 
 import DiscoveryHeader from './components/discovery/DiscoveryHeader';
-import WorkflowStepBar from './components/discovery/WorkflowStepBar';
 import CampaignMatchBanner from './components/discovery/CampaignMatchBanner';
 import DiscoveryFilterSection from './components/discovery/DiscoveryFilterSection';
 import DiscoveryResultsToolbar from './components/discovery/DiscoveryResultsToolbar';
@@ -14,7 +13,7 @@ import CreatorGridList from './components/discovery/CreatorGridList';
 import CreatorDetailDrawer from './components/discovery/CreatorDetailDrawer';
 import AddToShortlistModal from '../../components/discovery/AddToShortlistModal';
 import ShortlistBatchAdd from './components/ShortlistBatchAdd';
-import { activeCampaignId } from '../../services/campaignContext';
+import { activeCampaignId, rememberCampaign } from '../../services/campaignContext';
 
 import { useDiscoveryCampaigns } from './hooks/useDiscoveryCampaigns';
 import { useDiscoveryCreators } from './hooks/useDiscoveryCreators';
@@ -57,12 +56,25 @@ export default function CreatorDiscoveryPage() {
     loadCampaignError,
     setCampaignRequestKey,
     handleTriggerMatch: rawTriggerMatch,
-    handleClearMatch: rawClearMatch,
   } = useDiscoveryCampaigns({
     initialCampId,
     locationState: location.state,
     onRequestKeyBump: () => setRequestKey((v) => v + 1),
   });
+  useEffect(() => {
+    const breadcrumb = matchedCampaign ? { id: matchedCampaign.id, name: matchedCampaign.name } : null;
+    const previous = location.state?.discoveryBreadcrumb;
+    const params = new URLSearchParams(location.search);
+    const queryCampaignId = params.get('campaignId');
+    if (!queryCampaignId && (previous?.id ?? null) === (breadcrumb?.id ?? null) && (previous?.name ?? null) === (breadcrumb?.name ?? null)) return;
+    if (queryCampaignId) rememberCampaign(queryCampaignId);
+    params.delete('campaignId');
+    const search = params.toString();
+    navigate(location.pathname + (search ? '?' + search : '') + location.hash, {
+      replace: true,
+      state: { ...location.state, ...(queryCampaignId ? { campaignId: queryCampaignId } : {}), discoveryBreadcrumb: breadcrumb },
+    });
+  }, [matchedCampaign, location.pathname, location.search, location.hash, location.state, navigate]);
 
   // 3. Selection & Modal States
   const [selectedCreatorIds, setSelectedCreatorIds] = useState<Set<string>>(new Set());
@@ -107,8 +119,6 @@ export default function CreatorDiscoveryPage() {
     setFollowerTier,
     engagementTier,
     setEngagementTier,
-    priceTier,
-    setPriceTier,
     audienceAge,
     setAudienceAge,
     audienceGender,
@@ -124,6 +134,9 @@ export default function CreatorDiscoveryPage() {
     handleResetFilters,
     activeFiltersCount,
     filteredCreators,
+    groupCreators,
+    resultGroup,
+    setResultGroup,
     safeCurrentPage,
     paginatedCreators,
   } = useDiscoveryFilters({
@@ -140,15 +153,10 @@ export default function CreatorDiscoveryPage() {
     rawTriggerMatch(targetCamp);
   };
 
-  const handleClearMatch = () => {
-    setSelectedCreatorIds(new Set());
-    setSortBy('followers');
-    setCurrentPage(1);
-    rawClearMatch();
-  };
 
   // Selection actions
   const handleToggleSelectCreator = (id: string) => {
+    if (creators.find(creator => creator.id === id)?.saved) return;
     setSelectedCreatorIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -157,19 +165,6 @@ export default function CreatorDiscoveryPage() {
     });
   };
 
-  const handleToggleSelectAll = () => {
-    if (paginatedCreators.length === 0) return;
-    const allSelected = paginatedCreators.every((c) => selectedCreatorIds.has(c.id));
-    setSelectedCreatorIds((prev) => {
-      const next = new Set(prev);
-      if (allSelected) {
-        paginatedCreators.forEach((c) => next.delete(c.id));
-      } else {
-        paginatedCreators.forEach((c) => next.add(c.id));
-      }
-      return next;
-    });
-  };
 
   // Navigations & Modals
   const handleOpenCreator = (creator: Creator) => {
@@ -178,18 +173,23 @@ export default function CreatorDiscoveryPage() {
 
   const handleOpenShortlist = (creator: Creator, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (creator.saved && selectedCampaignId) {
+      navigate('/creators/shortlist', { state: { campaignId: selectedCampaignId } });
+      return;
+    }
     setShortlistModalCreator(creator);
   };
 
   const handleBulkAddToShortlist = () => {
-    if (selectedCreatorIds.size === 0) return;
+    const unsavedIds = [...selectedCreatorIds].filter(id => creators.some(creator => creator.id === id && !creator.saved));
+    if (unsavedIds.length === 0) return;
     const targetCampId = selectedCampaignId || matchedCampaign?.id;
     if (!targetCampId) {
       message.warning('Vui lòng tạo hoặc chọn một chiến dịch trước khi thêm Nhà sáng tạo vào danh sách chọn!');
       return;
     }
     if (selectedCreatorIds.size > 100) { message.warning('Mỗi lần chỉ lưu tối đa 100 kênh. Vui lòng bỏ bớt kênh đã chọn.'); return; }
-    setBatchSelection({ campaignId: targetCampId, creators: [...selectedCreatorIds].map(id => ({ id, name: creators.find(item => item.id === id)?.name || 'Kênh đã chọn' })) });
+    setBatchSelection({ campaignId: targetCampId, creators: unsavedIds.map(id => ({ id, name: creators.find(item => item.id === id)?.name || 'Kênh đã chọn' })) });
   };
 
   const handleShareCreator = async (creator: Creator) => {
@@ -201,21 +201,18 @@ export default function CreatorDiscoveryPage() {
     <ConfigProvider theme={discoveryTheme}>
     <div className="cdiscovery-container">
       {/* 1. Header & Breadcrumb */}
-      <DiscoveryHeader matchedCampaign={matchedCampaign} />
+      <DiscoveryHeader />
       {loadCampaignError && <Alert type="error" title={loadCampaignError} action={<Button onClick={() => setCampaignRequestKey(v => v + 1)}>Thử lại</Button>} />}
 
       {/* 2. Stepper 5 bước */}
-      <WorkflowStepBar selectedCampaignId={selectedCampaignId} />
 
       {/* 3. Main Discovery Flow */}
       <div className="cdiscovery-content-flow">
         {/* Banner chế độ đề xuất */}
         <CampaignMatchBanner
           matchedCampaign={matchedCampaign}
-          filteredCount={filteredCreators.length}
           campaignsList={campaignsList}
           selectedCampaignId={selectedCampaignId}
-          onClearMatch={handleClearMatch}
           onSelectCampaign={(campId) => {
             const found = campaignsList.find((c) => c.id === campId);
             if (found) handleTriggerMatch(found);
@@ -237,7 +234,8 @@ export default function CreatorDiscoveryPage() {
           onSortChange={setSortBy}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          selectedPlatform={selectedPlatform}
+          selectedPlatform={matchedCampaign?.channels?.length && !matchedCampaign.channels.includes(selectedPlatform) ? 'all' : selectedPlatform}
+          campaignPlatforms={matchedCampaign?.channels}
           onPlatformChange={(val) => {
             setSelectedPlatform(val);
             setCurrentPage(1);
@@ -268,28 +266,33 @@ export default function CreatorDiscoveryPage() {
             setAudienceGender(val);
             setCurrentPage(1);
           }}
-          priceFilterAvailable={creators.some((c) => c.hasReportedPrice)}
-          priceTier={priceTier}
-          onPriceTierChange={(val) => {
-            setPriceTier(val);
-            setCurrentPage(1);
-          }}
           activeFiltersCount={activeFiltersCount}
           onResetFilters={handleResetFilters}
         />
 
         {/* Toolbar Kết quả & Chọn hàng loạt */}
+        <section className="cdiscovery-results-controls" aria-label="Kết quả và lựa chọn kênh">
         <DiscoveryResultsToolbar
           loading={loading || loadingCampaigns}
           isMatching={isMatching}
           matchedCampaign={matchedCampaign}
           filteredCount={filteredCreators.length}
-          paginatedCreators={paginatedCreators}
+          availableCreators={filteredCreators}
           selectedCreatorIds={selectedCreatorIds}
-          onToggleSelectAll={handleToggleSelectAll}
+          onQuickSelect={(ids, selected) => setSelectedCreatorIds(previous => {
+            const next = new Set(previous);
+            ids.forEach(id => selected ? (!creators.find(creator => creator.id === id)?.saved && next.add(id)) : next.delete(id));
+            return next;
+          })}
           onBulkAddToShortlist={handleBulkAddToShortlist}
+          onViewShortlist={() => navigate('/creators/shortlist', { state: { campaignId: selectedCampaignId } })}
         />
 
+        {matchedCampaign && <Tabs activeKey={resultGroup} onChange={key => { setResultGroup(key); setCurrentPage(1); }} items={[
+          { key: 'matched', label: `Phù hợp yêu cầu (${filteredCreators.filter(creator => !creator.isSimilarFallback).length})` },
+          { key: 'expanded', label: `Kết quả mở rộng (${filteredCreators.filter(creator => creator.isSimilarFallback).length})` },
+        ]} />}
+        </section>
         {/* Grid / List KOC */}
         {loadError && (
           <Alert
@@ -318,7 +321,7 @@ export default function CreatorDiscoveryPage() {
             isMatching={isMatching}
             creators={creators}
             paginatedCreators={paginatedCreators}
-            totalCount={filteredCreators.length}
+            totalCount={groupCreators.length}
             viewMode={viewMode}
             matchedCampaign={matchedCampaign}
             safeCurrentPage={safeCurrentPage}
@@ -353,7 +356,7 @@ export default function CreatorDiscoveryPage() {
         }} />}
       <CreatorDetailDrawer
         visible={drawerVisible}
-        creator={selectedCreator}
+        creator={creators.find(creator => creator.id === selectedCreator?.id) || selectedCreator}
         matchedCampaign={matchedCampaign}
         isRefreshing={isRefreshingCreator}
         onClose={() => setDrawerVisible(false)}
@@ -363,6 +366,8 @@ export default function CreatorDiscoveryPage() {
           }
         }}
         onOpenShortlist={handleOpenShortlist}
+        actionLabel={creators.find(creator => creator.id === selectedCreator?.id)?.saved ? 'Xem trong danh sách chọn' : undefined}
+        actionDisabled={false}
       />
 
       {/* Modal thêm creator vào Shortlist */}
@@ -384,11 +389,12 @@ export default function CreatorDiscoveryPage() {
               }
             : null
         }
-        onSuccess={() => {
-          if (shortlistModalCreator) {
+        onSuccess={(campaignId) => {
+          if (shortlistModalCreator && campaignId === selectedCampaignId) {
             setCreators((prev) =>
               prev.map((c) => (c.id === shortlistModalCreator.id ? { ...c, saved: true } : c))
             );
+            setSelectedCreatorIds(previous => new Set([...previous].filter(id => id !== shortlistModalCreator.id)));
           }
         }}
       />

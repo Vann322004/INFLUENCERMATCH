@@ -4,23 +4,16 @@ import type { CampaignResponse } from '../../../../types/api/campaign.types';
 import type { CampaignCreatorRow, CampaignDetailTabKey } from './campaignDetailTypes';
 export type { CampaignCreatorRow, CampaignDetailTabKey };
 
-const VERIFIED_CREATOR_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=120&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=120&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
-];
 
 interface CampaignMetricCardsProps {
   campaignBudgetFormatted: string;
-  allocatedBudget: number;
-  progressPercent: number;
+  allocatedBudget: number | null;
+  progressPercent: number | null;
   rawCampaign: CampaignResponse | null;
   participatingCreators: CampaignCreatorRow[];
-  confirmedCreatorCount?: number;
-  targetCreatorCount?: number;
-  shortlistCount?: number;
+  confirmedCreatorCount?: number | null;
+  targetCreatorCount?: number | null;
+  shortlistCount?: number | null;
   isOverTarget?: boolean;
   setActiveTab: (tab: CampaignDetailTabKey) => void;
 }
@@ -30,7 +23,6 @@ export const CampaignMetricCards: React.FC<CampaignMetricCardsProps> = ({
   allocatedBudget,
   progressPercent,
   rawCampaign,
-  participatingCreators,
   confirmedCreatorCount = 0,
   targetCreatorCount = 1,
   shortlistCount = 0,
@@ -48,13 +40,13 @@ export const CampaignMetricCards: React.FC<CampaignMetricCardsProps> = ({
           <div className="cdetail-metric-value">{campaignBudgetFormatted}</div>
           <div className="cdetail-metric-progress-wrap">
             <div className="cdetail-metric-progress-bar">
-              <div className="cdetail-metric-progress-fill" style={{ width: `${progressPercent}%` }} />
+              <div className="cdetail-metric-progress-fill" style={{ width: `${progressPercent ?? 0}%` }} />
             </div>
-            <span className="cdetail-metric-progress-label">{progressPercent}%</span>
+            <span className="cdetail-metric-progress-label">{progressPercent == null ? 'Chưa có dữ liệu' : `${progressPercent}%`}</span>
           </div>
         </div>
         <div className="cdetail-metric-footer">
-          <span>Đã cam kết: {allocatedBudget > 0 ? `${allocatedBudget.toLocaleString('vi-VN')} đ` : 'Chưa phân bổ'}</span>
+          <span>Đã cam kết: {allocatedBudget != null ? `${allocatedBudget.toLocaleString('vi-VN')} đ` : 'Chưa có dữ liệu'}</span>
         </div>
       </div>
 
@@ -65,11 +57,11 @@ export const CampaignMetricCards: React.FC<CampaignMetricCardsProps> = ({
         </div>
         <div className="cdetail-metric-mid-row">
           <div className="cdetail-metric-value">
-            {rawCampaign?.followerMin ? `${(rawCampaign.followerMin / 1000).toFixed(0)}K+` : 'Chưa thiết lập'}
+            {rawCampaign?.followerMin != null ? rawCampaign.followerMin.toLocaleString('vi-VN') : 'Chưa thiết lập'}
           </div>
         </div>
         <div className="cdetail-metric-footer">
-          <span>{rawCampaign?.followerMax ? `Tối đa: ${(rawCampaign.followerMax / 1000).toFixed(0)}K` : 'Không giới hạn trần'}</span>
+          <span>{rawCampaign?.followerMax != null ? `Tối đa: ${rawCampaign.followerMax.toLocaleString('vi-VN')}` : 'Chưa thiết lập mức tối đa'}</span>
         </div>
       </div>
 
@@ -79,10 +71,10 @@ export const CampaignMetricCards: React.FC<CampaignMetricCardsProps> = ({
           <span className="cdetail-metric-title">Kênh trong Shortlist</span>
         </div>
         <div className="cdetail-metric-mid-row">
-          <div className="cdetail-metric-value">{shortlistCount} kênh</div>
+          <div className="cdetail-metric-value">{shortlistCount == null ? 'Chưa có dữ liệu' : `${shortlistCount} kênh`}</div>
         </div>
         <div className="cdetail-metric-footer">
-          <span>{rawCampaign?.creatorMode === 'MULTI' ? 'Mô hình: Đa Creator (MULTI)' : 'Mô hình: Đơn Creator (SINGLE)'}</span>
+          <span>{rawCampaign?.creatorMode === 'MULTI' ? 'Mô hình: Nhiều nhà sáng tạo' : rawCampaign?.creatorMode === 'SINGLE' ? 'Mô hình: Một nhà sáng tạo' : 'Chưa thiết lập mô hình'}</span>
         </div>
       </div>
 
@@ -97,14 +89,14 @@ export const CampaignMetricCards: React.FC<CampaignMetricCardsProps> = ({
         </div>
         <div className="cdetail-metric-mid-row">
           <div className="cdetail-metric-value">
-            {confirmedCreatorCount} / {targetCreatorCount} Creator
+            {confirmedCreatorCount ?? '—'} / {targetCreatorCount ?? '—'} Creator
           </div>
         </div>
         <div className="cdetail-metric-footer">
           {isOverTarget ? (
             <span style={{ color: '#D97706', fontWeight: 600 }}>⚠️ Vượt mục tiêu ({confirmedCreatorCount} &gt; {targetCreatorCount})</span>
           ) : (
-            <span>{participatingCreators.length} hợp tác đã xác nhận</span>
+            <span>{confirmedCreatorCount == null ? 'Chưa tải được số lượng đã chốt' : `${confirmedCreatorCount} nhà sáng tạo đã chốt`}</span>
           )}
         </div>
       </div>

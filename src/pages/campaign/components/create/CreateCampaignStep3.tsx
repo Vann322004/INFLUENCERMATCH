@@ -1,11 +1,10 @@
-import React from 'react';
-import { Row, Col, Select, InputNumber, Tag } from 'antd';
+import type { ReactNode } from 'react';
+import { Button, InputNumber } from 'antd';
+import type { CampaignPlanningFields } from '../../../../types/api/campaign.types';
 
-interface CreateCampaignStep3Props {
+interface Props {
   budgetTotal: number;
-  setBudgetTotal: (val: number) => void;
-  campaignDuration: string;
-  setCampaignDuration: (val: string) => void;
+  setBudgetTotal: (value: number) => void;
   campaignName: string;
   product: string;
   selectedPlatforms: string[];
@@ -15,106 +14,57 @@ interface CreateCampaignStep3Props {
   selectedGender: string;
   locationState: string;
   isAiAutofilled: boolean;
+  startDate: string;
+  endDate: string;
+  brief: string;
+  deliverables: NonNullable<CampaignPlanningFields['deliverables']>;
+  children: ReactNode;
 }
-
-export const CreateCampaignStep3: React.FC<CreateCampaignStep3Props> = ({
-  budgetTotal,
-  setBudgetTotal,
-  campaignDuration,
-  setCampaignDuration,
-  campaignName,
-  product,
-  selectedPlatforms,
-  creatorQuantity,
-  creatorTier,
-  selectedAges,
-  selectedGender,
-  locationState,
-  isAiAutofilled,
-}) => {
-  return (
-    <div className={`ccreate-card ${isAiAutofilled ? 'ai-highlight-card' : ''}`}>
-      <div className="ccreate-card-header">
-        <div className="ccreate-card-badge">3</div>
-        <div>
-          <div className="ccreate-card-title">Ngân sách & Thời gian thực thi</div>
-          <div className="ccreate-card-subtitle">
-            Xác định hạn mức tài chính, kỳ vọng chuyển đổi và lịch trình triển khai của chiến dịch.
-          </div>
+const dateLabel = (value: string) => value ? value.split('-').reverse().join('/') : 'Chưa chọn';
+export const CreateCampaignStep3 = (props: Props) => {
+  const { budgetTotal, setBudgetTotal } = props;
+  const budgetValid = Number.isSafeInteger(budgetTotal) && budgetTotal > 0;
+  const tier = ({ nano: 'Quy mô nhỏ', micro: 'Quy mô vừa', macro: 'Quy mô lớn', mega: 'Quy mô rất lớn' } as Record<string, string>)[props.creatorTier];
+  return <div className={`ccreate-card ${props.isAiAutofilled ? 'ai-highlight-card' : ''}`}>
+    <div className="ccreate-card-header">
+      <div className="ccreate-card-badge">3</div>
+      <div><div className="ccreate-card-title">Ngân sách & thời gian</div><div className="ccreate-card-subtitle">Kiểm tra thông tin trước khi chốt yêu cầu chiến dịch.</div></div>
+    </div>
+    <label className="ccreate-field-label" htmlFor="campaign-total-budget">Tổng ngân sách dự kiến (VND) <span className="req">*</span></label>
+    <InputNumber<number> id="campaign-total-budget" min={1} max={Number.MAX_SAFE_INTEGER} precision={0} controls={false}
+      value={budgetTotal > 0 ? budgetTotal : null} placeholder="Nhập tổng ngân sách"
+      onChange={value => setBudgetTotal(value != null && Number.isSafeInteger(value) && value > 0 ? value : 0)}
+      formatter={value => value == null ? '' : `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+      parser={value => Number((value ?? '').replace(/\./g, ''))}
+      suffix="₫" style={{ width: '100%' }} />
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 10 }}>
+      <span className="ad-note">Chọn nhanh:</span>
+      {[5_000_000, 10_000_000, 20_000_000, 50_000_000].map(value => <Button key={value} size="small"
+        type={budgetTotal === value ? 'primary' : 'default'} aria-pressed={budgetTotal === value}
+        onClick={() => setBudgetTotal(value)}>{value / 1_000_000} triệu</Button>)}
+    </div>
+    {props.children}
+    <div className="ccreate-sub-section">
+      <div className="ccreate-sub-title">Tóm tắt trước khi chốt</div>
+      <div className="ccreate-overview-card">
+        {[
+          ['Tên chiến dịch', props.campaignName || 'Chưa nhập'],
+          ['Sản phẩm', props.product || 'Chưa nhập'],
+          ['Ngân sách kế hoạch', budgetValid ? `${budgetTotal.toLocaleString('vi-VN')} ₫` : 'Chưa nhập'],
+          ['Thời gian', `${dateLabel(props.startDate)} – ${dateLabel(props.endDate)}`],
+          ['Nền tảng & nhà sáng tạo', `${props.selectedPlatforms.map(value => ({ tiktok: 'TikTok', instagram: 'Instagram', youtube: 'YouTube' }[value] ?? value)).join(', ')} · ${props.creatorQuantity} nhà sáng tạo${tier ? ` · ${tier}` : ''}`],
+          ['Khán giả & khu vực', [
+            [...props.selectedAges].sort((a, b) => parseInt(a) - parseInt(b)).join(', '),
+            ({ all: 'Tất cả giới tính', female: 'Nữ', male: 'Nam' } as Record<string, string>)[props.selectedGender],
+            props.locationState === 'nationwide' ? 'Toàn quốc' : props.locationState,
+          ].filter(Boolean).join(' · ') || 'Chưa thiết lập'],
+        ].map(([label, value]) => <div className="ccreate-overview-item" key={label}><span className="ccreate-overview-item-label">{label}</span><span className="ccreate-overview-item-val">{value}</span></div>)}
+        <div className="ccreate-overview-item"><span className="ccreate-overview-item-label">Ấn phẩm dự kiến</span>
+          <span className="ccreate-overview-item-val">{props.deliverables.length ? props.deliverables.map(item => `${item.quantity} ${item.contentType} · ${item.platform}`).join('; ') : 'Chưa thêm ấn phẩm'}</span>
         </div>
-      </div>
-
-      {/* Phần 1: Ngân sách & Thời gian */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} md={12}>
-          <div className="ccreate-field-label">
-            <span>Tổng ngân sách dự kiến (VND) <span className="req">*</span></span>
-            <Tag color="blue" style={{ borderRadius: 6, fontSize: 11.5, fontWeight: 700, margin: 0 }}>
-              {(budgetTotal / 1000000).toFixed(1)} Triệu VNĐ
-            </Tag>
-          </div>
-          <InputNumber
-            value={budgetTotal}
-            onChange={(val) => setBudgetTotal(val || 0)}
-            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={(value) => value?.replace(/\$\s?|(,*)/g, '') as any}
-            style={{ width: '100%', borderRadius: 10, height: 42, lineHeight: '40px', fontSize: 14, fontWeight: 700 }}
-            suffix={<span style={{ color: '#6D28D9', fontWeight: 700 }}>VNĐ</span>}
-          />
-        </Col>
-
-        <Col xs={24} md={12}>
-          <div className="ccreate-field-label">
-            <span>Thời lượng chiến dịch <span className="req">*</span></span>
-          </div>
-          <Select
-            value={campaignDuration}
-            onChange={setCampaignDuration}
-            style={{ width: '100%', height: 40 }}
-            options={[
-              { value: '2_weeks', label: '2 tuần (Chiến dịch thần tốc / Flash campaign)' },
-              { value: '4_weeks', label: '4 tuần (Khuyên dùng cho ra mắt sản phẩm)' },
-              { value: '8_weeks', label: '8 tuần (Chiến dịch duy trì nhận diện dài hạn)' },
-            ]}
-          />
-        </Col>
-      </Row>
-
-      {/* Phần 3: Executive Overview Card */}
-      <div className="ccreate-sub-section">
-        <div className="ccreate-sub-title">
-          <span>Tóm tắt tổng quan chiến dịch</span>
-
-        </div>
-
-        <div className="ccreate-overview-card">
-          <div className="ccreate-overview-item">
-            <span className="ccreate-overview-item-label">Tên & Sản phẩm</span>
-            <span className="ccreate-overview-item-val">{campaignName} — {product}</span>
-          </div>
-          <div className="ccreate-overview-item">
-            <span className="ccreate-overview-item-label">Ngân sách & Thời lượng</span>
-            <span className="ccreate-overview-item-val" style={{ color: '#6D28D9' }}>
-              {(budgetTotal / 1000000).toFixed(1)} Triệu VNĐ • {campaignDuration === '2_weeks' ? '2 tuần' : campaignDuration === '4_weeks' ? '4 tuần' : campaignDuration === '8_weeks' ? '8 tuần' : 'Theo ngày đã chọn'}
-            </span>
-          </div>
-          <div className="ccreate-overview-item">
-            <span className="ccreate-overview-item-label">Nền tảng & Creator</span>
-            <span className="ccreate-overview-item-val">
-              {selectedPlatforms.map(p => p.toUpperCase()).join(', ')} • {creatorQuantity} {creatorTier.toUpperCase()}
-            </span>
-          </div>
-          <div className="ccreate-overview-item">
-            <span className="ccreate-overview-item-label">Khán giả & Khu vực</span>
-            <span className="ccreate-overview-item-val">
-              {selectedAges.join(', ')} • {selectedGender === 'all' ? 'Tất cả' : selectedGender === 'female' ? 'Nữ' : selectedGender === 'male' ? 'Nam' : 'Chưa chọn'} • {locationState}
-            </span>
-          </div>
-        </div>
+        <div className="ccreate-overview-item"><span className="ccreate-overview-item-label">Yêu cầu sáng tạo</span><span className="ccreate-overview-item-val" style={{ whiteSpace: 'pre-wrap' }}>{props.brief || 'Chưa nhập'}</span></div>
       </div>
     </div>
-  );
+  </div>;
 };
-
 export default CreateCampaignStep3;
-

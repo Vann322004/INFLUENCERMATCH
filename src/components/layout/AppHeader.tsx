@@ -12,6 +12,10 @@ export default function AppHeader({ onOpenNavigation }: { onOpenNavigation?: () 
 
   const getPageInfo = () => {
     const p = location.pathname;
+    if (p === '/creators' || p === '/creators/discover' || p === '/discovery') {
+      const context = location.state?.discoveryBreadcrumb;
+      return { root: context ? 'Chiến dịch' : 'Trang chủ', sub: context?.name, subLink: '/campaigns/detail', current: 'Khám phá Nhà sáng tạo' };
+    }
     if (p.includes('/campaign-management')) {
       const campName = null;
       const isRec = location.search.includes('recommendation');
@@ -81,7 +85,7 @@ export default function AppHeader({ onOpenNavigation }: { onOpenNavigation?: () 
         <div className="header-breadcrumbs">
           {onOpenNavigation && <Button type="text" icon={<MenuOutlined />}
             aria-label="Mở menu điều hướng" onClick={onOpenNavigation} />}
-          <span className="header-bc-root" onClick={() => navigate('/dashboard')}>
+          <span className="header-bc-root" onClick={() => navigate(pageInfo.root === 'Chiến dịch' ? '/campaigns' : '/dashboard')}>
             <HomeOutlined style={{ marginRight: 4, fontSize: 12 }} />
             {pageInfo.root}
           </span>
@@ -90,7 +94,9 @@ export default function AppHeader({ onOpenNavigation }: { onOpenNavigation?: () 
             <>
               <span
                 className="header-bc-root"
-                onClick={() => pageInfo.subLink && navigate(pageInfo.subLink)}
+                title={pageInfo.sub}
+                style={{ minWidth: 0, maxWidth: 'min(38vw, 440px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                onClick={() => pageInfo.subLink && navigate(pageInfo.subLink, pageInfo.subLink === '/campaigns/detail' && location.state?.discoveryBreadcrumb ? { state: { campaignId: location.state.discoveryBreadcrumb.id } } : undefined)}
               >
                 {pageInfo.sub}
               </span>

@@ -187,7 +187,7 @@ export default function CampaignPage() {
             (p) => (p as string) !== 'YOUTUBE'
           );
 
-          const coverImage = (c as any).imageUrl || (c as any).thumbnail || 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80';
+          const coverImage = c.imageUrl || '';
 
           return {
             id: c.id,
@@ -876,7 +876,7 @@ export default function CampaignPage() {
                   >
                     {/* Left: Thumbnail & Info */}
                     <div className="campaign-row-identity" style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 2 }}>
-                      <img
+                      {item.thumbnail ? <img
                         src={item.thumbnail}
                         alt={item.name}
                         style={{
@@ -887,7 +887,7 @@ export default function CampaignPage() {
                           flexShrink: 0,
                           border: '1px solid #F1F5F9',
                         }}
-                      />
+                      /> : <div aria-label="Chưa có ảnh chiến dịch" style={{ width: 52, height: 52, borderRadius: 9, background: '#f3eef9', display: 'grid', placeItems: 'center', flexShrink: 0, fontSize: 10, color: '#64748b' }}>Chưa có ảnh</div>}
 
                       <div style={{ minWidth: 0 }}>
                         <div
@@ -1234,11 +1234,11 @@ export default function CampaignPage() {
                   }}
                   onClick={() => handleOpenDetail(campaigns[0])}
                 >
-                  <img
+                  {campaigns[0].thumbnail ? <img
                     src={campaigns[0].thumbnail}
                     alt={campaigns[0].name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
+                  /> : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', color: '#64748b', background: '#f3eef9' }}>Chưa có ảnh chiến dịch</div>}
 
                   {/* Overlaid Status Pill */}
                   <div

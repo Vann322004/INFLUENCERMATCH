@@ -30,6 +30,9 @@ export interface CreatorVectorSearchItem {
 }
 
 export interface CreatorDetail {
+  previousFollowers?: number | null;
+  followerChange7d?: number | null;
+  followerGrowthRate?: number | null;
   estimatedFeeMin?: number | null;
   estimatedFeeMax?: number | null;
   actualFee?: number | null;

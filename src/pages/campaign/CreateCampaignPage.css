@@ -9,9 +9,13 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding-bottom: 24px;
+  padding-bottom: 0;
   box-sizing: border-box;
   width: 100%;
+}
+
+.brand-content:has(.ccreate-container) {
+  padding-bottom: 0 !important;
 }
 
 /* 1. Header Section */
@@ -153,14 +157,23 @@
 
 /* 3. AI Assistant Hero Card - Elegant & Pastel */
 .ccreate-ai-hero-card {
-  background: linear-gradient(135deg, #FAF5FF 0%, #F5F3FF 50%, #F3E8FF 100%);
-  border: 1px solid #E9D5FF;
+  background: #FFFFFF;
+  border: 1px solid #D8CBEE;
   border-radius: 16px;
   padding: 16px 20px;
-  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.04);
+  box-shadow: 0 4px 16px rgba(55, 30, 85, 0.06);
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.ccreate-ai-explanation summary { cursor: pointer; font-size: 12px; color: #64748B; }
+.ccreate-ai-explanation p { margin: 8px 0 0; max-height: 160px; overflow-y: auto; overflow-wrap: anywhere; line-height: 1.6; }
+
+.ccreate-edit-notice.ant-alert {
+  background: #FFFFFF !important;
+  border-color: #D8CBEE !important;
+  border-left: 3px solid #8B5CF6 !important;
 }
 
 .ccreate-ai-hero-header {
@@ -214,17 +227,19 @@
 }
 
 .ccreate-ai-input-field {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
   border-radius: 12px !important;
   border: 1.5px solid #DDD6FE !important;
   min-height: 52px !important;
-  height: auto !important;
   padding: 10px 14px !important;
   font-size: 13.5px !important;
   line-height: 1.55 !important;
   background: #FFFFFF !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
   transition: all 0.2s ease !important;
-  resize: vertical !important;
+  resize: none;
 }
 
 .ccreate-ai-input-field:focus {
@@ -289,6 +304,10 @@
 }
 
 /* 4. Main Section Cards - Spacious & Elegant */
+.ccreate-audience-description > label { display: block; margin-bottom: 10px; font-weight: 600; }
+.ccreate-deliverables > h3 { margin: 0 0 16px; }
+.ccreate-deliverables .workflow-deliverable { margin-block: 0 12px; align-items: start; }
+
 .ccreate-card {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
@@ -663,6 +682,7 @@
   border-radius: 16px 16px 0 0;
   box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.05);
   padding: 12px 24px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
   margin-top: 10px;
   display: flex;
   align-items: center;

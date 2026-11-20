@@ -1,4 +1,3 @@
-import { campaignRecommendationPool } from '../components/discovery/recommendationLimit';
 import { useState, useMemo } from 'react';
 import { message } from 'antd';
 import type { Creator, BrandCampaignItem } from '../components/discovery/types';
@@ -29,6 +28,7 @@ export function useDiscoveryFilters({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
+  const [resultGroup, setResultGroup] = useState('matched');
 
   const handleResetFilters = () => {
     setSearchTerm('');
@@ -60,9 +60,9 @@ export function useDiscoveryFilters({
 
   const filteredCreators = useMemo(
     () =>
-      filterDiscoveryCreators(campaignRecommendationPool(creators, !!matchedCampaign), {
+      filterDiscoveryCreators(creators, {
         search: matchedCampaign ? '' : submittedSearch,
-        platform: selectedPlatform,
+        platform: matchedCampaign?.channels?.length && !matchedCampaign.channels.includes(selectedPlatform) ? 'all' : selectedPlatform,
         category: selectedCategory,
         followerTier,
         engagementTier,
@@ -84,13 +84,14 @@ export function useDiscoveryFilters({
     ]
   );
 
-  const totalPages = Math.max(1, Math.ceil(filteredCreators.length / pageSize));
+  const groupCreators = matchedCampaign ? filteredCreators.filter(creator => Boolean(creator.isSimilarFallback) === (resultGroup === 'expanded')) : filteredCreators;
+  const totalPages = Math.max(1, Math.ceil(groupCreators.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
 
   const paginatedCreators = useMemo(() => {
     const startIndex = (safeCurrentPage - 1) * pageSize;
-    return filteredCreators.slice(startIndex, startIndex + pageSize);
-  }, [filteredCreators, safeCurrentPage, pageSize]);
+    return groupCreators.slice(startIndex, startIndex + pageSize);
+  }, [groupCreators, safeCurrentPage, pageSize]);
 
   return {
     searchTerm,
@@ -123,6 +124,9 @@ export function useDiscoveryFilters({
     handleResetFilters,
     activeFiltersCount,
     filteredCreators,
+    groupCreators,
+    resultGroup,
+    setResultGroup,
     totalPages,
     safeCurrentPage,
     paginatedCreators,

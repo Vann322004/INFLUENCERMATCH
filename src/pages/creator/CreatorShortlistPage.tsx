@@ -5,7 +5,7 @@ import type { Creator } from './components/discovery/types';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Alert, Button, ConfigProvider, Dropdown, Empty, Form, Input, Modal, Pagination, Popconfirm, Select, Skeleton, message } from 'antd';
 import viVN from 'antd/locale/vi_VN';
-import { ArrowRightOutlined, MoreOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ArrowRightOutlined, MoreOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { activeCampaignId, rememberCampaign, campaignPath } from '../../services/campaignContext';
 import { shortlistService } from '../../services/api/shortlistService';
@@ -109,8 +109,18 @@ export default function CreatorShortlistPage() {
   useShortlistRealtime(campaignId || null, reload);
 
   const [quickOpen, setQuickOpen] = useState(false);
+  const recommendationNavigationLock = useRef(false);
+  useEffect(() => { recommendationNavigationLock.current = false; }, [context]);
+  const canStartRecommendations = !!campaign && !busy && !!getStoredUser()?.permissions?.includes('RUN_RECOMMENDATION')
+    && !['COMPLETED', 'ARCHIVED'].includes(campaign.status);
+  const backToDiscovery = () => {
+    if (!campaignId) return;
+    rememberCampaign(campaignId);
+    navigate('/creators', { state: { campaignId } });
+  };
   const openRecommendations = (ids: string[] = selected.map(item => item.creatorId)) => {
-    if (!campaign || busy) return;
+    if (!campaign || !canStartRecommendations || recommendationNavigationLock.current) return;
+    recommendationNavigationLock.current = true;
     rememberCampaign(campaign.id);
     const sessionId = getAuthSessionId();
     navigate('/campaign-management?tab=recommendation', {
@@ -135,12 +145,6 @@ export default function CreatorShortlistPage() {
     }
   };
 
-  const changeCampaign = (value: string) => {
-    setParams({ page: 0, size: 20 }); setSelection({ context: '', items: [] }); setCompareOpen(false);
-    setEdit(null); setContactOpen(false); setOutreach(null); setBusy(null);
-    // A navigation pointer is allowed; no shortlist results or metrics are stored locally.
-    rememberCampaign(value); navigate('/creators/shortlist', { replace: true, state: { shortlistContext: { sessionId, campaignId: value } } });
-  };
 
   const toggle = (item: ShortlistRecord, checked: boolean) => {
     if (checked && selected.length >= 100) { message.warning('Mỗi lần chỉ xử lý tối đa 100 kênh. Bỏ chọn một kênh trước.'); return; }
@@ -222,7 +226,6 @@ export default function CreatorShortlistPage() {
         <header className="sl-heading">
           <div>
             <h1>Danh sách đã chọn</h1>
-            <p>Các kênh được lưu từ trang khám phá và đề xuất của chiến dịch.</p>
           </div>
         </header>
         {campaigns.status === 'loading' ? (
@@ -231,31 +234,41 @@ export default function CreatorShortlistPage() {
           <Alert type="error" title="Không thể tải chiến dịch." action={<Button onClick={() => void campaigns.reload()}>Thử lại</Button>} />
         ) : campaigns.data?.length === 0 ? (
           <Empty description="Chưa có chiến dịch" />
+        ) : !campaign ? (
+          <section className="sl-panel"><Empty description={campaignId ? 'Không tìm thấy chiến dịch hiện tại hoặc bạn không có quyền truy cập.' : 'Chọn chiến dịch trước khi xem danh sách đã lưu.'} />
+            <Button onClick={() => navigate('/campaigns')}>Về danh sách chiến dịch</Button>
+          </section>
         ) : (
           <>
             <section className="sl-panel sl-campaign-context">
-              <label>
-                Chiến dịch
-                <Select
-                  aria-label="Chiến dịch"
-                  value={campaignId || undefined}
-                  placeholder="Chọn chiến dịch"
-                  options={campaigns.data?.map(item => ({ value: item.id, label: item.name }))}
-                  onChange={changeCampaign}
-                />
-              </label>
+              <span className="sl-campaign-label">Chiến dịch hiện tại</span>
+              <h2>{campaign.name}</h2>
             </section>
             <div className="sl-list-header">
               <div>
                 <h2>Kênh đã lưu {list.status === 'success' && <span>{list.data?.totalElements.toLocaleString('vi-VN')}</span>}</h2>
-                <p className="sl-muted">Chọn kênh để so sánh, chạy gợi ý hoặc chuẩn bị liên hệ.</p>
               </div>
               <div className="sl-list-tools">
-                <Button disabled={!campaign} onClick={() => setQuickOpen(true)}>Chọn kênh</Button>
+                <Button disabled={!canStartRecommendations} aria-expanded={quickOpen} onClick={() => setQuickOpen(value => !value)}>Chọn nhanh</Button>
                 <Select aria-label="Lọc ưu tiên" value={params.priority ?? 'ALL'} options={[{ value: 'ALL', label: 'Mọi ưu tiên' }, ...priorities]} onChange={value => setParams(previous => ({ ...previous, page: 0, priority: value === 'ALL' ? undefined : value as ShortlistPriority }))} />
                 <Select aria-label="Lọc trạng thái" value={params.status ?? 'ALL'} options={[{ value: 'ALL', label: 'Kênh đang lưu' }, ...Object.entries(statuses).map(([value, label]) => ({ value, label }))]} onChange={value => setParams(previous => ({ ...previous, page: 0, status: value === 'ALL' ? undefined : value as ShortlistStatus }))} />
               </div>
             </div>
+        {quickOpen && (
+          <ShortlistQuickPicker
+            key={context}
+            inline
+            open={quickOpen}
+            campaignId={campaignId}
+            selectedIds={selected.map(item => item.creatorId)}
+            confirmLabel="Đánh giá"
+            onClose={() => setQuickOpen(false)}
+            onApply={ids => {
+              setQuickOpen(false);
+              openRecommendations(ids);
+            }}
+          />
+        )}
             {!campaignId ? (
               <Empty description="Chọn chiến dịch để xem danh sách" />
             ) : list.status === 'loading' ? (
@@ -264,7 +277,7 @@ export default function CreatorShortlistPage() {
               <Alert type="error" title="Không thể tải danh sách đã chọn." action={<Button onClick={() => void list.reload()}>Thử lại</Button>} />
             ) : !list.data?.items.length ? (
               <Empty description="Chưa có kênh theo bộ lọc này">
-                <Button onClick={() => navigate('/creators')}>Khám phá nhà sáng tạo</Button>
+                <Button onClick={backToDiscovery}>Khám phá nhà sáng tạo</Button>
               </Empty>
             ) : (
               <div className="sl-channel-grid">
@@ -326,12 +339,9 @@ export default function CreatorShortlistPage() {
             <footer className="sl-action-bar" aria-label="Thao tác danh sách đã chọn">
               <div className="sl-action-summary">
                 <strong>{selected.length ? `Đã chọn ${selected.length} kênh` : 'Chưa đánh dấu kênh'}</strong>
-                <span>
-                  {selected.length ? `Gợi ý sẽ dùng ${selected.length} kênh đã chọn.` : 'Không chọn riêng: gợi ý dùng toàn bộ danh sách.'}
-                  {isDraft && ' · Chiến dịch đang ở Bản nháp (DRAFT).'}
-                </span>
               </div>
               <div className="sl-action-buttons">
+                <Button icon={<ArrowLeftOutlined />} disabled={!!busy} onClick={backToDiscovery}>Khám phá</Button>
                 {isDraft && (
                   <Button
                     type="dashed"
@@ -378,29 +388,16 @@ export default function CreatorShortlistPage() {
                 )}
                 <Button
                   type="primary"
-                  disabled={!campaign || !!busy}
+                  disabled={!canStartRecommendations}
                   onClick={() => openRecommendations()}
                 >
-                  {selected.length > 0 ? `Chạy gợi ý (${selected.length} kênh đã chọn)` : 'Chạy gợi ý toàn bộ danh sách'} <ArrowRightOutlined />
+                  {selected.length > 0 ? `Đánh giá ${selected.length} kênh đã chọn` : 'Đánh giá toàn bộ danh sách'} <ArrowRightOutlined />
                 </Button>
               </div>
             </footer>
           </>
         )}
-        {quickOpen && (
-          <ShortlistQuickPicker
-            key={context}
-            open={quickOpen}
-            campaignId={campaignId}
-            selectedIds={selected.map(item => item.creatorId)}
-            confirmLabel="Chạy gợi ý"
-            onClose={() => setQuickOpen(false)}
-            onApply={ids => {
-              setQuickOpen(false);
-              openRecommendations(ids);
-            }}
-          />
-        )}
+
         <Modal
           title="Ghi chú và ưu tiên"
           open={edit?.context === context}

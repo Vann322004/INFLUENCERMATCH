@@ -126,11 +126,6 @@ export const CreateCampaignStep2: React.FC<CreateCampaignStep2Props> = ({
           block
           style={{ borderRadius: 10, padding: 4 }}
         />
-        <div style={{ fontSize: 12, color: '#64748B', marginTop: 6 }}>
-          {creatorMode === 'SINGLE'
-            ? 'Chế độ Đơn Creator tập trung vào 1 Nhà sáng tạo chủ chốt (targetCreatorCount = 1).'
-            : 'Chế độ Đa Creator cho phép tuyển nhiều Nhà sáng tạo cùng lúc để phủ rộng chiến dịch (targetCreatorCount ≥ 2).'}
-        </div>
       </div>
 
       <Row gutter={[16, 16]}>

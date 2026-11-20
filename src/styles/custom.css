@@ -5,20 +5,31 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
+.sidebar-brand-name .sidebar-brand-match { color: #c4b5fd; }
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .sidebar-brand-name .sidebar-brand-match {
+    background: linear-gradient(115deg, #c4b5fd 0%, #a78bfa 35%, #d8b4fe 65%, #b9a5ff 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
 /* ==========================================================================
-   Sidebar: Floating Deep Plum-Violet Gradient (Unified Across All 4 Roles)
+   Sidebar: Full-height Deep Plum-Violet Panel (Unified Across All 4 Roles)
    ========================================================================== */
 .app-sider {
   background: linear-gradient(180deg, #231433 0%, #341E4E 54%, #492A6D 100%) !important;
-  border-right: none !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 22px !important;
-  margin: 10px 0 10px 10px !important;
-  height: calc(100dvh - 20px) !important;
-  max-height: calc(100dvh - 20px) !important;
+  border: 0 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
   position: relative !important;
   z-index: 50;
-  box-shadow: 0 18px 42px rgba(28, 14, 48, 0.28) !important;
+  box-shadow: none !important;
   overflow: hidden !important;
   flex-shrink: 0 !important;
   transition: all 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
@@ -560,13 +571,13 @@ body {
 
 /* Header - Modern SaaS Breadcrumbs, Search & Live Indicator */
 .app-header {
-  background: transparent !important;
+  background: #FAF5FF !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   height: auto !important;
   min-height: 54px !important;
   line-height: normal !important;
-  padding: 12px 24px 4px 24px !important;
+  padding: 12px 24px !important;
   border-bottom: none !important;
   position: sticky !important;
   top: 0;
