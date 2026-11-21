@@ -151,6 +151,28 @@
 .rec-detail-drawer .ant-drawer-title { font-size: 15px; }
 .rec-detail-drawer .ant-drawer-body { padding: 24px; }
 .rec-card-detail { padding: 0; border: 0; border-radius: 0; }
+.rec-analysis-drawer .ant-drawer-header,
+.rec-analysis-drawer .ant-drawer-footer { flex-shrink: 0; background: #fff; }
+.rec-analysis-drawer .ant-drawer-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.rec-analysis-drawer .ant-drawer-footer { padding: 12px 24px; border-top: 1px solid #eee5fa; }
+.rec-analysis-drawer .rec-card-detail { padding: 0; gap: 18px; }
+.rec-conclusion { padding: 14px 16px; background: #faf7ff; border: 1px solid #eee5fa; border-radius: 12px; }
+.rec-conclusion .rec-score,
+.rec-conclusion .rec-score.rec-score-unavailable { padding: 0; background: none; border: 0; }
+.rec-conclusion .rec-price { padding: 10px 0 0; border: 0; }
+.rec-conclusion-tier { margin: 10px 0 0; color: #64748b; font-size: 12px; line-height: 1.65; }
+.rec-card-detail .rec-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 16px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; }
+.rec-card-detail .rec-reason-summary p { white-space: pre-wrap; }
+.rec-card-detail .rec-reason-summary .rec-details { margin-top: 10px; }
+.rec-card-detail > :is(.rec-memory-details, .rec-extra-info, .rec-run-metadata) { margin: 0; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px; }
+.rec-card-detail > .rec-details > summary { padding: 0; }
+.rec-card-detail .rec-extra-info p { margin: 12px 0; }
+.rec-analysis-drawer .rec-card-footer { gap: 8px; padding: 0; }
+.rec-analysis-drawer .rec-feedback { padding-top: 6px; }
+@media (max-width: 767px) {
+  .rec-analysis-drawer .ant-drawer-content-wrapper { width: 100% !important; max-width: 100vw; }
+  .rec-analysis-drawer .ant-drawer-footer { padding: 12px 16px; }
+}
 .rec-run-metadata { margin-top: 20px; }
 .recommendation-page .ant-tabs-content-holder { min-width: 0; }
 .rec-card-detail .rec-breakdown > div { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }

@@ -50,7 +50,7 @@ import { channelVerificationService, type LinkedChannel } from '../../../service
 import ChannelVerification from './ChannelVerification';
 import './CreatorPortalPage.css';
 
-import { CreatorCollaborations } from '../../collaboration/CollaborationPage';
+import CreatorCooperationPage from './CreatorCooperationPage';
 
 export default function CreatorPortalPage() {
   const location = useLocation();
@@ -830,7 +830,7 @@ export default function CreatorPortalPage() {
       {/* ========================================================================= */}
       {/* VIEW 5: QUẢN LÝ HỢP TÁC & BOOKING (/creator/bookings)                     */}
       {/* ========================================================================= */}
-      {activeTab === 'bookings' && <CreatorCollaborations />}
+      {activeTab === 'bookings' && <CreatorCooperationPage />}
 
       {/* MODAL 1: ADD / EDIT RATE CARD */}
       <Modal

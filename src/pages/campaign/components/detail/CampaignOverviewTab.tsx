@@ -9,8 +9,9 @@ interface Props {
   participatingCreators: CampaignCreatorRow[];
   handleNavigateToEdit: () => void;
   moreMenuItems: MenuProps['items'];
+  onViewRequirements: () => void;
 }
-export const CampaignOverviewTab = ({ rawCampaign: c, handleNavigateToEdit }: Props) => (
+export const CampaignOverviewTab = ({ rawCampaign: c, handleNavigateToEdit, onViewRequirements }: Props) => (
   <div className="cdetail-overview-rows">
     <div className="cdetail-overview-row">
       <div className="cdetail-card-modern">
@@ -23,7 +24,8 @@ export const CampaignOverviewTab = ({ rawCampaign: c, handleNavigateToEdit }: Pr
           <div className="cdetail-product-tags">{c?.niches?.map(n => <span key={n} className="cdetail-product-tag">{n}</span>)}</div>
         </div></div>
         <div className="cdetail-brief-block"><span className="cdetail-brief-label">Yêu cầu hợp tác</span>
-          <p className="cdetail-brief-text" style={{ whiteSpace: 'pre-wrap' }}>{c?.brief || 'Chưa có yêu cầu hợp tác'}</p>
+          <p className="cdetail-brief-text cdetail-brief-preview" style={{ whiteSpace: 'pre-wrap' }}>{c?.brief || 'Chưa có yêu cầu hợp tác'}</p>
+          {c?.brief && <Button type="link" style={{ paddingInline: 0 }} onClick={onViewRequirements}>Xem đầy đủ yêu cầu</Button>}
         </div>
       </div>
       <div className="cdetail-card-modern">

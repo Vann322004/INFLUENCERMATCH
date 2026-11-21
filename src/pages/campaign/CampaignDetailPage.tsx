@@ -116,6 +116,7 @@ export default function CampaignDetailPage() {
                 participatingCreators={participatingCreators}
                 handleNavigateToEdit={handleNavigateToEdit}
                 moreMenuItems={moreMenuItems}
+                onViewRequirements={() => setActiveTab('guidelines')}
               />
             )}
 

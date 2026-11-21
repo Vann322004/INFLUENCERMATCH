@@ -798,3 +798,17 @@
   border-radius: 6px;
   margin-left: 8px;
 }
+.campaign-image-picker { margin-top: 16px; }
+.campaign-image-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.campaign-image-heading h3 { margin: 0; color: #0f172a; font-size: 14px; font-weight: 600; }
+.campaign-image-heading h3 span { color: #64748b; font-size: 12px; font-weight: 400; }
+.campaign-image-tabs { display: flex; gap: 4px; padding: 3px; background: #faf7ff; border: 1px solid #eee5fa; border-radius: 9px; }
+.campaign-image-tabs .ant-btn { box-shadow: none; font-size: 12px; }
+.campaign-image-content { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.campaign-image-preview { width: 112px; height: 76px; border-radius: 10px; background: #faf7ff; border: 1px solid #eee5fa; display: grid; place-items: center; color: #a78bfa; font-size: 24px; overflow: hidden; flex-shrink: 0; }
+.campaign-image-preview img { width: 100%; height: 100%; object-fit: cover; }
+.campaign-image-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; min-width: 0; flex: 1; }
+.campaign-image-controls > .ant-input { flex: 1 1 240px; min-width: 0; }
+.campaign-image-hint { color: #64748b; font-size: 12px; }
+.campaign-image-error { width: 100%; color: #dc2626; font-size: 12px; margin: 0; }
+@media (max-width: 575px) { .campaign-image-content { align-items: flex-start; } .campaign-image-preview { width: 80px; height: 64px; } .campaign-image-controls > .ant-input { flex-basis: 100%; } }

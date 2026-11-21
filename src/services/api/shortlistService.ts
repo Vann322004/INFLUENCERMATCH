@@ -102,10 +102,10 @@ export const shortlistService = {
       || data.items.some((item: any) => !itemIds.includes(item.shortlistItemId))) throw new Error('Dữ liệu liên hệ không hợp lệ.');
     return data;
   },
-  async prepareOutreach(campaignId: string, itemIds: string[]): Promise<OutreachResult> {
+  async prepareOutreach(campaignId: string, itemIds: string[], recommendationRunId?: string): Promise<OutreachResult> {
     orderedDistinct(itemIds, 1, 100);
     // Intentionally draft-only: without fee/terms/deliverables BE does NOT send a proposal.
-    const data = dataOf((await apiClient.post(`${path(campaignId)}/outreach`, { shortlistItemIds: itemIds })).data);
+    const data = dataOf((await apiClient.post(`${path(campaignId)}/outreach`, { shortlistItemIds: itemIds, recommendationRunId })).data);
     if (data?.campaignId !== campaignId || !Array.isArray(data.items) || data.items.length !== itemIds.length
       || new Set(data.items.map((item: any) => item.shortlistItemId)).size !== itemIds.length
       || data.items.some((item: any) => !itemIds.includes(item.shortlistItemId))) throw new Error('Kết quả chuẩn bị CRM không hợp lệ.');

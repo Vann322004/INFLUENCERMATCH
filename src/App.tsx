@@ -20,7 +20,8 @@ import CampaignListPage from './pages/campaign/CampaignListPage';
 import CampaignDetailPage from './pages/campaign/CampaignDetailPage';
 import SubscriptionPage from './pages/subscription/SubscriptionPage';
 import BrandProfilePage, { BrandOnboardingPage } from './pages/brand/BrandProfilePage';
-import OutreachCrmPage from './pages/crm/OutreachCrmPage';
+import OutreachCrmPage from './pages/crm/CampaignOutreachPage';
+import CooperationInvitationPage from './pages/crm/CooperationInvitationPage';
 import CollaborationPage from './pages/collaboration/CollaborationPage';
 import CollaborationDetailPage from './pages/collaboration/CollaborationDetailPage';
 import PerformancePage from './pages/performance/PerformancePage';
@@ -171,6 +172,7 @@ export default function App() {
           {/* Public Landing Page / Homepage */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/landing" element={<LandingPage />} />
+          <Route path="/cooperation-invitations" element={<CooperationInvitationPage />} />
 
           {/* Auth Routes */}
           <Route

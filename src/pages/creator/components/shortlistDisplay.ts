@@ -13,6 +13,7 @@ const labels: Record<string, string> = {
   ADDED: 'Đã thêm', ALREADY_EXISTS: 'Đã có trong danh sách', RESTORED: 'Đã khôi phục', INVALID: 'Kênh không còn khả dụng', FAILED: 'Chưa thực hiện được',
   NEEDS_PROPOSAL: 'Đã tạo bản nháp, cần hoàn thiện đề xuất', QUEUED: 'Đang chờ gửi', SENT: 'Đã gửi',
   DEAL_STATE_CONFLICT: 'Trạng thái thỏa thuận đã thay đổi', DEAL_REVISION_CONFLICT: 'Thỏa thuận có phiên bản mới',
+  RECOMMENDATION_REQUIRED: 'Cần đánh giá các kênh trong cùng một lượt trước khi mời hợp tác',
   FORBIDDEN: 'Không đủ quyền thực hiện', RESOURCE_NOT_FOUND: 'Không tìm thấy kênh', NOT_FOUND: 'Không tìm thấy kênh',
   INTERNAL_ERROR: 'Lỗi xử lý từ hệ thống', ACCESS_DENIED: 'Không đủ quyền thực hiện', UNAUTHENTICATED: 'Cần đăng nhập lại',
 };

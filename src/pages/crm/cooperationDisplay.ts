@@ -1,0 +1,1 @@
+export const dealLabel = (status: string) => ({ CONTACTED: 'Lời mời bản nháp', NEGOTIATING: 'Đang trao đổi', DECLINED: 'Đã từ chối', CONFIRMED: 'Đã xác nhận', ACTIVE: 'Đang hợp tác', COMPLETED: 'Hoàn thành', CANCELLED: 'Đã hủy' }[status] ?? 'Cần kiểm tra trạng thái');

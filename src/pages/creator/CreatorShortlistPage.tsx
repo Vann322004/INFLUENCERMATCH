@@ -3,22 +3,23 @@ import ShortlistQuickPicker from '../../components/campaign/ShortlistQuickPicker
 import { CreatorDetailDrawer } from './components/discovery/CreatorDetailDrawer';
 import type { Creator } from './components/discovery/types';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { Alert, Button, ConfigProvider, Dropdown, Empty, Form, Input, Modal, Pagination, Popconfirm, Select, Skeleton, message } from 'antd';
+import { Alert, Button, ConfigProvider, Empty, Form, Input, Modal, Pagination, Select, Skeleton, message } from 'antd';
 import viVN from 'antd/locale/vi_VN';
-import { ArrowLeftOutlined, ArrowRightOutlined, MoreOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { activeCampaignId, rememberCampaign, campaignPath } from '../../services/campaignContext';
+import { activeCampaignId, rememberCampaign } from '../../services/campaignContext';
 import { shortlistService } from '../../services/api/shortlistService';
 import { campaignService } from '../../services/api/campaignService';
 import { creatorService } from '../../services/api/creatorService';
 import { getErrorMessage } from '../../services/apiClient';
 import { getStoredUser, getAuthSessionId, subscribeAuthSession } from '../../services/authSession';
-import type { ShortlistRecord, ShortlistStatus, OutreachResult } from '../../types/api/shortlist.types';
+import type { ShortlistRecord, ShortlistStatus } from '../../types/api/shortlist.types';
 import type { ShortlistPriority } from '../../types/api/creator.types';
 import { useAsyncResource } from '../../hooks/useAsyncResource';
 import { useShortlistRealtime } from '../../hooks/useShortlistRealtime';
 import ShortlistComparison from './components/ShortlistComparison';
-import { shortlistLabel, readinessReason, outreachLabel } from './components/shortlistDisplay';
+import { aiRecommendationService } from '../../services/api/aiRecommendationService';
+import { coveringRun } from '../../services/recommendationHistory';
 import './CreatorDiscoveryPage.css';
 import './CreatorShortlistPage.css';
 
@@ -68,7 +69,6 @@ export default function CreatorShortlistPage() {
   const session = useSyncExternalStore(subscribeAuthSession, authScope);
   const sessionId = getAuthSessionId();
   const canManage = !!getStoredUser()?.permissions?.includes('MANAGE_OWN_SHORTLIST');
-  const canPrepareCrm = canManage && !!getStoredUser()?.permissions?.includes('MANAGE_OWN_RELATIONSHIP');
   const campaignQuery = useCallback(() => shortlistService.campaigns(), [session]);
   const campaigns = useAsyncResource(campaignQuery, canManage);
   const searchParams = new URLSearchParams(location.search);
@@ -84,8 +84,6 @@ export default function CreatorShortlistPage() {
     } });
   }, [campaignId, sessionId, location.search, location.state, location.pathname, routeContext?.campaignId, navigate]);
   const campaign = campaigns.data?.find(item => item.id === campaignId);
-  const isDraft = campaign?.status === 'DRAFT';
-  const canChangeStatus = !!getStoredUser()?.permissions?.includes('CHANGE_CAMPAIGN_STATUS');
   const compareSection = useRef<HTMLElement>(null);
   const [previewCreator, setPreviewCreator] = useState<Creator | null>(null);
 
@@ -95,16 +93,12 @@ export default function CreatorShortlistPage() {
   const list = useAsyncResource(query, canManage && !!campaignId);
   const [selection, setSelection] = useState<{ context: string; items: ShortlistRecord[] }>({ context: '', items: [] });
   const selected = selection.context === context ? selection.items : [];
-  const selectedCreatorKey = JSON.stringify(selected.map(item => item.creatorId)), selectedItemKey = JSON.stringify(selected.map(item => item.id));
+  const selectedCreatorKey = JSON.stringify(selected.map(item => item.creatorId));
   const [compareOpen, setCompareOpen] = useState(false);
   const compareQuery = useCallback(() => shortlistService.compare(campaignId, JSON.parse(selectedCreatorKey)), [campaignId, selectedCreatorKey, session]);
   const comparison = useAsyncResource(compareQuery, canManage && compareOpen && selected.length >= 2 && selected.length <= 5);
-  const [contactOpen, setContactOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null), [edit, setEdit] = useState<{ context: string; item: ShortlistRecord } | null>(null);
   const [editForm] = Form.useForm();
-  const [outreach, setOutreach] = useState<{ context: string; result: OutreachResult } | null>(null);
-  const readinessQuery = useCallback(() => shortlistService.readiness(campaignId, JSON.parse(selectedItemKey)), [campaignId, selectedItemKey, session]);
-  const readiness = useAsyncResource(readinessQuery, canManage && contactOpen && selected.length > 0);
   const reload = useCallback(() => { void list.reload(); if (compareOpen && selected.length >= 2) void comparison.reload(); }, [list.reload, compareOpen, comparison.reload, selected.length]);
   useShortlistRealtime(campaignId || null, reload);
 
@@ -113,37 +107,47 @@ export default function CreatorShortlistPage() {
   useEffect(() => { recommendationNavigationLock.current = false; }, [context]);
   const canStartRecommendations = !!campaign && !busy && !!getStoredUser()?.permissions?.includes('RUN_RECOMMENDATION')
     && !['COMPLETED', 'ARCHIVED'].includes(campaign.status);
+  const canViewRecommendations = !!getStoredUser()?.permissions?.includes('VIEW_OWN_RECOMMENDATION');
+  const evaluationQuery = useCallback(async () => { if (authScope() !== session) throw new Error('Phiên đăng nhập đã thay đổi.'); return { records: await shortlistService.all(campaignId), runs: await aiRecommendationService.getRecommendationRuns(campaignId) }; }, [campaignId, session]);
+  const evaluation = useAsyncResource(evaluationQuery, !!campaignId && canManage && canViewRecommendations);
+  const refreshEvaluation = evaluation.reload, evaluationListData = list.data, evaluationListStatus = list.status;
+  useEffect(() => { if (evaluationListStatus === 'success') void refreshEvaluation(); }, [evaluationListData, evaluationListStatus, refreshEvaluation]);
+  const scopeIds = selected.length ? selected.map(item => item.creatorId) : evaluation.data?.records.filter(item => item.status !== 'REMOVED').map(item => item.creatorId) ?? [];
+  const existingEvaluation = coveringRun(evaluation.data?.runs ?? [], campaignId, scopeIds);
   const backToDiscovery = () => {
     if (!campaignId) return;
     rememberCampaign(campaignId);
     navigate('/creators', { state: { campaignId } });
   };
-  const openRecommendations = (ids: string[] = selected.map(item => item.creatorId)) => {
-    if (!campaign || !canStartRecommendations || recommendationNavigationLock.current) return;
+  const openRecommendations = async (ids: string[] = selected.map(item => item.creatorId)) => {
+    if (!campaign || (!canStartRecommendations && !canViewRecommendations) || recommendationNavigationLock.current) return;
     recommendationNavigationLock.current = true;
+    try {
+    const [records, runs] = await Promise.all([shortlistService.all(campaign.id), aiRecommendationService.getRecommendationRuns(campaign.id)]);
+    if (live.current !== context) return;
+    const activeIds = records.filter(item => item.status !== 'REMOVED').map(item => item.creatorId);
+    const requested = ids.length ? ids : activeIds;
+    if (!requested.length || requested.some(id => !activeIds.includes(id))) { message.warning('Chọn kênh đang lưu trước khi đánh giá.'); return; }
+    const saved = coveringRun(runs, campaign.id, requested);
+    if (existingEvaluation && !saved) {
+      message.warning('Phạm vi đánh giá đã thay đổi. Kiểm tra lại lựa chọn trước khi chạy lượt mới.');
+      await evaluation.reload();
+      return;
+    }
+    if (!saved && !canStartRecommendations) { message.warning('Bạn chưa thể chạy lượt đánh giá mới.'); return; }
     rememberCampaign(campaign.id);
     const sessionId = getAuthSessionId();
     navigate('/campaign-management?tab=recommendation', {
       state: {
         recommendationContext: { sessionId, campaignId: campaign.id, creatorIds: ids },
-        recommendationRunIntent: { token: crypto.randomUUID(), sessionId, campaignId: campaign.id, creatorIds: ids },
+        recommendationViewRunId: saved?.id,
+        recommendationRunIntent: saved ? undefined : { token: crypto.randomUUID(), sessionId, campaignId: campaign.id, creatorIds: ids },
       },
     });
+    } catch (error) { message.error(getErrorMessage(error, 'Chưa kiểm tra được lịch sử đánh giá. Không có lượt AI nào được chạy.')); }
+    finally { recommendationNavigationLock.current = false; }
   };
 
-  const activateDiscovery = async () => {
-    if (!campaign || busy || !canChangeStatus) return;
-    setBusy('activate');
-    try {
-      await campaignService.updateStatus(campaign.id, 'READY_FOR_DISCOVERY', campaign.campaignRevision);
-      message.success('Đã kích hoạt chiến dịch sẵn sàng khám phá & gợi ý!');
-      await campaigns.reload();
-    } catch (error) {
-      message.error(getErrorMessage(error, 'Chưa thể chuyển chiến dịch sang sẵn sàng khám phá. Kiểm tra lại thông tin bản nháp.'));
-    } finally {
-      setBusy(null);
-    }
-  };
 
 
   const toggle = (item: ShortlistRecord, checked: boolean) => {
@@ -166,14 +170,6 @@ export default function CreatorShortlistPage() {
       if (live.current !== active) return;
       message.info(result.action === 'RESTORED' ? 'Đã khôi phục kênh vào danh sách.' : result.action === 'ALREADY_EXISTS' ? 'Kênh đã có trong danh sách.' : 'Đã thêm kênh vào danh sách.'); await list.reload();
     } catch (error) { if (live.current === active) message.error(errorText(error)); }
-    finally { if (live.current === active) setBusy(null); }
-  };
-
-  const prepareCrm = async () => {
-    const active = context; setBusy('outreach');
-    try { const result = await shortlistService.prepareOutreach(campaignId, JSON.parse(selectedItemKey));
-      if (live.current === active) { setOutreach({ context, result }); await list.reload(); } }
-    catch (error) { if (live.current === active) message.error(errorText(error)); }
     finally { if (live.current === active) setBusy(null); }
   };
 
@@ -342,16 +338,6 @@ export default function CreatorShortlistPage() {
               </div>
               <div className="sl-action-buttons">
                 <Button icon={<ArrowLeftOutlined />} disabled={!!busy} onClick={backToDiscovery}>Khám phá</Button>
-                {isDraft && (
-                  <Button
-                    type="dashed"
-                    loading={busy === 'activate'}
-                    disabled={!!busy || !canChangeStatus}
-                    onClick={activateDiscovery}
-                  >
-                    Kích hoạt sẵn sàng khám phá
-                  </Button>
-                )}
                 {selected.length > 0 && (
                   <>
                     <Button
@@ -363,35 +349,15 @@ export default function CreatorShortlistPage() {
                     >
                       So sánh (2–5 kênh)
                     </Button>
-                    <Button disabled={!!busy} onClick={() => { setOutreach(null); setContactOpen(true); }}>
-                      Chuẩn bị liên hệ
-                    </Button>
-                    <Dropdown
-                      menu={{
-                        items: [
-                          { key: 'ready', label: 'Đánh dấu sẵn sàng liên hệ', disabled: !!busy },
-                          { key: 'clear', label: 'Bỏ chọn', disabled: !!busy },
-                        ],
-                        onClick: ({ key }) => {
-                          if (key === 'clear') {
-                            setSelection({ context, items: [] });
-                            setCompareOpen(false);
-                          } else {
-                            void mutate('status', () => shortlistService.batchStatus(campaignId, JSON.parse(selectedItemKey), 'READY_TO_CONTACT'), 'Đã cập nhật trạng thái sẵn sàng liên hệ.');
-                          }
-                        },
-                      }}
-                    >
-                      <Button icon={<MoreOutlined />} aria-label="Thao tác khác" />
-                    </Dropdown>
+                    <Button disabled={!!busy} onClick={() => { setSelection({ context, items: [] }); setCompareOpen(false); }}>Bỏ chọn</Button>
                   </>
                 )}
                 <Button
                   type="primary"
-                  disabled={!canStartRecommendations}
+                  disabled={!!busy || evaluation.status === 'loading' || (!canStartRecommendations && !existingEvaluation)}
                   onClick={() => openRecommendations()}
                 >
-                  {selected.length > 0 ? `Đánh giá ${selected.length} kênh đã chọn` : 'Đánh giá toàn bộ danh sách'} <ArrowRightOutlined />
+                  {existingEvaluation ? 'Xem kết quả đánh giá' : selected.length > 0 ? `Đánh giá ${selected.length} kênh đã chọn` : `Đánh giá toàn bộ ${scopeIds.length} kênh đang lưu`} <ArrowRightOutlined />
                 </Button>
               </div>
             </footer>
@@ -419,51 +385,7 @@ export default function CreatorShortlistPage() {
             <Button type="primary" htmlType="submit" loading={!!busy}>Lưu thay đổi</Button>
           </Form>
         </Modal>
-        <Modal
-          title="Kiểm tra khả năng liên hệ"
-          open={contactOpen && selected.length > 0}
-          onCancel={() => { if (!busy) setContactOpen(false); }}
-          footer={null}
-          width={680}
-          destroyOnHidden
-        >
-          {readiness.status === 'loading' ? (
-            <Skeleton active />
-          ) : readiness.status === 'error' ? (
-            <Alert type="error" title="Không thể kiểm tra liên hệ." action={<Button onClick={() => void readiness.reload()}>Thử lại</Button>} />
-          ) : (
-            <>
-              <ul className="sl-batch-results">
-                {readiness.data?.items.map(item => (
-                  <li key={item.shortlistItemId}>
-                    <strong>{item.creatorName || 'Kênh chưa có tên'}</strong>
-                    <span>{shortlistLabel(item.readinessStatus)} · {shortlistLabel(item.contactChannel)}</span>
-                    <span>{readinessReason(item.readinessStatus)}</span>
-                  </li>
-                ))}
-              </ul>
-              <Alert type="info" title="Chuẩn bị hồ sơ tiếp cận" description="Tạo hồ sơ và thỏa thuận nháp, gộp các kênh của cùng nhà sáng tạo nếu đã được xác định. Thao tác này chưa gửi thư mời và chưa xác nhận hợp tác." />
-              {!canPrepareCrm && <p>Bạn cần quyền quản lý quan hệ hợp tác để tiếp tục.</p>}
-              <Popconfirm title="Tạo hồ sơ tiếp cận cho các kênh đã chọn?" onConfirm={prepareCrm}>
-                <Button type="primary" disabled={!canPrepareCrm || !!busy} loading={busy === 'outreach'}>Tạo hồ sơ tiếp cận</Button>
-              </Popconfirm>
-            </>
-          )}
-          {outreach?.context === context && (
-            <>
-              <h3>Kết quả xử lý</h3>
-              <ul className="sl-batch-results">
-                {outreach.result.items.map(item => (
-                  <li key={item.shortlistItemId}>
-                    <strong>{item.creatorName || 'Kênh chưa có tên'}</strong>
-                    <span>{outreachLabel(item.contactStatus)}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button onClick={() => navigate(campaignPath('/crm', campaignId))}>Tiếp tục thỏa thuận</Button>
-            </>
-          )}
-        </Modal>
+
 
         {/* Drawer xem hồ sơ chi tiết KOC */}
         <CreatorDetailDrawer

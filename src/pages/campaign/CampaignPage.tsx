@@ -41,6 +41,9 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
+import { getErrorMessage } from '../../services/apiClient';
+import { getStoredUser } from '../../services/authSession';
+import { activeCampaignId, forgetCampaign } from '../../services/campaignContext';
 import type { CampaignResponse, CampaignStatus, CampaignObjective, CampaignPlatform } from '../../types/api/campaign.types';
 import './CampaignPage.css';
 
@@ -63,15 +66,18 @@ export interface CampaignItemUI {
   budgetRaw: number;
   progressPercent: number;
   updatedTime: string;
+  updatedAt?: string;
+  createdAt?: string;
   updatedBy: string;
   thumbnail: string;
 }
 
 // Format relative time helper
 const formatRelativeTime = (dateStr?: string) => {
-  if (!dateStr) return 'Vừa xong';
-  const diff = Date.now() - new Date(dateStr).getTime();
-  if (isNaN(diff) || diff < 0) return 'Vừa xong';
+  if (!dateStr) return 'Chưa có thời gian cập nhật';
+  const diff = Date.now() - campaignTimestamp(dateStr).getTime();
+  if (isNaN(diff)) return 'Chưa có thời gian cập nhật';
+  if (diff < 0) return formatCampaignTimestamp(dateStr);
   const mins = Math.floor(diff / (1000 * 60));
   if (mins < 1) return 'Vừa xong';
   if (mins < 60) return `${mins} phút trước`;
@@ -80,6 +86,18 @@ const formatRelativeTime = (dateStr?: string) => {
   const days = Math.floor(hours / 24);
   if (days < 30) return `${days} ngày trước`;
   return `${Math.floor(days / 30)} tháng trước`;
+};
+
+// Backend timestamps without an offset follow the API's UTC convention.
+const campaignTimestamp = (value: string) => {
+  const normalized = value.trim().replace(' ', 'T').replace(/(\.\d{3})\d+/, '$1');
+  return new Date(/(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized) ? normalized : normalized + 'Z');
+};
+const formatCampaignTimestamp = (value?: string) => {
+  if (!value) return 'Chưa có thời gian cập nhật';
+  const date = campaignTimestamp(value);
+  if (!Number.isFinite(date.getTime())) return 'Chưa có thời gian cập nhật';
+  return new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
 };
 
 // Safe fallback placeholder for legacy types
@@ -96,11 +114,11 @@ const campaignPageCache: {
 const CACHE_TTL = 3 * 60 * 1000; // 3 phút
 
 const loadCachedCampaigns = (): CampaignItemUI[] => {
-  if (campaignPageCache.items && campaignPageCache.items.length > 0) {
+    if (campaignPageCache.items && campaignPageCache.items.length > 0) {
     return campaignPageCache.items;
   }
   try {
-    const raw = sessionStorage.getItem('IM_CAMPAIGNS_CACHE');
+    const raw = sessionStorage.getItem('IM_CAMPAIGNS_CACHE_V2');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed.items)) {
@@ -115,6 +133,7 @@ const loadCachedCampaigns = (): CampaignItemUI[] => {
 
 export default function CampaignPage() {
   const navigate = useNavigate();
+  const canArchiveCampaign = (getStoredUser()?.permissions ?? []).includes('CHANGE_CAMPAIGN_STATUS');
   // Khởi tạo tức thì từ cache nếu có dữ liệu sẵn
   const [campaigns, setCampaigns] = useState<CampaignItemUI[]>(loadCachedCampaigns);
   const [loading, setLoading] = useState(() => campaigns.length === 0);
@@ -153,7 +172,7 @@ export default function CampaignPage() {
       if (campaigns.length === 0) {
         setLoading(true);
       }
-      const apiData = await campaignService.getCampaigns(0, 50);
+      const apiData = await campaignService.getAllCampaigns();
       if (Array.isArray(apiData)) {
         let deletedIds: string[] = [];
         try {
@@ -203,7 +222,9 @@ export default function CampaignPage() {
             budgetFormatted: budgetText,
             budgetRaw: budgetNum,
             progressPercent: statusType === 'completed' ? 100 : statusType === 'running' ? 45 : 10,
-            updatedTime: c.updatedAt ? formatRelativeTime(c.updatedAt) : 'Gần đây',
+            updatedAt: c.updatedAt,
+            createdAt: c.createdAt,
+            updatedTime: formatRelativeTime(c.updatedAt),
             updatedBy: 'Thương hiệu',
             thumbnail: coverImage,
           };
@@ -212,7 +233,7 @@ export default function CampaignPage() {
         campaignPageCache.items = mapped;
         campaignPageCache.lastLoaded = Date.now();
         try {
-          sessionStorage.setItem('IM_CAMPAIGNS_CACHE', JSON.stringify({ items: mapped, lastLoaded: Date.now() }));
+          sessionStorage.setItem('IM_CAMPAIGNS_CACHE_V2', JSON.stringify({ items: mapped, lastLoaded: Date.now() }));
         } catch {}
         setCampaigns(mapped);
         return;
@@ -221,7 +242,7 @@ export default function CampaignPage() {
       campaignPageCache.items = [];
       campaignPageCache.lastLoaded = Date.now();
       try {
-        sessionStorage.setItem('IM_CAMPAIGNS_CACHE', JSON.stringify({ items: [], lastLoaded: Date.now() }));
+        sessionStorage.setItem('IM_CAMPAIGNS_CACHE_V2', JSON.stringify({ items: [], lastLoaded: Date.now() }));
       } catch {}
       setCampaigns([]);
     } catch (err) {
@@ -261,9 +282,14 @@ export default function CampaignPage() {
 
       return true;
     }).sort((a, b) => {
-      if (sortBy === 'budget') return b.budgetRaw - a.budgetRaw;
-      if (sortBy === 'creators') return b.creatorsCount - a.creatorsCount;
-      return 0;
+      const time = (item: CampaignItemUI) => {
+        const updated = item.updatedAt ? campaignTimestamp(item.updatedAt).getTime() : NaN;
+        const created = item.createdAt ? campaignTimestamp(item.createdAt).getTime() : NaN;
+        return Number.isFinite(updated) ? updated : Number.isFinite(created) ? created : 0;
+      };
+      if (sortBy === 'budget' && a.budgetRaw !== b.budgetRaw) return b.budgetRaw - a.budgetRaw;
+      if (sortBy === 'creators' && a.creatorsCount !== b.creatorsCount) return b.creatorsCount - a.creatorsCount;
+      return time(b) - time(a) || a.id.localeCompare(b.id);
     });
   }, [campaigns, activeTab, searchQuery, sortBy]);
 
@@ -376,25 +402,35 @@ export default function CampaignPage() {
   };
 
   const handleDeleteCampaign = (item: CampaignItemUI) => {
+    if (item.status !== 'DRAFT' || !canArchiveCampaign) return;
     Modal.confirm({
-      title: 'Xóa chiến dịch',
+      title: 'Xóa chiến dịch nháp?',
       icon: <ExclamationCircleOutlined style={{ color: '#EF4444' }} />,
-      content: `Bạn có chắc chắn muốn xóa chiến dịch "${item.name}" không?`,
-      okText: 'Xóa chiến dịch',
+      content: `Xóa vĩnh viễn bản nháp "${item.name}" và danh sách kênh đã lưu của bản nháp này. Không thể khôi phục. Chiến dịch đã có liên hệ hoặc lịch sử nghiệp vụ sẽ không được xóa.`,
+      okText: 'Xóa vĩnh viễn',
       okType: 'danger',
       cancelText: 'Hủy',
       async onOk() {
         try {
           message.loading({ content: 'Đang xóa chiến dịch...', key: 'del_camp' });
-          await campaignService.deleteCampaign(item.id).catch(() => {});
+          await campaignService.deleteCampaign(item.id);
+          if (activeCampaignId() === item.id) forgetCampaign();
           setCampaigns((prev) => {
             const next = prev.filter((c) => c.id !== item.id);
             campaignPageCache.items = next;
+            try { sessionStorage.setItem('IM_CAMPAIGNS_CACHE_V2', JSON.stringify({ items: next, lastLoaded: Date.now() })); } catch { /* Cache is optional. */ }
             return next;
           });
-          message.success({ content: 'Đã xóa chiến dịch!', key: 'del_camp' });
-        } catch {
-          message.error({ content: 'Không thể xóa chiến dịch.', key: 'del_camp' });
+          message.success({ content: 'Đã xóa vĩnh viễn bản nháp.', key: 'del_camp' });
+        } catch (error) {
+          const response = (error as { response?: { status?: number; data?: { code?: string } } }).response;
+          const status = response?.status;
+          message.error({ content: response?.data?.code === 'CAMPAIGN_DELETE_BLOCKED' ? 'Chiến dịch đã có dữ liệu liên quan hoặc không còn là bản nháp. Bạn có thể lưu trữ thay vì xóa.'
+            : status === 403 ? 'Bạn không có quyền xóa bản nháp này.'
+            : status === 409 || status === 412 ? 'Chiến dịch đã thay đổi. Tải lại danh sách trước khi xóa.'
+            : status === 428 ? 'Chưa xác nhận được phiên bản chiến dịch. Vui lòng tải lại.'
+            : getErrorMessage(error, 'Không thể xóa chiến dịch. Vui lòng thử lại.'), key: 'del_camp' });
+          throw error;
         }
       },
     });
@@ -806,7 +842,7 @@ export default function CampaignPage() {
                   styles={{ popup: { root: { minWidth: 140 } } }}
                   className="campaign-sort-select"
                   options={[
-                    { value: 'latest', label: 'Mới nhất' },
+                    { value: 'latest', label: 'Cập nhật mới nhất' },
                     { value: 'budget', label: 'Ngân sách' },
                     { value: 'creators', label: 'Số lượng Nhà sáng tạo' },
                   ]}
@@ -864,6 +900,7 @@ export default function CampaignPage() {
                     icon: <DeleteOutlined />,
                     danger: true,
                     label: 'Xóa chiến dịch',
+                    disabled: item.status !== 'DRAFT' || !canArchiveCampaign,
                     onClick: () => handleDeleteCampaign(item),
                   },
                 ];
@@ -874,163 +911,29 @@ export default function CampaignPage() {
                     className="campaign-row-card"
                     onClick={() => handleOpenDetail(item)}
                   >
-                    {/* Left: Thumbnail & Info */}
-                    <div className="campaign-row-identity" style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 2 }}>
-                      {item.thumbnail ? <img
-                        src={item.thumbnail}
-                        alt={item.name}
-                        style={{
-                          width: 52,
-                          height: 52,
-                          borderRadius: 9,
-                          objectFit: 'cover',
-                          flexShrink: 0,
-                          border: '1px solid #F1F5F9',
-                        }}
-                      /> : <div aria-label="Chưa có ảnh chiến dịch" style={{ width: 52, height: 52, borderRadius: 9, background: '#f3eef9', display: 'grid', placeItems: 'center', flexShrink: 0, fontSize: 10, color: '#64748b' }}>Chưa có ảnh</div>}
-
-                      <div style={{ minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontWeight: 700,
-                            fontSize: 14,
-                            color: '#0F172A',
-                            lineHeight: 1.25,
-                            marginBottom: 2,
-                            overflowWrap: 'break-word',
-                          }}
-                        >
-                          {item.name}
-                        </div>
-
-                        <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 4 }}>
-                          {item.dateRange}
-                        </div>
-
-                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                          {item.niches.slice(0, 3).map((niche) => (
-                            <span
-                              key={niche}
-                              style={{
-                                background: '#F8FAFC',
-                                border: '1px solid #F1F5F9',
-                                color: '#64748B',
-                                fontSize: 10,
-                                borderRadius: 4,
-                                padding: '1px 5px',
-                                fontWeight: 500,
-                              }}
-                            >
-                              {niche}
-                            </span>
-                          ))}
-                        </div>
+                    <div className="campaign-row-identity">
+                      {item.thumbnail && <img className="campaign-row-thumbnail" src={item.thumbnail} alt="" />}
+                      <div className="campaign-row-copy">
+                        <h3 title={item.name}>{item.name}</h3>
+                        <div className="campaign-row-dates">{item.dateRange}</div>
+                        <div className="campaign-row-tags">{item.niches.slice(0, 3).map(niche => <span key={niche}>{niche}</span>)}</div>
                       </div>
                     </div>
-
-                    {/* Column 2: Status & Platforms */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 0 }}>
-                      <span className={`status-pill ${item.statusType}`}>
-                        <span className="status-pill-dot" />
-                        {item.statusText}
-                      </span>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                        {item.platforms.map((p) => renderPlatformIcon(p))}
-                        {item.extraPlatformsCount && (
-                          <span className="platform-mini-icon more-pill">
-                            +{item.extraPlatformsCount}
-                          </span>
-                        )}
-                      </div>
+                    <div className="campaign-row-status">
+                      <span className={'status-pill ' + item.statusType}><span className="status-pill-dot" />{item.statusText}</span>
+                      <div className="campaign-row-platforms">{item.platforms.map(p => renderPlatformIcon(p))}</div>
+                      <span className="campaign-row-creators">{item.creatorsCount} nhà sáng tạo</span>
                     </div>
-
-                    {/* Column 3: Influencers Avatars */}
-                    <div style={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
-                      <div style={{ display: 'flex', marginRight: 4 }}>
-                        {item.creatorAvatars.slice(0, 3).map((av, idx) => (
-                          <img
-                            key={idx}
-                            src={av}
-                            alt="creator"
-                            style={{
-                              width: 22,
-                              height: 22,
-                              borderRadius: '50%',
-                              objectFit: 'cover',
-                              border: '1.5px solid #FFFFFF',
-                              marginLeft: idx === 0 ? 0 : -6,
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#64748B' }}>
-                        {item.creatorsCount}
-                      </span>
+                    <div className="campaign-row-budget">
+                      <span>Ngân sách dự kiến</span><strong>{item.budgetFormatted}</strong>
+                      <Tooltip title={item.updatedAt ? `Giờ Việt Nam (UTC+7). API: ${item.updatedAt}` : undefined}>
+                        <span className="campaign-row-updated">{item.updatedAt ? 'Cập nhật ' + formatCampaignTimestamp(item.updatedAt) : 'Chưa có thời gian cập nhật'}</span>
+                      </Tooltip>
                     </div>
-
-                    {/* Column 4: Budget & Progress */}
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 10, color: '#94A3B8', marginBottom: 1 }}>
-                        Ngân sách dự kiến
-                      </div>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', marginBottom: 2 }}>
-                        {item.budgetFormatted}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <div
-                          style={{
-                            flex: 1,
-                            height: 4,
-                            background: '#E2E8F0',
-                            borderRadius: 999,
-                            overflow: 'hidden',
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: `${item.progressPercent}%`,
-                              height: '100%',
-                              background: '#6D28D9',
-                              borderRadius: 999,
-                            }}
-                          />
-                        </div>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: '#64748B' }}>
-                          {item.progressPercent}%
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Column 5: Last Updated */}
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                      <div style={{ fontSize: 10, color: '#94A3B8', marginBottom: 1 }}>
-                        Cập nhật
-                      </div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: '#334155' }}>
-                        {item.updatedTime}
-                      </div>
-                      <div style={{ fontSize: 10, color: '#94A3B8' }}>
-                        {item.updatedBy}
-                      </div>
-                    </div>
-
-                    {/* Column 6: Actions */}
-                    <div
-                      style={{ display: 'flex', alignItems: 'center' }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Dropdown
-                        menu={{ items: actionMenuItems }}
-                        trigger={['click']}
-                        placement="bottomRight"
-                      >
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<RightOutlined style={{ fontSize: 11, color: '#94A3B8' }} />}
-                          style={{ borderRadius: 6 }}
-                        />
+                    <div className="campaign-row-actions" onClick={e => e.stopPropagation()}>
+                      {item.status === 'DRAFT' && canArchiveCampaign && <Button type="text" danger size="small" icon={<DeleteOutlined />} onClick={() => handleDeleteCampaign(item)}>Xóa bản nháp</Button>}
+                      <Dropdown menu={{ items: actionMenuItems }} trigger={['click']} placement="bottomRight">
+                        <Button type="text" aria-label={'Thao tác với ' + item.name} icon={<RightOutlined style={{ fontSize: 12, color: '#94A3B8' }} />} />
                       </Dropdown>
                     </div>
                   </div>
