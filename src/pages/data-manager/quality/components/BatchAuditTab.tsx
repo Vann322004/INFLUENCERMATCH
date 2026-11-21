@@ -21,10 +21,12 @@ import {
 } from 'antd';
 import { crawlerService } from '../../../../services/api/crawlerService';
 import { PLATFORM_COLOR_MAP } from '../types';
+import AuditEvidenceModal from './AuditEvidenceModal';
+import { auditOutcome } from '../../../../services/auditPresentation';
 
 const { Text, Title } = Typography;
 
-interface AuditItem {
+export interface AuditItem {
   creatorId: string;
   platform: string;
   username: string;
@@ -41,6 +43,10 @@ interface AuditItem {
   reasonCodes: string[];
   postsChecked: number;
   actionTaken: string;
+  profileUrl?: string;
+  posts?: any[];
+  bio?: string;
+  contentSummary?: string;
 }
 
 interface AuditReport {
@@ -52,6 +58,7 @@ interface AuditReport {
   kocCount: number;
   kolCount: number;
   junkOrShopCount: number;
+  needsReviewCount?: number;
   cleanRate: number;
   averageDataConfidence: number;
   filter: {
@@ -74,6 +81,7 @@ export default function BatchAuditTab() {
   const [autoQuarantine, setAutoQuarantine] = useState(true);
   const [report, setReport] = useState<AuditReport | null>(null);
   const [error, setError] = useState<string>('');
+  const [selected, setSelected] = useState<AuditItem | null>(null);
 
   // Tải báo cáo thẩm định gần nhất
   const fetchLatestReport = async () => {
@@ -134,7 +142,7 @@ export default function BatchAuditTab() {
           <Space align="center">
             <Avatar
               size={36}
-              style={{ backgroundColor: r.isJunk ? '#ff4d4f' : '#1890ff' }}
+              style={{ backgroundColor: auditOutcome(r) === 'excluded' ? '#ff4d4f' : auditOutcome(r) === 'review' ? '#faad14' : '#1890ff' }}
             >{(r.displayName || r.username || '?').charAt(0).toUpperCase()}</Avatar>
             <div>
               <Space orientation="horizontal" size={4}>
@@ -169,6 +177,8 @@ export default function BatchAuditTab() {
       key: 'verdict',
       width: 180,
       render: (_: any, r: AuditItem) => {
+        if (auditOutcome(r) === 'review') return <Tooltip title={(r.reasonCodes || []).join(', ')}>
+          <Tag color="warning">Cần manager xem xét</Tag></Tooltip>;
         if (r.status === 'VALID_KOC') {
           return (
             <Tag color="success">
@@ -184,16 +194,17 @@ export default function BatchAuditTab() {
           );
         }
         return (
-          <Tooltip title={`Lý do: ${(r.reasonCodes || []).join(', ') || 'Tài khoản bán hàng hoặc giới thiệu sản phẩm'}`}>
+          <Tooltip title={`Lý do: ${(r.reasonCodes || []).join(', ') || 'Chưa có lý do chi tiết'}`}>
             <Tag color="error">
-              Bán hàng / Nội dung rác
+              {r.creatorType === 'BRAND' ? 'Tài khoản thương hiệu'
+                : r.creatorType === 'ORGANIZATION' ? 'Tài khoản tổ chức' : 'Nội dung spam / catalog'}
             </Tag>
           </Tooltip>
         );
       },
     },
     {
-      title: 'Điểm tin cậy',
+      title: 'Chất lượng dữ liệu',
       key: 'confidence',
       width: 200,
       render: (_: any, r: AuditItem) => {
@@ -232,20 +243,28 @@ export default function BatchAuditTab() {
       dataIndex: 'actionTaken',
       key: 'actionTaken',
       width: 170,
-      render: (act: string) => {
+      render: (act: string, row: AuditItem) => {
+        const details = <Button size="small" onClick={() => setSelected(row)}>Xem hồ sơ</Button>;
         if (act === 'UPDATED_JAVA_BACKEND') {
-          return <Tag color="cyan">Đã đồng bộ dữ liệu</Tag>;
+          return <Space wrap><Tag color="cyan">Đã đồng bộ dữ liệu</Tag>{details}</Space>;
         }
         if (act === 'QUARANTINED_IN_STAGING') {
-          return <Tag color="volcano">Đã chuyển vào vùng cách ly</Tag>;
+          return <Space wrap><Tag color="volcano">Đã tạm chặn cào tự động</Tag>{details}</Space>;
         }
-        return <Tag color="default">Chạy thử nghiệm</Tag>;
+        const label = act === 'QUEUED_FOR_MANAGER_REVIEW' ? 'Đã đưa vào chờ duyệt'
+          : act === 'PRESERVED_MANAGER_DECISION' ? 'Giữ quyết định của manager'
+          : act === 'NO_ACTION' ? 'Chưa thay đổi hồ sơ' : act;
+        return <Space wrap><Tag>{label}</Tag>{details}</Space>;
       },
     },
   ];
 
   return (
     <section className="quality-crawler-box quality-batch-audit">
+      <AuditEvidenceModal item={selected} runId={report?.runId || ''} onClose={() => setSelected(null)} />
+      <Alert type="info" showIcon style={{ marginBottom: 16 }}
+        title="Cách ly là tạm chặn cào tự động, không xóa hồ sơ"
+        description="Chọn Xem hồ sơ để đối chiếu lý do và bài đăng. Thiếu dữ liệu xác minh được tách sang chờ manager xem xét, không đồng nghĩa tài khoản bán hàng hoặc spam." />
       <header className="quality-config-title quality-batch-header">
         <div>
           <h2>Kiểm định hàng loạt</h2>
@@ -370,6 +389,11 @@ export default function BatchAuditTab() {
         <Skeleton active paragraph={{ rows: 3 }} />
       ) : report ? (
         <>
+          {report.needsReviewCount === undefined ? <Alert type="warning" showIcon style={{ marginBottom: 16 }}
+            title="Báo cáo cũ chưa tách hồ sơ thiếu bằng chứng khỏi nhóm không phù hợp"
+            description="Các con số bên dưới là kết quả đã lưu của đợt cũ. Mở Xem hồ sơ để đối chiếu trước khi kết luận tài khoản là shop hoặc spam." />
+            : report.needsReviewCount > 0 && <Alert type="warning" showIcon style={{ marginBottom: 16 }}
+              title={`${report.needsReviewCount} hồ sơ cần manager xem xét, chưa được kết luận là shop hoặc spam`} />}
           <Row gutter={[16, 16]}>
             <Col xs={12} sm={8} md={4}>
               <Card size="small" style={{ borderRadius: 10, textAlign: 'center' }}>

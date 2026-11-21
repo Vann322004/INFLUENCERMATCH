@@ -205,6 +205,12 @@ class CrawlerService {
       15000
     );
   }
+
+  async getAuditEvidence(creatorId: string, platform: string, username: string, runId: string): Promise<any> {
+    const params = new URLSearchParams({ creator_id: creatorId, platform: platform.toUpperCase(),
+      username, run_id: runId });
+    return this.requestCrawler(`/api/v1/quality/audit-evidence?${params}`, {}, 10000);
+  }
 }
 
 export const crawlerService = new CrawlerService();

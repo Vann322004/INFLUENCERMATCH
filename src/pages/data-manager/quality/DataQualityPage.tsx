@@ -53,9 +53,24 @@ function confidenceNumber(item: QualityItem) {
     : null;
 }
 
+/** Trả về string ngành hàng sạch (bỏ UNKNOWN), hỗ trợ cả chuỗi CSV */
 function reviewedNiche(value?: string) {
   const niche = value?.trim() || '';
   return niche.toUpperCase() === 'UNKNOWN' ? '' : niche;
+}
+
+/** Parse CSV niche string → array (loại UNKNOWN, bỏ trống) */
+function parseNiches(value?: string): string[] {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s && s.toUpperCase() !== 'UNKNOWN');
+}
+
+/** Join array → CSV string để gửi lên backend */
+function joinNiches(values: string[]): string {
+  return values.join(', ');
 }
 
 function creatorTypeLabel(type?: string) {
@@ -135,7 +150,7 @@ export default function DataQualityPage() {
       setNichesError('');
       form.resetFields();
       form.setFieldsValue({
-        niche: reviewedNiche(item.niche),
+        niches: parseNiches(item.niche),
         reclassifiedType: 'REJECTED',
         reason: '',
         checked: false,
@@ -187,7 +202,8 @@ export default function DataQualityPage() {
         return (
           (item.displayName || '').toLowerCase().includes(normalizedQuery) ||
           (item.userName || '').toLowerCase().includes(normalizedQuery) ||
-          reviewedNiche(item.niche).toLowerCase().includes(normalizedQuery)
+          reviewedNiche(item.niche).toLowerCase().includes(normalizedQuery) ||
+          parseNiches(item.niche).some((n) => n.toLowerCase().includes(normalizedQuery))
         );
       }),
     [items, platformFilter, normalizedQuery]
@@ -222,7 +238,9 @@ export default function DataQualityPage() {
         }
         const names = records.filter((item) => item.active && reviewedNiche(item.name)).map((item) => item.name);
         setNiches(names);
-        if (!names.includes(form.getFieldValue('niche'))) form.setFieldValue('niche', undefined);
+        const currentValues: string[] = form.getFieldValue('niches') || [];
+        const validValues = currentValues.filter((v) => names.includes(v));
+        form.setFieldValue('niches', validValues.length ? validValues : undefined);
       })
       .catch((err) => {
         if (!active) return;
@@ -261,11 +279,11 @@ export default function DataQualityPage() {
     savingRef.current = true;
     setSaving(true);
     try {
-      if (decision === 'approve') await dataQualityService.approve(selected.metricId, values.niche);
+      if (decision === 'approve') await dataQualityService.approve(selected.metricId, joinNiches(values.niches));
       else await dataQualityService.reject(selected.metricId, values.reason, values.reclassifiedType);
       message.success(
         decision === 'approve'
-          ? `Đã duyệt hồ sơ @${selected.userName} với ngành hàng ${values.niche.trim()}.`
+          ? `Đã duyệt hồ sơ @${selected.userName} với ngành hàng: ${joinNiches(values.niches)}.`
           : `Đã ghi nhận kết quả kiểm định hồ sơ @${selected.userName}.`
       );
       setSelected(null);
@@ -293,11 +311,15 @@ export default function DataQualityPage() {
     {
       title: 'Ngành hàng gợi ý',
       dataIndex: 'niche',
-      width: 155,
+      width: 170,
       render: (value) => {
-        const niche = reviewedNiche(value);
-        return niche ? (
-          <span className="quality-niche-pill">{niche}</span>
+        const parts = parseNiches(value);
+        return parts.length > 0 ? (
+          <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {parts.map((p) => (
+              <span key={p} className="quality-niche-pill">{p}</span>
+            ))}
+          </span>
         ) : (
           <span className="quality-niche-pill is-empty">Chưa phân loại</span>
         );
@@ -331,7 +353,7 @@ export default function DataQualityPage() {
   ];
 
   const selectedUrl = selected ? channelUrl(selected) : undefined;
-  const selectedNiche = selected ? reviewedNiche(selected.niche) : '';
+  const selectedNiches = selected ? parseNiches(selected.niche) : [];
 
   return (
     <div className="data-quality-page">
@@ -478,7 +500,7 @@ export default function DataQualityPage() {
                         ) : (
                           <div className="quality-profile-cards">
                             {visibleItems.map((item) => {
-                              const niche = reviewedNiche(item.niche);
+                              const nicheParts = parseNiches(item.niche);
                               const score = confidenceNumber(item);
                               const isSelected = selected?.metricId === item.metricId;
                               return (
@@ -491,8 +513,12 @@ export default function DataQualityPage() {
                                 >
                                   <CreatorIdentity item={item} />
                                   <div className="quality-card-facts">
-                                    <span className={`quality-niche-pill ${niche ? '' : 'is-empty'}`}>
-                                      {niche || 'Chưa phân loại'}
+                                    <span style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                                      {nicheParts.length > 0
+                                        ? nicheParts.slice(0, 2).map((p) => (
+                                            <span key={p} className="quality-niche-pill" style={{ fontSize: 11 }}>{p}</span>
+                                          ))
+                                        : <span className="quality-niche-pill is-empty">Chưa phân loại</span>}
                                     </span>
                                     <span className={`quality-confidence-badge ${score !== null && score < 70 ? 'is-low' : ''}`}>
                                       Tin cậy AI: {score !== null ? `${score}%` : 'Chưa có'}
@@ -567,9 +593,11 @@ export default function DataQualityPage() {
 
                             <div className="quality-summary-list">
                               <div className="quality-summary-row">
-                                <span>Ngành hàng gợi ý</span>
-                                <strong className={selectedNiche ? '' : 'is-muted'}>
-                                  {selectedNiche || 'Chưa phân loại'}
+                                <span>Ngành hàng AI gợi ý</span>
+                                <strong className={selectedNiches.length ? '' : 'is-muted'} style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                  {selectedNiches.length
+                                    ? selectedNiches.map((n) => <span key={n} className="quality-niche-pill" style={{ fontSize: 12 }}>{n}</span>)
+                                    : 'Chưa phân loại'}
                                 </strong>
                               </div>
                               <div className="quality-summary-row">
@@ -600,27 +628,37 @@ export default function DataQualityPage() {
                                 {decision === 'approve' ? (
                                   <>
                                     <Form.Item
-                                      name="niche"
+                                      name="niches"
                                       label="Ngành hàng đã đối chiếu"
+                                      extra="Có thể chọn nhiều ngành (ví dụ: Lifestyle + Công nghệ)"
                                       rules={[
-                                        { required: true, message: 'Chọn ngành hàng sau khi kiểm tra.' },
                                         {
-                                          validator: (_, value) =>
-                                            value && !niches.includes(value)
-                                              ? Promise.reject(new Error('Chọn ngành hàng có trong danh mục đang bật.'))
-                                              : Promise.resolve(),
+                                          required: true,
+                                          type: 'array',
+                                          min: 1,
+                                          message: 'Chọn ít nhất 1 ngành hàng sau khi kiểm tra.',
+                                        },
+                                        {
+                                          validator: (_, values: string[]) => {
+                                            const invalid = (values || []).filter((v) => !niches.includes(v));
+                                            return invalid.length
+                                              ? Promise.reject(new Error(`Ngành hàng không hợp lệ: ${invalid.join(', ')}`))
+                                              : Promise.resolve();
+                                          },
                                         },
                                       ]}
                                     >
                                       <Select
+                                        mode="multiple"
                                         showSearch
                                         allowClear
                                         loading={nichesLoading}
                                         options={niches.map((name) => ({ value: name, label: name }))}
-                                        placeholder={nichesLoading ? 'Đang tải ngành hàng…' : 'Chọn ngành hàng…'}
+                                        placeholder={nichesLoading ? 'Đang tải ngành hàng…' : 'Chọn 1 hoặc nhiều ngành hàng…'}
                                         disabled={saving || nichesLoading || !niches.length}
                                         optionFilterProp="label"
                                         notFoundContent="Không có ngành hàng phù hợp"
+                                        maxTagCount="responsive"
                                       />
                                     </Form.Item>
                                     {!nichesLoading && !nichesError && !niches.length && (
