@@ -12,7 +12,7 @@ import { getAuthSessionId, getStoredUser } from '../../services/authSession';
 import { useNavigate } from 'react-router-dom';
 import { getErrorMessage } from '../../services/apiClient';
 import ProposalHistory from './ProposalHistory';
-import { deliveryMethodLabels } from './invitationDisplay';
+import { deliveryMethodLabels, emailResendState } from './invitationDisplay';
 import type { DealHistory } from '../../services/api/dealService';
 
 
@@ -49,6 +49,7 @@ function ProposalEditor({ campaignId, deal, initialDelivery, history, readOnly, 
   const mutable = !readOnly && ['CONTACTED', 'NEGOTIATING'].includes(deal.status);
   const accepted = !!deal.proposal && deal.acceptedRevision === deal.proposal.revision;
   const canConfirm = (getStoredUser()?.permissions ?? []).includes('MANAGE_OWN_COLLABORATION');
+  const resendState = emailResendState(deal, delivery, readOnly);
   const manual = deliveryMethod === 'MANUAL_LINK';
   const channelDescription = manual ? 'Bạn tự chia sẻ link lời mời. Hệ thống không gửi email hoặc thông báo Portal.'
     : deliveryMethod === 'PORTAL_ONLY' ? 'Chỉ tạo thông báo trong tài khoản Creator, không gửi email.'
@@ -125,7 +126,7 @@ function ProposalEditor({ campaignId, deal, initialDelivery, history, readOnly, 
       <div className="contact-actions"><Button disabled={busy} onClick={() => void perform(async () => { const next = await dealService.delivery(delivery.invitationId); if (getAuthSessionId() === sessionId) setDelivery(next); })}>Kiểm tra trạng thái gửi</Button>
         {delivery.emailStatus === 'MANUAL_REQUIRED' && delivery.active !== false && <Button disabled={busy} onClick={() => void perform(async () => { const result = await dealService.manualLink(delivery.invitationId); if (getAuthSessionId() !== sessionId) return; setManualLink(result.link); })}>Lấy link lời mời</Button>}
         {delivery.canRetry && <Button disabled={busy} onClick={() => void perform(async () => { const result = await dealService.retryEmail(delivery.invitationId); if (getAuthSessionId() === sessionId) setDelivery(result); })}>Thử gửi lại email</Button>}</div>
-      {delivery.emailStatus === 'SENT' && delivery.active === true && mutable && !accepted && <Button disabled={busy || !delivery.canResend} title="Cách lần gửi trước ít nhất 60 giây, tối đa 5 yêu cầu gửi lại trong một giờ." onClick={() => Modal.confirm({ title: 'Gửi lại email lời mời?', content: 'Giữ nguyên liên kết và thời hạn của lời mời, không tạo thỏa thuận mới.', okText: 'Gửi lại email', cancelText: 'Hủy', onOk: () => perform(async () => { await dealService.resendEmail(delivery.invitationId); const next = await dealService.delivery(delivery.invitationId); if (getAuthSessionId() === sessionId) { setDelivery(next); message.success('Đã xếp hàng gửi lại email.'); } }) })}>Gửi lại email</Button>}
+      {resendState.visible && <div className="contact-resend-control"><Button disabled={busy || !resendState.enabled} onClick={() => Modal.confirm({ title: 'Gửi lại email lời mời?', content: 'Giữ nguyên liên kết và thời hạn của lời mời, không tạo thỏa thuận mới.', okText: 'Gửi lại email', cancelText: 'Hủy', onOk: () => perform(async () => { await dealService.resendEmail(delivery.invitationId); const next = await dealService.delivery(delivery.invitationId); if (getAuthSessionId() === sessionId) { setDelivery(next); message.success('Đã xếp hàng gửi lại email.'); } }) })}>Gửi lại email</Button>{resendState.reason && <small>{resendState.reason}</small>}</div>}
       {manualLink && delivery.active !== false && <Input.TextArea readOnly value={manualLink} aria-label="Link lời mời để chia sẻ trực tiếp" autoSize onFocus={event => event.target.select()} />}
       {delivery.emailStatus === 'MANUAL_REQUIRED' && <p>Chia sẻ link qua kênh liên hệ công khai. Chưa xác nhận Creator đã nhận hoặc đồng ý.</p>}
     </section>}

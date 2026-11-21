@@ -3,7 +3,7 @@ import { App, Button, Tag } from 'antd';
 import { useAsyncResource } from '../../hooks/useAsyncResource';
 import { dealService } from '../../services/api/dealService';
 import type { Deal } from '../../services/api/dealService';
-import { invitationDisplay } from './invitationDisplay';
+import { invitationDisplay, emailResendState } from './invitationDisplay';
 import { getErrorMessage } from '../../services/apiClient';
 
 export default function InvitationListItem({ deal, name, readOnly, onOpen }: { deal: Deal; name: string; readOnly: boolean; onOpen: () => void }) {
@@ -20,7 +20,7 @@ export default function InvitationListItem({ deal, name, readOnly, onOpen }: { d
   const status = useAsyncResource(query);
   const view = invitationDisplay(deal, status.data);
   const loaded = status.status === 'success';
-  const canShowResend = !readOnly && ['CONTACTED', 'NEGOTIATING'].includes(deal.status) && deal.acceptedRevision !== deal.proposal?.revision && status.data?.emailStatus === 'SENT' && status.data.active === true;
+  const resendState = emailResendState(deal, status.data, readOnly);
   const resend = () => modal.confirm({ title: 'Gửi lại email lời mời?', content: 'Gửi lại cùng lời mời đến email người nhận. Liên kết và thời hạn giữ nguyên; không tạo thỏa thuận mới.', okText: 'Gửi lại email', cancelText: 'Hủy', onOk: async () => {
     if (resendLock.current || !status.data?.canResend) return;
     resendLock.current = true; setResending(true);
@@ -40,7 +40,7 @@ export default function InvitationListItem({ deal, name, readOnly, onOpen }: { d
       {loaded ? <small>{view.hint}</small> : status.status === 'error' && <Button size="small" type="link" onClick={() => void status.reload()}>Thử tải lại trạng thái</Button>}
     </div>
     <div className="contact-invitation-buttons"><Button onClick={onOpen}>{readOnly ? 'Xem thỏa thuận' : loaded ? view.action : 'Xem lời mời'}</Button>
-      {canShowResend && <Button loading={resending} disabled={resending || !status.data?.canResend} title="Cách lần gửi trước ít nhất 60 giây, tối đa 5 yêu cầu gửi lại trong một giờ." onClick={resend}>Gửi lại email</Button>}
+      {resendState.visible && <div className="contact-resend-control"><Button loading={resending} disabled={resending || !resendState.enabled} onClick={resend}>Gửi lại email</Button>{resendState.reason && <small>{resendState.reason}</small>}<Button type="link" size="small" disabled={resending} onClick={() => void status.reload()}>Tải lại trạng thái</Button></div>}
     </div>
   </article>;
 }

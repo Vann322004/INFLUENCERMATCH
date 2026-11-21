@@ -5,9 +5,18 @@ import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
 const source = readFileSync(new URL('../src/pages/crm/invitationDisplay.ts', import.meta.url), 'utf8').replace(/^import .*;\r?\n/gm, '').replace(/export /g, '');
 const context = vm.createContext({});
-vm.runInContext(stripTypeScriptTypes(source) + '\nglobalThis.display = invitationDisplay;', context);
+vm.runInContext(stripTypeScriptTypes(source) + '\nglobalThis.display = invitationDisplay; globalThis.resend = emailResendState;', context);
 const display = context.display;
 const draft = {status:'NEGOTIATING',masterId:null,proposal:{revision:2,kind:'OFFER'},acceptedRevision:null};
+test('resend remains visible with a reason when final, expired, rate limited or API fields are missing', () => {
+  for (const [deal,delivery] of [[{...draft,status:'CONFIRMED'},{emailStatus:'CANCELLED',active:false}],[draft,{emailStatus:'SENT',active:false}],[draft,{emailStatus:'SENT',active:true,canResend:false}],[draft,{emailStatus:'SENT'}]]) {
+    const state = context.resend(deal, delivery);
+    assert.equal(state.visible,true); assert.equal(state.enabled,false); assert.ok(state.reason);
+  }
+  assert.equal(context.resend(draft,{emailStatus:'SENT',active:true,canResend:true}).enabled,true);
+  assert.equal(context.resend(draft,{emailStatus:'MANUAL_REQUIRED',deliveryMethod:'MANUAL_LINK'}).visible,false);
+  assert.equal(context.resend(draft,{emailStatus:'NOT_REQUESTED',deliveryMethod:'PORTAL_ONLY'}).visible,false);
+});
 test('saved proposal is distinct from a sent invitation', () => {
   const view = display(draft,null);
   assert.equal(view.dispatch,'Chưa gửi bản đề xuất này');
