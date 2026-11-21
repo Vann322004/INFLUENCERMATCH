@@ -1,11 +1,15 @@
-import { useCallback } from 'react';
-import { Button, Tag } from 'antd';
+import { useCallback, useRef, useState } from 'react';
+import { App, Button, Tag } from 'antd';
 import { useAsyncResource } from '../../hooks/useAsyncResource';
 import { dealService } from '../../services/api/dealService';
 import type { Deal } from '../../services/api/dealService';
 import { invitationDisplay } from './invitationDisplay';
+import { getErrorMessage } from '../../services/apiClient';
 
 export default function InvitationListItem({ deal, name, readOnly, onOpen }: { deal: Deal; name: string; readOnly: boolean; onOpen: () => void }) {
+  const { modal, message } = App.useApp();
+  const [resending, setResending] = useState(false);
+  const resendLock = useRef(false);
   const query = useCallback(async () => {
     if (!deal.proposal) return null;
     const history = await dealService.history(deal.campaignId, deal.id);
@@ -16,6 +20,14 @@ export default function InvitationListItem({ deal, name, readOnly, onOpen }: { d
   const status = useAsyncResource(query);
   const view = invitationDisplay(deal, status.data);
   const loaded = status.status === 'success';
+  const canShowResend = !readOnly && ['CONTACTED', 'NEGOTIATING'].includes(deal.status) && deal.acceptedRevision !== deal.proposal?.revision && status.data?.emailStatus === 'SENT' && status.data.active === true;
+  const resend = () => modal.confirm({ title: 'Gửi lại email lời mời?', content: 'Gửi lại cùng lời mời đến email người nhận. Liên kết và thời hạn giữ nguyên; không tạo thỏa thuận mới.', okText: 'Gửi lại email', cancelText: 'Hủy', onOk: async () => {
+    if (resendLock.current || !status.data?.canResend) return;
+    resendLock.current = true; setResending(true);
+    try { await dealService.resendEmail(status.data.invitationId); message.success('Đã xếp hàng gửi lại email.'); }
+    catch (error) { message.error(getErrorMessage(error, 'Chưa gửi lại được email.')); }
+    finally { await status.reload(); resendLock.current = false; setResending(false); }
+  } });
   return <article className="contact-deal contact-invitation-row">
     <div className="contact-invitation-copy"><strong>{name}</strong>
       <p className="contact-invitation-summary">{deal.proposal ? `${deal.proposal.fee.toLocaleString('vi-VN')} ₫ · ${deal.proposal.deliverables.length} hạng mục` : 'Bản nháp · Chưa có đề xuất'}</p>
@@ -27,6 +39,8 @@ export default function InvitationListItem({ deal, name, readOnly, onOpen }: { d
       {loaded && !deal.plannedContactChannel && !deal.masterId && !status.data && <small>API chưa cung cấp cách gửi cho bản nháp này. Chưa có lời mời được gửi.</small>}
       {loaded ? <small>{view.hint}</small> : status.status === 'error' && <Button size="small" type="link" onClick={() => void status.reload()}>Thử tải lại trạng thái</Button>}
     </div>
-    <Button onClick={onOpen}>{readOnly ? 'Xem thỏa thuận' : loaded ? view.action : 'Xem lời mời'}</Button>
+    <div className="contact-invitation-buttons"><Button onClick={onOpen}>{readOnly ? 'Xem thỏa thuận' : loaded ? view.action : 'Xem lời mời'}</Button>
+      {canShowResend && <Button loading={resending} disabled={resending || !status.data?.canResend} title="Cách lần gửi trước ít nhất 60 giây, tối đa 5 yêu cầu gửi lại trong một giờ." onClick={resend}>Gửi lại email</Button>}
+    </div>
   </article>;
 }

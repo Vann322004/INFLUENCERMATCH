@@ -4,7 +4,7 @@ export interface ProposalUnit { creatorId: string; contentType: string; quantity
 export interface DealProposal { id?: string; revision: number; kind: string; fee: number; currency: string; terms: string; deliverables: ProposalUnit[]; createdAt: string }
 export interface Deal { id: string; campaignId: string; campaignName?: string; campaignStatus?: string; brandName?: string; plannedContactChannel?: string; availableDeliveryMethods?: string[]; masterId: string | null; status: string; revision: number; acceptedRevision: number | null; collaborationId: string | null; collaborationStatus?: string; channels: DealChannel[]; proposal: DealProposal | null; agreedFee: number | null }
 export interface CooperationBudget { status: string; totalBudget: number | null; currency: string | null; committedBudget: number | null; remainingBudget: number | null; confirmedCreatorCount: number; negotiatingBudget: number | null }
-export interface Delivery { invitationId: string; dealId?: string; deliveryMethod?: string; emailStatus: string; sentAt?: string | null; canRetry?: boolean; portalNotificationCreated?: boolean; active?: boolean; invitationStatus?: string; expiresAt?: string }
+export interface Delivery { invitationId: string; dealId?: string; deliveryMethod?: string; emailStatus: string; sentAt?: string | null; canRetry?: boolean; canResend?: boolean; portalNotificationCreated?: boolean; active?: boolean; invitationStatus?: string; expiresAt?: string }
 export interface DealHistory { events: { action: string; revision: number; createdAt: string; metadata: { invitationId?: string; agreementSource?: string; agreedAt?: string; evidenceSource?: string; evidenceUrl?: string; evidenceDescription?: string } }[]; proposals: DealProposal[] }
 const base = (campaignId: string) => `/campaigns/${campaignId}`;
 function dataOf(response: any) { if (response.data?.success === false || response.data?.data == null) throw new Error('Máy chủ chưa xác nhận kết quả.'); return response.data.data; }
@@ -31,6 +31,7 @@ export const dealService = {
     return data;
   },
   async retryEmail(id: string): Promise<Delivery> { const data = dataOf(await apiClient.post(`/cooperation-invitations/${id}/retry-email`)); if (data.invitationId !== id) throw new Error('Chưa xác nhận gửi lại email.'); return data; },
+  async resendEmail(id: string): Promise<Delivery> { const data = dataOf(await apiClient.post(`/cooperation-invitations/${id}/resend-email`)); if (data.invitationId !== id || data.emailStatus !== 'QUEUED') throw new Error('Chưa xác nhận yêu cầu gửi lại email.'); return data; },
   async manualLink(id: string): Promise<{ invitationId: string; link: string; expiresAt: string }> {
     const data = dataOf(await apiClient.get(`/cooperation-invitations/${id}/manual-link`));
     if (data?.invitationId !== id || typeof data.link !== 'string' || !/^https?:\/\//i.test(data.link)) throw new Error('Chưa lấy được đường dẫn lời mời.');
