@@ -1,6 +1,21 @@
 import type { Deal, Delivery } from '../../services/api/dealService';
 export const deliveryMethodLabels: Record<string, string> = { PORTAL_EMAIL: 'Portal & email', PORTAL_ONLY: 'Thông báo Portal', EMAIL_ONLY: 'Email liên hệ', MANUAL_LINK: 'Chia sẻ link thủ công' };
 
+export function emailResendState(deal: Deal, delivery: Delivery | null, readOnly = false) {
+  const visible = !!delivery && !['MANUAL_REQUIRED', 'NOT_REQUESTED'].includes(delivery.emailStatus) && !['MANUAL_LINK', 'PORTAL_ONLY'].includes(delivery.deliveryMethod ?? '');
+  let reason = '';
+  if (readOnly || ['CONFIRMED', 'ACTIVE', 'COMPLETED', 'DECLINED', 'CANCELLED'].includes(deal.status)) reason = 'Thỏa thuận đã xác nhận hoặc kết thúc, không gửi lại lời mời này.';
+  else if (deal.proposal && deal.acceptedRevision === deal.proposal.revision) reason = 'Creator đã đồng ý bản đề xuất này, không cần gửi lại.';
+  else if (!delivery) reason = 'Chưa có lời mời để gửi lại.';
+  else if (delivery.active === false) reason = 'Lời mời đã hết hiệu lực, bị hủy hoặc được thay thế.';
+  else if (['QUEUED', 'PROCESSING'].includes(delivery.emailStatus)) reason = 'Email đang chờ hoặc đang được gửi.';
+  else if (delivery.emailStatus === 'FAILED') reason = 'Email bị lỗi. Dùng thao tác thử gửi lại trong chi tiết lời mời.';
+  else if (delivery.emailStatus !== 'SENT') reason = 'Lời mời này chưa có email đã gửi để gửi lại.';
+  else if (delivery.active !== true || delivery.canResend === undefined) reason = 'Chưa xác nhận được điều kiện gửi lại. Hãy tải lại trạng thái.';
+  else if (!delivery.canResend) reason = 'Chờ ít nhất 60 giây sau lần gửi trước; tối đa 5 yêu cầu gửi lại mỗi giờ.';
+  return { visible, reason, enabled: visible && !reason && delivery?.canResend === true };
+}
+
 export function invitationDisplay(deal: Deal, delivery: Delivery | null) {
   const accepted = !!deal.proposal && deal.acceptedRevision === deal.proposal.revision;
   const final = ['CONFIRMED', 'ACTIVE', 'COMPLETED', 'DECLINED', 'CANCELLED'].includes(deal.status);
