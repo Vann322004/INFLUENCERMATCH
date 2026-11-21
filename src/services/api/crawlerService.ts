@@ -51,13 +51,7 @@ class CrawlerService {
     const limit = Math.max(1, Math.min(20, Math.trunc(maxChannels) || 1));
     const accounts = [...new Set(usernames.map(value => value.trim().replace(/^@+/, '')).filter(Boolean))].slice(0, limit);
     if (!accounts.length) throw new Error('Vui lòng nhập ít nhất một tài khoản.');
-    if (accounts.length > 1) return this.batchCrawl({ platform, usernames: accounts, maxChannels: limit });
-    const result = await this.testScrape(accounts[0], platform);
-    return {
-      status: result.status === 'error' ? 'error' : 'success', platform,
-      results: [result], summary: { total_requested: 1, success_count: result.status === 'error' ? 0 : 1,
-        failed_count: result.status === 'error' ? 1 : 0, avg_latency_ms: result.latency_ms || 0 },
-    };
+    return this.batchCrawl({ platform, usernames: accounts, maxChannels: limit });
   }
 
   async batchCrawl(payload: {
@@ -70,20 +64,46 @@ class CrawlerService {
     const plat = (payload.platform || 'TIKTOK').toUpperCase();
     const maxChannels = payload.maxChannels || 3;
 
-    return await this.requestCrawler<BatchCrawlResponse>(
-      '/api/v1/crawl/batch-crawl',
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          platform: plat,
-          category: payload.category,
-          keywords: payload.keywords,
-          usernames: payload.usernames || [],
-          max_channels: maxChannels,
-        }),
-      },
-      900000 // 15 minutes cho cào hàng loạt
-    );
+    const body = JSON.stringify({ platform: plat, category: payload.category,
+      keywords: payload.keywords, usernames: payload.usernames || [], max_channels: maxChannels });
+    const storageKey = `crawler.batch:${body}`;
+    let taskId = '';
+    try { taskId = sessionStorage.getItem(storageKey) || ''; } catch { /* Storage may be disabled. */ }
+    if (!taskId) {
+      const job = await this.requestCrawler<{ task_id: string }>(
+        '/api/v1/crawl/batch-crawl/jobs',
+        { method: 'POST', body },
+        15000
+      );
+      if (!job.task_id) throw new Error('Máy chủ chưa trả mã tác vụ thu thập.');
+      taskId = job.task_id;
+      try { sessionStorage.setItem(storageKey, taskId); } catch { /* Keep tracking in memory. */ }
+    }
+    const deadline = Date.now() + 15 * 60 * 1000;
+    let failures = 0;
+    while (Date.now() < deadline) {
+      let job: { status: string; result?: BatchCrawlResponse; error?: string };
+      try {
+        job = await this.requestCrawler(`/api/v1/crawl/batch-crawl/jobs/${encodeURIComponent(taskId)}`, {}, 10000);
+        failures = 0;
+      } catch (error) {
+        if (++failures >= 3) throw new Error(`Tạm mất kết nối theo dõi tác vụ ${taskId}. Bấm bắt đầu với cùng cấu hình để tiếp tục theo dõi. ${error instanceof Error ? error.message : ''}`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        continue;
+      }
+      if (job.status === 'COMPLETED' && job.result) {
+        try { sessionStorage.removeItem(storageKey); } catch { /* Storage may be disabled. */ }
+        invalidateDataManagerCacheForMutation('POST', '/api/v1/crawl/batch-crawl');
+        invalidateAdminCacheForMutation('POST', '/api/v1/crawl/batch-crawl');
+        return job.result;
+      }
+      if (['FAILED', 'REVOKED'].includes(job.status)) {
+        try { sessionStorage.removeItem(storageKey); } catch { /* Storage may be disabled. */ }
+        throw new Error(job.error || `Tác vụ ${taskId} không hoàn tất.`);
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    throw new Error(`Chưa có kết quả tác vụ ${taskId}. Bấm bắt đầu với cùng cấu hình để tiếp tục theo dõi; tác vụ không được gửi lại.`);
   }
 
   /**

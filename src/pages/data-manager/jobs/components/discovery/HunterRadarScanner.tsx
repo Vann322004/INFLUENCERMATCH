@@ -16,12 +16,6 @@ interface HunterRadarScannerProps {
   onNavigateQuality?: () => void;
 }
 
-function getStageText(progressPercent: number): string {
-  if (progressPercent < 30) return 'Đang kết nối và tìm kiếm kênh phù hợp';
-  if (progressPercent < 65) return 'Đang trích xuất hồ sơ và dữ liệu bài đăng';
-  return 'Đang lọc điều kiện và tổng hợp danh sách';
-}
-
 function renderLogLine(line: string) {
   const match = line.match(/^(\[[^\]]+\])\s*(.*)$/);
   if (!match) return <span>{line}</span>;
@@ -48,7 +42,7 @@ export default function HunterRadarScanner({
 }: HunterRadarScannerProps) {
   const isRunning = loading;
   const isDone = !isRunning && !errorMessage && progressPercent === 100;
-  const displayPercent = isRunning ? Math.max(8, progressPercent) : progressPercent;
+  const displayPercent = isDone ? 100 : 0;
   const formattedTime = `${Math.floor(waitSeconds / 60)}:${String(waitSeconds % 60).padStart(2, '0')}`;
 
   const title = isRunning
@@ -78,7 +72,7 @@ export default function HunterRadarScanner({
           </div>
           {isRunning && (
             <div className="collection-radar-meta">
-              <span>{getStageText(progressPercent)}</span>
+              <span>Đang chờ kết quả từ tác vụ thu thập</span>
               {currentKeyword && <span className="collection-radar-keyword">#{currentKeyword}</span>}
             </div>
           )}
@@ -87,12 +81,12 @@ export default function HunterRadarScanner({
         <div className="collection-radar-right">
           {isRunning && <span className="collection-radar-timer">{formattedTime}</span>}
           <span className={`collection-radar-percent ${errorMessage ? 'is-error' : isDone ? 'is-done' : ''}`}>
-            {displayPercent}%
+            {isDone ? '100%' : 'Đang chờ kết quả'}
           </span>
         </div>
       </div>
 
-      <div className="collection-radar-progress">
+      {isDone && <div className="collection-radar-progress">
         <Progress
           percent={displayPercent}
           showInfo={false}
@@ -101,7 +95,7 @@ export default function HunterRadarScanner({
           trailColor="#e2e8f0"
           size={['100%', 8]}
         />
-      </div>
+      </div>}
 
       {errorMessage && (
         <div className="collection-radar-error" role="alert">

@@ -4,29 +4,75 @@ import { readFileSync } from 'node:fs';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
 
-test('account collection uses direct scraping for one account and batch for multiple accounts', async () => {
+test('account collection queues both single and multiple accounts without holding a crawl request open', async () => {
   const calls = [];
   const { crawlerService } = load('src/services/api/crawlerService.ts', 'crawlerService', {
     invalidateDataManagerCacheForMutation() {},
     invalidateAdminCacheForMutation() {},
     requestCrawler: async (_, path, options) => {
-      calls.push({ path, body: JSON.parse(options.body) });
+      calls.push({ path, body: options.body ? JSON.parse(options.body) : null });
       return path.endsWith('/test-scrape')
         ? { status: 'success', platform: 'TIKTOK', username: 'alice', latency_ms: 250 }
-        : { status: 'success', results: [], summary: {} };
+        : path.endsWith('/jobs') ? { task_id: 'test-job' }
+        : { status: 'COMPLETED', result: { status: 'success', results: [{ username: 'alice' }], summary: { total_requested: 1 } } };
     },
   });
   const single = await crawlerService.collectAccounts('TIKTOK', [' @alice ', '@alice'], 5);
-  assert.equal(calls[0].path, '/api/v1/crawl/test-scrape');
-  assert.equal(calls[0].body.profile_url, 'alice');
+  assert.equal(calls[0].path, '/api/v1/crawl/batch-crawl/jobs');
+  assert.deepEqual(calls[0].body.usernames, ['alice']);
   assert.equal(single.results[0].username, 'alice');
   assert.equal(single.summary.total_requested, 1);
   await crawlerService.collectAccounts('FACEBOOK', ['alice', 'bob', 'charlie'], 2);
-  assert.equal(calls[1].path, '/api/v1/crawl/batch-crawl');
-  assert.deepEqual(calls[1].body.usernames, ['alice', 'bob']);
-  assert.equal(calls[1].body.max_channels, 2);
+  assert.equal(calls[2].path, '/api/v1/crawl/batch-crawl/jobs');
+  assert.deepEqual(calls[2].body.usernames, ['alice', 'bob']);
+  assert.equal(calls[2].body.max_channels, 2);
   await assert.rejects(crawlerService.collectAccounts('TIKTOK', ['  ', '@']), /tài khoản/);
-  assert.equal(calls.length, 2);
+  assert.equal(calls[3].path, '/api/v1/crawl/batch-crawl/jobs/test-job');
+  assert.equal(calls.length, 4);
+});
+
+test('batch polling survives pending and started states without replaying the mutation', async () => {
+  const calls = [];
+  const states = ['PENDING', 'STARTED', 'COMPLETED'];
+  const values = new Map();
+  const { crawlerService } = load('src/services/api/crawlerService.ts', 'crawlerService', {
+    invalidateDataManagerCacheForMutation() {}, invalidateAdminCacheForMutation() {},
+    setTimeout: callback => callback(),
+    sessionStorage: { getItem: key => values.get(key), setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) },
+    requestCrawler: async (_, path, options) => {
+      calls.push({ path, method: options.method });
+      if (options.method === 'POST') return { task_id: 'tracked-job' };
+      const status = states.shift();
+      return { status, result: status === 'COMPLETED' ? { results: [{ username: 'alice' }] } : undefined };
+    },
+  });
+  const result = await crawlerService.batchCrawl({ category: 'TECH' });
+  assert.equal(result.results[0].username, 'alice');
+  assert.equal(calls.filter(call => call.method === 'POST').length, 1);
+  assert.equal(calls.length, 4);
+  assert.equal(values.size, 0);
+});
+
+test('lost status connection retains the job and the next attempt resumes without another POST', async () => {
+  const values = new Map();
+  let posts = 0;
+  let offline = true;
+  const { crawlerService } = load('src/services/api/crawlerService.ts', 'crawlerService', {
+    invalidateDataManagerCacheForMutation() {}, invalidateAdminCacheForMutation() {},
+    setTimeout: callback => callback(),
+    sessionStorage: { getItem: key => values.get(key), setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) },
+    requestCrawler: async (_, path, options) => {
+      if (options.method === 'POST') { posts++; return { task_id: 'retained-job' }; }
+      if (offline) throw new Error('HTTP 504');
+      return { status: 'COMPLETED', result: { results: [] } };
+    },
+  });
+  await assert.rejects(crawlerService.batchCrawl({ category: 'TECH' }), /retained-job/);
+  assert.equal(values.size, 1);
+  offline = false;
+  await crawlerService.batchCrawl({ category: 'TECH' });
+  assert.equal(posts, 1);
+  assert.equal(values.size, 0);
 });
 
 function load(file, exports, globals = {}) {

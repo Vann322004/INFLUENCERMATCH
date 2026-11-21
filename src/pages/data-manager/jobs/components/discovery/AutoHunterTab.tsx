@@ -16,55 +16,6 @@ import { dataQualityService } from '../../../../../services/api/dataQualityServi
 import { DATA_MANAGER_ROUTES } from '../../../../../constants/adminRoutes';
 import type { CrawlPlatform } from '../../../../../types/api/crawler.types';
 
-// Kiểm tra tài khoản shop, bán sỉ, kho hàng
-function isShopAccount(username: string, displayName?: string, bio?: string): boolean {
-  const text = `${username} ${displayName || ''} ${bio || ''}`.toLowerCase();
-  const shopPatterns = [
-    /(\b|_|\.)shop(\b|_|\.|\d|$)/i,
-    /(\b|_|\.)store(\b|_|\.|\d|$)/i,
-    /(\b|_|\.)boutique(\b|_|\.|\d|$)/i,
-    /(\b|_|\.)tongkho(\b|_|\.|\d|$)/i,
-    /(\b|_|\.)khohang(\b|_|\.|\d|$)/i,
-    /(\b|_|\.)bansi(\b|_|\.|\d|$)/i,
-    /(\b|_|\.)sile(\b|_|\.|\d|$)/i,
-    /(\b|_|\.)order(\b|_|\.|\d|$)/i,
-    /bán sỉ/i,
-    /sỉ lẻ/i,
-    /tổng kho/i,
-    /kho buôn/i,
-    /cửa hàng/i,
-    /chuyên sỉ/i,
-    /giỏ hàng/i,
-    /bấm vào giỏ hàng/i,
-    /đơn hàng/i,
-    /từng đơn hàng/i,
-    /chốt đơn/i,
-    /lên đơn/i,
-    /đặt hàng/i,
-    /mua hàng/i,
-    /hoàn tiền/i,
-    /1 đổi 1/i,
-    /lỗi 1/i,
-    /đổi trả/i,
-    /bao đổi trả/i,
-    /ủng hộ em/i,
-    /ủng hộ shop/i,
-    /hàng có sẵn/i,
-    /sẵn kho/i,
-    /sẵn hàng/i,
-    /xả kho/i,
-    /thanh lý/i,
-    /ship cod/i,
-    /đồng kiểm/i,
-    /cho xem hàng/i,
-    /kiểm tra hàng/i,
-    /freeship/i,
-    /báo giá/i,
-    /giá sỉ/i,
-  ];
-  return shopPatterns.some((pattern) => pattern.test(text));
-}
-
 export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category' | 'custom' }) {
   const [platform, setPlatform] = useCollectionState<string>(`hunter.${mode}.platform`, 'ALL');
   const [topics, setTopics] = useState<Niche[]>([]);
@@ -82,9 +33,6 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
   const [progressPercent, setProgressPercent] = useCollectionState<number>(`hunter.${mode}.progressPercent`, 0);
   const [waitSeconds, setWaitSeconds] = useState(0);
   const [huntError, setHuntError] = useState('');
-  const huntConfigRef = useRef({ mode, maxKocs, activeKeywords });
-  huntConfigRef.current = { mode, maxKocs, activeKeywords };
-
   useEffect(() => {
     if (!loading) return;
     setWaitSeconds(0);
@@ -93,20 +41,8 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
     const waitTimer = setInterval(() => {
       setWaitSeconds(Math.floor((Date.now() - started) / 1000));
     }, 1000);
-    const progressTimer = setInterval(() => {
-      const elapsed = (Date.now() - started) / 1000;
-      const { maxKocs: limit, mode: currentMode, activeKeywords: kws } = huntConfigRef.current;
-      const expectedSeconds = Math.max(8, limit * 4);
-      const nextPct = Math.min(92, Math.max(8, Math.round(92 * (1 - Math.exp(-elapsed / (expectedSeconds * 0.65))))));
-      setProgressPercent((prev) => (prev < 95 ? Math.max(prev, nextPct) : prev));
-      if (currentMode === 'category' && kws.length > 1) {
-        const kwIdx = Math.floor(elapsed / 3) % kws.length;
-        setCurrentKeyword(kws[kwIdx]);
-      }
-    }, 600);
     return () => {
       clearInterval(waitTimer);
-      clearInterval(progressTimer);
     };
   }, [loading]);
 
@@ -198,11 +134,12 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
     const targetCount = mode === 'custom' ? Math.min(usernamesToCrawl.length, maxKocs) : maxKocs;
     setLoading(true);
     setHuntError('');
-    setProgressPercent(8);
+    setProgressPercent(0);
     setScannedCount(targetCount);
     setFilteredOutCount(0);
     setMatchedCount(0);
     setDiscoveredList([]);
+    setRawResults([]);
 
     const now = () => new Date().toLocaleTimeString('vi-VN');
     const topicObj = topics.find((t) => t.id === selectedTopic);
@@ -223,16 +160,6 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
       setCurrentKeyword(activeKeywords[0] || categoryCode || '');
     }
 
-    const timer1 = setTimeout(() => {
-      setLogLines((prev) => [`[${now()}] Đang quét và trích xuất thông tin hồ sơ từ nền tảng...`, ...prev]);
-    }, 3500);
-    const timer2 = setTimeout(() => {
-      setLogLines((prev) => [`[${now()}] Đang kiểm tra điều kiện người theo dõi và lọc tài khoản thương mại...`, ...prev]);
-    }, 9000);
-    const timer3 = setTimeout(() => {
-      setLogLines((prev) => [`[${now()}] Đang xử lý dữ liệu chuyên sâu, vui lòng đợi thêm giây lát...`, ...prev]);
-    }, 20000);
-
     try {
       const res = mode === 'custom' ? await crawlerService.collectAccounts(crawlPlatform, usernamesToCrawl, maxKocs) : await crawlerService.batchCrawl({
         platform: crawlPlatform,
@@ -241,9 +168,6 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
         maxChannels: maxKocs,
       });
 
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
 
       const summary = res.summary;
       const totalReq = summary?.total_requested ?? (res.results?.length ?? maxKocs);
@@ -252,39 +176,19 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
       setRawResults(res.results || []);
       const rawResults = (res.results || []).filter((r) => r.status === 'success' && !!r.username).map(r => ({ ...r }));
 
-      // Áp dụng bộ lọc Tier-0 Guards
-      let shopFilteredCount = 0;
-      let lowFollowersCount = 0;
+      // Backend decisions are authoritative for eligibility.
+      let rejectedCount = 0;
       const passedResults: typeof rawResults = [];
-      const shopRemovedNames: string[] = [];
+      const rejectedNames: string[] = [];
       const reviewPendingCandidates: { username: string; platform: string }[] = [];
 
       for (const r of rawResults) {
         const uname = r.username || '';
-        const dname = r.display_name || '';
-        const bio = r.bio || '';
-        const followers = r.followers || 0;
-
-        // 1. Loại bỏ tài khoản Shop / thương mại
-        if (isShopAccount(uname, dname, bio)) {
-          r.decision = 'AUTO_REJECT';
-          shopFilteredCount++;
-          shopRemovedNames.push(`@${uname.replace(/^@/, '')}`);
-          continue;
-        }
-
-        // 2. Loại bỏ tài khoản dưới 7.000 followers
-        if (followers < 7000) {
-          r.decision = 'SKIP_INSUFFICIENT';
-          lowFollowersCount++;
-          continue;
-        }
-
-        // 3. Loại bỏ nếu Backend Rule Engine từ chối (Brand / Shop / Spam)
+        // Loại bỏ nếu Backend Rule Engine từ chối (Brand / Shop / Spam)
         if (collectionOutcome(r.decision, r.primary_type) === 'rejected' || r.primary_type === 'BRAND' || r.primary_type === 'SPAM') {
           r.decision = 'AUTO_REJECT';
-          shopFilteredCount++;
-          shopRemovedNames.push(`@${uname.replace(/^@/, '')}`);
+          rejectedCount++;
+          rejectedNames.push(`@${uname.replace(/^@/, '')}`);
           continue;
         }
 
@@ -298,7 +202,7 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
 
       saveCollectionResults(res.results || [], mode === 'custom' ? 'manual' : 'automatic');
 
-      const totalExcluded = failedCnt + shopFilteredCount + lowFollowersCount;
+      const totalExcluded = failedCnt + rejectedCount;
       setScannedCount(totalReq);
       setFilteredOutCount(totalExcluded);
       setMatchedCount(passedResults.length);
@@ -337,11 +241,8 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
         const newLogs = [
           `[${now()}] Đã xử lý ${res.results?.length ?? 0}/${totalReq} kênh yêu cầu; ${mappedList.length} nhà sáng tạo đạt chuẩn Tier-0. ${(res.results?.length ?? 0) < totalReq ? "Nguồn tìm kiếm chưa trả đủ kênh phù hợp." : ""}`,
         ];
-        if (shopFilteredCount > 0) {
-          newLogs.push(`[${now()}] Đã loại bỏ ${shopFilteredCount} tài khoản Shop/Kho hàng: ${shopRemovedNames.join(', ')}`);
-        }
-        if (lowFollowersCount > 0) {
-          newLogs.push(`[${now()}] Đã loại bỏ ${lowFollowersCount} tài khoản có lượng theo dõi dưới 7.000.`);
+        if (rejectedCount > 0) {
+          newLogs.push(`[${now()}] Đã loại bỏ ${rejectedCount} tài khoản bị backend từ chối: ${rejectedNames.join(', ')}`);
         }
         if (totalExcluded > 0) {
           newLogs.push(`[${now()}] Có ${totalExcluded} kênh cào lỗi hoặc bị lọc Tier-0. Chưa xác nhận có hồ sơ chờ kiểm định trên hệ thống.`);
@@ -366,8 +267,8 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
         }, 150);
       } else {
         setProgressPercent(100);
-        const reason = shopFilteredCount > 0
-          ? `Tất cả kênh đều là tài khoản Shop (${shopRemovedNames.join(', ')}) hoặc dưới 7.000 followers.`
+        const reason = rejectedCount > 0
+          ? `Backend từ chối ${rejectedCount} tài khoản: ${rejectedNames.join(', ')}.`
           : 'Không có tài khoản nào đạt tiêu chuẩn Tier-0 trong danh mục này.';
         setLogLines([
           `[${now()}] ${reason}`,
@@ -385,11 +286,8 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
         });
       }
     } catch (err: any) {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
       setHuntError(err.message || 'Crawler request failed');
-      setLogLines((prev) => [`[${now()}] Lỗi kết nối máy chủ cào: ${err.message || 'Không thể lấy dữ liệu'}`, ...prev]);
+      setLogLines((prev) => [`[${now()}] Chưa nhận được kết quả thu thập: ${err.message || 'Không thể lấy dữ liệu'}`, ...prev]);
       message.error(err.message || 'Lỗi khi gọi API cào dữ liệu');
     } finally {
       setLoading(false);
