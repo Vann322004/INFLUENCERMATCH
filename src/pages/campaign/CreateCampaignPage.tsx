@@ -1,8 +1,9 @@
-import React, { useEffect, useSyncExternalStore } from 'react';
+import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { campaignEditor } from '../../services/campaignContext';
 import { getAuthSessionId, subscribeAuthSession } from '../../services/authSession';
 import { Row, Col, Alert, Tag, Input, InputNumber, Button, ConfigProvider, Select } from 'antd';
 import CampaignDeliverablesEditor from './components/create/CampaignDeliverablesEditor';
+import CampaignImagePicker from './components/create/CampaignImagePicker';
 import '../../components/layout/CampaignWorkflow.css';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 
@@ -41,6 +42,7 @@ export default function CreateCampaignPage() {
 function CampaignEditor({ resolvedCampaignId }: { resolvedCampaignId: string | null }) {
   const navigate = useNavigate();
   const isEditMode = Boolean(resolvedCampaignId);
+  const [imageUploading, setImageUploading] = useState(false);
 
   const form = useCreateCampaignForm({
     resolvedCampaignId,
@@ -61,6 +63,7 @@ function CampaignEditor({ resolvedCampaignId }: { resolvedCampaignId: string | n
       <CreateCampaignStepper
         currentStep={form.currentStep}
         onStepClick={(step) => {
+          if (imageUploading) return;
           if (step > form.currentStep && form.campaignStatus === 'DRAFT') { void form.handleNextStep(); return; }
           form.setCurrentStep(step);
           if (resolvedCampaignId) {
@@ -140,12 +143,8 @@ function CampaignEditor({ resolvedCampaignId }: { resolvedCampaignId: string | n
                 toggleObjective={form.toggleObjective}
                 isAiAutofilled={form.isAiAutofilled}
               />
-              <section className="workflow-panel" style={{ marginTop: 16 }}>
-                <label htmlFor="campaign-image-url">Ảnh chiến dịch (không bắt buộc)</label>
-                <Input id="campaign-image-url" type="url" maxLength={2048} value={form.imageUrl}
-                  onChange={event => form.setImageUrl(event.target.value)} placeholder="https://…"
-                  style={{ marginTop: 8 }} />
-              </section>
+              <CampaignImagePicker value={form.imageUrl} onChange={form.setImageUrl} onBusyChange={setImageUploading}
+                disabled={!!form.loadError || form.isLoadingCampaign || form.isSubmitting || form.isSavingDraft || (isEditMode && form.campaignStatus !== 'DRAFT')} />
               </>
             )}
 
@@ -239,7 +238,7 @@ function CampaignEditor({ resolvedCampaignId }: { resolvedCampaignId: string | n
         handleNextStep={form.handleNextStep}
         handleUpdateCampaign={form.handleUpdateCampaign}
         handleSaveDraft={form.handleSaveDraft}
-        isSubmitting={form.isSubmitting}
+        isSubmitting={form.isSubmitting || imageUploading}
         isSavingDraft={form.isSavingDraft}
       /> : <Button onClick={() => window.history.back()}>Quay lại</Button>}
     </div>

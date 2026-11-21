@@ -7,6 +7,7 @@ import type { NotificationDto } from '../../services/api/notificationService';
 
 // Retain existing Brand entity destinations; do not send other roles into Brand routes.
 function relatedPath(item: NotificationDto): string | undefined {
+  if (String(getStoredUser()?.role).toUpperCase() === 'CREATOR' && item.entityType?.toUpperCase() === 'COOPERATION_DEAL') return '/creator/bookings';
   if (String(getStoredUser()?.role).toUpperCase() !== 'BRAND') return;
   const type = item.entityType?.toUpperCase();
   if (type === 'CAMPAIGN' && item.entityId) return `/campaigns/${encodeURIComponent(item.entityId)}`;
@@ -47,7 +48,7 @@ export default function NotificationDrawer({ onClose }: { onClose: () => void })
                   if (!path) return;
                   if (!item.read && state.canManage) await notificationStore.markRead(item.id);
                   if (notificationStore.getSnapshot().session !== session) return;
-                  onClose(); navigate(path);
+                  onClose(); navigate(path, { state: item.entityType?.toUpperCase() === 'COOPERATION_DEAL' ? { cooperationDealId: item.entityId } : undefined });
                 }}>Xem liên quan</Button>}
             </li>)}</ul>}
       </div>

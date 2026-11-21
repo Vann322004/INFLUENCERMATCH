@@ -48,6 +48,19 @@ function readCampaign(response: { data: ApiResponse<CampaignResponse> }, id?: st
 }
 
 export const campaignService = {
+  async uploadImage(file: File, signal?: AbortSignal): Promise<string> {
+    const brandId = await this.resolveCurrentBrandId();
+    const body = new FormData();
+    body.append('file', file);
+    const response = await apiClient.post<ApiResponse<{ imageUrl: string }>>('/brands/' + brandId + '/campaign-images', body, {
+      headers: { 'Content-Type': undefined }, signal,
+    });
+    const url = response.data?.data?.imageUrl;
+    if (response.data?.success !== true || !url || new URL(url).protocol !== 'https:') {
+      throw new Error('Máy chủ chưa xác nhận ảnh đã tải lên.');
+    }
+    return url;
+  },
   /**
    * Lấy ID brand của user hiện tại, tự động cache theo userId và tạo profile nếu chưa có
    */
@@ -100,7 +113,12 @@ export const campaignService = {
       response.headers?.['etag'] ??
       (typeof response.headers?.get === 'function' ? response.headers.get('etag') : null);
     const headerEtag = typeof rawHeader === 'string' ? rawHeader : null;
-    const etag = headerEtag || this.formatCampaignRevisionTag(id, data.campaignRevision);
+    // Revision in the DTO is authoritative; a proxy may replace ETag or make it weak.
+    const expectedPrefix = `"campaign:${id}:r`;
+    const etag = data.campaignRevision != null
+      ? this.formatCampaignRevisionTag(id, data.campaignRevision)
+      : headerEtag?.startsWith(expectedPrefix) && /^"campaign:[\da-f-]+:r\d+"$/i.test(headerEtag)
+        ? headerEtag : this.formatCampaignRevisionTag(id, null);
     return { data, etag };
   },
 
@@ -155,9 +173,16 @@ export const campaignService = {
   async archiveCampaign(id: string, revisionOrEtag?: number | string | null): Promise<CampaignResponse> {
     const etag = typeof revisionOrEtag === 'number' ? this.formatCampaignRevisionTag(id, revisionOrEtag)
       : typeof revisionOrEtag === 'string' ? revisionOrEtag : (await this.getCampaignWithETag(id)).etag;
-    return readCampaign(await apiClient.patch<ApiResponse<CampaignResponse>>('/campaigns/' + id + '/archive', undefined, { headers: { 'If-Match': etag } }), id);
+    const result = readCampaign(await apiClient.patch<ApiResponse<CampaignResponse>>('/campaigns/' + id + '/archive', undefined, { headers: { 'If-Match': etag } }), id);
+    if (result.status !== 'ARCHIVED') throw new Error('Máy chủ chưa xác nhận lưu trữ chiến dịch.');
+    return result;
   },
-  async deleteCampaign(id: string): Promise<void> { await this.archiveCampaign(id); },
+  async deleteCampaign(id: string): Promise<void> {
+    const { data, etag } = await this.getCampaignWithETag(id);
+    if (data.status !== 'DRAFT') throw new Error('Chỉ có thể xóa vĩnh viễn chiến dịch bản nháp.');
+    const response = await apiClient.delete('/campaigns/' + id, { headers: { 'If-Match': etag } });
+    if (response.status !== 204) throw new Error('Máy chủ chưa xác nhận xóa vĩnh viễn chiến dịch.');
+  },
 
   /**
    * Tự động điền thông tin chiến dịch bằng Gemini AI

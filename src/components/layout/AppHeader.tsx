@@ -51,7 +51,7 @@ export default function AppHeader({ onOpenNavigation }: { onOpenNavigation?: () 
       return { root: 'Trang chủ', sub: 'Khám phá Nhà sáng tạo', subLink: '/creators', current: 'Chi tiết nhà sáng tạo' };
     }
     if (p.includes('/creators')) return { root: 'Trang chủ', current: 'Khám phá Nhà sáng tạo' };
-    if (p.includes('/crm')) return { root: 'Trang chủ', current: 'Tiếp cận & Kết nối' };
+    if (p.includes('/crm') || p.includes('/outreach') || p.includes('/relationships')) return { root: 'Trang chủ', current: 'Tiếp cận & thỏa thuận' };
     if (p.startsWith('/collaboration/')) {
       const returnTo = location.state?.returnTo;
       return {

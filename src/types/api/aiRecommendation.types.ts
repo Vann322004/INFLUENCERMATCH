@@ -83,6 +83,8 @@ export interface ExcludedCandidate {
 }
 
 export interface RecommendationRunMetadata {
+  evaluatedCreatorIds?: string[];
+  evaluatedCount?: number;
   scoringAsOf?: string;
   historyCutoff?: string;
   effectiveWeights?: number[] | null;

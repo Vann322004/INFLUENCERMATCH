@@ -31,6 +31,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
 import { getErrorMessage } from '../../services/apiClient';
+import { getStoredUser } from '../../services/authSession';
+import { activeCampaignId, forgetCampaign } from '../../services/campaignContext';
 import type { CampaignResponse, CampaignStatus, CampaignObjective, CampaignPlatform } from '../../types/api/campaign.types';
 import type { Campaign } from '../../data/mockData';
 
@@ -76,6 +78,7 @@ export const mapApiCampaignToUi = (c: CampaignResponse): Campaign => {
 
 export default function CampaignTable() {
   const navigate = useNavigate();
+  const canDeleteDraft = (getStoredUser()?.permissions ?? []).includes('CHANGE_CAMPAIGN_STATUS');
   const [loading, setLoading] = useState(true);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [activeTab, setActiveTab] = useState<string>('all');
@@ -281,18 +284,19 @@ export default function CampaignTable() {
   };
 
   const handleDeleteCampaign = (record: Campaign) => {
+    if (record.status !== 'draft' || !canDeleteDraft) return;
     Modal.confirm({
-      title: 'Xóa chiến dịch',
+      title: 'Xóa vĩnh viễn bản nháp?',
       icon: <ExclamationCircleOutlined style={{ color: '#EF4444' }} />,
       content: (
         <div>
           Bạn có chắc chắn muốn xóa chiến dịch <strong style={{ color: '#0F172A' }}>"{record.title}"</strong> không?
           <div style={{ color: '#64748B', fontSize: 12.5, marginTop: 6 }}>
-            Thao tác này sẽ gỡ bỏ chiến dịch khỏi danh sách và cập nhật ngay lập tức.
+            Bản nháp và danh sách kênh đã lưu sẽ bị xóa khỏi hệ thống, không thể khôi phục. Chiến dịch đã có lịch sử nghiệp vụ sẽ không được xóa.
           </div>
         </div>
       ),
-      okText: 'Xóa chiến dịch',
+      okText: 'Xóa vĩnh viễn',
       okType: 'danger',
       cancelText: 'Hủy',
       maskClosable: true,
@@ -300,6 +304,7 @@ export default function CampaignTable() {
         try {
           message.loading({ content: `Đang xóa chiến dịch "${record.title}"...`, key: 'del_camp' });
           await campaignService.deleteCampaign(record.id);
+          if (activeCampaignId() === record.id) forgetCampaign();
 
           setCampaigns((prev) => prev.filter((c) => c.id !== record.id));
 
@@ -313,7 +318,9 @@ export default function CampaignTable() {
 
           message.success({ content: `Đã xóa chiến dịch "${record.title}" thành công!`, key: 'del_camp' });
         } catch (err) {
-          message.error({ content: getErrorMessage(err, 'Không thể xóa chiến dịch.'), key: 'del_camp' });
+          const code = (err as { response?: { data?: { code?: string } } }).response?.data?.code;
+          message.error({ content: code === 'CAMPAIGN_DELETE_BLOCKED' ? 'Chiến dịch đã có dữ liệu liên quan. Bạn có thể lưu trữ thay vì xóa.' : getErrorMessage(err, 'Không thể xóa chiến dịch.'), key: 'del_camp' });
+          throw err;
         }
       },
     });
@@ -524,7 +531,7 @@ export default function CampaignTable() {
           { key: 'edit', icon: <EditOutlined />, label: 'Chỉnh sửa' },
           { key: 'discovery', icon: <CompassOutlined />, label: 'Khám phá Nhà sáng tạo AI' },
           { type: 'divider' },
-          { key: 'delete', icon: <DeleteOutlined />, danger: true, label: 'Xóa chiến dịch' },
+          { key: 'delete', icon: <DeleteOutlined />, danger: true, label: 'Xóa bản nháp', disabled: record.status !== 'draft' || !canDeleteDraft },
         ];
 
         return (

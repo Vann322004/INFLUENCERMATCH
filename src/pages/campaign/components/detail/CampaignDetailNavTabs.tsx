@@ -21,35 +21,35 @@ export const CampaignDetailNavTabs: React.FC<CampaignDetailNavTabsProps> = ({
           className={`cdetail-seg-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
-          Tổng quan chiến dịch
+          Tổng quan
         </button>
         <button
           type="button"
           className={`cdetail-seg-tab-btn ${activeTab === 'creators' ? 'active' : ''}`}
           onClick={() => setActiveTab('creators')}
         >
-          Nhà sáng tạo tham gia ({creatorsCount})
+          Nhà sáng tạo · {creatorsCount}
         </button>
         <button
           type="button"
           className={`cdetail-seg-tab-btn ${activeTab === 'budget' ? 'active' : ''}`}
           onClick={() => setActiveTab('budget')}
         >
-          Ngân sách & Thanh toán
+          Ngân sách & thỏa thuận
         </button>
         <button
           type="button"
           className={`cdetail-seg-tab-btn ${activeTab === 'timeline' ? 'active' : ''}`}
           onClick={() => setActiveTab('timeline')}
         >
-          Lộ trình chiến dịch
+          Lộ trình
         </button>
         <button
           type="button"
           className={`cdetail-seg-tab-btn ${activeTab === 'guidelines' ? 'active' : ''}`}
           onClick={() => setActiveTab('guidelines')}
         >
-          Hồ sơ & Yêu cầu nội dung
+          Yêu cầu nội dung
         </button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Alert, App, Form, Input, Button, Checkbox } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 import { authService } from '../../services/api/authService';
 import { brandService } from '../../services/api/brandService';
@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [form] = Form.useForm();
   const { message } = App.useApp();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
 
   const [registration, setRegistration] = useState(null);
@@ -36,7 +37,7 @@ export default function LoginPage() {
     } else if (user && (user.role === 'MANAGER' || user.role === 'DATA_MANAGER' || user.role === 'manager')) {
       navigate('/data-manager/dashboard');
     } else if (user && (user.role === 'CREATOR' || user.role === 'creator')) {
-      navigate('/creator/dashboard');
+      navigate(location.state?.cooperationReturnTo === '/creator/bookings' ? '/creator/bookings' : '/creator/dashboard');
     } else if (user?.role === 'BRAND') {
       const dashboard = ROUTES.DASHBOARD || '/dashboard';
       if (user.onboardingStatus === 'COMPLETED' || (user.id && hasDeferredBrandOnboarding(user.id))) {
