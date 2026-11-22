@@ -39,7 +39,7 @@ export const aiRecommendationService = {
       const response = await apiClient.get('/campaigns/' + campaignId, { signal });
       const data = response.data?.data as CampaignResponse;
       if (response.data?.success === false || data?.id !== campaignId || !data.status) throw new Error('Không thể đọc trạng thái chiến dịch.');
-      if (data.status === 'ARCHIVED') throw new Error('Chiến dịch đã lưu trữ, không thể tiếp tục chạy gợi ý.');
+      if (data.status === 'ARCHIVED' || data.status === 'CLOSED') throw new Error('Chiến dịch đã kết thúc, không thể tiếp tục chạy gợi ý.');
       return data;
     };
     let campaign = await readCampaign();

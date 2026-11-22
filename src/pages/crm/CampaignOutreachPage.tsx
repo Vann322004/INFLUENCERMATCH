@@ -103,7 +103,7 @@ function OutreachWorkspace({ campaignId, initialIds, assessment, campaignSelecto
   const readinessQuery = useCallback(() => shortlistService.readiness(campaignId, JSON.parse(selectionKey)), [campaignId, selectionKey]);
   const contactRoutes = useAsyncResource(readinessQuery, canSelect && selected.length > 0 && resource.status === 'success');
   const eligible = readiness?.ids === selectionKey ? readiness.data : contactRoutes.status === 'success' ? contactRoutes.data : null;
-  const terminal = ['COMPLETED', 'ARCHIVED'].includes(resource.data?.campaign.status ?? '');
+  const terminal = ['COMPLETED', 'ARCHIVED', 'CLOSED'].includes(resource.data?.campaign.status ?? '');
   const uncovered = selected.filter(item => !ai.data?.items.some(result => result.creatorId === item.creatorId) && !ai.data?.evaluatedCreatorIds?.includes(item.creatorId));
   const evaluated = canViewAI && ai.status === 'success' && !!ai.data?.runId && selected.length > 0 && uncovered.length === 0;
   const deals = resource.data?.deals ?? [];

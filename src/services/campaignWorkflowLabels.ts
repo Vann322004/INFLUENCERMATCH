@@ -1,1 +1,1 @@
-export const campaignStatusLabels: Record<string, string> = { DRAFT: 'Bản nháp', READY_FOR_DISCOVERY: 'Sẵn sàng khám phá', ACTIVE: 'Đang triển khai', COMPLETED: 'Đã hoàn thành', ARCHIVED: 'Đã lưu trữ' };
+export const campaignStatusLabels: Record<string, string> = { DRAFT: 'Bản nháp', READY_FOR_DISCOVERY: 'Sẵn sàng khám phá', ACTIVE: 'Đang triển khai', COMPLETED: 'Đã hoàn thành', ARCHIVED: 'Đã lưu trữ', CLOSED: 'Đã đóng' };

@@ -104,9 +104,9 @@ export default function CampaignListPage() {
             } else if (rawStatus === 'READY_FOR_DISCOVERY') {
               uiStatus = 'ready_for_discovery';
               statusText = 'Sẵn sàng đề xuất';
-            } else if (rawStatus === 'COMPLETED' || rawStatus === 'ARCHIVED') {
+            } else if (rawStatus === 'COMPLETED' || rawStatus === 'ARCHIVED' || rawStatus === 'CLOSED') {
               uiStatus = 'completed';
-              statusText = 'Hoàn thành';
+              statusText = rawStatus === 'CLOSED' ? 'Đã đóng' : rawStatus === 'ARCHIVED' ? 'Đã lưu trữ' : 'Hoàn thành';
             }
 
             const budgetMax = c.totalBudget ?? c.budgetMax ?? 0;

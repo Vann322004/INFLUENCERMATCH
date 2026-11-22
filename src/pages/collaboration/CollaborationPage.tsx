@@ -11,7 +11,7 @@ import type { CampaignResponse } from '../../types/api/campaign.types';
 import type { CollaborationStatus, CollaborationSummary, ExecutionSnapshot, PendingAssignment } from '../../types/api/collaboration.types';
 import { RetryAlert, StatusTag, statusOptions } from './CollaborationExecutionPanel';
 import { useCollaborationPermissions } from './useCollaborationPermissions';
-import { channelLabel, formatDate, formatMoney } from './ExecutionForms';
+import { channelLabel, formatDate, formatMoney, formatNumber } from './ExecutionForms';
 import { OperationsTable } from './OperationsTables';
 import './CollaborationPage.css';
 

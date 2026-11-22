@@ -47,7 +47,7 @@ function CreatorResponse({ deal, onSaved }: { deal: Deal; onSaved: () => void })
   const [error, setError] = useState('');
   const session = getAuthSessionId();
   const lock = useRef(false);
-  const mutable = ['CONTACTED', 'NEGOTIATING'].includes(deal.status) && deal.proposal?.kind === 'OFFER' && !['COMPLETED','ARCHIVED'].includes(deal.campaignStatus ?? '');
+  const mutable = ['CONTACTED', 'NEGOTIATING'].includes(deal.status) && deal.proposal?.kind === 'OFFER' && !['COMPLETED','ARCHIVED','CLOSED'].includes(deal.campaignStatus ?? '');
   const accepted = deal.proposal != null && deal.acceptedRevision === deal.proposal.revision;
   const perform = async (action: 'accept' | 'decline' | 'counteroffers', values?: ProposalForm) => {
     if (lock.current || !mutable) return;

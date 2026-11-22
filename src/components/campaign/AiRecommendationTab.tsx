@@ -107,7 +107,7 @@ export default function AiRecommendationTab({
   const [quickOpen, setQuickOpen] = useState(false);
   const permissions = getStoredUser()?.permissions ?? [];
   const canView = permissions.includes('VIEW_OWN_RECOMMENDATION');
-  const canRun = permissions.includes('RUN_RECOMMENDATION') && !!campaign && !['ARCHIVED', 'COMPLETED'].includes(campaign.status);
+  const canRun = permissions.includes('RUN_RECOMMENDATION') && !!campaign && !['ARCHIVED', 'COMPLETED', 'CLOSED'].includes(campaign.status);
   const canSave = permissions.includes('MANAGE_OWN_SHORTLIST');
   const [selectedCreatorIds, setSelectedCreatorIds] = useState<string[]>(initialSelectedCreatorIds);
   const [mode, setMode] = useState<DisplayMode>('BEST_MATCH');
@@ -457,7 +457,7 @@ export default function AiRecommendationTab({
         {invalidSelection && <Alert type="error" title="Danh sách kênh trên liên kết không hợp lệ. Vui lòng chọn lại." />}
         {running && <Alert type="info" showIcon title={phase === 'preparing' ? 'Đang chuẩn bị dữ liệu' : 'Đang chạy gợi ý'} description="Giữ nguyên chiến dịch và các kênh đã chọn. Hệ thống sẽ tự tiếp tục một lần khi dữ liệu sẵn sàng." />}
         {campaign.status === 'DRAFT' && !running && !result && <Alert type="info" title="Bạn có thể chỉnh sửa yêu cầu trước khi chạy đánh giá" description="Sau khi chốt, yêu cầu sẽ được khóa; bạn vẫn có thể thay đổi danh sách kênh." action={<Button onClick={() => { const target = campaignEditor(campaign.id); navigate(target.path, { state: target.state }); }}>Kiểm tra yêu cầu</Button>} />}
-        {!canRun && <p className="ad-note">{['COMPLETED', 'ARCHIVED'].includes(campaign.status) ? 'Chiến dịch đã kết thúc. Bạn có thể xem lại các lượt đánh giá trong lịch sử.' : 'Bạn chưa có quyền chạy đánh giá.'}</p>}
+        {!canRun && <p className="ad-note">{['COMPLETED', 'ARCHIVED', 'CLOSED'].includes(campaign.status) ? 'Chiến dịch đã kết thúc. Bạn có thể xem lại các lượt đánh giá trong lịch sử.' : 'Bạn chưa có quyền chạy đánh giá.'}</p>}
       </section>
 
       {statusWarning && <Alert type="warning" title={statusWarning} />}
