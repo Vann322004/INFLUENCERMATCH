@@ -71,18 +71,21 @@ export function OutcomeTable({ snapshot, latest, label }: {
     <div className="kpi-controls-bar">
       <div>
         <h2>Kết quả bài đăng</h2>
-        {latest && <span>Phiên bản {latest.revision} · {outcomeSourceLabel(latest.source || latest.calculation.metricSource)}{snapshot.acceptances.some(item => !item.reopenedAt && item.outcomeRevision === latest.revision) ? ' · Brand đã nghiệm thu' : ''}</span>}
+        {latest && <span>Phiên bản {latest.revision} · {outcomeSourceLabel(latest.calculation.metricSource || latest.source)}{snapshot.acceptances.some(item => !item.reopenedAt && item.outcomeRevision === latest.revision) ? ' · Brand đã nghiệm thu' : ''}</span>}
       </div>
     </div>
     {posts.length ? <OperationsTable label="Bảng KPI bài đăng" headers={['Ấn phẩm và link bài đăng', 'Kỳ đo', ...metrics.map(metric => metricLabels[metric])]}>
       {posts.map(({ unit, publication, measurement }) => <tr key={unit.id}>
         <td><strong>{label(unit)}</strong><div><HttpsLink url={publication.url}>Mở bài đăng</HttpsLink></div>
+          {measurement && (measurement.recorderSource === 'BRAND_EXTERNAL_REPORTED' || measurement.sourceDescription)
+            && <div className="collab-muted">Brand ghi nhận bên ngoài · {measurement.sourceDescription}
+              {' · '}{measurement.receivedAt ? formatDate(measurement.receivedAt) : 'Chưa ghi nhận'}</div>}
           {measurement?.evidenceUrl && <div><HttpsLink url={measurement.evidenceUrl}>Bằng chứng</HttpsLink></div>}</td>
         <td>{measurement ? `${formatDate(measurement.periodStart)} – ${formatDate(measurement.periodEnd)}` : '—'}</td>
         {metrics.map(metric => <td key={metric}>{measurementMetric(measurement, metric)}
           {measurement?.[metric] != null && <div className="collab-muted">{measurement.metricSources?.[metric] === 'PUBLIC_POST_CRAWL'
             ? `Nhận từ crawl · ${formatDate(measurement.collectedAt)}`
-            : measurement.metricSources?.[metric] === 'BRAND_EXTERNAL_REPORTED' ? 'Brand ghi nhận bên ngoài' : 'Creator khai báo'}</div>}
+            : outcomeSourceLabel(measurement.metricSources?.[metric])}</div>}
         </td>)}
       </tr>)}
     </OperationsTable> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có bài đăng hiện hành" />}

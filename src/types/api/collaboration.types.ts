@@ -61,6 +61,9 @@ export interface Publication {
   url: string;
   earlyPublication: boolean;
   exceptionAcknowledged: boolean;
+  source?: 'CREATOR_PORTAL' | 'BRAND_EXTERNAL';
+  sourceDescription?: string | null;
+  receivedAt?: string | null;
   exceptionReason?: string | null;
 }
 
@@ -92,6 +95,8 @@ export type MetricName = 'views' | 'clicks' | 'likes' | 'comments' | 'shares';
 
 export interface Measurement extends Partial<Record<MetricName, number | null>> {
   sourceDescription?: string;
+  receivedAt?: string | null;
+  recorderSource?: 'SELF_REPORTED' | 'BRAND_EXTERNAL_REPORTED';
   collectionId?: string;
   metricSources?: Partial<Record<MetricName, 'PUBLIC_POST_CRAWL' | 'SELF_REPORTED' | 'BRAND_EXTERNAL_REPORTED'>>;
   collectedAt?: string;
@@ -193,8 +198,10 @@ export interface ExecutionSnapshot {
   terminatedAt?: string;
   terminationReason?: string;
   terminationEvidence?: string;
-  exitRequests?: { id: string; reason: string; evidenceUrl?: string; requestedByRole: 'BRAND' | 'CREATOR'; createdAt: string;
-    resolvedAt?: string; resolution?: 'TERMINATED' | 'DECLINED'; resolutionReason?: string }[];
+  terminationMethod?: 'PORTAL' | 'BRAND_EXTERNAL';
+  terminationAgreedAt?: string;
+  exitRequests?: { id: string; requestedBy: string; reason: string; evidenceUrl?: string; requestedByRole: 'BRAND' | 'CREATOR'; createdAt: string;
+    resolvedAt?: string; resolution?: 'TERMINATED' | 'DECLINED' | 'WITHDRAWN' | 'TERMINATED_EXTERNAL'; resolutionReason?: string }[];
   id: string;
   campaignId: string;
   campaignStatus: CampaignStatus;
