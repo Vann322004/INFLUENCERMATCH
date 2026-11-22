@@ -198,8 +198,8 @@ export interface ExecutionSnapshot {
   terminatedAt?: string;
   terminationReason?: string;
   terminationEvidence?: string;
-  terminationMethod?: 'PORTAL' | 'BRAND_EXTERNAL';
-  terminationAgreedAt?: string;
+  terminationMethod?: 'PORTAL' | 'BRAND_EXTERNAL' | null;
+  terminationAgreedAt?: string | null;
   exitRequests?: { id: string; requestedBy: string; reason: string; evidenceUrl?: string; requestedByRole: 'BRAND' | 'CREATOR'; createdAt: string;
     resolvedAt?: string; resolution?: 'TERMINATED' | 'DECLINED' | 'WITHDRAWN' | 'TERMINATED_EXTERNAL'; resolutionReason?: string }[];
   id: string;

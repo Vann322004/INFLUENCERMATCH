@@ -11,7 +11,7 @@ import GoogleIdentityButton, { googleErrorMessage } from './GoogleIdentityButton
 import GoogleRegistrationModal from './GoogleRegistrationModal';
 import GoogleLinkModal from '../brand/GoogleLinkModal';
 import './LoginPage.css';
-import { cooperationPath, pendingCooperation, validCooperationToken } from '../../services/cooperationContinuation';
+import { cooperationPath, pendingCooperation, rememberCooperation, validCooperationToken } from '../../services/cooperationContinuation';
 
 export default function LoginPage() {
   const [form] = Form.useForm();
@@ -40,7 +40,8 @@ export default function LoginPage() {
       navigate('/data-manager/dashboard');
     } else if (user && (user.role === 'CREATOR' || user.role === 'creator')) {
       const invitation = validCooperationToken(location.state?.cooperationToken) ? location.state.cooperationToken : pendingCooperation();
-      navigate(invitation ? cooperationPath(invitation) : location.state?.cooperationReturnTo === '/creator/bookings' ? '/creator/bookings' : '/creator/dashboard');
+      if (invitation) rememberCooperation(invitation);
+      navigate(invitation ? cooperationPath() : location.state?.cooperationReturnTo === '/creator/bookings' ? '/creator/bookings' : '/creator/dashboard');
     } else if (user?.role === 'BRAND') {
       const dashboard = ROUTES.DASHBOARD || '/dashboard';
       if (user.onboardingStatus === 'COMPLETED' || (user.id && hasDeferredBrandOnboarding(user.id))) {
@@ -253,7 +254,7 @@ export default function LoginPage() {
       {/* ── Footer Registration Banner (Matching Mockup grey pill box) ── */}
       <div className="login-register-banner">
         <span className="register-prompt">Chưa có tài khoản?</span>
-        <Link to={cooperationInvitation ? cooperationPath(cooperationInvitation) : ROUTES.AUTH.REGISTER || '/register'} className="register-now-link">
+        <Link to={cooperationInvitation ? cooperationPath() : ROUTES.AUTH.REGISTER || '/register'} className="register-now-link">
           <span>Đăng ký ngay</span>
           <ArrowRightOutlined style={{ fontSize: 11, marginLeft: 4 }} />
         </Link>

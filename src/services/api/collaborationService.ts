@@ -79,6 +79,8 @@ export const collaborationService = {
   flexibleAction: (id: string, action: 'management-mode' | 'complete-without-review' | 'terminate' | 'terminate-external' | 'termination-requests' | 'termination-requests/decline'
     | `termination-requests/${string}/withdraw`, body: object, key: string) =>
     writer<object>(() => `/collaborations/${id}/${action}`)(id, body, key),
+  withdrawTermination: (id: string, requestId: string, expectedRevision: number, key: string) =>
+    writer<object>(() => `/collaborations/${id}/termination-requests/${requestId}/withdraw`)(id, { expectedRevision }, key),
   submitExternal: deliverableWriter<object>('external-submissions'),
   publishExternal: deliverableWriter<object>('external-publication'),
   outcomeExternal: deliverableWriter<object>('external-outcome'),

@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Card, Empty, Pagination, Space, Spin, Tag, Typography } from 'antd';
-import { Link, useSearchParams } from 'react-router-dom';
-import { cooperationPath, pendingCooperation } from '../../../services/cooperationContinuation';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  cooperationPath, pendingCooperation, pendingCooperationTarget,
+} from '../../../services/cooperationContinuation';
+import { dealService } from '../../../services/api/dealService';
 import { claimService } from '../../../services/api/claimService';
 import {
   channelVerificationService as verification,
@@ -23,6 +26,7 @@ const matchLabels = {
   ALREADY_LINKED: 'Đã liên kết với bạn',
   UNMATCHED: 'Chưa khớp mã kênh trong hệ thống',
   UNAVAILABLE: 'Không thể liên kết do quyền sở hữu hoặc điều kiện kênh',
+  INSUFFICIENT_EVIDENCE: 'OAuth chưa đủ bằng chứng về quyền phù hợp; cần xác minh thủ công',
 };
 
 function verificationLabel(channel: LinkedChannel) {
@@ -124,8 +128,10 @@ interface Props {
 }
 
 export default function ChannelVerification({ canVerify, canViewClaims, linked, linkedError, reloadLinked }: Props) {
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const invitationToken = pendingCooperation();
+  const invitationTarget = pendingCooperationTarget();
   const [options, setOptions] = useState<ConnectionOption[] | null>(null);
   const [optionsError, setOptionsError] = useState('');
   const [optionsRetry, setOptionsRetry] = useState(0);
@@ -140,6 +146,15 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
   const [notice, setNotice] = useState('');
   const [manual, setManual] = useState<{ platform?: OAuthPlatform; query?: string } | null>(null);
   const [historyVersion, setHistoryVersion] = useState(0);
+  const [invitationContext, setInvitationContext] = useState<{
+    status: string;
+    channels?: { creatorId: string; platform: string; username: string }[];
+  } | null>(null);
+  const [invitationContextError, setInvitationContextError] = useState('');
+  const targetChannel = invitationContext?.channels?.find(
+    channel => channel.creatorId === invitationTarget?.creatorId
+      && channel.platform === invitationTarget?.platform,
+  );
 
   useEffect(() => {
     const returned = ['return', 'cancelled', 'conflict'].includes(params.get('oauth') ?? '');
@@ -164,6 +179,25 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
       });
     return () => controller.abort();
   }, [canVerify, optionsRetry]);
+
+  useEffect(() => {
+    if (!canVerify || !invitationToken) {
+      setInvitationContext(null);
+      setInvitationContextError('');
+      return;
+    }
+    let active = true;
+    setInvitationContext(null);
+    setInvitationContextError('');
+    dealService.invitationContext(invitationToken)
+      .then(result => { if (active) setInvitationContext(result); })
+      .catch(cause => {
+        if (active) setInvitationContextError(
+          getErrorMessage(cause, 'Không kiểm tra được kênh trong lời mời. Hãy quay lại lời mời và thử lại.'),
+        );
+      });
+    return () => { active = false; };
+  }, [canVerify, invitationToken]);
 
   function clearPending() {
     sessionStorage.removeItem(storageKey);
@@ -191,8 +225,15 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
           clearPending();
           setError('');
           setNotice('Kênh đã được liên kết.');
+          if (invitationToken) {
+            navigate(cooperationPath(), { state: { channelOAuthResult: 'VERIFIED' } });
+          }
         } else {
           setSession(result);
+          if (invitationToken && pending.flow === 'TIKTOK_LOGIN' && result.status === 'READY') {
+            clearPending();
+            navigate(cooperationPath(), { state: { channelOAuthResult: 'MANUAL_RESOLUTION' } });
+          }
         }
       })
       .catch(cause => {
@@ -202,7 +243,7 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
       })
       .finally(() => { if (!controller.signal.aborted) setChecking(false); });
     return () => controller.abort();
-  }, [canVerify, pending, reloadLinked, statusRetry]);
+  }, [canVerify, invitationToken, navigate, pending, reloadLinked, statusRetry]);
 
   async function start(option: ConnectionOption) {
     if (busy.current) return;
@@ -212,14 +253,21 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
     setError('');
     const authSessionId = getAuthSessionId();
     try {
-      const result = await verification.start(option);
+      if (invitationToken && (!invitationTarget || !targetChannel
+          || targetChannel.platform !== option.platform)) {
+        throw new Error('Chưa xác nhận được kênh đích trong lời mời. Hãy chọn lại kênh từ trang lời mời.');
+      }
+      const startContext = invitationToken && targetChannel
+        ? { creatorId: targetChannel.creatorId, cooperationInvitationToken: invitationToken }
+        : {};
+      const result = await verification.start(option, startContext);
       if (getAuthSessionId() !== authSessionId) return;
       const url = getConsentUrl(result.authorizationUrl, option);
       if (!result.sessionId || !Number.isFinite(Date.parse(result.expiresAt))) {
         throw new Error('Phiên xác minh mới không hợp lệ.');
       }
       sessionStorage.setItem(storageKey, JSON.stringify({ id: result.sessionId, expiresAt: result.expiresAt,
-        authSessionId, flow: option.oauthFlow }));
+        authSessionId, flow: option.oauthFlow, targetCreatorId: targetChannel?.creatorId ?? null }));
       window.location.assign(url);
     } catch (cause) {
       setError(getErrorMessage(cause, 'Không bắt đầu được xác minh.'));
@@ -247,6 +295,7 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
       }
       clearPending();
       setNotice('Kênh đã được liên kết.');
+      if (invitationToken) navigate(cooperationPath(), { state: { channelOAuthResult: 'VERIFIED' } });
     } catch (cause) {
       if (pending.authSessionId === getAuthSessionId()) {
         setError(getErrorMessage(cause, 'Chưa xác nhận được liên kết.'));
@@ -285,7 +334,9 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
 
   return (
     <Space orientation="vertical" size="large" style={{ width: '100%' }}>
-      {invitationToken && <Alert type="info" title="Bạn đang liên kết kênh để phản hồi lời mời hợp tác" action={<Link to={cooperationPath(invitationToken)}><Button>Tiếp tục lời mời</Button></Link>} />}
+      {invitationToken && <Alert type="info" title="Bạn đang xác minh kênh cho lời mời hợp tác"
+        description={invitationTarget ? `Kênh mục tiêu: ${invitationTarget.platform} · @${invitationTarget.username}` : undefined}
+        action={<Link to={cooperationPath()}><Button>Tiếp tục lời mời</Button></Link>} />}
       <h1 className="creator-page-title">Kênh liên kết</h1>
       {canVerify && <Card className="creator-section-card" title="Xác minh kênh">
         <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
@@ -294,11 +345,17 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
           {optionsError && <Alert showIcon type="error" title={optionsError} action={
             <Button onClick={() => setOptionsRetry(value => value + 1)}>Thử lại</Button>
           } />}
+          {invitationToken && invitationContextError && <Alert type="error" showIcon title={invitationContextError} />}
+          {invitationToken && !invitationTarget && <Alert type="warning" showIcon
+            title="Chọn kênh cụ thể từ trang lời mời trước khi bắt đầu OAuth." />}
+          {invitationToken && invitationTarget && invitationContext && !targetChannel && <Alert type="error" showIcon
+            title="Kênh đã chọn không còn thuộc lời mời này. Quay lại lời mời để kiểm tra lại." />}
           <Space wrap>
             <Button disabled={!!working} onClick={() => setManual({})}>Gửi bằng chứng thủ công</Button>
-            {!pending && options?.map(option => <Button key={optionLabel(option)} type="primary"
+            {!pending && options?.filter(option => !invitationToken || option.platform === targetChannel?.platform).map(option => <Button key={optionLabel(option)} type="primary"
               loading={working === optionLabel(option)}
-              disabled={!option.available || (!!working && working !== optionLabel(option))}
+              disabled={!option.available || (!!working && working !== optionLabel(option))
+                || !!invitationToken && (!targetChannel || invitationContext?.status !== 'NEEDS_CHANNEL_VERIFICATION')}
               title={option.available ? undefined : 'Phương thức này chưa được cấu hình'}
               onClick={() => void start(option)}>Xác minh {optionLabel(option)}</Button>)}
             {!options && !optionsError && <Spin size="small" />}
@@ -314,9 +371,14 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
                 : 'Nền tảng không hoàn tất cấp quyền.'
             } />}
             {session?.status === 'EXPIRED' && <Alert type="warning" showIcon title="Phiên xác minh đã hết hạn." />}
-            {session?.status === 'READY' && pending.flow === 'TIKTOK_LOGIN' && <Alert type="warning" showIcon
-              title="Tài khoản TikTok được cấp quyền chưa khớp kênh cần xác minh."
-              description={session.account?.username || session.account?.displayName} />}
+            {session?.status === 'READY' && pending.flow === 'TIKTOK_LOGIN' && <>
+              <Alert type="warning" showIcon
+                title="TikTok đã cấp quyền, nhưng chưa xác nhận được danh tính kênh mục tiêu. Chưa thay đổi ownership."
+                description={session.account?.username || session.account?.displayName} />
+              <Button disabled={!!working} onClick={() => setManual({
+                platform: 'TIKTOK', query: session.account?.username ?? '',
+              })}>Tiếp tục xác minh thủ công</Button>
+            </>}
             {session?.status === 'READY' && pending.flow !== 'TIKTOK_LOGIN' && (
               session.accounts.length ? <Space orientation="vertical" style={{ width: '100%' }}>
                 <Typography.Text strong>Chọn kênh đã cấp quyền</Typography.Text>
@@ -334,7 +396,7 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
                     loading={working === account.accountId} onClick={() => void confirm(account.accountId)}>
                     {account.matchStatus === 'AVAILABLE' ? 'Liên kết kênh' : 'Xác minh lại'}
                   </Button>}
-                  {account.matchStatus === 'UNMATCHED' && <Button disabled={!!working} onClick={() => setManual({
+                  {(account.matchStatus === 'UNMATCHED' || account.matchStatus === 'INSUFFICIENT_EVIDENCE') && <Button disabled={!!working} onClick={() => setManual({
                     platform: session.platform, query: account.username ?? account.accountId,
                   })}>Gửi bằng chứng</Button>}
                 </div>)}
