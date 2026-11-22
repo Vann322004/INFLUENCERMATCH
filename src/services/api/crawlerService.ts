@@ -132,6 +132,42 @@ class CrawlerService {
     };
   }
 
+  async getReviewCandidates(): Promise<{ items: LiveCrawlResult[]; complete: boolean }> {
+    const rows = new Map<string, LiveCrawlResult>();
+    let offset = 0;
+    let legacy = false;
+    while (true) {
+      let page: { total: number; items?: LiveCrawlResult[]; candidates?: any[] };
+      try {
+        const path = legacy ? '/api/v1/candidates/review/pending' : '/api/v1/monitor/review-candidates';
+        page = await this.requestCrawler(`${path}?limit=200&offset=${offset}`, {}, 10000);
+      } catch (error) {
+        if (!legacy && offset === 0 && (error as { status?: number })?.status === 404) {
+          legacy = true;
+          continue;
+        }
+        throw error;
+      }
+      const items: LiveCrawlResult[] | undefined = legacy && Array.isArray(page.candidates)
+        ? page.candidates.map(candidate => ({
+            status: 'success', platform: candidate.platform, username: candidate.username,
+            display_name: candidate.display_name, author_id: candidate.external_id,
+            profile_url: candidate.profile_url, decision: candidate.decision,
+            primary_type: candidate.primary_type, reason_codes: candidate.reason_codes,
+            followers: candidate.evidence_summary?.followers,
+            recent_posts: candidate.evidence_summary?.audit_posts, collected_at: candidate.updated_at,
+          })) : page.items;
+      if (!Array.isArray(items) || !Number.isFinite(page.total)) {
+        throw new Error('Dữ liệu hàng chờ đối chiếu không hợp lệ.');
+      }
+      for (const row of items) rows.set(`${row.platform}:${row.username}`, row);
+      offset += items.length;
+      if (offset >= page.total) break;
+      if (!items.length) throw new Error('Hàng chờ thay đổi trong lúc tải. Hãy làm mới danh sách.');
+    }
+    return { items: [...rows.values()], complete: !legacy };
+  }
+
   /**
    * Đưa Creator vào hàng đợi phân loại Celery (POST /api/v1/crawl/enqueue)
    */

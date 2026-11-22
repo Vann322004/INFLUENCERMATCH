@@ -11,6 +11,77 @@ export interface CollectionResult {
 export const collectionIdentity = (platform: string, username: string) =>
   `${platform.toUpperCase()}:${username.replace(/^@+/, '').toLowerCase()}`;
 const storageKey = () => `im_collection:${getAuthSessionId()}:reviewResults`;
+const dismissedStorageKey = () => `im_collection:${getAuthSessionId()}:dismissedIds`;
+const dismissedReasonsKey = () => `im_collection:${getAuthSessionId()}:dismissedReasons`;
+
+export function readDismissedIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(dismissedStorageKey()) || sessionStorage.getItem(dismissedStorageKey()) || '[]';
+    const parsed = JSON.parse(raw);
+    return new Set(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export function readDismissedReasons(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(dismissedReasonsKey()) || sessionStorage.getItem(dismissedReasonsKey()) || '{}';
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+export function dismissCollectionResult(id: string, reason?: string) {
+  const current = readDismissedIds();
+  current.add(id);
+  const reasons = readDismissedReasons();
+  if (reason) reasons[id] = reason;
+  try {
+    const serialized = JSON.stringify([...current]);
+    localStorage.setItem(dismissedStorageKey(), serialized);
+    sessionStorage.setItem(dismissedStorageKey(), serialized);
+    const reasonsSerialized = JSON.stringify(reasons);
+    localStorage.setItem(dismissedReasonsKey(), reasonsSerialized);
+    sessionStorage.setItem(dismissedReasonsKey(), reasonsSerialized);
+    window.dispatchEvent(new Event('im-collection-results'));
+  } catch {}
+}
+
+export function dismissBatchCollectionResults(ids: string[], reason?: string) {
+  const current = readDismissedIds();
+  const reasons = readDismissedReasons();
+  ids.forEach(id => {
+    current.add(id);
+    if (reason) reasons[id] = reason;
+  });
+  try {
+    const serialized = JSON.stringify([...current]);
+    localStorage.setItem(dismissedStorageKey(), serialized);
+    sessionStorage.setItem(dismissedStorageKey(), serialized);
+    const reasonsSerialized = JSON.stringify(reasons);
+    localStorage.setItem(dismissedReasonsKey(), reasonsSerialized);
+    sessionStorage.setItem(dismissedReasonsKey(), reasonsSerialized);
+    window.dispatchEvent(new Event('im-collection-results'));
+  } catch {}
+}
+
+export function restoreCollectionResult(id: string) {
+  const current = readDismissedIds();
+  current.delete(id);
+  const reasons = readDismissedReasons();
+  delete reasons[id];
+  try {
+    const serialized = JSON.stringify([...current]);
+    localStorage.setItem(dismissedStorageKey(), serialized);
+    sessionStorage.setItem(dismissedStorageKey(), serialized);
+    const reasonsSerialized = JSON.stringify(reasons);
+    localStorage.setItem(dismissedReasonsKey(), reasonsSerialized);
+    sessionStorage.setItem(dismissedReasonsKey(), reasonsSerialized);
+    window.dispatchEvent(new Event('im-collection-results'));
+  } catch {}
+}
 
 export function readCollectionResults(): CollectionResult[] {
   try {

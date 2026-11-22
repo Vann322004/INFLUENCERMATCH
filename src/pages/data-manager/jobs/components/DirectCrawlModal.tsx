@@ -9,6 +9,7 @@ interface DirectCrawlModalProps {
   defaultInput?: string;
   initialResult?: LiveCrawlResult;
   onImportSuccess?: (result: LiveCrawlResult) => void;
+  onDismiss?: (result: LiveCrawlResult, reason?: string) => void;
 }
 
 export default function DirectCrawlModal({
@@ -17,10 +18,11 @@ export default function DirectCrawlModal({
   defaultInput = '',
   initialResult,
   onImportSuccess,
+  onDismiss,
 }: DirectCrawlModalProps) {
   return (
     <Modal
-      title={initialResult ? 'Chi tiết kết quả thu thập' : 'Thu thập dữ liệu trực tiếp'}
+      title={initialResult ? 'Chi tiết kết quả thu thập & đối chiếu' : 'Thu thập dữ liệu trực tiếp'}
       open={open}
       onCancel={onClose}
       footer={null}
@@ -35,6 +37,10 @@ export default function DirectCrawlModal({
           initialResult={initialResult}
           onImportSuccess={(res) => {
             if (onImportSuccess) onImportSuccess(res);
+            onClose();
+          }}
+          onDismiss={(res, reason) => {
+            if (onDismiss) onDismiss(res, reason);
             onClose();
           }}
         />
