@@ -1,3 +1,4 @@
+import EvidenceImages from './EvidenceImages';
 import { Alert, App, Button, Card, Collapse, Descriptions, Empty, Form, Input, Modal, Select, Space, Spin, Tag, Typography } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -32,7 +33,7 @@ type StatusStyle = [label: string, tone: StatusTone];
 const statuses: Record<CollaborationStatus, StatusStyle> = {
   PLANNED: ['Đã lên kế hoạch', 'gray'],
   IN_PROGRESS: ['Đang thực hiện', 'blue'],
-  AWAITING_REVIEW: ['Chờ đánh giá cuối', 'orange'],
+  AWAITING_REVIEW: ['Đã nghiệm thu · Chờ hoàn tất', 'orange'],
   COMPLETED: ['Đã hoàn tất', 'green'],
   CANCELLED: ['Đã hủy', 'red'],
   TERMINATED: ['Đã kết thúc giữa chừng', 'orange'],
@@ -144,7 +145,7 @@ function OutcomeHistory({ snapshot, brand, label }: {
       key: outcome.id,
       label: <Space wrap>
         <strong>Phiên bản {outcome.revision}</strong>
-        <Tag>{outcomeSourceLabel(outcome.source || outcome.calculation.metricSource)}</Tag>
+        <Tag>{outcomeSourceLabel(outcome.calculation.metricSource || outcome.source)}</Tag>
         <span>{formatDate(outcome.createdAt)}</span>
       </Space>,
       children: <Space orientation="vertical" className="execution-stack">
@@ -181,7 +182,7 @@ function DeliverableHistory({ collaborationId, unit }: { collaborationId: string
             request={signal => collaborationService.video(collaborationId, unit.id, submission.id, signal)} />
           : submission.url && <HttpsLink url={submission.url}>Mở bản nháp</HttpsLink>}
         {submission.sourceDescription && <span>{submission.sourceDescription}</span>}
-        {submission.receivedAt && <span>Nhận nội dung: {formatDate(submission.receivedAt)}</span>}
+        {submission.source === 'BRAND_EXTERNAL' && <span>Nhận nội dung · {submission.receivedAt ? formatDate(submission.receivedAt) : 'Chưa ghi nhận'}</span>}
         {decision && <div>
           <strong>{decision.decision === 'APPROVE' ? 'Đã duyệt' : 'Yêu cầu chỉnh sửa'}</strong>
           {' · '}{formatDate(decision.createdAt)}{decision.reason && <> · {decision.reason}</>}
@@ -189,6 +190,8 @@ function DeliverableHistory({ collaborationId, unit }: { collaborationId: string
         </div>}
         {publication && <Space wrap>
           <HttpsLink url={publication.url}>Mở bài đăng</HttpsLink>
+          {publication.source === 'BRAND_EXTERNAL' && <span>Brand ghi nhận bên ngoài · {publication.sourceDescription}
+            {' · '}{publication.receivedAt ? formatDate(publication.receivedAt) : 'Chưa ghi nhận'}</span>}
           {publication.earlyPublication && <Tag color={publication.exceptionAcknowledged ? 'default' : 'warning'}>
             {publication.exceptionAcknowledged ? 'Ngoại lệ đã xác nhận' : 'Đăng trước khi duyệt'}
           </Tag>}
@@ -284,7 +287,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
   const canSaveFinance = !!latest?.payload.posts.length && latest.payload.posts.every(post =>
     publishedUnits.some(unit => unit.id === post.deliverableId && unit.submissionRevision === post.submissionRevision));
   const inProgress = snapshot?.status === 'IN_PROGRESS' && snapshot.campaignStatus === 'ACTIVE';
-  const canPost = inProgress && (snapshot?.managementMode === 'BRAND_MANAGED' ? manage : canRespond);
+  const canPost = inProgress && (brand ? manage : canRespond);
   const readiness = snapshot ? acceptanceReadiness(snapshot, latest) : undefined;
   const canAccept = !!readiness && readiness.issues.length === 0;
   const channels = summary.channels ?? [];
@@ -303,8 +306,8 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
     setFailure('');
     setConflict(false);
     setRefreshed(false);
-    setAction(next);
-  }, []);
+    setAction(next.kind === 'outcome' ? { ...next, outcomeRevision: latest?.revision } : next);
+  }, [latest?.revision]);
 
   function actionStillValid(current: ExecutionSnapshot, target: Action) {
     const unit = current.deliverables.find(item => item.id === target.unit?.id);
@@ -329,7 +332,8 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
         return inProgress && manage && !!post?.earlyPublication && !post.exceptionAcknowledged;
       }
       case 'outcome':
-        return canPost && (!brandManaged || canRecord) && unit?.status === 'APPROVED'
+        return canPost && (!brand || canRecord) && unit?.status === 'APPROVED'
+          && target.outcomeRevision === latest?.revision
           && !!measurementFor(latest?.payload, unit) === target.editing
           && currentPublication(unit)?.url === currentPublication(target.unit!)?.url;
       case 'finance':
@@ -346,7 +350,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
   }
 
   const allowed = !!(action && snapshot && actionStillValid(snapshot, action));
-  const videoSubmission = action?.kind === 'submit' && !brandManaged && snapshot?.videoSubmissionRequired;
+  const videoSubmission = action?.kind === 'submit' && !brand && snapshot?.videoSubmissionRequired;
 
   async function prepareDraft(unit: Deliverable, file: File) {
     const controller = new AbortController();
@@ -403,7 +407,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
           break;
         }
         case 'submit': {
-          if (brandManaged) {
+          if (brand) {
             const body = { expectedRevision: unit!.revision, url: values.url.trim(),
               sourceDescription: values.sourceDescription?.trim(), receivedAt: values.receivedAt?.toISOString() };
             result = await collaborationService.submitExternal(id, unit!.id, body, keyFor(body));
@@ -428,8 +432,8 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
         }
         case 'publish':
         case 'exception': {
-          if (brandManaged && action.kind === 'publish') {
-            const body = { ...unitRevision!, url: values.url.trim(), sourceDescription: values.sourceDescription?.trim() };
+          if (brand && action.kind === 'publish') {
+            const body = { ...unitRevision!, url: values.url.trim(), sourceDescription: values.sourceDescription?.trim(), receivedAt: values.receivedAt?.toISOString() };
             result = await collaborationService.publishExternal(id, unit!.id, body, keyFor(body));
             break;
           }
@@ -443,8 +447,8 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
           break;
         }
         case 'outcome': {
-          const body = { ...revision, ...outcomePayload(values, unit!), ...(brandManaged ? { sourceDescription: values.sourceDescription?.trim() } : {}) };
-          result = brandManaged ? await collaborationService.outcomeExternal(id, unit!.id, body, keyFor(body))
+          const body = { ...revision, ...outcomePayload(values, unit!), ...(brand ? { sourceDescription: values.sourceDescription?.trim(), receivedAt: values.receivedAt?.toISOString() } : {}) };
+          result = brand ? await collaborationService.outcomeExternal(id, unit!.id, body, keyFor(body))
             : await collaborationService.saveDeliverableOutcome(id, unit!.id, body, keyFor(body));
           break;
         }
@@ -480,7 +484,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
         }
       }
       if (result) setSnapshot(result);
-      message.success(action.kind === 'submit' ? brandManaged ? 'Đã ghi nhận nội dung nhận bên ngoài.' : 'Đã nộp bản nháp.' : 'Đã lưu thay đổi.');
+      message.success(action.kind === 'submit' ? brand ? 'Đã ghi nhận nội dung nhận bên ngoài.' : 'Đã nộp bản nháp.' : 'Đã lưu thay đổi.');
       if (action.kind === 'submit') {
         setVideoFile(undefined);
         videoUpload.current = null;
@@ -521,7 +525,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
     : undefined;
 
   function renderNextAction() {
-    if (!snapshot || ['COMPLETED', 'CANCELLED'].includes(snapshot.status)) return null;
+    if (!snapshot || ['COMPLETED', 'CANCELLED', 'TERMINATED'].includes(snapshot.status)) return null;
     let title = 'Theo dõi tiến độ hợp tác';
     let description = '';
     let control: ReactNode;
@@ -531,10 +535,9 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
       if (!brand) description = 'Thương hiệu sẽ bắt đầu hợp tác sau khi chiến dịch và người thực hiện đủ điều kiện.';
       else if (!brandManaged && snapshot.assignmentStatus !== 'READY') { description = snapshot.assignmentStatus === 'WAITING_FOR_ACCEPTANCE' ? 'Đang chờ Creator xác nhận nhận việc theo điều khoản đã chốt.' : 'Cần kiểm tra xác minh và quyền của Creator trước khi bắt đầu.'; control = <Button onClick={() => setTab('progress')}>Xem điều kiện bắt đầu</Button>; }
       else if (snapshot.campaignStatus !== 'ACTIVE') { description = 'Chiến dịch cần được kích hoạt trước khi bắt đầu thực hiện.'; control = <Button onClick={() => navigate('/campaigns/detail', { state: { campaignId: snapshot.campaignId } })}>Xem chiến dịch</Button>; }
-      else if (canStart) { title = 'Đã sẵn sàng thực hiện'; description = 'Bắt đầu để Creator có thể nộp bản nháp.'; control = <Button type="primary" disabled={busy || loading} onClick={() => startAction({ kind: 'start' })}>Bắt đầu hợp tác</Button>; }
+      else if (canStart) { title = 'Đã sẵn sàng thực hiện'; description = brandManaged ? 'Bắt đầu để Brand ghi nhận nội dung nhận bên ngoài.' : 'Bắt đầu để Creator có thể nộp bản nháp.'; control = <Button type="primary" disabled={busy || loading} onClick={() => startAction({ kind: 'start' })}>Bắt đầu hợp tác</Button>; }
     } else if (awaitingReview) {
       title = 'Kết quả đã được nghiệm thu'; description = brand ? 'Bạn có thể đánh giá Nhà sáng tạo hoặc hoàn tất không đánh giá.' : 'Đang chờ thương hiệu hoàn tất hợp tác.';
-      if (canSendReview) control = <Button type="primary" disabled={busy || loading} onClick={() => startAction({ kind: 'review', outcomeRevision: acceptedOutcome!.revision })}>Đánh giá & hoàn tất</Button>;
     } else if (inProgress && brand) {
       const pendingUnit = ordered.find(unit => unit.status === 'SUBMITTED');
       const externalDraft = brandManaged && ordered.find(unit => ['PENDING', 'CHANGES_REQUESTED'].includes(unit.status));
@@ -561,7 +564,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
     const buttons = (
       <Space wrap className="execution-actions">
         {canPost && unit.status !== 'SUBMITTED' && <Button disabled={loading}
-          onClick={() => startAction({ kind: 'submit', unit })}>{brandManaged ? 'Ghi nhận nội dung' : unit.status === 'CHANGES_REQUESTED' ? 'Nộp lại bản nháp' : 'Nộp bản nháp'}</Button>}
+          onClick={() => startAction({ kind: 'submit', unit })}>{brand ? 'Ghi nhận nội dung từ bên ngoài' : unit.status === 'CHANGES_REQUESTED' ? 'Nộp lại bản nháp' : 'Nộp bản nháp'}</Button>}
         {inProgress && manage && unit.status === 'SUBMITTED' && <>
           <Button disabled={loading} onClick={() => startAction({ kind: 'approve', unit })}>Phê duyệt</Button>
           <Button danger={splitView} disabled={loading || unit.revisionRounds >= unit.maxRevisionRounds}
@@ -572,7 +575,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
           onClick={() => startAction({ kind: 'publish', unit })}>
           Báo bài đã đăng sớm
         </Button>}
-        {canPost && (!brandManaged || canRecord) && unit.status === 'APPROVED' && post && <Button type="primary" disabled={loading || busy}
+        {canPost && (!brand || canRecord) && unit.status === 'APPROVED' && post && <Button type="primary" disabled={loading || busy}
           onClick={() => startAction({ kind: 'outcome', unit, editing: !!measurement })}>
           {measurement ? 'Chỉnh sửa kết quả' : 'Nhập kết quả'}
         </Button>}
@@ -627,6 +630,8 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
         </Space>
       </header>
       <FlexibleLifecycleControls key={id} snapshot={snapshot} brand={brand} permissions={permissions}
+        reviewAction={canSendReview && <Button type="primary" disabled={busy || loading}
+          onClick={() => startAction({ kind: 'review', outcomeRevision: acceptedOutcome!.revision })}>Đánh giá & hoàn tất</Button>}
         onChanged={next => { setSnapshot(next); }} />
       {renderNextAction()}
       {['LEGACY', 'BRAND_LEGACY_PLAN'].includes(snapshot.executionSource) && <Alert showIcon type="info"
@@ -701,7 +706,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
               <PostMetricsPanel id={id} unitId={unit.id} publicationId={currentPublication(unit)!.id}
                 revision={snapshot.executionRevision} canCollect={unit.status === 'APPROVED' && ['IN_PROGRESS', 'AWAITING_REVIEW', 'COMPLETED'].includes(snapshot.status)
                   && ['ACTIVE', 'COMPLETED'].includes(snapshot.campaignStatus) && !busy && !loading} />
-              {canPost && unit.status === 'APPROVED' && (!brandManaged || canRecord) && <Button onClick={() => startAction({ kind: 'outcome', unit, editing: !!measurementFor(latest?.payload, unit) })}>Ghi nhận kết quả</Button>}
+              {canPost && unit.status === 'APPROVED' && (!brand || canRecord) && <Button onClick={() => startAction({ kind: 'outcome', unit, editing: !!measurementFor(latest?.payload, unit) })}>Ghi nhận kết quả</Button>}
             </Card>)}
           </>}
           {brand && tab === 'finance' && <FeesOverview snapshot={snapshot} latest={latest} />}
@@ -739,12 +744,13 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
                   if (issue.unit) { setSelectedUnitId(issue.unit.id); setTab('progress'); }
                   else if (issue.target === 'finance' && canRecord && canSaveFinance) openFinance();
                   else setTab(issue.target === 'plan' ? 'progress' : 'kpi');
-                }}>{issue.unit ? 'Xem ấn phẩm' : issue.target === 'finance' ? canRecord && canSaveFinance ? 'Ghi / xác nhận chi phí' : canRecord ? brandManaged ? 'Chờ kết quả bài đăng' : 'Chờ kết quả Creator' : 'Cần quyền ghi chi phí' : 'Xem kế hoạch'}</Button>
+                }}>{issue.unit ? 'Xem ấn phẩm' : issue.target === 'finance' ? canRecord && canSaveFinance ? 'Ghi / xác nhận chi phí' : canRecord ? 'Chờ kết quả bài đăng' : 'Cần quyền ghi chi phí' : 'Xem kế hoạch'}</Button>
               </li>)}
             </ul>} />}
           {tab === 'history' && <OutcomeHistory snapshot={snapshot} brand={brand} label={label} />}
         </>}
       </>}
+      {tab === 'progress' && <EvidenceImages key={id} id={id} canUpload={!!canPost} />}
       {brand && snapshot.review && tab === 'history' && <Card title="Đánh giá cuối">
         <Descriptions size="small" column={{ xs: 1, sm: 2 }} items={[
           { key: 'overall', label: 'Điểm tổng thể', children: `${snapshot.review.overallRating}/5` },
@@ -758,11 +764,11 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
         ]} />
       </Card>}
     </>}
-    {action && <Modal open title={action.kind === 'submit' && brandManaged ? 'Ghi nhận nội dung nhận bên ngoài'
+    {action && <Modal open title={action.kind === 'submit' && brand ? 'Ghi nhận nội dung nhận bên ngoài'
       : action.kind === 'publish' && action.unit?.status === 'APPROVED' ? 'Ghi nhận bài đăng'
       : action.kind === 'finance' ? 'Ghi nhận chi phí thực tế'
       : action.kind === 'outcome' ? (action.editing ? 'Chỉnh sửa kết quả bài đăng' : 'Nhập kết quả bài đăng') : actionLabels[action.kind]}
-      okText={action.kind === 'submit' && brandManaged ? 'Lưu nội dung' : action.kind === 'publish' && action.unit?.status === 'APPROVED' ? 'Lưu bài đăng' : actionLabels[action.kind]} cancelText="Đóng"
+      okText={action.kind === 'submit' && brand ? 'Lưu nội dung' : action.kind === 'publish' && action.unit?.status === 'APPROVED' ? 'Lưu bài đăng' : actionLabels[action.kind]} cancelText="Đóng"
       onCancel={closeAction} confirmLoading={busy}
       okButtonProps={{ htmlType: 'submit', form: 'collaboration-execution-form',
         disabled: !allowed || conflict || loading || (videoSubmission && !videoFile) }} cancelButtonProps={{ disabled: busy }}
@@ -797,17 +803,17 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
         {videoSubmission && <DraftVideoField file={videoFile} disabled={busy} percent={uploadPercent}
           onChange={file => { setVideoFile(file); setFailure(''); videoUpload.current = null; }} />}
         {(action.kind === 'publish' || (action.kind === 'submit' && !videoSubmission)) && (
-          <Form.Item name="url" label={action.kind === 'submit' ? brandManaged ? 'Link nội dung nhận được' : 'Link bản nháp' : 'Link bài đăng'} rules={[requiredText, httpsRule]}>
+          <Form.Item name="url" label={action.kind === 'submit' ? brand ? 'Link nội dung nhận được' : 'Link bản nháp' : 'Link bài đăng'} rules={[requiredText, httpsRule]}>
             <Input maxLength={2000} placeholder="https://…" />
           </Form.Item>
         )}
-        {brandManaged && ['submit', 'publish', 'outcome'].includes(action.kind) && <>
+        {brand && ['submit', 'publish', 'outcome'].includes(action.kind) && <>
           <Form.Item name="sourceDescription" label="Nguồn thông tin bên ngoài" rules={[requiredText]}>
             <Input maxLength={2000} placeholder="Ví dụ: nội dung nhận qua email, trao đổi qua Zalo…" />
           </Form.Item>
-          {action.kind === 'submit' && <Form.Item name="receivedAt" label="Thời điểm nhận nội dung" rules={[required]}>
+          <Form.Item name="receivedAt" label="Thời điểm nhận từ bên ngoài" rules={[required]}>
             <DatePicker showTime format="DD/MM/YYYY HH:mm" />
-          </Form.Item>}
+          </Form.Item>
         </>}
         {action.kind === 'exception' && action.unit && currentPublication(action.unit) && (
           <HttpsLink url={currentPublication(action.unit)!.url}>Mở bài đăng</HttpsLink>
@@ -825,7 +831,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
           <OutcomeFields unit={action.unit} label={label(action.unit)} editing={!!action.editing} />
         </>}
         {action.kind === 'finance' && <FinanceFields editing={!!action.editing} />}
-        {action.kind === 'accept' && <p>Nghiệm thu kết quả phiên bản {action.outcomeRevision} và chuyển sang chờ đánh giá cuối.</p>}
+        {action.kind === 'accept' && <p>Nghiệm thu kết quả phiên bản {action.outcomeRevision} và chuyển sang chờ hoàn tất.</p>}
         {action.kind === 'review' && <p>Kết quả đã nghiệm thu · Phiên bản {action.outcomeRevision}</p>}
         {['review', 'legacyReview'].includes(action.kind) && <ReviewFields />}
       </Form>

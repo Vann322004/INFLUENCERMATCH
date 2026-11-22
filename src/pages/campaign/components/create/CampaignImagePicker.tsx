@@ -23,8 +23,8 @@ export default function CampaignImagePicker({ value, onChange, disabled, onBusyC
   const upload = async (file?: File) => {
     if (!file || disabled || request.current) return;
     setError('');
-    if (!['image/jpeg', 'image/png'].includes(file.type) || file.size === 0 || file.size > 5 * 1024 * 1024) {
-      setError('Chọn ảnh JPG hoặc PNG, tối đa 5 MB.');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size === 0 || file.size > 5 * 1024 * 1024) {
+      setError('Chọn ảnh JPG, PNG hoặc WEBP, tối đa 5 MB.');
       return;
     }
     const controller = new AbortController();
@@ -58,8 +58,8 @@ export default function CampaignImagePicker({ value, onChange, disabled, onBusyC
     <div className="campaign-image-content">
       <div className="campaign-image-preview">{preview ? <img src={preview} alt="Xem trước ảnh chiến dịch" referrerPolicy="no-referrer" onError={() => setFailedUrl(preview)} /> : <PictureOutlined aria-label="Chưa có ảnh xem trước" />}</div>
       <div className="campaign-image-controls">
-        {mode === 'upload' ? <><input ref={fileInput} type="file" accept="image/jpeg,image/png" hidden disabled={disabled || busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; void upload(file); }} />
-          <Button icon={<UploadOutlined />} loading={busy} disabled={disabled || busy} onClick={() => fileInput.current?.click()}>{busy ? 'Đang tải ảnh' : value ? 'Đổi ảnh' : 'Chọn ảnh'}</Button><span className="campaign-image-hint">JPG, PNG · Tối đa 5 MB</span></>
+        {mode === 'upload' ? <><input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" hidden disabled={disabled || busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; void upload(file); }} />
+          <Button icon={<UploadOutlined />} loading={busy} disabled={disabled || busy} onClick={() => fileInput.current?.click()}>{busy ? 'Đang tải ảnh' : value ? 'Đổi ảnh' : 'Chọn ảnh'}</Button><span className="campaign-image-hint">JPG, PNG, WEBP · Tối đa 5 MB</span></>
           : <Input aria-label="Đường link ảnh chiến dịch" type="url" maxLength={2048} value={value} disabled={disabled || busy} placeholder="https://…" onChange={event => { setError(''); onChange(event.target.value); }} />}
         {value && <Button type="text" icon={<DeleteOutlined />} disabled={disabled || busy} onClick={() => { onChange(''); setError(''); }}>Bỏ ảnh</Button>}
         {error && <p className="campaign-image-error" role="alert">{error}</p>}

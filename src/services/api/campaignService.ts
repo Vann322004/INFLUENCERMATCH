@@ -1,4 +1,5 @@
 import { apiClient } from '../apiClient';
+import { uploadImage, validateImageFile } from './imageUploadService';
 import { readPage } from './pageResponse';
 import { ApiResponse } from '../../types/api/common.types';
 import {
@@ -50,13 +51,10 @@ function readCampaign(response: { data: ApiResponse<CampaignResponse> }, id?: st
 export const campaignService = {
   async uploadImage(file: File, signal?: AbortSignal): Promise<string> {
     const brandId = await this.resolveCurrentBrandId();
-    const body = new FormData();
-    body.append('file', file);
-    const response = await apiClient.post<ApiResponse<{ imageUrl: string }>>('/brands/' + brandId + '/campaign-images', body, {
-      headers: { 'Content-Type': undefined }, signal,
-    });
-    const url = response.data?.data?.imageUrl;
-    if (response.data?.success !== true || !url || new URL(url).protocol !== 'https:') {
+    validateImageFile(file, 5);
+    const data = await uploadImage<{ imageUrl: string; storageKey: string }>(`/brands/${brandId}/campaign-images`, file, signal);
+    const url = data.imageUrl;
+    if (!url || new URL(url).protocol !== 'https:' || !data.storageKey) {
       throw new Error('Máy chủ chưa xác nhận ảnh đã tải lên.');
     }
     return url;

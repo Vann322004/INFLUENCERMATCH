@@ -1,3 +1,4 @@
+import CampaignImage from '../../components/common/CampaignImage';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Typography,
@@ -915,7 +916,7 @@ export default function CampaignPage() {
                     onClick={() => handleOpenDetail(item)}
                   >
                     <div className="campaign-row-identity">
-                      {item.thumbnail && <img className="campaign-row-thumbnail" src={item.thumbnail} alt="" />}
+                      <CampaignImage className="campaign-row-thumbnail" src={item.thumbnail} alt="" />
                       <div className="campaign-row-copy">
                         <h3 title={item.name}>{item.name}</h3>
                         <div className="campaign-row-dates">{item.dateRange}</div>
@@ -1140,11 +1141,8 @@ export default function CampaignPage() {
                   }}
                   onClick={() => handleOpenDetail(campaigns[0])}
                 >
-                  {campaigns[0].thumbnail ? <img
-                    src={campaigns[0].thumbnail}
-                    alt={campaigns[0].name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  /> : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', color: '#64748b', background: '#f3eef9' }}>Chưa có ảnh chiến dịch</div>}
+                  <CampaignImage src={campaigns[0].thumbnail} alt={campaigns[0].name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
 
                   {/* Overlaid Status Pill */}
                   <div

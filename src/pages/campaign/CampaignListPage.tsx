@@ -1,3 +1,4 @@
+import CampaignImage from '../../components/common/CampaignImage';
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Button,
@@ -307,13 +308,8 @@ export default function CampaignListPage() {
                 <div key={campaign.id} className="clist-card">
                   {/* Card Header */}
                   <div className="clist-card-header">
-                    {campaign.thumbnail ? <img
-                      src={campaign.thumbnail}
-                      alt={campaign.title}
-                      className="clist-card-thumb"
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => handleOpenDetail(campaign.id)}
-                    /> : <div className="clist-card-thumb" aria-label="Chưa có ảnh chiến dịch" style={{ display: 'grid', placeItems: 'center', background: '#f3eef9', color: '#64748b', fontSize: 11 }}>Chưa có ảnh</div>}
+                    <CampaignImage src={campaign.thumbnail} alt={campaign.title} className="clist-card-thumb"
+                      style={{ cursor: 'pointer' }} onClick={() => handleOpenDetail(campaign.id)} />
                     <div className="clist-card-meta">
                       <div className="clist-card-title-row">
                         <h3

@@ -1,3 +1,4 @@
+import CrawlAvatar from '../../../../../components/common/CrawlAvatar';
 import React from 'react';
 import { Card, Table, Tag, Button, Space, message, Tooltip } from 'antd';
 import type { TableColumnsType } from 'antd';
@@ -12,6 +13,7 @@ export interface DiscoveredKocItem {
   heartCount?: number;
   videoCount?: number;
   avatarUrl?: string;
+  avatarFallbackUrl?: string;
   profileUrl?: string;
   topicKeyword: string;
   primaryType: string;
@@ -95,18 +97,7 @@ export default function DiscoveredFeedCard({
       width: 240,
       render: (_, r) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <img
-            src={r.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.username}`}
-            alt={r.displayName}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              objectFit: 'cover',
-              border: '2px solid #F3E8FF',
-              flexShrink: 0,
-            }}
-          />
+          <CrawlAvatar src={r.avatarUrl} fallbackSrc={r.avatarFallbackUrl} name={r.displayName || r.username} size={44} />
           <div style={{ minWidth: 0 }}>
             <div
               style={{

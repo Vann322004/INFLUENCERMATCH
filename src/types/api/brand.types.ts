@@ -16,6 +16,8 @@ export interface BrandRequest {
 }
 
 export interface BrandResponse {
+  logoUrl?: string | null;
+  coverImageUrl?: string | null;
   id: string;
   userId?: string;
   businessName: string;

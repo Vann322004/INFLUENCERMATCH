@@ -1,3 +1,4 @@
+import CampaignImage from '../../../../components/common/CampaignImage';
 import React, { useCallback, useSyncExternalStore } from 'react';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
@@ -94,10 +95,8 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
 
       {/* Main Title, Description & Categorization Tags */}
       <div className="cdetail-hero-meta">
-        {rawCampaign?.imageUrl && <img src={rawCampaign.imageUrl} alt="Ảnh chiến dịch" referrerPolicy="no-referrer"
-          style={{ display: 'block', width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 12, marginBottom: 20 }}
-          onLoad={event => { event.currentTarget.style.display = 'block'; }}
-          onError={event => { event.currentTarget.style.display = 'none'; }} />}
+        <CampaignImage src={rawCampaign?.imageUrl} className="cdetail-hero-image" />
+        <div className="cdetail-hero-copy">
         <h1 className="cdetail-hero-title">
           {campaignTitle}
         </h1>
@@ -125,6 +124,7 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
               {translateNiche(n)}
             </span>
           ))}
+        </div>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { message } from 'antd';
-import { saveCollectionResults } from '../../../../services/collectionResults';
+import { saveCollectionResults, restoreCrawledAvatars } from '../../../../services/collectionResults';
 import { useCollectionState } from '../../../../hooks/useCollectionState';
 import { nicheService, type Niche } from '../../../../services/api/nicheService';
 import { crawlerService } from '../../../../services/api/crawlerService';
@@ -168,7 +168,8 @@ export function useAutoHunter() {
       const totalReq = summary?.total_requested ?? (res.results?.length ?? maxKocs);
       const failedCnt = summary?.failed_count ?? 0;
 
-      setRawResults(res.results || []);
+      res.results = restoreCrawledAvatars(res.results || []);
+      setRawResults(res.results);
       saveCollectionResults(res.results || [], mode === 'custom' ? 'manual' : 'automatic');
       const validResults = (res.results || []).filter((r) => r.status === 'success' && !!r.username);
 
@@ -206,7 +207,8 @@ export function useAutoHunter() {
             followers,
             heartCount: r.heart_count,
             videoCount: r.video_count,
-            avatarUrl: r.avatar_url,
+            avatarUrl: r.avatar_url || r.avatarUrl,
+            avatarFallbackUrl: r.avatar_fallback_url,
             profileUrl: r.profile_url,
             topicKeyword: activeKeywords[idx % activeKeywords.length] || categoryCode.toLowerCase(),
             primaryType: isKol ? 'KOL' : 'KOC',

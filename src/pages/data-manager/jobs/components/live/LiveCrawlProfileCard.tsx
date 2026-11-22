@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Card, Row, Col, Typography, Tag, Tooltip, Avatar } from 'antd';
-import { SafetyCertificateOutlined, LinkOutlined, UserOutlined } from '@ant-design/icons';
+import CrawlAvatar from '../../../../../components/common/CrawlAvatar';
+import React from 'react';
+import { Card, Row, Col, Typography, Tag, Tooltip } from 'antd';
+import { SafetyCertificateOutlined, LinkOutlined } from '@ant-design/icons';
 import type { LiveCrawlResult } from '../../../../../types/api/crawler.types';
 import { formatViNumber, formatFullNumber } from '../../../../../utils/formatters';
 
@@ -12,11 +13,9 @@ interface LiveCrawlProfileCardProps {
 }
 
 export default function LiveCrawlProfileCard({ result, engagementRate }: LiveCrawlProfileCardProps) {
-  const [avatarError, setAvatarError] = useState(false);
   const followersFull = formatFullNumber(result.followers);
   const heartsFull = formatFullNumber(result.heart_count);
   const videoCount = result.video_count || result.recent_posts?.length || 0;
-  const initial = (result.display_name || result.username || '?').charAt(0).toUpperCase();
 
   return (
     <Card
@@ -31,36 +30,7 @@ export default function LiveCrawlProfileCard({ result, engagementRate }: LiveCra
     >
       {/* Thông tin hồ sơ chính */}
       <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 12 }}>
-        {result.avatar_url && !avatarError ? (
-          <img
-            src={result.avatar_url}
-            alt={result.display_name || result.username}
-            referrerPolicy="no-referrer"
-            onError={() => setAvatarError(true)}
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: '50%',
-              objectFit: 'cover',
-              border: '2px solid #F3E8FF',
-              flexShrink: 0,
-            }}
-          />
-        ) : (
-          <Avatar
-            size={56}
-            style={{
-              backgroundColor: '#7C3AED',
-              color: '#FFFFFF',
-              fontSize: 22,
-              fontWeight: 700,
-              flexShrink: 0,
-              border: '2px solid #F3E8FF',
-            }}
-          >
-            {initial || <UserOutlined />}
-          </Avatar>
-        )}
+        <CrawlAvatar src={result.avatar_url || result.avatarUrl} fallbackSrc={result.avatar_fallback_url} name={result.display_name || result.username} size={56} />
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>

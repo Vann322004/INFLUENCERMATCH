@@ -1,5 +1,6 @@
 import { collectionOutcome, collectionOutcomeLabel } from '../../../../services/collectionDecision';
 import { saveCollectionResults } from '../../../../services/collectionResults';
+import { mergeCrawledAvatar } from '../../../../services/crawledMedia';
 import { useCollectionState } from '../../../../hooks/useCollectionState';
 import React, { useRef, useState, useEffect } from 'react';
 import { Card, Button, Input, Modal, Space, Tag, Typography, Spin, message, Empty, Select, Tooltip } from 'antd';
@@ -81,7 +82,7 @@ export default function LiveCrawlTab({ onImportSuccess, onDismiss, defaultInput 
       setTimeout(() => setCurrentStep('Đang trích xuất bài đăng gần nhất...'), 900);
 
       const res = await crawlerService.testScrape(target, platform);
-      setResult(res);
+      setResult(previous => mergeCrawledAvatar(res, previous));
       saveCollectionResults([res], 'manual');
       const latencySec = res.latency_ms ? (res.latency_ms / 1000).toFixed(1) : '0.5';
       message.success(`Cào thành công @${res.username}! (${latencySec} giây)`);
@@ -272,9 +273,9 @@ export default function LiveCrawlTab({ onImportSuccess, onDismiss, defaultInput 
               justifyContent: 'space-between',
               alignItems: 'center',
               flexWrap: 'wrap',
-              gap: 10,
-              marginBottom: 12,
-              padding: '10px 14px',
+              gap: 12,
+              marginBottom: 16,
+              padding: '12px 16px',
               background: '#FFFFFF',
               borderRadius: 10,
               border: '1px solid #E2E8F0',

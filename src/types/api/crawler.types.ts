@@ -20,6 +20,8 @@ export interface LiveCrawlResult {
   author_id?: string;
   profile_url?: string;
   avatar_url?: string;
+  avatarUrl?: string;
+  avatar_fallback_url?: string;
   followers?: number;
   following?: number;
   heart_count?: number;

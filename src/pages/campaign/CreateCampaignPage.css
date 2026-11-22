@@ -806,7 +806,7 @@
 .campaign-image-tabs .ant-btn { box-shadow: none; font-size: 12px; }
 .campaign-image-content { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .campaign-image-preview { width: 112px; height: 76px; border-radius: 10px; background: #faf7ff; border: 1px solid #eee5fa; display: grid; place-items: center; color: #a78bfa; font-size: 24px; overflow: hidden; flex-shrink: 0; }
-.campaign-image-preview img { width: 100%; height: 100%; object-fit: cover; }
+.campaign-image-preview img { width: 100%; height: 100%; object-fit: contain; }
 .campaign-image-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; min-width: 0; flex: 1; }
 .campaign-image-controls > .ant-input { flex: 1 1 240px; min-width: 0; }
 .campaign-image-hint { color: #64748b; font-size: 12px; }

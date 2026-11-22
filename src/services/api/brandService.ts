@@ -1,4 +1,5 @@
 import { apiClient } from '../apiClient';
+import { uploadImage } from './imageUploadService';
 import type { ApiResponse, PageResponse } from '../../types/api/common.types';
 import type { BrandRequest, BrandResponse } from '../../types/api/brand.types';
 import type { CampaignResponse } from '../../types/api/campaign.types';
@@ -20,6 +21,14 @@ let cachedBrand: { data: BrandResponse | null; timestamp: number } | null = (() 
 let inFlightBrandPromise: Promise<BrandResponse | null> | null = null;
 
 export const brandService = {
+  async uploadImage(kind: 'logo' | 'cover', file: File, etag: string, signal?: AbortSignal) {
+    const brand = await uploadImage<BrandResponse>(`/brands/me/images/${kind}`, file, signal, { 'If-Match': etag });
+    if (!brand.id || !(kind === 'logo' ? brand.logoUrl : brand.coverImageUrl)) {
+      throw new Error('Máy chủ chưa xác nhận ảnh hồ sơ.');
+    }
+    this.clearBrandCache();
+    return { brand, etag: this.resolveBrandETag(null, brand)! };
+  },
   /**
    * Get the current authenticated user's brand profile with deduplication and 3-min cache.
    * Returns null if brand profile does not exist (404).

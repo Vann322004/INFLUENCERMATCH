@@ -1,3 +1,4 @@
+import { uploadImage } from './imageUploadService';
 import { campaignService } from './campaignService';
 import apiClient from '../apiClient';
 import type { ApiResponse, PageResponse } from '../../types/api/common.types';
@@ -6,6 +7,13 @@ import type {
   CollaborationDetail, CollaborationSummary, ExecutionSnapshot,
   LegacyPlan, Measurement, OutcomeValues, PendingAssignment, ReviewValues, VideoPlayback,
 } from '../../types/api/collaboration.types';
+
+export interface EvidenceImage {
+  id: string;
+  assetType: string;
+  storageUrl: string;
+  uploadedAt: string;
+}
 
 type Revision = { expectedRevision: number };
 type SubmissionRevision = Revision & { submissionRevision: number };
@@ -68,7 +76,8 @@ function deliverableWriter<T>(action: 'submissions' | 'review' | 'publication' |
 }
 
 export const collaborationService = {
-  flexibleAction: (id: string, action: 'management-mode' | 'complete-without-review' | 'terminate' | 'terminate-external' | 'termination-requests' | 'termination-requests/decline', body: object, key: string) =>
+  flexibleAction: (id: string, action: 'management-mode' | 'complete-without-review' | 'terminate' | 'terminate-external' | 'termination-requests' | 'termination-requests/decline'
+    | `termination-requests/${string}/withdraw`, body: object, key: string) =>
     writer<object>(() => `/collaborations/${id}/${action}`)(id, body, key),
   withdrawTermination: (id: string, requestId: string, expectedRevision: number, key: string) =>
     writer<object>(() => `/collaborations/${id}/termination-requests/${requestId}/withdraw`)(id, { expectedRevision }, key),
@@ -83,6 +92,9 @@ export const collaborationService = {
       { headers: { 'Idempotency-Key': key } },
     )).data.data;
   },
+  evidence: (id: string, signal?: AbortSignal) => get<EvidenceImage[]>(`/collaborations/${id}/evidence`, undefined, signal),
+  uploadEvidenceImage: (id: string, file: File, signal?: AbortSignal) =>
+    uploadImage<EvidenceImage>(`/collaborations/${id}/evidence/images`, file, signal),
   async listCampaigns(): Promise<CampaignResponse[]> {
     return campaignService.getAllCampaigns();
   },
