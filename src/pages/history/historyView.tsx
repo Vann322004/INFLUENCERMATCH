@@ -20,11 +20,13 @@ export async function readHistoryUser(signal: AbortSignal): Promise<UserProfileR
 export const campaignStates: Record<CampaignStatus, [string, string]> = {
   DRAFT: ['Bản nháp', 'default'], READY_FOR_DISCOVERY: ['Sẵn sàng tìm Creator', 'cyan'],
   ACTIVE: ['Đang hoạt động', 'blue'], COMPLETED: ['Đã hoàn tất', 'green'], ARCHIVED: ['Đã lưu trữ', 'default'],
+  CLOSED: ['Đã đóng', 'default'],
 };
 
 export const collaborationStates: Record<CollaborationStatus, [string, string]> = {
   PLANNED: ['Đã lên kế hoạch', 'default'], IN_PROGRESS: ['Đang thực hiện', 'blue'],
   AWAITING_REVIEW: ['Chờ đánh giá cuối', 'orange'], COMPLETED: ['Đã hoàn tất', 'green'], CANCELLED: ['Đã hủy', 'red'],
+  TERMINATED: ['Kết thúc giữa chừng', 'orange'],
 };
 
 export const deliverableStates: Record<string, [string, string]> = {
@@ -45,6 +47,8 @@ export function historyMoney(value?: number | null, unit?: string | null) {
 export function provenanceLabel(source?: string | null) {
   switch (source) {
     case 'SELF_REPORTED': return 'Số liệu tự khai';
+    case 'BRAND_EXTERNAL_REPORTED': return 'Brand ghi nhận bên ngoài';
+    case 'ACCEPTED_REPORTED': return 'Kết quả được Brand nghiệm thu; nguồn khai báo/thu thập được ghi riêng';
     case 'LEGACY_SNAPSHOT':
     case 'LEGACY_UNVERIFIED':
     case 'LEGACY': return 'Dữ liệu lịch sử chưa kiểm chứng';

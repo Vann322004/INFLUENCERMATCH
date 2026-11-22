@@ -1039,7 +1039,9 @@ export default function OutreachCrmPage() {
                           </button>
 
                           {creator.collaborationId ? (
-                            <Button size="small" href={'/collaboration/' + creator.collaborationId}>Xem hợp tác</Button>
+                            <Button size="small" onClick={() => navigate('/collaboration/detail', {
+                              state: { collaborationId: creator.collaborationId },
+                            })}>Xem hợp tác</Button>
                           ) : !creator.dealId && allowedNextStage[creator.relationshipStage] && (
                             <button
                               className="btn-kanban-next-stage"

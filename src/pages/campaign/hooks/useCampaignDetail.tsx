@@ -43,12 +43,17 @@ export function useCampaignDetail() {
   const [currentStatus, setCurrentStatus] = useState<CampaignStatusType>('draft');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [relatedErrors, setRelatedErrors] = useState<string[]>([]);
+  const [completionBlocked, setCompletionBlocked] = useState<string | null>(null);
+  useEffect(() => { setCompletionBlocked(null); }, [resolvedId]);
   const [collaborationsError, setCollaborationsError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [activeTab, setActiveTab] = useState<CampaignDetailTabKey>('overview');
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [activationNeedsDeliverables, setActivationNeedsDeliverables] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
+  const [closureReason, setClosureReason] = useState('');
+  const [closing, setClosing] = useState(false);
   const [cooperationBudget, setCooperationBudget] = useState<CooperationBudget | null>(null);
   const [shortlistCount, setShortlistCount] = useState<number | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(true);
@@ -95,7 +100,7 @@ export function useCampaignDetail() {
 
           if (data.status === 'COMPLETED') newStatus = 'completed';
           else if (data.status === 'DRAFT' || data.status === 'READY_FOR_DISCOVERY') newStatus = 'draft';
-          else if (data.status === 'ARCHIVED') newStatus = 'cancelled';
+          else if (data.status === 'ARCHIVED' || data.status === 'CLOSED') newStatus = 'cancelled';
           setCurrentStatus(newStatus);
         }
 
@@ -112,6 +117,7 @@ export function useCampaignDetail() {
             PUBLISHED: { text: 'Đã xuất bản', color: '#06B6D4', deliverable: 'Đang đo lường', delColor: 'cyan' },
             COMPLETED: { text: 'Hoàn thành', color: '#10B981', deliverable: 'Nghiệm thu hoàn tất', delColor: 'success' },
             CANCELLED: { text: 'Đã hủy', color: '#EF4444', deliverable: 'Dừng hợp tác', delColor: 'error' },
+            TERMINATED: { text: 'Kết thúc giữa chừng', color: '#F59E0B', deliverable: 'Đã dừng', delColor: 'warning' },
           };
 
           const currentCreators: CampaignCreatorRow[] = (collabs || []).map((c, idx) => {
@@ -231,14 +237,16 @@ export function useCampaignDetail() {
       onOk: async () => {
         try {
           message.loading({ content: 'Đang đánh dấu hoàn thành chiến dịch...', key: 'comp_camp' });
+          if (!resolvedId) throw new Error('Chọn chiến dịch trước khi hoàn thành.');
           if (resolvedId) {
             const updated = await campaignService.updateStatus(resolvedId, 'COMPLETED');
             if (updated) {
               setRawCampaign(updated);            }
           }
           setCurrentStatus('completed');
+          setCompletionBlocked(null);
           message.success({
-            content: 'Chiến dịch đã được đánh dấu hoàn thành xuất sắc!',
+            content: 'Đã hoàn thành chiến dịch.',
             key: 'comp_camp',
           });
         } catch (error: any) {
@@ -248,6 +256,7 @@ export function useCampaignDetail() {
             error?.response?.data?.message ||
             'Không thể cập nhật trạng thái';
           message.error({ content: errMsg, key: 'comp_camp' });
+          if (error?.response?.data?.code === 'INVALID_COLLABORATION_STATE') setCompletionBlocked('Cần có ít nhất một hợp tác hoàn tất, không còn hợp tác chưa kết thúc hoặc lời mời đang trao đổi.');
         }
       },
     });
@@ -278,6 +287,10 @@ export function useCampaignDetail() {
   };
 
   const moreMenuItems: MenuProps['items'] = [
+    ...(['READY_FOR_DISCOVERY', 'ACTIVE'].includes(rawCampaign?.status ?? '') ? [{
+      key: 'close', label: 'Đóng chiến dịch không có hợp tác hoàn tất', danger: true,
+      onClick: () => { setClosureReason(''); setIsCloseModalOpen(true); },
+    }] : []),
     {
       key: 'edit',
       label: rawCampaign?.status === 'DRAFT' ? 'Chỉnh sửa yêu cầu' : 'Xem yêu cầu',
@@ -295,6 +308,20 @@ export function useCampaignDetail() {
   const creatorColumns = useMemo(() => getCreatorTableColumns(), []);
 
   return {
+    isCloseModalOpen, setIsCloseModalOpen, closureReason, setClosureReason, closing,
+    closeCampaign: async () => {
+      if (!resolvedId || closing || !closureReason.trim()) return;
+      setClosing(true);
+      try {
+        const updated = await campaignService.updateStatus(resolvedId, 'CLOSED', rawCampaign?.campaignRevision, closureReason.trim());
+        setRawCampaign(updated); setCurrentStatus('cancelled'); setIsCloseModalOpen(false);
+        message.success('Đã đóng chiến dịch.');
+      } catch (error) { message.error(getErrorMessage(error, 'Cần xử lý các lời mời hoặc hợp tác còn mở trước khi đóng.')); }
+      finally { setClosing(false); }
+    },
+    completionBlocked,
+    openPendingCollaborations: () => navigate('/collaboration', { state: { campaignId: resolvedId } }),
+    openPendingDeals: () => navigate('/crm', { state: { campaignId: resolvedId } }),
     resolvedId,
     rawCampaign,
     participatingCreators,

@@ -1,8 +1,8 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { App, Button, Tag } from 'antd';
 import { useAsyncResource } from '../../hooks/useAsyncResource';
 import { dealService } from '../../services/api/dealService';
-import type { Deal } from '../../services/api/dealService';
+import type { Deal, Delivery } from '../../services/api/dealService';
 import { invitationDisplay, emailResendState } from './invitationDisplay';
 import { getErrorMessage } from '../../services/apiClient';
 
@@ -18,9 +18,30 @@ export default function InvitationListItem({ deal, name, readOnly, onOpen }: { d
     return invitation?.metadata.invitationId ? dealService.delivery(invitation.metadata.invitationId) : null;
   }, [deal.campaignId, deal.id, deal.proposal]);
   const status = useAsyncResource(query);
-  const view = invitationDisplay(deal, status.data);
+  const scope = `${deal.campaignId}/${deal.id}/${deal.proposal?.revision}`;
+  const lastDelivery = useRef<{ scope: string; value: Delivery } | null>(null);
+  if (status.data) lastDelivery.current = { scope, value: status.data };
+  const delivery = status.status === 'success' ? status.data
+    : lastDelivery.current?.scope === scope ? lastDelivery.current.value : null;
+  const view = invitationDisplay(deal, delivery);
   const loaded = status.status === 'success';
-  const resendState = emailResendState(deal, status.data, readOnly);
+  const resendState = emailResendState(deal, delivery, readOnly);
+  useEffect(() => {
+    if (!loaded || readOnly || !delivery || delivery.active !== true
+        || !['SENT', 'QUEUED', 'PROCESSING'].includes(delivery.emailStatus)
+        || ['CONFIRMED', 'DECLINED', 'CANCELLED'].includes(deal.status)
+        || deal.acceptedRevision === deal.proposal?.revision
+        || ['PAYLOAD_UNAVAILABLE', 'PROPOSAL_ACCEPTED', 'STATE_UNAVAILABLE'].includes(delivery.resendUnavailableReason ?? '')) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (!delivery.canResend) {
+      const available = Date.parse(delivery.resendAvailableAt ?? '');
+      const delay = Number.isFinite(available) ? Math.max(1000, available - Date.now() + 1000) : 60000;
+      timer = setTimeout(() => { if (!document.hidden) void status.reload(); }, Math.min(delay, 2147483647));
+    }
+    const onFocus = () => { if (!document.hidden) void status.reload(); };
+    window.addEventListener('focus', onFocus);
+    return () => { if (timer) clearTimeout(timer); window.removeEventListener('focus', onFocus); };
+  }, [loaded, delivery, deal.status, deal.acceptedRevision, deal.proposal?.revision, readOnly, status.reload]);
   const resend = () => modal.confirm({ title: 'Gửi lại email lời mời?', content: 'Gửi lại cùng lời mời đến email người nhận. Liên kết và thời hạn giữ nguyên; không tạo thỏa thuận mới.', okText: 'Gửi lại email', cancelText: 'Hủy', onOk: async () => {
     if (resendLock.current || !status.data?.canResend) return;
     resendLock.current = true; setResending(true);
@@ -38,9 +59,10 @@ export default function InvitationListItem({ deal, name, readOnly, onOpen }: { d
       </dl>
       {loaded && !deal.plannedContactChannel && !deal.masterId && !status.data && <small>API chưa cung cấp cách gửi cho bản nháp này. Chưa có lời mời được gửi.</small>}
       {loaded ? <small>{view.hint}</small> : status.status === 'error' && <Button size="small" type="link" onClick={() => void status.reload()}>Thử tải lại trạng thái</Button>}
+      {resendState.visible && resendState.reason && <small>Gửi lại email: {resendState.reason}</small>}
     </div>
     <div className="contact-invitation-buttons"><Button onClick={onOpen}>{readOnly ? 'Xem thỏa thuận' : loaded ? view.action : 'Xem lời mời'}</Button>
-      {resendState.visible && <div className="contact-resend-control"><Button loading={resending} disabled={resending || !resendState.enabled} onClick={resend}>Gửi lại email</Button>{resendState.reason && <small>{resendState.reason}</small>}<Button type="link" size="small" disabled={resending} onClick={() => void status.reload()}>Tải lại trạng thái</Button></div>}
+      {resendState.visible && <Button loading={resending} disabled={resending || !loaded || !resendState.enabled} onClick={resend}>Gửi lại email</Button>}
     </div>
   </article>;
 }

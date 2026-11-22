@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, useSyncExternalStore } from 'react';
 import { Alert, App, Button, Drawer, Empty, Form, Modal, Skeleton, Tabs, Tag } from 'antd';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { dealService } from '../../../services/api/dealService';
 import type { Deal } from '../../../services/api/dealService';
 import { getAuthSessionId, getStoredUser, subscribeAuthSession } from '../../../services/authSession';
@@ -15,7 +15,9 @@ import { dealLabel } from '../../crm/cooperationDisplay';
 import '../../crm/CampaignOutreachPage.css';
 
 export default function CreatorCooperationPage() {
-  return <Tabs defaultActiveKey="offers" items={[{ key: 'offers', label: 'Lời mời hợp tác', children: <CreatorOffers /> }, { key: 'work', label: 'Quản lý bàn giao', children: <CreatorCollaborations /> }]} />;
+  const [params, setParams] = useSearchParams();
+  const active = params.get('view') === 'work' ? 'work' : 'offers';
+  return <Tabs activeKey={active} onChange={view => setParams(previous => { const next = new URLSearchParams(previous); next.set('view', view); return next; }, { replace: true })} items={[{ key: 'offers', label: 'Lời mời hợp tác', children: <CreatorOffers /> }, { key: 'work', label: 'Quản lý bàn giao', children: <CreatorCollaborations /> }]} />;
 }
 function CreatorOffers() {
   const session = useSyncExternalStore(subscribeAuthSession, getAuthSessionId);
@@ -64,7 +66,7 @@ function CreatorResponse({ deal, onSaved }: { deal: Deal; onSaved: () => void })
     {accepted && <Alert type="success" title="Bạn đã đồng ý. Hợp tác chỉ được tạo sau khi thương hiệu xác nhận." />}
     {deal.proposal.kind === 'COUNTEROFFER' && <Alert type="info" title="Đang chờ thương hiệu phản hồi đề xuất thay đổi của bạn." />}
     {error && <Alert type="error" title={error} action={<Button onClick={onSaved}>Tải lại</Button>} />}
-    <ProposalFields form={form} deal={deal} initialValues={{ fee: deal.proposal.fee, terms: deal.proposal.terms, units: deal.proposal.deliverables.map(unit => ({ ...unit, dueAt: localDate(unit.dueAt), checklist: unit.acceptanceChecklist.join('\n') })) }} mutable={counter && !!mutable} busy={busy} onDirty={() => {}} onFinish={values => void perform('counteroffers', values)} />
+    <ProposalFields form={form} deal={deal} initialValues={{ fee: deal.proposal.fee, terms: deal.proposal.terms, kpiType: deal.proposal.kpiType ?? undefined, kpiTarget: deal.proposal.kpiTarget ?? null, units: deal.proposal.deliverables.map(unit => ({ ...unit, dueAt: localDate(unit.dueAt), checklist: unit.acceptanceChecklist.join('\n') })) }} mutable={counter && !!mutable} busy={busy} onDirty={() => {}} onFinish={values => void perform('counteroffers', values)} />
     {counter && accepted && <p className="contact-source">Gửi đề xuất thay đổi sẽ thay thế sự đồng ý với bản trước.</p>}
     {mutable && <div className="contact-proposal-footer">{counter ? <><Button disabled={busy} onClick={() => { form.resetFields(); setCounter(false); }}>Quay lại</Button><Button type="primary" loading={busy} onClick={() => form.submit()}>Gửi đề xuất thay đổi</Button></> : <>
       <Button disabled={busy} onClick={() => Modal.confirm({ title: 'Từ chối lời mời này?', okText: 'Từ chối', cancelText: 'Để sau', onOk: () => perform('decline') })}>Từ chối</Button><Button disabled={busy} onClick={() => setCounter(true)}>Đề xuất thay đổi</Button>

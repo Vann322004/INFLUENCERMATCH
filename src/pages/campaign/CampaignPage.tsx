@@ -196,6 +196,9 @@ export default function CampaignPage() {
           } else if (c.status === 'COMPLETED') {
             statusType = 'completed';
             statusText = 'Đã hoàn thành';
+          } else if (c.status === 'CLOSED') {
+            statusType = 'completed';
+            statusText = 'Đã đóng';
           }
 
           const startDateStr = c.startDate ? new Date(c.startDate).toLocaleDateString('vi-VN') : 'Linh hoạt';
@@ -827,7 +830,7 @@ export default function CampaignPage() {
                     setCurrentPage(1);
                   }}
                 >
-                  <span>Đã hoàn thành</span>
+                  <span>Đã kết thúc</span>
                   <span className="campaign-tab-badge">{countCompleted}</span>
                 </div>
               </div>

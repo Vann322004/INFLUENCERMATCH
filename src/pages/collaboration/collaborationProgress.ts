@@ -10,12 +10,14 @@ export function sortDeliverables(deliverables: Deliverable[]) {
 }
 
 export function acceptanceReadiness(snapshot: ExecutionSnapshot, latest?: OutcomeRevision) {
-  const issues: { unit?: Deliverable; message: string }[] = [];
+  const issues: { unit?: Deliverable; message: string; target: 'plan' | 'deliverable' | 'finance' }[] = [];
   const missingMeasurements: Deliverable[] = [];
   const hasPositiveCost = latest?.payload.currency === 'VND' && (latest.calculation.actualCost ?? 0) > 0;
   const costConfirmed = hasPositiveCost && latest?.payload.financialConfirmed === true;
 
-  if (!snapshot.deliverables.length) issues.push({ message: 'Chưa có kế hoạch ấn phẩm.' });
+  if (!snapshot.deliverables.length) issues.push({ message: 'Chưa có kế hoạch ấn phẩm.', target: 'plan' });
+  if (snapshot.exitRequests?.some(request => !request.resolvedAt))
+    issues.push({ message: 'Xử lý yêu cầu dừng hợp tác trước khi nghiệm thu.', target: 'plan' });
   for (const unit of sortDeliverables(snapshot.deliverables)) {
     const missing = [];
     if (unit.status !== 'APPROVED') {
@@ -37,9 +39,9 @@ export function acceptanceReadiness(snapshot: ExecutionSnapshot, latest?: Outcom
         missingMeasurements.push(unit);
       }
     }
-    if (missing.length) issues.push({ unit, message: missing.join(' · ') });
+    if (missing.length) issues.push({ unit, message: missing.join(' · '), target: 'deliverable' });
   }
-  if (!costConfirmed) issues.push({ message: hasPositiveCost
+  if (!costConfirmed) issues.push({ target: 'finance', message: hasPositiveCost
     ? 'Chi phí thực tế đã được lưu. Brand cần xác nhận chi phí này.'
     : 'Cần khai báo và xác nhận chi phí thực tế dương bằng VND.' });
   return { issues, missingMeasurements, hasPositiveCost, costConfirmed };

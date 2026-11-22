@@ -81,9 +81,40 @@ export interface HistoryReport {
   completedCount: number;
   unfinishedCount: number;
   cancelledCount: number;
+  terminatedCount?: number;
   eligibleCount: number;
   missingSourceCollaborationIds: string[];
   metrics: Record<string, HistoryMetric>;
+}
+
+export interface CampaignFinancialSummary {
+  revision: number;
+  gmv: number | null;
+  revenue: number | null;
+  currency: 'VND';
+  periodStart: string;
+  periodEnd: string;
+  sourceDescription: string;
+  evidenceUrl: string | null;
+  actorId: string;
+  reason: string;
+  recordedAt: string;
+  formulaVersion: string;
+  actualCost: number | null;
+  roas: number | null;
+  roi: number | null;
+  unavailableReasons: Record<string, string[]>;
+}
+
+export interface CampaignFinancialSummaryRequest {
+  expectedRevision: number;
+  gmv?: number;
+  revenue?: number;
+  periodStart: string;
+  periodEnd: string;
+  sourceDescription: string;
+  evidenceUrl?: string;
+  reason?: string;
 }
 
 export type BriefSourceKind = 'CONTEXT_SNAPSHOT' | 'CURRENT_DRAFT' | 'CURRENT_RECORD_FALLBACK';
@@ -110,6 +141,7 @@ export interface HistoryDetail {
   snapshotAvailability: 'AVAILABLE' | 'MISSING';
   dealCounts: Record<string, number>;
   report: HistoryReport;
+  campaignFinancialSummaries: CampaignFinancialSummary[];
   copyOrigin: BriefOrigin | null;
 }
 

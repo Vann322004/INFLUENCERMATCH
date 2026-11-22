@@ -4,15 +4,20 @@ export const deliveryMethodLabels: Record<string, string> = { PORTAL_EMAIL: 'Por
 export function emailResendState(deal: Deal, delivery: Delivery | null, readOnly = false) {
   const visible = !!delivery && !['MANUAL_REQUIRED', 'NOT_REQUESTED'].includes(delivery.emailStatus) && !['MANUAL_LINK', 'PORTAL_ONLY'].includes(delivery.deliveryMethod ?? '');
   let reason = '';
-  if (readOnly || ['CONFIRMED', 'ACTIVE', 'COMPLETED', 'DECLINED', 'CANCELLED'].includes(deal.status)) reason = 'Thỏa thuận đã xác nhận hoặc kết thúc, không gửi lại lời mời này.';
+  if (['CONFIRMED', 'ACTIVE', 'COMPLETED'].includes(deal.status)) reason = 'Hai bên đã xác nhận hợp tác; lời mời không còn ở bước chờ phản hồi.';
+  else if (readOnly || ['DECLINED', 'CANCELLED'].includes(deal.status)) reason = 'Chiến dịch hoặc thỏa thuận đã kết thúc, không gửi lại lời mời này.';
   else if (deal.proposal && deal.acceptedRevision === deal.proposal.revision) reason = 'Creator đã đồng ý bản đề xuất này, không cần gửi lại.';
   else if (!delivery) reason = 'Chưa có lời mời để gửi lại.';
   else if (delivery.active === false) reason = 'Lời mời đã hết hiệu lực, bị hủy hoặc được thay thế.';
   else if (['QUEUED', 'PROCESSING'].includes(delivery.emailStatus)) reason = 'Email đang chờ hoặc đang được gửi.';
   else if (delivery.emailStatus === 'FAILED') reason = 'Email bị lỗi. Dùng thao tác thử gửi lại trong chi tiết lời mời.';
   else if (delivery.emailStatus !== 'SENT') reason = 'Lời mời này chưa có email đã gửi để gửi lại.';
+  else if (delivery.resendUnavailableReason === 'PAYLOAD_UNAVAILABLE') reason = 'Dữ liệu gửi lại của lời mời cũ không còn được lưu. Cần tạo lời mời mới thay thế.';
+  else if (delivery.resendUnavailableReason === 'PROPOSAL_ACCEPTED') reason = 'Creator đã đồng ý bản đề xuất này, không cần gửi lại.';
+  else if (delivery.resendUnavailableReason === 'HOURLY_LIMIT') reason = 'Đã đạt giới hạn 5 yêu cầu gửi lại trong một giờ. Hệ thống sẽ kiểm tra lại khi hết thời gian chờ.';
+  else if (delivery.resendUnavailableReason === 'COOLDOWN') reason = 'Đang trong thời gian chờ sau lần gửi trước. Hệ thống sẽ tự kiểm tra lại.';
   else if (delivery.active !== true || delivery.canResend === undefined) reason = 'Chưa xác nhận được điều kiện gửi lại. Hãy tải lại trạng thái.';
-  else if (!delivery.canResend) reason = 'Chờ ít nhất 60 giây sau lần gửi trước; tối đa 5 yêu cầu gửi lại mỗi giờ.';
+  else if (!delivery.canResend) reason = 'Máy chủ chưa cho phép gửi lại. Hệ thống sẽ kiểm tra lại trạng thái; chưa xác định được lý do cụ thể.';
   return { visible, reason, enabled: visible && !reason && delivery?.canResend === true };
 }
 

@@ -3,7 +3,8 @@ import type { ApiResponse, PageResponse } from '../../types/api/common.types';
 import type { CollaborationStatus, VideoPlayback } from '../../types/api/collaboration.types';
 import type {
   BriefPreview, DuplicateBriefRequest, DuplicateBriefResult, HistoryCampaignItem,
-  HistoryCollaborationDetail, HistoryCollaborationItem, HistoryContext, HistoryDetail, HistoryFilters,
+  CampaignFinancialSummary, CampaignFinancialSummaryRequest, HistoryCollaborationDetail,
+  HistoryCollaborationItem, HistoryContext, HistoryDetail, HistoryFilters,
 } from '../../types/api/campaignHistory.types';
 
 async function get<T>(url: string, signal: AbortSignal, params?: object): Promise<T> {
@@ -20,6 +21,12 @@ export const campaignHistoryService = {
     get<PageResponse<HistoryCollaborationItem>>(`/campaigns/${id}/history/collaborations`, signal, { page, size: 20, status }),
   collaboration: (id: string, collaborationId: string, signal: AbortSignal) =>
     get<HistoryCollaborationDetail>(`/campaigns/${id}/history/collaborations/${collaborationId}`, signal),
+  async saveFinancialSummary(id: string, payload: CampaignFinancialSummaryRequest, key: string) {
+    return (await apiClient.post<ApiResponse<CampaignFinancialSummary>>(
+      `/campaigns/${id}/history/financial-summary`, payload,
+      { headers: { 'Idempotency-Key': key } },
+    )).data.data;
+  },
   collaborationVideo: (id: string, collaborationId: string, unit: string, submission: string, signal: AbortSignal) =>
     get<VideoPlayback>(`/campaigns/${id}/history/collaborations/${collaborationId}/deliverables/${unit}/submissions/${submission}/video`, signal),
   preview: (id: string, contextId: string | undefined, signal: AbortSignal) =>

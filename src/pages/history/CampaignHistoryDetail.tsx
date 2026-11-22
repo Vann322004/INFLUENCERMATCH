@@ -76,18 +76,22 @@ function Collaborations({ campaignId }: { campaignId: string }) {
   </div>;
 }
 
-export default function CampaignHistoryDetail({ campaignId, canDuplicate }: { campaignId: string; canDuplicate: boolean }) {
+export default function CampaignHistoryDetail({ campaignId, canDuplicate, canRecordCampaignSummary }: {
+  campaignId: string; canDuplicate: boolean; canRecordCampaignSummary: boolean;
+}) {
   const { search } = useLocation();
   const load = useCallback((signal: AbortSignal) => campaignHistoryService.detail(campaignId, signal), [campaignId]);
   return <>
     <Link to={{ pathname: '/campaign-history', search }} className="history-back"><ArrowLeftOutlined aria-hidden /> Quay lại danh sách</Link>
-    {isUuid(campaignId) ? <DetailContent load={load} canDuplicate={canDuplicate} />
+    {isUuid(campaignId) ? <DetailContent load={load} canDuplicate={canDuplicate}
+      canRecordCampaignSummary={canRecordCampaignSummary} />
       : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không tìm thấy chiến dịch." />}
   </>;
 }
 
-function DetailContent({ load, canDuplicate }: {
+function DetailContent({ load, canDuplicate, canRecordCampaignSummary }: {
   load: (signal: AbortSignal) => Promise<HistoryDetail>; canDuplicate: boolean;
+  canRecordCampaignSummary: boolean;
 }) {
   const { result, retry } = useHistoryRead(load);
   const [copy, setCopy] = useState<{ contextId?: string; version?: number | null }>();
@@ -101,7 +105,8 @@ function DetailContent({ load, canDuplicate }: {
       {canDuplicate && <Button type="primary" icon={<CopyOutlined aria-hidden />} onClick={() => setCopy({})}>Dùng lại brief</Button>}
     </div>
     <Tabs items={[
-      { key: 'overview', label: 'Tổng quan', children: <CampaignOutcomeReport detail={detail} /> },
+      { key: 'overview', label: 'Tổng quan', children: <CampaignOutcomeReport detail={detail}
+        canRecordCampaignSummary={canRecordCampaignSummary} /> },
       { key: 'brief', label: 'Brief & phiên bản', children: <Contexts detail={detail}
         duplicate={canDuplicate ? context => setCopy({ contextId: context.id, version: context.version }) : undefined} /> },
       { key: 'collaborations', label: 'Hợp tác', children: <Collaborations campaignId={campaign.id} /> },

@@ -10,6 +10,12 @@ export const creatorProfileImage = (value: unknown): string => {
     if (!['http:', 'https:'].includes(url.protocol)) return '';
     const placeholders = ['ui-avatars.com', 'unsplash.com', 'pravatar.cc', 'randomuser.me'];
     if (placeholders.some(host => url.hostname === host || url.hostname.endsWith('.' + host))) return '';
+    // Signed TikTok CDN URLs cannot be renewed by the browser. Avoid requesting
+    // already-expired images; CreatorAvatar renders local initials instead.
+    if (url.hostname === 'tiktokcdn.com' || url.hostname.endsWith('.tiktokcdn.com')) {
+      const expires = url.searchParams.get('x-expires');
+      if (expires && /^\d+$/.test(expires) && Number(expires) <= Date.now() / 1000) return '';
+    }
     return url.href;
   } catch { return ''; }
 };

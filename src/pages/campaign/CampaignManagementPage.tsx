@@ -723,7 +723,9 @@ export default function CampaignManagementPage() {
                             )}
 
                             {c.collaborationId ? <Button
-                              href={'/collaboration/' + c.collaborationId}>
+                              onClick={() => navigate('/collaboration/detail', {
+                                state: { collaborationId: c.collaborationId },
+                              })}>
                               Xem hợp tác
                             </Button> : !c.dealId && (c.relationshipStage === 'SHORTLISTED' || c.relationshipStage === 'CONTACTED') ? (
                               <Button className={'btn-kcard-action ' + stg.actionClass}

@@ -1,10 +1,19 @@
 import type { Deal, ProposalUnit } from '../../services/api/dealService';
 
 interface UnitForm { creatorId: string; contentType: string; quantity: number; dueAt: string; checklist: string; maxRevisionRounds: number }
-export interface ProposalForm { fee: number; terms: string; units: UnitForm[] }
+export interface ProposalForm {
+  fee: number;
+  terms: string;
+  units: UnitForm[];
+  kpiType?: string;
+  kpiTarget?: number | null;
+}
 
 export function proposalPayload(values: ProposalForm, deal: Deal) {
   if (!Number.isSafeInteger(values.fee) || values.fee <= 0 || !values.terms?.trim() || values.terms.trim().length > 4000) throw new Error('Nhập phí VND hợp lệ và điều khoản hợp tác.');
+  if ((values.kpiType && (!['VIEWS', 'CLICKS', 'LIKES', 'COMMENTS', 'SHARES'].includes(values.kpiType)
+      || !Number.isSafeInteger(values.kpiTarget) || (values.kpiTarget ?? 0) <= 0))
+    || (!values.kpiType && values.kpiTarget != null)) throw new Error('KPI cam kết cần có loại chỉ số và mục tiêu số nguyên dương.');
   if (!values.units?.length || values.units.length > 100) throw new Error('Cần từ 1 đến 100 hạng mục bàn giao.');
   const deliverables: ProposalUnit[] = values.units.map(unit => {
     const acceptanceChecklist = unit.checklist?.split('\n').map(line => line.trim()).filter(Boolean) ?? [];
@@ -17,7 +26,15 @@ export function proposalPayload(values: ProposalForm, deal: Deal) {
     return { creatorId: unit.creatorId, contentType: unit.contentType.trim(), quantity: unit.quantity, dueAt: due.toISOString(), acceptanceChecklist, maxRevisionRounds: unit.maxRevisionRounds };
   });
   if (deliverables.reduce((sum, unit) => sum + unit.quantity, 0) > 1000 || deal.channels.some(channel => !deliverables.some(unit => unit.creatorId === channel.creatorId))) throw new Error('Mỗi kênh trong thỏa thuận cần có hạng mục; tổng số lượng không vượt quá 1.000.');
-  return { expectedRevision: deal.revision, fee: values.fee, currency: 'VND', terms: values.terms.trim(), deliverables };
+  return {
+    expectedRevision: deal.revision,
+    fee: values.fee,
+    currency: 'VND',
+    terms: values.terms.trim(),
+    deliverables,
+    kpiType: values.kpiType || null,
+    kpiTarget: values.kpiType ? values.kpiTarget : null,
+  };
 }
 
 

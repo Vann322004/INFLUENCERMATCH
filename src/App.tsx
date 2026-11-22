@@ -92,6 +92,35 @@ function CampaignManagementIdRedirect() {
   return <Navigate to={'/campaign-management?' + next} replace />;
 }
 
+function CollaborationDetailIdRedirect() {
+  const { collaborationId } = useParams<{ collaborationId: string }>();
+  const location = useLocation();
+  const returnTo = typeof location.state?.returnTo === 'string' ? location.state.returnTo : undefined;
+  return <Navigate
+    to={{ pathname: '/collaboration/detail', search: location.search }}
+    replace
+    state={{ collaborationId, ...(returnTo ? { returnTo } : {}) }}
+  />;
+}
+
+function CollaborationListRouteDispatcher() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const campaignId = params.get('campaign') || params.get('campaignId');
+  if (params.has('campaign') || params.has('campaignId')) {
+    params.delete('campaign');
+    params.delete('campaignId');
+    const priorState = location.state && typeof location.state === 'object'
+      ? location.state as Record<string, unknown> : {};
+    return <Navigate
+      to={{ pathname: location.pathname, search: params.size ? '?' + params : '' }}
+      replace
+      state={{ ...priorState, ...(campaignId ? { campaignId } : {}) }}
+    />;
+  }
+  return <MainLayout collaborationNavigation><CollaborationPage /></MainLayout>;
+}
+
 // Main App Layout Wrapper with Light Linear Sidebar & Top Header
 function MainLayout({ children }: {
   children: React.ReactNode;
@@ -458,14 +487,10 @@ export default function App() {
           {/* Collaboration & Operations Routes */}
           <Route
             path="/collaboration"
-            element={
-              <MainLayout collaborationNavigation>
-                <CollaborationPage />
-              </MainLayout>
-            }
+            element={<CollaborationListRouteDispatcher />}
           />
           <Route
-            path="/collaboration/:collaborationId"
+            path="/collaboration/detail"
             element={
               <MainLayout collaborationNavigation>
                 <CollaborationDetailPage brand />
@@ -473,12 +498,12 @@ export default function App() {
             }
           />
           <Route
+            path="/collaboration/:collaborationId"
+            element={<CollaborationDetailIdRedirect />}
+          />
+          <Route
             path="/collab"
-            element={
-              <MainLayout collaborationNavigation>
-                <CollaborationPage />
-              </MainLayout>
-            }
+            element={<CollaborationListRouteDispatcher />}
           />
           <Route
             path="/operations"

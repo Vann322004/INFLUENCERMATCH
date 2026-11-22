@@ -118,7 +118,8 @@ function HistoryAccess() {
         <Link to="/performance">Về Báo cáo &amp; Hiệu suất</Link>
       </Space>
         : campaignId ? <CampaignHistoryDetail key={campaignId} campaignId={campaignId}
-          canDuplicate={result.data.permissions?.includes('CREATE_CAMPAIGN') === true} />
+        canDuplicate={result.data.permissions?.includes('CREATE_CAMPAIGN') === true}
+        canRecordCampaignSummary={result.data.permissions?.includes('RECORD_OWN_OUTCOME') === true} />
           : <CampaignHistoryList />}
   </main>;
 }

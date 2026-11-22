@@ -96,7 +96,15 @@ export default function AppHeader({ onOpenNavigation }: { onOpenNavigation?: () 
                 className="header-bc-root"
                 title={pageInfo.sub}
                 style={{ minWidth: 0, maxWidth: 'min(38vw, 440px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                onClick={() => pageInfo.subLink && navigate(pageInfo.subLink, pageInfo.subLink === '/campaigns/detail' && location.state?.discoveryBreadcrumb ? { state: { campaignId: location.state.discoveryBreadcrumb.id } } : undefined)}
+                onClick={() => {
+                  if (!pageInfo.subLink) return;
+                  const options = pageInfo.subLink.startsWith('/collaboration?') && location.state?.returnToState
+                    ? { state: location.state.returnToState }
+                    : pageInfo.subLink === '/campaigns/detail' && location.state?.discoveryBreadcrumb
+                      ? { state: { campaignId: location.state.discoveryBreadcrumb.id } }
+                      : undefined;
+                  navigate(pageInfo.subLink, options);
+                }}
               >
                 {pageInfo.sub}
               </span>

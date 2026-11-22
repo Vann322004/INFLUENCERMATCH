@@ -286,12 +286,18 @@ export default function AiRecommendationTab({
       <dl className="rec-breakdown">
         <div><dt>Thời điểm đánh giá</dt><dd>{metadata?.scoringAsOf ? formatRecommendationDate(metadata.scoringAsOf) : 'Chưa được lưu'}</dd></div>
         <div><dt>Mốc bắt đầu lịch sử</dt><dd>{metadata?.historyCutoff ? formatRecommendationDate(metadata.historyCutoff) : 'Chưa được lưu'}</dd></div>
+        {metadata?.m1PolicyVersion && <div><dt>Chính sách M1</dt><dd>{metadata.m1PolicyVersion}{metadata.m1Weights?.length === 3 ? ` · R/T/K ${metadata.m1Weights.map(weight => `${Math.round(weight * 100)}%`).join('/')}` : ''}</dd></div>}
+        {metadata?.evidencePolicyVersion && <div><dt>Schema bằng chứng</dt><dd>{metadata.evidencePolicyVersion}</dd></div>}
+        {metadata?.historySelectionPolicyVersion && <div><dt>Chính sách chọn lịch sử</dt><dd>{metadata.historySelectionPolicyVersion}</dd></div>}
+        {metadata?.m4PolicyVersion && <div><dt>Chính sách M4</dt><dd>{metadata.m4PolicyVersion}</dd></div>}
+        {metadata?.m4HistoryReadStatus && <div><dt>Đọc lịch sử M4</dt><dd>{metadata.m4HistoryReadStatus === 'AVAILABLE' ? 'Có lịch sử đánh giá' : metadata.m4HistoryReadStatus === 'EMPTY' ? 'Chưa có lịch sử đánh giá' : 'Tạm lỗi · dùng fallback theo tiêu chí hiện tại'}</dd></div>}
         <div><dt>Chế độ trọng số</dt><dd>{metadata?.weightingMode === 'DYNAMIC_BLENDED' ? 'Kết hợp trọng số dữ liệu và mục tiêu' : metadata?.weightingMode === 'FALLBACK_PRIOR' ? 'Trọng số theo mục tiêu chiến dịch' : 'Chưa được lưu'}</dd></div>
         <div><dt>Chế độ kết quả</dt><dd>{displayedOrder?.label ?? 'Chưa được lưu'}</dd></div>
         <div><dt>Hệ số kết hợp trọng số</dt><dd>{formatNumber(metadata?.lambdaUsed)}</dd></div>
         {viewedRun?.scoringPolicyVersion && <div><dt>Chính sách đánh giá</dt><dd>{viewedRun.scoringPolicyVersion}</dd></div>}
       </dl>
       {metadata?.effectiveWeights?.length === 4 && metadata.effectiveWeights.every(Number.isFinite) && <dl className="rec-breakdown">{metadata.effectiveWeights.map((weight, index) => <div key={index}><dt>Trọng số M{index + 1}</dt><dd>{formatNumber(weight * 100)}%</dd></div>)}</dl>}
+      {metadata?.m4HistoryReadStatus === 'READ_FAILED' && <Alert type="warning" title="Không đọc được lịch sử đánh giá M4. Lượt này dùng fallback theo tiêu chí hiện tại; kết quả không được hiểu là Brand chưa có lịch sử." />}
       <h4>Thứ tự kết quả</h4><p>{displayedOrder?.description ?? 'Lượt này chưa lưu chế độ sắp xếp.'}</p>
       <p>Hai nhóm được sắp xếp riêng theo thứ tự máy chủ trả về. Mức ưu tiên trong danh sách chọn không quyết định thứ hạng đánh giá.</p>
       <p>Thông tin thuộc lượt đang xem, không lấy từ cấu hình hoặc danh sách hiện tại.</p>
@@ -379,9 +385,12 @@ export default function AiRecommendationTab({
             <div><dt>Hợp tác đủ điều kiện</dt><dd>{formatNumber(breakdown?.eligibleEvaluatedCollaborations)}</dd></div>
             <div><dt>Thương hiệu đóng góp</dt><dd>{formatNumber(breakdown?.distinctBrandCount)}</dd></div>
             {breakdown?.maxBrandShare != null && <div><dt>Tỷ trọng lớn nhất từ một thương hiệu</dt><dd>{formatNumber(breakdown.maxBrandShare)}%</dd></div>}
-            {([['Điểm đánh giá hợp tác', breakdown?.rScore], ['Điểm đúng hạn', breakdown?.tScore], ['Điểm thực hiện KPI', breakdown?.kScore]] as const).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{formatScore(value)}</dd></div>)}
+            <div><dt>Điểm đánh giá hợp tác</dt><dd>{breakdown?.rAvailability === 'AVAILABLE' ? formatScore(breakdown.rScore) : 'Chưa có Final Review'}</dd></div>
+            <div><dt>Điểm đúng hạn</dt><dd>{breakdown?.tAvailability === 'AVAILABLE' ? formatScore(breakdown.tScore) : 'Unavailable · cần timestamp Portal và deadline'}</dd></div>
+            <div><dt>Điểm thực hiện KPI</dt><dd>{breakdown?.kAvailability === 'AVAILABLE' ? formatScore(breakdown.kScore) : breakdown?.kAvailability === 'NOT_APPLICABLE' ? 'Không áp dụng · không tự phân bổ lại trọng số' : 'Unavailable · thiếu KPI actual hợp lệ'}</dd></div>
+            {breakdown?.m1Availability === 'UNAVAILABLE' && <div><dt>Cách dùng M1 trong lượt này</dt><dd>Composite M1 unavailable; TOPSIS dùng prior trung tính 0.50, không phải điểm đã học.</dd></div>}
           </dl>
-          <h4>Nguồn đánh giá M4</h4><p>{m4SourceLabel(breakdown?.m4Source)}</p>
+          <h4>Nguồn đánh giá M4</h4><p>{metadata?.m4HistoryReadStatus === 'READ_FAILED' ? 'Lịch sử đọc lỗi; điểm này dùng fallback theo tiêu chí hiện tại.' : m4SourceLabel(breakdown?.m4Source)}</p>
           <dl className="rec-breakdown">
             <div><dt>Điểm từ lịch sử</dt><dd>{formatScore(breakdown?.m4LearnedScore)}</dd></div>
             <div><dt>Điểm từ tiêu chí hiện tại</dt><dd>{formatScore(breakdown?.m4ExplicitScore)}</dd></div>

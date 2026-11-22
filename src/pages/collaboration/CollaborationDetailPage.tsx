@@ -1,7 +1,7 @@
 import { Alert, Breadcrumb, Spin } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useEffect, useRef, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/api/authService';
 import { collaborationService } from '../../services/api/collaborationService';
 import type { CollaborationDetail } from '../../types/api/collaboration.types';
@@ -11,10 +11,39 @@ import './CollaborationPage.css';
 
 const uuid = /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i;
 
+function stateString(state: unknown, key: string): string | undefined {
+  if (!state || typeof state !== 'object' || !(key in state)) return undefined;
+  const value = (state as Record<string, unknown>)[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
+function stateObject(state: unknown, key: string): Record<string, unknown> | undefined {
+  if (!state || typeof state !== 'object' || !(key in state)) return undefined;
+  const value = (state as Record<string, unknown>)[key];
+  return value && typeof value === 'object' ? value as Record<string, unknown> : undefined;
+}
+
+function collaborationListLocation(state: unknown, fallbackCampaignId?: string) {
+  const returnTo = stateString(state, 'returnTo');
+  const returnState = stateObject(state, 'returnToState');
+  let campaignId = typeof returnState?.campaignId === 'string' ? returnState.campaignId : fallbackCampaignId;
+  let to = '/collaboration';
+  if (returnTo === '/collaboration' || returnTo?.startsWith('/collaboration?')) {
+    const url = new URL(returnTo, window.location.origin);
+    campaignId = campaignId || url.searchParams.get('campaign') || url.searchParams.get('campaignId') || undefined;
+    url.searchParams.delete('campaign');
+    url.searchParams.delete('campaignId');
+    to = url.pathname + (url.searchParams.size ? '?' + url.searchParams : '');
+  }
+  return { to, state: campaignId ? { campaignId } : undefined };
+}
+
 export default function CollaborationDetailPage({ brand }: { brand: boolean }) {
-  const { collaborationId } = useParams();
+  const location = useLocation();
+  const collaborationId = stateString(location.state, 'collaborationId');
   if (!authService.isAuthenticated()) return <Navigate to="/login" replace />;
-  return <Detail key={collaborationId} id={collaborationId ?? ''} brand={brand} />;
+  if (!collaborationId) return <Navigate to="/collaboration" replace />;
+  return <Detail key={collaborationId} id={collaborationId} brand={brand} />;
 }
 
 function Detail({ id, brand }: { id: string; brand: boolean }) {
@@ -29,24 +58,19 @@ function Detail({ id, brand }: { id: string; brand: boolean }) {
   const roleAllowed = authService.getCurrentUser()?.role === (brand ? 'BRAND' : 'CREATOR');
   const canRead = permissions.has(brand ? 'MANAGE_OWN_COLLABORATION' : 'RESPOND_OWN_COOPERATION');
   const validId = uuid.test(id);
-  const remembered = state?.returnTo;
-  const brandListPath = '/collaboration';
-  const brandListPrefix = brandListPath + '?';
-  const backTo = brand
-    ? typeof remembered === 'string' && (remembered === brandListPath || remembered.startsWith(brandListPrefix))
-      ? remembered
-      : detail?.campaignId ? brandListPrefix + new URLSearchParams({ campaign: detail.campaignId }) : brandListPath
-    : '/creator/bookings';
+  const back = brand
+    ? collaborationListLocation(state, detail?.campaignId)
+    : { to: '/creator/bookings?view=work', state: undefined };
 
   function returnAfterReview(campaignId: string) {
-    const params = new URLSearchParams(backTo.startsWith(brandListPrefix) ? backTo.slice(brandListPrefix.length) : '');
-    if (backTo !== brandListPath && params.has('campaign')) params.set('campaign', campaignId);
+    const destination = collaborationListLocation(state, campaignId);
+    const params = new URL(destination.to, window.location.origin).searchParams;
     const status = params.get('status');
     if (status && status !== 'COMPLETED') {
       params.set('status', 'COMPLETED');
       params.delete('page');
     }
-    navigate(params.size ? brandListPrefix + params : brandListPath, { replace: true });
+    navigate('/collaboration' + (params.size ? '?' + params : ''), { replace: true, state: destination.state });
   }
 
   useEffect(() => {
@@ -69,7 +93,7 @@ function Detail({ id, brand }: { id: string; brand: boolean }) {
         { title: <Link to={backTo}>Hợp tác</Link> },
         { title: 'Chi tiết' },
       ]} />}
-      <Link className="collab-back-link" to={backTo}><ArrowLeftOutlined /> Quay lại danh sách</Link>
+      <Link className="collab-back-link" aria-label="Quay lại danh sách" to={back.to} state={back.state}><ArrowLeftOutlined /> Quay lại danh sách</Link>
     </div>
     {!roleAllowed || !canRead ? <Alert showIcon type="warning" title="Bạn không có quyền xem hợp tác này." />
       : !validId ? <Alert showIcon type="error" title="Không tìm thấy hợp tác." />

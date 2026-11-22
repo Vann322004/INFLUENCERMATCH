@@ -38,7 +38,7 @@ function CollaborationResults({ id }: { id: string }) {
     {snapshot.status === 'IN_PROGRESS' && !latest && <Typography.Text type="secondary">
       Chờ Creator ghi nhận bài đăng và kết quả cho ấn phẩm đã duyệt.
     </Typography.Text>}
-    {(canAccept || canReview) && <Link to={'/collaboration/' + id + '?tab=kpi'}>
+    {(canAccept || canReview) && <Link to="/collaboration/detail?tab=kpi" state={{ collaborationId: id }}>
       {canReview ? 'Đánh giá cuối' : 'Nghiệm thu'}
     </Link>}
   </Space>;
@@ -60,7 +60,7 @@ function CampaignCollaborations({ campaignId }: { campaignId: string }) {
         columns={[
           { title: 'Nhà sáng tạo', render: (_, row) => row.creatorName || row.channels?.map(channel => channel.creatorName || channel.username).filter(Boolean).join(', ') || '—' },
           { title: 'Trạng thái', render: (_, row) => <StatusTag status={row.status} /> },
-          { title: 'Thao tác', render: (_, row) => <Link to={'/collaboration/' + row.id + '?tab=kpi'}>
+          { title: 'Thao tác', render: (_, row) => <Link to="/collaboration/detail?tab=kpi" state={{ collaborationId: row.id }}>
             {row.status === 'AWAITING_REVIEW' ? 'Xem nghiệm thu và đánh giá' : 'Xem kết quả'}
           </Link> },
         ]} />}
