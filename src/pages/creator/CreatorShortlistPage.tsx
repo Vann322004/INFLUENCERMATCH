@@ -106,7 +106,7 @@ export default function CreatorShortlistPage() {
   const recommendationNavigationLock = useRef(false);
   useEffect(() => { recommendationNavigationLock.current = false; }, [context]);
   const canStartRecommendations = !!campaign && !busy && !!getStoredUser()?.permissions?.includes('RUN_RECOMMENDATION')
-    && !['COMPLETED', 'ARCHIVED'].includes(campaign.status);
+    && !['COMPLETED', 'ARCHIVED', 'CLOSED'].includes(campaign.status);
   const canViewRecommendations = !!getStoredUser()?.permissions?.includes('VIEW_OWN_RECOMMENDATION');
   const evaluationQuery = useCallback(async () => { if (authScope() !== session) throw new Error('Phiên đăng nhập đã thay đổi.'); return { records: await shortlistService.all(campaignId), runs: await aiRecommendationService.getRecommendationRuns(campaignId) }; }, [campaignId, session]);
   const evaluation = useAsyncResource(evaluationQuery, !!campaignId && canManage && canViewRecommendations);

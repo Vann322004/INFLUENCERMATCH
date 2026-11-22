@@ -90,7 +90,7 @@ function Detail({ id, brand }: { id: string; brand: boolean }) {
   return <main ref={page} className="collaboration-page-container collab-detail-page">
     <div className="collab-detail-nav">
       {!brand && <Breadcrumb items={[
-        { title: <Link to={backTo}>Hợp tác</Link> },
+        { title: <Link to={back.to} state={back.state}>Hợp tác</Link> },
         { title: 'Chi tiết' },
       ]} />}
       <Link className="collab-back-link" aria-label="Quay lại danh sách" to={back.to} state={back.state}><ArrowLeftOutlined /> Quay lại danh sách</Link>
