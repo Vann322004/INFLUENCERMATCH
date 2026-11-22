@@ -1,3 +1,4 @@
+import EvidenceImages from './EvidenceImages';
 import { Alert, App, Button, Card, Collapse, Descriptions, Empty, Form, Input, Modal, Select, Space, Spin, Tag, Typography } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -749,6 +750,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
           {tab === 'history' && <OutcomeHistory snapshot={snapshot} brand={brand} label={label} />}
         </>}
       </>}
+      {tab === 'progress' && <EvidenceImages key={id} id={id} canUpload={!!canPost} />}
       {brand && snapshot.review && tab === 'history' && <Card title="Đánh giá cuối">
         <Descriptions size="small" column={{ xs: 1, sm: 2 }} items={[
           { key: 'overall', label: 'Điểm tổng thể', children: `${snapshot.review.overallRating}/5` },

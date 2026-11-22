@@ -11,9 +11,7 @@ import {
   Select,
   Button,
   Tag,
-  Avatar,
   Space,
-  Tooltip,
   Spin,
   Checkbox,
   Alert,
@@ -27,7 +25,6 @@ import {
   SaveOutlined,
   AimOutlined,
   AppstoreOutlined,
-  CameraOutlined,
   PlusOutlined,
   ShareAltOutlined,
 } from '@ant-design/icons';
@@ -38,6 +35,9 @@ import type { BrandRequest, BrandResponse } from '../../types/api/brand.types';
 import { getErrorMessage } from '../../services/apiClient';
 import GoogleLinkModal from './GoogleLinkModal';
 import './BrandProfilePage.css';
+import ImageUploadButton from '../../components/common/ImageUploadButton';
+import CreatorAvatar from '../creator/components/discovery/CreatorAvatar';
+import CampaignImage from '../../components/common/CampaignImage';
 
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -61,8 +61,8 @@ interface BrandProfileState {
 const EMPTY_BRAND_PROFILE: BrandProfileState = {
   brandName: '',
   description: '',
-  logo: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=150&auto=format&fit=crop&q=80',
-  coverImage: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop&q=80',
+  logo: '',
+  coverImage: '',
   website: '',
   location: '',
   industry: '',
@@ -87,6 +87,8 @@ const requiredFields = [
 function toForm(brand: BrandResponse | null): BrandProfileState {
   return {
     ...EMPTY_BRAND_PROFILE,
+    logo: brand?.logoUrl ?? '',
+    coverImage: brand?.coverImageUrl ?? '',
     brandName: brand?.businessName ?? '',
     description: brand?.description ?? '',
     industry: brand?.industry ?? '',
@@ -121,6 +123,7 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
   const [loadError, setLoadError] = useState('');
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [imageUploading, setImageUploading] = useState(false);
   const [action, setAction] = useState<'save' | 'complete' | null>(null);
   const [conflict, setConflict] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -133,7 +136,7 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
   const permissions = authService.getCurrentUser()?.permissions ?? [];
   const canEdit = permissions.includes(brand ? 'UPDATE_BRAND_PROFILE' : 'CREATE_BRAND_PROFILE');
   const canComplete = canEdit && permissions.includes('UPDATE_BRAND_PROFILE');
-  const busy = loading || action !== null;
+  const busy = loading || imageUploading || action !== null;
   const writeDisabled = busy || !!loadError || conflict || !canEdit || (!!brand && !etag);
 
   useEffect(() => {
@@ -234,6 +237,20 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
     }
   };
 
+  async function uploadBrandImage(kind: 'logo' | 'cover', file: File, signal: AbortSignal) {
+    if (!brand || !etag || writeDisabled) return;
+    try {
+      const saved = await brandService.uploadImage(kind, file, etag, signal);
+      if (signal.aborted) return;
+      setBrand(saved.brand);
+      setEtag(saved.etag);
+      setProfile(previous => ({ ...previous, logo: saved.brand.logoUrl ?? '', coverImage: saved.brand.coverImageUrl ?? '' }));
+    } catch (error) {
+      if ((error as { response?: { status?: number } }).response?.status === 409) setConflict(true);
+      throw error;
+    }
+  }
+
   function handleDefer() {
     if (!onboardingUserId || action) return;
     const leave = () => {
@@ -331,49 +348,22 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
           {!isOnboarding && <>
             {/* 2. Cover Banner & Header Card */}
             <div className="brand-cover-wrapper">
-              <img src={profile.coverImage} alt="Cover" className="brand-cover-img" />
-              <Button
-                size="small"
-                icon={<CameraOutlined />}
-                style={{
-                  position: 'absolute',
-                  top: 14,
-                  right: 14,
-                  background: 'rgba(0,0,0,0.4)',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: 8,
-                }}
-                onClick={() => message.info('Tính năng đổi ảnh bìa sẽ sớm ra mắt')}
-              >
-                Đổi ảnh bìa
-              </Button>
+              <CampaignImage src={profile.coverImage} alt="Ảnh bìa thương hiệu" className="brand-cover-img" />
+              <div style={{ position: 'absolute', top: 14, right: 14 }}>
+                <ImageUploadButton label="Đổi ảnh bìa" disabled={writeDisabled || !brand}
+                  upload={(file, signal) => uploadBrandImage('cover', file, signal)} onBusyChange={setImageUploading} />
+              </div>
             </div>
 
             <div className="brand-header-card">
               <Row gutter={[20, 16]} align="middle">
                 <Col xs={24} sm="auto">
                   <div style={{ position: 'relative', width: 84, height: 84 }}>
-                    <Avatar
-                      src={profile.logo}
-                      size={84}
-                      shape="square"
-                      className="brand-logo-avatar"
-                    />
-                    <Tooltip title="Đổi logo">
-                      <Button
-                        size="small"
-                        shape="circle"
-                        icon={<CameraOutlined />}
-                        style={{
-                          position: 'absolute',
-                          bottom: -4,
-                          right: -4,
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                        }}
-                        onClick={() => message.info('Tính năng cập nhật logo sẽ sớm ra mắt')}
-                      />
-                    </Tooltip>
+                    <CreatorAvatar src={profile.logo} name={profile.brandName || 'Thương hiệu'} size={84} />
+                  </div>
+                  <div style={{ marginTop: 8 }}>
+                    <ImageUploadButton label="Đổi logo" disabled={writeDisabled || !brand}
+                      upload={(file, signal) => uploadBrandImage('logo', file, signal)} onBusyChange={setImageUploading} />
                   </div>
                 </Col>
 

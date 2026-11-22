@@ -4,27 +4,30 @@ import { creatorProfileImage } from './discoveryUtils';
 
 interface CreatorAvatarProps {
   src?: string;
+  fallbackSrc?: string;
   name?: string;
   size?: number;
   style?: React.CSSProperties;
 }
 
-export const CreatorAvatar: React.FC<CreatorAvatarProps> = ({ src, name, size = 48, style }) => {
+export const CreatorAvatar: React.FC<CreatorAvatarProps> = ({ src, fallbackSrc, name, size = 48, style }) => {
   const cleanName = name || 'Creator';
-  const imageUrl = creatorProfileImage(src);
-  const [failedUrl, setFailedUrl] = useState('');
+  const primaryUrl = creatorProfileImage(src);
+  const fallbackUrl = creatorProfileImage(fallbackSrc);
+  const [failedUrls, setFailedUrls] = useState<string[]>([]);
+  const imageUrl = [primaryUrl, fallbackUrl].find(url => url && !failedUrls.includes(url));
   const words = cleanName.trim().split(/\s+/).filter(Boolean);
   const initial = (words.length > 1 ? words[0][0] + words[words.length - 1][0] : cleanName.trim().slice(0, 2)).toLocaleUpperCase('vi-VN') || 'C';
 
   return (
     <Avatar
       src={
-        imageUrl && imageUrl !== failedUrl ? (
+        imageUrl ? (
           <img
             src={imageUrl}
             alt={cleanName}
             referrerPolicy="no-referrer"
-            onError={() => setFailedUrl(imageUrl)}
+            onError={() => setFailedUrls(previous => previous.includes(imageUrl) ? previous : [...previous, imageUrl])}
           />
         ) : (
           undefined

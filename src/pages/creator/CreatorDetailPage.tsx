@@ -1,3 +1,4 @@
+import CampaignImage from '../../components/common/CampaignImage';
 import { useEffect, useState } from 'react';
 import { Alert, Button, Card, Empty, Spin, Tabs, Tag } from 'antd';
 import { ArrowLeftOutlined, ExportOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
@@ -84,6 +85,7 @@ export default function CreatorDetailPage() {
   const renderPosts = (items: typeof posts) => <div className="creator-detail-live-posts">{items.map((post, index) => {
     const link = safeLink(post.postUrl);
     return <Card key={`${post.platformPostId ?? 'post'}-${index}`}>
+      <CampaignImage src={post.thumbnailUrl} alt="Ảnh bài đăng" style={{ width: '100%', height: 150, objectFit: 'contain', borderRadius: 10, marginBottom: 12 }} />
       <div className="creator-detail-post-meta"><Tag>{creator.platform || 'Bài đăng'}</Tag>{post.postedAt && <span>{post.postedAt.replace('T', ' ').replace(/\.\d+/, '')}</span>}</div>
       <p className="creator-detail-live-summary creator-detail-post-caption">{post.caption?.trim() || 'Bài đăng chưa có mô tả'}</p>
       <dl>{[['Lượt xem', post.views], ['Lượt thích', post.likes], ['Bình luận', post.comments], ['Chia sẻ', post.shares]].map(([label, value]) => <div key={String(label)}><dt>{label}</dt><dd>{numberText(value)}</dd></div>)}</dl>

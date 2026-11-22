@@ -1,3 +1,6 @@
+import ImageUploadButton from '../../../components/common/ImageUploadButton';
+import CreatorAvatar from '../components/discovery/CreatorAvatar';
+import { creatorService } from '../../../services/api/creatorService';
 import React, { useCallback, useState, useEffect } from 'react';
 import {
   Alert,
@@ -6,7 +9,6 @@ import {
   Col,
   Tag,
   Button,
-  Avatar,
   Modal,
   Form,
   Input,
@@ -100,6 +102,13 @@ export default function CreatorPortalPage() {
   const canViewClaims = activeCreator && (user.permissions?.includes('VIEW_OWN_CREATOR_CLAIM') ?? false);
   const channels = linked ?? [];
   const isVerified = channels.some(channel => channel.verifiedByInfluencerMatch);
+
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  async function changeAvatar(creatorId: string, file: File, signal: AbortSignal) {
+    const stored = await creatorService.uploadAvatar(creatorId, file, signal);
+    if (!signal.aborted) setLinked(previous => previous?.map(channel =>
+      channel.id === creatorId ? { ...channel, avatarUrl: stored.url } : channel) ?? null);
+  }
 
   // Modal Rate Card
   const [rateCardModalOpen, setRateCardModalOpen] = useState(false);
@@ -266,11 +275,7 @@ export default function CreatorPortalPage() {
 
             <div className="creator-hero-left">
               <div className="creator-avatar-ring-wrap">
-                <Avatar
-                  size={78}
-                  src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&auto=format&fit=crop&q=80"
-                  className="creator-hero-avatar"
-                />
+                <CreatorAvatar size={78} src={channels[0]?.avatarUrl ?? undefined} name={channels[0]?.displayName || user?.fullName} />
                 <span
                   className={`creator-status-dot ${isVerified ? 'verified' : 'unverified'}`}
                   title={isVerified ? 'Có kênh đã xác minh trên InfluencerMatch' : 'Chưa xác nhận được kênh đã xác minh'}
@@ -565,7 +570,10 @@ export default function CreatorPortalPage() {
                   {channels.slice(0, 3).map((ch) => (
                     <div key={ch.id} className="creator-mini-row">
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <Avatar size={40} src={ch.avatarUrl ?? undefined} />
+                        <CreatorAvatar size={40} src={ch.avatarUrl ?? undefined} name={ch.displayName || ch.userName || ch.externalId} />
+                        <ImageUploadButton label="Đổi ảnh" disabled={!activeCreator || avatarUploading}
+                          onBusyChange={setAvatarUploading}
+                          upload={(file, signal) => changeAvatar(ch.id, file, signal)} />
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <span style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>{ch.displayName || ch.userName || ch.externalId}</span>

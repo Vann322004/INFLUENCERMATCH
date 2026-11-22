@@ -1,3 +1,4 @@
+import { uploadImage } from './imageUploadService';
 import { apiClient } from '../apiClient';
 import { shortlistService } from './shortlistService';
 import { createAdminQuery } from '../adminCache';
@@ -146,5 +147,17 @@ export const creatorService = {
       { creatorId, ...payload }
     );
     return response.data?.data || (response.data as unknown as InvitationResponse);
+  },
+
+  /**
+   * Upload creator avatar to Cloudinary via backend API
+   * POST /creators/{creatorId}/avatar
+   */
+  async uploadAvatar(creatorId: string, file: File, signal?: AbortSignal): Promise<{ url: string; storageKey: string }> {
+    const data = await uploadImage<{ url: string; storageKey: string }>(`/creators/${creatorId}/avatar`, file, signal);
+    if (!data.url || !data.storageKey || new URL(data.url).protocol !== 'https:') {
+      throw new Error('Máy chủ chưa xác nhận ảnh đại diện đã tải lên.');
+    }
+    return data;
   },
 };

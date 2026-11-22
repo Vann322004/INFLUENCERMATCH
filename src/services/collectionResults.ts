@@ -1,3 +1,4 @@
+import { mergeCrawledAvatar } from './crawledMedia';
 import { getAuthSessionId } from './authSession';
 import type { LiveCrawlResult } from '../types/api/crawler.types';
 
@@ -97,7 +98,7 @@ export function saveCollectionResults(results: LiveCrawlResult[], source: Collec
     const id = collectionIdentity(result.platform, result.username);
     const previous = records.get(id);
     records.set(id, {
-      id, result, savedAt: new Date().toISOString(),
+      id, result: mergeCrawledAvatar(result, previous?.result), savedAt: new Date().toISOString(),
       sources: Array.from(new Set([...(previous?.sources || []), source])),
     });
   }
@@ -105,4 +106,11 @@ export function saveCollectionResults(results: LiveCrawlResult[], source: Collec
     sessionStorage.setItem(storageKey(), JSON.stringify([...records.values()]));
     window.dispatchEvent(new Event('im-collection-results'));
   } catch { /* Keep the current crawl visible if browser storage is unavailable. */ }
+}
+
+/** Preview cache only; never mixes channels or claims that a temporary URL was cloud-saved. */
+export function restoreCrawledAvatars(results: LiveCrawlResult[]): LiveCrawlResult[] {
+  const previous = new Map(readCollectionResults().map(row => [row.id, row.result]));
+  return results.map(result => mergeCrawledAvatar(result,
+    previous.get(collectionIdentity(result.platform, result.username))));
 }

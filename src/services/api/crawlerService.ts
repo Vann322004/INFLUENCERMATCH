@@ -152,6 +152,7 @@ class CrawlerService {
         ? page.candidates.map(candidate => ({
             status: 'success', platform: candidate.platform, username: candidate.username,
             display_name: candidate.display_name, author_id: candidate.external_id,
+            avatar_url: candidate.avatar_url || candidate.avatarUrl,
             profile_url: candidate.profile_url, decision: candidate.decision,
             primary_type: candidate.primary_type, reason_codes: candidate.reason_codes,
             followers: candidate.evidence_summary?.followers,

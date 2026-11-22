@@ -85,10 +85,45 @@
 
 /* Hero Center Content */
 .cdetail-hero-meta {
+  display: grid;
+  grid-template-columns: minmax(240px, 36%) minmax(0, 1fr);
+  align-items: center;
+  gap: 28px;
+  width: 100%;
+}
+
+.cdetail-hero-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 260px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #faf8ff;
+}
+
+.cdetail-hero-copy {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-width: 960px;
+  gap: 12px;
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .cdetail-hero-meta {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .cdetail-hero-image {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 220px;
+    aspect-ratio: auto;
+    justify-self: center;
+    background: transparent;
+  }
 }
 
 .cdetail-hero-badge-row {
