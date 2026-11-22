@@ -1,8 +1,9 @@
-import { canQueueCollectionResult, collectionOutcome, collectionOutcomeLabel } from '../../../../services/collectionDecision';
+import { collectionOutcome, collectionOutcomeLabel } from '../../../../services/collectionDecision';
 import { saveCollectionResults } from '../../../../services/collectionResults';
 import { useCollectionState } from '../../../../hooks/useCollectionState';
 import React, { useRef, useState, useEffect } from 'react';
-import { Card, Button, Input, Modal, Space, Tag, Typography, Spin, message, Empty, Select } from 'antd';
+import { Card, Button, Input, Modal, Space, Tag, Typography, Spin, message, Empty, Select, Tooltip } from 'antd';
+import { ReloadOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { crawlerService } from '../../../../services/api/crawlerService';
 import type { CrawlPlatform, LiveCrawlResult } from '../../../../types/api/crawler.types';
 import LiveCrawlInputBar from './live/LiveCrawlInputBar';
@@ -20,6 +21,14 @@ const DISMISS_REASONS = [
   { value: 'other', label: 'Lý do khác' },
 ];
 
+const PRIMARY_TYPE_LABELS: Record<string, string> = {
+  KOC: 'KOC',
+  KOL: 'KOL',
+  BRAND: 'Nhãn hàng / Thương mại',
+  SPAM: 'Rác / Spam',
+  ORGANIZATION: 'Tổ chức / Báo chí',
+};
+
 interface LiveCrawlTabProps {
   onImportSuccess?: (result: LiveCrawlResult) => void;
   onDismiss?: (result: LiveCrawlResult, reason?: string) => void;
@@ -33,14 +42,14 @@ export default function LiveCrawlTab({ onImportSuccess, onDismiss, defaultInput 
   const [loading, setLoading] = useCollectionState(`live.${defaultInput}.loading`, false, false);
   const [result, setResult] = useCollectionState<LiveCrawlResult | null>(`live.${defaultInput}.result`, initialResult || null);
   const [currentStep, setCurrentStep] = useCollectionState(`live.${defaultInput}.currentStep`, '', false);
-  const [submitting, setSubmitting] = useState<'queue' | 'catalog' | null>(null);
+  const [approving, setApproving] = useState(false);
   const submittingRef = useRef(false);
   const autoCrawledRef = useRef(false);
   const [dismissModalOpen, setDismissModalOpen] = useState(false);
   const [dismissReason, setDismissReason] = useState('');
   const [dismissReasonNote, setDismissReasonNote] = useState('');
 
-  // Có dữ liệu chi tiết = đã cào thực tế: phải có followers hoặc bài viết — không chỉ có avatar/username từ overview
+  // Có dữ liệu chi tiết = đã cào thực tế: phải có followers hoặc bài viết
   const hasDetailedData = Boolean(
     result &&
     (result.followers != null ||
@@ -104,52 +113,26 @@ export default function LiveCrawlTab({ onImportSuccess, onDismiss, defaultInput 
     setDismissReasonNote('');
   };
 
-  const handleCopyJson = () => {
-    if (!result) return;
-    navigator.clipboard.writeText(JSON.stringify(result, null, 2));
-    message.success('Đã sao chép toàn bộ dữ liệu vào bộ nhớ tạm!');
-  };
+  // Quản trị viên thẩm định có toàn quyền Duyệt đưa kênh vào kiểm định (bỏ qua mọi rào cản AI)
+  const canApprove = Boolean(result && result.username?.trim());
 
-  // Quyền cào sâu: Cho phép Quản trị viên duyệt và gửi cào sâu nếu kênh không bị từ chối
-  const canDeepCrawl = Boolean(
-    result &&
-    result.username?.trim() &&
-    collectionOutcome(result.decision, result.primary_type) !== 'rejected'
-  );
-
-  const handleImportToCatalog = async () => {
-    if (!result || submittingRef.current || !canDeepCrawl) return;
+  const handleApproveForAudit = async () => {
+    if (!result || submittingRef.current || !canApprove) return;
     submittingRef.current = true;
-    setSubmitting('catalog');
-    message.loading({ content: `Đang gửi yêu cầu cào sâu @${result.username}...`, key: 'import_catalog' });
+    setApproving(true);
+    message.loading({ content: `Đang duyệt và đưa @${result.username} vào kiểm định...`, key: 'approve_audit' });
     try {
-      await crawlerService.enqueueCandidate(result.platform as CrawlPlatform, result.username, true);
+      await crawlerService.enqueueCandidate((result.platform || 'TIKTOK') as CrawlPlatform, result.username, true);
       message.success({
-        content: `Đã gửi yêu cầu cào sâu @${result.username}. Hồ sơ sẽ được chuyển sang kiểm định sau khi cào xong.`,
-        key: 'import_catalog',
+        content: `Đã duyệt @${result.username}. Hồ sơ đã được chuyển sang danh sách chờ kiểm định.`,
+        key: 'approve_audit',
       });
       if (onImportSuccess) onImportSuccess(result);
     } catch (err: any) {
-      message.error({ content: err.message || 'Không gửi được yêu cầu cào sâu', key: 'import_catalog' });
+      message.error({ content: err.message || 'Lỗi khi đưa hồ sơ vào kiểm định', key: 'approve_audit' });
     } finally {
       submittingRef.current = false;
-      setSubmitting(null);
-    }
-  };
-
-  const handleSendToQueue = async () => {
-    if (!result || submittingRef.current || !canQueueCollectionResult(result)) return;
-    submittingRef.current = true;
-    setSubmitting('queue');
-    message.loading({ content: `Đang gửi @${result.username} vào hàng đợi xử lý...`, key: 'send_queue' });
-    try {
-      await crawlerService.enqueueCandidate(result.platform as CrawlPlatform, result.username, false);
-      message.success({ content: `Đã đưa @${result.username} vào hàng đợi. Theo dõi kết quả ở Tiến trình thu thập.`, key: 'send_queue' });
-    } catch (err: any) {
-      message.error({ content: err.message || 'Lỗi khi gửi vào hàng đợi', key: 'send_queue' });
-    } finally {
-      submittingRef.current = false;
-      setSubmitting(null);
+      setApproving(false);
     }
   };
 
@@ -281,17 +264,17 @@ export default function LiveCrawlTab({ onImportSuccess, onDismiss, defaultInput 
 
       {/* 4. Hiển thị kết quả cào khi đã có dữ liệu */}
       {result && !loading && hasDetailedData && (
-        <div>
-          {/* Thanh công cụ hành động */}
+        <div style={{ width: '100%', overflowX: 'hidden' }}>
+          {/* Thanh công cụ quyết định thẩm định */}
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               flexWrap: 'wrap',
-              gap: 12,
-              marginBottom: 16,
-              padding: '12px 16px',
+              gap: 10,
+              marginBottom: 12,
+              padding: '10px 14px',
               background: '#FFFFFF',
               borderRadius: 10,
               border: '1px solid #E2E8F0',
@@ -299,47 +282,51 @@ export default function LiveCrawlTab({ onImportSuccess, onDismiss, defaultInput 
           >
             <Space align="center" wrap>
               <Text strong style={{ fontSize: 14, color: '#0F172A' }}>
-                Kết quả: @{result.username}
+                Đối chiếu kênh: @{result.username}
               </Text>
-              <Tag color="cyan">
-                {result.latency_ms ? `${(result.latency_ms / 1000).toFixed(1)} giây` : 'Tức thì'}
+              <Tag color="geekblue" style={{ fontWeight: 600, borderRadius: 4 }}>
+                {result.platform}
               </Tag>
               {result.primary_type && result.primary_type !== 'UNKNOWN' && (
-                <Tag color="purple">{result.primary_type}</Tag>
+                <Tag color="purple">
+                  {PRIMARY_TYPE_LABELS[result.primary_type.toUpperCase()] || result.primary_type}
+                </Tag>
               )}
-              {getDecisionTag(result.decision, result.primary_type)}
+              <Tooltip title="Đánh giá sơ bộ tự động từ AI / Hệ thống quét">
+                {getDecisionTag(result.decision, result.primary_type)}
+              </Tooltip>
             </Space>
 
-            <Space wrap>
-              <Button onClick={handleCopyJson}>
-                Sao chép JSON
-              </Button>
-              <Button onClick={() => handleCrawl()} disabled={submitting !== null}>
-                Thu thập lại
-              </Button>
-              <Button
-                onClick={handleSendToQueue}
-                loading={submitting === 'queue'}
-                disabled={submitting !== null || !canQueueCollectionResult(result)}
-                style={{ borderColor: '#F59E0B', color: '#D97706', fontWeight: 600 }}
-              >
-                Gửi vào hàng đợi xử lý
-              </Button>
+            <Space size={8} wrap>
+              <Tooltip title="Cào lại dữ liệu kênh nếu thông tin chưa đầy đủ">
+                <Button
+                  icon={<ReloadOutlined />}
+                  onClick={() => handleCrawl()}
+                  loading={loading}
+                  disabled={approving}
+                >
+                  Cào lại
+                </Button>
+              </Tooltip>
+
+              <DismissButton />
+
               <Button
                 type="primary"
-                onClick={handleImportToCatalog}
-                loading={submitting === 'catalog'}
-                disabled={submitting !== null || !canDeepCrawl}
+                icon={<CheckCircleOutlined />}
+                onClick={handleApproveForAudit}
+                loading={approving}
+                disabled={!canApprove}
                 style={{
-                  background: '#10B981',
-                  border: 'none',
+                  background: '#16A34A',
+                  borderColor: '#16A34A',
                   fontWeight: 600,
                   borderRadius: 6,
+                  boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)',
                 }}
               >
-                Yêu cầu cào sâu
+                Duyệt & Đưa vào kiểm định
               </Button>
-              <DismissButton />
             </Space>
           </div>
 

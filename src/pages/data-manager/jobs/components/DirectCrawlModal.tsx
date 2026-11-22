@@ -30,7 +30,26 @@ export default function DirectCrawlModal({
       destroyOnClose
       style={{ top: 20, maxWidth: '95vw' }}
     >
-      <div style={{ maxHeight: '80vh', overflowY: 'auto', paddingRight: 4 }}>
+      <style>{`
+        .direct-crawl-modal-scroll {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .direct-crawl-modal-scroll::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+      `}</style>
+      <div
+        className="direct-crawl-modal-scroll"
+        style={{
+          maxHeight: '85vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          paddingBottom: 8,
+        }}
+      >
         <LiveCrawlTab
           key={defaultInput}
           defaultInput={defaultInput}
