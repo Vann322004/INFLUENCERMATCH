@@ -1,26 +1,37 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Alert, Button, Form, Input, Skeleton, Space } from 'antd';
+import { isAxiosError } from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getAuthSessionId, getStoredUser, subscribeAuthSession } from '../../services/authSession';
 import { dealService } from '../../services/api/dealService';
 import { authService } from '../../services/api/authService';
 import { getErrorMessage } from '../../services/apiClient';
 import { useAsyncResource } from '../../hooks/useAsyncResource';
-import { forgetCooperation, rememberCooperation, validCooperationToken } from '../../services/cooperationContinuation';
+import { forgetCooperation, pendingCooperation, rememberCooperation, rememberCooperationTarget, validCooperationToken } from '../../services/cooperationContinuation';
 import './CampaignOutreachPage.css';
 
 export default function CooperationInvitationPage() {
   const location = useLocation(), navigate = useNavigate();
   const session = useSyncExternalStore(subscribeAuthSession, getAuthSessionId);
-  const token = new URLSearchParams(location.search).get('token') ?? '';
+  const incoming = new URLSearchParams(location.search).get('token');
+  // An explicitly invalid link must never fall back to a previously opened invitation.
+  const token = incoming !== null ? incoming : pendingCooperation() ?? '';
   const valid = validCooperationToken(token);
+  useLayoutEffect(() => {
+    if (incoming === null || !validCooperationToken(incoming)) return;
+    rememberCooperation(incoming);
+    const params = new URLSearchParams(location.search);
+    params.delete('token');
+    navigate({ pathname: location.pathname, search: params.toString(), hash: location.hash }, { replace: true });
+  }, [incoming, location.pathname, location.search, location.hash, navigate]);
   const query = useCallback(() => dealService.preview(token), [token]);
   const resource = useAsyncResource(query, valid);
   const user = getStoredUser();
   const creator = String(user?.role).toUpperCase() === 'CREATOR';
   const contextQuery = useCallback(() => dealService.invitationContext(token), [token, session]);
   const context = useAsyncResource(contextQuery, valid && creator && resource.status === 'success');
-  const [register, setRegister] = useState(false), [sent, setSent] = useState(false);
+  const channelOAuthResult = location.state?.channelOAuthResult;
+  const [register, setRegister] = useState(false), [sent, setSent] = useState<'EMAIL_SUBMITTED' | 'UNKNOWN' | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const lock = useRef(false);
   const [cooldown, setCooldown] = useState(0);
@@ -36,11 +47,25 @@ export default function CooperationInvitationPage() {
   };
   const requestRegistration = async ({ email }: { email: string }) => {
     if (lock.current || cooldown > 0) return;
-    lock.current = true; setBusy(true); setError('');
+    lock.current = true; setBusy(true); setError(''); setSent(null);
     try {
-      await dealService.requestCreatorRegistration(token, email.trim());
-      rememberCooperation(token); setSent(true); setCooldown(60);
-    } catch (e) { setError(getErrorMessage(e, 'Chưa gửi được email đăng ký. Vui lòng thử lại sau.')); }
+      const result = await dealService.requestCreatorRegistration(token, email.trim());
+      if (result.status === 'RECIPIENT_EMAIL_MISMATCH') {
+        setError('Email không khớp người nhận lời mời. Kiểm tra lại địa chỉ nhận thư hoặc liên hệ thương hiệu. Chưa gửi email đăng ký.');
+        return;
+      }
+      rememberCooperation(token); setSent(result.status);
+      setCooldown(Number.isFinite(result.retryAfterSeconds) ? Math.max(1, Math.ceil(result.retryAfterSeconds!)) : 60);
+    } catch (e) {
+      const problem = isAxiosError(e) ? e.response?.data : null;
+      if (problem?.code === 'EMAIL_OTP_RATE_LIMITED' || isAxiosError(e) && e.response?.status === 429) {
+        const wait = Number(problem?.retryAfterSeconds);
+        setCooldown(Number.isFinite(wait) && wait > 0 ? Math.ceil(wait) : 60);
+        setError('Bạn vừa yêu cầu gửi email. Vui lòng chờ hết thời gian bên dưới rồi thử lại.');
+      } else if (problem?.code === 'EMAIL_DELIVERY_UNAVAILABLE') {
+        setError('Chưa gửi được email. Dịch vụ gửi thư đang gặp sự cố; vui lòng thử lại sau hoặc liên hệ hỗ trợ.');
+      } else setError(getErrorMessage(e, 'Chưa xác nhận gửi được email. Vui lòng thử lại sau.'));
+    }
     finally { lock.current = false; setBusy(false); }
   };
   const proceed = async () => {
@@ -64,7 +89,9 @@ export default function CooperationInvitationPage() {
         <Space wrap><Button type="primary" onClick={() => void login()}>{user ? 'Đăng nhập tài khoản Creator' : 'Đăng nhập'}</Button>{!user && <Button onClick={() => setRegister(value => !value)}>Tạo tài khoản Creator</Button>}</Space>
         {register && !user && <Form layout="vertical" onFinish={requestRegistration}>
           <Form.Item name="email" label="Email nhận lời mời" rules={[{ required: true, type: 'email', message: 'Nhập email hợp lệ.' }]}><Input autoComplete="email" maxLength={255} /></Form.Item>
-          {sent && <Alert type="success" title="Kiểm tra hộp thư" description="Nếu email phù hợp với lời mời, bạn sẽ nhận liên kết đăng ký Creator. Nếu đã có tài khoản, hãy đăng nhập. Có thể yêu cầu lại sau 60 giây." />}
+          {sent && <Alert type="info" title={sent === 'EMAIL_SUBMITTED' ? 'Đã gửi email hướng dẫn' : 'Đã tiếp nhận yêu cầu, chưa xác nhận gửi email'} description={sent === 'EMAIL_SUBMITTED'
+            ? 'Kiểm tra Hộp thư đến và Spam. Email sẽ hướng dẫn đăng ký hoặc tiếp tục bằng tài khoản hiện có. Chưa xác nhận thư đã đến hộp thư của bạn.'
+            : 'Chưa có kết quả gửi cụ thể từ máy chủ. Nếu đã có tài khoản, hãy đăng nhập hoặc dùng Quên mật khẩu. Không nhận được thư? Liên hệ influencermatch.sep491@gmail.com.'} />}
           <Button htmlType="submit" loading={busy} disabled={cooldown > 0}>{cooldown ? `Gửi lại sau ${cooldown}s` : 'Gửi liên kết đăng ký'}</Button>
         </Form>}
       </> : context.status === 'loading' ? <Skeleton active /> : context.status === 'error' ? <Alert type="warning" title="Chưa kiểm tra được quyền truy cập" description={context.error} action={<Button onClick={() => void context.reload()}>Thử lại</Button>} /> : context.data?.status === 'READY' ? <>
@@ -72,8 +99,15 @@ export default function CooperationInvitationPage() {
         <Button type="primary" loading={busy} onClick={() => void proceed()}>Xem đề xuất hợp tác</Button>
       </> : context.data?.status === 'NEEDS_CHANNEL_VERIFICATION' ? <>
         <Alert type="info" title="Xác minh quyền quản lý kênh" description="Bạn cần liên kết đúng kênh được mời trước khi xem và phản hồi đề xuất." />
-        {context.data.channels?.map(channel => <strong key={channel.creatorId}>{channel.platform} · @{channel.username}</strong>)}
-        <Button type="primary" onClick={() => { rememberCooperation(token); navigate('/creator/social-accounts'); }}>Liên kết kênh</Button>
+        {channelOAuthResult === 'MANUAL_RESOLUTION' && <Alert type="warning" title="TikTok đã cấp quyền, nhưng chưa xác định được kênh được mời." description="Chưa có thay đổi ownership. Tiếp tục bằng xác minh thủ công hoặc liên hệ Data Manager." />}
+        {context.data.channels?.map(channel => <div key={channel.creatorId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <strong>{channel.platform} · @{channel.username}</strong>
+          <Button type="primary" onClick={() => {
+            rememberCooperation(token);
+            rememberCooperationTarget(channel);
+            navigate('/creator/social-accounts');
+          }}>Xác minh kênh này</Button>
+        </div>)}
         <Button onClick={() => void context.reload()}>Tôi đã xác minh kênh</Button>
       </> : <Alert type="warning" title={context.data?.status === 'ACCOUNT_MISMATCH' ? 'Tài khoản chưa khớp người nhận lời mời' : 'Kênh đang thuộc hồ sơ khác'} description="Dùng đúng tài khoản Creator quản lý kênh hoặc liên hệ thương hiệu để kiểm tra." action={<Button onClick={() => void login()}>Đổi tài khoản</Button>} />}
       <small>Mở lời mời và tạo tài khoản không tự liên kết kênh hoặc xác nhận hợp tác.</small>

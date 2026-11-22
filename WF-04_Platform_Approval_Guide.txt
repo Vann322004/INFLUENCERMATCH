@@ -24,6 +24,73 @@ Phạm vi code hiện tại:
   đúng môi trường và được duyệt. Không coi chỉ thay client key là đủ chuyển đổi.
 - YouTube OAuth: ngoài phạm vi hiện tại; có Claim thủ công cho kênh tìm được.
 
+1.1. CHANNEL VERIFICATION WORKFLOW — HAI ĐIỂM BẮT ĐẦU
+
+Creator đăng nhập InfluencerMatch bằng Email/Password hoặc Google. Đây là
+Authentication của sản phẩm. Social OAuth không đăng nhập InfluencerMatch và
+không ghép tài khoản theo email.
+
+Creator có thể bắt đầu từ:
+- Creator Portal: tự chọn kênh cần liên kết; sau OAuth quay về quản lý kênh.
+- Cooperation Invitation: Creator chủ động chọn đúng kênh được mời rồi mới
+  chọn phương thức OAuth. BE xác thực lời mời, người nhận, phiên bản đề xuất,
+  quyền Creator và kênh mục tiêu; OAuth transaction giữ ID lời mời và target
+  channel để callback kiểm tra lại. FE không tự khởi chạy OAuth chỉ từ query.
+
+Cooperation Invitation token và Creator Claim Invitation token là hai loại
+token riêng, không dùng thay thế nhau. Sau callback, BE kiểm tra session,
+browser binding, state, expiry/replay, target, provider identity và ownership
+conflict. OAuth thành công chỉ có nghĩa nhà cung cấp xác thực tài khoản; việc
+Channel Matching/Claim có thể vẫn cần xử lý thủ công. Không đủ bằng chứng hoặc
+mismatch thì không đổi ownership và chuyển Manual Resolution.
+
+Claim/ownership của kênh không phải Proposal Acceptance. OAuth không chấp nhận,
+từ chối hoặc sửa đề xuất hợp tác. Cooperation Invitation chỉ được mở/kiểm tra
+tiếp theo bước riêng khi Creator chủ động tiếp tục; thao tác đó cũng không thay
+Creator quyết định chấp nhận hợp tác. Brand-managed Collaboration không phụ
+thuộc việc Creator thực hiện OAuth.
+
+1.2. NHỮNG HẠNG MỤC ĐÃ TRIỂN KHAI TRONG SOURCE BE/FE
+
+Backend (BE)
+- Tách Cooperation Invitation token khỏi Creator Claim Invitation token trong
+  request OAuth. Meta/TikTok OAuth session lưu riêng ID Cooperation Invitation;
+  migration thêm cột/ràng buộc cần thiết.
+- Khi bắt đầu từ lời mời, xác thực Creator đang đăng nhập, lời mời còn hợp lệ,
+  kênh mục tiêu thuộc deal và đúng platform. Callback/confirm kiểm tra lại
+  invitation-target binding trước khi xử lý ownership.
+- Giữ state ngẫu nhiên, hash state, browser binding, expiry, one-time/replay,
+  auth-session/version và các khóa đồng bộ hiện có; không chuyển secret/token
+  sang FE.
+- TikTok vẫn là Sandbox. Resolver nhận expected channel ID và chỉ MATCHED khi
+  author ID khớp chính xác ID mục tiêu, resolver báo matched, username nhất quán
+  và dữ liệu còn mới. OAuth thành công nhưng không đủ mapping thì giữ kết quả
+  chưa khớp để Manual Resolution; không tạo Creator hoặc ownership từ username.
+- Meta tách cấu hình Login cho Facebook Page và Instagram qua Facebook Page;
+  scope được kiểm tra theo từng nhánh. Graph response giữ lại Page tasks thực tế.
+  Facebook Page chưa có owner phù hợp bị fail-closed/INSUFFICIENT_EVIDENCE:
+  tasks không rỗng không được coi là ownership. Không thêm quyền đăng bài,
+  nhắn tin hoặc Insights cho Channel Verification.
+- Ownership chỉ thay đổi sau khi đủ điều kiện và thao tác xác nhận liên kết.
+  Không tự Accept Cooperation Proposal; Creator Claim Invitation vẫn là nghiệp
+  vụ khác. Brand-managed Collaboration không phụ thuộc OAuth Creator.
+
+Frontend (FE)
+- Creator Portal tiếp tục là điểm bắt đầu OAuth thông thường. Cooperation
+  Invitation hiển thị từng kênh được mời; Creator phải chủ động chọn kênh cụ
+  thể rồi bấm bắt đầu xác minh.
+- Lưu invitation token và target channel trong sessionStorage của tab; gửi
+  target Creator ID cùng Cooperation Invitation token khi bắt đầu OAuth. Không
+  dùng token Claim Invitation thay thế, và không khởi chạy OAuth chỉ vì query
+  parameter.
+- Giới hạn provider theo platform của kênh được mời; sau callback đọc lại
+  session/kênh từ BE và quay về đúng Cooperation Invitation. Creator có thể
+  kiểm tra lại context hoặc tiếp tục xử lý thủ công khi provider account không
+  khớp/không đủ bằng chứng.
+- UI phân biệt OAuth chưa hoàn tất, đã cấp quyền nhưng chưa match, thiếu bằng
+  chứng, xung đột ownership và đã liên kết. Nút mở đề xuất chỉ xuất hiện khi
+  BE báo READY; quyết định chấp nhận/từ chối/thay đổi đề xuất vẫn do Creator.
+
 2. CHUẨN BỊ BẢN DEPLOY TRƯỚC KHI GỬI REVIEW
 
 2.1. Website
@@ -63,7 +130,8 @@ Không cần đổi callback chỉ vì sửa URL chính sách; chỉ sửa khi c
 BE cấu hình tương ứng, chỉ lưu trên môi trường server:
 - META_OAUTH_ENABLED
 - META_APP_ID, META_APP_SECRET
-- META_LOGIN_CONFIG_ID, META_GRAPH_API_VERSION
+- META_LOGIN_CONFIG_ID (Facebook Page), META_INSTAGRAM_PAGE_LOGIN_CONFIG_ID
+  (Instagram qua Facebook Page), META_GRAPH_API_VERSION
 - META_REDIRECT_URI, META_OAUTH_ENCRYPTION_KEY
 - INSTAGRAM_OAUTH_ENABLED
 - INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET, INSTAGRAM_GRAPH_API_VERSION
@@ -95,16 +163,22 @@ Business; META_LOGIN_CONFIG_ID phải trỏ cấu hình đó.
 Chỉ chọn permission phục vụ chức năng đang có.
 
 Bước 4. Đối chiếu quyền code hiện kiểm tra.
-- pages_show_list
-- pages_read_engagement
-public_profile/email dùng cho identity/login không thay thế hai quyền Page này.
+- Facebook Page OAuth: pages_show_list.
+- Instagram qua Facebook Page: pages_show_list, pages_read_engagement,
+  instagram_basic.
+public_profile/email dùng cho identity/login không thay thế quyền Page này.
 Không xin quyền đăng bài, tin nhắn hoặc insights nếu chức năng hiện không dùng.
 
 Bước 5. Test tài khoản trong nhóm phát triển/tester.
 Đảm bảo tài khoản Meta đã nhận role/tester và có quyền trên Page thử nghiệm.
 Trong InfluencerMatch: Kênh liên kết → Facebook Page → cấp quyền → chọn đúng
-Page → Liên kết → đọc lại danh sách. Mở network/log để xác định lỗi cụ thể:
-session/cookie, permission thiếu, asset không trả về hay stable ID chưa khớp.
+Page → đọc lại danh sách. Facebook Graph trả Page ID và tasks được cấp; tasks
+không rỗng không được xem là bằng chứng ownership. Hiện BE fail-closed với
+Facebook Page chưa có owner phù hợp và trả trạng thái không đủ bằng chứng; không
+auto-claim Page mới cho tới khi tiêu chí task/quyền được xác nhận cho đúng API
+flow và được kiểm thử. Instagram qua Facebook Page là luồng riêng, dùng stable
+Instagram Professional ID. Mở network/log để xác định session/cookie, permission,
+asset, tasks thực tế hay stable ID mismatch.
 
 Bước 6. Chuẩn bị hồ sơ App Review.
 Ở khu vực App Review / Permissions and Features hoặc use case tương ứng,
@@ -228,6 +302,39 @@ Trong ghi chú reviewer:
 - Chỉ role/tester dùng được: kiểm tra app mode/access level/review.
 - TikTok mismatch: kiểm tra resolver và loại ID, không so open_id với author ID.
 - 521/5xx: xử lý khả dụng BE/proxy trước khi nộp review hoặc quay video.
+
+7.1. KIỂM THỬ THEO TẦNG — KHÔNG GỘP THÀNH MỘT KẾT QUẢ PASS
+
+Ghi ngày, commit/build, environment, provider, test account loại nào và bằng
+chứng đã quan sát. Chỉ ghi PASS khi test tương ứng thực sự chạy; nếu không thì
+ghi NOT TESTED. Tối thiểu phân biệt:
+- Provider mock/unit/integration: xác nhận code với response giả lập; không
+  chứng minh kết nối hoặc quyền của app trên nền tảng.
+- TikTok Sandbox OAuth thật: chỉ tài khoản được thêm/cho phép trong Sandbox.
+- Meta test-role OAuth thật: chỉ tài khoản có role/test access được nền tảng
+  cho phép.
+- External-user Production E2E: tài khoản ngoài role/tester được phép, trên app
+  production với quyền/access level đã được cấp.
+
+Mẫu trạng thái báo cáo:
+- Provider mock tests: PASS/FAIL/NOT TESTED (ghi test command và kết quả).
+- TikTok Sandbox OAuth thật: PASS/FAIL/NOT TESTED.
+- Meta test-role OAuth thật, tách Facebook/Instagram direct/Instagram qua Page:
+  PASS/FAIL/NOT TESTED.
+- External-user Production E2E, tách từng provider: PASS/FAIL/NOT TESTED.
+- Developer Console/App Review/access level: CONFIRMED/UNKNOWN (ghi bằng chứng
+  Dashboard và ngày kiểm tra; không suy ra từ source hoặc test).
+
+Kết quả code ghi nhận ngày 23/11/2026:
+- BE mock/unit/PostgreSQL integration: PASS, 92 tests qua MetaGraphClientTest,
+  MetaOAuthPostgresIntegrationTest, OAuthFlowCompatibilityPostgresIntegrationTest
+  và TikTokIdentityResolverTest. Provider OAuth không gọi Meta/TikTok thật.
+- FE production build, oxlint và TypeScript no-emit check: PASS. Oxlint có
+  warnings về hook hiện có; build có cảnh báo bundle lớn.
+- TikTok Sandbox OAuth thật: NOT TESTED.
+- Meta test-role OAuth thật: NOT TESTED.
+- External-user Production E2E: NOT TESTED.
+- Trạng thái Developer Console/App Review/access level: UNKNOWN.
 
 8. PHẠM VI HOÀN TẤT
 

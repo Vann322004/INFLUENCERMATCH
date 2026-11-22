@@ -31,7 +31,7 @@ export interface OAuthAccount {
   accountId: string;
   name?: string | null;
   username?: string | null;
-  matchStatus: 'AVAILABLE' | 'ALREADY_LINKED' | 'UNMATCHED' | 'UNAVAILABLE';
+  matchStatus: 'AVAILABLE' | 'ALREADY_LINKED' | 'UNMATCHED' | 'UNAVAILABLE' | 'INSUFFICIENT_EVIDENCE';
 }
 
 export interface OAuthSession {
@@ -39,8 +39,13 @@ export interface OAuthSession {
   platform: OAuthPlatform;
   status: 'NEW' | 'EXCHANGING' | 'READY' | 'FAILED' | 'EXPIRED' | 'COMPLETED';
   accounts: OAuthAccount[];
-  account?: { username?: string | null; displayName?: string | null };
+  account?: { username?: string | null; displayName?: string | null; matchStatus?: string | null };
   creatorId?: string;
+}
+
+export interface OAuthStartContext {
+  creatorId?: string;
+  cooperationInvitationToken?: string;
 }
 
 const portal = '/creators/portal/accounts';
@@ -62,11 +67,13 @@ export const channelVerificationService = {
       || (option.oauthFlow === 'TIKTOK_LOGIN' && option.platform === 'TIKTOK')
     ));
   },
-  async start(option: ConnectionOption): Promise<{ sessionId: string; authorizationUrl: string; expiresAt: string }> {
+  async start(option: ConnectionOption, context: OAuthStartContext = {}): Promise<{ sessionId: string; authorizationUrl: string; expiresAt: string }> {
     const directInstagram = option.oauthFlow === 'INSTAGRAM_LOGIN';
     const path = option.oauthFlow === 'TIKTOK_LOGIN' ? portal + '/connect/tiktok/start'
       : directInstagram ? portal + '/connect/instagram/start' : meta + '/start';
-    const { data } = await apiClient.post(path, option.oauthFlow === 'FACEBOOK_LOGIN' ? { platform: option.platform } : {});
+    const body = option.oauthFlow === 'FACEBOOK_LOGIN'
+      ? { platform: option.platform, ...context } : context;
+    const { data } = await apiClient.post(path, body);
     return data.data;
   },
   async readSession(id: string, flow: OAuthFlow, signal?: AbortSignal): Promise<OAuthSession> {
