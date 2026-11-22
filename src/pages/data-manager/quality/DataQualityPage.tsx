@@ -397,7 +397,7 @@ export default function DataQualityPage() {
       >
         <Tabs
           activeKey={activeTab}
-          onChange={(k) => setActiveTab(k as 'pending' | 'crawler' | 'batch-audit')}
+          onChange={(k) => setActiveTab(k as typeof activeTab)}
           size="middle"
           tabBarStyle={{
             padding: '0 20px',
@@ -408,21 +408,17 @@ export default function DataQualityPage() {
           items={[
             {
               key: 'pending',
-              label: (
-                <span style={{ fontWeight: 700, fontSize: 14 }}>
-                  Hồ sơ chờ kiểm định{total !== null ? ` (${total})` : ''}
-                </span>
-              ),
+              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Hồ sơ chờ duyệt ngành</span>,
               children: (
                 <div style={{ padding: '24px 24px 32px' }}>
                   <section className="quality-workspace">
                     {/* Left Main Column */}
                     <div className="quality-config-main">
                       <header className="quality-config-title">
-                        <h2>Danh sách chờ kiểm định</h2>
+                        <h2>Hồ sơ chờ phân loại & duyệt ngành</h2>
                         <p>
-                          Các hồ sơ nhà sáng tạo mới thu thập có độ tin cậy dưới 70% hoặc chưa xác định lĩnh vực. Chọn
-                          một hồ sơ để đối chiếu và duyệt ở cột bên phải.
+                          Các hồ sơ nhà sáng tạo đã thu thập đủ dữ liệu. Quản lý kiểm tra và duyệt ngành hàng để chính
+                          thức đưa nhà sáng tạo lên sàn tìm kiếm.
                         </p>
                       </header>
 
@@ -767,7 +763,7 @@ export default function DataQualityPage() {
             },
             {
               key: 'crawler',
-              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Hồ sơ cần đối chiếu</span>,
+              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Kênh mới phát hiện</span>,
               children: (
                 <div style={{ padding: '24px 24px 32px' }}>
                   <CrawlerReviewList refreshKey={refreshKey} />
@@ -776,11 +772,7 @@ export default function DataQualityPage() {
             },
             {
               key: 'batch-audit',
-              label: (
-                <span style={{ fontWeight: 700, fontSize: 14 }}>
-                  Kiểm định hàng loạt
-                </span>
-              ),
+              label: <span style={{ fontWeight: 700, fontSize: 14 }}>Thanh lọc dữ liệu</span>,
               children: (
                 <div style={{ padding: '24px 24px 32px' }}>
                   <BatchAuditTab />

@@ -269,8 +269,8 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
             }}
             style={{ width: 200 }}
             options={[
-              { value: 'active', label: 'Cần đối chiếu (Mặc định)' },
-              { value: 'dismissed', label: 'Đã loại bỏ (Thùng rác)' },
+              { value: 'active', label: 'Cần đối chiếu' },
+              { value: 'dismissed', label: 'Đã loại bỏ' },
               { value: 'all', label: 'Tất cả hồ sơ' },
             ]}
           />
@@ -314,7 +314,7 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
                   style={{ background: '#10B981', borderColor: '#10B981', fontWeight: 600 }}
                   onClick={handleBatchEnqueueDeep}
                 >
-                  Cào sâu đã chọn ({selectedRowKeys.length})
+                  Cào sâu đã chọn
                 </Button>
                 <Popconfirm
                   title={`Loại bỏ ${selectedRowKeys.length} hồ sơ đã chọn?`}
@@ -325,7 +325,7 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
                   onConfirm={handleBatchDismiss}
                 >
                   <Button danger icon={<DeleteOutlined />} style={{ fontWeight: 600 }}>
-                    Loại bỏ đã chọn ({selectedRowKeys.length})
+                    Loại bỏ đã chọn
                   </Button>
                 </Popconfirm>
               </>
