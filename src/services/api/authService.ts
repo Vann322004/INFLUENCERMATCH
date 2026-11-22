@@ -58,6 +58,13 @@ function googleAuthentication(path: string, payload: unknown, sessionId: string)
 }
 
 export const authService = {
+  async resolveCreatorInvitation(token: string): Promise<{ email: string; expiresAt: string }> {
+    const response = await apiClient.post('/auth/creator-invitations/resolve', { token });
+    return response.data.data;
+  },
+  async registerCreator(payload: { invitationToken: string; fullName: string; password: string; policyAcceptance: { acceptedTerms: boolean; acceptedPrivacy: boolean; termsVersion: string; privacyVersion: string } }): Promise<void> {
+    await apiClient.post('/auth/creator/register', payload);
+  },
   /**
    * Đăng nhập người dùng bằng email và mật khẩu
    */

@@ -13,6 +13,8 @@ function normalize(raw: any): ClaimResponse {
     creatorPlatform: raw.creatorPlatform ?? raw.platform, creatorAvatar: raw.creatorAvatar,
     creatorFollowers: typeof raw.creatorFollowers === 'number' ? raw.creatorFollowers : undefined,
     claimantName: raw.claimantName, claimantEmail: raw.claimantEmail, claimantAvatar: raw.claimantAvatar,
+    linkedToClaimant: typeof raw.linkedToClaimant === 'boolean' ? raw.linkedToClaimant : undefined,
+    verification: raw.verification,
     status: raw.status, submittedAt: raw.createdAt ?? raw.submittedAt ?? '',
     reviewedAt: raw.reviewedAt, reviewedBy: raw.reviewerId ?? raw.reviewedBy,
     reason: raw.revokeReason ?? raw.reason,

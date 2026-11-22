@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import {
+  Alert,
   Card,
   Row,
   Col,
@@ -771,61 +772,11 @@ export default function CreatorPortalPage() {
       {/* ========================================================================= */}
       {/* VIEW 4: ĐỊNH DANH PHÁP LÝ eKYC (/creator/verification)                    */}
       {/* ========================================================================= */}
-      {activeTab === 'verification' && (
-        <div className="creator-studio-stack">
-          <div className="creator-page-header-row">
-            <div>
-              <h1 className="creator-page-title">Định danh Pháp lý & Hồ sơ Căn Cước Công Dân (eKYC)</h1>
-              <p className="creator-page-subtitle">
-                Xác thực danh tính pháp lý để ký kết hợp đồng điện tử và nhận thanh toán trực tiếp từ Nhãn hàng
-              </p>
-            </div>
-            <Space>
-              <Button icon={<EditOutlined />} onClick={handleOpenVerifyModal} className="creator-secondary-btn">
-                Cập nhật hồ sơ CCCD
-              </Button>
-              {canVerify && <Button type="primary" icon={<SafetyCertificateOutlined />}
-                onClick={handleOpenClaimModal} className="creator-primary-btn">Gửi bằng chứng thủ công</Button>}
-            </Space>
-          </div>
-
-          <Card
-            title={
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <IdcardOutlined style={{ color: '#7C3AED', fontSize: 18 }} />
-                  <span className="creator-card-title">Thông tin Căn Cước Công Dân (eKYC)</span>
-                </div>
-                {verification.status === 'VERIFIED' ? (
-                  <Tag color="success" icon={<CheckCircleFilled />} style={{ fontWeight: 700 }}>ĐÃ XÁC MINH PHÁP LÝ</Tag>
-                ) : (
-                  <Tag color="warning" icon={<ClockCircleOutlined />} style={{ fontWeight: 700 }}>CHỜ XÉT DUYỆT</Tag>
-                )}
-              </div>
-            }
-            bordered={false}
-            className="creator-section-card"
-          >
-            <Descriptions bordered size="middle" column={{ xs: 1, sm: 2, md: 3 }}>
-              <Descriptions.Item label="Họ và tên">{verification.fullName}</Descriptions.Item>
-              <Descriptions.Item label="Số CCCD/CMND">{verification.idNumber}</Descriptions.Item>
-              <Descriptions.Item label="Ngày sinh">{verification.dateOfBirth}</Descriptions.Item>
-              <Descriptions.Item label="Số điện thoại">{verification.phone}</Descriptions.Item>
-              <Descriptions.Item label="Email chính chủ">{verification.email}</Descriptions.Item>
-              <Descriptions.Item label="Nơi cấp">{verification.issuePlace}</Descriptions.Item>
-              <Descriptions.Item label="Ảnh CCCD mặt trước">
-                <Tag color="success">Đã tải lên hợp lệ</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Ảnh CCCD mặt sau">
-                <Tag color="success">Đã tải lên hợp lệ</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Xác thực khuôn mặt">
-                <Tag color="purple">Khớp sinh trắc học 97.4%</Tag>
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
-        </div>
-      )}
+      {activeTab === 'verification' && <Card className="creator-section-card" title="Định danh pháp lý">
+        <Alert type="info" showIcon title="Xác minh CCCD hiện chưa khả dụng"
+          description="Để xác nhận quyền quản lý kênh, hãy xác minh qua nền tảng hoặc gửi bằng chứng thủ công tại Kênh liên kết." />
+        <Button style={{ marginTop: 16 }} onClick={() => handleTabChange('social')}>Đến Kênh liên kết</Button>
+      </Card>}
 
       {/* ========================================================================= */}
       {/* VIEW 5: QUẢN LÝ HỢP TÁC & BOOKING (/creator/bookings)                     */}
