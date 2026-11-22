@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Card, Table, Tag, Avatar, Button, Input, Select, Space,
   Drawer, Descriptions, Modal, Form, Badge, message,
@@ -13,9 +13,25 @@ import {
 } from "@ant-design/icons";
 import { claimService } from "../../../services/api/claimService";
 import type { ClaimResponse, ClaimStatus } from "../../../types/api/claim.types";
+import { getErrorMessage } from "../../../services/apiClient";
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
+
+function actionError(error: any, fallback: string) {
+  return error?.response?.status === 409
+    ? 'Hồ sơ hoặc quyền sở hữu đã thay đổi. Hãy tải lại danh sách trước khi quyết định.'
+    : getErrorMessage(error, fallback);
+}
+
+function ownershipResult(claim: ClaimResponse) {
+  if (claim.linkedToClaimant === undefined) return null;
+  return claim.linkedToClaimant
+    ? claim.verification?.status === 'VERIFIED'
+      ? 'Kênh vẫn liên kết với người gửi và còn bằng chứng xác minh hợp lệ.'
+      : 'Kênh vẫn liên kết với người gửi; chưa có kết quả xác minh hợp lệ.'
+    : 'Kênh hiện không liên kết với người gửi yêu cầu này.';
+}
 
 const STATUS_CFG: Record<ClaimStatus, { label: string; color: string; icon: React.ReactNode }> = {
   PENDING:  { label: "Chờ duyệt",  color: "#F59E0B", icon: <ClockCircleOutlined /> },
@@ -86,7 +102,7 @@ function ClaimDetailDrawer({
           <Space style={{ width: "100%", justifyContent: "flex-end" }}>
             <Button icon={<StopOutlined />} onClick={() => { onClose(); onRevoke(d); }}
               style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#EF4444", fontWeight: 700 }}>
-              Thu hồi quyền
+              Thu hồi bằng chứng
             </Button>
           </Space>
         ) : null
@@ -166,6 +182,8 @@ function ClaimDetailDrawer({
               />
             </>
           )}
+          {ownershipResult(d) && <Alert type="info" showIcon title="Liên kết kênh hiện tại"
+            description={ownershipResult(d)} />}
           {d.status === "APPROVED" && (
             <>
               <Divider style={{ margin: "4px 0" }} />
@@ -195,7 +213,8 @@ function ApproveModal({ claim, open, onClose, onDone }: { claim: ClaimResponse |
       message.success("Đã ghi nhận quyết định xác minh quyền sở hữu kênh.");
       onDone(updated); onClose();
     } catch (err: any) {
-      message.error(err?.response?.data?.message || "Không thể duyệt đơn. Backend chưa ghi nhận thay đổi, vui lòng thử lại.");
+      message.error(actionError(err, 'Chưa xác nhận được kết quả duyệt. Hãy tải lại hồ sơ trước khi thử lại.'));
+      if (err?.response?.status === 409) { onDone(claim); onClose(); }
     } finally { setLoading(false); }
   };
   return (
@@ -217,7 +236,7 @@ function ApproveModal({ claim, open, onClose, onDone }: { claim: ClaimResponse |
           placeholder="VD: Mã trong Bio khớp, kênh chính chủ..." style={{ resize: "none", marginBottom: 16 }} />
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <Button onClick={onClose}>Hủy</Button>
-          <Button loading={loading} onClick={handleConfirm}
+          <Button disabled={!note.trim()} loading={loading} onClick={handleConfirm}
             style={{ background: "linear-gradient(135deg,#10B981,#059669)", border: "none", color: "#fff", fontWeight: 700 }}>
             Xác nhận duyệt
           </Button>
@@ -240,7 +259,8 @@ function RejectModal({ claim, open, onClose, onDone }: { claim: ClaimResponse | 
       onDone(updated); onClose(); form.resetFields();
     } catch (err: any) {
       if (err?.errorFields) return; // lỗi validate form, Ant Design đã hiển thị
-      message.error(err?.response?.data?.message || "Không thể từ chối đơn. Backend chưa ghi nhận thay đổi, vui lòng thử lại.");
+      message.error(actionError(err, 'Chưa xác nhận được kết quả từ chối. Hãy tải lại hồ sơ trước khi thử lại.'));
+      if (err?.response?.status === 409) { onDone(claim); onClose(); }
     } finally { setLoading(false); }
   };
   return (
@@ -272,16 +292,20 @@ function RevokeModal({ claim, open, onClose, onDone }: { claim: ClaimResponse | 
       const values = await form.validateFields();
       setLoading(true);
       const updated = await claimService.revokeClaim(claim.id, { reason: values.reason });
-      message.success("Đã thu hồi Tích Xanh.");
+      message.success(updated.linkedToClaimant === true
+        ? 'Đã thu hồi bằng chứng thủ công. Kênh vẫn còn liên kết.'
+        : updated.linkedToClaimant === false ? 'Đã thu hồi bằng chứng và tháo liên kết với người gửi.'
+        : 'Đã thu hồi bằng chứng thủ công. Hãy kiểm tra lại liên kết kênh.');
       onDone(updated); onClose(); form.resetFields();
     } catch (err: any) {
       if (err?.errorFields) return;
-      message.error(err?.response?.data?.message || "Không thể thu hồi. Backend chưa ghi nhận thay đổi, vui lòng thử lại.");
+      message.error(actionError(err, 'Chưa xác nhận được kết quả thu hồi. Hãy tải lại hồ sơ trước khi thử lại.'));
+      if (err?.response?.status === 409) { onDone(claim); onClose(); }
     } finally { setLoading(false); }
   };
   return (
     <Modal open={open} onCancel={onClose} footer={null} width={480}
-      title={<div style={{ display: "flex", alignItems: "center", gap: 8 }}><StopOutlined style={{ color: "#EF4444", fontSize: 18 }} /><span style={{ fontWeight: 700 }}>Thu hồi quyền sở hữu</span></div>}>
+      title={<div style={{ display: "flex", alignItems: "center", gap: 8 }}><StopOutlined style={{ color: "#EF4444", fontSize: 18 }} /><span style={{ fontWeight: 700 }}>Thu hồi bằng chứng thủ công</span></div>}>
       <Alert type="warning" showIcon message="Bằng chứng thủ công của đơn này sẽ bị thu hồi. Quyền sở hữu được giữ nếu kênh còn bằng chứng xác minh độc lập hợp lệ." style={{ margin: "12px 0 16px" }} />
       <Form form={form} layout="vertical">
         <Form.Item name="reason" label="Lý do thu hồi *" rules={[{ required: true, message: "Vui lòng nhập lý do thu hồi" }]}>
@@ -306,6 +330,11 @@ export default function CreatorClaimReviewPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [serverSearch, setServerSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setServerSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
   const [statusFilter, setStatusFilter] = useState<ClaimStatus | "ALL">("ALL");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedClaim, setSelectedClaim] = useState<ClaimResponse | null>(null);
@@ -314,22 +343,26 @@ export default function CreatorClaimReviewPage() {
   const [revokeTarget, setRevokeTarget] = useState<ClaimResponse | null>(null);
 
   const [loadError, setLoadError] = useState<string | null>(null);
+  const loadVersion = useRef(0);
 
   const fetchClaims = useCallback(async (p = 1) => {
+    const version = ++loadVersion.current;
     try {
       setLoading(true);
       setLoadError(null);
       const statusParam = tab === "pending" ? "PENDING" : statusFilter !== "ALL" ? statusFilter : undefined;
-      const res = await claimService.getClaims({ status: statusParam as any, page: p - 1, size: 10 });
+      const res = await claimService.getClaims({ status: statusParam as any, page: p - 1, size: 10, q: serverSearch || undefined });
+      if (version !== loadVersion.current) return;
       const list = res.items ?? res.content ?? (Array.isArray(res) ? res : []);
       setClaims(list);
       setTotal(res.totalElements ?? list.length);
     } catch (err: any) {
+      if (version !== loadVersion.current) return;
       setClaims([]);
       setTotal(0);
       setLoadError(err?.response?.data?.message || err?.message || "Không kết nối được máy chủ.");
-    } finally { setLoading(false); }
-  }, [tab, statusFilter]);
+    } finally { if (version === loadVersion.current) setLoading(false); }
+  }, [tab, statusFilter, serverSearch]);
 
   useEffect(() => { setPage(1); void fetchClaims(1); }, [fetchClaims]);
 
@@ -337,9 +370,7 @@ export default function CreatorClaimReviewPage() {
     void fetchClaims(page);
   };
 
-  const filtered = search
-    ? claims.filter(c => [c.creatorId, c.claimantId, c.creatorName, c.creatorHandle, c.claimantEmail].some(value => value?.toLowerCase().includes(search.toLowerCase())))
-    : claims;
+  const filtered = claims;
 
   const pendingCount = claims.filter(c => c.status === "PENDING").length;
 

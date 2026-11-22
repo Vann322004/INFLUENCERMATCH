@@ -95,6 +95,11 @@ export interface RecommendationRunMetadata {
   m1PolicyVersion?: string;
   m1Weights?: number[];
   m4PolicyVersion?: string;
+  m4HistorySelectionPolicyVersion?: string;
+  m4HistoryWindowMonths?: number;
+  m4HistoryCutoff?: string;
+  m4ExcludedCampaignId?: string;
+  m4ReviewEvidenceCount?: number;
   m4HistoryReadStatus?: 'AVAILABLE' | 'EMPTY' | 'READ_FAILED';
   effectiveWeights?: number[] | null;
   criticWeights?: number[] | null;

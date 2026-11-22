@@ -5,6 +5,8 @@ export type OAuthPlatform = MetaPlatform | 'TIKTOK';
 export type OAuthFlow = 'FACEBOOK_LOGIN' | 'INSTAGRAM_LOGIN' | 'TIKTOK_LOGIN';
 
 export interface ConnectionOption {
+  environment?: string;
+  requirements?: string[];
   platform: OAuthPlatform;
   oauthFlow: OAuthFlow;
   supported: boolean;
@@ -13,6 +15,8 @@ export interface ConnectionOption {
 }
 
 export interface LinkedChannel {
+  verification?: { status: 'VERIFIED' | 'UNVERIFIED' | 'LEGACY_UNVERIFIED' | 'SIMULATED';
+    method: string | null; verifiedAt: string | null; evidenceSource: string; environment: string | null };
   id: string;
   platform: string;
   externalId: string;
@@ -82,5 +86,14 @@ export const channelVerificationService = {
       throw new Error('Chưa xác nhận được kết quả liên kết.');
     }
     return data.data.creatorId;
+  },
+  async cancel(id: string, flow: OAuthFlow): Promise<OAuthSession> {
+    const path = flow === 'TIKTOK_LOGIN'
+      ? portal + '/connect/tiktok/sessions/' + encodeURIComponent(id) : sessionPath(id);
+    const { data } = await apiClient.post(path + '/cancel');
+    if (data?.data?.sessionId !== id || !['FAILED', 'EXPIRED', 'COMPLETED'].includes(data?.data?.status)) {
+      throw new Error('Chưa xác nhận được việc hủy phiên. Hãy kiểm tra lại.');
+    }
+    return data.data;
   },
 };

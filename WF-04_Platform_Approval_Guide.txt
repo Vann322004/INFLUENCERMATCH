@@ -1,0 +1,266 @@
+WF-04 — HƯỚNG DẪN CẤU HÌNH, KIỂM THỬ VÀ XÉT DUYỆT NỀN TẢNG
+InfluencerMatch — 22/11/2026
+
+1. ĐỌC TRƯỚC KHI THỰC HIỆN
+
+Chức năng hiện tại: người dùng đăng nhập InfluencerMatch trước, sau đó cấp quyền
+trên Facebook/Instagram/TikTok để liên kết kênh với hồ sơ Creator.
+Đây không phải bổ sung đăng nhập InfluencerMatch bằng ba nền tảng.
+Không ghép ownership chỉ vì hai tài khoản có cùng email.
+
+Có code hoặc test PASS không đồng nghĩa app đã được Meta/TikTok duyệt.
+Không ai có thể bảo đảm được duyệt chỉ bằng đổi cấu hình hoặc viết chính sách.
+Dashboard có thể thay tên/vị trí mục theo loại app và use case. Làm theo yêu cầu
+đang hiển thị của chính app, không dùng một hướng dẫn cũ làm chuẩn tuyệt đối.
+
+Tài liệu này không thay đổi Dashboard, không deploy và không gửi request xét duyệt.
+Không đưa App Secret, Client Secret, service key hoặc token vào FE, video hoặc Git.
+
+Phạm vi code hiện tại:
+- Facebook: Facebook Page, không phải nhận ownership hồ sơ Facebook cá nhân.
+- Instagram qua Facebook: Professional account liên kết Facebook Page.
+- Instagram trực tiếp: Professional account; không bắt buộc Facebook Page.
+- TikTok: Sandbox. Không đổi nhãn thành production khi chưa triển khai/kiểm thử
+  đúng môi trường và được duyệt. Không coi chỉ thay client key là đủ chuyển đổi.
+- YouTube OAuth: ngoài phạm vi hiện tại; có Claim thủ công cho kênh tìm được.
+
+2. CHUẨN BỊ BẢN DEPLOY TRƯỚC KHI GỬI REVIEW
+
+2.1. Website
+- Dùng domain chính thức: https://www.influencermatch.site
+- Trang giới thiệu giải thích rõ sản phẩm và đối tượng dùng.
+- Privacy Policy: https://www.influencermatch.site/privacy-policy
+- Terms: https://www.influencermatch.site/terms-of-service
+- Hướng dẫn xóa dữ liệu: trang chính sách có phần hướng dẫn và email hoạt động
+  influencermatch.sep491@gmail.com.
+- Mở từng trang bằng cửa sổ ẩn danh; kiểm tra HTTPS, nội dung, không yêu cầu login,
+  không redirect về homepage và không lỗi 404/521.
+- Cập nhật chính sách theo dữ liệu thực tế, gồm TikTok nếu cung cấp trên UI,
+  và cả Instagram Login trực tiếp. Không hứa xử lý thu hồi/xóa tự động nếu chưa có.
+
+2.2. Tài khoản và dữ liệu demo
+- Chuẩn bị Creator InfluencerMatch ACTIVE, email đã xác minh, có quyền Claim.
+- Chuẩn bị kênh test do nhóm kiểm soát và đúng điều kiện của nền tảng.
+- Với Meta, tạo trước bản ghi kênh có stable provider ID khớp API; tên giống nhau
+  không đủ. Ghi chú internal ID khác provider ID.
+- Chuẩn bị tài khoản reviewer và hướng dẫn truy cập theo trường Dashboard yêu cầu.
+- Không chia sẻ tài khoản cá nhân hoặc OTP; không đặt mật khẩu reviewer trong repo.
+- Không bắt reviewer truy cập localhost, VPN riêng hoặc giải captcha/OTP mà nhóm
+  không có phương án kiểm thử theo hướng dẫn nền tảng.
+
+2.3. Callback cùng domain FE
+Luồng FE hiện kiểm tra redirect_uri cùng origin với trang hiện tại.
+Khi dùng www.influencermatch.site, cấu hình mẫu là:
+- Meta: https://www.influencermatch.site/api/v1/integrations/meta/callback
+- Instagram: https://www.influencermatch.site/api/v1/integrations/instagram/callback
+- TikTok: https://www.influencermatch.site/api/v1/integrations/tiktok/callback
+
+Các URL này phải đồng nhất ở Dashboard, BE và domain đang dùng trên trình duyệt.
+Không trộn non-www, domain Vercel cũ, api subdomain hoặc localhost với bản quay demo.
+Đường /api được proxy đến BE; kiểm tra callback thật và Set-Cookie qua proxy.
+Không cần đổi callback chỉ vì sửa URL chính sách; chỉ sửa khi cấu hình thực sự sai.
+
+BE cấu hình tương ứng, chỉ lưu trên môi trường server:
+- META_OAUTH_ENABLED
+- META_APP_ID, META_APP_SECRET
+- META_LOGIN_CONFIG_ID, META_GRAPH_API_VERSION
+- META_REDIRECT_URI, META_OAUTH_ENCRYPTION_KEY
+- INSTAGRAM_OAUTH_ENABLED
+- INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET, INSTAGRAM_GRAPH_API_VERSION
+- INSTAGRAM_REDIRECT_URI, INSTAGRAM_OAUTH_ENCRYPTION_KEY
+- TIKTOK_SANDBOX_LOGIN_ENABLED
+- TIKTOK_SANDBOX_CLIENT_KEY, TIKTOK_SANDBOX_CLIENT_SECRET
+- TIKTOK_SANDBOX_REDIRECT_URI
+- TIKTOK_SANDBOX_SCOPE=user.info.basic,user.info.profile
+
+Không in giá trị secret ra log khi kiểm tra. connection-options chỉ xác nhận cấu hình
+khả dụng theo kiểm tra nội bộ, không xác nhận app được nhà cung cấp phê duyệt.
+
+3. FACEBOOK PAGE — CÁC BƯỚC
+
+Bước 1. Mở Meta for Developers, chọn đúng app.
+Đối chiếu App ID trong Dashboard với BE. Kiểm tra app use case và sản phẩm
+Facebook Login for Business phù hợp luồng đang dùng config_id.
+
+Bước 2. Hoàn thiện thông tin app.
+Điền tên/icon, email liên hệ, domain/website, Privacy Policy URL và các mục
+data deletion/terms mà Dashboard yêu cầu. Nếu Dashboard yêu cầu Business
+Verification hoặc xác minh khác thì hoàn thành đúng quy trình, không bỏ qua.
+Hướng dẫn xóa dữ liệu qua email và callback tự động là hai cơ chế khác nhau;
+không điền URL callback chưa được code vào ô yêu cầu callback.
+
+Bước 3. Cấu hình Login.
+Đăng ký callback chính xác ở mục redirect URI. Tạo/kiểm tra cấu hình Login for
+Business; META_LOGIN_CONFIG_ID phải trỏ cấu hình đó.
+Chỉ chọn permission phục vụ chức năng đang có.
+
+Bước 4. Đối chiếu quyền code hiện kiểm tra.
+- pages_show_list
+- pages_read_engagement
+public_profile/email dùng cho identity/login không thay thế hai quyền Page này.
+Không xin quyền đăng bài, tin nhắn hoặc insights nếu chức năng hiện không dùng.
+
+Bước 5. Test tài khoản trong nhóm phát triển/tester.
+Đảm bảo tài khoản Meta đã nhận role/tester và có quyền trên Page thử nghiệm.
+Trong InfluencerMatch: Kênh liên kết → Facebook Page → cấp quyền → chọn đúng
+Page → Liên kết → đọc lại danh sách. Mở network/log để xác định lỗi cụ thể:
+session/cookie, permission thiếu, asset không trả về hay stable ID chưa khớp.
+
+Bước 6. Chuẩn bị hồ sơ App Review.
+Ở khu vực App Review / Permissions and Features hoặc use case tương ứng,
+yêu cầu access level cần thiết cho người dùng ngoài role theo Dashboard.
+Mỗi quyền cần mô tả chính xác dữ liệu được đọc và chức năng dùng dữ liệu đó.
+Đính kèm video và hướng dẫn thao tác có thể tái hiện trên website deploy.
+Không mô tả tính năng đăng bài/đọc tin nhắn để xin quyền khi app không có.
+
+Bước 7. Sau khi review.
+Đọc kết quả từng permission/use case, không chỉ trạng thái app chung.
+Kiểm tra release/live theo Dashboard và test với tài khoản không thuộc app roles.
+Nếu tài khoản role chạy nhưng user ngoài role không chạy, kiểm tra access level,
+app mode và yêu cầu xác minh thay vì sửa UI thành success.
+
+Mẫu giải thích mục đích (chỉnh theo dữ liệu thực tế trước khi nộp):
+"InfluencerMatch allows a signed-in Creator to connect a Facebook Page they
+manage. We list the Pages returned by Meta and let the Creator select the Page
+to link to their InfluencerMatch profile. We use the permitted Page information
+to verify the selected channel identity and prevent conflicting ownership.
+This flow does not publish posts or read private messages."
+
+4. INSTAGRAM — CHỌN ĐÚNG MỘT NHÁNH ĐỂ TEST VÀ QUAY VIDEO
+
+4.1. Nhánh Instagram Login trực tiếp
+
+- Chuẩn bị Instagram Professional account (Creator hoặc Business).
+- Thiết lập sản phẩm Instagram API/Instagram Login phù hợp trong Meta Dashboard.
+- Dùng App ID/Secret đúng sản phẩm mà Dashboard hiển thị; không đoán giống
+  Facebook App ID khi Dashboard cấp thông tin riêng.
+- Đăng ký callback /api/v1/integrations/instagram/callback trên domain chính thức.
+- Code yêu cầu instagram_business_basic; không dùng tên scope cũ business_basic.
+- Thiết lập tester theo Dashboard nếu đang thử trước khi được duyệt.
+- Test: đăng nhập InfluencerMatch → Instagram Professional → cấp quyền Instagram
+  → chọn/xác nhận account → đọc lại linked accounts.
+- Account phải khớp stable ID bản ghi kênh Meta hiện có. Không tự tạo/chọn kênh
+  theo email hoặc tên giống nhau khi API trả UNMATCHED.
+- Nộp quyền/access level cần thiết theo sản phẩm và Dashboard, kèm video riêng.
+
+4.2. Nhánh Instagram qua Facebook Page
+
+- Chuẩn bị Professional Instagram đã liên kết với Facebook Page.
+- Tài khoản Facebook dùng cấp quyền phải có quyền phù hợp trên Page.
+- Dùng Meta Login config và callback /api/v1/integrations/meta/callback.
+- Code yêu cầu pages_show_list, pages_read_engagement, instagram_basic.
+- Quay video bằng nút Instagram qua Facebook Page; không quay direct Instagram
+  rồi mô tả đang sử dụng quyền Facebook Page.
+
+Không bắt người dùng tạo Facebook Page cho nhánh direct Instagram.
+Không quảng bá hai nhánh như hỗ trợ mọi tài khoản Instagram cá nhân.
+
+5. TIKTOK — SANDBOX TRƯỚC, REVIEW VÀ PRODUCTION SAU
+
+Bước 1. Vào TikTok for Developers → Manage apps → chọn đúng app.
+Đối chiếu app owner, tên/icon, website và sản phẩm Login Kit.
+
+Bước 2. Sandbox.
+Thêm target users theo Developer Portal; dùng tài khoản do nhóm kiểm soát.
+Đăng ký callback đúng domain, cấu hình hai scope code hiện cần:
+- user.info.basic: identity/hồ sơ cơ bản.
+- user.info.profile: username/thông tin profile dùng đối chiếu kênh.
+Không xin user.info.stats hoặc quyền video nếu luồng hiện không dùng.
+
+Bước 3. Test đầy đủ.
+Creator đăng nhập InfluencerMatch → TikTok Sandbox → consent → callback → resolver
+đối chiếu author identity → đọc lại kênh liên kết và nhãn Sandbox.
+Test hủy cấp quyền, hủy phiên, mismatch và kênh đang có owner khác.
+open_id là identity theo app; không đồng nhất nó với author ID do crawler trả về.
+
+Bước 4. Chuẩn bị submission.
+Trong khu vực Production của app, điền thông tin và chọn Login Kit/scopes đúng.
+Hoàn thành xác minh URL khi Developer Portal yêu cầu. Website phải thể hiện
+sản phẩm hoạt động; Privacy/Terms công khai, truy cập được.
+Giải thích mục đích từng scope, quay video đúng integration hiện tại bằng
+Sandbox cho lần xét duyệt đầu theo hướng dẫn TikTok.
+
+Bước 5. Sau khi được duyệt.
+Developer phải rà lại cấu hình production và logic ràng buộc identity/environment.
+Code hiện ghi TIKTOK_OAUTH_SANDBOX và nhãn Sandbox: không chỉ đổi nhãn/env rồi
+tuyên bố production. Cần thay đổi tương ứng, kiểm thử migration/mapping nếu đổi
+app credentials, và giữ phân biệt bằng chứng Sandbox đã có với production mới.
+
+Mẫu giải thích (chỉnh theo luồng thực tế):
+"A signed-in Creator uses TikTok Login Kit to authorize their TikTok account.
+InfluencerMatch uses the granted account identity and profile information to
+associate the correct TikTok channel with that Creator and prevent ownership
+conflicts. This feature does not request publishing or messaging access."
+
+6. KỊCH BẢN VIDEO VÀ HƯỚNG DẪN REVIEWER
+
+Chuẩn bị một video riêng cho từng nhánh thực sự xin quyền.
+Không quay secret, OTP, token hoặc cookie trong video.
+
+1) Mở website chính thức, giới thiệu ngắn chức năng liên kết kênh.
+2) Đăng nhập tài khoản Creator thử nghiệm có đủ quyền.
+3) Mở Kênh liên kết và chọn đúng nền tảng/phương thức.
+4) Thể hiện trang consent và những quyền thực sự cần.
+5) Quay lại app, chọn kênh nếu luồng yêu cầu, xác nhận.
+6) Hiển thị kênh đã liên kết, nền tảng và nguồn xác minh.
+7) Mô tả ngắn dữ liệu được dùng để gắn đúng kênh, không cấp tick mạng xã hội.
+8) Chỉ vị trí chính sách và yêu cầu xóa dữ liệu.
+
+Trong ghi chú reviewer:
+- URL bắt đầu: https://www.influencermatch.site/creator/social-accounts
+- Cách đăng nhập tài khoản test và đường đến tính năng.
+- Điều kiện tài khoản nguồn: Page / Professional Instagram / TikTok target user.
+- Những bước tester phải thực hiện, kết quả mong đợi và mục đích permission.
+- Nếu có dữ liệu seed hỗ trợ khớp ID, phải là kênh test đúng chủ thể; không gắn
+  một kênh bất kỳ chỉ để video thành công.
+
+7. KIỂM TRA LỖI THƯỜNG GẶP
+
+- Không bắt đầu được: kiểm tra connection-options, feature enabled và cấu hình.
+- redirect_uri lỗi: so chuỗi đầy đủ giữa Dashboard, BE và trình duyệt, gồm www,
+  HTTPS, path và slash; không dùng domain Vercel đã ngừng hoạt động.
+- Callback xong không về UI: kiểm tra proxy callback và content negotiation.
+- Browser binding lỗi: bắt đầu và hoàn tất cùng trình duyệt/domain; kiểm tra
+  Set-Cookie/Path/Secure qua proxy, không tự bỏ kiểm tra cookie để chạy được.
+- Không thấy Page/Instagram: kiểm tra quyền thực cấp và quan hệ tài khoản nguồn.
+- UNMATCHED: đối chiếu stable provider ID trong DB, không fallback kênh đầu tiên.
+- 409 owner: đọc lại ownership; không đổi owner bằng SQL để bỏ qua kiểm tra.
+- Chỉ role/tester dùng được: kiểm tra app mode/access level/review.
+- TikTok mismatch: kiểm tra resolver và loại ID, không so open_id với author ID.
+- 521/5xx: xử lý khả dụng BE/proxy trước khi nộp review hoặc quay video.
+
+8. PHẠM VI HOÀN TẤT
+
+Code sẵn sàng kiểm thử không đồng nghĩa đã được nền tảng duyệt.
+Chỉ đánh dấu OAuth deploy hoàn tất cho từng nhánh sau khi:
+- Có bằng chứng quyền/config đúng và tài khoản nguồn hợp lệ.
+- Browser end-to-end ghi đúng ownership, verification và audit.
+- Reload vẫn đúng và không lộ token/bằng chứng riêng tư.
+- Hủy/deny/expire/conflict/replay không tạo liên kết ngoài ý muốn.
+- Nếu mở công khai, test bằng user ngoài nhóm app roles/target users theo
+  quyền production thực tế được duyệt.
+
+Hủy phiên OAuth không đồng nghĩa gỡ app khỏi Meta/TikTok hay xóa dữ liệu đã lưu.
+Nếu callback đã hoàn tất trước khi hủy, liên kết được giữ và UI thông báo rõ.
+Hủy liên kết đã hoàn tất và xóa dữ liệu theo quy trình hỗ trợ hiện có, không
+được hứa một nút hủy phiên sẽ thực hiện cả hai việc.
+
+9. TÀI LIỆU CHÍNH THỨC ĐÃ ĐỐI CHIẾU
+
+Meta — Instagram API with Instagram Login:
+https://developers.facebook.com/documentation/instagram-platform/instagram-api-with-instagram-login
+Meta — App Review Introduction:
+https://developers.facebook.com/docs/resp-plat-initiatives/app-review/introduction
+Meta — App Verification Details Rejection Guide:
+https://developers.facebook.com/docs/resp-plat-initiatives/appreview/tutorial/rejection-guide/
+TikTok — Register Your App:
+https://developers.tiktok.com/docs/en/getting-started-create-an-app
+TikTok — App Review Guidelines:
+https://developers.tiktok.com/docs/en/app-review-guidelines/
+TikTok — Login Kit Web:
+https://developers.tiktok.com/docs/en/login-kit-web
+TikTok — User Info:
+https://developers.tiktok.com/docs/en/tiktok-api-v2-get-user-info
+
+Các bước cấu hình cụ thể và mẫu giải thích trong file là hướng dẫn áp dụng cho
+source InfluencerMatch hiện tại, không phải cam kết phê duyệt từ nền tảng.

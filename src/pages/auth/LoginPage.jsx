@@ -11,12 +11,14 @@ import GoogleIdentityButton, { googleErrorMessage } from './GoogleIdentityButton
 import GoogleRegistrationModal from './GoogleRegistrationModal';
 import GoogleLinkModal from '../brand/GoogleLinkModal';
 import './LoginPage.css';
+import { cooperationPath, pendingCooperation, validCooperationToken } from '../../services/cooperationContinuation';
 
 export default function LoginPage() {
   const [form] = Form.useForm();
   const { message } = App.useApp();
   const navigate = useNavigate();
   const location = useLocation();
+  const cooperationInvitation = validCooperationToken(location.state?.cooperationToken) ? location.state.cooperationToken : pendingCooperation();
   const [loading, setLoading] = useState(false);
 
   const [registration, setRegistration] = useState(null);
@@ -37,7 +39,8 @@ export default function LoginPage() {
     } else if (user && (user.role === 'MANAGER' || user.role === 'DATA_MANAGER' || user.role === 'manager')) {
       navigate('/data-manager/dashboard');
     } else if (user && (user.role === 'CREATOR' || user.role === 'creator')) {
-      navigate(location.state?.cooperationReturnTo === '/creator/bookings' ? '/creator/bookings' : '/creator/dashboard');
+      const invitation = validCooperationToken(location.state?.cooperationToken) ? location.state.cooperationToken : pendingCooperation();
+      navigate(invitation ? cooperationPath(invitation) : location.state?.cooperationReturnTo === '/creator/bookings' ? '/creator/bookings' : '/creator/dashboard');
     } else if (user?.role === 'BRAND') {
       const dashboard = ROUTES.DASHBOARD || '/dashboard';
       if (user.onboardingStatus === 'COMPLETED' || (user.id && hasDeferredBrandOnboarding(user.id))) {
@@ -231,13 +234,13 @@ export default function LoginPage() {
       </Form>
 
       {/* ── Divider ── */}
-      <div className="luxe-divider">
+      <div className="luxe-divider" style={cooperationInvitation ? { display: 'none' } : undefined}>
         <span className="luxe-divider-line" />
         <span className="luxe-divider-text">hoặc tiếp tục với</span>
         <span className="luxe-divider-line" />
       </div>
 
-      <div className="google-login-control">
+      <div className="google-login-control" style={cooperationInvitation ? { display: 'none' } : undefined}>
         {!registration && !googleLink && <GoogleIdentityButton key={googleAttempt}
           start={startGoogle} onCredential={onGoogleCredential} disabled={loading} />}
       </div>
@@ -250,7 +253,7 @@ export default function LoginPage() {
       {/* ── Footer Registration Banner (Matching Mockup grey pill box) ── */}
       <div className="login-register-banner">
         <span className="register-prompt">Chưa có tài khoản?</span>
-        <Link to={ROUTES.AUTH.REGISTER || '/register'} className="register-now-link">
+        <Link to={cooperationInvitation ? cooperationPath(cooperationInvitation) : ROUTES.AUTH.REGISTER || '/register'} className="register-now-link">
           <span>Đăng ký ngay</span>
           <ArrowRightOutlined style={{ fontSize: 11, marginLeft: 4 }} />
         </Link>

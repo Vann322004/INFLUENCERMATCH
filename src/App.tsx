@@ -22,6 +22,7 @@ import SubscriptionPage from './pages/subscription/SubscriptionPage';
 import BrandProfilePage, { BrandOnboardingPage } from './pages/brand/BrandProfilePage';
 import OutreachCrmPage from './pages/crm/CampaignOutreachPage';
 import CooperationInvitationPage from './pages/crm/CooperationInvitationPage';
+import CreatorRegisterPage from './pages/auth/CreatorRegisterPage';
 import CollaborationPage from './pages/collaboration/CollaborationPage';
 import CollaborationDetailPage from './pages/collaboration/CollaborationDetailPage';
 import PerformancePage from './pages/performance/PerformancePage';
@@ -202,6 +203,7 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/cooperation-invitations" element={<CooperationInvitationPage />} />
+          <Route path="/auth/creator/register" element={<AuthLayout><CreatorRegisterPage /></AuthLayout>} />
 
           {/* Auth Routes */}
           <Route

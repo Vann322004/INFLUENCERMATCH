@@ -290,7 +290,7 @@ export default function AiRecommendationTab({
         {metadata?.evidencePolicyVersion && <div><dt>Schema bằng chứng</dt><dd>{metadata.evidencePolicyVersion}</dd></div>}
         {metadata?.historySelectionPolicyVersion && <div><dt>Chính sách chọn lịch sử</dt><dd>{metadata.historySelectionPolicyVersion}</dd></div>}
         {metadata?.m4PolicyVersion && <div><dt>Chính sách M4</dt><dd>{metadata.m4PolicyVersion}</dd></div>}
-        {metadata?.m4HistoryReadStatus && <div><dt>Đọc lịch sử M4</dt><dd>{metadata.m4HistoryReadStatus === 'AVAILABLE' ? 'Có lịch sử đánh giá' : metadata.m4HistoryReadStatus === 'EMPTY' ? 'Chưa có lịch sử đánh giá' : 'Tạm lỗi · dùng fallback theo tiêu chí hiện tại'}</dd></div>}
+        {metadata?.m4HistoryReadStatus && <div><dt>Đọc lịch sử M4</dt><dd>{metadata.m4HistoryReadStatus === 'AVAILABLE' ? 'Có lịch sử đánh giá' : metadata.m4HistoryReadStatus === 'EMPTY' ? metadata.m4HistorySelectionPolicyVersion ? 'Chưa có đánh giá trong phạm vi lịch sử' : 'Chưa có lịch sử đánh giá' : 'Tạm lỗi · dùng fallback theo tiêu chí hiện tại'}</dd></div>}
         <div><dt>Chế độ trọng số</dt><dd>{metadata?.weightingMode === 'DYNAMIC_BLENDED' ? 'Kết hợp trọng số dữ liệu và mục tiêu' : metadata?.weightingMode === 'FALLBACK_PRIOR' ? 'Trọng số theo mục tiêu chiến dịch' : 'Chưa được lưu'}</dd></div>
         <div><dt>Chế độ kết quả</dt><dd>{displayedOrder?.label ?? 'Chưa được lưu'}</dd></div>
         <div><dt>Hệ số kết hợp trọng số</dt><dd>{formatNumber(metadata?.lambdaUsed)}</dd></div>
@@ -391,7 +391,10 @@ export default function AiRecommendationTab({
             {breakdown?.m1Availability === 'UNAVAILABLE' && <div><dt>Cách dùng M1 trong lượt này</dt><dd>Composite M1 unavailable; TOPSIS dùng prior trung tính 0.50, không phải điểm đã học.</dd></div>}
           </dl>
           <h4>Nguồn đánh giá M4</h4><p>{metadata?.m4HistoryReadStatus === 'READ_FAILED' ? 'Lịch sử đọc lỗi; điểm này dùng fallback theo tiêu chí hiện tại.' : m4SourceLabel(breakdown?.m4Source)}</p>
+          <p>Số lượng hợp tác giúp đáp ứng điều kiện bằng chứng, không bảo đảm điểm phù hợp tăng.</p>
           <dl className="rec-breakdown">
+            {metadata?.m4HistoryWindowMonths != null && <div><dt>Phạm vi lịch sử M4</dt><dd>{metadata.m4HistoryWindowMonths} tháng trước thời điểm đánh giá; không gồm chiến dịch này.</dd></div>}
+            {metadata?.m4ReviewEvidenceCount != null && <div><dt>Đánh giá trong phạm vi lịch sử</dt><dd>{formatNumber(metadata.m4ReviewEvidenceCount)}</dd></div>}
             <div><dt>Điểm từ lịch sử</dt><dd>{formatScore(breakdown?.m4LearnedScore)}</dd></div>
             <div><dt>Điểm từ tiêu chí hiện tại</dt><dd>{formatScore(breakdown?.m4ExplicitScore)}</dd></div>
             <div><dt>Điểm được sử dụng</dt><dd>{formatScore(breakdown?.m4EffectiveScore ?? breakdown?.m4Score)}</dd></div>

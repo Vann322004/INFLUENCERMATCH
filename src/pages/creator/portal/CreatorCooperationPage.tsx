@@ -27,7 +27,8 @@ function CreatorOffers() {
   const resource = useAsyncResource(query, canRespond);
   const [selected, setSelected] = useState<string | null>(null);
   const requested = typeof location.state?.cooperationDealId === 'string' ? location.state.cooperationDealId : null;
-  const id = selected ?? (resource.data?.some(deal => deal.id === requested) ? requested : null);
+  // The detail API verifies ownership, including invitations beyond the first list page.
+  const id = selected ?? (requested && /^[a-f0-9-]{36}$/i.test(requested) ? requested : null);
   if (!canRespond) return <Alert type="warning" title="Bạn chưa có quyền phản hồi lời mời hợp tác." />;
   return <div className="contact-workspace"><header className="contact-heading"><div><h1>Lời mời hợp tác</h1><p>Xem yêu cầu, trao đổi và phản hồi đề xuất của thương hiệu.</p></div><Button onClick={() => void resource.reload()}>Cập nhật</Button></header>
     {resource.status === 'loading' ? <Skeleton active /> : resource.status === 'error' ? <Alert type="error" title={resource.error} action={<Button onClick={() => void resource.reload()}>Thử lại</Button>} /> : !resource.data?.length ? <Empty description="Chưa có lời mời thuộc các kênh bạn quản lý" /> : <section className="contact-panel">{resource.data.map(deal => <article className="contact-deal" key={deal.id}><div><strong>{deal.channels.map(channel => `${channel.platform} · @${channel.username}`).join(' / ')}</strong><p><Tag>{dealLabel(deal.status)}</Tag>{deal.proposal ? `${deal.proposal.fee.toLocaleString('vi-VN')} ₫ · Bản ${deal.proposal.revision}` : 'Chưa có đề xuất'}{deal.acceptedRevision === deal.proposal?.revision && deal.proposal ? ' · Bạn đã đồng ý bản này' : ''}</p></div><Button onClick={() => setSelected(deal.id)}>Xem lời mời</Button></article>)}</section>}

@@ -21,6 +21,15 @@ const base = (campaignId: string) => `/campaigns/${campaignId}`;
 function dataOf(response: any) { if (response.data?.success === false || response.data?.data == null) throw new Error('Máy chủ chưa xác nhận kết quả.'); return response.data.data; }
 function deal(raw: any, campaignId: string): Deal { if (!raw?.id || raw.campaignId !== campaignId || !Number.isSafeInteger(raw.revision) || raw.revision < 1 || !Array.isArray(raw.channels)) throw new Error('Thỏa thuận trả về không hợp lệ.'); return raw; }
 export const dealService = {
+  async requestCreatorRegistration(token: string, email: string): Promise<void> {
+    await apiClient.post('/cooperation-invitations/registration', { token, email });
+  },
+  async invitationContext(token: string): Promise<{ status: 'READY' | 'NEEDS_CHANNEL_VERIFICATION' | 'ACCOUNT_MISMATCH' | 'OWNERSHIP_CONFLICT'; channels?: { creatorId: string; platform: string; username: string }[] }> {
+    return dataOf(await apiClient.post('/cooperation-invitations/context', { token }));
+  },
+  async continueInvitation(token: string): Promise<{ dealId: string }> {
+    return dataOf(await apiClient.post('/cooperation-invitations/continue', { token }));
+  },
   async portalList(): Promise<Deal[]> {
     const data = dataOf(await apiClient.get('/creators/portal/cooperation-deals'));
     if (!Array.isArray(data)) throw new Error('Không tải được danh sách lời mời.');

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Card, Empty, Pagination, Space, Spin, Tag, Typography } from 'antd';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { cooperationPath, pendingCooperation } from '../../../services/cooperationContinuation';
 import { claimService } from '../../../services/api/claimService';
 import {
   channelVerificationService as verification,
@@ -23,6 +24,17 @@ const matchLabels = {
   UNMATCHED: 'Chưa khớp mã kênh trong hệ thống',
   UNAVAILABLE: 'Không thể liên kết do quyền sở hữu hoặc điều kiện kênh',
 };
+
+function verificationLabel(channel: LinkedChannel) {
+  const proof = channel.verification;
+  if (proof?.status === 'SIMULATED') return 'Xác minh mô phỏng';
+  if (proof?.status === 'LEGACY_UNVERIFIED') return 'Chưa đủ bằng chứng xác minh';
+  if (proof?.status !== 'VERIFIED') return channel.verifiedByInfluencerMatch
+    ? 'Đã xác minh trên InfluencerMatch' : 'Chưa xác minh';
+  return proof.environment === 'SANDBOX' ? 'Đã xác minh · TikTok Sandbox'
+    : proof.environment === 'MANUAL' ? 'Đã xác minh · Duyệt thủ công'
+    : 'Đã xác minh · API nền tảng';
+}
 
 interface PendingOAuth {
   id: string;
@@ -113,6 +125,7 @@ interface Props {
 
 export default function ChannelVerification({ canVerify, canViewClaims, linked, linkedError, reloadLinked }: Props) {
   const [params, setParams] = useSearchParams();
+  const invitationToken = pendingCooperation();
   const [options, setOptions] = useState<ConnectionOption[] | null>(null);
   const [optionsError, setOptionsError] = useState('');
   const [optionsRetry, setOptionsRetry] = useState(0);
@@ -245,8 +258,34 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
     }
   }
 
+  async function cancelSession() {
+    if (!pending || busy.current) return;
+    const current = pending;
+    busy.current = true;
+    setWorking('cancel');
+    setError('');
+    try {
+      const result = await verification.cancel(current.id, current.flow);
+      if (current.authSessionId !== getAuthSessionId()) return;
+      if (result.status === 'COMPLETED') {
+        const updated = await reloadLinked();
+        if (current.authSessionId !== getAuthSessionId()) return;
+        if (!updated) throw new Error('Phiên đã hoàn tất. Chưa tải được danh sách kênh, hãy kiểm tra lại.');
+        setNotice('Phiên đã hoàn tất trước khi hủy. Liên kết kênh được giữ nguyên.');
+      } else setNotice('Đã hủy phiên xác minh.');
+      clearPending();
+    } catch (cause) {
+      if (current.authSessionId === getAuthSessionId())
+        setError(getErrorMessage(cause, 'Không hủy được phiên. Hãy kiểm tra lại trước khi bắt đầu phiên mới.'));
+    } finally {
+      busy.current = false;
+      setWorking('');
+    }
+  }
+
   return (
     <Space orientation="vertical" size="large" style={{ width: '100%' }}>
+      {invitationToken && <Alert type="info" title="Bạn đang liên kết kênh để phản hồi lời mời hợp tác" action={<Link to={cooperationPath(invitationToken)}><Button>Tiếp tục lời mời</Button></Link>} />}
       <h1 className="creator-page-title">Kênh liên kết</h1>
       {canVerify && <Card className="creator-section-card" title="Xác minh kênh">
         <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
@@ -306,8 +345,8 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
                 setError('');
                 setStatusRetry(value => value + 1);
               }}>Kiểm tra lại phiên</Button>
-              <Button disabled={!!working} onClick={() => { clearPending(); setError(''); }}>
-                Kết thúc phiên
+              <Button disabled={checking || !!working} loading={working === 'cancel'} onClick={() => void cancelSession()}>
+                Hủy phiên xác minh
               </Button>
             </Space>
           </>}
@@ -327,7 +366,8 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
                     <span>{channel.platform} · {channel.userName || channel.externalId}</span>
                     {profile && <a href={profile} target="_blank" rel="noreferrer">Mở kênh</a>}
                   </Space>
-                  {channel.verifiedByInfluencerMatch && <Tag color="success">Đã xác minh trên InfluencerMatch</Tag>}
+                  <Tag color={channel.verification?.environment === 'SANDBOX' ? 'warning'
+                    : channel.verifiedByInfluencerMatch ? 'success' : 'default'}>{verificationLabel(channel)}</Tag>
                 </div>;
               })}
             </Space>}

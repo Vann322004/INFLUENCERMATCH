@@ -21,6 +21,8 @@ export interface ClaimResponse {
   claimantName?: string;
   claimantEmail?: string;
   claimantAvatar?: string;
+  linkedToClaimant?: boolean;
+  verification?: { status: string; method?: string | null; environment?: string | null };
 
   status: ClaimStatus;
   submittedAt: string;
@@ -28,7 +30,7 @@ export interface ClaimResponse {
   reviewedBy?: string;
   reason?: string;
 
-  // Evidence fields (private, only visible to admins)
+  // Private evidence: claimant and authorized reviewers only.
   evidenceType?: string;
   evidenceUrl?: string;
   evidenceUrls?: string[];
@@ -36,6 +38,7 @@ export interface ClaimResponse {
 }
 
 export interface ClaimListParams {
+  q?: string;
   status?: ClaimStatus;
   creatorId?: string;
   claimantId?: string;

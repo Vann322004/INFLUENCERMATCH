@@ -12,7 +12,7 @@ export default function AuthLayout({ children }) {
   const [lang, setLang] = useState('vi');
   const { pathname } = useLocation();
   const isLogin = pathname === '/login';
-  const isRegister = pathname === '/register';
+  const isRegister = pathname === '/register' || pathname === '/auth/creator/register';
   const isRecovery = pathname === '/forgot-password' || pathname === '/reset-password';
   const isAuthEntry = isLogin || isRegister || isRecovery;
 
