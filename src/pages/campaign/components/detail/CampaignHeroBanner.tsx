@@ -72,7 +72,7 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
           <span className="cdetail-nav-slash">/</span>
           <span className={`cdetail-hero-status-tag ${currentStatus}`}>
             <span className="cdetail-status-dot-pulse" />
-            {currentStatus === 'running'
+            {rawCampaign?.status === 'CLOSED' ? 'Đã đóng' : currentStatus === 'running'
               ? 'Đang triển khai'
               : currentStatus === 'completed'
               ? 'Hoàn thành'
@@ -142,7 +142,7 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
             const target = campaignEditor(resolvedId);
             navigate(target.path, { state: target.state });
           }}>Chỉnh sửa yêu cầu</button>}
-          {['COMPLETED', 'ARCHIVED'].includes(rawCampaign?.status ?? '') ? <button type="button" className="cdetail-hero-btn primary-action" onClick={() => navigate('/campaigns/create')}>Tạo chiến dịch mới</button> : <>
+          {['COMPLETED', 'ARCHIVED', 'CLOSED'].includes(rawCampaign?.status ?? '') ? <button type="button" className="cdetail-hero-btn primary-action" onClick={() => navigate('/campaigns/create')}>Tạo chiến dịch mới</button> : <>
           <button
             type="button"
             className="cdetail-hero-btn primary-action"

@@ -204,7 +204,8 @@ export const campaignService = {
   async updateStatus(
     id: string,
     status: CampaignStatus,
-    revisionOrEtag?: number | string | null
+    revisionOrEtag?: number | string | null,
+    reason?: string
   ): Promise<CampaignResponse> {
     let ifMatchValue: string;
     if (typeof revisionOrEtag === 'number') {
@@ -218,7 +219,7 @@ export const campaignService = {
     }
     const response = await apiClient.patch<ApiResponse<CampaignResponse>>(
       `/campaigns/${id}/status`,
-      { status },
+      { status, ...(reason ? { reason } : {}) },
       { headers: { 'If-Match': ifMatchValue } }
     );
     const data = readCampaign(response, id);

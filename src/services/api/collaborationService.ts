@@ -62,12 +62,25 @@ function writer<T>(path: (id: string) => string) {
     })).data.data;
 }
 
-function deliverableWriter<T>(action: 'submissions' | 'review' | 'publication' | 'outcome') {
+function deliverableWriter<T>(action: 'submissions' | 'review' | 'publication' | 'outcome' | 'external-submissions' | 'external-publication' | 'external-outcome') {
   return async (id: string, unit: string, body: T, key: string) =>
     writer<T>(() => `/collaborations/${id}/deliverables/${unit}/${action}`)(id, body, key);
 }
 
 export const collaborationService = {
+  flexibleAction: (id: string, action: 'management-mode' | 'complete-without-review' | 'terminate' | 'termination-requests' | 'termination-requests/decline', body: object, key: string) =>
+    writer<object>(() => `/collaborations/${id}/${action}`)(id, body, key),
+  submitExternal: deliverableWriter<object>('external-submissions'),
+  publishExternal: deliverableWriter<object>('external-publication'),
+  outcomeExternal: deliverableWriter<object>('external-outcome'),
+  postMetricHistory: (id: string, unit: string) =>
+    get<import('../../types/api/collaboration.types').PostMetricCollection[]>(`/collaborations/${id}/deliverables/${unit}/post-metrics`),
+  async collectPostMetrics(id: string, unit: string, expectedRevision: number, key: string) {
+    return (await apiClient.post<ApiResponse<import('../../types/api/collaboration.types').PostMetricCollection[]>>(
+      `/collaborations/${id}/deliverables/${unit}/post-metrics`, { expectedRevision },
+      { headers: { 'Idempotency-Key': key } },
+    )).data.data;
+  },
   async listCampaigns(): Promise<CampaignResponse[]> {
     return campaignService.getAllCampaigns();
   },

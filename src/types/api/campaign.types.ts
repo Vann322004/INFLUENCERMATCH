@@ -1,7 +1,7 @@
 // Campaign & CRM Pipeline Types based on OpenAPI specification
 
 export type CampaignObjective = 'AWARENESS' | 'ENGAGEMENT' | 'TRAFFIC' | 'CONVERSION';
-export type CampaignStatus = 'DRAFT' | 'READY_FOR_DISCOVERY' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED';
+export type CampaignStatus = 'DRAFT' | 'READY_FOR_DISCOVERY' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED' | 'CLOSED';
 export type CampaignPlatform = 'TIKTOK' | 'INSTAGRAM' | 'FACEBOOK' | 'YOUTUBE';
 
 export interface CampaignPlanningFields {

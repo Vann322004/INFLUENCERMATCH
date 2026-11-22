@@ -1,6 +1,6 @@
 import type { CampaignStatus } from './campaign.types';
 
-export type CollaborationStatus = 'PLANNED' | 'IN_PROGRESS' | 'AWAITING_REVIEW' | 'COMPLETED' | 'CANCELLED';
+export type CollaborationStatus = 'PLANNED' | 'IN_PROGRESS' | 'AWAITING_REVIEW' | 'COMPLETED' | 'CANCELLED' | 'TERMINATED';
 export type PaymentStatus = 'PENDING' | 'PARTIALLY_PAID' | 'PAID' | 'FAILED' | 'REFUNDED';
 
 export interface CollaborationChannel {
@@ -43,6 +43,7 @@ export interface DeliverableSubmission {
   source: 'CREATOR_PORTAL' | 'BRAND_EXTERNAL';
   sourceDescription?: string | null;
   createdAt: string;
+  receivedAt?: string;
 }
 
 export interface ContentDecision {
@@ -90,12 +91,49 @@ export interface LegacyOutcome extends Partial<Record<MetricName, number | null>
 export type MetricName = 'views' | 'clicks' | 'likes' | 'comments' | 'shares';
 
 export interface Measurement extends Partial<Record<MetricName, number | null>> {
+  sourceDescription?: string;
+  collectionId?: string;
+  metricSources?: Partial<Record<MetricName, 'PUBLIC_POST_CRAWL' | 'SELF_REPORTED' | 'BRAND_EXTERNAL_REPORTED'>>;
+  collectedAt?: string;
   deliverableId: string;
   submissionRevision: number;
   periodStart: string;
   periodEnd: string;
   unavailableMetrics?: MetricName[];
   evidenceUrl?: string;
+}
+
+export interface PostMetricCollection {
+  id: string;
+  publicationId: string;
+  status: 'PENDING' | 'SUCCEEDED' | 'FAILED';
+  postUrl: string;
+  requestedAt: string;
+  collectedAt?: string;
+  metrics?: Partial<Record<MetricName, number>> | null;
+  errorCode?: string;
+  upstreamTrackedAt?: string;
+  servedAt?: string;
+  upstreamErrorCode?: string;
+  retryable?: boolean;
+  retryAfterSeconds?: number;
+  metricStatus?: Partial<Record<'views' | 'likes' | 'comments' | 'shares',
+    'AVAILABLE' | 'NOT_SUPPORTED' | 'NOT_AVAILABLE' | 'FETCH_FAILED'>>;
+  metricErrors?: Partial<Record<'views' | 'likes' | 'comments' | 'shares', {
+    code?: string;
+    retryable?: boolean;
+  }>>;
+  collection?: {
+    source?: string;
+    method?: string;
+    cacheHit?: boolean;
+    scope?: string;
+    engagementRateFormula?: string;
+    engagementRateUnit?: string;
+  };
+  platform?: string;
+  postedAt?: string;
+  caption?: string;
 }
 
 export interface OutcomeValues {
@@ -150,6 +188,13 @@ export interface FinalReview extends ReviewValues {
 }
 
 export interface ExecutionSnapshot {
+  managementMode?: 'COLLABORATIVE' | 'BRAND_MANAGED';
+  completionMethod?: 'WITH_REVIEW' | 'WITHOUT_REVIEW' | null;
+  terminatedAt?: string;
+  terminationReason?: string;
+  terminationEvidence?: string;
+  exitRequests?: { id: string; reason: string; evidenceUrl?: string; requestedByRole: 'BRAND' | 'CREATOR'; createdAt: string;
+    resolvedAt?: string; resolution?: 'TERMINATED' | 'DECLINED'; resolutionReason?: string }[];
   id: string;
   campaignId: string;
   campaignStatus: CampaignStatus;
@@ -197,4 +242,6 @@ export interface PendingAssignment {
   fee: number;
   currency: string;
   terms: string;
+  kpiType?: 'VIEWS' | 'CLICKS' | 'LIKES' | 'COMMENTS' | 'SHARES' | null;
+  kpiTarget?: number | null;
 }

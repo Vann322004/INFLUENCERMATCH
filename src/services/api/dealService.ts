@@ -1,10 +1,21 @@
 import apiClient from '../apiClient';
 export interface DealChannel { creatorId: string; relationshipId: string; platform: string; username: string }
 export interface ProposalUnit { creatorId: string; contentType: string; quantity: number; dueAt: string; acceptanceChecklist: string[]; maxRevisionRounds: number }
-export interface DealProposal { id?: string; revision: number; kind: string; fee: number; currency: string; terms: string; deliverables: ProposalUnit[]; createdAt: string }
+export interface DealProposal {
+  id?: string;
+  revision: number;
+  kind: string;
+  fee: number;
+  currency: string;
+  terms: string;
+  deliverables: ProposalUnit[];
+  kpiType?: 'VIEWS' | 'CLICKS' | 'LIKES' | 'COMMENTS' | 'SHARES' | null;
+  kpiTarget?: number | null;
+  createdAt: string;
+}
 export interface Deal { id: string; campaignId: string; campaignName?: string; campaignStatus?: string; brandName?: string; plannedContactChannel?: string; availableDeliveryMethods?: string[]; masterId: string | null; status: string; revision: number; acceptedRevision: number | null; collaborationId: string | null; collaborationStatus?: string; channels: DealChannel[]; proposal: DealProposal | null; agreedFee: number | null }
 export interface CooperationBudget { status: string; totalBudget: number | null; currency: string | null; committedBudget: number | null; remainingBudget: number | null; confirmedCreatorCount: number; negotiatingBudget: number | null }
-export interface Delivery { invitationId: string; dealId?: string; deliveryMethod?: string; emailStatus: string; sentAt?: string | null; canRetry?: boolean; canResend?: boolean; portalNotificationCreated?: boolean; active?: boolean; invitationStatus?: string; expiresAt?: string }
+export interface Delivery { invitationId: string; dealId?: string; deliveryMethod?: string; emailStatus: string; sentAt?: string | null; canRetry?: boolean; canResend?: boolean; resendUnavailableReason?: string; resendAvailableAt?: string; portalNotificationCreated?: boolean; active?: boolean; invitationStatus?: string; expiresAt?: string }
 export interface DealHistory { events: { action: string; revision: number; createdAt: string; metadata: { invitationId?: string; agreementSource?: string; agreedAt?: string; evidenceSource?: string; evidenceUrl?: string; evidenceDescription?: string } }[]; proposals: DealProposal[] }
 const base = (campaignId: string) => `/campaigns/${campaignId}`;
 function dataOf(response: any) { if (response.data?.success === false || response.data?.data == null) throw new Error('Máy chủ chưa xác nhận kết quả.'); return response.data.data; }
@@ -46,6 +57,7 @@ export const dealService = {
     const result = deal(data, campaignId);
     if (result.id !== id) throw new Error('Máy chủ trả về sai thỏa thuận.');
     if (action === 'proposals' && (result.status !== 'NEGOTIATING' || !result.proposal || result.proposal.revision !== result.revision)) throw new Error('Máy chủ chưa xác nhận phiên bản đề xuất mới.');
+    if (action === 'cancel' && result.status !== 'CANCELLED') throw new Error('Máy chủ chưa xác nhận hồ sơ đã được hủy.');
     return result;
   },
   async delivery(id: string): Promise<Delivery> { return dataOf(await apiClient.get(`/cooperation-invitations/${id}/email-delivery`)); },

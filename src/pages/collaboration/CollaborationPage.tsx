@@ -2,7 +2,7 @@ import { Alert, Avatar, Button, Card, Empty, Input, Modal, Pagination, Progress,
 import type { TableColumnsType } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { authService } from '../../services/api/authService';
 import { collaborationService } from '../../services/api/collaborationService';
@@ -28,7 +28,7 @@ type SortOrder = typeof sortOptions[number]['value'];
 type BrandCollaborationRow = CollaborationSummary & { campaignName: string };
 
 const statusOrder: Record<CollaborationStatus, number> = {
-  IN_PROGRESS: 0, AWAITING_REVIEW: 1, PLANNED: 2, COMPLETED: 3, CANCELLED: 4,
+  IN_PROGRESS: 0, AWAITING_REVIEW: 1, PLANNED: 2, COMPLETED: 3, CANCELLED: 4, TERMINATED: 5,
 };
 const nameOrder = new Intl.Collator('vi', { sensitivity: 'base', numeric: true });
 
@@ -62,10 +62,11 @@ function CreatorName({ row }: { row: CollaborationSummary }) {
   </Space>;
 }
 
-function ProgressTable({ rows, snapshots, returnTo, emptyLabel }: {
+function ProgressTable({ rows, snapshots, returnTo, returnToState, emptyLabel }: {
   rows: BrandCollaborationRow[];
   snapshots: Record<string, ExecutionSnapshot>;
   returnTo: string;
+  returnToState: { campaignId?: string };
   emptyLabel: string;
 }) {
   if (!rows.length) return <Card><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyLabel} /></Card>;
@@ -87,7 +88,8 @@ function ProgressTable({ rows, snapshots, returnTo, emptyLabel }: {
         </Space> : 'Chưa có dữ liệu'}</td>
         <td>{deadline ? formatDate(deadline) : 'Chưa có dữ liệu'}</td>
         <td><strong>{formatMoney(row.agreedFee, row.currency)}</strong></td>
-        <td><Link className="collab-row-link" to={'/collaboration/' + row.id} state={{ returnTo }}>Xem hợp tác</Link></td>
+        <td><Link className="collab-row-link" to="/collaboration/detail"
+          state={{ collaborationId: row.id, returnTo, returnToState }}>Xem hợp tác</Link></td>
       </tr>;
     })}
   </OperationsTable>;
@@ -95,7 +97,11 @@ function ProgressTable({ rows, snapshots, returnTo, emptyLabel }: {
 
 function BrandCollaborations({ campaigns }: { campaigns: CampaignResponse[] }) {
   const [params, setParams] = useSearchParams();
-  const selectedCampaign = params.get('campaign') || params.get('campaignId');
+  const location = useLocation();
+  const locationState = useMemo(() => location.state && typeof location.state === 'object'
+    ? location.state as Record<string, unknown> : {}, [location.state]);
+  const stateCampaign = typeof locationState.campaignId === 'string' ? locationState.campaignId : undefined;
+  const selectedCampaign = params.get('campaign') || params.get('campaignId') || stateCampaign;
   const campaignId = campaigns.find(campaign => campaign.id === selectedCampaign)?.id;
   const status = statusOptions.find(option => option.value === params.get('status'))?.value;
   const query = params.get('q') ?? params.get('campaignSearch') ?? '';
@@ -109,16 +115,19 @@ function BrandCollaborations({ campaigns }: { campaigns: CampaignResponse[] }) {
   const retry = () => setRefresh(value => value + 1);
 
   function updateParams(changes: Record<string, string | undefined>) {
+    const nextCampaign = 'campaign' in changes ? changes.campaign : selectedCampaign;
     setParams(previous => {
       const next = new URLSearchParams(previous);
-      if ('campaign' in changes) next.delete('campaignId');
+      next.delete('campaign');
+      next.delete('campaignId');
       if ('q' in changes) next.delete('campaignSearch');
       for (const [key, value] of Object.entries(changes)) {
+        if (key === 'campaign') continue;
         if (value) next.set(key, value);
         else next.delete(key);
       }
       return next;
-    }, { replace: true });
+    }, { replace: true, state: { ...locationState, campaignId: nextCampaign } });
   }
 
   useEffect(() => {
@@ -161,10 +170,12 @@ function BrandCollaborations({ campaigns }: { campaigns: CampaignResponse[] }) {
     Math.max(1, Math.ceil(rows.length / pageSize)));
   const visible = useMemo(() => rows.slice((page - 1) * pageSize, page * pageSize), [rows, page]);
   const returnParams = new URLSearchParams(params);
-  if (!campaignId) returnParams.delete('campaign');
+  returnParams.delete('campaign');
+  returnParams.delete('campaignId');
   if (page > 1) returnParams.set('page', String(page));
   else returnParams.delete('page');
   const returnTo = '/collaboration' + (returnParams.size ? '?' + returnParams : '');
+  const returnToState = { campaignId: campaignId || undefined };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -212,6 +223,7 @@ function BrandCollaborations({ campaigns }: { campaigns: CampaignResponse[] }) {
       {summaryFailures && <Alert type="warning" showIcon title="Một số tiến trình chưa tải được."
         action={<Button size="small" onClick={retry}>Thử lại</Button>} />}
       {(!data?.failed || rows.length > 0) && <ProgressTable rows={visible} snapshots={snapshots} returnTo={returnTo}
+        returnToState={returnToState}
         emptyLabel={query.trim() || status ? 'Không tìm thấy hợp tác phù hợp' : 'Chưa có hợp tác'} />}
       {rows.length > pageSize && <Pagination size="small" current={page} pageSize={pageSize}
         total={rows.length} showSizeChanger={false}
@@ -343,6 +355,9 @@ export function CreatorCollaborations() {
         <div><strong>{selected.campaignName}</strong><div>{selected.brandName}</div></div>
         <div>{selected.channels.map(channelLabel).join(', ')}</div>
         <div>Phí đã chốt · {formatMoney(selected.fee, selected.currency)}</div>
+        <div>KPI cam kết · {selected.kpiType && selected.kpiTarget != null
+          ? `${selected.kpiType} ≥ ${formatNumber(selected.kpiTarget)}`
+          : 'Không cam kết KPI (K không áp dụng)'}</div>
         <p className="collab-agreement-terms">{selected.terms}</p>
         <ul>{selected.deliverables.map((unit, index) => {
           const channel = selected.channels.find(item => item.creatorId === unit.creatorId);

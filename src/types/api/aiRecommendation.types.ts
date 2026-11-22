@@ -17,6 +17,9 @@ export interface ScoreBreakdownDto {
   rScore?: number | null;
   tScore?: number | null;
   kScore?: number | null;
+  rAvailability?: 'AVAILABLE' | 'UNAVAILABLE' | null;
+  tAvailability?: 'AVAILABLE' | 'UNAVAILABLE' | null;
+  kAvailability?: 'AVAILABLE' | 'UNAVAILABLE' | 'NOT_APPLICABLE' | null;
   eligibleEvaluatedCollaborations?: number | null;
   distinctBrandCount?: number | null;
   maxBrandShare?: number | null;
@@ -87,6 +90,12 @@ export interface RecommendationRunMetadata {
   evaluatedCount?: number;
   scoringAsOf?: string;
   historyCutoff?: string;
+  evidencePolicyVersion?: string;
+  historySelectionPolicyVersion?: string;
+  m1PolicyVersion?: string;
+  m1Weights?: number[];
+  m4PolicyVersion?: string;
+  m4HistoryReadStatus?: 'AVAILABLE' | 'EMPTY' | 'READ_FAILED';
   effectiveWeights?: number[] | null;
   criticWeights?: number[] | null;
   businessWeights?: number[] | null;

@@ -2,6 +2,7 @@ import { Button, Checkbox, DatePicker, Form, Input, InputNumber, Radio, Rate, Se
 import type { FormRule } from 'antd';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
+import { formatVndInput, parseVndInput } from './lifecyclePresentation';
 import type {
   CollaborationChannel, Deliverable, LegacyPlan, Measurement, MetricName, OutcomeValues, ReviewValues,
 } from '../../types/api/collaboration.types';
@@ -62,6 +63,7 @@ const moneyRule = nonnegativeNumberRule(false);
 const dateRange = (start?: string, end?: string) => start && end ? [dayjs(start), dayjs(end)] : undefined;
 
 export type OutcomeForm = Partial<Record<MetricName, string>> & {
+  collectionId?: string;
   period: [Dayjs, Dayjs];
   unavailable?: Partial<Record<MetricName, boolean>>;
   evidenceUrl?: string;
@@ -94,6 +96,7 @@ export function measurementMetric(post: Measurement | undefined, metric: MetricN
 export function initialOutcome(post?: Measurement): Partial<OutcomeForm> {
   const unavailable: OutcomeForm['unavailable'] = {};
   const values: Partial<OutcomeForm> = {
+    collectionId: post?.collectionId,
     period: dateRange(post?.periodStart, post?.periodEnd) as [Dayjs, Dayjs] | undefined,
     evidenceUrl: post?.evidenceUrl,
     unavailable,
@@ -122,6 +125,7 @@ export function outcomePayload(values: OutcomeForm & { url?: string }, unit: Del
   const [periodStart, periodEnd] = isoPeriod(values.period);
   const unavailableMetrics = metrics.filter(metric => values.unavailable?.[metric]);
   const post: Omit<Measurement, 'deliverableId'> = {
+    collectionId: values.collectionId,
     submissionRevision: unit.submissionRevision, periodStart, periodEnd, unavailableMetrics,
     evidenceUrl: values.evidenceUrl?.trim() || undefined,
   };
@@ -219,7 +223,7 @@ export function FinanceFields({ editing }: { editing: boolean }) {
               </Form.Item>
               <Form.Item name={[name, 'amount']} label="Số tiền (VND)" dependencies={[description]}
                 rules={[requiredWhenEntered, moneyRule]}>
-                <Input inputMode="decimal" placeholder="Ví dụ: 150000" />
+                <InputNumber<string> stringMode min="0" max={String(Number.MAX_SAFE_INTEGER)} precision={2} controls={false} decimalSeparator="," suffix="₫" style={{ width: '100%' }} formatter={(value, info) => info.userTyping ? info.input : formatVndInput(value)} parser={parseVndInput} placeholder="Ví dụ: 150.000" />
               </Form.Item>
               <Button onClick={() => remove(name)}>Bỏ khoản chi</Button>
             </div>;
@@ -246,9 +250,9 @@ export function FinanceFields({ editing }: { editing: boolean }) {
       <div className="execution-grid">
         <Form.Item name="gmv" label={gmvLabel} rules={[moneyRule]}
           extra="Tổng giá trị đơn hàng ghi nhận từ hợp tác trong kỳ đối soát.">
-          <Input inputMode="decimal" />
+          <InputNumber<string> stringMode min="0" max={String(Number.MAX_SAFE_INTEGER)} precision={2} controls={false} decimalSeparator="," suffix="₫" style={{ width: '100%' }} formatter={(value, info) => info.userTyping ? info.input : formatVndInput(value)} parser={parseVndInput} />
         </Form.Item>
-        <Form.Item name="revenue" label="Doanh thu" rules={[moneyRule]}><Input inputMode="decimal" /></Form.Item>
+        <Form.Item name="revenue" label="Doanh thu" rules={[moneyRule]}><InputNumber<string> stringMode min="0" max={String(Number.MAX_SAFE_INTEGER)} precision={2} controls={false} decimalSeparator="," suffix="₫" style={{ width: '100%' }} formatter={(value, info) => info.userTyping ? info.input : formatVndInput(value)} parser={parseVndInput} /></Form.Item>
         <Form.Item name="financialPeriod" label="Kỳ tài chính (giờ địa phương)">
           <DatePicker.RangePicker showTime format="DD/MM/YYYY HH:mm" />
         </Form.Item>
@@ -315,12 +319,13 @@ export function LegacyPlanFields({ channels }: { channels: CollaborationChannel[
 
 export function ReviewFields() {
   return <>
-    <Form.Item name="overallRating" label="Đánh giá tổng thể" rules={[required]}><Rate allowClear={false} /></Form.Item>
-    <Form.Item name="brandFitRating" label="Mức phù hợp với thương hiệu" rules={[required]}><Rate allowClear={false} /></Form.Item>
+    <Typography.Paragraph type="secondary">Final Review là tùy chọn. Review ghi nhận đánh giá của Brand; M1/M4 được hệ thống tính từ bằng chứng và không nhập điểm thủ công tại đây.</Typography.Paragraph>
+    <Form.Item name="overallRating" label="Đánh giá tổng thể (1–5)" rules={[required]}><Rate allowClear={false} /></Form.Item>
+    <Form.Item name="brandFitRating" label="Mức phù hợp với thương hiệu (1–5)" rules={[required]}><Rate allowClear={false} /></Form.Item>
     <Form.Item name="wouldCollaborateAgain" label="Bạn có muốn hợp tác lại?" rules={[required]}>
       <Radio.Group options={[{ value: true, label: 'Có' }, { value: false, label: 'Không' }]} />
     </Form.Item>
-    <Form.Item name="note" label="Ghi chú"><Input.TextArea maxLength={2000} /></Form.Item>
+    <Form.Item name="note" label="Ghi chú (tối đa 2.000 ký tự)"><Input.TextArea maxLength={2000} /></Form.Item>
     <Form.Item name="reviewTags" label="Nhãn đánh giá" extra="Nhấn Enter để thêm nhãn. Tối đa 20 nhãn."
       rules={[{ validator: async (_, tags?: string[]) => {
         if (tags?.some(tag => !tag.trim() || tag.trim().length > 100)) throw new Error('Mỗi nhãn có từ 1 đến 100 ký tự.');

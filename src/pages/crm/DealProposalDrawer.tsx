@@ -35,6 +35,8 @@ function ProposalEditor({ campaignId, deal, initialDelivery, history, readOnly, 
   const [form] = Form.useForm<ProposalForm>();
   const [confirmForm] = Form.useForm();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelForm] = Form.useForm<{ reason: string }>();
   const agreementSource = Form.useWatch('agreementSource', confirmForm);
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -49,6 +51,8 @@ function ProposalEditor({ campaignId, deal, initialDelivery, history, readOnly, 
   const mutable = !readOnly && ['CONTACTED', 'NEGOTIATING'].includes(deal.status);
   const accepted = !!deal.proposal && deal.acceptedRevision === deal.proposal.revision;
   const canConfirm = (getStoredUser()?.permissions ?? []).includes('MANAGE_OWN_COLLABORATION');
+  const canCancel = !readOnly && canConfirm && (mutable || (deal.status === 'CONFIRMED' && deal.collaborationStatus === 'PLANNED'));
+  const cancelLabel = deal.collaborationId ? 'Hủy hợp tác trước khi bắt đầu' : delivery ? 'Rút lời mời' : 'Hủy hồ sơ tiếp cận';
   const resendState = emailResendState(deal, delivery, readOnly);
   const manual = deliveryMethod === 'MANUAL_LINK';
   const channelDescription = manual ? 'Bạn tự chia sẻ link lời mời. Hệ thống không gửi email hoặc thông báo Portal.'
@@ -58,6 +62,7 @@ function ProposalEditor({ campaignId, deal, initialDelivery, history, readOnly, 
     : 'Chưa tải được các cách gửi khả dụng cho người nhận này.';
   const initialValues: Partial<ProposalForm> = {
     fee: deal.proposal?.fee, terms: deal.proposal?.terms ?? '',
+    kpiType: deal.proposal?.kpiType ?? undefined, kpiTarget: deal.proposal?.kpiTarget ?? null,
     units: deal.proposal?.deliverables.map(unit => ({ ...unit, dueAt: localDate(unit.dueAt), checklist: unit.acceptanceChecklist?.join('\n') ?? '' }))
       ?? deal.channels.map(channel => ({ creatorId: channel.creatorId, contentType: '', quantity: 1, dueAt: '', checklist: '', maxRevisionRounds: 1 })),
   };
@@ -81,6 +86,7 @@ function ProposalEditor({ campaignId, deal, initialDelivery, history, readOnly, 
       const sameChannels = source.channels.length === deal.channels.length && source.channels.every(channel => deal.channels.some(target => target.creatorId === channel.creatorId));
       const singleMatch = source.channels.length === 1 && deal.channels.length === 1 && source.channels[0].platform === deal.channels[0].platform;
       form.setFieldsValue({ fee: source.proposal.fee, terms: source.proposal.terms,
+        kpiType: source.proposal.kpiType ?? undefined, kpiTarget: source.proposal.kpiTarget ?? null,
         ...(sameChannels || singleMatch ? { units: source.proposal.deliverables.map(unit => ({ creatorId: singleMatch ? deal.channels[0].creatorId : unit.creatorId, contentType: unit.contentType, quantity: unit.quantity, dueAt: localDate(unit.dueAt), checklist: unit.acceptanceChecklist?.join('\n') ?? '', maxRevisionRounds: unit.maxRevisionRounds })) } : {}),
       });
       setDirty(true);
@@ -112,6 +118,14 @@ function ProposalEditor({ campaignId, deal, initialDelivery, history, readOnly, 
     setConfirmOpen(false); message.success('Đã xác nhận hợp tác. Có thể tiếp tục quản lý bàn giao.'); onSaved();
   });
 
+  const cancel = (values: { reason: string }) => perform(async () => {
+    const body = { expectedRevision: deal.revision, reason: values.reason.trim() };
+    const result = await dealService.write(campaignId, deal.id, 'cancel', body, await writeKey(deal.id + ':cancel', body)) as Deal;
+    if (result.status !== 'CANCELLED') throw new Error('Chưa xác nhận hồ sơ đã được hủy.');
+    if (getAuthSessionId() !== sessionId) return;
+    setCancelOpen(false); message.success('Đã hủy hồ sơ và vô hiệu hóa lời mời liên quan.'); onSaved();
+  });
+
   return <div className="contact-proposal">
     <div className="contact-section-heading"><strong>{deal.channels.map(channel => `${channel.platform} · @${channel.username.replace(/^@+/, '')}`).join(' / ')}</strong><Tag>{dealLabel(deal.status)}</Tag></div>
     <div className="contact-route-summary"><strong>Cách gửi lời mời</strong>{mutable && <Select aria-label="Cách gửi lời mời" value={deliveryMethod} placeholder="Chọn cách gửi" disabled={busy || (!!delivery && delivery.active !== false && !dirty)} onChange={setDeliveryMethod} options={availableMethods.map(value => ({ value, label: deliveryMethodLabels[value] }))} style={{ width: '100%', marginTop: 10 }} />}<p>{channelDescription}</p></div>
@@ -131,6 +145,13 @@ function ProposalEditor({ campaignId, deal, initialDelivery, history, readOnly, 
       {delivery.emailStatus === 'MANUAL_REQUIRED' && <p>Chia sẻ link qua kênh liên hệ công khai. Chưa xác nhận Creator đã nhận hoặc đồng ý.</p>}
     </section>}
     <ProposalHistory history={history} />
+    {canCancel && <Button danger disabled={busy} onClick={() => setCancelOpen(true)}>{cancelLabel}</Button>}
+    <Modal title={cancelLabel} open={cancelOpen} onCancel={() => { if (!busy) setCancelOpen(false); }} okText="Xác nhận hủy" cancelText="Giữ lại" okButtonProps={{ danger: true }} confirmLoading={busy} onOk={() => cancelForm.submit()} destroyOnHidden>
+      <p>Lời mời liên quan sẽ mất hiệu lực. Lịch sử được giữ lại; thao tác này không thực hiện thanh toán hoặc hoàn tiền.</p>
+      {dirty && <Alert type="warning" title="Nội dung đang chỉnh chưa được lưu sẽ không được gửi." />}
+      {error && <Alert type="error" title={error} />}
+      <Form form={cancelForm} layout="vertical" disabled={busy} onFinish={values => void cancel(values)}><Form.Item name="reason" label="Lý do dừng hợp tác" rules={[{ required: true, whitespace: true, message: 'Nhập lý do hủy.' }]}><Input.TextArea rows={3} maxLength={1000} showCount /></Form.Item></Form>
+    </Modal>
     {deal.collaborationId && <Button type="primary" onClick={() => navigate('/collaboration')}>Đi đến quản lý bàn giao</Button>}
     {mutable && <div className="contact-proposal-footer"><Button loading={busy} disabled={busy || (!dirty && !!deal.proposal && deal.proposal.kind === 'OFFER')} onClick={() => form.submit()}>Lưu bản nháp</Button>
       <Button type={accepted && !dirty ? 'default' : 'primary'} disabled={busy || !deliveryMethod || !availableMethods.includes(deliveryMethod) || (!!delivery && delivery.active !== false && !dirty && deal.proposal?.kind === 'OFFER')} onClick={() => void reviewAndSend()}>{manual ? 'Xem lại & tạo link' : 'Xem lại & gửi'}</Button>
