@@ -13,7 +13,7 @@ export async function requestCrawler<T>(baseUrl: string, endpoint: string, optio
         throw new Error(`Dịch vụ thu thập tạm thời không kết nối được (HTTP ${response.status}). Vui lòng kiểm tra máy chủ crawler và cấu hình proxy.`);
       }
       const detail = body?.detail || body?.error;
-      throw new Error(typeof detail === 'string' ? detail : `Yêu cầu thu thập thất bại (HTTP ${response.status}).`);
+      throw Object.assign(new Error(typeof detail === 'string' ? detail : `Yêu cầu thu thập thất bại (HTTP ${response.status}).`), { status: response.status });
     }
     if (!body || typeof body !== 'object') throw new Error('Máy chủ thu thập trả về dữ liệu không hợp lệ. Kiểm tra cấu hình đường dẫn crawler.');
     return body as T;

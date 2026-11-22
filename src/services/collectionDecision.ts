@@ -1,5 +1,15 @@
 export type CollectionOutcome = 'accepted' | 'rejected' | 'review' | 'pending';
 
+export function collectionNeedsComparison(result: {
+  status?: string; decision?: string; primary_type?: string; database_synced?: boolean;
+}) {
+  if (result.status !== 'success') return false;
+  const decision = (result.decision || '').toUpperCase();
+  return collectionOutcome(decision, result.primary_type) === 'review'
+    || ['SKIP_INSUFFICIENT', 'RETRY_PREFLIGHT'].includes(decision)
+    || (!result.database_synced && (!decision || decision === 'UNKNOWN'));
+}
+
 // A crawl completing is not an approval. Classification alone is not an approval either.
 export function collectionOutcome(decision?: string, primaryType?: string): CollectionOutcome {
   const value = (decision || '').toUpperCase();

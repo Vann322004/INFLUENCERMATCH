@@ -433,6 +433,47 @@
   color: #334155;
 }
 
+/* Override Ant Design Select dropdown: bỏ màu tím ở option đã chọn */
+.quality-decision-card .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background-color: #F0FDF4 !important;
+  color: #166534 !important;
+  font-weight: 600 !important;
+}
+
+.quality-decision-card .ant-select-item-option-selected:not(.ant-select-item-option-disabled) .ant-select-item-option-state {
+  color: #16A34A !important;
+}
+
+.quality-decision-card .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background-color: #F8FAFC !important;
+}
+
+/* Tag của item đã chọn trong input box */
+.quality-decision-card .ant-select-selection-item {
+  background: #DCFCE7 !important;
+  border-color: #86EFAC !important;
+  color: #166534 !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+}
+
+.quality-decision-card .ant-select-selection-item-remove {
+  color: #16A34A !important;
+}
+
+/* Radio button toggle: "Duyệt hồ sơ" = xanh lá, "Từ chối" = đỏ */
+.quality-decision-toggle .ant-radio-button-wrapper:first-child.ant-radio-button-wrapper-checked {
+  background: #16A34A !important;
+  border-color: #16A34A !important;
+  color: #fff !important;
+}
+
+.quality-decision-toggle .ant-radio-button-wrapper:last-child.ant-radio-button-wrapper-checked {
+  background: #DC2626 !important;
+  border-color: #DC2626 !important;
+  color: #fff !important;
+}
+
 .quality-niche-fallback {
   margin: -4px 0 12px;
   font-size: 12px;

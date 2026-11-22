@@ -9,6 +9,7 @@ interface DirectCrawlModalProps {
   defaultInput?: string;
   initialResult?: LiveCrawlResult;
   onImportSuccess?: (result: LiveCrawlResult) => void;
+  onDismiss?: (result: LiveCrawlResult, reason?: string) => void;
 }
 
 export default function DirectCrawlModal({
@@ -17,10 +18,11 @@ export default function DirectCrawlModal({
   defaultInput = '',
   initialResult,
   onImportSuccess,
+  onDismiss,
 }: DirectCrawlModalProps) {
   return (
     <Modal
-      title={initialResult ? 'Chi tiết kết quả thu thập' : 'Thu thập dữ liệu trực tiếp'}
+      title={initialResult ? 'Chi tiết kết quả thu thập & đối chiếu' : 'Thu thập dữ liệu trực tiếp'}
       open={open}
       onCancel={onClose}
       footer={null}
@@ -28,13 +30,36 @@ export default function DirectCrawlModal({
       destroyOnClose
       style={{ top: 20, maxWidth: '95vw' }}
     >
-      <div style={{ maxHeight: '80vh', overflowY: 'auto', paddingRight: 4 }}>
+      <style>{`
+        .direct-crawl-modal-scroll {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .direct-crawl-modal-scroll::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+      `}</style>
+      <div
+        className="direct-crawl-modal-scroll"
+        style={{
+          maxHeight: '85vh',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          paddingBottom: 8,
+        }}
+      >
         <LiveCrawlTab
           key={defaultInput}
           defaultInput={defaultInput}
           initialResult={initialResult}
           onImportSuccess={(res) => {
             if (onImportSuccess) onImportSuccess(res);
+            onClose();
+          }}
+          onDismiss={(res, reason) => {
+            if (onDismiss) onDismiss(res, reason);
             onClose();
           }}
         />

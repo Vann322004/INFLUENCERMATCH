@@ -1,6 +1,6 @@
-import React from 'react';
-import { Card, Row, Col, Typography, Tag, Tooltip } from 'antd';
-import { SafetyCertificateOutlined, LinkOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Card, Row, Col, Typography, Tag, Tooltip, Avatar } from 'antd';
+import { SafetyCertificateOutlined, LinkOutlined, UserOutlined } from '@ant-design/icons';
 import type { LiveCrawlResult } from '../../../../../types/api/crawler.types';
 import { formatViNumber, formatFullNumber } from '../../../../../utils/formatters';
 
@@ -12,235 +12,281 @@ interface LiveCrawlProfileCardProps {
 }
 
 export default function LiveCrawlProfileCard({ result, engagementRate }: LiveCrawlProfileCardProps) {
+  const [avatarError, setAvatarError] = useState(false);
   const followersFull = formatFullNumber(result.followers);
   const heartsFull = formatFullNumber(result.heart_count);
   const videoCount = result.video_count || result.recent_posts?.length || 0;
+  const initial = (result.display_name || result.username || '?').charAt(0).toUpperCase();
 
   return (
     <Card
       style={{
         borderRadius: 12,
         border: '1px solid #E2E8F0',
-        marginBottom: 20,
+        marginBottom: 12,
         boxShadow: '0 1px 6px rgba(0,0,0,0.03)',
+        overflow: 'hidden',
       }}
-      bodyStyle={{ padding: 22 }}
+      bodyStyle={{ padding: '14px 18px' }}
     >
-      <Row gutter={[20, 20]} align="top">
-        {/* Avatar + Main Info */}
-        <Col xs={24} md={10}>
-          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-            <img
-              src={result.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${result.username}`}
-              alt={result.display_name}
-              style={{
-                width: 72,
-                height: 72,
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '2px solid #F3E8FF',
-                flexShrink: 0,
-              }}
-            />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <Title level={5} style={{ margin: 0, color: '#0F172A', wordBreak: 'break-word' }}>
-                  {result.display_name || result.username}
-                </Title>
-                {result.is_verified && (
-                  <Tooltip title="Tài khoản đã xác minh chính chủ">
-                    <SafetyCertificateOutlined style={{ color: '#7C3AED', fontSize: 16 }} />
-                  </Tooltip>
-                )}
-                <Tag color="geekblue" style={{ borderRadius: 4, fontWeight: 600, fontSize: 11, margin: 0 }}>
-                  {result.platform}
-                </Tag>
-              </div>
+      {/* Thông tin hồ sơ chính */}
+      <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 12 }}>
+        {result.avatar_url && !avatarError ? (
+          <img
+            src={result.avatar_url}
+            alt={result.display_name || result.username}
+            referrerPolicy="no-referrer"
+            onError={() => setAvatarError(true)}
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '2px solid #F3E8FF',
+              flexShrink: 0,
+            }}
+          />
+        ) : (
+          <Avatar
+            size={56}
+            style={{
+              backgroundColor: '#7C3AED',
+              color: '#FFFFFF',
+              fontSize: 22,
+              fontWeight: 700,
+              flexShrink: 0,
+              border: '2px solid #F3E8FF',
+            }}
+          >
+            {initial || <UserOutlined />}
+          </Avatar>
+        )}
 
-              <div style={{ color: '#6D28D9', fontWeight: 600, fontSize: 13, marginTop: 2 }}>
-                @{result.username}
-              </div>
-
-              {result.profile_url && (
-                <div style={{ marginTop: 4 }}>
-                  <a
-                    href={result.profile_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ fontSize: 12, color: '#64748B', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                  >
-                    <LinkOutlined /> Mở trang cá nhân ↗
-                  </a>
-                </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <Title level={5} style={{ margin: 0, color: '#0F172A', wordBreak: 'break-word', fontSize: 15 }}>
+                {result.display_name || result.username}
+              </Title>
+              {result.is_verified && (
+                <Tooltip title="Tài khoản đã xác minh chính chủ">
+                  <SafetyCertificateOutlined style={{ color: '#7C3AED', fontSize: 15 }} />
+                </Tooltip>
               )}
+              <Tag color="geekblue" style={{ borderRadius: 4, fontWeight: 600, fontSize: 11, margin: 0 }}>
+                {result.platform}
+              </Tag>
             </div>
+
+            {result.profile_url && (
+              <a
+                href={result.profile_url}
+                target="_blank"
+                rel="noreferrer"
+                style={{ fontSize: 12, color: '#64748B', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 500 }}
+              >
+                <LinkOutlined /> Mở trang cá nhân ↗
+              </a>
+            )}
           </div>
 
-          {/* Bio */}
+          <div style={{ color: '#6D28D9', fontWeight: 600, fontSize: 12.5, marginTop: 2 }}>
+            @{result.username}
+          </div>
+
           {result.bio && (
             <div
               style={{
-                marginTop: 14,
+                marginTop: 8,
                 background: '#F8FAFC',
-                padding: '10px 12px',
-                borderRadius: 8,
+                padding: '6px 10px',
+                borderRadius: 6,
                 border: '1px solid #E2E8F0',
                 fontSize: 12,
                 color: '#334155',
-                lineHeight: 1.5,
+                lineHeight: 1.45,
+                wordBreak: 'break-word',
               }}
             >
-              <Text strong style={{ color: '#64748B', fontSize: 11, display: 'block', marginBottom: 2 }}>
+              <Text strong style={{ color: '#64748B', fontSize: 10.5, display: 'block', marginBottom: 2 }}>
                 TIỂU SỬ KÊNH
               </Text>
-              <div style={{ wordBreak: 'break-word' }}>{result.bio}</div>
+              <div>{result.bio}</div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Lưới 4 chỉ số thống kê - Chiếm toàn bộ chiều rộng thẻ, không bị ép lệch */}
+      <Row gutter={[10, 10]} style={{ marginLeft: 0, marginRight: 0, marginBottom: 12 }}>
+        <Col xs={12} sm={12} md={6}>
+          <div
+            style={{
+              background: '#F8FAFC',
+              borderRadius: 8,
+              border: '1px solid #E2E8F0',
+              padding: '8px 6px',
+              textAlign: 'center',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: '#64748B' }}>
+              NGƯỜI THEO DÕI
+            </div>
+            <Tooltip title={`${followersFull} người theo dõi`}>
+              <div
+                style={{
+                  fontSize: 18,
+                  fontWeight: 800,
+                  color: '#1E293B',
+                  marginTop: 2,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {formatViNumber(result.followers)}
+              </div>
+            </Tooltip>
+            <div style={{ fontSize: 10.5, color: '#10B981', marginTop: 1 }}>
+              {followersFull}
+            </div>
+          </div>
         </Col>
 
-        {/* Statistics Grid */}
-        <Col xs={24} md={14}>
-          <Row gutter={[12, 12]}>
-            <Col xs={12} sm={12} md={6}>
+        <Col xs={12} sm={12} md={6}>
+          <div
+            style={{
+              background: '#F8FAFC',
+              borderRadius: 8,
+              border: '1px solid #E2E8F0',
+              padding: '8px 6px',
+              textAlign: 'center',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: '#64748B' }}>
+              LƯỢT THÍCH
+            </div>
+            <Tooltip title={`${heartsFull} lượt thích`}>
               <div
                 style={{
-                  background: '#F8FAFC',
-                  borderRadius: 10,
-                  border: '1px solid #E2E8F0',
-                  padding: '12px 8px',
-                  textAlign: 'center',
+                  fontSize: 18,
+                  fontWeight: 800,
+                  color: '#E11D48',
+                  marginTop: 2,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
               >
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', whiteSpace: 'nowrap' }}>
-                  NGƯỜI THEO DÕI
-                </div>
-                <Tooltip title={`${followersFull} người theo dõi`}>
-                  <div
-                    style={{
-                      fontSize: 19,
-                      fontWeight: 800,
-                      color: '#1E293B',
-                      marginTop: 4,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {formatViNumber(result.followers)}
-                  </div>
-                </Tooltip>
-                <div style={{ fontSize: 10.5, color: '#10B981', marginTop: 2, whiteSpace: 'nowrap' }}>
-                  {followersFull}
-                </div>
+                {formatViNumber(result.heart_count)}
               </div>
-            </Col>
+            </Tooltip>
+            <div style={{ fontSize: 10.5, color: '#64748B', marginTop: 1 }}>
+              {heartsFull}
+            </div>
+          </div>
+        </Col>
 
-            <Col xs={12} sm={12} md={6}>
-              <div
-                style={{
-                  background: '#F8FAFC',
-                  borderRadius: 10,
-                  border: '1px solid #E2E8F0',
-                  padding: '12px 8px',
-                  textAlign: 'center',
-                }}
-              >
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', whiteSpace: 'nowrap' }}>
-                  LƯỢT THÍCH
-                </div>
-                <Tooltip title={`${heartsFull} lượt thích`}>
-                  <div
-                    style={{
-                      fontSize: 19,
-                      fontWeight: 800,
-                      color: '#E11D48',
-                      marginTop: 4,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {formatViNumber(result.heart_count)}
-                  </div>
-                </Tooltip>
-                <div style={{ fontSize: 10.5, color: '#64748B', marginTop: 2, whiteSpace: 'nowrap' }}>
-                  {heartsFull}
-                </div>
-              </div>
-            </Col>
+        <Col xs={12} sm={12} md={6}>
+          <div
+            style={{
+              background: '#F8FAFC',
+              borderRadius: 8,
+              border: '1px solid #E2E8F0',
+              padding: '8px 6px',
+              textAlign: 'center',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: '#64748B' }}>
+              TỔNG BÀI TRÊN KÊNH
+            </div>
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 800,
+                color: '#7C3AED',
+                marginTop: 2,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {formatFullNumber(videoCount)}
+            </div>
+            <div style={{ fontSize: 10.5, color: '#64748B', marginTop: 1 }}>
+              Đã xuất bản
+            </div>
+          </div>
+        </Col>
 
-            <Col xs={12} sm={12} md={6}>
-              <div
-                style={{
-                  background: '#F8FAFC',
-                  borderRadius: 10,
-                  border: '1px solid #E2E8F0',
-                  padding: '12px 8px',
-                  textAlign: 'center',
-                }}
-              >
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', whiteSpace: 'nowrap' }}>
-                  TỔNG BÀI TRÊN KÊNH
-                </div>
-                <div
-                  style={{
-                    fontSize: 19,
-                    fontWeight: 800,
-                    color: '#7C3AED',
-                    marginTop: 4,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {formatFullNumber(videoCount)}
-                </div>
-                <div style={{ fontSize: 10.5, color: '#64748B', marginTop: 2, whiteSpace: 'nowrap' }}>
-                  Đã xuất bản
-                </div>
-              </div>
-            </Col>
-
-            <Col xs={12} sm={12} md={6}>
-              <div
-                style={{
-                  background: '#F0FDF4',
-                  borderRadius: 10,
-                  border: '1px solid #BBF7D0',
-                  padding: '12px 8px',
-                  textAlign: 'center',
-                }}
-              >
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#166534', whiteSpace: 'nowrap' }}>
-                  TƯƠNG TÁC
-                </div>
-                <div
-                  style={{
-                    fontSize: 19,
-                    fontWeight: 800,
-                    color: '#15803D',
-                    marginTop: 4,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {engagementRate > 0 ? `${engagementRate}%` : '—'}
-                </div>
-                <div style={{ fontSize: 10.5, color: '#15803D', marginTop: 2, whiteSpace: 'nowrap' }}>
-                  {result.recent_posts?.length ? 'Trung bình bài đã thu thập' : 'Chưa có bài để tính'}
-                </div>
-              </div>
-            </Col>
-          </Row>
-
-          {/* Metadata */}
-          <div style={{ marginTop: 14, fontSize: 12, color: '#64748B', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            <span>
-              <strong>Mã tác giả:</strong> <Text code>{result.author_id || 'Chưa có'}</Text>
-            </span>
-            <span>
-              <strong>Thời gian thu thập:</strong> {result.collected_at && !Number.isNaN(Date.parse(result.collected_at)) ? new Date(result.collected_at).toLocaleString('vi-VN') : 'Chưa có thời gian từ nguồn dữ liệu'}
-            </span>
+        <Col xs={12} sm={12} md={6}>
+          <div
+            style={{
+              background: '#F0FDF4',
+              borderRadius: 8,
+              border: '1px solid #BBF7D0',
+              padding: '8px 6px',
+              textAlign: 'center',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: '#166534' }}>
+              TƯƠNG TÁC
+            </div>
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 800,
+                color: '#15803D',
+                marginTop: 2,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {engagementRate > 0 ? `${engagementRate}%` : '—'}
+            </div>
+            <div style={{ fontSize: 10.5, color: '#15803D', marginTop: 1 }}>
+              {result.recent_posts?.length ? 'Trung bình bài viết' : 'Chưa có bài để tính'}
+            </div>
           </div>
         </Col>
       </Row>
+
+      {/* Thông tin phụ: Mã tác giả & Thời gian thu thập */}
+      <div
+        style={{
+          borderTop: '1px solid #F1F5F9',
+          paddingTop: 8,
+          fontSize: 11.5,
+          color: '#64748B',
+          display: 'flex',
+          gap: 16,
+          flexWrap: 'wrap',
+          alignItems: 'center',
+        }}
+      >
+        <span>
+          <strong>Mã tác giả:</strong> <Text code>{result.author_id || 'Chưa có'}</Text>
+        </span>
+        <span>
+          <strong>Thời gian thu thập:</strong>{' '}
+          {result.collected_at && !Number.isNaN(Date.parse(result.collected_at))
+            ? new Date(result.collected_at).toLocaleString('vi-VN')
+            : 'Chưa có thời gian từ nguồn dữ liệu'}
+        </span>
+      </div>
     </Card>
   );
 }
