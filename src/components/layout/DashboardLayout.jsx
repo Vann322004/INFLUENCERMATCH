@@ -230,7 +230,7 @@ export default function DashboardLayout({ children }) {
       </Sider>
 
       {/* MAIN LAYOUT */}
-      <Layout style={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <Layout className="dashboard-main-layout" style={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {/* HEADER */}
         <Header
           style={{
@@ -302,6 +302,7 @@ export default function DashboardLayout({ children }) {
 
         {/* SCROLLABLE CONTENT BODY */}
         <Content
+          className="dashboard-main-content"
           style={{
             background: '#F8FAFC',
             overflowY: 'auto',

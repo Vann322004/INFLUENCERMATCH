@@ -268,6 +268,16 @@ export const subscriptionService = {
     return response.data.data;
   },
 
+  /** Create a hosted PayOS QR checkout for a subscription plan. */
+  async subscribePayOS(planId: string): Promise<PaymentResponse> {
+    const response = await apiClient.post<ApiResponse<PaymentResponse>>('/billing/subscribe/payos', { planId });
+    const checkout = response.data.data;
+    if (!checkout?.paymentUrl || !checkout.transactionCode) {
+      throw new Error('Thông tin thanh toán PayOS không hợp lệ. Vui lòng thử lại.');
+    }
+    return checkout;
+  },
+
   /**
    * Initiate VNPay subscription checkout for a plan.
    * Returns VNPay payment URL for direct redirect.

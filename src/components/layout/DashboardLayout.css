@@ -1,4 +1,8 @@
 /* DashboardLayout CSS & Ant Design Fixes */
+.dashboard-main-layout,
+.dashboard-main-content {
+  min-width: 0;
+}
 
 /* Fix Sider Flex Container so user card stays at bottom */
 .antd-custom-sider {

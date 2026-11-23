@@ -29,3 +29,12 @@ export function subscriptionIsActive(status: string, expirationDate: string, now
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   return status === 'ACTIVE' && expirationDate >= today;
 }
+
+/** Keep gateway references as strings: PayOS order codes can exceed safe JS integers. */
+export function getPaymentReturn(params: URLSearchParams): { reference: string | null; cancelled: boolean } | null {
+  if (!['payment', 'vnp_ResponseCode', 'vnp_TransactionStatus', 'status', 'orderCode', 'cancel'].some(key => params.has(key))) return null;
+  return {
+    reference: params.get('orderCode') || params.get('txnRef') || params.get('vnp_TxnRef'),
+    cancelled: params.get('payment') === 'cancelled' || params.get('cancel') === 'true' || params.get('status') === 'CANCELLED',
+  };
+}

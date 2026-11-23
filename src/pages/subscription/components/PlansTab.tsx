@@ -139,7 +139,7 @@ export default function PlansTab({
                   <Tooltip title={buttonTooltip}>
                     <div style={{ width: '100%' }}>
                       <Button
-                        type={isCurrent ? 'default' : (plan.popular || isTrial) && !buttonDisabled ? 'primary' : 'default'}
+                        type={isCurrent || buttonDisabled || isTrial ? 'default' : 'primary'}
                         size="large"
                         block
                         disabled={buttonDisabled}
@@ -152,21 +152,15 @@ export default function PlansTab({
                             ? '#F1F5F9'
                             : isTrial && !buttonDisabled
                               ? '#059669'
-                              : plan.popular
-                                ? '#7C3AED'
-                                : '#FFFFFF',
+                              : '#7C3AED',
                           borderColor: buttonDisabled
                             ? '#E2E8F0'
                             : isTrial && !buttonDisabled
                               ? '#059669'
-                              : plan.popular
-                                ? '#7C3AED'
-                                : '#CBD5E1',
+                              : '#7C3AED',
                           color: buttonDisabled
                             ? '#94A3B8'
-                            : isTrial || plan.popular
-                              ? '#FFFFFF'
-                              : '#1E293B',
+                            : '#FFFFFF',
                         }}
                       >
                         {buttonText}
