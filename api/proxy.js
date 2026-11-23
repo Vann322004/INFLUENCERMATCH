@@ -6,6 +6,7 @@ const UPSTREAM_ORIGIN = `https://${UPSTREAM_HOST}`;
 const channelOAuthCallbacks = new Set([
   '/api/v1/integrations/meta/callback',
   '/api/v1/integrations/instagram/callback',
+  '/api/v1/integrations/instagram-unified/callback',
   '/api/v1/integrations/tiktok/callback',
 ]);
 
