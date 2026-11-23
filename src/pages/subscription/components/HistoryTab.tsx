@@ -167,7 +167,7 @@ export default function HistoryTab({ invoices, loading, onViewInvoice, onRetryPa
               <HistoryOutlined style={{ fontSize: 32, color: '#CBD5E1', marginBottom: 8 }} />
               <div style={{ fontWeight: 600, color: '#334155' }}>Chưa có giao dịch thanh toán nào phát sinh</div>
               <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>
-                Các giao dịch qua VNPay sẽ hiển thị tại đây sau khi tạo thanh toán.
+                Các giao dịch qua PayOS và VNPay sẽ hiển thị tại đây sau khi tạo thanh toán.
               </div>
             </div>
           ),

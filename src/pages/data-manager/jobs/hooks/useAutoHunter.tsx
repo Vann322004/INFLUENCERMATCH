@@ -136,7 +136,7 @@ export function useAutoHunter() {
     } else {
       setLogLines([
         `[${now()}] Bắt đầu cào ${maxKocs} kênh thuộc lĩnh vực ${topicObj?.name}...`,
-        `[${now()}] Nền tảng: ${platform === 'ALL' ? 'Tất cả nền tảng (TikTok + Facebook)' : platform} | Từ khóa: ${activeKeywords.join(', ')}`,
+        `[${now()}] Nền tảng: ${platform === 'ALL' ? 'Tất cả nền tảng (TikTok, Facebook, Instagram)' : platform} | Từ khóa: ${activeKeywords.join(', ')}`,
       ]);
       setCurrentKeyword(activeKeywords[0] || categoryCode || '');
     }

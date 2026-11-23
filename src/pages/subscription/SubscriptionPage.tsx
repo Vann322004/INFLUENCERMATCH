@@ -14,10 +14,10 @@ import CurrentPlanBanner, { SubInfoData } from './components/CurrentPlanBanner';
 import PlansTab from './components/PlansTab';
 import QuotaTab from './components/QuotaTab';
 import HistoryTab from './components/HistoryTab';
-import UpgradeModal from './components/UpgradeModal';
+import SubscriptionPlanModal from './components/SubscriptionPlanModal';
 import InvoiceModal from './components/InvoiceModal';
 
-import { quotaTotal, reconcilePayment, subscriptionIsActive } from './billingState';
+import { getPaymentReturn, quotaTotal, reconcilePayment, subscriptionIsActive } from './billingState';
 import './SubscriptionPage.css';
 
 const { Title, Paragraph } = Typography;
@@ -70,7 +70,7 @@ export default function SubscriptionPage() {
   const activePlanIdRef = useRef<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('plans');
   const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState<SubscriptionPlan | null>(null);
-  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [paying, setPaying] = useState<boolean>(false);
 
   const navigate = useNavigate();
@@ -377,47 +377,49 @@ export default function SubscriptionPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (!['payment', 'vnp_ResponseCode', 'vnp_TransactionStatus', 'status'].some(key => params.has(key))) return;
-    const reference = params.get('txnRef') || params.get('vnp_TxnRef');
+    const paymentReturn = getPaymentReturn(params);
+    if (!paymentReturn) return;
+    const { reference, cancelled } = paymentReturn;
     if (!reference) {
       message.warning('Chưa có mã giao dịch để xác minh thanh toán. Vui lòng kiểm tra lịch sử thanh toán.');
       return;
     }
     const controller = new AbortController();
-    message.loading({ content: 'Đang xác minh thanh toán với máy chủ...', key: 'vnpay_payment_toast', duration: 0 });
+    message.loading({ content: 'Đang xác minh thanh toán với máy chủ...', key: 'payment_status_toast', duration: 0 });
     reconcilePayment(reference, (ref, signal) => subscriptionService.getPaymentStatus(ref, signal), controller.signal)
       .then(async payment => {
         if (controller.signal.aborted) return;
         if (payment.status === 'PAID') {
-          message.success({ content: 'Máy chủ đã xác nhận thanh toán thành công.', key: 'vnpay_payment_toast' });
+          message.success({ content: 'Máy chủ đã xác nhận thanh toán thành công.', key: 'payment_status_toast' });
           subscriptionService.clearBrandSubsCache();
           await loadSubscriptionData(true);
           if (controller.signal.aborted) return;
           setActiveTab('quota');
         } else if (payment.status === 'PENDING') {
-          message.info({ content: 'Giao dịch đang chờ xác nhận. Bạn có thể kiểm tra lại trong lịch sử thanh toán.', key: 'vnpay_payment_toast', duration: 6 });
+          message.info({ content: cancelled ? 'Bạn đã hủy thao tác thanh toán. Giao dịch vẫn đang chờ xác nhận; kiểm tra lịch sử trước khi thanh toán lại.' : 'Giao dịch đang chờ xác nhận. Bạn có thể kiểm tra lại trong lịch sử thanh toán.', key: 'payment_status_toast', duration: 6 });
           setActiveTab('history');
         } else {
-          message.error({ content: payment.status === 'REFUNDED' ? 'Giao dịch đã được đánh dấu hoàn tiền.' : 'Máy chủ xác nhận giao dịch không thành công.', key: 'vnpay_payment_toast' });
+          message.error({ content: payment.status === 'REFUNDED' ? 'Giao dịch đã được đánh dấu hoàn tiền.' : 'Máy chủ xác nhận giao dịch không thành công.', key: 'payment_status_toast' });
           setActiveTab('history');
         }
         setHistoryVersion(value => value + 1);
         params.delete('payment'); params.delete('txnRef'); params.delete('vnp_TxnRef');
         params.delete('status'); params.delete('vnp_ResponseCode'); params.delete('vnp_TransactionStatus');
+        params.delete('orderCode'); params.delete('cancel'); params.delete('code'); params.delete('id');
         window.history.replaceState({}, '', window.location.pathname + (params.size ? `?${params}` : ''));
       }).catch(error => {
-        if (!controller.signal.aborted) message.error({ content: getErrorMessage(error, 'Chưa xác minh được giao dịch. Vui lòng kiểm tra lịch sử thanh toán.'), key: 'vnpay_payment_toast' });
+        if (!controller.signal.aborted) message.error({ content: getErrorMessage(error, 'Chưa xác minh được giao dịch. Vui lòng kiểm tra lịch sử thanh toán.'), key: 'payment_status_toast' });
       });
-    return () => { controller.abort(); message.destroy('vnpay_payment_toast'); };
+    return () => { controller.abort(); message.destroy('payment_status_toast'); };
   }, [loadSubscriptionData]);
 
   // Handle plan upgrade click
   const handleOpenUpgrade = (plan: SubscriptionPlan) => {
     setSelectedPlanForUpgrade(plan);
-    setIsUpgradeModalOpen(true);
+    setIsPlanModalOpen(true);
   };
 
-  const handleConfirmPayment = async () => {
+  const handleConfirmPayment = async (gateway: 'VNPAY' | 'PAYOS') => {
     if (!selectedPlanForUpgrade) return;
     if (!getAccessToken()) {
       message.warning('Vui lòng đăng nhập tài khoản Brand để thực hiện thao tác.');
@@ -431,7 +433,7 @@ export default function SubscriptionPage() {
     if (selectedPlanForUpgrade.priceMonthly <= 0) {
       if (hasUsedTrial || isPaidSubscriber) {
         message.error('Tài khoản của bạn đang dùng gói trả phí hoặc đã từng dùng thử. Không thể chuyển về gói dùng thử.');
-        setIsUpgradeModalOpen(false);
+        setIsPlanModalOpen(false);
         setPaying(false);
         return;
       }
@@ -448,7 +450,7 @@ export default function SubscriptionPage() {
         }
         await subscriptionService.subscribeFreePlan(validBrandId, selectedPlanForUpgrade.id);
         message.success({ content: 'Kích hoạt gói dùng thử thành công!', key: 'upgrade_msg' });
-        setIsUpgradeModalOpen(false);
+        setIsPlanModalOpen(false);
         window.location.reload();
       } catch (err) {
         message.error({ content: getErrorMessage(err, 'Không thể kích hoạt gói dùng thử.'), key: 'upgrade_msg' });
@@ -458,18 +460,20 @@ export default function SubscriptionPage() {
       return;
     }
 
-    // Xử lý gói Trả phí qua VNPAY
-    message.loading({ content: 'Đang kết nối cổng thanh toán VNPAY...', key: 'upgrade_msg' });
+    const gatewayLabel = gateway === 'VNPAY' ? 'VNPAY' : 'PayOS';
+    message.loading({ content: `Đang kết nối cổng thanh toán ${gatewayLabel}...`, key: 'upgrade_msg' });
     try {
-      const res = await subscriptionService.subscribeVNPay(selectedPlanForUpgrade.id);
+      const res = await (gateway === 'VNPAY'
+        ? subscriptionService.subscribeVNPay(selectedPlanForUpgrade.id)
+        : subscriptionService.subscribePayOS(selectedPlanForUpgrade.id));
       if (res?.paymentUrl) {
-        message.success({ content: 'Đang chuyển hướng tới cổng thanh toán VNPAY...', key: 'upgrade_msg' });
+        message.success({ content: `Đang chuyển hướng tới cổng thanh toán ${gatewayLabel}...`, key: 'upgrade_msg' });
         window.location.href = res.paymentUrl;
       } else {
         message.error({ content: 'Không tìm thấy liên kết thanh toán.', key: 'upgrade_msg' });
       }
     } catch (err) {
-      message.error({ content: getErrorMessage(err, 'Khởi tạo thanh toán VNPAY thất bại.'), key: 'upgrade_msg' });
+      message.error({ content: getErrorMessage(err, `Khởi tạo thanh toán ${gatewayLabel} thất bại.`), key: 'upgrade_msg' });
     } finally {
       setPaying(false);
     }
@@ -576,7 +580,7 @@ export default function SubscriptionPage() {
                     );
                     if (matchedPlan) {
                       setSelectedPlanForUpgrade(matchedPlan);
-                      setIsUpgradeModalOpen(true);
+                      setIsPlanModalOpen(true);
                     } else {
                       setActiveTab('plans');
                     }
@@ -589,11 +593,11 @@ export default function SubscriptionPage() {
       </Card>
 
       {/* 4. Payment / Upgrade Modal */}
-      <UpgradeModal
-        open={isUpgradeModalOpen}
+      <SubscriptionPlanModal
+        open={isPlanModalOpen}
         plan={selectedPlanForUpgrade}
         paying={paying}
-        onCancel={() => setIsUpgradeModalOpen(false)}
+        onCancel={() => setIsPlanModalOpen(false)}
         onConfirm={handleConfirmPayment}
       />
 
