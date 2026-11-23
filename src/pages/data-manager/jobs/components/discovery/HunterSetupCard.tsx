@@ -7,7 +7,7 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const PLATFORM_LABELS: Record<string, string> = {
-  ALL: 'TikTok & Facebook',
+  ALL: 'TikTok, Facebook & Instagram',
   TIKTOK: 'TikTok',
   FACEBOOK: 'Facebook',
   INSTAGRAM: 'Instagram',
@@ -55,7 +55,7 @@ export default function HunterSetupCard({
   onStartHunting,
 }: HunterSetupCardProps) {
   const [customInput, setCustomInput] = React.useState('');
-  const platforms = mode === 'category' ? ['ALL', 'TIKTOK', 'FACEBOOK'] : ['TIKTOK', 'FACEBOOK', 'INSTAGRAM'];
+  const platforms = mode === 'category' ? ['ALL', 'TIKTOK', 'FACEBOOK', 'INSTAGRAM'] : ['TIKTOK', 'FACEBOOK', 'INSTAGRAM'];
   const effectivePlatform = platforms.includes(platform) ? platform : mode === 'category' ? 'ALL' : 'TIKTOK';
   React.useEffect(() => {
     if (effectivePlatform !== platform) onPlatformChange(effectivePlatform);
@@ -94,10 +94,10 @@ export default function HunterSetupCard({
         <label htmlFor={`platform-${mode}`}>Nền tảng</label>
         <Select id={`platform-${mode}`} aria-label="Nền tảng" disabled={loading} value={effectivePlatform}
           onChange={onPlatformChange} size="large">
-          {mode === 'category' && <Option value="ALL">TikTok và Facebook</Option>}
+          {mode === 'category' && <Option value="ALL">Tất cả nền tảng (TikTok, Facebook, Instagram)</Option>}
           <Option value="TIKTOK">TikTok</Option>
           <Option value="FACEBOOK">Facebook</Option>
-          {mode === 'custom' && <Option value="INSTAGRAM">Instagram</Option>}
+          <Option value="INSTAGRAM">Instagram</Option>
         </Select>
       </div>
 
