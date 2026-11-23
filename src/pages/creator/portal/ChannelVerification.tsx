@@ -11,6 +11,7 @@ import {
   type ConnectionOption, type LinkedChannel, type OAuthFlow, type OAuthPlatform, type OAuthSession,
 } from '../../../services/api/channelVerificationService';
 import { getAuthSessionId, getErrorMessage } from '../../../services/apiClient';
+import { consentUrl } from '../../../services/channelOAuthContract';
 import type { ClaimResponse, ClaimStatus } from '../../../types/api/claim.types';
 import ManualChannelClaim, { httpUrl } from './ManualChannelClaim';
 
@@ -52,7 +53,7 @@ function readPendingOAuth(): PendingOAuth | null {
     const pending = JSON.parse(sessionStorage.getItem(storageKey) ?? 'null') as PendingOAuth | null;
     return pending?.authSessionId === getAuthSessionId() && typeof pending.id === 'string'
         && pending.id && Number.isFinite(Date.parse(pending.expiresAt))
-        && ['FACEBOOK_LOGIN', 'INSTAGRAM_LOGIN', 'TIKTOK_LOGIN'].includes(pending.flow)
+        && ['FACEBOOK_LOGIN', 'INSTAGRAM_LOGIN', 'INSTAGRAM_UNIFIED_LOGIN', 'TIKTOK_LOGIN'].includes(pending.flow)
       ? pending : null;
   } catch {
     return null;
@@ -60,22 +61,13 @@ function readPendingOAuth(): PendingOAuth | null {
 }
 
 function getConsentUrl(raw: string, option: ConnectionOption) {
-  const directInstagram = option.oauthFlow === 'INSTAGRAM_LOGIN';
-  const tiktok = option.oauthFlow === 'TIKTOK_LOGIN';
-  const provider = tiktok ? 'https://www.tiktok.com' : directInstagram ? 'https://www.instagram.com' : 'https://www.facebook.com';
-  const path = '/api/v1/integrations/' + (tiktok ? 'tiktok' : directInstagram ? 'instagram' : 'meta') + '/callback';
-  const url = new URL(raw);
-  const callback = new URL(url.searchParams.get('redirect_uri') ?? '');
-  if (url.origin !== provider || url.username || url.password
-      || callback.href !== new URL(path, window.location.origin).href) {
-    throw new Error('Địa chỉ chuyển hướng OAuth chưa khớp với trang hiện tại.');
-  }
-  return url.href;
+  return consentUrl(raw, option.oauthFlow, window.location.origin);
 }
 
 function optionLabel(option: ConnectionOption) {
   if (option.platform === 'TIKTOK') return 'TikTok Sandbox';
   if (option.platform === 'FACEBOOK') return 'Facebook Page';
+  if (option.oauthFlow === 'INSTAGRAM_UNIFIED_LOGIN') return 'Instagram qua Business Portfolio';
   return option.oauthFlow === 'INSTAGRAM_LOGIN' ? 'Instagram Professional' : 'Instagram qua Facebook Page';
 }
 
@@ -400,7 +392,10 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
                     platform: session.platform, query: account.username ?? account.accountId,
                   })}>Gửi bằng chứng</Button>}
                 </div>)}
-              </Space> : <Alert showIcon type="warning" title="Nền tảng chưa trả về kênh đủ điều kiện." />
+              </Space> : <Alert showIcon type="warning" title={pending.flow === 'INSTAGRAM_UNIFIED_LOGIN'
+                ? 'Chưa có tài khoản Instagram được cấp quyền trong phiên này.' : 'Nền tảng chưa trả về kênh đủ điều kiện.'}
+                description={pending.flow === 'INSTAGRAM_UNIFIED_LOGIN'
+                  ? 'Hủy phiên để cấp quyền lại với đúng tài khoản chuyên nghiệp và Business Portfolio, hoặc gửi bằng chứng thủ công.' : undefined} />
             )}
             <Space wrap>
               <Button disabled={checking || !!working} onClick={() => {

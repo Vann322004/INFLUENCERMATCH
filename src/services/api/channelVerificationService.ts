@@ -1,8 +1,9 @@
 import apiClient from '../apiClient';
+import { matchesOAuthSession } from '../channelOAuthContract';
 
 export type MetaPlatform = 'FACEBOOK' | 'INSTAGRAM';
 export type OAuthPlatform = MetaPlatform | 'TIKTOK';
-export type OAuthFlow = 'FACEBOOK_LOGIN' | 'INSTAGRAM_LOGIN' | 'TIKTOK_LOGIN';
+export type OAuthFlow = 'FACEBOOK_LOGIN' | 'INSTAGRAM_LOGIN' | 'INSTAGRAM_UNIFIED_LOGIN' | 'TIKTOK_LOGIN';
 
 export interface ConnectionOption {
   environment?: string;
@@ -35,6 +36,7 @@ export interface OAuthAccount {
 }
 
 export interface OAuthSession {
+  oauthFlow?: OAuthFlow;
   sessionId: string;
   platform: OAuthPlatform;
   status: 'NEW' | 'EXCHANGING' | 'READY' | 'FAILED' | 'EXPIRED' | 'COMPLETED';
@@ -64,12 +66,15 @@ export const channelVerificationService = {
     return data.data.filter((option: ConnectionOption) => option.supported && (
       (option.oauthFlow === 'FACEBOOK_LOGIN' && ['FACEBOOK', 'INSTAGRAM'].includes(option.platform))
       || (option.oauthFlow === 'INSTAGRAM_LOGIN' && option.platform === 'INSTAGRAM')
+      || (option.oauthFlow === 'INSTAGRAM_UNIFIED_LOGIN' && option.platform === 'INSTAGRAM')
       || (option.oauthFlow === 'TIKTOK_LOGIN' && option.platform === 'TIKTOK')
     ));
   },
   async start(option: ConnectionOption, context: OAuthStartContext = {}): Promise<{ sessionId: string; authorizationUrl: string; expiresAt: string }> {
     const directInstagram = option.oauthFlow === 'INSTAGRAM_LOGIN';
+    const unifiedInstagram = option.oauthFlow === 'INSTAGRAM_UNIFIED_LOGIN';
     const path = option.oauthFlow === 'TIKTOK_LOGIN' ? portal + '/connect/tiktok/start'
+      : unifiedInstagram ? portal + '/connect/instagram-unified/start'
       : directInstagram ? portal + '/connect/instagram/start' : meta + '/start';
     const body = option.oauthFlow === 'FACEBOOK_LOGIN'
       ? { platform: option.platform, ...context } : context;
@@ -81,8 +86,7 @@ export const channelVerificationService = {
     const path = tiktok ? portal + '/connect/tiktok/sessions/' + encodeURIComponent(id) : sessionPath(id);
     const { data } = await apiClient.get(path, { signal });
     const session = data?.data;
-    if (session?.sessionId !== id
-        || (tiktok ? session.platform !== 'TIKTOK' : !Array.isArray(session.accounts))) {
+    if (!matchesOAuthSession(session, id, flow)) {
       throw new Error('Phiên xác minh không hợp lệ.');
     }
     return tiktok ? { ...session, accounts: [] } : session;
