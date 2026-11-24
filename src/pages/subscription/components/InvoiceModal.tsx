@@ -42,7 +42,8 @@ export default function InvoiceModal({
             setDownloading(true);
             try {
               await downloadReceipt(invoice, { currentBrand, storedUser });
-            } catch {
+            } catch (err) {
+              console.error('Lỗi khi tải biên lai PDF:', err);
               message.error('Không thể tải biên lai PDF. Vui lòng thử lại.');
             } finally {
               setDownloading(false);

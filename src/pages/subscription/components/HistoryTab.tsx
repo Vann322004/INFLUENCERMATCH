@@ -132,7 +132,8 @@ export default function HistoryTab({ invoices, loading, onViewInvoice, onRetryPa
                 setDownloadingId(record.id);
                 try {
                   await downloadReceipt(record, { currentBrand, storedUser });
-                } catch {
+                } catch (err) {
+                  console.error('Lỗi khi tải biên lai PDF:', err);
                   message.error('Không thể tải biên lai PDF. Vui lòng thử lại.');
                 } finally {
                   setDownloadingId(null);
