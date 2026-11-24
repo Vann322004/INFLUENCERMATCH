@@ -190,8 +190,25 @@ export default function DiscoveredFeedCard({
     {
       title: 'Đánh giá Tier-0',
       key: 'decision',
-      width: 140,
+      width: 170,
       render: (_, r) => {
+        if (r.status === 'REJECTED' || r.decision === 'AUTO_REJECT' || r.primaryType === 'BRAND' || r.primaryType === 'SPAM') {
+          const reason = r.primaryType === 'BRAND' ? 'Thương hiệu/Brand'
+            : r.primaryType === 'SPAM' ? 'Spam bán hàng'
+            : 'Không đạt tiêu chí';
+          return (
+            <Tag color="error" style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}>
+              Từ chối: {reason}
+            </Tag>
+          );
+        }
+        if (r.decision === 'NEEDS_MANAGER_REVIEW' || r.status === 'QUEUED') {
+          return (
+            <Tag color="warning" style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}>
+              Chờ kiểm định
+            </Tag>
+          );
+        }
         const isKol = r.primaryType === 'KOL';
         return (
           <Tag
@@ -208,46 +225,68 @@ export default function DiscoveredFeedCard({
       dataIndex: 'status',
       key: 'status',
       width: 140,
-      render: (st: string) => (
-        <Tag
-          color={st === 'INGESTED' ? 'success' : 'processing'}
-          style={{ borderRadius: 6, fontWeight: 600 }}
-        >
-          {st === 'INGESTED' ? 'Đã lưu vào DB' : st === 'QUEUED' ? 'Đã vào hàng đợi' : 'Chờ gửi'}
-        </Tag>
-      ),
+      render: (st: string) => {
+        if (st === 'REJECTED') {
+          return (
+            <Tag color="error" style={{ borderRadius: 6, fontWeight: 600 }}>
+              Đã loại bỏ
+            </Tag>
+          );
+        }
+        return (
+          <Tag
+            color={st === 'INGESTED' ? 'success' : 'processing'}
+            style={{ borderRadius: 6, fontWeight: 600 }}
+          >
+            {st === 'INGESTED' ? 'Đã lưu vào DB' : st === 'QUEUED' ? 'Đã vào hàng đợi' : 'Chờ gửi'}
+          </Tag>
+        );
+      },
     },
     {
       title: 'Thao tác',
       key: 'actions',
-      width: 110,
-      render: (_, r) => (
-        <Space size="small">
-          {r.status !== 'INGESTED' ? (
-            <Button
-              size="small"
-              type="primary"
-              onClick={() => handleImport(r)}
-              style={{
-                background: '#10B981',
-                border: 'none',
-                borderRadius: 6,
-                fontWeight: 600,
-              }}
-            >
-              Lưu vào DB
-            </Button>
-          ) : (
+      width: 120,
+      render: (_, r) => {
+        if (r.status === 'REJECTED') {
+          return (
             <Button
               size="small"
               onClick={() => handleInspect(r)}
-              style={{ borderRadius: 6 }}
+              style={{ borderRadius: 6, color: '#64748B' }}
             >
               Xem chi tiết
             </Button>
-          )}
-        </Space>
-      ),
+          );
+        }
+        return (
+          <Space size="small">
+            {r.status !== 'INGESTED' ? (
+              <Button
+                size="small"
+                type="primary"
+                onClick={() => handleImport(r)}
+                style={{
+                  background: '#10B981',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                }}
+              >
+                Lưu vào DB
+              </Button>
+            ) : (
+              <Button
+                size="small"
+                onClick={() => handleInspect(r)}
+                style={{ borderRadius: 6 }}
+              >
+                Xem chi tiết
+              </Button>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
@@ -278,10 +317,10 @@ export default function DiscoveredFeedCard({
       >
         <div>
           <div style={{ fontSize: 15, fontWeight: 700, color: '#166534' }}>
-            Danh sách nhà sáng tạo đạt chuẩn Tier-0 ({discoveredList.length} tài khoản)
+            Kết quả thu thập nhà sáng tạo ({discoveredList.length} kênh)
           </div>
           <div style={{ fontSize: 12, color: '#15803D', marginTop: 2 }}>
-            Tất cả tài khoản đều có tối thiểu 7.000 followers, đã tự động loại bỏ Shop thương mại và kho buôn.
+            Hiển thị toàn bộ các kênh đã cào, kèm kết quả phân loại đạt chuẩn hoặc bị từ chối.
           </div>
         </div>
 
