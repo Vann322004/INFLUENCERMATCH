@@ -14,7 +14,7 @@ import DirectCrawlModal from '../DirectCrawlModal';
 import { crawlerService } from '../../../../../services/api/crawlerService';
 import { dataQualityService } from '../../../../../services/api/dataQualityService';
 import { DATA_MANAGER_ROUTES } from '../../../../../constants/adminRoutes';
-import type { CrawlPlatform } from '../../../../../types/api/crawler.types';
+import type { BatchCrawlProgress, CrawlPlatform } from '../../../../../types/api/crawler.types';
 
 export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category' | 'custom' }) {
   const [platform, setPlatform] = useCollectionState<string>(`hunter.${mode}.platform`, 'ALL');
@@ -160,13 +160,20 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
       setCurrentKeyword(activeKeywords[0] || categoryCode || '');
     }
 
+    const handleProgress = (progress: BatchCrawlProgress) => {
+      if (progress.current_keyword) setCurrentKeyword(progress.current_keyword);
+      if (progress.logs?.length) setLogLines(progress.logs);
+    };
+
     try {
-      const res = mode === 'custom' ? await crawlerService.collectAccounts(crawlPlatform, usernamesToCrawl, maxKocs) : await crawlerService.batchCrawl({
+      const res = mode === 'custom' ? await crawlerService.collectAccounts(
+        crawlPlatform, usernamesToCrawl, maxKocs, handleProgress
+      ) : await crawlerService.batchCrawl({
         platform: crawlPlatform,
         category: categoryCode,
         keywords: activeKeywords,
         maxChannels: maxKocs,
-      });
+      }, handleProgress);
 
 
       const summary = res.summary;

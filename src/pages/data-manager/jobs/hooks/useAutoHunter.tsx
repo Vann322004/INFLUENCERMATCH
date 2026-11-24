@@ -7,7 +7,7 @@ import { nicheService, type Niche } from '../../../../services/api/nicheService'
 import { crawlerService } from '../../../../services/api/crawlerService';
 import { dataQualityService } from '../../../../services/api/dataQualityService';
 import { DATA_MANAGER_ROUTES } from '../../../../constants/adminRoutes';
-import type { CrawlPlatform, LiveCrawlResult } from '../../../../types/api/crawler.types';
+import type { BatchCrawlProgress, CrawlPlatform, LiveCrawlResult } from '../../../../types/api/crawler.types';
 import type { DiscoveredKocItem } from '../components/discovery/DiscoveredFeedCard';
 import { filterTier0Candidates } from '../utils/hunterTier0Filter';
 
@@ -116,7 +116,7 @@ export function useAutoHunter() {
     }
 
     setLoading(true);
-    setProgressPercent(15);
+    setProgressPercent(0);
     setScannedCount(0);
     setFilteredOutCount(0);
     setMatchedCount(0);
@@ -141,16 +141,10 @@ export function useAutoHunter() {
       setCurrentKeyword(activeKeywords[0] || categoryCode || '');
     }
 
-    // Dynamic progress feedback
-    const timer1 = setTimeout(() => {
-      setProgressPercent(40);
-      setLogLines((prev) => [`[${now()}] Đang bóc tách dữ liệu hồ sơ và bài đăng...`, ...prev]);
-    }, 4000);
-
-    const timer2 = setTimeout(() => {
-      setProgressPercent(70);
-      setLogLines((prev) => [`[${now()}] Áp dụng bộ lọc Tier-0: loại bỏ Shop & nick dưới 7.000 followers...`, ...prev]);
-    }, 12000);
+    const handleProgress = (progress: BatchCrawlProgress) => {
+      if (progress.current_keyword) setCurrentKeyword(progress.current_keyword);
+      if (progress.logs?.length) setLogLines(progress.logs);
+    };
 
     try {
       const res = await crawlerService.batchCrawl({
@@ -159,10 +153,7 @@ export function useAutoHunter() {
         keywords: mode === 'category' ? activeKeywords : undefined,
         usernames: mode === 'custom' ? usernamesToCrawl : undefined,
         maxChannels: maxKocs,
-      });
-
-      clearTimeout(timer1);
-      clearTimeout(timer2);
+      }, handleProgress);
 
       const summary = res.summary;
       const totalReq = summary?.total_requested ?? (res.results?.length ?? maxKocs);
@@ -297,8 +288,6 @@ export function useAutoHunter() {
         });
       }
     } catch (err: any) {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
       setProgressPercent(0);
       setLogLines([`[${now()}] Lỗi kết nối máy chủ cào: ${err.message || 'Không thể lấy dữ liệu'}`]);
       message.error(err.message || 'Lỗi khi gọi API cào dữ liệu');

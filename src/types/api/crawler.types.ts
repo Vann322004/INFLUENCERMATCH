@@ -58,6 +58,13 @@ export interface BatchCrawlResponse {
   metrics?: Record<string, unknown>;
 }
 
+export interface BatchCrawlProgress {
+  logs?: string[];
+  current_keyword?: string;
+  platform?: string;
+  stage?: string;
+}
+
 export interface CrawlerOverviewStats {
   total_candidates?: number;
   ingested_count?: number;
