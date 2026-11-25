@@ -32,5 +32,5 @@ export function matchesOAuthSession(session: unknown, id: string, flow: string):
   if (flow === 'FACEBOOK_LOGIN' ? !['FACEBOOK', 'INSTAGRAM'].includes(String(value.platform)) : value.platform !== 'INSTAGRAM') return false;
   return value.accounts.every(account => account && typeof account.accountId === 'string'
     && account.accountId.length > 0
-    && ['AVAILABLE', 'ALREADY_LINKED', 'UNMATCHED', 'UNAVAILABLE', 'INSUFFICIENT_EVIDENCE'].includes(account.matchStatus));
+    && ['AVAILABLE', 'CAN_CREATE', 'ALREADY_LINKED', 'UNMATCHED', 'UNAVAILABLE', 'INSUFFICIENT_EVIDENCE'].includes(account.matchStatus));
 }

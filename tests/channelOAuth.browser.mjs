@@ -12,10 +12,11 @@ try {
     import { createRoot } from 'react-dom/client';
     import { BrowserRouter } from 'react-router-dom';
     import ChannelVerification from '/src/pages/creator/portal/ChannelVerification.tsx';
-    window.mountChannelVerification = () => {
+    window.mountChannelVerification = (reloadResult = [{ id: 'creator' }]) => {
       createRoot(document.getElementById('harness')).render(
         createElement(BrowserRouter, {}, createElement(ChannelVerification, {
-          canVerify: true, canViewClaims: false, linked: [], linkedError: null, reloadLinked: async () => true,
+          canVerify: true, canViewClaims: false, linked: [], linkedError: null,
+          reloadLinked: async () => reloadResult,
         })),
       );
     };
@@ -29,6 +30,7 @@ try {
   let duplicateInstagram = false;
   let instagramMethods;
   let rejectStart = false;
+  let sessionAccounts = [{ accountId: '178400001', matchStatus: 'AVAILABLE' }];
   await page.route('**/api/v1/**', async route => {
     const req = route.request();
     const path = new URL(req.url()).pathname;
@@ -50,7 +52,10 @@ try {
     else if (path.endsWith('/claim')) data = { id: 'claim', creatorId: 'target', claimantId: 'creator-user', status: 'PENDING' };
     else if (path.endsWith('/start')) data = { sessionId: 'session', expiresAt: new Date(Date.now() + 600000).toISOString(), authorizationUrl: 'https://www.facebook.com/dialog/oauth' };
     else if (path.endsWith('/confirm')) data = { sessionId: 'session', creatorId: 'creator', status: 'AUTHORIZED' };
-    else data = { sessionId: 'session', platform: 'INSTAGRAM', oauthFlow: returnedFlow, status: 'READY', accounts: [{ accountId: '178400001', matchStatus: 'AVAILABLE' }] };
+    else if (path.endsWith('/connect/tiktok/sessions/session')) {
+      data = { sessionId: 'session', platform: 'TIKTOK', status: 'COMPLETED', creatorId: 'new-tiktok-channel' };
+    }
+    else data = { sessionId: 'session', platform: 'INSTAGRAM', oauthFlow: returnedFlow, status: 'READY', accounts: sessionAccounts };
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ success: true, data }) });
   });
   await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/.channel-oauth-browser.html`);
@@ -149,7 +154,45 @@ try {
   await dialog.getByRole('button', { name: 'Xác minh thủ công' }).click();
   await dialog.waitFor({ state: 'hidden' });
   await page.getByRole('dialog').waitFor();
-  console.log('PASS: OAuth routing, bound Claim payload, three Instagram choices at 375 px, start errors and manual fallback (mock HTTP)');
+  sessionAccounts = [
+    { accountId: '178400001', name: 'Kênh mới', matchStatus: 'CAN_CREATE' },
+    { accountId: '178400002', name: 'Kênh thiếu bằng chứng', matchStatus: 'INSUFFICIENT_EVIDENCE' },
+  ];
+  await page.reload();
+  await page.waitForFunction(() => typeof window.mountChannelVerification === 'function');
+  await page.evaluate(async () => {
+    const { getAuthSessionId } = await import('/src/services/authSession.ts');
+    sessionStorage.setItem('creator.channel-oauth', JSON.stringify({
+      id: 'session', expiresAt: new Date(Date.now() + 600000).toISOString(),
+      authSessionId: getAuthSessionId(), flow: 'INSTAGRAM_LOGIN',
+    }));
+    window.mountChannelVerification();
+  });
+  const create = page.getByRole('button', { name: 'Tạo và liên kết kênh', exact: true });
+  await create.waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Gửi bằng chứng', exact: true }).count(), 0);
+  await create.click();
+  await page.getByText('Kênh đã được liên kết.', { exact: true }).waitFor();
+  assert.equal(requests.at(-1).path, '/api/v1/creators/portal/accounts/connect/meta/sessions/session/confirm');
+  assert.equal(requests.at(-1).body.accountId, '178400001');
+  async function returnFromTikTok(reloadResult) {
+    await page.reload();
+    await page.waitForFunction(() => typeof window.mountChannelVerification === 'function');
+    await page.evaluate(async result => {
+      const { getAuthSessionId } = await import('/src/services/authSession.ts');
+      sessionStorage.setItem('creator.channel-oauth', JSON.stringify({
+        id: 'session', expiresAt: new Date(Date.now() + 600000).toISOString(),
+        authSessionId: getAuthSessionId(), flow: 'TIKTOK_LOGIN',
+      }));
+      window.mountChannelVerification(result);
+    }, reloadResult);
+  }
+  await returnFromTikTok([{ id: 'another-channel' }]);
+  await page.getByText('BE đã xác nhận phiên. Chưa đọc được kênh vừa liên kết, hãy kiểm tra lại phiên.', { exact: true }).waitFor();
+  assert.equal(await page.getByText('Kênh đã được liên kết.', { exact: true }).count(), 0);
+  await returnFromTikTok([{ id: 'new-tiktok-channel' }]);
+  await page.getByText('Kênh đã được liên kết.', { exact: true }).waitFor();
+  console.log('PASS: OAuth routing, bound Claim payload, Instagram choices, Meta confirmation and TikTok linked-channel reload (mock HTTP)');
 } finally {
   await browser?.close(); await server?.close(); await unlink(harness).catch(() => {});
 }

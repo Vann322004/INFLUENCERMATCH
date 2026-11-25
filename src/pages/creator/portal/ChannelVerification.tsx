@@ -32,10 +32,16 @@ const claimLabels: Record<ClaimStatus, { label: string; color: string }> = {
 };
 const matchLabels = {
   AVAILABLE: 'Có thể liên kết',
+  CAN_CREATE: 'Kênh đã cấp quyền và có thể tạo hồ sơ mới.',
   ALREADY_LINKED: 'Đã liên kết với bạn',
   UNMATCHED: 'Chưa khớp mã kênh trong hệ thống',
   UNAVAILABLE: 'Không thể liên kết do quyền sở hữu hoặc điều kiện kênh',
   INSUFFICIENT_EVIDENCE: 'OAuth chưa đủ bằng chứng về quyền phù hợp; cần xác minh thủ công',
+};
+const linkActions: Partial<Record<keyof typeof matchLabels, string>> = {
+  AVAILABLE: 'Liên kết kênh',
+  CAN_CREATE: 'Tạo và liên kết kênh',
+  ALREADY_LINKED: 'Xác minh lại',
 };
 const matchReasons = {
   CHANNEL_NOT_FOUND: 'Mã kênh chưa khớp hồ sơ trong hệ thống.',
@@ -224,7 +230,9 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
         if (result.status === 'COMPLETED') {
           const updated = await reloadLinked(controller.signal);
           if (controller.signal.aborted || pending.authSessionId !== getAuthSessionId()) return;
-          if (!updated || (result.creatorId && !updated.some(channel => channel.id === result.creatorId))) {
+          if (!updated
+              || (pending.flow === 'TIKTOK_LOGIN' && !result.creatorId)
+              || (result.creatorId && !updated.some(channel => channel.id === result.creatorId))) {
             setError('BE đã xác nhận phiên. Chưa đọc được kênh vừa liên kết, hãy kiểm tra lại phiên.');
             return;
           }
@@ -402,7 +410,9 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
             {session?.status === 'EXPIRED' && <Alert type="warning" showIcon title="Phiên xác minh đã hết hạn." />}
             {session?.status === 'READY' && pending.flow === 'TIKTOK_LOGIN' && <>
               <Alert type="warning" showIcon
-                title="TikTok đã cấp quyền, nhưng chưa xác nhận được danh tính kênh mục tiêu. Chưa thay đổi ownership."
+                title={invitationToken
+                  ? 'TikTok chưa xác nhận được tài khoản đã cấp quyền khớp với kênh được mời.'
+                  : 'TikTok đã cấp quyền, nhưng hệ thống chưa đối chiếu được mã kênh. Hãy hủy phiên để thử lại.'}
                 description={session.account?.username || session.account?.displayName} />
               <Button disabled={!!working || !canOpenManual} onClick={() => setManual({
                 platform: 'TIKTOK', query: session.account?.username ?? '',
@@ -411,26 +421,30 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
             {session?.status === 'READY' && pending.flow !== 'TIKTOK_LOGIN' && (
               session.accounts.length ? <Space orientation="vertical" style={{ width: '100%' }}>
                 <Typography.Text strong>Chọn kênh đã cấp quyền</Typography.Text>
-                {session.accounts.map(account => <div className="creator-mini-row" key={account.accountId}
-                  style={{ flexWrap: 'wrap', gap: 8 }}>
-                  <Space orientation="vertical" size={2} style={{ overflowWrap: 'anywhere' }}>
-                    <Typography.Text strong>{account.name || account.username || account.accountId}</Typography.Text>
-                    <span>{account.username && account.name ? '@' + account.username.replace(/^@/, '') + ' · ' : ''}
-                      {account.accountId}</span>
-                    <Typography.Text type="secondary">
-                      {(account.matchReason && matchReasons[account.matchReason]) || matchLabels[account.matchStatus]}
-                    </Typography.Text>
-                  </Space>
-                  {(account.matchStatus === 'AVAILABLE' || account.matchStatus === 'ALREADY_LINKED') && <Button
-                    type={account.matchStatus === 'AVAILABLE' ? 'primary' : 'default'}
-                    disabled={checking || (!!working && working !== account.accountId)}
-                    loading={working === account.accountId} onClick={() => void confirm(account.accountId)}>
-                    {account.matchStatus === 'AVAILABLE' ? 'Liên kết kênh' : 'Xác minh lại'}
-                  </Button>}
-                  {(account.matchStatus === 'UNMATCHED' || account.matchStatus === 'INSUFFICIENT_EVIDENCE') && <Button disabled={!!working || !canOpenManual} onClick={() => setManual({
-                    platform: session.platform, query: account.username ?? account.accountId,
-                  })}>Gửi bằng chứng</Button>}
-                </div>)}
+                {session.accounts.map(account => {
+                  const action = linkActions[account.matchStatus];
+                  const canSubmitEvidence = account.matchStatus === 'INSUFFICIENT_EVIDENCE'
+                    && (!!account.creatorId || account.matchReason === 'UNSTABLE_CHANNEL_ID');
+                  return <div className="creator-mini-row" key={account.accountId}
+                    style={{ flexWrap: 'wrap', gap: 8 }}>
+                    <Space orientation="vertical" size={2} style={{ overflowWrap: 'anywhere' }}>
+                      <Typography.Text strong>{account.name || account.username || account.accountId}</Typography.Text>
+                      <span>{account.username && account.name ? '@' + account.username.replace(/^@/, '') + ' · ' : ''}
+                        {account.accountId}</span>
+                      <Typography.Text type="secondary">
+                        {(account.matchReason && matchReasons[account.matchReason]) || matchLabels[account.matchStatus]}
+                      </Typography.Text>
+                    </Space>
+                    {action && <Button type={account.matchStatus === 'ALREADY_LINKED' ? 'default' : 'primary'}
+                      disabled={checking || (!!working && working !== account.accountId)}
+                      loading={working === account.accountId} onClick={() => void confirm(account.accountId)}>
+                      {action}
+                    </Button>}
+                    {canSubmitEvidence && <Button disabled={!!working || !canOpenManual} onClick={() => setManual({
+                      platform: session.platform, query: account.username ?? account.accountId,
+                    })}>Gửi bằng chứng</Button>}
+                  </div>;
+                })}
               </Space> : <Alert showIcon type="warning" title={pending.flow === 'INSTAGRAM_UNIFIED_LOGIN'
                 ? 'Chưa có tài khoản Instagram được cấp quyền trong phiên này.'
                 : session.platform === 'FACEBOOK' ? 'Facebook chưa trả về Trang nào cho phiên này.' : 'Nền tảng chưa trả về kênh đủ điều kiện.'}
