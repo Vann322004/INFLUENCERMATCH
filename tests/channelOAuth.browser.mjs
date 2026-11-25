@@ -30,6 +30,7 @@ try {
   let duplicateInstagram = false;
   let instagramMethods;
   let rejectStart = false;
+  let sessionPlatform = 'INSTAGRAM';
   let sessionAccounts = [{ accountId: '178400001', matchStatus: 'AVAILABLE' }];
   await page.route('**/api/v1/**', async route => {
     const req = route.request();
@@ -55,10 +56,14 @@ try {
     else if (path.endsWith('/connect/tiktok/sessions/session')) {
       data = { sessionId: 'session', platform: 'TIKTOK', status: 'COMPLETED', creatorId: 'new-tiktok-channel' };
     }
-    else data = { sessionId: 'session', platform: 'INSTAGRAM', oauthFlow: returnedFlow, status: 'READY', accounts: sessionAccounts };
+    else if (path.endsWith('/cooperation-invitations/context')) {
+      data = { status: 'NEEDS_CHANNEL_VERIFICATION', channels: [{ creatorId: 'invited-channel', platform: 'FACEBOOK', username: 'invited' }] };
+    }
+    else data = { sessionId: 'session', platform: sessionPlatform, oauthFlow: returnedFlow, status: 'READY', accounts: sessionAccounts };
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ success: true, data }) });
   });
-  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/.channel-oauth-browser.html`);
+  const harnessUrl = `http://127.0.0.1:${server.httpServer.address().port}/.channel-oauth-browser.html`;
+  await page.goto(harnessUrl);
   await page.evaluate(async () => {
     const { setAuthSession } = await import('/src/services/authSession.ts');
     setAuthSession('fixture-access-token', undefined, { id: 'creator-user', role: 'CREATOR', status: 'ACTIVE' });
@@ -154,45 +159,87 @@ try {
   await dialog.getByRole('button', { name: 'Xác minh thủ công' }).click();
   await dialog.waitFor({ state: 'hidden' });
   await page.getByRole('dialog').waitFor();
+  async function returnFromOAuth(flow, { reloadResult, fromInvitation = false } = {}) {
+    await page.goto(harnessUrl);
+    await page.waitForFunction(() => typeof window.mountChannelVerification === 'function');
+    await page.evaluate(async ({ flow, fromInvitation, reloadResult }) => {
+      const { getAuthSessionId } = await import('/src/services/authSession.ts');
+      const { forgetCooperation, rememberCooperation, rememberCooperationTarget } =
+        await import('/src/services/cooperationContinuation.ts');
+      forgetCooperation();
+      if (fromInvitation) {
+        rememberCooperation('a'.repeat(64));
+        rememberCooperationTarget({ creatorId: 'invited-channel', platform: 'FACEBOOK', username: 'invited' });
+      }
+      sessionStorage.setItem('creator.channel-oauth', JSON.stringify({
+        id: 'session', expiresAt: new Date(Date.now() + 600000).toISOString(),
+        authSessionId: getAuthSessionId(), flow,
+      }));
+      window.mountChannelVerification(reloadResult);
+    }, { flow, fromInvitation, reloadResult });
+  }
+  const radio = name => page.getByRole('radio', { name });
+  const link = page.getByRole('button', { name: 'Liên kết kênh', exact: true });
+  const create = page.getByRole('button', { name: 'Tạo và liên kết kênh', exact: true });
+  const confirmRequests = () => requests.filter(req => req.path.endsWith('/confirm'));
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  returnedFlow = 'FACEBOOK_LOGIN';
+  sessionPlatform = 'FACEBOOK';
+  sessionAccounts = [
+    { accountId: '178400001', creatorId: 'known-channel', name: 'Trang có hồ sơ', matchStatus: 'AVAILABLE' },
+    { accountId: '178400002', name: 'Trang mới', matchStatus: 'CAN_CREATE' },
+  ];
+  await returnFromOAuth('FACEBOOK_LOGIN');
+  await link.waitFor();
+  assert.equal(await link.isDisabled(), true);
+  await radio(/Trang có hồ sơ/).check();
+  assert.equal(await link.isEnabled(), true);
+  await radio(/Trang mới/).check();
+  assert.equal(await radio(/Trang có hồ sơ/).isChecked(), false);
+  assert.equal(await create.isEnabled(), true);
+  const previousConfirms = confirmRequests().length;
+  await create.evaluate(button => { button.click(); button.click(); });
+  await page.getByText('Kênh đã được liên kết.', { exact: true }).waitFor();
+  assert.deepEqual(confirmRequests().slice(previousConfirms).map(req => req.body), [{ accountId: '178400002' }]);
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  returnedFlow = 'INSTAGRAM_LOGIN';
+  sessionPlatform = 'INSTAGRAM';
   sessionAccounts = [
     { accountId: '178400001', name: 'Kênh mới', matchStatus: 'CAN_CREATE' },
     { accountId: '178400002', name: 'Kênh thiếu bằng chứng', matchStatus: 'INSUFFICIENT_EVIDENCE' },
   ];
-  await page.reload();
-  await page.waitForFunction(() => typeof window.mountChannelVerification === 'function');
-  await page.evaluate(async () => {
-    const { getAuthSessionId } = await import('/src/services/authSession.ts');
-    sessionStorage.setItem('creator.channel-oauth', JSON.stringify({
-      id: 'session', expiresAt: new Date(Date.now() + 600000).toISOString(),
-      authSessionId: getAuthSessionId(), flow: 'INSTAGRAM_LOGIN',
-    }));
-    window.mountChannelVerification();
-  });
-  const create = page.getByRole('button', { name: 'Tạo và liên kết kênh', exact: true });
-  await create.waitFor();
+  await returnFromOAuth('INSTAGRAM_LOGIN');
+  await radio(/Kênh mới/).check();
+  assert.equal(await radio(/Kênh thiếu bằng chứng/).isDisabled(), true);
+  assert.equal(await create.isEnabled(), true);
   assert.equal(await page.getByRole('button', { name: 'Gửi bằng chứng', exact: true }).count(), 0);
-  await create.click();
-  await page.getByText('Kênh đã được liên kết.', { exact: true }).waitFor();
-  assert.equal(requests.at(-1).path, '/api/v1/creators/portal/accounts/connect/meta/sessions/session/confirm');
-  assert.equal(requests.at(-1).body.accountId, '178400001');
-  async function returnFromTikTok(reloadResult) {
-    await page.reload();
-    await page.waitForFunction(() => typeof window.mountChannelVerification === 'function');
-    await page.evaluate(async result => {
-      const { getAuthSessionId } = await import('/src/services/authSession.ts');
-      sessionStorage.setItem('creator.channel-oauth', JSON.stringify({
-        id: 'session', expiresAt: new Date(Date.now() + 600000).toISOString(),
-        authSessionId: getAuthSessionId(), flow: 'TIKTOK_LOGIN',
-      }));
-      window.mountChannelVerification(result);
-    }, reloadResult);
-  }
-  await returnFromTikTok([{ id: 'another-channel' }]);
+  sessionAccounts[0] = { ...sessionAccounts[0], matchStatus: 'UNAVAILABLE', matchReason: 'OWNERSHIP_CONFLICT' };
+  await page.getByRole('button', { name: 'Kiểm tra lại phiên', exact: true }).click();
+  await page.getByText('Chưa có kênh đủ điều kiện liên kết.', { exact: true }).waitFor();
+  assert.equal(await radio(/Kênh mới/).isChecked(), false);
+  assert.equal(await link.isDisabled(), true);
+
+  returnedFlow = 'FACEBOOK_LOGIN';
+  sessionPlatform = 'FACEBOOK';
+  sessionAccounts = [
+    { accountId: '178400001', creatorId: 'invited-channel', name: 'Trang được mời', matchStatus: 'AVAILABLE' },
+    { accountId: '178400002', creatorId: 'other-channel', name: 'Trang khác', matchStatus: 'AVAILABLE' },
+  ];
+  await returnFromOAuth('FACEBOOK_LOGIN', { fromInvitation: true });
+  await radio(/Trang được mời/).check();
+  assert.equal(await radio(/Trang khác/).isDisabled(), true);
+  await link.click();
+  await page.waitForURL('**/cooperation-invitations');
+  assert.deepEqual(confirmRequests().at(-1).body, { accountId: '178400001' });
+
+  await returnFromOAuth('TIKTOK_LOGIN', { reloadResult: [{ id: 'another-channel' }] });
   await page.getByText('BE đã xác nhận phiên. Chưa đọc được kênh vừa liên kết, hãy kiểm tra lại phiên.', { exact: true }).waitFor();
   assert.equal(await page.getByText('Kênh đã được liên kết.', { exact: true }).count(), 0);
-  await returnFromTikTok([{ id: 'new-tiktok-channel' }]);
+  await returnFromOAuth('TIKTOK_LOGIN', { reloadResult: [{ id: 'new-tiktok-channel' }] });
   await page.getByText('Kênh đã được liên kết.', { exact: true }).waitFor();
-  console.log('PASS: OAuth routing, bound Claim payload, Instagram choices, Meta confirmation and TikTok linked-channel reload (mock HTTP)');
+  console.log('PASS: OAuth routing, single-channel selection, duplicate-click protection, invitation scope, and TikTok linked-channel reload (mock HTTP)');
 } finally {
   await browser?.close(); await server?.close(); await unlink(harness).catch(() => {});
 }

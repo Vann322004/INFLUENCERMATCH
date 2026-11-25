@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Card, Empty, Modal, Pagination, Space, Spin, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Empty, Modal, Pagination, Radio, Space, Spin, Tag, Typography } from 'antd';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   cooperationPath, pendingCooperation, pendingCooperationTarget,
@@ -146,6 +146,7 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
   const [pending, setPending] = useState(readPendingOAuth);
   const [returnHint, setReturnHint] = useState(() => params.get('oauth'));
   const [session, setSession] = useState<OAuthSession | null>(null);
+  const [selection, setSelection] = useState<{ sessionId: string; accountId: string } | null>(null);
   const [checking, setChecking] = useState(false);
   const [statusRetry, setStatusRetry] = useState(0);
   const [working, setWorking] = useState('');
@@ -216,6 +217,7 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
     setPending(null);
     setReturnHint(null);
     setSession(null);
+    setSelection(null);
     setChecking(false);
   }
 
@@ -244,6 +246,9 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
           }
         } else {
           setSession(result);
+          setSelection(current => result.status === 'READY' && current?.sessionId === result.sessionId
+            && result.accounts.some(account => account.accountId === current.accountId
+              && !!linkActions[account.matchStatus]) ? current : null);
           if (invitationToken && pending.flow === 'TIKTOK_LOGIN' && result.status === 'READY') {
             clearPending();
             navigate(cooperationPath(), { state: { channelOAuthResult: 'MANUAL_RESOLUTION' } });
@@ -252,6 +257,8 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
       })
       .catch(cause => {
         if (!controller.signal.aborted && pending.authSessionId === getAuthSessionId()) {
+          setSession(null);
+          setSelection(null);
           setError(getErrorMessage(cause, 'Không đọc được phiên xác minh. Hãy thử tải lại hoặc bắt đầu lại.'));
         }
       })
@@ -262,6 +269,14 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
   const instagramOption = options?.find(option => option.platform === 'INSTAGRAM');
   const canUsePlatform = (platform: OAuthPlatform) => !invitationToken
     || (targetChannel?.platform === platform && invitationContext?.status === 'NEEDS_CHANNEL_VERIFICATION');
+  const checkingInvitation = !!invitationToken && !invitationContext && !invitationContextError;
+  const selectableAccounts = canVerify && pending && pending.flow !== 'TIKTOK_LOGIN'
+    && session?.status === 'READY' && session.sessionId === pending.id
+    ? session.accounts.filter(account => !!linkActions[account.matchStatus]
+      && canUsePlatform(session.platform) && (!invitationToken || account.creatorId === targetChannel?.creatorId))
+    : [];
+  const selectedAccount = selection && selection.sessionId === session?.sessionId
+    ? selectableAccounts.find(account => account.accountId === selection.accountId) : undefined;
   const instagramDialogOpen = showInstagram && canVerify && !pending
     && !!instagramOption && canUsePlatform('INSTAGRAM');
   const instagramMethods = instagramChoices.map(choice => ({
@@ -304,8 +319,10 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
     }
   }
 
-  async function confirm(accountId: string) {
-    if (!pending || session?.status !== 'READY' || busy.current) return;
+  async function confirm() {
+    if (!pending || !selectedAccount || checking || busy.current
+        || pending.authSessionId !== getAuthSessionId()) return;
+    const accountId = selectedAccount.accountId;
     busy.current = true;
     setWorking(accountId);
     setNotice('');
@@ -420,31 +437,52 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
             </>}
             {session?.status === 'READY' && pending.flow !== 'TIKTOK_LOGIN' && (
               session.accounts.length ? <Space orientation="vertical" style={{ width: '100%' }}>
-                <Typography.Text strong>Chọn kênh đã cấp quyền</Typography.Text>
-                {session.accounts.map(account => {
-                  const action = linkActions[account.matchStatus];
-                  const canSubmitEvidence = account.matchStatus === 'INSUFFICIENT_EVIDENCE'
-                    && (!!account.creatorId || account.matchReason === 'UNSTABLE_CHANNEL_ID');
-                  return <div className="creator-mini-row" key={account.accountId}
-                    style={{ flexWrap: 'wrap', gap: 8 }}>
-                    <Space orientation="vertical" size={2} style={{ overflowWrap: 'anywhere' }}>
-                      <Typography.Text strong>{account.name || account.username || account.accountId}</Typography.Text>
-                      <span>{account.username && account.name ? '@' + account.username.replace(/^@/, '') + ' · ' : ''}
-                        {account.accountId}</span>
-                      <Typography.Text type="secondary">
-                        {(account.matchReason && matchReasons[account.matchReason]) || matchLabels[account.matchStatus]}
-                      </Typography.Text>
-                    </Space>
-                    {action && <Button type={account.matchStatus === 'ALREADY_LINKED' ? 'default' : 'primary'}
-                      disabled={checking || (!!working && working !== account.accountId)}
-                      loading={working === account.accountId} onClick={() => void confirm(account.accountId)}>
-                      {action}
-                    </Button>}
-                    {canSubmitEvidence && <Button disabled={!!working || !canOpenManual} onClick={() => setManual({
-                      platform: session.platform, query: account.username ?? account.accountId,
-                    })}>Gửi bằng chứng</Button>}
-                  </div>;
-                })}
+                <Typography.Text strong id="oauth-channel-choice">Chọn kênh đã cấp quyền</Typography.Text>
+                <Radio.Group name="oauth-account" aria-labelledby="oauth-channel-choice"
+                  value={selectedAccount?.accountId ?? ''} disabled={checking || !!working}
+                  style={{ width: '100%' }}
+                  onChange={event => {
+                    const accountId = event.target.value;
+                    if (selectableAccounts.some(account => account.accountId === accountId)) {
+                      setSelection({ sessionId: session.sessionId, accountId });
+                    }
+                  }}>
+                  <Space orientation="vertical" style={{ width: '100%' }}>
+                    {session.accounts.map(account => {
+                      const canSelect = selectableAccounts.includes(account);
+                      const canSubmitEvidence = account.matchStatus === 'INSUFFICIENT_EVIDENCE'
+                        && (!!account.creatorId || account.matchReason === 'UNSTABLE_CHANNEL_ID');
+                      const wrongTarget = !!invitationToken && !!targetChannel && !!linkActions[account.matchStatus]
+                        && account.creatorId !== targetChannel.creatorId;
+                      const reason = wrongTarget ? matchReasons.TARGET_MISMATCH
+                        : (account.matchReason && matchReasons[account.matchReason]) || matchLabels[account.matchStatus];
+                      return <div className="creator-mini-row" key={account.accountId}
+                        style={{ flexWrap: 'wrap', gap: 8 }}>
+                        <Radio value={account.accountId} disabled={canSelect ? undefined : true}
+                          style={{ flex: '1 1 180px', minWidth: 0, marginInlineEnd: 0 }}>
+                          <span style={{ display: 'flex', flexDirection: 'column', gap: 2, overflowWrap: 'anywhere' }}>
+                            <Typography.Text strong>{account.name || account.username || account.accountId}</Typography.Text>
+                            <Typography.Text>
+                              {account.username && account.name ? '@' + account.username.replace(/^@/, '') + ' · ' : ''}
+                              {account.accountId}
+                            </Typography.Text>
+                            <Typography.Text type="secondary">{reason}</Typography.Text>
+                          </span>
+                        </Radio>
+                        {canSubmitEvidence && <Button disabled={checking || !!working || !canOpenManual} onClick={() => setManual({
+                          platform: session.platform, query: account.username ?? account.accountId,
+                        })}>Gửi bằng chứng</Button>}
+                      </div>;
+                    })}
+                  </Space>
+                </Radio.Group>
+                {!checking && !checkingInvitation && !selectableAccounts.length && <Alert type="info" showIcon
+                  title="Chưa có kênh đủ điều kiện liên kết."
+                  description="Xem lý do ở từng kênh. Chọn Kiểm tra lại phiên để cập nhật, hoặc hủy phiên và cấp quyền lại." />}
+                <Button type="primary" disabled={!selectedAccount || checking || !!working}
+                  loading={!!selectedAccount && working === selectedAccount.accountId} onClick={() => void confirm()}>
+                  {selectedAccount ? linkActions[selectedAccount.matchStatus] : 'Liên kết kênh'}
+                </Button>
               </Space> : <Alert showIcon type="warning" title={pending.flow === 'INSTAGRAM_UNIFIED_LOGIN'
                 ? 'Chưa có tài khoản Instagram được cấp quyền trong phiên này.'
                 : session.platform === 'FACEBOOK' ? 'Facebook chưa trả về Trang nào cho phiên này.' : 'Nền tảng chưa trả về kênh đủ điều kiện.'}
