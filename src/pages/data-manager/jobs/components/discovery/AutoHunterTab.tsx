@@ -131,7 +131,7 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
       }
     }
 
-    const targetCount = mode === 'custom' ? Math.min(usernamesToCrawl.length, maxKocs) : maxKocs;
+    const targetCount = mode === 'custom' ? usernamesToCrawl.length : maxKocs;
     setLoading(true);
     setHuntError('');
     setProgressPercent(0);
@@ -167,7 +167,7 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
 
     try {
       const res = mode === 'custom' ? await crawlerService.collectAccounts(
-        crawlPlatform, usernamesToCrawl, maxKocs, handleProgress
+        crawlPlatform, usernamesToCrawl, targetCount, handleProgress
       ) : await crawlerService.batchCrawl({
         platform: crawlPlatform,
         category: categoryCode,
