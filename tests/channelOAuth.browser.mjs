@@ -13,12 +13,22 @@ try {
   const page = await browser.newPage();
   const requests = [];
   let returnedFlow = 'INSTAGRAM_UNIFIED_LOGIN';
+  let duplicateInstagram = false;
   await page.route('**/api/v1/**', async route => {
     const req = route.request();
     const path = new URL(req.url()).pathname;
     requests.push({ path, method: req.method(), body: req.postDataJSON() });
     let data;
-    if (path.endsWith('/start')) data = { sessionId: 'session', expiresAt: new Date(Date.now() + 600000).toISOString(), authorizationUrl: 'https://www.facebook.com/dialog/oauth' };
+    if (path.endsWith('/connection-options')) {
+      data = [
+        { platform: 'FACEBOOK', oauthFlow: 'FACEBOOK_LOGIN', available: true, supported: true },
+        { platform: 'INSTAGRAM', oauthFlow: 'INSTAGRAM_UNIFIED_LOGIN', available: true, supported: true },
+        { platform: 'TIKTOK', oauthFlow: 'TIKTOK_LOGIN', available: false, supported: true },
+      ];
+      if (duplicateInstagram) data.push({ platform: 'INSTAGRAM', oauthFlow: 'INSTAGRAM_LOGIN', available: true, supported: true });
+    }
+    else if (path.endsWith('/claim')) data = { id: 'claim', creatorId: 'target', claimantId: 'creator-user', status: 'PENDING' };
+    else if (path.endsWith('/start')) data = { sessionId: 'session', expiresAt: new Date(Date.now() + 600000).toISOString(), authorizationUrl: 'https://www.facebook.com/dialog/oauth' };
     else if (path.endsWith('/confirm')) data = { sessionId: 'session', creatorId: 'creator', status: 'AUTHORIZED' };
     else data = { sessionId: 'session', platform: 'INSTAGRAM', oauthFlow: returnedFlow, status: 'READY', accounts: [{ accountId: '178400001', matchStatus: 'AVAILABLE' }] };
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ success: true, data }) });
@@ -52,7 +62,28 @@ try {
     const { channelVerificationService: api } = await import('/src/services/api/channelVerificationService.ts');
     try { await api.readSession('session', 'INSTAGRAM_UNIFIED_LOGIN'); return false; } catch { return true; }
   }), true, 'a Direct session must not be shown as Unified');
-  console.log('PASS: browser service routing for four flows, invitation context, confirmation and cross-flow rejection (mock HTTP)');
+  const readOptions = () => page.evaluate(async () => {
+    const { channelVerificationService: api } = await import('/src/services/api/channelVerificationService.ts');
+    return api.options();
+  });
+  assert.deepEqual((await readOptions()).map(option => [option.platform, option.oauthFlow, option.available]), [
+    ['FACEBOOK', 'FACEBOOK_LOGIN', true],
+    ['INSTAGRAM', 'INSTAGRAM_UNIFIED_LOGIN', true],
+    ['TIKTOK', 'TIKTOK_LOGIN', false],
+  ]);
+  duplicateInstagram = true;
+  assert.equal((await readOptions()).find(option => option.platform === 'INSTAGRAM').available, false);
+  await page.evaluate(async () => {
+    const { claimService } = await import('/src/services/api/claimService.ts');
+    const claim = await claimService.submitClaim('target', {
+      evidenceUrls: ['https://example.test/proof'], note: 'Account settings',
+      cooperationInvitationToken: 'fixture-invitation',
+    });
+    if (claim.status !== 'PENDING') throw Error('Missing pending claim');
+  });
+  assert.equal(requests.at(-1).path, '/api/v1/creators/target/claim');
+  assert.equal(requests.at(-1).body.cooperationInvitationToken, 'fixture-invitation');
+  console.log('PASS: OAuth routing and session isolation, one option per supported platform, and bound Claim payload (mock HTTP)');
 } finally {
   await browser?.close(); await server?.close(); await unlink(harness).catch(() => {});
 }

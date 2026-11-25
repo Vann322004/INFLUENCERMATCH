@@ -3,6 +3,7 @@ import { Alert, Button, Empty, Form, Input, Modal, Radio, Select, Space } from '
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { claimService, type ClaimChannel } from '../../../services/api/claimService';
 import { getErrorMessage } from '../../../services/apiClient';
+import type { CooperationTarget } from '../../../services/cooperationContinuation';
 
 export function httpUrl(value?: string | null): string | undefined {
   if (!value) return undefined;
@@ -19,6 +20,7 @@ const platforms = ['FACEBOOK', 'INSTAGRAM', 'TIKTOK', 'YOUTUBE'];
 interface Props {
   initialPlatform?: string;
   initialQuery?: string;
+  invitation?: { token: string; target: CooperationTarget };
   onClose: () => void;
   onSubmitted: () => void;
 }
@@ -28,7 +30,7 @@ interface Evidence {
   note: string;
 }
 
-export default function ManualChannelClaim({ initialPlatform, initialQuery, onClose, onSubmitted }: Props) {
+export default function ManualChannelClaim({ initialPlatform, initialQuery, invitation, onClose, onSubmitted }: Props) {
   const [platform, setPlatform] = useState(initialPlatform ?? 'FACEBOOK');
   const [query, setQuery] = useState(initialQuery ?? '');
   const [results, setResults] = useState<ClaimChannel[] | null>(null);
@@ -38,6 +40,7 @@ export default function ManualChannelClaim({ initialPlatform, initialQuery, onCl
   const [error, setError] = useState('');
   const lookup = useRef<AbortController | null>(null);
   const saving = useRef(false);
+  const creatorId = invitation?.target.creatorId ?? selected;
   useEffect(() => () => lookup.current?.abort(), []);
 
   function resetSearch() {
@@ -68,14 +71,15 @@ export default function ManualChannelClaim({ initialPlatform, initialQuery, onCl
   }
 
   async function submit(values: Evidence) {
-    if (!selected || saving.current) return;
+    if (!creatorId || saving.current) return;
     saving.current = true;
     setSubmitting(true);
     setError('');
     try {
-      const claim = await claimService.submitClaim(selected, {
+      const claim = await claimService.submitClaim(creatorId, {
         evidenceUrls: values.evidenceUrls.map(url => url.trim()),
         note: values.note.trim(),
+        cooperationInvitationToken: invitation?.token,
       });
       if (claim.status !== 'PENDING') throw new Error('Chưa xác nhận được yêu cầu chờ duyệt.');
       onSubmitted();
@@ -92,6 +96,9 @@ export default function ManualChannelClaim({ initialPlatform, initialQuery, onCl
       closable={!submitting} mask={{ closable: !submitting }} keyboard={!submitting}>
       <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
         {error && <Alert showIcon type="error" title={error} />}
+        {invitation ? <Alert type="info" showIcon title="Kênh trong lời mời"
+          description={`${invitation.target.platform} · ${invitation.target.username || invitation.target.creatorId}`} />
+        : <>
         <Select aria-label="Nền tảng" value={platform} disabled={submitting}
           style={{ width: '100%' }} options={platforms.map(value => ({ value, label: value }))}
           onChange={value => { setPlatform(value); resetSearch(); }} />
@@ -114,6 +121,7 @@ export default function ManualChannelClaim({ initialPlatform, initialQuery, onCl
             </Space>
           </Radio.Group>
         )}
+        </>}
         <Form<Evidence> layout="vertical" disabled={submitting} initialValues={{ evidenceUrls: [''] }}
           onFinish={submit}>
           <Form.List name="evidenceUrls">
@@ -141,11 +149,12 @@ export default function ManualChannelClaim({ initialPlatform, initialQuery, onCl
           </Form.List>
           <Form.Item name="note" label="Ghi chú" style={{ marginTop: 16 }}
             rules={[{ required: true, whitespace: true, message: 'Nhập ghi chú về quyền quản lý kênh.' }]}>
-            <Input.TextArea rows={3} maxLength={2000} showCount />
+            <Input.TextArea rows={3} maxLength={2000} showCount
+              placeholder="Ví dụ: Liên kết này dẫn đến ảnh phần cài đặt hiển thị quyền quản lý kênh của tôi." />
           </Form.Item>
           <Space wrap>
             <Button onClick={onClose}>Đóng</Button>
-            <Button type="primary" htmlType="submit" disabled={!selected} loading={submitting}>
+            <Button type="primary" htmlType="submit" disabled={!creatorId} loading={submitting}>
               Gửi bằng chứng
             </Button>
           </Space>

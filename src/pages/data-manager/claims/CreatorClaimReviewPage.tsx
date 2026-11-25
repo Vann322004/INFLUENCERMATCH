@@ -12,11 +12,38 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { claimService } from "../../../services/api/claimService";
-import type { ClaimResponse, ClaimStatus } from "../../../types/api/claim.types";
+import type { ClaimResponse, ClaimStatus, ReviewRequest, ReviewEvidenceType } from "../../../types/api/claim.types";
 import { getErrorMessage } from "../../../services/apiClient";
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
+const reviewEvidenceLabels: Record<ReviewEvidenceType, string> = {
+  ACCOUNT_SETTINGS: 'Trang quản lý/cài đặt',
+  SCREEN_SHARE: 'Chia sẻ màn hình',
+  OTHER: 'Khác',
+  NO_VALID_EVIDENCE: 'Chưa có bằng chứng hợp lệ',
+};
+type ReviewFields = Omit<ReviewRequest, 'approved'>;
+
+function ReviewEvidenceFields({ approving }: { approving: boolean }) {
+  const types = Object.keys(reviewEvidenceLabels) as ReviewEvidenceType[];
+  return <>
+    <Form.Item name="reviewEvidenceType" label="Loại bằng chứng đã xem"
+      rules={[{ required: true, message: 'Chọn loại bằng chứng.' }]}>
+      <Select options={types.filter(value => !approving || value !== 'NO_VALID_EVIDENCE')
+        .map(value => ({ value, label: reviewEvidenceLabels[value] }))} />
+    </Form.Item>
+    <Form.Item name="reviewVerificationNote" label="Cách đối chiếu"
+      rules={[{ required: true, whitespace: true, message: 'Ghi cách bạn đã đối chiếu bằng chứng.' }]}>
+      <TextArea rows={3} maxLength={2000}
+        placeholder="Ví dụ: Đối chiếu mã kênh và quyền quản lý trên trang cài đặt qua chia sẻ màn hình." />
+    </Form.Item>
+    <Form.Item name="reason" label={approving ? 'Lý do duyệt' : 'Lý do từ chối'}
+      rules={[{ required: true, whitespace: true, message: 'Nhập lý do quyết định.' }]}>
+      <TextArea rows={3} maxLength={2000} showCount />
+    </Form.Item>
+  </>;
+}
 
 function actionError(error: any, fallback: string) {
   return error?.response?.status === 409
@@ -173,25 +200,20 @@ function ClaimDetailDrawer({
             )}
           </div>
 
-          {(d.status === "REJECTED" || d.status === "REVOKED") && d.reason && (
-            <>
-              <Divider style={{ margin: "4px 0" }} />
-              <Alert type={d.status === "REVOKED" ? "error" : "warning"} showIcon
-                message={d.status === "REVOKED" ? "Lý do thu hồi" : "Lý do từ chối"}
-                description={d.reason}
-              />
-            </>
-          )}
+          {d.cooperationInvitationId && <Text type="secondary">Mã lời mời hợp tác · {d.cooperationInvitationId}</Text>}
+          {d.reviewedAt && <Descriptions title="Quyết định xét duyệt" size="small" column={1}>
+            <Descriptions.Item label="Người xét duyệt">{d.reviewedBy || 'Chưa ghi nhận'}</Descriptions.Item>
+            <Descriptions.Item label="Thời điểm">{new Date(d.reviewedAt).toLocaleString('vi-VN')}</Descriptions.Item>
+            <Descriptions.Item label="Loại bằng chứng">
+              {d.reviewEvidenceType ? reviewEvidenceLabels[d.reviewEvidenceType] : 'Chưa ghi nhận'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Cách đối chiếu">{d.reviewVerificationNote || 'Chưa ghi nhận'}</Descriptions.Item>
+            <Descriptions.Item label="Lý do quyết định">{d.reason || 'Chưa ghi nhận'}</Descriptions.Item>
+          </Descriptions>}
+          {d.status === "REVOKED" && d.revokeReason &&
+            <Alert type="error" showIcon title="Lý do thu hồi" description={d.revokeReason} />}
           {ownershipResult(d) && <Alert type="info" showIcon title="Liên kết kênh hiện tại"
             description={ownershipResult(d)} />}
-          {d.status === "APPROVED" && (
-            <>
-              <Divider style={{ margin: "4px 0" }} />
-              <Alert type="success" showIcon message="Yêu cầu đã được duyệt"
-                description={`Duyệt bởi: ${d.reviewedBy || "Quản trị viên"} lúc ${d.reviewedAt ? new Date(d.reviewedAt).toLocaleString("vi-VN") : "—"}`}
-              />
-            </>
-          )}
         </div>
       )}
     </Drawer>
@@ -200,15 +222,15 @@ function ClaimDetailDrawer({
 
 function ApproveModal({ claim, open, onClose, onDone }: { claim: ClaimResponse | null; open: boolean; onClose: () => void; onDone: (u: ClaimResponse) => void }) {
   const [loading, setLoading] = useState(false);
-  const [note, setNote] = useState("");
-  useEffect(() => { if (open) setNote(""); }, [open]);
-  const handleConfirm = async () => {
+  const [form] = Form.useForm<ReviewFields>();
+  useEffect(() => { if (open) form.resetFields(); }, [open, claim?.id, form]);
+  const handleConfirm = async (values: ReviewFields) => {
     if (!claim) return;
     try {
       setLoading(true);
       const updated = await claimService.reviewClaim(claim.id, {
         approved: true,
-        reason: note.trim(),
+        ...values,
       });
       message.success("Đã ghi nhận quyết định xác minh quyền sở hữu kênh.");
       onDone(updated); onClose();
@@ -231,34 +253,33 @@ function ApproveModal({ claim, open, onClose, onDone }: { claim: ClaimResponse |
             </div>
           </div>
         )}
-        <div style={{ fontSize: 12.5, fontWeight: 600, color: "#334155", marginBottom: 6 }}>Lý do duyệt (bắt buộc)</div>
-        <TextArea rows={3} value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} showCount
-          placeholder="VD: Mã trong Bio khớp, kênh chính chủ..." style={{ resize: "none", marginBottom: 16 }} />
+        <Form form={form} layout="vertical" disabled={loading} onFinish={handleConfirm}>
+        <ReviewEvidenceFields approving />
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <Button onClick={onClose}>Hủy</Button>
-          <Button disabled={!note.trim()} loading={loading} onClick={handleConfirm}
+          <Button loading={loading} htmlType="submit"
             style={{ background: "linear-gradient(135deg,#10B981,#059669)", border: "none", color: "#fff", fontWeight: 700 }}>
             Xác nhận duyệt
           </Button>
         </div>
+        </Form>
       </div>
     </Modal>
   );
 }
 
 function RejectModal({ claim, open, onClose, onDone }: { claim: ClaimResponse | null; open: boolean; onClose: () => void; onDone: (u: ClaimResponse) => void }) {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<ReviewFields>();
   const [loading, setLoading] = useState(false);
-  const handleConfirm = async () => {
+  useEffect(() => { if (open) form.resetFields(); }, [open, claim?.id, form]);
+  const handleConfirm = async (values: ReviewFields) => {
     if (!claim) return;
     try {
-      const values = await form.validateFields();
       setLoading(true);
-      const updated = await claimService.reviewClaim(claim.id, { approved: false, reason: values.reason });
+      const updated = await claimService.reviewClaim(claim.id, { approved: false, ...values });
       message.success("Đã từ chối đơn claim.");
       onDone(updated); onClose(); form.resetFields();
     } catch (err: any) {
-      if (err?.errorFields) return; // lỗi validate form, Ant Design đã hiển thị
       message.error(actionError(err, 'Chưa xác nhận được kết quả từ chối. Hãy tải lại hồ sơ trước khi thử lại.'));
       if (err?.response?.status === 409) { onDone(claim); onClose(); }
     } finally { setLoading(false); }
@@ -267,13 +288,11 @@ function RejectModal({ claim, open, onClose, onDone }: { claim: ClaimResponse | 
     <Modal open={open} onCancel={onClose} footer={null} width={480}
       title={<div style={{ display: "flex", alignItems: "center", gap: 8 }}><CloseCircleOutlined style={{ color: "#EF4444", fontSize: 18 }} /><span style={{ fontWeight: 700 }}>Từ chối yêu cầu</span></div>}>
       <Alert type="error" showIcon message="Yêu cầu sẽ bị từ chối và nhà sáng tạo không nhận được quyền sở hữu." style={{ margin: "12px 0 16px" }} />
-      <Form form={form} layout="vertical">
-        <Form.Item name="reason" label="Lý do từ chối *" rules={[{ required: true, message: "Vui lòng nhập lý do từ chối" }]}>
-          <TextArea rows={4} placeholder="Bằng chứng không đủ thuyết phục / Thông tin không khớp / ..." style={{ resize: "none" }} />
-        </Form.Item>
+      <Form form={form} layout="vertical" disabled={loading} onFinish={handleConfirm}>
+        <ReviewEvidenceFields approving={false} />
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <Button onClick={onClose}>Hủy</Button>
-          <Button loading={loading} onClick={handleConfirm}
+          <Button loading={loading} htmlType="submit"
             style={{ background: "#EF4444", border: "none", color: "#fff", fontWeight: 700 }}>
             Xác nhận từ chối
           </Button>

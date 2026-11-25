@@ -7,6 +7,7 @@
 // =============================================
 
 export type ClaimStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVOKED';
+export type ReviewEvidenceType = 'ACCOUNT_SETTINGS' | 'SCREEN_SHARE' | 'OTHER' | 'NO_VALID_EVIDENCE';
 
 export interface ClaimResponse {
   id: string;
@@ -29,6 +30,10 @@ export interface ClaimResponse {
   reviewedAt?: string;
   reviewedBy?: string;
   reason?: string;
+  revokeReason?: string;
+  cooperationInvitationId?: string | null;
+  reviewEvidenceType?: ReviewEvidenceType | null;
+  reviewVerificationNote?: string | null;
 
   // Private evidence: claimant and authorized reviewers only.
   evidenceType?: string;
@@ -49,6 +54,8 @@ export interface ClaimListParams {
 export interface ReviewRequest {
   approved: boolean;
   reason: string;
+  reviewEvidenceType: ReviewEvidenceType;
+  reviewVerificationNote: string;
 }
 
 export interface RevokeRequest {
@@ -56,6 +63,7 @@ export interface RevokeRequest {
 }
 
 export interface SubmitClaimRequest {
-  evidenceUrls?: string[];
-  note?: string;
+  evidenceUrls: string[];
+  note: string;
+  cooperationInvitationToken?: string;
 }
