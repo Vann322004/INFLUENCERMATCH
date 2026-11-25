@@ -1860,8 +1860,7 @@ body:has(.nl-page),
     height: 28px;
   }
 
-  .nl-nav-center,
-  .nl-nav-login {
+  .nl-nav-center {
     display: none;
   }
 
@@ -2334,8 +2333,10 @@ html:has(.nl-page) {
     border-radius: 6px;
   }
 
-  .nl-nav-right .nl-nav-pill.grey {
-    display: none;
+  .nl-nav-right .nl-nav-pill.grey,
+  .nl-nav-right .nl-nav-pill.primary {
+    padding: 0 12px;
+    font-size: 13px;
   }
 
   .nl-nav-right {
