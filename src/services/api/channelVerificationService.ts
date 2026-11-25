@@ -5,6 +5,12 @@ export type MetaPlatform = 'FACEBOOK' | 'INSTAGRAM';
 export type OAuthPlatform = MetaPlatform | 'TIKTOK';
 export type OAuthFlow = 'FACEBOOK_LOGIN' | 'INSTAGRAM_LOGIN' | 'INSTAGRAM_UNIFIED_LOGIN' | 'TIKTOK_LOGIN';
 
+export interface ConnectionMethod {
+  oauthFlow: OAuthFlow;
+  available: boolean;
+  unavailableReason?: string | null;
+}
+
 export interface ConnectionOption {
   environment?: string;
   requirements?: string[];
@@ -13,6 +19,7 @@ export interface ConnectionOption {
   supported: boolean;
   available: boolean;
   unavailableReason?: string | null;
+  methods?: ConnectionMethod[];
 }
 
 export interface LinkedChannel {

@@ -1,19 +1,34 @@
 // Browser/API contract test with mocked HTTP. Does not contact Meta or a live BE.
 import { createServer } from 'vite';
+import react from '@vitejs/plugin-react';
 import { chromium } from 'playwright';
 import { writeFile, unlink } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const harness = new URL('../.channel-oauth-browser.html', import.meta.url);
 let server, browser;
 try {
-  await writeFile(harness, '<!doctype html><html><body>OAuth contract harness</body></html>', 'utf8');
-  server = await createServer({ configFile: false, envDir: false, server: { host: '127.0.0.1', port: 0 } });
+  await writeFile(harness, `<!doctype html><html><body><div id="harness"></div><script type="module">
+    import { createElement } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { BrowserRouter } from 'react-router-dom';
+    import ChannelVerification from '/src/pages/creator/portal/ChannelVerification.tsx';
+    window.mountChannelVerification = () => {
+      createRoot(document.getElementById('harness')).render(
+        createElement(BrowserRouter, {}, createElement(ChannelVerification, {
+          canVerify: true, canViewClaims: false, linked: [], linkedError: null, reloadLinked: async () => true,
+        })),
+      );
+    };
+  </script></body></html>`, 'utf8');
+  server = await createServer({ configFile: false, envDir: false, plugins: [react()], server: { host: '127.0.0.1', port: 0 } });
   await server.listen();
   browser = await chromium.launch({ headless: true, channel: 'msedge' });
   const page = await browser.newPage();
   const requests = [];
   let returnedFlow = 'INSTAGRAM_UNIFIED_LOGIN';
   let duplicateInstagram = false;
+  let instagramMethods;
+  let rejectStart = false;
   await page.route('**/api/v1/**', async route => {
     const req = route.request();
     const path = new URL(req.url()).pathname;
@@ -22,10 +37,15 @@ try {
     if (path.endsWith('/connection-options')) {
       data = [
         { platform: 'FACEBOOK', oauthFlow: 'FACEBOOK_LOGIN', available: true, supported: true },
-        { platform: 'INSTAGRAM', oauthFlow: 'INSTAGRAM_UNIFIED_LOGIN', available: true, supported: true },
+        { platform: 'INSTAGRAM', oauthFlow: 'INSTAGRAM_UNIFIED_LOGIN', available: true, supported: true, methods: instagramMethods },
         { platform: 'TIKTOK', oauthFlow: 'TIKTOK_LOGIN', available: false, supported: true },
       ];
       if (duplicateInstagram) data.push({ platform: 'INSTAGRAM', oauthFlow: 'INSTAGRAM_LOGIN', available: true, supported: true });
+    }
+    else if (path.endsWith('/start') && rejectStart) {
+      await route.fulfill({ status: 422, contentType: 'application/problem+json',
+        body: JSON.stringify({ detail: 'Không bắt đầu được phiên thử.' }) });
+      return;
     }
     else if (path.endsWith('/claim')) data = { id: 'claim', creatorId: 'target', claimantId: 'creator-user', status: 'PENDING' };
     else if (path.endsWith('/start')) data = { sessionId: 'session', expiresAt: new Date(Date.now() + 600000).toISOString(), authorizationUrl: 'https://www.facebook.com/dialog/oauth' };
@@ -83,7 +103,53 @@ try {
   });
   assert.equal(requests.at(-1).path, '/api/v1/creators/target/claim');
   assert.equal(requests.at(-1).body.cooperationInvitationToken, 'fixture-invitation');
-  console.log('PASS: OAuth routing and session isolation, one option per supported platform, and bound Claim payload (mock HTTP)');
+  duplicateInstagram = false;
+  rejectStart = true;
+  const choices = [
+    ['INSTAGRAM_LOGIN', 'Đăng nhập trực tiếp bằng Instagram', 'instagram'],
+    ['FACEBOOK_LOGIN', 'Qua Facebook Page', 'meta'],
+    ['INSTAGRAM_UNIFIED_LOGIN', 'Qua Meta Business Portfolio', 'instagram-unified'],
+  ];
+  const setAvailability = availableFlows => {
+    instagramMethods = choices.map(([flow]) => ({
+      oauthFlow: flow, available: availableFlows.includes(flow), unavailableReason: 'NOT_CONFIGURED',
+    }));
+  };
+  await page.setViewportSize({ width: 375, height: 812 });
+  const openDialog = async () => {
+    await page.reload();
+    await page.waitForFunction(() => typeof window.mountChannelVerification === 'function');
+    await page.evaluate(() => window.mountChannelVerification());
+    await page.getByRole('button', { name: 'Xác minh Instagram', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Chọn cách xác minh Instagram' });
+    await dialog.waitFor();
+    return dialog;
+  };
+  setAvailability(['INSTAGRAM_LOGIN']);
+  const startCount = requests.filter(req => req.path.endsWith('/start')).length;
+  let dialog = await openDialog();
+  assert.equal(requests.filter(req => req.path.endsWith('/start')).length, startCount);
+  for (const [flow, label] of choices) {
+    const button = dialog.getByRole('button', { name: label, exact: true });
+    assert.equal(await button.count(), 1);
+    assert.equal(await button.isEnabled(), flow === 'INSTAGRAM_LOGIN');
+  }
+  assert.ok((await dialog.boundingBox()).width <= 375);
+  setAvailability(choices.map(([flow]) => flow));
+  dialog = await openDialog();
+  for (const [flow, label, endpoint] of choices) {
+    const response = page.waitForResponse(result => result.url().endsWith('/connect/' + endpoint + '/start'));
+    await dialog.getByRole('button', { name: label, exact: true }).click();
+    assert.equal((await response).status(), 422);
+    await dialog.getByRole('alert').waitFor();
+    if (flow === 'FACEBOOK_LOGIN') assert.equal(requests.at(-1).body.platform, 'INSTAGRAM');
+  }
+  setAvailability([]);
+  dialog = await openDialog();
+  await dialog.getByRole('button', { name: 'Xác minh thủ công' }).click();
+  await dialog.waitFor({ state: 'hidden' });
+  await page.getByRole('dialog').waitFor();
+  console.log('PASS: OAuth routing, bound Claim payload, three Instagram choices at 375 px, start errors and manual fallback (mock HTTP)');
 } finally {
   await browser?.close(); await server?.close(); await unlink(harness).catch(() => {});
 }

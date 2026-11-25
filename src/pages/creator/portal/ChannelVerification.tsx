@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Card, Empty, Pagination, Space, Spin, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Empty, Modal, Pagination, Space, Spin, Tag, Typography } from 'antd';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   cooperationPath, pendingCooperation, pendingCooperationTarget,
@@ -16,6 +16,14 @@ import type { ClaimResponse, ClaimStatus } from '../../../types/api/claim.types'
 import ManualChannelClaim, { httpUrl } from './ManualChannelClaim';
 
 const storageKey = 'creator.channel-oauth';
+const instagramChoices = [
+  { flow: 'INSTAGRAM_LOGIN', label: 'Đăng nhập trực tiếp bằng Instagram',
+    description: 'Dùng tài khoản Instagram chuyên nghiệp. Không cần liên kết Facebook Page.' },
+  { flow: 'FACEBOOK_LOGIN', label: 'Qua Facebook Page',
+    description: 'Dùng Trang Facebook đã liên kết với tài khoản Instagram.' },
+  { flow: 'INSTAGRAM_UNIFIED_LOGIN', label: 'Qua Meta Business Portfolio',
+    description: 'Chọn tài khoản Instagram trong danh mục doanh nghiệp bạn quản lý.' },
+] as const;
 const claimLabels: Record<ClaimStatus, { label: string; color: string }> = {
   PENDING: { label: 'Chờ duyệt', color: 'warning' },
   APPROVED: { label: 'Đã duyệt', color: 'success' },
@@ -126,6 +134,7 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
   const invitationToken = pendingCooperation();
   const invitationTarget = pendingCooperationTarget();
   const [options, setOptions] = useState<ConnectionOption[] | null>(null);
+  const [showInstagram, setShowInstagram] = useState(false);
   const [optionsError, setOptionsError] = useState('');
   const [optionsRetry, setOptionsRetry] = useState(0);
   const [pending, setPending] = useState(readPendingOAuth);
@@ -242,11 +251,23 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
     return () => controller.abort();
   }, [canVerify, invitationToken, navigate, pending, reloadLinked, statusRetry]);
 
+  const instagramOption = options?.find(option => option.platform === 'INSTAGRAM');
+  const canUsePlatform = (platform: OAuthPlatform) => !invitationToken
+    || (targetChannel?.platform === platform && invitationContext?.status === 'NEEDS_CHANNEL_VERIFICATION');
+  const instagramDialogOpen = showInstagram && canVerify && !pending
+    && !!instagramOption && canUsePlatform('INSTAGRAM');
+  const instagramMethods = instagramChoices.map(choice => ({
+    ...choice,
+    option: instagramOption?.methods
+      ? instagramOption.methods.find(method => method.oauthFlow === choice.flow)
+      : instagramOption?.oauthFlow === choice.flow ? instagramOption : undefined,
+  }));
+
   async function start(option: ConnectionOption) {
     const flow = option.oauthFlow;
-    if (busy.current || !option.available || !flow) return;
+    if (busy.current || !option.available || !flow || !canUsePlatform(option.platform)) return;
     busy.current = true;
-    setWorking(optionLabel(option));
+    setWorking(option.platform === 'INSTAGRAM' ? flow : optionLabel(option));
     setNotice('');
     setError('');
     const authSessionId = getAuthSessionId();
@@ -339,7 +360,7 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
       {canVerify && <Card className="creator-section-card" title="Xác minh kênh">
         <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
           {notice && <Alert showIcon type="success" title={notice} />}
-          {error && <Alert showIcon type="error" title={error} />}
+          {error && !instagramDialogOpen && <Alert showIcon type="error" title={error} />}
           {optionsError && <Alert showIcon type="error" title={optionsError} action={
             <Button onClick={() => setOptionsRetry(value => value + 1)}>Thử lại</Button>
           } />}
@@ -352,16 +373,23 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
             <Button disabled={!!working || !canOpenManual} onClick={() => setManual({})}>Xác minh thủ công</Button>
             {!pending && options?.filter(option => !invitationToken || option.platform === targetChannel?.platform).map(option => <Button key={optionLabel(option)} type="primary"
               loading={working === optionLabel(option)}
-              disabled={!option.available || (!!working && working !== optionLabel(option))
-                || !!invitationToken && (!targetChannel || invitationContext?.status !== 'NEEDS_CHANNEL_VERIFICATION')}
-              title={option.available ? undefined : option.unavailableReason === 'NOT_CONFIGURED'
-                ? 'Phương thức này chưa được cấu hình đầy đủ' : 'Phương thức này chưa được bật trong môi trường hiện tại'}
-              onClick={() => void start(option)}>Xác minh {optionLabel(option)}</Button>)}
+              disabled={(option.platform !== 'INSTAGRAM' && !option.available) || !!working || !canUsePlatform(option.platform)}
+              title={option.platform === 'INSTAGRAM' || option.available ? undefined
+                : option.unavailableReason === 'NOT_CONFIGURED' ? 'Phương thức này chưa được cấu hình đầy đủ'
+                : 'Phương thức này chưa được bật trong môi trường hiện tại'}
+              onClick={() => {
+                if (option.platform === 'INSTAGRAM') {
+                  setError('');
+                  setShowInstagram(true);
+                } else {
+                  void start(option);
+                }
+              }}>Xác minh {optionLabel(option)}</Button>)}
             {!options && !optionsError && <Spin size="small" />}
           </Space>
-          {!pending && options?.some(option => option.available) &&
+          {!pending && options?.some(option => option.available || option.methods?.some(method => method.available)) &&
             <Typography.Text type="secondary">Nền tảng sẽ kiểm tra quyền của tài khoản và kênh trong bước cấp quyền.</Typography.Text>}
-          {!pending && options && !options.some(option => option.available) &&
+          {!pending && options && !options.some(option => option.available || option.methods?.some(method => method.available)) &&
             <Typography.Text type="secondary">Xác minh qua nền tảng hiện chưa khả dụng.</Typography.Text>}
           {pending && <>
             {checking && <Spin size="small" />}
@@ -445,6 +473,35 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
             </Space>}
       </Card>}
       {canViewClaims && <ClaimHistory key={historyVersion} />}
+      <Modal title="Chọn cách xác minh Instagram" open={instagramDialogOpen} footer={null}
+        closable={!working} mask={{ closable: !working }} keyboard={!working}
+        onCancel={() => { setShowInstagram(false); setError(''); }}>
+        <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
+          {error && <Alert showIcon type="error" title={error} />}
+          {instagramMethods.map(({ flow, label, description, option }) => (
+            <Space key={flow} orientation="vertical" size={4} style={{ width: '100%' }}>
+              {flow === 'INSTAGRAM_LOGIN' && <Tag color="blue">Khuyên dùng</Tag>}
+              <Button block disabled={!option?.available || !!working} loading={working === flow}
+                type={flow === 'INSTAGRAM_LOGIN' ? 'primary' : 'default'}
+                style={{ whiteSpace: 'normal', height: 'auto', minHeight: 32 }}
+                onClick={() => void start({
+                  platform: 'INSTAGRAM', oauthFlow: flow, supported: true, available: option?.available === true,
+                })}>{label}</Button>
+              <Typography.Text type="secondary">{description}</Typography.Text>
+              {!option?.available && <Typography.Text type="secondary">
+                {option?.unavailableReason === 'NOT_CONFIGURED'
+                  ? 'Phương thức này chưa được cấu hình đầy đủ.'
+                  : 'Phương thức này chưa được bật trong môi trường hiện tại.'}
+              </Typography.Text>}
+            </Space>
+          ))}
+          {!instagramMethods.some(({ option }) => option?.available) && canOpenManual && (
+            <Button onClick={() => { setShowInstagram(false); setError(''); setManual({ platform: 'INSTAGRAM' }); }}>
+              Xác minh thủ công
+            </Button>
+          )}
+        </Space>
+      </Modal>
       {manual && canVerify && canOpenManual && <ManualChannelClaim
         key={manualInvitation?.target.creatorId ?? 'portal-claim'}
         initialPlatform={manual.platform} initialQuery={manual.query} invitation={manualInvitation}
