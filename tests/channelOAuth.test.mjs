@@ -28,6 +28,16 @@ test('session read cannot mix Unified, Direct or Facebook flows', () => {
   assert.equal(matchesOAuthSession({ ...session, status: 'AUTHORIZED' }, 'session', 'INSTAGRAM_UNIFIED_LOGIN'), false);
   assert.equal(matchesOAuthSession({ ...session, accounts: [{ accountId: '1', matchStatus: 'UNKNOWN' }] }, 'session', 'INSTAGRAM_UNIFIED_LOGIN'), false);
 });
+test('callback mismatch identifies the configuration without disclosing secrets or accepting another host', () => {
+  const raw = url({ redirect_uri: 'https://api.influencermatch.site/api/v1/integrations/instagram-unified/callback?token=private-value',
+    state: 'private-state', code: 'private-code' });
+  assert.throws(() => consentUrl(raw, 'INSTAGRAM_UNIFIED_LOGIN', 'https://www.influencermatch.site'), error => {
+    assert.match(error.message, /https:\/\/api\.influencermatch\.site/);
+    assert.match(error.message, /https:\/\/www\.influencermatch\.site/);
+    assert.ok(!/private-value|private-state|private-code|token=/.test(error.message));
+    return true;
+  });
+});
 test('all browser callbacks discard sensitive query parameters without declaring success', () => {
   const req = { method: 'GET', headers: { accept: 'text/html', 'sec-fetch-mode': 'navigate' } };
   for (const provider of ['meta', 'instagram', 'instagram-unified', 'tiktok']) {
