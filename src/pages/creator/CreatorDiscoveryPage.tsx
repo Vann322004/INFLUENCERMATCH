@@ -219,8 +219,9 @@ export default function CreatorDiscoveryPage() {
           }}
         />
 
-        {/* Panel Tìm kiếm & Bộ lọc */}
-        <DiscoveryFilterSection
+        {/* Khối Khám phá thống nhất: Tìm kiếm & Bộ lọc + Kết quả + Danh sách Creator */}
+        <div className="cdiscovery-workspace-card">
+          <DiscoveryFilterSection
           searchTerm={searchTerm}
           onSearchChange={(value) => {
             setSearchTerm(value);
@@ -293,6 +294,7 @@ export default function CreatorDiscoveryPage() {
           { key: 'expanded', label: `Kết quả mở rộng (${filteredCreators.filter(creator => creator.isSimilarFallback).length})` },
         ]} />}
         </section>
+        <div className="cdiscovery-workspace-body">
         {/* Grid / List KOC */}
         {loadError && (
           <Alert
@@ -344,9 +346,23 @@ export default function CreatorDiscoveryPage() {
             }}
           />
         )}
+        </div>
+        </div>
       </div>
 
       {/* Quick Preview Drawer */}
+      {selectedCreatorIds.size > 0 && (
+        <div className="cdiscovery-sticky-selection-bar" role="region" aria-label="Thao tác lưu nhanh">
+          <span>Đã chọn <strong>{selectedCreatorIds.size}</strong> kênh</span>
+          <div className="cdiscovery-sticky-selection-actions">
+            <Button onClick={() => setSelectedCreatorIds(new Set())}>Bỏ chọn</Button>
+            <Button type="primary" className="cdiscovery-btn-bulk-shortlist" onClick={handleBulkAddToShortlist}>
+              + Lưu {selectedCreatorIds.size} kênh vào danh sách
+            </Button>
+          </div>
+        </div>
+      )}
+
       {batchSelection && <ShortlistBatchAdd campaignId={batchSelection.campaignId} creators={batchSelection.creators}
         onClose={() => setBatchSelection(null)} onChanged={result => {
           const saved = new Set(result.results.filter(item => ['ADDED', 'ALREADY_EXISTS', 'RESTORED'].includes(item.action)).map(item => item.creatorId));

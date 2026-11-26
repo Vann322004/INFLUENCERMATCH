@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert, Button, Descriptions, Drawer, Form, Input, Select, Spin, Table, Tabs, Tag } from 'antd';
+import { Alert, Button, Card, Descriptions, Drawer, Form, Input, Select, Spin, Table, Tabs, Tag } from 'antd';
 import type { TableColumnsType } from 'antd';
 import type { TablePaginationConfig } from 'antd';
 import { getStoredUser } from '../../../services/authSession';
@@ -61,7 +61,7 @@ function MasterList({onOpen}:{onOpen:(id:string)=>void}) {
  const resource=useAsyncResource(load);
  const columns:TableColumnsType<CatalogMaster>=[
  {title:'Hồ sơ nhà sáng tạo',key:'master',render:(_,row)=><div><Button type="link" onClick={()=>onOpen(row.id)}>{row.canonicalName || 'Hồ sơ chưa có tên'}</Button><code>{row.id}</code></div>},
- {title:'Trạng thái',dataIndex:'status',render:value=><Tag>{value==='ACTIVE'?'Hoạt động':value==='SUSPENDED'?'Tạm ngừng':text(value)}</Tag>},
+ {title:'Trạng thái',dataIndex:'status',render:value=><Tag color={value==='ACTIVE'?'green':value==='SUSPENDED'?'red':'default'}>{value==='ACTIVE'?'Hoạt động':value==='SUSPENDED'?'Tạm ngừng':text(value)}</Tag>},
  {title:'Kênh liên kết',dataIndex:'accountCount',render:value=>value.toLocaleString('vi-VN')},
  {title:'Kết quả xác minh',key:'verification',render:(_,row)=><div>{Object.entries(row.verificationCounts).length ? Object.entries(row.verificationCounts).map(([status,count])=><Tag key={status}>{verificationLabels[status as VerificationStatus] ?? status}: {count}</Tag>):'Chưa có kênh liên kết'}</div>},
  {title:'Ngày tạo',dataIndex:'createdAt',render:value=><time title={value || undefined}>{auditTimestamp(value)}</time>},
@@ -75,7 +75,7 @@ function MasterList({onOpen}:{onOpen:(id:string)=>void}) {
  <div className="catalog-filter-actions"><Button type="primary" htmlType="submit">Tìm kiếm</Button><Button onClick={()=>{form.resetFields();setQuery({page:0,size:query.size})}}>Đặt lại</Button></div>
  </Form>
  <ResourceNotice resource={resource} />
- {resource.status==='success' && <Table<CatalogMaster> rowKey="id" columns={columns} dataSource={resource.data!.items} scroll={{x:950}} pagination={pagination(resource.data,(page,size)=>setQuery({...query,page,size}))} locale={{emptyText:'Không có hồ sơ phù hợp'}} />}
+ {resource.status==='success' && <Table<CatalogMaster> rowKey="id" columns={columns} dataSource={resource.data!.items} size="middle" pagination={pagination(resource.data,(page,size)=>setQuery({...query,page,size}))} locale={{emptyText:'Không có hồ sơ phù hợp'}} />}
  </section>;
 }
 function Accounts({masterId}:{masterId?:string}) {
@@ -85,7 +85,7 @@ function Accounts({masterId}:{masterId?:string}) {
  const resource=useAsyncResource(load);
  const columns:TableColumnsType<CatalogAccount>=[
  {title:'Kênh',key:'channel',render:(_,row)=><div><strong>{row.displayName || row.userName || 'Chưa có tên'}</strong><small>{text(row.userName)}</small><code>{row.creatorId}</code></div>},
- {title:'Nền tảng',dataIndex:'platform'},
+ {title:'Nền tảng',dataIndex:'platform',render:value=><Tag color="geekblue">{text(value)}</Tag>},
  {title:'Mã kênh nền tảng',dataIndex:'externalId',render:value=><code>{text(value)}</code>},
  {title:'Định danh ổn định',dataIndex:'isStableId',render:value=>value===true?'Đã có mã ổn định':'Chưa ổn định'},
  {title:'Nguồn dữ liệu',dataIndex:'sourceType',render:value=>value==='PUBLIC'?'Công khai':value==='AUTHORIZED'?'Đã cấp quyền':text(value)},
@@ -101,7 +101,7 @@ function Accounts({masterId}:{masterId?:string}) {
  <div className="catalog-filter-actions"><Button type="primary" htmlType="submit">Tìm kiếm</Button><Button onClick={()=>{form.resetFields();setQuery({page:0,size:query.size})}}>Đặt lại</Button></div>
  </Form></>}
  <ResourceNotice resource={resource} />
- {resource.status==='success' && <Table<CatalogAccount> rowKey="creatorId" columns={columns} dataSource={resource.data!.items} scroll={{x:1000}} pagination={pagination(resource.data,(page,size)=>setQuery({...query,page,size}))} locale={{emptyText:masterId?'Hồ sơ chưa liên kết kênh':'Không có kênh phù hợp'}} />}
+ {resource.status==='success' && <Table<CatalogAccount> rowKey="creatorId" columns={columns} dataSource={resource.data!.items} size="middle" pagination={pagination(resource.data,(page,size)=>setQuery({...query,page,size}))} locale={{emptyText:masterId?'Hồ sơ chưa liên kết kênh':'Không có kênh phù hợp'}} />}
  </section>;
 }
 function History({masterId}:{masterId?:string}) {
@@ -130,7 +130,7 @@ function History({masterId}:{masterId?:string}) {
  <div className="catalog-filter-actions"><Button type="primary" htmlType="submit">Áp dụng</Button><Button onClick={()=>{form.resetFields();setQuery({page:0,size:query.size})}}>Đặt lại</Button></div>
  </Form>
  <ResourceNotice resource={resource} />
- {resource.status==='success' && <Table<IdentityEvent> rowKey={row=>row.source+':'+row.sourceId} columns={columns} dataSource={resource.data!.items} scroll={{x:1000}} pagination={pagination(resource.data,(page,size)=>setQuery({...query,page,size}))} locale={{emptyText:'Không có sự kiện phù hợp'}} />}
+ {resource.status==='success' && <Table<IdentityEvent> rowKey={row=>row.source+':'+row.sourceId} columns={columns} dataSource={resource.data!.items} size="middle" pagination={pagination(resource.data,(page,size)=>setQuery({...query,page,size}))} locale={{emptyText:'Không có sự kiện phù hợp'}} />}
  </section>;
 }
 function MasterDetail({id,canHistory}:{id:string;canHistory:boolean}) {
@@ -157,13 +157,36 @@ export default function CreatorCatalogPage() {
  const canHistory=permissions.includes('VIEW_CREATOR_IDENTITY_HISTORY');
  const [selected,setSelected]=useState<string | null>(null);
  const tabs=[
- ...(canCatalog?[{key:'masters',label:'Hồ sơ nhà sáng tạo',children:<MasterList onOpen={setSelected} />},{key:'unclaimed',label:'Kênh chưa liên kết',children:<Accounts />}]:[]),
- ...(canHistory?[{key:'history',label:'Lịch sử định danh',children:<History />}]:[]),
+ ...(canCatalog?[{key:'masters',label:<span style={{fontWeight:700,fontSize:14}}>Hồ sơ nhà sáng tạo</span>,children:<div className="catalog-tab-body"><MasterList onOpen={setSelected} /></div>},{key:'unclaimed',label:<span style={{fontWeight:700,fontSize:14}}>Kênh chưa liên kết</span>,children:<div className="catalog-tab-body"><Accounts /></div>}]:[]),
+ ...(canHistory?[{key:'history',label:<span style={{fontWeight:700,fontSize:14}}>Lịch sử định danh</span>,children:<div className="catalog-tab-body"><History /></div>}]:[]),
  ];
   return <div className="creator-catalog">
-  <header className="catalog-header"><h1>Quản lý Định danh Nhà sáng tạo</h1><p>Một hồ sơ, các kênh được đối chiếu rõ ràng. Tra cứu thông tin và kết quả xác minh; không thay đổi quyền sở hữu tại đây.</p></header>
+  <div className="catalog-header">
+    <div>
+      <div className="catalog-title">Quản lý Định danh Nhà sáng tạo</div>
+      <div className="catalog-subtitle">Một hồ sơ, các kênh được đối chiếu rõ ràng. Tra cứu thông tin và kết quả xác minh; không thay đổi quyền sở hữu tại đây.</div>
+    </div>
+  </div>
   {canCatalog && <Summary />}
-  {tabs.length?<div className="catalog-panel"><Tabs destroyOnHidden items={tabs} /></div>:<Alert type="warning" showIcon title="Bạn chưa có quyền tra cứu danh mục hoặc lịch sử định danh." />}
+  {tabs.length ? (
+    <Card
+      variant="borderless"
+      className="catalog-card"
+      styles={{ body: { padding: 0 } }}
+    >
+      <Tabs
+        destroyOnHidden
+        size="middle"
+        tabBarStyle={{
+          padding: '0 20px',
+          marginBottom: 0,
+          borderBottom: '1px solid #EEF0F6',
+          background: '#FAFAFD',
+        }}
+        items={tabs}
+      />
+    </Card>
+  ) : <Alert type="warning" showIcon title="Bạn chưa có quyền tra cứu danh mục hoặc lịch sử định danh." />}
   <Drawer open={!!selected} onClose={()=>setSelected(null)} title="Chi tiết hồ sơ định danh" size="min(1080px, 100vw)" destroyOnHidden className="catalog-detail">
   {selected && <MasterDetail key={selected} id={selected} canHistory={canHistory} />}
   </Drawer>

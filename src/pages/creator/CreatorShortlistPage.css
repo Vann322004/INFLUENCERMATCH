@@ -1,9 +1,9 @@
-.sl-page { max-width: 1400px; width: 100%; min-width: 0; min-height: calc(100dvh - 112px); box-sizing: border-box; margin: 0 auto; padding: 8px 0 0; color: #0f172a; display: flex; flex-direction: column; gap: 20px; }
+.sl-page { max-width: 1440px; width: 100%; min-width: 0; min-height: calc(100dvh - 112px); box-sizing: border-box; margin: 0 auto; padding: 8px 0 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; display: flex; flex-direction: column; gap: 20px; }
 .sl-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.sl-heading h1 { font-size: clamp(24px, 3vw, 32px); margin: 0 0 8px; }
+.sl-heading h1 { font-size: 22px; font-weight: 800; margin: 0 0 6px; color: #0f172a; }
 .sl-heading h2 { font-size: 18px; margin: 0; }
 .sl-heading p, .sl-muted { color: #64748b; font-size: 13px; line-height: 1.6; margin: 0; }
-.sl-panel { min-width: 0; border: 1px solid #e2e8f0; background: white; border-radius: 12px; padding: 20px; overflow-wrap: anywhere; }
+.sl-panel { min-width: 0; border: 1px solid #e1e7f0; background: white; border-radius: 14px; padding: 20px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04); overflow-wrap: anywhere; }
 .sl-campaign-context { padding: 16px 20px; }
 .sl-campaign-context .sl-campaign-label { display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; }
 .sl-campaign-context h2 { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
@@ -131,3 +131,207 @@
 .sl-channel-card.is-selected .sl-channel-select { color: #475569; border-color: #e2e8f0; background: #fff; }
 .sl-channel-card button:focus-visible { outline: 2px solid #A78BFA; outline-offset: 3px; }
 @media (max-width: 575px) { .sl-channel-card { padding: 18px; gap: 16px; } .sl-list-tools { width: 100%; } .sl-list-tools > .ant-select { flex: 1 1 120px; width: 0; } .sl-list-tools > .ant-btn { flex: 1 1 100%; } }
+
+
+/* ── Đồng bộ UI Shortlist theo Discovery, CreatorDetail & /data-manager/jobs ── */
+.sl-campaign-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 22px;
+}
+
+.sl-campaign-context-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.sl-campaign-thumb {
+  width: 84px;
+  height: 62px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #E1E7F0;
+  background: #F8FAFC;
+  flex-shrink: 0;
+}
+
+.sl-campaign-context .sl-campaign-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #7C3AED;
+  margin-bottom: 4px;
+}
+
+.sl-workspace-card {
+  background: #FFFFFF;
+  border: 1px solid #E1E7F0;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.sl-workspace-card .sl-list-header {
+  background: #F5F7FC;
+  border-bottom: 1px solid #EEF0F6;
+  padding: 14px 22px;
+}
+
+.sl-workspace-card .sl-list-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #18283F;
+}
+
+.sl-workspace-card .sl-list-header h2 > span {
+  background: #F3E8FF;
+  color: #6D28D9;
+  font-weight: 700;
+}
+
+.sl-workspace-body {
+  padding: 20px 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sl-channel-card {
+  border: 1px solid #E1E7F0;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.sl-channel-card:hover {
+  border-color: #C4B5FD;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.08);
+}
+
+.sl-channel-author h3 {
+  font-weight: 700;
+}
+
+.sl-channel-metrics {
+  border-color: #EEF0F6;
+}
+
+.sl-channel-metrics dd {
+  font-weight: 700;
+}
+
+.sl-page .ant-btn-primary {
+  background: #7C3AED;
+  border-color: #7C3AED;
+  box-shadow: none;
+}
+
+.sl-page .ant-btn-primary:not(:disabled):hover {
+  background: #6D28D9;
+  border-color: #6D28D9;
+}
+
+.sl-page .ant-btn {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+
+/* ── Bỏ sticky che thẻ ở đáy + chia lưới 3 cột gọn như /discovery ── */
+.sl-page {
+  padding: 8px 0 32px;
+}
+
+.sl-channel-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.sl-channel-card {
+  padding: 16px;
+  gap: 10px;
+}
+
+.sl-action-bar {
+  position: static;
+  margin-top: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  border-color: #E1E7F0;
+}
+
+@media (max-width: 1100px) {
+  .sl-channel-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .sl-channel-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+
+/* ── Rút gọn thẻ Shortlist & ghim thanh popup đáy chỉ khi đang chọn kênh ── */
+.sl-page {
+  padding: 8px 0 0;
+}
+
+.sl-workspace-card {
+  margin-bottom: 8px;
+}
+
+.sl-channel-metrics {
+  padding: 10px 12px;
+  gap: 8px;
+}
+
+.sl-channel-metrics dt {
+  margin-bottom: 4px;
+}
+
+.sl-channel-metrics dd {
+  font-size: 17px;
+}
+
+.sl-channel-fee {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sl-channel-fee strong {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.sl-channel-inline-note-btn {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #7C3AED;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sl-channel-inline-note-btn:hover {
+  text-decoration: underline;
+}
+
+.sl-action-bar.is-floating {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  border-radius: 12px 12px 0 0;
+  border-color: #C4B5FD;
+  box-shadow: 0 -6px 24px rgba(15, 23, 42, 0.12);
+}

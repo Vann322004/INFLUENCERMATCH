@@ -169,40 +169,48 @@ function CampaignFinancialSummaryCard({ campaignId, summaries, canRecord, onSave
   </>;
 }
 
-export default function CampaignOutcomeReport({ detail, canRecordCampaignSummary = false }: {
-  detail: HistoryDetail; canRecordCampaignSummary?: boolean;
+export default function CampaignOutcomeReport({ detail, canRecordCampaignSummary = false, mode = 'full' }: {
+  detail: HistoryDetail; canRecordCampaignSummary?: boolean; mode?: 'full' | 'financial' | 'metrics';
 }) {
   const [summaries, setSummaries] = useState(detail.campaignFinancialSummaries ?? []);
   const { report, copyOrigin, latestContext, snapshotAvailability } = detail;
   return <div className="history-stack">
-    <div className="history-grid">{[
-      ['Đã hoàn tất', report.completedCount], ['Chưa hoàn tất', report.unfinishedCount],
-      ['Đã hủy', report.cancelledCount], ['Có nguồn đủ điều kiện báo cáo', report.eligibleCount],
-      ['Kết thúc giữa chừng', report.terminatedCount ?? 0],
-    ].map(([label, value]) => <Card key={label}><div className="history-summary"><span>{label}</span><strong>{value}</strong></div></Card>)}</div>
-    {snapshotAvailability === 'MISSING' && <Alert showIcon type="info" title="Chưa có bản lưu lịch sử của brief." />}
-    {latestContext && <p className="history-muted">Bản lưu brief mới nhất · Phiên bản {latestContext.version ?? '—'} · {historyDate(latestContext.createdAt, true)}</p>}
-    {copyOrigin && <p className="history-muted">Chiến dịch được tạo bằng cách dùng lại brief từ <Link
-      to={`/campaign-history/${copyOrigin.sourceCampaignId}`}>chiến dịch nguồn</Link>.</p>}
-    <CampaignFinancialSummaryCard campaignId={detail.currentCampaign.id} summaries={summaries}
-    canRecord={canRecordCampaignSummary} onSaved={summary => setSummaries(current =>
-      [summary, ...current.filter(row => row.revision !== summary.revision)])} />
-    <Card title="Báo cáo kết quả">
-      <p className="history-muted">Kết quả lấy từ hợp tác đã hoàn tất có Outcome được nghiệm thu và đánh giá cuối tham chiếu.
-        Phí cam kết gồm các hợp tác chưa hủy. Nguồn số liệu: {provenanceLabel(report.metricSource)}.</p>
-      <Table rowKey="key" size="middle" scroll={{ x: 'max-content' }} pagination={false}
-        dataSource={Object.entries(report.metrics).map(([key, metric]) => ({ key, metric }))}
-        columns={[
-          { title: 'Chỉ số', render: (_, row) => metrics[row.key] ?? row.key },
-          { title: 'Giá trị', render: (_, row) => <strong>{metricValue(row.key, row.metric)}</strong> },
-          { title: 'Độ phủ', render: (_, { metric: { coverage } }) => <span>
-            {coverage.includedCollaborationCount}/{coverage.requiredCollaborationCount} hợp tác
-            {coverage.distinctPostCount > 0 && ` · ${coverage.distinctPostCount} bài đăng`}
-          </span> },
-          { title: 'Dữ liệu còn thiếu', width: 320, render: (_, { metric }) => metric.unavailableReasons.length
-            ? <ul className="history-reasons">{metric.unavailableReasons.map(reason =>
-              <li key={reason}>{metricReasons[reason] ?? reason}</li>)}</ul> : '—' },
-        ]} />
-    </Card>
+    {mode === 'full' && (
+      <>
+        <div className="history-grid">{[
+          ['Đã hoàn tất', report.completedCount], ['Chưa hoàn tất', report.unfinishedCount],
+          ['Đã hủy', report.cancelledCount], ['Có nguồn đủ điều kiện báo cáo', report.eligibleCount],
+          ['Kết thúc giữa chừng', report.terminatedCount ?? 0],
+        ].map(([label, value]) => <Card key={label}><div className="history-summary"><span>{label}</span><strong>{value}</strong></div></Card>)}</div>
+        {snapshotAvailability === 'MISSING' && <Alert showIcon type="info" title="Chưa có bản lưu lịch sử của brief." />}
+        {latestContext && <p className="history-muted">Bản lưu brief mới nhất · Phiên bản {latestContext.version ?? '—'} · {historyDate(latestContext.createdAt, true)}</p>}
+        {copyOrigin && <p className="history-muted">Chiến dịch được tạo bằng cách dùng lại brief từ <Link
+          to={`/campaign-history/${copyOrigin.sourceCampaignId}`}>chiến dịch nguồn</Link>.</p>}
+      </>
+    )}
+    {(mode === 'full' || mode === 'financial') && (
+      <CampaignFinancialSummaryCard campaignId={detail.currentCampaign.id} summaries={summaries}
+        canRecord={canRecordCampaignSummary} onSaved={summary => setSummaries(current =>
+          [summary, ...current.filter(row => row.revision !== summary.revision)])} />
+    )}
+    {(mode === 'full' || mode === 'metrics') && (
+      <Card title="Báo cáo kết quả">
+        <p className="history-muted">Kết quả lấy từ hợp tác đã hoàn tất có Outcome được nghiệm thu và đánh giá cuối tham chiếu.
+          Phí cam kết gồm các hợp tác chưa hủy. Nguồn số liệu: {provenanceLabel(report.metricSource)}.</p>
+        <Table rowKey="key" size="middle" scroll={{ x: 'max-content' }} pagination={false}
+          dataSource={Object.entries(report.metrics).map(([key, metric]) => ({ key, metric }))}
+          columns={[
+            { title: 'Chỉ số', render: (_, row) => metrics[row.key] ?? row.key },
+            { title: 'Giá trị', render: (_, row) => <strong>{metricValue(row.key, row.metric)}</strong> },
+            { title: 'Độ phủ', render: (_, { metric: { coverage } }) => <span>
+              {coverage.includedCollaborationCount}/{coverage.requiredCollaborationCount} hợp tác
+              {coverage.distinctPostCount > 0 && ` · ${coverage.distinctPostCount} bài đăng`}
+            </span> },
+            { title: 'Dữ liệu còn thiếu', width: 320, render: (_, { metric }) => metric.unavailableReasons.length
+              ? <ul className="history-reasons">{metric.unavailableReasons.map(reason =>
+                <li key={reason}>{metricReasons[reason] ?? reason}</li>)}</ul> : '—' },
+          ]} />
+      </Card>
+    )}
   </div>;
 }

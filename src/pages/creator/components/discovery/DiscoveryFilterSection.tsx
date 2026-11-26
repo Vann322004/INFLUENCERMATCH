@@ -7,6 +7,7 @@ import {
   AppstoreOutlined,
   UnorderedListOutlined,
   CloseOutlined,
+  SlidersOutlined,
 } from '@ant-design/icons';
 
 interface DiscoveryFilterSectionProps {
@@ -56,81 +57,77 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
   activeFiltersCount,
   onResetFilters,
 }) => {
-  const [isFilterExpanded, setIsFilterExpanded] = useState(true);
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
   return (
-    <div className="cdiscovery-search-filter-card">
-      <button
-        type="button"
-        aria-expanded={isFilterExpanded}
-        className="cdiscovery-filter-card-header"
-        onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-      >
-        <span className="cdiscovery-filter-card-title">
-          Tìm kiếm & Bộ lọc {isFilterExpanded ? <UpOutlined style={{ fontSize: 12, marginLeft: 4 }} /> : <DownOutlined style={{ fontSize: 12, marginLeft: 4 }} />}
-        </span>
-        <span className="cdiscovery-filter-toggle-icon">
-          {isFilterExpanded ? 'Thu gọn' : 'Mở rộng'}
-        </span>
-      </button>
+    <div className="cdiscovery-search-filter-card is-sticky">
+      {/* Dòng 1: Thanh tìm kiếm gọn, luôn ghim khi cuộn */}
+      <div className="cdiscovery-filter-row-top">
+        <div className="cdiscovery-search-input-group">
+          <Input
+            placeholder="Tìm kiếm Nhà sáng tạo theo tên, kênh, chủ đề, từ khóa..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            onPressEnter={onSearchSubmit}
+            prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 15 }} />}
+            allowClear
+            className="cdiscovery-search-input"
+          />
+          <Button
+            type="primary"
+            icon={<SearchOutlined />}
+            onClick={onSearchSubmit}
+            className="cdiscovery-btn-search"
+          >
+            Tìm kiếm
+          </Button>
+          <Button
+            type={isFilterExpanded || activeFiltersCount > 0 ? 'default' : 'default'}
+            icon={<SlidersOutlined />}
+            onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+            aria-expanded={isFilterExpanded}
+            className={`cdiscovery-btn-filter-toggle ${isFilterExpanded || activeFiltersCount > 0 ? 'is-active' : ''}`}
+          >
+            Bộ lọc{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''} {isFilterExpanded ? <UpOutlined style={{ fontSize: 10 }} /> : <DownOutlined style={{ fontSize: 10 }} />}
+          </Button>
+        </div>
+
+        <div className="cdiscovery-sort-group">
+          <span className="cdiscovery-sort-label">Sắp xếp:</span>
+          <Select
+            value={sortBy}
+            onChange={onSortChange}
+            className="cdiscovery-sort-select"
+            options={[
+              { value: 'match', label: 'Độ liên quan' },
+              { value: 'followers', label: 'Lượt theo dõi' },
+              { value: 'engagement', label: 'Tỷ lệ tương tác' },
+            ]}
+          />
+        </div>
+
+        <div className="cdiscovery-view-switch-btns">
+          <button
+            type="button"
+            className={`cdiscovery-view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+            onClick={() => onViewModeChange('grid')}
+            title="Dạng lưới"
+          >
+            <AppstoreOutlined />
+          </button>
+          <button
+            type="button"
+            className={`cdiscovery-view-btn ${viewMode === 'list' ? 'active' : ''}`}
+            onClick={() => onViewModeChange('list')}
+            title="Dạng danh sách"
+          >
+            <UnorderedListOutlined />
+          </button>
+        </div>
+      </div>
 
       {isFilterExpanded && (
         <>
-          {/* Dòng 1: Tìm kiếm + Sắp xếp + View switch */}
-          <div className="cdiscovery-filter-row-top">
-            <div className="cdiscovery-search-input-group">
-              <Input
-                placeholder="Tìm kiếm Nhà sáng tạo theo tên, kênh, chủ đề, từ khóa..."
-                value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
-                onPressEnter={onSearchSubmit}
-                prefix={<SearchOutlined style={{ color: '#94A3B8', fontSize: 15 }} />}
-                allowClear
-                className="cdiscovery-search-input"
-              />
-              <Button
-                type="primary"
-                icon={<SearchOutlined />}
-                onClick={onSearchSubmit}
-                className="cdiscovery-btn-search"
-              >
-                Tìm kiếm
-              </Button>
-            </div>
-
-            <div className="cdiscovery-sort-group">
-              <span className="cdiscovery-sort-label">Sắp xếp:</span>
-              <Select
-                value={sortBy}
-                onChange={onSortChange}
-                className="cdiscovery-sort-select"
-                options={[
-                  { value: 'match', label: 'Độ liên quan' },
-                  { value: 'followers', label: 'Lượt theo dõi' },
-                  { value: 'engagement', label: 'Tỷ lệ tương tác' },
-                ]}
-              />
-            </div>
-
-            <div className="cdiscovery-view-switch-btns">
-              <button
-                type="button"
-                className={`cdiscovery-view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => onViewModeChange('grid')}
-                title="Dạng lưới"
-              >
-                <AppstoreOutlined />
-              </button>
-              <button
-                type="button"
-                className={`cdiscovery-view-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => onViewModeChange('list')}
-                title="Dạng danh sách"
-              >
-                <UnorderedListOutlined />
-              </button>
-            </div>
-          </div>
 
           {/* Dòng 2: Thanh bộ lọc tinh gọn, sang trọng (Pills Filter Capsules) */}
           <div className="cdiscovery-filter-pills-row">
@@ -194,16 +191,17 @@ export const DiscoveryFilterSection: React.FC<DiscoveryFilterSectionProps> = ({
               ]}
             /></div>
 
-            {/* Nút đặt lại nhanh nếu có bộ lọc */}
+            {/* Nút đặt lại nhanh chỉ hiện khi có bộ lọc */}
+            {activeFiltersCount > 0 && (
               <Button
                 type="link"
                 size="small"
                 onClick={onResetFilters}
-                disabled={activeFiltersCount === 0}
                 className="cdiscovery-filter-reset-btn"
               >
-                <CloseOutlined style={{ fontSize: 10 }} /> Đặt lại{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
+                <CloseOutlined style={{ fontSize: 10 }} /> Đặt lại ({activeFiltersCount})
               </Button>
+            )}
           </div>
         </>
       )}

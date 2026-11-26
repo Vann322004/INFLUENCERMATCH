@@ -361,15 +361,25 @@ export default function BatchAuditTab() {
         onClose={() => setSelected(null)}
       />
 
-      <header className="quality-config-title quality-batch-header" style={{ marginBottom: 20 }}>
-        <div>
+      <header
+        className="quality-config-title quality-batch-header"
+        style={{
+          marginBottom: 20,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
+          gap: 16,
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 240 }}>
           <h2>Thanh lọc dữ liệu</h2>
           <p>
             Quét lại các tài khoản đã lưu trong hệ thống để phát hiện kênh bán hàng, quảng cáo rác hoặc nội dung sao chép,
             tự động cách ly và bảo vệ chất lượng dữ liệu trên sàn.
           </p>
         </div>
-        <Button icon={<ReloadOutlined />} onClick={fetchLatestReport} loading={loading}>
+        <Button icon={<ReloadOutlined />} onClick={fetchLatestReport} loading={loading} style={{ borderRadius: 8, fontWeight: 600 }}>
           Làm mới báo cáo
         </Button>
       </header>
@@ -453,49 +463,55 @@ export default function BatchAuditTab() {
             </Col>
           </Row>
 
-          <Row gutter={[16, 16]} align="middle" justify="space-between">
-            <Col xs={24} md={13}>
-              <Space wrap size="large">
-                <Checkbox
-                  checked={autoQuarantine}
-                  onChange={(e) => setAutoQuarantine(e.target.checked)}
-                >
-                  <Tooltip title="Tài khoản bị phát hiện là kênh bán hàng, quảng cáo rác hoặc sao chép sẽ được chuyển trạng thái cách ly và ẩn khỏi sàn tìm kiếm.">
-                    <Text strong style={{ color: '#dc2626' }}>
-                      Tự động cách ly tài khoản rác
-                    </Text>
-                  </Tooltip>
-                </Checkbox>
-                <Checkbox checked={dryRun} onChange={(e) => setDryRun(e.target.checked)}>
-                  <Tooltip title="Chỉ phân tích và hiển thị kết quả kiểm định, không cập nhật thay đổi vào hệ thống.">
-                    <Text>Chạy thử nghiệm</Text>
-                  </Tooltip>
-                </Checkbox>
-              </Space>
-            </Col>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 12,
+              paddingTop: 4,
+            }}
+          >
+            <Space wrap size="large">
+              <Checkbox
+                checked={autoQuarantine}
+                onChange={(e) => setAutoQuarantine(e.target.checked)}
+              >
+                <Tooltip title="Tài khoản bị phát hiện là kênh bán hàng, quảng cáo rác hoặc sao chép sẽ được chuyển trạng thái cách ly và ẩn khỏi sàn tìm kiếm.">
+                  <Text strong style={{ color: '#dc2626' }}>
+                    Tự động cách ly tài khoản rác
+                  </Text>
+                </Tooltip>
+              </Checkbox>
+              <Checkbox checked={dryRun} onChange={(e) => setDryRun(e.target.checked)}>
+                <Tooltip title="Chỉ phân tích và hiển thị kết quả kiểm định, không cập nhật thay đổi vào hệ thống.">
+                  <Text>Chạy thử nghiệm</Text>
+                </Tooltip>
+              </Checkbox>
+            </Space>
 
-            <Col xs={24} md={11} style={{ textAlign: 'right' }}>
-              <Space wrap>
-                <Tag color="blue" style={{ fontSize: 12, padding: '4px 8px' }}>
-                  Phạm vi: #{offset} → #{offset + limit}
-                </Tag>
-                <Button
-                  type="primary"
-                  loading={loading}
-                  onClick={() => handleRunAudit(offset)}
-                  style={{ backgroundColor: '#2563eb', fontWeight: 600 }}
-                >
-                  {dryRun ? `Chạy thử ${limit} hồ sơ` : `Quét & Lọc ${limit} hồ sơ`}
-                </Button>
-                <Button
-                  disabled={loading}
-                  onClick={() => handleRunAudit(offset + limit)}
-                >
-                  Đợt tiếp theo
-                </Button>
-              </Space>
-            </Col>
-          </Row>
+            <Space wrap size="small" style={{ justifyContent: 'flex-end' }}>
+              <Tag color="purple" style={{ fontSize: 12, padding: '4px 10px', marginInlineEnd: 0, borderRadius: 6 }}>
+                Phạm vi: #{offset} → #{offset + limit}
+              </Tag>
+              <Button
+                type="primary"
+                loading={loading}
+                onClick={() => handleRunAudit(offset)}
+                style={{ backgroundColor: '#7C3AED', borderColor: '#7C3AED', fontWeight: 600, borderRadius: 8 }}
+              >
+                {dryRun ? `Chạy thử ${limit} hồ sơ` : `Quét & Lọc ${limit} hồ sơ`}
+              </Button>
+              <Button
+                disabled={loading}
+                onClick={() => handleRunAudit(offset + limit)}
+                style={{ borderRadius: 8 }}
+              >
+                Đợt tiếp theo
+              </Button>
+            </Space>
+          </div>
         </Space>
       </Card>
 
@@ -522,69 +538,67 @@ export default function BatchAuditTab() {
             />
           )}
 
-          <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-            <Col xs={12} sm={8} md={5}>
-              <Card size="small" style={{ borderRadius: 10, textAlign: 'center' }}>
-                <Statistic
-                  title="Tổng hồ sơ đã quét"
-                  value={report.totalAudited}
-                  valueStyle={{ fontWeight: 700 }}
-                />
-              </Card>
-            </Col>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+              gap: 12,
+              marginBottom: 16,
+            }}
+          >
+            <Card size="small" style={{ borderRadius: 10, textAlign: 'center', height: '100%' }}>
+              <Statistic
+                title="Tổng đã quét"
+                value={report.totalAudited}
+                valueStyle={{ fontWeight: 700 }}
+              />
+            </Card>
 
-            <Col xs={12} sm={8} md={4}>
-              <Card size="small" style={{ borderRadius: 10, textAlign: 'center' }}>
-                <Statistic
-                  title="Tỷ lệ sạch"
-                  value={report.cleanRate}
-                  suffix="%"
-                  valueStyle={{
-                    color: report.cleanRate >= 75 ? '#16a34a' : report.cleanRate >= 50 ? '#d97706' : '#dc2626',
-                    fontWeight: 800,
-                  }}
-                />
-              </Card>
-            </Col>
-
-            <Col xs={12} sm={8} md={5}>
-              <Card size="small" style={{ borderRadius: 10, textAlign: 'center' }}>
-                <Statistic
-                  title="Hồ sơ đạt chuẩn"
-                  value={report.validCreators || (report.kocCount + report.kolCount)}
-                  valueStyle={{ color: '#16a34a', fontWeight: 700 }}
-                />
-              </Card>
-            </Col>
-
-            <Col xs={12} sm={8} md={5}>
-              <Card
-                size="small"
-                style={{
-                  borderRadius: 10,
-                  textAlign: 'center',
-                  backgroundColor: report.junkOrShopCount > 0 ? '#fef2f2' : '#fff',
-                  borderColor: report.junkOrShopCount > 0 ? '#fecaca' : undefined,
+            <Card size="small" style={{ borderRadius: 10, textAlign: 'center', height: '100%' }}>
+              <Statistic
+                title="Tỷ lệ sạch"
+                value={report.cleanRate}
+                suffix="%"
+                valueStyle={{
+                  color: report.cleanRate >= 75 ? '#16a34a' : report.cleanRate >= 50 ? '#d97706' : '#dc2626',
+                  fontWeight: 800,
                 }}
-              >
-                <Statistic
-                  title="Tài khoản rác & bán hàng"
-                  value={report.junkOrShopCount}
-                  valueStyle={{ color: '#dc2626', fontWeight: 800 }}
-                />
-              </Card>
-            </Col>
+              />
+            </Card>
 
-            <Col xs={12} sm={8} md={5}>
-              <Card size="small" style={{ borderRadius: 10, textAlign: 'center' }}>
-                <Statistic
-                  title="Cần xem xét thêm"
-                  value={report.needsReviewCount ?? reviewCount}
-                  valueStyle={{ color: '#d97706', fontWeight: 700 }}
-                />
-              </Card>
-            </Col>
-          </Row>
+            <Card size="small" style={{ borderRadius: 10, textAlign: 'center', height: '100%' }}>
+              <Statistic
+                title="Hồ sơ đạt chuẩn"
+                value={report.validCreators || (report.kocCount + report.kolCount)}
+                valueStyle={{ color: '#16a34a', fontWeight: 700 }}
+              />
+            </Card>
+
+            <Card
+              size="small"
+              style={{
+                borderRadius: 10,
+                textAlign: 'center',
+                height: '100%',
+                backgroundColor: report.junkOrShopCount > 0 ? '#fef2f2' : '#fff',
+                borderColor: report.junkOrShopCount > 0 ? '#fecaca' : undefined,
+              }}
+            >
+              <Statistic
+                title="Rác / Bán hàng"
+                value={report.junkOrShopCount}
+                valueStyle={{ color: '#dc2626', fontWeight: 800 }}
+              />
+            </Card>
+
+            <Card size="small" style={{ borderRadius: 10, textAlign: 'center', height: '100%' }}>
+              <Statistic
+                title="Cần xem xét"
+                value={report.needsReviewCount ?? reviewCount}
+                valueStyle={{ color: '#d97706', fontWeight: 700 }}
+              />
+            </Card>
+          </div>
 
           {/* Bảng chi tiết kết quả kèm bộ lọc gọn gàng */}
           <Card
@@ -632,7 +646,6 @@ export default function BatchAuditTab() {
                   next_page: 'Trang sau',
                 },
               }}
-              scroll={{ x: 1000 }}
               size="middle"
               locale={{
                 emptyText: (

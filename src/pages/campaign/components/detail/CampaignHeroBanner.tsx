@@ -2,7 +2,7 @@ import CampaignImage from '../../../../components/common/CampaignImage';
 import React, { useCallback, useSyncExternalStore } from 'react';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
-import { ArrowLeftOutlined, EllipsisOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, EllipsisOutlined, SearchOutlined, TeamOutlined, ThunderboltOutlined, SendOutlined, EditOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { rememberCampaign, campaignPath, campaignEditor } from '../../../../services/campaignContext';
 import type { CampaignResponse } from '../../../../types/api/campaign.types';
@@ -50,6 +50,17 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id))[0];
   const toolbarMenu: MenuProps['items'] = [
     ...(moreMenuItems ?? []),
+    ...(!['COMPLETED', 'ARCHIVED', 'CLOSED'].includes(rawCampaign?.status ?? '')
+      ? [{
+          key: 'crm',
+          icon: <SendOutlined />,
+          label: 'Tiếp cận & thỏa thuận',
+          onClick: () => {
+            rememberCampaign(resolvedId);
+            navigate(campaignPath('/crm', resolvedId));
+          },
+        }]
+      : []),
     { key: 'budget', label: 'Ngân sách & thỏa thuận', onClick: () => setActiveTab('budget') },
     ...(['DRAFT', 'READY_FOR_DISCOVERY'].includes(rawCampaign?.status ?? '')
       ? [{ key: 'activate', label: 'Kích hoạt chiến dịch', onClick: handleActivate }] : []),
@@ -129,56 +140,71 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
       </div>
 
       {/* Actions Toolbar */}
-      <p className="cdetail-hero-desc">
-        {rawCampaign?.status === 'DRAFT' ? 'Bạn có thể chỉnh sửa yêu cầu trước khi bắt đầu đánh giá.'
-          : rawCampaign?.status === 'READY_FOR_DISCOVERY' ? 'Yêu cầu đã được chốt. Bạn có thể tiếp tục lựa chọn và đánh giá các kênh.'
-          : rawCampaign?.status === 'ACTIVE' ? 'Theo dõi các thỏa thuận và tiến độ hợp tác. Yêu cầu chiến dịch đã được chốt.'
-          : rawCampaign?.status === 'COMPLETED' ? 'Chiến dịch đã kết thúc. Bạn có thể xem lại thông tin và kết quả.'
-          : 'Chiến dịch đã được lưu trữ và không thể tiếp tục chỉnh sửa.'}
-      </p>
       <div className="cdetail-hero-toolbar">
         <div className="cdetail-hero-actions-group">
-          {rawCampaign?.status === 'DRAFT' && <button type="button" className="cdetail-hero-btn secondary" onClick={() => {
-            const target = campaignEditor(resolvedId);
-            navigate(target.path, { state: target.state });
-          }}>Chỉnh sửa yêu cầu</button>}
-          {['COMPLETED', 'ARCHIVED', 'CLOSED'].includes(rawCampaign?.status ?? '') ? <button type="button" className="cdetail-hero-btn primary-action" onClick={() => navigate('/campaigns/create')}>Tạo chiến dịch mới</button> : <>
-          <button
-            type="button"
-            className="cdetail-hero-btn primary-action"
-            onClick={() => {
-              if (!resolvedId) return;
-              rememberCampaign(resolvedId);
-              navigate(campaignPath('/discovery', resolvedId));
-            }}
-          >
-            Tìm kiếm Nhà sáng tạo
-          </button>
+          {['COMPLETED', 'ARCHIVED', 'CLOSED'].includes(rawCampaign?.status ?? '') ? (
+            <button type="button" className="cdetail-hero-btn primary-action" onClick={() => navigate('/campaigns/create')}>
+              Tạo chiến dịch mới
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="cdetail-hero-btn primary-action"
+                onClick={() => {
+                  if (!resolvedId) return;
+                  rememberCampaign(resolvedId);
+                  navigate(campaignPath('/discovery', resolvedId));
+                }}
+              >
+                <SearchOutlined />
+                <span>Tìm kiếm Nhà sáng tạo</span>
+              </button>
 
-          <button type="button" className="cdetail-hero-btn secondary" onClick={() => {
-            rememberCampaign(resolvedId);
-            navigate('/creators/shortlist', { state: { shortlistContext: { sessionId, campaignId: resolvedId } } });
-          }}>Danh sách đã chọn</button>
+              <button
+                type="button"
+                className="cdetail-hero-btn secondary"
+                onClick={() => {
+                  rememberCampaign(resolvedId);
+                  navigate('/creators/shortlist', { state: { shortlistContext: { sessionId, campaignId: resolvedId } } });
+                }}
+              >
+                <TeamOutlined />
+                <span>Danh sách đã chọn</span>
+              </button>
 
-          <button
-            type="button"
-            className="cdetail-hero-btn secondary"
-            onClick={() => {
-              rememberCampaign(resolvedId);
-              navigate(campaignPath('/crm', resolvedId));
-            }}
-          >
-            Tiếp cận & thỏa thuận
-          </button>
-          </>}
+              {canViewRecommendations && (
+                <button
+                  type="button"
+                  className="cdetail-hero-btn secondary"
+                  onClick={() => {
+                    rememberCampaign(resolvedId);
+                    navigate('/campaign-management?tab=recommendation', { state: {
+                      recommendationContext: { sessionId, campaignId: resolvedId, creatorIds: [] },
+                      recommendationViewRunId: latestRun?.id,
+                    } });
+                  }}
+                >
+                  <ThunderboltOutlined />
+                  <span>Gợi ý AI</span>
+                </button>
+              )}
 
-          {latestRun && <button type="button" className="cdetail-hero-btn secondary" onClick={() => {
-            rememberCampaign(resolvedId);
-            navigate('/campaign-management?tab=recommendation', { state: {
-              recommendationContext: { sessionId, campaignId: resolvedId, creatorIds: [] },
-              recommendationViewRunId: latestRun.id,
-            } });
-          }}>Xem gợi ý AI</button>}
+              {rawCampaign?.status === 'DRAFT' && (
+                <button
+                  type="button"
+                  className="cdetail-hero-btn secondary"
+                  onClick={() => {
+                    const target = campaignEditor(resolvedId);
+                    navigate(target.path, { state: target.state });
+                  }}
+                >
+                  <EditOutlined />
+                  <span>Chỉnh sửa yêu cầu</span>
+                </button>
+              )}
+            </>
+          )}
 
           <Dropdown menu={{ items: toolbarMenu }} trigger={['click']} placement="bottomRight">
             <button type="button" className="cdetail-hero-btn icon-btn" title="Thao tác khác">
@@ -186,6 +212,14 @@ export const CampaignHeroBanner: React.FC<CampaignHeroBannerProps> = ({
             </button>
           </Dropdown>
         </div>
+
+        <span className="cdetail-hero-toolbar-note">
+          {rawCampaign?.status === 'DRAFT' ? 'Có thể chỉnh sửa yêu cầu trước khi đánh giá.'
+            : rawCampaign?.status === 'READY_FOR_DISCOVERY' ? 'Yêu cầu đã được chốt · Sẵn sàng tìm & đánh giá kênh.'
+            : rawCampaign?.status === 'ACTIVE' ? 'Yêu cầu đã chốt · Đang theo dõi hợp tác.'
+            : rawCampaign?.status === 'COMPLETED' ? 'Chiến dịch đã kết thúc.'
+            : 'Chiến dịch đã lưu trữ.'}
+        </span>
       </div>
     </div>
   );

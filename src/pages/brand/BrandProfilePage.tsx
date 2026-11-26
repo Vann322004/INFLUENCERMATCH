@@ -15,6 +15,7 @@ import {
   Spin,
   Checkbox,
   Alert,
+  Tooltip,
 } from 'antd';
 import { Navigate, useNavigate } from 'react-router-dom';
 import {
@@ -316,15 +317,10 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
           <Space wrap className="brand-profile-actions">
             {!isOnboarding && authService.getCurrentUser()?.role === 'BRAND' &&
               <Button onClick={() => setLinkGoogleOpen(true)}>Liên kết Google</Button>}
-            {isOnboarding ? (
+            {isOnboarding && (
               <Button onClick={handleDefer} disabled={action !== null}>Để sau</Button>
-            ) : (
-              <Button icon={<SaveOutlined />} type={pending ? 'default' : 'primary'}
-                onClick={() => handleSaveProfile(false)} loading={action === 'save'} disabled={writeDisabled}>
-                Lưu thay đổi
-              </Button>
             )}
-            {pending && canComplete && (
+            {isOnboarding && pending && canComplete && (
               <Button type="primary" onClick={() => handleSaveProfile(true)}
                 loading={action === 'complete'} disabled={writeDisabled}>
                 Hoàn tất hồ sơ
@@ -350,8 +346,12 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
             <div className="brand-cover-wrapper">
               <CampaignImage src={profile.coverImage} alt="Ảnh bìa thương hiệu" className="brand-cover-img" />
               <div style={{ position: 'absolute', top: 14, right: 14 }}>
-                <ImageUploadButton label="Đổi ảnh bìa" disabled={writeDisabled || !brand}
-                  upload={(file, signal) => uploadBrandImage('cover', file, signal)} onBusyChange={setImageUploading} />
+                <Tooltip title={!brand ? 'Lưu tên thương hiệu trước để tải ảnh' : undefined}>
+                  <span>
+                    <ImageUploadButton label="Đổi ảnh bìa" disabled={writeDisabled || !brand}
+                      upload={(file, signal) => uploadBrandImage('cover', file, signal)} onBusyChange={setImageUploading} />
+                  </span>
+                </Tooltip>
               </div>
             </div>
 
@@ -362,8 +362,12 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
                     <CreatorAvatar src={profile.logo} name={profile.brandName || 'Thương hiệu'} size={84} />
                   </div>
                   <div style={{ marginTop: 8 }}>
-                    <ImageUploadButton label="Đổi logo" disabled={writeDisabled || !brand}
-                      upload={(file, signal) => uploadBrandImage('logo', file, signal)} onBusyChange={setImageUploading} />
+                    <Tooltip title={!brand ? 'Lưu tên thương hiệu trước để tải ảnh' : undefined}>
+                      <span>
+                        <ImageUploadButton label="Đổi logo" disabled={writeDisabled || !brand}
+                          upload={(file, signal) => uploadBrandImage('logo', file, signal)} onBusyChange={setImageUploading} />
+                      </span>
+                    </Tooltip>
                   </div>
                 </Col>
 
@@ -419,12 +423,15 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
             </div>
           </>}
 
-          {/* 3. Form Content in Tabs */}
-          <Card className="brand-form-card" styles={{ body: { padding: '8px 24px 24px 24px' } }}>
-            <Tabs
-              activeKey={activeTab}
-              onChange={(key) => setActiveTab(key)}
-              size="large"
+          {/* 3. Form Content in Tabs (2-Column Format aligned with /data-manager/jobs) */}
+          <Card className="brand-form-card" styles={{ body: { padding: 0 } }}>
+            <div className="brand-setup-shell">
+              <div className="brand-setup-main">
+                <Tabs
+                  activeKey={activeTab}
+                  onChange={(key) => setActiveTab(key)}
+                  animated={false}
+                  size="middle"
               items={[
                 {
                   key: 'general',
@@ -509,10 +516,14 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
                           </Col>
                         </Row>
 
-                        <Form.Item label={<strong>Số điện thoại</strong>} required {...feedback('phoneNumber')}>
-                          <Input type="tel" autoComplete="tel" size="large" maxLength={30} value={profile.phoneNumber}
-                            onChange={(e) => setProfile({ ...profile, phoneNumber: e.target.value })} />
-                        </Form.Item>
+                        <Row gutter={[20, 16]}>
+                          <Col xs={24} md={12}>
+                            <Form.Item label={<strong>Số điện thoại</strong>} required {...feedback('phoneNumber')}>
+                              <Input type="tel" autoComplete="tel" size="large" maxLength={30} value={profile.phoneNumber}
+                                onChange={(e) => setProfile({ ...profile, phoneNumber: e.target.value })} />
+                            </Form.Item>
+                          </Col>
+                        </Row>
                         <Form.Item
                           label={<strong>Mô tả thương hiệu & định hướng</strong>}
                           tooltip="Giới thiệu câu chuyện thương hiệu, sản phẩm chính và thông điệp bạn muốn Creator hiểu rõ"
@@ -731,6 +742,63 @@ export default function BrandProfilePage({ onboardingUserId }: { onboardingUserI
                 },
               ]}
             />
+              </div>
+
+              <aside className="brand-setup-sidebar" aria-label="Tóm tắt hồ sơ">
+                <div className="brand-sidebar-heading">
+                  <h3>Tóm tắt hồ sơ</h3>
+                  <p>Thông tin này giúp AI M4 gợi ý đúng Creator phù hợp với thương hiệu.</p>
+                </div>
+                <div className="brand-summary-list">
+                  <div className="brand-summary-row">
+                    <span>Thương hiệu</span>
+                    <strong>{profile.brandName || 'Chưa nhập'}</strong>
+                  </div>
+                  <div className="brand-summary-row">
+                    <span>Ngành hàng</span>
+                    <strong>{profile.industry || 'Chưa chọn'}</strong>
+                  </div>
+                  <div className="brand-summary-row">
+                    <span>Nhóm sản phẩm</span>
+                    <strong>{profile.subCategories.length ? `${profile.subCategories.length} nhóm` : 'Chưa có'}</strong>
+                  </div>
+                  <div className="brand-summary-row">
+                    <span>Nền tảng ưu tiên</span>
+                    <strong>{profile.preferredPlatforms.length ? profile.preferredPlatforms.join(', ') : 'Chưa chọn'}</strong>
+                  </div>
+                  <div className="brand-summary-row">
+                    <span>Trạng thái</span>
+                    <strong style={{ color: pending ? '#D97706' : '#059669' }}>
+                      {pending ? 'Chưa hoàn tất' : 'Đã hoàn tất'}
+                    </strong>
+                  </div>
+                </div>
+                {!isOnboarding && (
+                  <div className="brand-sidebar-actions">
+                    <Button
+                      block
+                      type="primary"
+                      icon={<SaveOutlined />}
+                      onClick={() => handleSaveProfile(false)}
+                      loading={action === 'save'}
+                      disabled={writeDisabled}
+                    >
+                      Lưu thay đổi
+                    </Button>
+                    {pending && canComplete && (
+                      <Button
+                        block
+                        onClick={() => handleSaveProfile(true)}
+                        loading={action === 'complete'}
+                        disabled={writeDisabled}
+                      >
+                        Hoàn tất hồ sơ
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </aside>
+            </div>
           </Card>
         </div>
       </Spin>

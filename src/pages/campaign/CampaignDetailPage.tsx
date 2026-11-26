@@ -110,15 +110,15 @@ export default function CampaignDetailPage() {
             setActiveTab={setActiveTab}
           />
 
-          {/* 3. Navigation Tabs */}
-          <CampaignDetailNavTabs
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            creatorsCount={participatingCreators.length}
-          />
+          {/* 3. Navigation Tabs + Tab Content Area (Unified Card) */}
+          <div className="cdetail-tabs-card">
+            <CampaignDetailNavTabs
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              creatorsCount={participatingCreators.length}
+            />
 
-          {/* 4. Tab Content Area */}
-          <div className="cdetail-tab-content-wrap">
+            <div className="cdetail-tab-content-wrap">
             {activeTab === 'overview' && (
               <CampaignOverviewTab
                 rawCampaign={rawCampaign}
@@ -157,6 +157,7 @@ export default function CampaignDetailPage() {
             {activeTab === 'guidelines' && (
               <CampaignGuidelinesTab rawCampaign={rawCampaign} />
             )}
+            </div>
           </div>
 
           {/* 5. Cancel Campaign Confirmation Modal */}

@@ -317,6 +317,7 @@ export const mapApiCampaignToItem = (c: CampaignResponse | any): BrandCampaignIt
 
   return {
     id: c.id,
+    imageUrl: c.imageUrl,
     channels: Array.isArray(c.platforms) ? c.platforms.map((platform: string) => platform.toLowerCase()) : [],
     targetCreatorCount: Number(c.targetCreatorCount || c.creatorQuantity) || 1,
     name: c.name,

@@ -199,6 +199,7 @@ export default function AppSider({ collapsed: initialCollapsed = false, inDrawer
 
   const userDropdownItems: MenuProps['items'] = [
     { key: 'profile', icon: <UserOutlined />, label: 'Hồ sơ thương hiệu', onClick: () => navigate('/brand-profile') },
+    { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt tài khoản', onClick: () => navigate('/brand-profile') },
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, danger: true, label: 'Đăng xuất', onClick: handleLogout },
   ];
@@ -304,19 +305,8 @@ export default function AppSider({ collapsed: initialCollapsed = false, inDrawer
             </div>
           </div>
 
-          {/* Bottom Section: Settings Icon + Brand User Avatar */}
+          {/* Bottom Section: Brand User Avatar */}
           <div style={{ marginTop: 'auto', paddingTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <ChatGptTooltip title="Hồ sơ & Cài đặt">
-              <button
-                type="button"
-                className={`sidebar-rail-btn ${activeKey === 'profile' ? 'active' : ''}`}
-                onClick={() => navigate('/brand-profile')}
-                aria-label="Hồ sơ & Cài đặt"
-              >
-                <SettingOutlined style={{ fontSize: 17 }} />
-              </button>
-            </ChatGptTooltip>
-
             <Dropdown menu={{ items: userDropdownItems }} placement="topRight" trigger={['click']}>
               <div>
                 <ChatGptTooltip title="Tài khoản & Hồ sơ">

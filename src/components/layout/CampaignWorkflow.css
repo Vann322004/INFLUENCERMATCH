@@ -1,13 +1,13 @@
-.workflow-page { display: flex; flex-direction: column; gap: 20px; min-width: 0; color: #0f172a; }
+.workflow-page { display: flex; flex-direction: column; gap: 20px; min-width: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; }
 .workflow-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 16px; }
-.workflow-header h1 { margin: 0 0 8px; font-size: 28px; }
+.workflow-header h1 { margin: 0 0 6px; font-size: 22px; font-weight: 800; color: #0f172a; }
 .workflow-page p { line-height: 1.6; }
 .workflow-page :is(h1,h2,h3,p,li,.ant-descriptions-item-content) { overflow-wrap: anywhere; }
 .workflow-page :is(.ant-space,.ant-space-item) { max-width: 100%; min-width: 0; }
-.workflow-page .ant-btn { height: auto; min-height: 32px; white-space: normal; }
+.workflow-page .ant-btn { height: auto; min-height: 34px; border-radius: 8px; font-weight: 600; white-space: normal; }
 .workflow-page .ant-select { max-width: 100%; }
 .workflow-panel + .workflow-panel { margin-top: 12px; }
-.workflow-panel { padding: 20px; background: white; border: 1px solid #e2e8f0; border-radius: 14px; min-width: 0; }
+.workflow-panel { padding: 20px; background: white; border: 1px solid #e1e7f0; border-radius: 14px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04); min-width: 0; }
 .workflow-context { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .workflow-context .ant-select { width: min(100%, 650px); min-width: 0; }
 .campaign-detail-container .workflow-context { padding: 14px 16px; gap: 12px; }
@@ -184,3 +184,333 @@
 @container (max-width: 480px) { .rec-creator-card { padding: 16px; gap: 14px; } .rec-score strong { font-size: 20px; } .rec-metrics { gap: 16px 12px; } .rec-feedback { align-items: start; flex-direction: column; } }
 @container brand (max-width: 650px) { .workflow-deliverable { grid-template-columns: minmax(0,1fr); } .workflow-panel { padding: 16px; } }
 @media (max-width: 650px) { .workflow-deliverable { grid-template-columns: minmax(0,1fr); } .workflow-page h1 { font-size: 24px; } .workflow-panel { padding: 16px; } }
+
+
+/* ── Đồng bộ UI Recommendation theo Shortlist, Discovery & /data-manager/jobs ── */
+.recommendation-page {
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  padding-bottom: 0;
+}
+
+.rec-page-heading h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.rec-campaign-context {
+  border-color: #E1E7F0;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  padding: 16px 22px;
+}
+
+.rec-campaign-context-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.rec-campaign-thumb {
+  width: 84px;
+  height: 62px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #E1E7F0;
+  background: #F8FAFC;
+  flex-shrink: 0;
+}
+
+.rec-campaign-context-main > div > span {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #7C3AED;
+  margin-bottom: 4px;
+}
+
+.rec-campaign-context-main h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.rec-workspace-card {
+  background: #FFFFFF;
+  border: 1px solid #E1E7F0;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.rec-workspace-card .rec-results-heading {
+  background: #F5F7FC;
+  border-bottom: 1px solid #EEF0F6;
+  padding: 16px 22px;
+  margin: 0;
+}
+
+.rec-workspace-body {
+  padding: 0 22px 24px;
+}
+
+.rec-workspace-body > .ant-tabs > .ant-tabs-nav {
+  background: #F5F7FC;
+  margin: 0 -22px 18px;
+  padding: 0 22px;
+  border-bottom: 1px solid #EEF0F6;
+}
+
+.rec-workspace-body > .ant-tabs .ant-tabs-tab {
+  padding: 12px 2px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.rec-workspace-body > .ant-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #7C3AED !important;
+  font-weight: 700;
+}
+
+.rec-workspace-body > .ant-tabs .ant-tabs-ink-bar {
+  background: #7C3AED;
+}
+
+.rec-cards-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.rec-card-compact {
+  padding: 16px;
+  gap: 10px;
+  border-color: #E1E7F0;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.rec-card-compact:hover {
+  border-color: #C4B5FD;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.08);
+}
+
+.rec-card-compact .rec-metrics {
+  padding: 10px 12px;
+  gap: 8px;
+  border-color: #EEF0F6;
+}
+
+.rec-card-compact .rec-metrics dd {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.rec-next-action {
+  position: static;
+  margin-top: 0;
+  border-color: #E1E7F0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.rec-next-action.is-floating {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  border-radius: 12px 12px 0 0;
+  border-color: #C4B5FD;
+  box-shadow: 0 -6px 24px rgba(15, 23, 42, 0.12);
+}
+
+.recommendation-page .ant-btn-primary {
+  background: #7C3AED;
+  border-color: #7C3AED;
+  box-shadow: none;
+}
+
+.recommendation-page .ant-btn-primary:not(:disabled):hover {
+  background: #6D28D9;
+  border-color: #6D28D9;
+}
+
+@media (max-width: 1100px) {
+  .rec-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .rec-cards-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rec-workspace-body {
+    padding: 0 16px 16px;
+  }
+  .rec-workspace-body > .ant-tabs > .ant-tabs-nav {
+    margin: 0 -16px 14px;
+    padding: 0 16px;
+  }
+}
+
+
+/* ── Modal chi tiết kết quả gợi ý 2 cột rộng ── */
+.rec-analysis-modal .ant-modal-content {
+  border-radius: 14px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.rec-analysis-modal .ant-modal-header {
+  background: #F5F7FC;
+  border-bottom: 1px solid #EEF0F6;
+  padding: 16px 24px;
+  margin: 0;
+}
+
+.rec-analysis-modal .ant-modal-title {
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.rec-analysis-modal .ant-modal-body {
+  padding: 20px 24px;
+  max-height: calc(100dvh - 200px);
+  overflow-y: auto;
+}
+
+.rec-analysis-modal .ant-modal-footer {
+  background: #FAFBFD;
+  border-top: 1px solid #EEF0F6;
+  padding: 12px 24px;
+  margin: 0;
+}
+
+.rec-modal-two-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 20px;
+  align-items: start;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.rec-modal-col-left,
+.rec-modal-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.rec-analysis-modal .rec-card-footer {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0;
+}
+
+.rec-analysis-modal .rec-card-actions {
+  flex: 0 1 auto;
+}
+
+.rec-analysis-modal .rec-card-actions .ant-btn {
+  flex: 0 0 auto;
+  min-height: 36px;
+}
+
+.rec-analysis-modal .rec-feedback {
+  border-top: 0;
+  padding-top: 0;
+}
+
+@media (max-width: 860px) {
+  .rec-modal-two-col {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rec-analysis-modal .ant-modal-body {
+    padding: 16px;
+  }
+}
+
+
+/* ── Thẻ điểm M1-M4 có thanh tiến độ màu sắc & bố cục cột phải gọn ── */
+.rec-modal-card {
+  background: #FAFBFD;
+  border: 1px solid #E1E7F0;
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.rec-modal-card-title {
+  margin: 0 0 14px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #18283F !important;
+}
+
+.rec-score-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rec-score-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rec-score-bar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+}
+
+.rec-score-bar-head span {
+  color: #475569;
+  font-weight: 600;
+}
+
+.rec-score-bar-head strong {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.rec-score-bar-track {
+  width: 100%;
+  height: 7px;
+  background: #E2E8F0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.rec-score-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.rec-modal-card-note {
+  margin: 12px 0 0 !important;
+  padding-top: 10px;
+  border-top: 1px solid #EEF0F6;
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.55;
+}
+
+.rec-modal-col-right .rec-details {
+  background: #FFFFFF;
+  border: 1px solid #E1E7F0;
+  border-radius: 12px;
+  padding: 12px 16px;
+}

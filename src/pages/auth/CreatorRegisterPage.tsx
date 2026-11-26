@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/api/authService';
 import { getErrorMessage } from '../../services/apiClient';
 import { useAsyncResource } from '../../hooks/useAsyncResource';
-import { rememberCooperation, validCooperationToken } from '../../services/cooperationContinuation';
+import { cooperationPath, pendingCooperation, rememberCooperation, validCooperationToken } from '../../services/cooperationContinuation';
 import './RegisterPage.css';
 
 const registrationContextKey = 'im.creatorRegistrationContext';
@@ -44,6 +44,7 @@ function CreatorRegistrationForm({ token, cooperationToken }: { token: string; c
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [cooldown, setCooldown] = useState(0);
   const lock = useRef(false);
+  const pendingPasswordRef = useRef('');
   const query = useCallback(() => authService.resolveCreatorInvitation(token), [token]);
   const resource = useAsyncResource(query, valid && !email);
   useEffect(() => {
@@ -72,7 +73,21 @@ function CreatorRegistrationForm({ token, cooperationToken }: { token: string; c
       <p>Nhập mã xác minh đã gửi đến <strong>{email}</strong>.</p>
       <Form layout="vertical" requiredMark={false} size="large" disabled={busy} onFinish={({ otp }) => void perform(async () => {
         await authService.verifyEmail(email, otp);
-        sessionStorage.removeItem(storageKey); sessionStorage.removeItem(registrationContextKey); login();
+        sessionStorage.removeItem(storageKey); sessionStorage.removeItem(registrationContextKey);
+        const savedPassword = pendingPasswordRef.current;
+        pendingPasswordRef.current = '';
+        if (savedPassword) {
+          try {
+            await authService.login({ email, password: savedPassword });
+            const invitation = validCooperationToken(cooperationToken) ? cooperationToken : pendingCooperation();
+            if (invitation) rememberCooperation(invitation);
+            navigate(invitation ? cooperationPath() : '/creator/dashboard', { replace: true });
+            return;
+          } catch {
+            // Fallback to login page if auto-login fails
+          }
+        }
+        login();
       })}>
         <Form.Item name="otp" label="Mã xác minh" rules={[{ required: true, pattern: /^\d{6}$/, message: 'Nhập mã gồm 6 chữ số.' }]}><Input className="luxe-input" inputMode="numeric" autoComplete="one-time-code" maxLength={6} /></Form.Item>
         <Button className="luxe-primary-btn" type="primary" htmlType="submit" block loading={busy}>Xác minh email <ArrowRightOutlined /></Button>
@@ -83,6 +98,7 @@ function CreatorRegistrationForm({ token, cooperationToken }: { token: string; c
         const policies = await authService.getPolicies();
         await authService.registerCreator({ invitationToken: token, fullName: values.fullName.trim(), password: values.password,
           policyAcceptance: { acceptedTerms: values.agreement === true, acceptedPrivacy: values.agreement === true, ...policies } });
+        pendingPasswordRef.current = values.password || '';
         sessionStorage.setItem(storageKey, resource.data!.email);
         if (validCooperationToken(cooperationToken)) rememberCooperation(cooperationToken);
         setEmail(resource.data!.email); setCooldown(60);
