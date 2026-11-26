@@ -52,11 +52,13 @@ export default function DashboardLayout({ children }) {
       key: 'profile',
       icon: <UserOutlined />,
       label: 'Thông tin tài khoản',
+      onClick: () => navigate('/brand-profile'),
     },
     {
       key: 'settings',
       icon: <SettingOutlined />,
       label: 'Cài đặt hệ thống',
+      onClick: () => navigate('/subscription'),
     },
     {
       type: 'divider',

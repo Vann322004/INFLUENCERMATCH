@@ -49,14 +49,16 @@ export const DiscoveryResultsToolbar: React.FC<DiscoveryResultsToolbarProps> = (
       <div className="cdiscovery-results-right">
         {onViewShortlist && <Button disabled={!matchedCampaign} onClick={onViewShortlist}>Danh sách đã chọn</Button>}
           <Button onClick={() => setQuickOpen(value => !value)} disabled={busy || !availableCreators.length} aria-expanded={quickOpen}>Chọn nhanh <DownOutlined /></Button>
-        <Button
-          type="primary"
-          disabled={busy || selectedCreatorIds.size === 0}
-          onClick={onBulkAddToShortlist}
-          className="cdiscovery-btn-bulk-shortlist"
-        >
-          + Lưu các kênh đã chọn
-        </Button>
+        {selectedCreatorIds.size > 0 && (
+          <Button
+            type="primary"
+            disabled={busy}
+            onClick={onBulkAddToShortlist}
+            className="cdiscovery-btn-bulk-shortlist"
+          >
+            + Lưu {selectedCreatorIds.size} kênh đã chọn
+          </Button>
+        )}
       </div>
       {quickOpen && !busy && <div className="cdiscovery-quick-select">
             <div className="cdiscovery-quick-select-head"><strong>Chọn từ kết quả khám phá</strong><span>{availableCreators.length} kênh</span></div>

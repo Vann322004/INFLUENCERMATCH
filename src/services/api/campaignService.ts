@@ -92,6 +92,19 @@ export const campaignService = {
   },
 
   /**
+   * Thử lại embedding M3 khi trạng thái hiện tại là FAILED
+   * POST /campaigns/{id}/context/embedding/retry
+   */
+  async retryEmbedding(id: string): Promise<CampaignResponse> {
+    const response = await apiClient.post<ApiResponse<CampaignResponse>>(`/campaigns/${id}/context/embedding/retry`);
+    const data = response.data?.data;
+    if (response.data?.success === false || data?.id !== id || !data.status) {
+      throw new Error('Không thể thử lại chuẩn bị dữ liệu chiến dịch.');
+    }
+    return data;
+  },
+
+  /**
    * Tạo chuẩn ETag revision theo contract của backend: "campaign:<uuid>:r<revision>"
    */
   formatCampaignRevisionTag(id: string, revision?: number | null): string {

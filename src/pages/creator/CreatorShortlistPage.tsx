@@ -1,7 +1,6 @@
-import ShortlistCreatorCard, { formatFollowers, formatEngagement, formatFee } from './components/ShortlistCreatorCard';
+import ShortlistCreatorCard from './components/ShortlistCreatorCard';
+import CampaignImage from '../../components/common/CampaignImage';
 import ShortlistQuickPicker from '../../components/campaign/ShortlistQuickPicker';
-import { CreatorDetailDrawer } from './components/discovery/CreatorDetailDrawer';
-import type { Creator } from './components/discovery/types';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Alert, Button, ConfigProvider, Empty, Form, Input, Modal, Pagination, Select, Skeleton, message } from 'antd';
 import viVN from 'antd/locale/vi_VN';
@@ -10,7 +9,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { activeCampaignId, rememberCampaign } from '../../services/campaignContext';
 import { shortlistService } from '../../services/api/shortlistService';
 import { campaignService } from '../../services/api/campaignService';
-import { creatorService } from '../../services/api/creatorService';
 import { getErrorMessage } from '../../services/apiClient';
 import { getStoredUser, getAuthSessionId, subscribeAuthSession } from '../../services/authSession';
 import type { ShortlistRecord, ShortlistStatus } from '../../types/api/shortlist.types';
@@ -30,39 +28,6 @@ const errorText = (error: unknown) => {
 };
 const priorities = [{ value: 'HIGH', label: 'Cao' }, { value: 'MEDIUM', label: 'Trung bình' }, { value: 'LOW', label: 'Thấp' }];
 const statuses: Record<ShortlistStatus, string> = { SAVED: 'Đã lưu', READY_TO_CONTACT: 'Sẵn sàng liên hệ', CONTACTED: 'Đã chuyển bước liên hệ', REMOVED: 'Đã xóa' };
-
-function shortlistRecordToCreator(item: ShortlistRecord): Creator {
-  const categories = [
-    ...new Set(
-      [item.niche, item.category].flatMap(
-        (v) => v?.split(/[,;]/).map((t) => t.trim()).filter(Boolean) ?? []
-      )
-    ),
-  ];
-  const fee = formatFee(item);
-
-  return {
-    id: item.creatorId,
-    name: item.creatorName || 'Kênh chưa có tên',
-    username: item.userName ? item.userName.replace(/^@+/, '') : '',
-    avatar: item.avatarUrl || '',
-    isVerified: !!item.verifiedByInfluencerMatch,
-    matchRate: 0,
-    matchLevel: 'medium',
-    platforms: item.platform ? [item.platform.toLowerCase() as Creator['platforms'][number]] : [],
-    categories,
-    bio: item.contentSummary || '',
-    followers: formatFollowers(item.followers),
-    followersCount: item.followers || 0,
-    engagementRate: formatEngagement(item.engagementRate),
-    engagementValue: item.engagementRate || 0,
-    avgPrice: fee,
-    priceSource: item.actualFee != null ? 'Báo giá đã ghi nhận' : item.estimatedFeeMin != null || item.estimatedFeeMax != null ? 'Khoảng giá ước tính' : undefined,
-    avgPriceValue: item.actualFee || item.estimatedFeeMin || 0,
-    location: (item as { location?: string | null }).location || '',
-    saved: item.status !== 'REMOVED',
-  };
-}
 
 export default function CreatorShortlistPage() {
   const location = useLocation(), navigate = useNavigate();
@@ -85,7 +50,6 @@ export default function CreatorShortlistPage() {
   }, [campaignId, sessionId, location.search, location.state, location.pathname, routeContext?.campaignId, navigate]);
   const campaign = campaigns.data?.find(item => item.id === campaignId);
   const compareSection = useRef<HTMLElement>(null);
-  const [previewCreator, setPreviewCreator] = useState<Creator | null>(null);
 
   const context = session + ':' + campaignId, live = useRef(context); live.current = context;
   const [params, setParams] = useState<{ page: number; size: number; priority?: ShortlistPriority; status?: ShortlistStatus }>({ page: 0, size: 20 });
@@ -173,46 +137,16 @@ export default function CreatorShortlistPage() {
     finally { if (live.current === active) setBusy(null); }
   };
 
-  const handleViewProfile = async (item: ShortlistRecord) => {
-    const base = shortlistRecordToCreator(item);
-    setPreviewCreator(base);
-    try {
-      const detail = await creatorService.getCreatorById(item.creatorId);
-      if (detail) {
-        setPreviewCreator(prev => {
-          if (!prev || prev.id !== item.creatorId) return prev;
-          const cat = [
-            ...new Set(
-              [detail.niche, detail.category, ...(prev.categories || [])].flatMap(
-                v => v?.split(/[,;]/).map(t => t.trim()).filter(Boolean) ?? []
-              )
-            ),
-          ];
-          return {
-            ...prev,
-            name: detail.displayName || prev.name,
-            username: detail.userName ? detail.userName.replace(/^@+/, '') : prev.username,
-            avatar: detail.avatarUrl || prev.avatar,
-            bio: detail.contentSummary || prev.bio,
-            followers: formatFollowers(detail.followers ?? item.followers),
-            followersCount: detail.followers ?? prev.followersCount,
-            engagementRate: formatEngagement(detail.engagementRate ?? item.engagementRate),
-            engagementValue: detail.engagementRate ?? prev.engagementValue,
-            avgPrice: formatFee({
-              actualFee: detail.actualFee,
-              estimatedFeeMin: detail.estimatedFeeMin,
-              estimatedFeeMax: detail.estimatedFeeMax,
-            }),
-            priceSource: detail.actualFee != null ? 'Báo giá đã ghi nhận' : detail.estimatedFeeMin != null || detail.estimatedFeeMax != null ? 'Khoảng giá ước tính' : undefined,
-            location: detail.location || prev.location,
-            isVerified: detail.verifiedByInfluencerMatch ?? prev.isVerified,
-            categories: cat.length ? cat : prev.categories,
-          };
-        });
-      }
-    } catch {
-      message.warning('Chưa tải được hồ sơ chi tiết. Đang hiển thị thông tin đã lưu trong danh sách.');
-    }
+  const handleViewProfile = (item: ShortlistRecord) => {
+    if (campaignId) rememberCampaign(campaignId);
+    navigate('/creators/detail', {
+      state: {
+        creatorId: item.creatorId,
+        campaignId: campaignId || undefined,
+        from: 'shortlist',
+        returnTo: '/creators/shortlist',
+      },
+    });
   };
 
   if (!canManage) return <div className="sl-page"><Alert type="info" title="Bạn không có quyền quản lý danh sách đã chọn." /></div>;
@@ -237,9 +171,16 @@ export default function CreatorShortlistPage() {
         ) : (
           <>
             <section className="sl-panel sl-campaign-context">
-              <span className="sl-campaign-label">Chiến dịch hiện tại</span>
-              <h2>{campaign.name}</h2>
+              <div className="sl-campaign-context-main">
+                <CampaignImage src={campaign.imageUrl} className="sl-campaign-thumb" />
+                <div>
+                  <span className="sl-campaign-label">CHIẾN DỊCH HIỆN TẠI</span>
+                  <h2>{campaign.name}</h2>
+                </div>
+              </div>
+              <Button icon={<ArrowLeftOutlined />} onClick={backToDiscovery}>Thêm từ Khám phá</Button>
             </section>
+            <div className="sl-workspace-card">
             <div className="sl-list-header">
               <div>
                 <h2>Kênh đã lưu {list.status === 'success' && <span>{list.data?.totalElements.toLocaleString('vi-VN')}</span>}</h2>
@@ -250,6 +191,7 @@ export default function CreatorShortlistPage() {
                 <Select aria-label="Lọc trạng thái" value={params.status ?? 'ALL'} options={[{ value: 'ALL', label: 'Kênh đang lưu' }, ...Object.entries(statuses).map(([value, label]) => ({ value, label }))]} onChange={value => setParams(previous => ({ ...previous, page: 0, status: value === 'ALL' ? undefined : value as ShortlistStatus }))} />
               </div>
             </div>
+            <div className="sl-workspace-body">
         {quickOpen && (
           <ShortlistQuickPicker
             key={context}
@@ -314,6 +256,8 @@ export default function CreatorShortlistPage() {
                 onChange={(page, size) => setParams(previous => ({ ...previous, page: size !== previous.size ? 0 : page - 1, size }))}
               />
             )}
+            </div>
+            </div>
             {compareOpen && (
               <section ref={compareSection} className="sl-panel sl-comparison" aria-label="So sánh các kênh">
                 <div className="sl-heading">
@@ -332,7 +276,7 @@ export default function CreatorShortlistPage() {
                 )}
               </section>
             )}
-            <footer className="sl-action-bar" aria-label="Thao tác danh sách đã chọn">
+            <footer className={selected.length > 0 ? 'sl-action-bar is-floating' : 'sl-action-bar'} aria-label="Thao tác danh sách đã chọn">
               <div className="sl-action-summary">
                 <strong>{selected.length ? `Đã chọn ${selected.length} kênh` : 'Chưa đánh dấu kênh'}</strong>
               </div>
@@ -385,26 +329,6 @@ export default function CreatorShortlistPage() {
             <Button type="primary" htmlType="submit" loading={!!busy}>Lưu thay đổi</Button>
           </Form>
         </Modal>
-
-
-        {/* Drawer xem hồ sơ chi tiết KOC */}
-        <CreatorDetailDrawer
-          visible={!!previewCreator}
-          creator={previewCreator}
-          matchedCampaign={null}
-          showMatch={false}
-          actionLabel={selected.some(item => item.creatorId === previewCreator?.id) ? 'Bỏ chọn kênh' : 'Chọn để chạy gợi ý'}
-          actionDisabled={!!busy || !list.data?.items.some(item => item.creatorId === previewCreator?.id && item.status !== 'REMOVED')}
-          onClose={() => setPreviewCreator(null)}
-          onOpenShortlist={(c) => {
-            const rec = list.data?.items.find(r => r.creatorId === c.id);
-            if (rec) {
-              const isSel = selected.some(r => r.creatorId === c.id);
-              toggle(rec, !isSel);
-
-            }
-          }}
-        />
       </div>
     </ConfigProvider>
   );

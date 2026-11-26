@@ -12,7 +12,6 @@ import {
   FileTextOutlined,
   SafetyCertificateOutlined,
   TagOutlined,
-  LineChartOutlined,
 } from '@ant-design/icons';
 import { ADMIN_ROUTES, DATA_MANAGER_ROUTES } from '../../../constants/adminRoutes';
 
@@ -109,17 +108,10 @@ export const ADMIN_MENU_GROUPS: AdminMenuGroup[] = [
     items: [
       {
         key: 'audit-logs',
-        label: 'Nhật ký kiểm toán',
+        label: 'Nhật ký & Giám sát',
         icon: <FileTextOutlined style={{ fontSize: 18 }} />,
         path: ADMIN_ROUTES.AUDIT,
         code: 'AD-02',
-      },
-      {
-        key: 'system-monitoring',
-        label: 'Giám sát hệ thống',
-        icon: <LineChartOutlined style={{ fontSize: 18 }} />,
-        path: `${ADMIN_ROUTES.AUDIT}?tab=monitoring`,
-        code: 'AD-MON',
       },
     ],
   },

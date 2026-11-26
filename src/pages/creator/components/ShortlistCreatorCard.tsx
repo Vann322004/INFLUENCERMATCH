@@ -87,13 +87,21 @@ export default function ShortlistCreatorCard({
         <div><dt>Người theo dõi</dt><dd title={shortlistNumber(item.followers)}>{formatFollowers(item.followers)}</dd></div>
         <div><dt>Tỷ lệ tương tác</dt><dd>{formatEngagement(item.engagementRate)}</dd></div>
       </dl>
-      <div className="sl-channel-fee"><span>{item.actualFee != null ? 'Phí đã ghi nhận' : 'Khoảng phí ước tính'}</span><strong>{formatFee(item)}</strong></div>
-      <div className="sl-channel-context"><button type="button" className={`sl-channel-priority sl-channel-priority-${item.priority.toLowerCase()}`} disabled={busy || removed} onClick={onEdit}>Ưu tiên: <strong>{shortlistLabel(item.priority)}</strong></button>{addedDate && <span>Lưu {addedDate}</span>}</div>
-      {hasBio && <details className="sl-channel-description"><summary>Giới thiệu kênh</summary><p>{bio}</p></details>}
-      <div className="sl-channel-note">
-        <div className="sl-channel-note-heading"><span>Ghi chú lựa chọn</span>{!removed && <button type="button" disabled={busy} onClick={onEdit}>{item.note?.trim() ? 'Chỉnh sửa' : 'Thêm ghi chú'}</button>}</div>
-        {item.note?.trim() ? <details><summary>{item.note}</summary><p>{item.note}</p></details> : <p className="sl-channel-note-empty">Chưa có ghi chú.</p>}
+      <div className="sl-channel-fee"><span>{item.actualFee != null ? 'Phí đã ghi nhận' : 'Phí ước tính'}</span><strong>{formatFee(item)}</strong></div>
+      <div className="sl-channel-context">
+        <button type="button" className={`sl-channel-priority sl-channel-priority-${item.priority.toLowerCase()}`} disabled={busy || removed} onClick={onEdit}>Ưu tiên: <strong>{shortlistLabel(item.priority)}</strong></button>
+        {!removed && !item.note?.trim() && (
+          <button type="button" className="sl-channel-inline-note-btn" disabled={busy} onClick={onEdit}>+ Thêm ghi chú</button>
+        )}
+        {addedDate && <span>Lưu {addedDate}</span>}
       </div>
+      {hasBio && <details className="sl-channel-description"><summary>Giới thiệu kênh</summary><p>{bio}</p></details>}
+      {item.note?.trim() && (
+        <div className="sl-channel-note">
+          <div className="sl-channel-note-heading"><span>Ghi chú lựa chọn</span>{!removed && <button type="button" disabled={busy} onClick={onEdit}>Chỉnh sửa</button>}</div>
+          <details><summary>{item.note}</summary><p>{item.note}</p></details>
+        </div>
+      )}
       <footer className="sl-channel-actions"><Button onClick={onView}>Xem hồ sơ</Button>{removed ? <Button disabled={busy} onClick={onRestore}>Khôi phục</Button> : <Button className="sl-channel-select" disabled={busy} onClick={() => onToggle(!checked)}>{checked ? 'Bỏ chọn kênh' : 'Chọn để gợi ý'}</Button>}</footer>
     </article>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import {
@@ -21,6 +22,7 @@ export default function AdminSidebarUserSection({
   isManager,
   onLogout,
 }: AdminSidebarUserSectionProps) {
+  const navigate = useNavigate();
   const getInitials = () => {
     const name = currentUser?.name || currentUser?.fullName;
     if (name) {
@@ -37,9 +39,26 @@ export default function AdminSidebarUserSection({
   const userName = currentUser?.name || currentUser?.fullName || (isManager ? 'Quản lý dữ liệu' : 'Quản trị viên');
   const roleLabel = currentUser?.roleLabel || (isManager ? 'Quản lý dữ liệu' : 'Quản trị viên cấp cao');
 
+  const handleOpenProfile = () => {
+    if (isManager) {
+      navigate('/data-manager/dashboard');
+      return;
+    }
+    if (currentUser?.id) {
+      sessionStorage.setItem('im.admin.selectedAccountId', currentUser.id);
+      navigate('/admin/accounts/detail', { state: { accountId: currentUser.id } });
+    } else {
+      navigate('/admin/accounts');
+    }
+  };
+
+  const handleOpenSettings = () => {
+    navigate(isManager ? '/data-manager/scoring' : '/admin/accounts');
+  };
+
   const userDropdownItems: MenuProps['items'] = [
-    { key: 'profile', icon: <UserOutlined />, label: isManager ? 'Hồ sơ Quản lý dữ liệu' : 'Hồ sơ Quản trị viên' },
-    { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt hệ thống' },
+    { key: 'profile', icon: <UserOutlined />, label: isManager ? 'Hồ sơ Quản lý dữ liệu' : 'Hồ sơ Quản trị viên', onClick: handleOpenProfile },
+    { key: 'settings', icon: <SettingOutlined />, label: isManager ? 'Cấu hình thuật toán' : 'Cài đặt hệ thống', onClick: handleOpenSettings },
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, danger: true, label: 'Đăng xuất', onClick: onLogout },
   ];

@@ -50,19 +50,23 @@ export default function InvitationListItem({ deal, name, readOnly, onOpen }: { d
     finally { await status.reload(); resendLock.current = false; setResending(false); }
   } });
   return <article className="contact-deal contact-invitation-row">
-    <div className="contact-invitation-copy"><strong>{name}</strong>
-      <p className="contact-invitation-summary">{deal.proposal ? `${deal.proposal.fee.toLocaleString('vi-VN')} ₫ · ${deal.proposal.deliverables.length} hạng mục` : 'Bản nháp · Chưa có đề xuất'}</p>
-      <dl className="contact-invitation-status-grid">
-        <div><dt>Cách gửi</dt><dd><Tag>{loaded ? view.route : status.status === 'error' ? 'Chưa tải được cách gửi' : 'Đang kiểm tra…'}</Tag></dd></div>
-        <div><dt>Trạng thái gửi</dt><dd>{loaded ? view.dispatch : status.status === 'error' ? 'Chưa tải được trạng thái' : 'Đang kiểm tra…'}</dd></div>
-        <div><dt>Phản hồi</dt><dd><Tag>{view.response}</Tag></dd></div>
-      </dl>
-      {loaded && !deal.plannedContactChannel && !deal.masterId && !status.data && <small>API chưa cung cấp cách gửi cho bản nháp này. Chưa có lời mời được gửi.</small>}
-      {loaded ? <small>{view.hint}</small> : status.status === 'error' && <Button size="small" type="link" onClick={() => void status.reload()}>Thử tải lại trạng thái</Button>}
-      {resendState.visible && resendState.reason && <small>Gửi lại email: {resendState.reason}</small>}
+    <div className="contact-invitation-top">
+      <div className="contact-invitation-title">
+        <strong>{name}</strong>
+        <p className="contact-invitation-summary">{deal.proposal ? `${deal.proposal.fee.toLocaleString('vi-VN')} ₫ · ${deal.proposal.deliverables.length} hạng mục` : 'Bản nháp · Chưa có đề xuất'}</p>
+      </div>
+      <div className="contact-invitation-buttons">
+        <Button onClick={onOpen}>{readOnly ? 'Xem thỏa thuận' : loaded ? view.action : 'Xem lời mời'}</Button>
+        {resendState.visible && <Button loading={resending} disabled={resending || !loaded || !resendState.enabled} onClick={resend}>Gửi lại email</Button>}
+      </div>
     </div>
-    <div className="contact-invitation-buttons"><Button onClick={onOpen}>{readOnly ? 'Xem thỏa thuận' : loaded ? view.action : 'Xem lời mời'}</Button>
-      {resendState.visible && <Button loading={resending} disabled={resending || !loaded || !resendState.enabled} onClick={resend}>Gửi lại email</Button>}
-    </div>
+    <dl className="contact-invitation-status-grid">
+      <div><dt>Cách gửi</dt><dd><Tag>{loaded ? view.route : status.status === 'error' ? 'Chưa tải được cách gửi' : 'Đang kiểm tra…'}</Tag></dd></div>
+      <div><dt>Trạng thái gửi</dt><dd>{loaded ? view.dispatch : status.status === 'error' ? 'Chưa tải được trạng thái' : 'Đang kiểm tra…'}</dd></div>
+      <div><dt>Phản hồi</dt><dd><Tag>{view.response}</Tag></dd></div>
+    </dl>
+    {loaded && !deal.plannedContactChannel && !deal.masterId && !status.data && <small className="contact-invitation-hint">API chưa cung cấp cách gửi cho bản nháp này. Chưa có lời mời được gửi.</small>}
+    {loaded ? <small className="contact-invitation-hint">{view.hint}</small> : status.status === 'error' && <Button size="small" type="link" onClick={() => void status.reload()}>Thử tải lại trạng thái</Button>}
+    {resendState.visible && resendState.reason && <small className="contact-invitation-hint">Gửi lại email: {resendState.reason}</small>}
   </article>;
 }

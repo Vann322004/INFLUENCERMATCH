@@ -96,8 +96,8 @@
 
 .dm-editorial-italic {
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-style: italic;
-  font-weight: 500;
+  font-style: normal;
+  font-weight: 700;
   background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -429,6 +429,46 @@
   text-align: left;
   padding: 10px;
   border-bottom: 1px solid #F3E8FF;
+}
+
+.dm-activity-table .ant-table {
+  width: 100%;
+}
+
+.dm-activity-identity {
+  min-width: 0;
+}
+
+.dm-nowrap {
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.dm-activity-mobile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dm-activity-mobile-item {
+  border: 1px solid #EDE9FE;
+  border-radius: 12px;
+  padding: 12px;
+  background: #FAF8FF;
+}
+
+.dm-activity-mobile-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.dm-activity-mobile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .dm-niche-stats {

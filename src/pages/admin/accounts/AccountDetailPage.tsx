@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   Button, Avatar, Tag, Descriptions, Card, Row, Col,
   Typography, Space, Badge, Divider, Spin,
@@ -39,21 +39,31 @@ const ROLE_LABEL_MAP: Record<AdminUserRole, string> = {
 };
 
 export default function AccountDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id: paramId } = useParams<{ id: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
+  const stateId = (location.state as { accountId?: string } | null)?.accountId;
+  const id = stateId || paramId || sessionStorage.getItem('im.admin.selectedAccountId') || '';
   const [account, setAccount] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [lockOpen, setLockOpen] = useState(false);
   const [lockAction, setLockAction] = useState<'lock' | 'unlock' | 'restore'>('lock');
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    sessionStorage.setItem('im.admin.selectedAccountId', id);
+    if (paramId) {
+      navigate('/admin/accounts/detail', { replace: true, state: { accountId: id } });
+    }
     setLoading(true);
     adminService.getUserById(id)
       .then(setAccount)
       .catch(() => setAccount(null))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, paramId, navigate]);
 
   if (loading) {
     return (
@@ -87,12 +97,19 @@ export default function AccountDetailPage() {
   };
 
   return (
-    <div>
+    <div style={{ color: '#0F172A' }}>
       {/* Back Button */}
       <Button
         icon={<ArrowLeftOutlined />}
         onClick={() => navigate('/admin/accounts')}
-        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#94A3B8', marginBottom: 20 }}
+        style={{
+          background: '#FFFFFF',
+          border: '1px solid #E2E8F0',
+          color: '#0F172A',
+          fontWeight: 600,
+          borderRadius: 8,
+          marginBottom: 20,
+        }}
       >
         Quay lại danh sách
       </Button>
@@ -100,24 +117,25 @@ export default function AccountDetailPage() {
       <Row gutter={[20, 20]}>
         {/* Left — Profile Card */}
         <Col xs={24} lg={8}>
-        <Card
-            bordered={false}
-            bodyStyle={{ padding: '28px 24px' }}
+          <Card
+            variant="borderless"
+            styles={{ body: { padding: '28px 24px' } }}
             style={{
-              borderRadius: 16,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
+              borderRadius: 14,
+              border: '1px solid #E2E8F0',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
               textAlign: 'center',
             }}
           >
             <Avatar
               src={account.avatar}
               size={80}
-              style={{ border: '3px solid rgba(124, 58, 237,0.4)', marginBottom: 14 }}
+              style={{ border: '3px solid #DDD6FE', marginBottom: 14 }}
             />
-            <Title level={4} style={{ color: '#0F172A', margin: '0 0 4px', fontWeight: 800 }}>
+            <Title level={4} style={{ color: '#0F172A', margin: '0 0 6px', fontWeight: 800 }}>
               {account.name}
             </Title>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
               <Tag
                 style={{
                   background: roleColor + '18',
@@ -126,16 +144,17 @@ export default function AccountDetailPage() {
                   borderRadius: 20,
                   fontWeight: 700,
                   fontSize: 11,
+                  marginInlineEnd: 0,
                 }}
               >
                 {account.roleLabel || ROLE_LABEL_MAP[account.role] || account.role}
               </Tag>
               <Badge status={statusCfg.color as any} text={
-                <span style={{ color: '#94A3B8', fontSize: 12 }}>{statusCfg.label}</span>
+                <span style={{ color: '#475569', fontSize: 12, fontWeight: 600 }}>{statusCfg.label}</span>
               } />
             </div>
 
-            <Divider style={{ borderColor: 'rgba(255,255,255,0.06)', margin: '12px 0' }} />
+            <Divider style={{ borderColor: '#F1F5F9', margin: '12px 0' }} />
 
             <div style={{ textAlign: 'left' }}>
               {[
@@ -143,24 +162,24 @@ export default function AccountDetailPage() {
                 { icon: <CalendarOutlined />, label: 'Tham gia', value: account.joinedAt },
                 { icon: <GlobalOutlined />, label: 'IP cuối', value: account.ip },
               ].map(item => (
-                <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ color: '#7C3AED', fontSize: 14, width: 18 }}>{item.icon}</span>
-                  <div>
-                    <div style={{ color: '#64748B', fontSize: 10, fontWeight: 600, lineHeight: 1 }}>{item.label}</div>
-                    <div style={{ color: '#334155', fontSize: 12.5, fontWeight: 600 }}>{item.value}</div>
+                <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <span style={{ color: '#7C3AED', fontSize: 14, width: 18, flexShrink: 0 }}>{item.icon}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ color: '#64748B', fontSize: 11, fontWeight: 600, lineHeight: 1.2 }}>{item.label}</div>
+                    <div style={{ color: '#1E293B', fontSize: 13, fontWeight: 600, overflowWrap: 'anywhere' }}>{item.value || '—'}</div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <Divider style={{ borderColor: 'rgba(255,255,255,0.06)', margin: '14px 0' }} />
+            <Divider style={{ borderColor: '#F1F5F9', margin: '14px 0' }} />
 
             {/* Action Buttons */}
             <Space direction="vertical" style={{ width: '100%' }}>
               <Button
                 block
                 icon={<EditOutlined />}
-                style={{ background: 'rgba(124, 58, 237,0.12)', border: '1px solid rgba(124, 58, 237,0.25)', color: '#A78BFA', fontWeight: 600 }}
+                style={{ background: '#F3E8FF', border: '1px solid #DDD6FE', color: '#6D28D9', fontWeight: 700, borderRadius: 8, height: 38 }}
               >
                 Chỉnh sửa thông tin
               </Button>
@@ -169,7 +188,7 @@ export default function AccountDetailPage() {
                   block
                   icon={<LockOutlined />}
                   onClick={() => openLock('lock')}
-                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#F87171', fontWeight: 600 }}
+                  style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontWeight: 700, borderRadius: 8, height: 38 }}
                 >
                   Khóa tài khoản
                 </Button>
@@ -178,7 +197,7 @@ export default function AccountDetailPage() {
                   block
                   icon={<UnlockOutlined />}
                   onClick={() => openLock('unlock')}
-                  style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', color: '#34D399', fontWeight: 600 }}
+                  style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#059669', fontWeight: 700, borderRadius: 8, height: 38 }}
                 >
                   Mở khóa
                 </Button>
@@ -187,7 +206,7 @@ export default function AccountDetailPage() {
                   block
                   icon={<UnlockOutlined />}
                   onClick={() => openLock('restore')}
-                  style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: '#FBBF24', fontWeight: 600 }}
+                  style={{ background: '#FFFBEB', border: '1px solid #FDE68A', color: '#D97706', fontWeight: 700, borderRadius: 8, height: 38 }}
                 >
                   Khôi phục tài khoản
                 </Button>
@@ -202,33 +221,35 @@ export default function AccountDetailPage() {
             {/* Account Info */}
             <Col span={24}>
               <Card
-                bordered={false}
-                bodyStyle={{ padding: '20px 22px' }}
+                variant="borderless"
+                styles={{ body: { padding: '22px 24px' } }}
                 style={{
-                  borderRadius: 16,
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
+                  borderRadius: 14,
+                  border: '1px solid #E2E8F0',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
                 }}
               >
                 <Title level={5} style={{ color: '#0F172A', fontWeight: 700, margin: '0 0 16px' }}>
                   Thông tin tài khoản
                 </Title>
                 <Descriptions
-                  column={2}
+                  column={{ xs: 1, sm: 2 }}
                   size="small"
-                  labelStyle={{ color: '#64748B', fontWeight: 600, fontSize: 12 }}
-                  contentStyle={{ color: '#334155', fontWeight: 600, fontSize: 13 }}
+                  styles={{
+                    label: { color: '#64748B', fontWeight: 600, fontSize: 12 },
+                    content: { color: '#1E293B', fontWeight: 600, fontSize: 13 },
+                  }}
                   colon={false}
                 >
-                  <Descriptions.Item label="ID">{account.id}</Descriptions.Item>
                   <Descriptions.Item label="Tên hiển thị">{account.name}</Descriptions.Item>
                   <Descriptions.Item label="Email">{account.email}</Descriptions.Item>
-                  <Descriptions.Item label="Vai trò">{account.roleLabel || account.role}</Descriptions.Item>
+                  <Descriptions.Item label="Vai trò">{account.roleLabel || ROLE_LABEL_MAP[account.role] || account.role}</Descriptions.Item>
                   <Descriptions.Item label="Trạng thái">
-                    <Tag color={statusCfg.color}>{statusCfg.label}</Tag>
+                    <Tag color={statusCfg.color} style={{ marginInlineEnd: 0, fontWeight: 600 }}>{statusCfg.label}</Tag>
                   </Descriptions.Item>
-                  <Descriptions.Item label="Ngày tham gia">{account.joinedAt}</Descriptions.Item>
-                  <Descriptions.Item label="Đăng nhập cuối">{account.lastLogin}</Descriptions.Item>
-                  <Descriptions.Item label="IP đăng nhập cuối">{account.ip}</Descriptions.Item>
+                  <Descriptions.Item label="Ngày tham gia">{account.joinedAt || '—'}</Descriptions.Item>
+                  <Descriptions.Item label="Đăng nhập cuối">{account.lastLogin || '—'}</Descriptions.Item>
+                  <Descriptions.Item label="IP đăng nhập cuối">{account.ip || '—'}</Descriptions.Item>
                 </Descriptions>
               </Card>
             </Col>
@@ -236,11 +257,12 @@ export default function AccountDetailPage() {
             {/* Security Activity */}
             <Col span={24}>
               <Card
-                bordered={false}
-                bodyStyle={{ padding: '20px 22px' }}
+                variant="borderless"
+                styles={{ body: { padding: '22px 24px' } }}
                 style={{
-                  borderRadius: 16,
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
+                  borderRadius: 14,
+                  border: '1px solid #E2E8F0',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
                 }}
               >
                 <SecurityActivityPanel userId={account.id} />

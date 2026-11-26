@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Table, Tag, Avatar, Button, Input, Select, Space,
-  Tooltip, Dropdown, Typography, Row, Col, Card, Spin, Badge, Tabs,
+  Tooltip, Dropdown, Typography, Row, Col, Card, Spin, Badge, Tabs, message,
 } from 'antd';
 import type { MenuProps, TableColumnsType } from 'antd';
 import {
@@ -105,12 +105,46 @@ export default function AccountManagementPage() {
     fetchUsers();
   };
 
+  const handleExportCsv = () => {
+    if (!filtered.length) {
+      message.warning('Không có dữ liệu để xuất CSV.');
+      return;
+    }
+    const escapeCell = (val: unknown) => {
+      const str = String(val ?? '');
+      return /[",\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    };
+    const headers = ['Tên hiển thị', 'Email', 'Vai trò', 'Trạng thái', 'Đăng nhập cuối', 'Ngày tham gia'];
+    const rows = filtered.map(acc => [
+      acc.name,
+      acc.email,
+      acc.roleLabel || ROLE_CONFIG[acc.role]?.label || acc.role,
+      STATUS_CONFIG[acc.status]?.label || acc.status,
+      acc.lastLogin || '',
+      acc.joinedAt || '',
+    ]);
+    const csvContent = '\uFEFF' + [headers, ...rows].map(r => r.map(escapeCell).join(',')).join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `accounts-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    message.success(`Đã xuất ${filtered.length} tài khoản ra file CSV.`);
+  };
+
   const rowActions = (record: AdminUser): MenuProps['items'] => [
     {
       key: 'view',
       icon: <EyeOutlined />,
       label: 'Xem chi tiết',
-      onClick: () => navigate(`/admin/accounts/${record.id}`),
+      onClick: () => {
+        sessionStorage.setItem('im.admin.selectedAccountId', record.id);
+        navigate('/admin/accounts/detail', { state: { accountId: record.id } });
+      },
     },
     { type: 'divider' },
     record.status === 'active'
@@ -199,8 +233,11 @@ export default function AccountManagementPage() {
             <Button
               size="small"
               icon={<EyeOutlined />}
-              onClick={() => navigate(`/admin/accounts/${record.id}`)}
-              style={{ background: 'rgba(124, 58, 237,0.1)', border: '1px solid rgba(124, 58, 237,0.2)', color: '#A78BFA' }}
+              onClick={() => {
+                sessionStorage.setItem('im.admin.selectedAccountId', record.id);
+                navigate('/admin/accounts/detail', { state: { accountId: record.id } });
+              }}
+              style={{ background: '#F3E8FF', border: '1px solid #DDD6FE', color: '#7C3AED' }}
             />
           </Tooltip>
           <Dropdown menu={{ items: rowActions(record) }} trigger={['click']} placement="bottomRight">
@@ -240,7 +277,9 @@ export default function AccountManagementPage() {
           <Space>
             <Button
               icon={<ExportOutlined />}
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #CBD5E1', color: '#475569' }}
+              onClick={handleExportCsv}
+              disabled={!filtered.length}
+              style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#334155', fontWeight: 600 }}
             >
               Xuất file CSV
             </Button>
@@ -357,7 +396,10 @@ export default function AccountManagementPage() {
               showTotal: (total) => <span style={{ color: '#64748B', fontSize: 12 }}>{total} tài khoản</span>,
             }}
             onRow={record => ({
-              onClick: () => navigate(`/admin/accounts/${record.id}`),
+              onClick: () => {
+        sessionStorage.setItem('im.admin.selectedAccountId', record.id);
+        navigate('/admin/accounts/detail', { state: { accountId: record.id } });
+      },
               style: { cursor: 'pointer' },
             })}
           />

@@ -77,8 +77,8 @@
 
 .im-welcome-heading-accent {
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-style: italic;
-  font-weight: 500;
+  font-style: normal;
+  font-weight: 700;
   background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

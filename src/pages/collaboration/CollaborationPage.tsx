@@ -202,33 +202,35 @@ function BrandCollaborations({ campaigns }: { campaigns: CampaignResponse[] }) {
   return <section className="collab-list-section" aria-label="Danh sách tiến độ hợp tác">
     {selectedCampaign && !campaignId &&
       <Alert showIcon type="warning" title="Chiến dịch không tồn tại hoặc bạn không có quyền truy cập." />}
-    <div className="collab-list-controls">
-      <Input allowClear prefix={<SearchOutlined />} className="collab-list-search"
-        aria-label="Tìm chiến dịch hoặc Creator" placeholder="Tìm chiến dịch hoặc Creator" value={query}
-        onChange={event => updateParams({ q: event.target.value, page: undefined })} />
-      <Select allowClear showSearch optionFilterProp="label" value={campaignId} placeholder="Tất cả chiến dịch"
-        aria-label="Lọc theo chiến dịch" className="collab-campaign-filter"
-        options={campaigns.map(campaign => ({ value: campaign.id, label: campaign.name }))}
-        onChange={value => updateParams({ campaign: value, page: undefined })} />
-      <Select allowClear value={status} options={statusOptions} placeholder="Tất cả trạng thái"
-        aria-label="Trạng thái hợp tác" className="collab-status-filter"
-        onChange={value => updateParams({ status: value, page: undefined })} />
-      <Select aria-label="Sắp xếp hợp tác" value={sort} options={[...sortOptions]} className="collab-sort-filter"
-        onChange={value => updateParams({ campaignSort: value === 'newest' ? undefined : value, page: undefined })} />
+    <div className="collab-workspace-card">
+      <div className="collab-list-controls">
+        <Input allowClear prefix={<SearchOutlined />} className="collab-list-search"
+          aria-label="Tìm chiến dịch hoặc Creator" placeholder="Tìm chiến dịch hoặc Creator" value={query}
+          onChange={event => updateParams({ q: event.target.value, page: undefined })} />
+        <Select allowClear showSearch optionFilterProp="label" value={campaignId} placeholder="Tất cả chiến dịch"
+          aria-label="Lọc theo chiến dịch" className="collab-campaign-filter"
+          options={campaigns.map(campaign => ({ value: campaign.id, label: campaign.name }))}
+          onChange={value => updateParams({ campaign: value, page: undefined })} />
+        <Select allowClear value={status} options={statusOptions} placeholder="Tất cả trạng thái"
+          aria-label="Trạng thái hợp tác" className="collab-status-filter"
+          onChange={value => updateParams({ status: value, page: undefined })} />
+        <Select aria-label="Sắp xếp hợp tác" value={sort} options={[...sortOptions]} className="collab-sort-filter"
+          onChange={value => updateParams({ campaignSort: value === 'newest' ? undefined : value, page: undefined })} />
+      </div>
+      {loading ? <div className="collab-loading-box"><Spin /></div> : <>
+        {!!data?.failed && <div className="collab-alert-wrap"><RetryAlert
+          error={data.rows.length ? 'Chưa tải được hợp tác của một số chiến dịch.' : 'Không tải được danh sách hợp tác.'}
+          retry={retry} /></div>}
+        {summaryFailures && <div className="collab-alert-wrap"><Alert type="warning" showIcon title="Một số tiến trình chưa tải được."
+          action={<Button size="small" onClick={retry}>Thử lại</Button>} /></div>}
+        {(!data?.failed || rows.length > 0) && <ProgressTable rows={visible} snapshots={snapshots} returnTo={returnTo}
+          returnToState={returnToState}
+          emptyLabel={query.trim() || status ? 'Không tìm thấy hợp tác phù hợp' : 'Chưa có hợp tác'} />}
+        {rows.length > pageSize && <div className="collab-pagination-bar"><Pagination size="small" current={page} pageSize={pageSize}
+          total={rows.length} showSizeChanger={false}
+          onChange={next => updateParams({ page: next > 1 ? String(next) : undefined })} /></div>}
+      </>}
     </div>
-    {loading ? <Spin /> : <>
-      {!!data?.failed && <RetryAlert
-        error={data.rows.length ? 'Chưa tải được hợp tác của một số chiến dịch.' : 'Không tải được danh sách hợp tác.'}
-        retry={retry} />}
-      {summaryFailures && <Alert type="warning" showIcon title="Một số tiến trình chưa tải được."
-        action={<Button size="small" onClick={retry}>Thử lại</Button>} />}
-      {(!data?.failed || rows.length > 0) && <ProgressTable rows={visible} snapshots={snapshots} returnTo={returnTo}
-        returnToState={returnToState}
-        emptyLabel={query.trim() || status ? 'Không tìm thấy hợp tác phù hợp' : 'Chưa có hợp tác'} />}
-      {rows.length > pageSize && <Pagination size="small" current={page} pageSize={pageSize}
-        total={rows.length} showSizeChanger={false}
-        onChange={next => updateParams({ page: next > 1 ? String(next) : undefined })} />}
-    </>}
   </section>;
 }
 

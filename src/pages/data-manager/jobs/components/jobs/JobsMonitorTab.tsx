@@ -1,6 +1,6 @@
 import { collectionOutcome, collectionOutcomeLabel } from '../../../../../services/collectionDecision';
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Input, Select, Row, Col, Button, Space, message, Alert } from 'antd';
+import { Card, Table, Tag, Input, Select, Row, Col, Button, Space, message, Alert, Grid, Pagination, Empty } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   SearchOutlined,
@@ -42,13 +42,28 @@ const DECISION_COLOR_MAP: Record<string, { color: string; label: string }> = {
   SKIP_INSUFFICIENT:    { color: 'red', label: 'Từ chối (Không đủ dữ liệu)' },
 };
 
+function formatShortDate(value?: string) {
+  if (!value) return '—';
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return value;
+  return new Date(parsed).toLocaleString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export default function JobsMonitorTab() {
+  const screens = Grid.useBreakpoint();
+  const isMobile = screens.md === false;
   const [loading, setLoading] = useState<boolean>(true);
   const [overview, setOverview] = useState<CrawlMonitorOverview | null>(null);
   const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [platformFilter, setPlatformFilter] = useState('all');
+  const [mobilePage, setMobilePage] = useState(1);
 
   const fetchRealOverview = async () => {
     setLoading(true);
@@ -93,24 +108,18 @@ export default function JobsMonitorTab() {
 
   const columns: TableColumnsType<ActivityRecord> = [
     {
-      title: 'Mã tác vụ',
-      dataIndex: 'id',
-      key: 'id',
-      render: (id: string) => (
-        <span style={{ fontFamily: 'monospace', fontWeight: 600, color: '#7C3AED' }}>
-          #{id.slice(0, 8)}...
-        </span>
-      ),
-    },
-    {
-      title: 'Nhà sáng tạo',
+      title: 'Kênh / Mã tác vụ',
       key: 'creator',
+      ellipsis: true,
       render: (_, r) => (
-        <div>
-          <div style={{ fontWeight: 700, color: '#0F172A' }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 700, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {r.displayName || `@${r.username}`}
           </div>
-          <div style={{ fontSize: 11, color: '#7C3AED' }}>@{r.username}</div>
+          <div style={{ fontSize: 11, color: '#7C3AED', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <span>@{r.username}</span>
+            <span style={{ fontFamily: 'monospace', color: '#94A3B8' }}>#{r.id.slice(0, 8)}</span>
+          </div>
         </div>
       ),
     },
@@ -118,20 +127,22 @@ export default function JobsMonitorTab() {
       title: 'Nền tảng',
       dataIndex: 'platform',
       key: 'platform',
+      width: 96,
       render: (plat: string) => (
-        <Tag color="geekblue" style={{ borderRadius: 6, fontWeight: 700 }}>
+        <Tag color="geekblue" style={{ borderRadius: 6, fontWeight: 700, marginInlineEnd: 0 }}>
           {plat}
         </Tag>
       ),
     },
     {
-      title: 'Tiến trình thu thập',
+      title: 'Tiến trình',
       dataIndex: 'status',
       key: 'status',
+      width: 148,
       render: (st: string) => {
-        const conf = STATUS_COLOR_MAP[st] || { color: 'default', label: st || 'Chưa rõ tiến trình' };
+        const conf = STATUS_COLOR_MAP[st] || { color: 'default', label: st || 'Chưa rõ' };
         return (
-          <Tag color={conf.color} style={{ borderRadius: 6, fontWeight: 600 }}>
+          <Tag color={conf.color} style={{ borderRadius: 6, fontWeight: 600, marginInlineEnd: 0, whiteSpace: 'normal' }}>
             {conf.label}
           </Tag>
         );
@@ -149,7 +160,7 @@ export default function JobsMonitorTab() {
             ? { color: 'warning', label: collectionOutcomeLabel(outcome) }
             : DECISION_COLOR_MAP[dec] || { color: 'default', label: dec || 'Chờ đánh giá' };
         return (
-          <Tag color={conf.color} style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px' }}>
+          <Tag color={conf.color} style={{ borderRadius: 6, fontWeight: 700, padding: '2px 8px', marginInlineEnd: 0, whiteSpace: 'normal' }}>
             {conf.label}
           </Tag>
         );
@@ -159,28 +170,33 @@ export default function JobsMonitorTab() {
       title: 'Phân loại',
       dataIndex: 'primaryType',
       key: 'primaryType',
+      width: 96,
       render: (t: string) => {
         const type = (t || '').toUpperCase();
         const isKol = type === 'KOL';
         const isKoc = type === 'KOC';
         return (
-          <Tag color={isKol ? 'purple' : isKoc ? 'cyan' : 'default'} style={{ borderRadius: 6, fontWeight: 700 }}>
-            {isKol ? 'KOL' : isKoc ? 'Nhà sáng tạo' : 'Chưa rõ'}
+          <Tag color={isKol ? 'purple' : isKoc ? 'cyan' : 'default'} style={{ borderRadius: 6, fontWeight: 700, marginInlineEnd: 0 }}>
+            {isKol ? 'KOL' : isKoc ? 'KOC' : 'Chưa rõ'}
           </Tag>
         );
       },
     },
     {
-      title: 'Thời gian cập nhật',
+      title: 'Cập nhật',
       dataIndex: 'updatedAt',
       key: 'updatedAt',
+      width: 110,
       render: (time: string) => (
-        <span style={{ fontSize: 11.5, color: '#64748B' }}>
-          {time ? new Date(time).toLocaleString('vi-VN') : '—'}
+        <span style={{ fontSize: 12, color: '#64748B', whiteSpace: 'nowrap' }}>
+          {formatShortDate(time)}
         </span>
       ),
     },
   ];
+
+  const pageSize = 8;
+  const pagedMobileItems = filteredItems.slice((mobilePage - 1) * pageSize, mobilePage * pageSize);
 
   return (
     <div>
@@ -271,15 +287,62 @@ export default function JobsMonitorTab() {
       </div>
 
       {/* Bảng tiến trình */}
-      <Table
-        loading={loading}
-        columns={columns}
-        dataSource={filteredItems}
-        rowKey="id"
-        pagination={{ pageSize: 8, showTotal: (t) => `Tổng số ${t} tác vụ` }}
-        size="middle"
-        scroll={{ x: 950 }}
-      />
+      {isMobile ? (
+        filteredItems.length === 0 ? (
+          <Empty description="Không có tác vụ phù hợp" />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {pagedMobileItems.map((r) => {
+              const stConf = STATUS_COLOR_MAP[r.status] || { color: 'default', label: r.status || 'Chưa rõ' };
+              const outcome = collectionOutcome(r.decision, r.primaryType);
+              const decConf = outcome === 'accepted'
+                ? { color: 'green', label: `Đạt chuẩn ${r.decision === 'AUTO_ACCEPT_KOL' || r.primaryType === 'KOL' ? 'KOL' : 'Nhà sáng tạo'}` }
+                : outcome === 'review'
+                  ? { color: 'warning', label: collectionOutcomeLabel(outcome) }
+                  : DECISION_COLOR_MAP[r.decision] || { color: 'default', label: r.decision || 'Chờ đánh giá' };
+              const type = (r.primaryType || '').toUpperCase();
+              return (
+                <div key={r.id} style={{ border: '1px solid #E2E8F0', borderRadius: 12, padding: 12, background: '#FAF8FF' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, color: '#0F172A', wordBreak: 'break-word' }}>{r.displayName || `@${r.username}`}</div>
+                      <div style={{ fontSize: 11, color: '#7C3AED' }}>@{r.username} · <span style={{ fontFamily: 'monospace', color: '#94A3B8' }}>#{r.id.slice(0, 8)}</span></div>
+                    </div>
+                    <span style={{ fontSize: 11.5, color: '#64748B', whiteSpace: 'nowrap' }}>{formatShortDate(r.updatedAt)}</span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    <Tag color="geekblue" style={{ borderRadius: 6, fontWeight: 700, marginInlineEnd: 0 }}>{r.platform}</Tag>
+                    <Tag color={stConf.color} style={{ borderRadius: 6, fontWeight: 600, marginInlineEnd: 0 }}>{stConf.label}</Tag>
+                    <Tag color={decConf.color} style={{ borderRadius: 6, fontWeight: 700, marginInlineEnd: 0 }}>{decConf.label}</Tag>
+                    <Tag color={type === 'KOL' ? 'purple' : type === 'KOC' ? 'cyan' : 'default'} style={{ borderRadius: 6, fontWeight: 700, marginInlineEnd: 0 }}>
+                      {type === 'KOL' ? 'KOL' : type === 'KOC' ? 'KOC' : 'Chưa rõ'}
+                    </Tag>
+                  </div>
+                </div>
+              );
+            })}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+              <Pagination
+                current={mobilePage}
+                pageSize={pageSize}
+                total={filteredItems.length}
+                onChange={setMobilePage}
+                size="small"
+                showTotal={(t) => `Tổng số ${t} tác vụ`}
+              />
+            </div>
+          </div>
+        )
+      ) : (
+        <Table
+          loading={loading}
+          columns={columns}
+          dataSource={filteredItems}
+          rowKey="id"
+          pagination={{ pageSize, showTotal: (t) => `Tổng số ${t} tác vụ` }}
+          size="middle"
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Alert, App, Button, Checkbox, Empty, Input, Modal, Select, Skeleton, Tabs, Tag } from 'antd';
-import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ReloadOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
+import CampaignImage from '../../components/common/CampaignImage';
 import { useAsyncResource } from '../../hooks/useAsyncResource';
 import { getAuthSessionId, getStoredUser, subscribeAuthSession } from '../../services/authSession';
 import { activeCampaignId, rememberCampaign } from '../../services/campaignContext';
@@ -97,8 +98,28 @@ function OutreachWorkspace({ campaignId, initialIds, assessment, campaignSelecto
   }, [assessment, campaignId, ids, resource.data?.runs]);
   const ai = useAsyncResource(loadAssessment, canViewAI && resource.status === 'success' && uuid.test(campaignId));
   const records = resource.data?.records ?? [];
-  const selected = records.filter(item => ids.includes(item.creatorId));
-  const stale = ids.some(id => !records.some(item => item.creatorId === id));
+  const deals = resource.data?.deals ?? [];
+  const grouped = (deal: Deal) => ['CONFIRMED','ACTIVE','COMPLETED'].includes(deal.status) ? 'confirmed' : ['DECLINED','CANCELLED'].includes(deal.status) ? 'closed' : deal.proposal ? 'discussion' : 'draft';
+  const visibleDeals = deals.filter(deal => group === 'all' || grouped(deal) === group);
+  const savedIds = new Set(deals.flatMap(deal => deal.channels.map(channel => channel.creatorId)));
+  const evaluatedIds = evaluatedCreatorIds(resource.data?.runs ?? [], campaignId);
+  const latestCompletedRun = completedRuns(resource.data?.runs ?? [], campaignId)[0];
+  const excludedMap = new Map(
+    (latestCompletedRun?.excludedCandidates ?? []).map(ex => [ex.creatorId, ex])
+  );
+  // Chỉ giữ các kênh đã có thỏa thuận hoặc đã chạy gợi ý AI hợp lệ (ẩn kênh chưa chạy AI hoặc bị loại)
+  const channelIds = [...new Set([...savedIds, ...addedChannelIds])].filter(
+    id => savedIds.has(id) || (evaluatedIds.includes(id) && !excludedMap.has(id))
+  );
+  const channels = records.filter(item => channelIds.includes(item.creatorId));
+  const excludedInSelection = records.filter(
+    item => addedChannelIds.includes(item.creatorId) && !savedIds.has(item.creatorId) && excludedMap.has(item.creatorId)
+  );
+  const unevaluatedInSelection = records.filter(
+    item => addedChannelIds.includes(item.creatorId) && !savedIds.has(item.creatorId) && !excludedMap.has(item.creatorId) && !evaluatedIds.includes(item.creatorId)
+  );
+  const selected = records.filter(item => ids.includes(item.creatorId) && channelIds.includes(item.creatorId));
+  const stale = ids.some(id => channelIds.includes(id) && !records.some(item => item.creatorId === id));
   const selectionKey = JSON.stringify(selected.map(item => item.id).sort());
   const readinessQuery = useCallback(() => shortlistService.readiness(campaignId, JSON.parse(selectionKey)), [campaignId, selectionKey]);
   const contactRoutes = useAsyncResource(readinessQuery, canSelect && selected.length > 0 && resource.status === 'success');
@@ -106,21 +127,14 @@ function OutreachWorkspace({ campaignId, initialIds, assessment, campaignSelecto
   const terminal = ['COMPLETED', 'ARCHIVED', 'CLOSED'].includes(resource.data?.campaign.status ?? '');
   const uncovered = selected.filter(item => !ai.data?.items.some(result => result.creatorId === item.creatorId) && !ai.data?.evaluatedCreatorIds?.includes(item.creatorId));
   const evaluated = canViewAI && ai.status === 'success' && !!ai.data?.runId && selected.length > 0 && uncovered.length === 0;
-  const deals = resource.data?.deals ?? [];
-  const grouped = (deal: Deal) => ['CONFIRMED','ACTIVE','COMPLETED'].includes(deal.status) ? 'confirmed' : ['DECLINED','CANCELLED'].includes(deal.status) ? 'closed' : deal.proposal ? 'discussion' : 'draft';
-  const visibleDeals = deals.filter(deal => group === 'all' || grouped(deal) === group);
-  const savedIds = new Set((resource.data?.deals ?? []).flatMap(deal => deal.channels.map(channel => channel.creatorId)));
-  const evaluatedIds = evaluatedCreatorIds(resource.data?.runs ?? [], campaignId);
-  const channelIds = [...new Set([...savedIds, ...addedChannelIds])];
-  const channels = records.filter(item => channelIds.includes(item.creatorId));
   const visible = channels.filter(item => `${item.creatorName ?? ''} ${item.userName ?? ''}`.toLocaleLowerCase('vi-VN').includes(search.trim().toLocaleLowerCase('vi-VN')));
   const changeSelection = (next: string[]) => { setIds(next); setReadiness(null); setPrepared(null); };
-  const evaluateSelection = () => {
-    if (!ids.length || terminal) return;
+  const evaluateSelection = (targetIds: string[] = ids) => {
+    if (!targetIds.length || terminal) return;
     const sessionId = getAuthSessionId();
     navigate('/campaign-management?tab=recommendation', { state: {
-      recommendationContext: { sessionId, campaignId, creatorIds: ids },
-      recommendationRunIntent: { token: crypto.randomUUID(), sessionId, campaignId, creatorIds: ids },
+      recommendationContext: { sessionId, campaignId, creatorIds: targetIds },
+      recommendationRunIntent: { token: crypto.randomUUID(), sessionId, campaignId, creatorIds: targetIds },
     } });
   };
 
@@ -147,28 +161,89 @@ function OutreachWorkspace({ campaignId, initialIds, assessment, campaignSelecto
   if (!uuid.test(campaignId)) return <Empty description="Chọn một chiến dịch để tiếp tục"><Button onClick={() => navigate('/campaigns')}>Danh sách chiến dịch</Button></Empty>;
   if (!canManage) return <Alert type="warning" title="Bạn chưa có quyền quản lý tiếp cận và thỏa thuận." />;
   return <div className="contact-workspace contact-brand-workspace" ref={ref}>
-    <header className="contact-heading"><div className="contact-heading-copy"><h1>Lời mời & thỏa thuận</h1><p>{resource.data?.campaign.name ?? 'Đang tải chiến dịch…'}</p></div></header>
-    {campaignSelector}
+    <header className="contact-heading"><div className="contact-heading-copy"><h1>Lời mời & thỏa thuận</h1></div></header>
+    {resource.data?.campaign && (
+      <section className="contact-campaign-banner">
+        <div className="contact-campaign-banner-main">
+          <CampaignImage src={resource.data.campaign.imageUrl} className="contact-campaign-thumb" />
+          <div>
+            <span>CHIẾN DỊCH HIỆN TẠI</span>
+            <h2>{resource.data.campaign.name}</h2>
+          </div>
+        </div>
+        {campaignSelector}
+      </section>
+    )}
+    {!resource.data?.campaign && campaignSelector}
     {resource.status === 'loading' ? <Skeleton active /> : resource.status === 'error' ? <Alert type="error" title="Không tải được dữ liệu tiếp cận" description={resource.error} action={<Button onClick={() => void resource.reload()}>Thử lại</Button>} /> : <>
       {terminal && <Alert type="info" title="Chiến dịch đã kết thúc hoặc lưu trữ. Chỉ xem lại hồ sơ." />}
+      <div className="contact-workspace-card">
       <Tabs className="contact-workspace-tabs" activeKey={workspaceTab} onChange={setWorkspaceTab} items={[
         { key: 'channels', label: `Kênh tiếp cận · ${channels.length}` },
         { key: 'invitations', label: `Lời mời & thỏa thuận · ${deals.length}` },
       ]} />
+      <div className="contact-workspace-body">
       {workspaceTab === 'channels' && <>
+      {excludedInSelection.length > 0 && (
+        <Alert
+          type="warning"
+          showIcon
+          title={`Đã bỏ qua ${excludedInSelection.length} kênh không đủ điều kiện chấm điểm AI`}
+          description={excludedInSelection.map(c => `${c.creatorName || c.userName || 'Kênh'}: ${excludedMap.get(c.creatorId)?.message || 'Thiếu dữ liệu đánh giá (NOT_SCORABLE)'}`).join(' · ')}
+        />
+      )}
+      {unevaluatedInSelection.length > 0 && (
+        <Alert
+          type="info"
+          showIcon
+          title={`Đã ẩn ${unevaluatedInSelection.length} kênh chưa chạy gợi ý AI`}
+          description="Chỉ những kênh đã được đánh giá AI mới có thể gửi lời mời hợp tác. Bạn có thể quay lại Gợi ý AI để chạy đánh giá cho các kênh này."
+          action={
+            <Button
+              type="primary"
+              icon={<ThunderboltOutlined />}
+              disabled={terminal || !permissions.includes('RUN_RECOMMENDATION')}
+              onClick={() => evaluateSelection(unevaluatedInSelection.map(u => u.creatorId))}
+            >
+              Quay lại Gợi ý AI để chạy
+            </Button>
+          }
+        />
+      )}
       {ai.status === 'error' && ids.length > 0 && <Alert type="warning" title="Chưa kiểm tra được kết quả đánh giá" action={<Button onClick={() => void ai.reload()}>Thử lại</Button>} />}
-      {canViewAI && ai.status === 'success' && uncovered.length > 0 && <Alert type="info" title={`${uncovered.length} kênh chưa được đánh giá trong lượt này`} description="Đánh giá các kênh đã chọn cùng nhau để có một bảng xếp hạng chung. Kết quả cũ vẫn được giữ." action={<Button disabled={terminal || !permissions.includes('RUN_RECOMMENDATION')} onClick={evaluateSelection}>Đánh giá lựa chọn này</Button>} />}
+      {canViewAI && ai.status === 'success' && uncovered.length > 0 && <Alert type="info" title={`${uncovered.length} kênh chưa được đánh giá AI trong lượt này`} description="Cần chạy đánh giá AI cho các kênh này trước khi soạn lời mời." action={<Button type="primary" icon={<ThunderboltOutlined />} disabled={terminal || !permissions.includes('RUN_RECOMMENDATION')} onClick={() => evaluateSelection(uncovered.map(u => u.creatorId))}>Chạy gợi ý AI</Button>} />}
       <section className="contact-panel"><div className="contact-section-heading"><h2>Kênh tiếp cận · {channels.length}</h2><div className="contact-channel-tools">{!!channels.length && <Input allowClear aria-label="Tìm kênh tiếp cận" placeholder="Tìm kênh tiếp cận" value={search} onChange={event => setSearch(event.target.value)} />}<Button disabled={!canSelect || busy || checking || terminal} onClick={() => setQuick(value => !value)}>Thêm kênh</Button></div></div>
         <ShortlistQuickPicker inline addOnly allowedIds={evaluatedIds} title="Thêm kênh đã được đánh giá AI" emptyDescription="Không còn kênh đã đánh giá hợp lệ để thêm trong chiến dịch này." excludedIds={channelIds} maxSelection={Math.max(0, 100 - ids.length)} confirmLabel="Thêm kênh" open={quick} campaignId={campaignId} selectedIds={[]} onClose={() => setQuick(false)} onApply={next => { const allowed = next.filter(id => evaluatedIds.includes(id) && !channelIds.includes(id)); setChannelIds(previous => [...new Set([...previous, ...allowed])]); changeSelection([...new Set([...ids, ...allowed])]); setQuick(false); }} />
         {stale && <Alert type="warning" title="Có kênh không còn trong Shortlist. Chọn lại trước khi tiếp tục." />}
-        {!channels.length ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Thêm kênh muốn tiếp cận từ danh sách đã lưu." /> : <>
-          <div className="contact-selection-toolbar"><Checkbox checked={channels.length > 0 && channels.every(item => ids.includes(item.creatorId))} indeterminate={selected.length > 0 && selected.length < channels.length} disabled={busy || terminal} onChange={event => changeSelection(event.target.checked ? channels.map(item => item.creatorId) : [])}>Chọn tất cả</Checkbox><span>Đã chọn {selected.length} kênh</span></div>
+        {!channels.length ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Thêm kênh đã đánh giá AI để bắt đầu tiếp cận." /> : <>
+          {(() => {
+            const selectableChannels = channels.filter(
+              item => !!(canViewAI && ai.data?.items.some(row => row.creatorId === item.creatorId)) || !!ai.data?.evaluatedCreatorIds?.includes(item.creatorId)
+            );
+            return (
+              <div className="contact-selection-toolbar">
+                <Checkbox
+                  checked={selectableChannels.length > 0 && selectableChannels.every(item => ids.includes(item.creatorId))}
+                  indeterminate={selected.length > 0 && selected.length < selectableChannels.length}
+                  disabled={busy || terminal || selectableChannels.length === 0}
+                  onChange={event => changeSelection(event.target.checked ? selectableChannels.map(item => item.creatorId) : [])}
+                >
+                  Chọn tất cả
+                </Checkbox>
+                <span>Đã chọn {selected.length} kênh</span>
+              </div>
+            );
+          })()}
           <div className="contact-channel-list">{visible.map(item => {
             const result = canViewAI ? ai.data?.items.find(row => row.creatorId === item.creatorId) : null;
+            const isEvaluatedItem = !!result || !!ai.data?.evaluatedCreatorIds?.includes(item.creatorId);
             const ready = eligible?.items.find(row => row.creatorId === item.creatorId);
-            return <article className="contact-channel" key={item.id}><Checkbox aria-label={`Chọn ${item.creatorName || item.userName || 'kênh'}`} checked={ids.includes(item.creatorId)} disabled={busy || terminal} onChange={event => changeSelection(event.target.checked ? [...new Set([...ids, item.creatorId])] : ids.filter(id => id !== item.creatorId))} /><CreatorAvatar size={40} src={item.avatarUrl || undefined} name={item.creatorName || undefined} />
+            return <article className="contact-channel" key={item.id}><Checkbox aria-label={`Chọn ${item.creatorName || item.userName || 'kênh'}`} checked={ids.includes(item.creatorId)} disabled={busy || terminal || !isEvaluatedItem} onChange={event => changeSelection(event.target.checked ? [...new Set([...ids, item.creatorId])] : ids.filter(id => id !== item.creatorId))} /><CreatorAvatar size={40} src={item.avatarUrl || undefined} name={item.creatorName || undefined} />
               <div className="contact-channel-copy"><strong>{item.creatorName || item.userName || 'Kênh chưa có tên'}</strong><small>{[item.platform, item.userName ? '@' + item.userName.replace(/^@+/, '') : null].filter(Boolean).join(' · ')}</small>
-                <span>{result ? `${result.group === 'main' ? 'Đề xuất chính' : 'Tham khảo'} · #${result.position}${result.score != null ? ' · ' + result.score.toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + '/100' : ' · Chưa công bố điểm'}` : canViewAI && ai.status === 'loading' ? 'Đang đọc kết quả AI…' : ai.data?.evaluatedCreatorIds?.includes(item.creatorId) ? 'Đã đánh giá · Không hiển thị điểm/thứ hạng trong bảng kết quả' : 'Chưa đánh giá trong lượt này'}</span>
+                <span>{result ? `${result.group === 'main' ? 'Đề xuất chính' : 'Tham khảo'} · #${result.position}${result.score != null ? ' · ' + result.score.toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + '/100' : ' · Chưa công bố điểm chính thức'}` : canViewAI && ai.status === 'loading' ? 'Đang đọc kết quả AI…' : isEvaluatedItem ? 'Đã đánh giá AI' : 'Chưa chạy gợi ý AI'}</span>
+                {!isEvaluatedItem && canViewAI && ai.status === 'success' && !terminal && permissions.includes('RUN_RECOMMENDATION') && (
+                  <div><Button size="small" icon={<ThunderboltOutlined />} onClick={() => evaluateSelection([item.creatorId])}>Chạy gợi ý AI</Button></div>
+                )}
                 {ready && <div className="contact-route"><Tag>{ready.contactChannel === 'IN_APP_PORTAL' ? 'Portal & email' : ready.contactChannel === 'SYSTEM_EMAIL_OUTBOX' ? 'Email liên hệ' : ready.contactChannel === 'MANUAL_SOCIAL_LINK' ? 'Chia sẻ thủ công' : ready.contactChannel === 'EXISTING_INVITATION' ? 'Đã có hồ sơ lời mời' : 'Chưa thể liên hệ'}</Tag><small>{ready.contactChannel === 'IN_APP_PORTAL' ? 'Creator nhận thông báo trong tài khoản và email khi bạn gửi.' : ready.contactChannel === 'SYSTEM_EMAIL_OUTBOX' ? 'Hệ thống gửi email chứa link xem lời mời.' : ready.contactChannel === 'MANUAL_SOCIAL_LINK' ? 'Bạn lấy link lời mời và tự chia sẻ qua trang cá nhân.' : readinessReason(ready.readinessStatus)}</small></div>}
                 {!ready && ids.includes(item.creatorId) && <small>{contactRoutes.status === 'loading' ? 'Đang kiểm tra cách liên hệ…' : contactRoutes.status === 'error' ? 'Chưa kiểm tra được cách liên hệ' : 'Cách gửi sẽ được kiểm tra khi soạn lời mời.'}</small>}
                 {ready?.contactChannel === 'MANUAL_SOCIAL_LINK' && /^https?:\/\//i.test(ready.contactTarget ?? '') && <a href={ready.contactTarget!} target="_blank" rel="noopener noreferrer">Mở trang cá nhân để liên hệ</a>}
@@ -183,8 +258,10 @@ function OutreachWorkspace({ campaignId, initialIds, assessment, campaignSelecto
         {prepared && <div className="contact-batch-results">{prepared.items.map(item => <p key={item.shortlistItemId}><strong>{item.creatorName || 'Kênh'}</strong> · {outreachLabel(item.contactStatus)}</p>)}</div>}
         {!visibleDeals.length ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có lời mời trong nhóm này" /> : <div className="contact-deal-list">{visibleDeals.map(deal => <InvitationListItem key={deal.id} deal={deal} name={deal.channels.map(channel => records.find(item => item.creatorId === channel.creatorId)?.creatorName || channel.username || channel.platform).join(' · ')} readOnly={terminal} onOpen={() => setEdit(deal)} />)}</div>}
       </section>}
+      </div>
+      </div>
     </>}
-    <footer className="contact-bottom-bar" aria-label="Thao tác tiếp cận">
+    <footer className={workspaceTab === 'channels' && selected.length > 0 ? 'contact-bottom-bar is-floating' : 'contact-bottom-bar'} aria-label="Thao tác tiếp cận">
       <strong>{workspaceTab === 'channels' ? selected.length ? `Đã chọn ${selected.length} kênh` : 'Chưa chọn kênh' : `${deals.length} lời mời & thỏa thuận`}</strong>
       <div className="contact-bottom-buttons">
         <Button icon={<ArrowLeftOutlined />} disabled={busy} onClick={() => { rememberCampaign(campaignId); navigate('/campaign-management?tab=recommendation', { state: { recommendationContext: { sessionId: getAuthSessionId(), campaignId, creatorIds: [] }, recommendationViewRunId: ai.data?.runId } }); }}>Kết quả AI</Button>

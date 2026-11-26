@@ -1,4 +1,5 @@
 import ShortlistQuickPicker from './ShortlistQuickPicker';
+import CampaignImage from '../common/CampaignImage';
 import { getErrorMessage } from '../../services/apiClient';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Alert, App, Button, Checkbox, Drawer, Dropdown, Empty, Form, Input, Modal, Select, Skeleton, Space, Tabs, Tag, Tooltip } from 'antd';
@@ -12,6 +13,7 @@ import {
   DownOutlined,
 } from '@ant-design/icons';
 import { aiRecommendationService } from '../../services/api/aiRecommendationService';
+import { campaignService } from '../../services/api/campaignService';
 import { creatorService } from '../../services/api/creatorService';
 import { getStoredUser, getAuthSessionId, subscribeAuthSession } from '../../services/authSession';
 import { useAsyncResource } from '../../hooks/useAsyncResource';
@@ -116,6 +118,8 @@ export default function AiRecommendationTab({
   const [resultScope, setResultScope] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const runningLock = useRef(false);
+  const [retryingEmbedding, setRetryingEmbedding] = useState(false);
+  const retryEmbeddingLock = useRef(false);
   const consumedAutoRun = useRef<string | null>(null);
   const activeRun = useRef<AbortController | null>(null);
   const savedRequest = useRef<{ fingerprint: string; key: string } | null>(null);
@@ -131,13 +135,14 @@ export default function AiRecommendationTab({
   const [busy, setBusy] = useState<string | null>(null);
   const [detail, setDetail] = useState<CreatorRecommendationItemDto | null>(null);
   const [reject, setReject] = useState<CreatorRecommendationItemDto | null>(null);
+  const [feedbackMarks, setFeedbackMarks] = useState<Record<string, 'ACCEPT' | 'REJECT'>>({});
 
   const initialSelectionKey = JSON.stringify(initialSelectedCreatorIds);
   useEffect(() => { setSelectedCreatorIds(JSON.parse(initialSelectionKey)); }, [initialSelectionKey]);
 
   const campaignId = providedCampaign?.id ?? '';
   useEffect(() => {
-    setRunning(false); setDetail(null); setPhase('idle'); setResult(null); setResultMode(null); setViewedRun(null); setError(null); setMissingFields([]); setServerCampaign(null); setStatusWarning(null); setResultScope(null); setHistoryOpen(false); setTab('main');
+    setRunning(false); setDetail(null); setPhase('idle'); setResult(null); setResultMode(null); setViewedRun(null); setError(null); setMissingFields([]); setServerCampaign(null); setStatusWarning(null); setResultScope(null); setHistoryOpen(false); setTab('main'); setFeedbackMarks({});
     return () => { activeRun.current?.abort(); activeRun.current = null; runningLock.current = false; savedRequest.current = null; };
   }, [campaignId, sessionId]);
   const historyQuery = useCallback(() => aiRecommendationService.getRecommendationRuns(campaignId), [campaignId]);
@@ -165,6 +170,25 @@ export default function AiRecommendationTab({
     setTab(saved.scoringSnapshot?.some(item => item.isProvisional !== true && !['LIMITED_HISTORY', 'LIMITED_STABILITY'].includes(item.recommendationTier ?? '')) ? 'main' : saved.scoringSnapshot?.length ? 'reference' : 'main');
   }, [requestedSavedRunId, history.data, running, result, sessionId, campaignId, autoRunToken]);
   const reloadHistory = history.reload;
+
+  const canRetryEmbedding = permissions.includes('UPDATE_CAMPAIGN');
+  const handleRetryEmbedding = useCallback(async () => {
+    if (!campaign || !canRetryEmbedding || running || retryingEmbedding || retryEmbeddingLock.current) return;
+    retryEmbeddingLock.current = true;
+    setRetryingEmbedding(true);
+    try {
+      const updated = await campaignService.retryEmbedding(campaign.id);
+      setServerCampaign(updated);
+      onCampaignUpdated?.(updated);
+      setError(null);
+      message.success('Đã gửi yêu cầu chuẩn bị lại dữ liệu ngữ nghĩa (M3). Bạn có thể chạy Đánh giá AI.');
+    } catch (cause) {
+      message.error(getErrorMessage(cause, 'Không thể thử lại chuẩn bị dữ liệu. Vui lòng thử lại.'));
+    } finally {
+      retryEmbeddingLock.current = false;
+      setRetryingEmbedding(false);
+    }
+  }, [campaign, canRetryEmbedding, running, retryingEmbedding, onCampaignUpdated, message]);
 
   const run = useCallback(async () => {
     if (!campaign || !canRun || invalidSelection || runningLock.current) return;
@@ -237,6 +261,7 @@ export default function AiRecommendationTab({
     setBusy(reject.creatorId);
     try {
       await aiRecommendationService.submitFeedback(campaign.id, { creatorId: reject.creatorId, action: 'REJECT', ...values });
+      setFeedbackMarks(prev => ({ ...prev, [reject.creatorId]: 'REJECT' }));
       setReject(null);
       message.success('Đã ghi nhận phản hồi. Kết quả đã lưu không bị viết lại.');
     } catch {
@@ -251,6 +276,7 @@ export default function AiRecommendationTab({
     setBusy(item.creatorId);
     try {
       await aiRecommendationService.submitFeedback(campaign.id, { creatorId: item.creatorId, action: 'ACCEPT' });
+      setFeedbackMarks(prev => ({ ...prev, [item.creatorId]: 'ACCEPT' }));
       message.success('Đã ghi nhận đánh giá phù hợp.');
     } catch {
       message.error('Chưa ghi nhận được đánh giá. Vui lòng thử lại.');
@@ -305,9 +331,19 @@ export default function AiRecommendationTab({
   );
   const renderDetailActions = (item: CreatorRecommendationItemDto) => {
     const isSaved = membership.status === 'success' ? activeCreatorIds.includes(item.creatorId) : item.inShortlist === true || ['SAVED', 'READY_TO_CONTACT', 'CONTACTED'].includes(item.shortlistStatus ?? '');
+    const feedback = feedbackMarks[item.creatorId];
     return <footer className="rec-card-footer">
           <div className="rec-card-actions"><Button onClick={() => navigate(campaignPath('/creators/' + item.creatorId, campaign.id))}>Xem hồ sơ</Button><Button type="primary" disabled={isSaved || !canSave || !!busy} loading={busy === item.creatorId} onClick={() => void save(item)}>{isSaved ? 'Đã trong danh sách chọn' : 'Lưu vào danh sách'}</Button></div>
-          <div className="rec-feedback"><span>Đánh giá kết quả</span><Space size={4}><Button size="small" type="text" icon={<LikeOutlined />} disabled={!permissions.includes('RUN_RECOMMENDATION') || !!busy} onClick={() => void accept(item)}>Phù hợp</Button><Button size="small" type="text" icon={<DislikeOutlined />} disabled={!permissions.includes('RUN_RECOMMENDATION') || !!busy} onClick={() => setReject(item)}>Không phù hợp</Button></Space></div>
+          <div className="rec-feedback"><span>Đánh giá kết quả</span><Space size={6}>
+            <Button size="small" type={feedback === 'ACCEPT' ? 'default' : 'text'} icon={<LikeOutlined />}
+              style={feedback === 'ACCEPT' ? { color: '#059669', borderColor: '#A7F3D0', background: '#ECFDF5', fontWeight: 600 } : undefined}
+              disabled={!permissions.includes('RUN_RECOMMENDATION') || !!busy || feedback === 'ACCEPT'}
+              onClick={() => void accept(item)}>{feedback === 'ACCEPT' ? 'Đã chọn Phù hợp' : 'Phù hợp'}</Button>
+            <Button size="small" type={feedback === 'REJECT' ? 'default' : 'text'} icon={<DislikeOutlined />}
+              style={feedback === 'REJECT' ? { color: '#DC2626', borderColor: '#FECACA', background: '#FEF2F2', fontWeight: 600 } : undefined}
+              disabled={!permissions.includes('RUN_RECOMMENDATION') || !!busy || feedback === 'REJECT'}
+              onClick={() => setReject(item)}>{feedback === 'REJECT' ? 'Đã chọn Không phù hợp' : 'Không phù hợp'}</Button>
+          </Space></div>
         </footer>;
   };
   const renderCandidate = (item: CreatorRecommendationItemDto, detailed = false, position?: number) => {
@@ -323,6 +359,138 @@ export default function AiRecommendationTab({
       ['M3 · Phù hợp nội dung', formatScore(breakdown?.m3Score)],
       ['M4 · Phù hợp với thương hiệu', formatScore(breakdown?.m4EffectiveScore ?? breakdown?.m4Score)],
     ];
+    if (detailed) {
+      return (
+        <article className="rec-creator-card rec-card-detail rec-modal-two-col" key={item.creatorId}>
+          <div className="rec-modal-col-left">
+            <header className="rec-identity">
+              <CreatorAvatar size={48} src={item.avatarUrl || undefined} name={item.displayName || item.userName} />
+              <div className="rec-author">
+                <h3><button type="button" onClick={() => navigate(campaignPath('/creators/' + item.creatorId, campaign.id))}>{item.displayName || 'Kênh chưa có tên'}</button></h3>
+                <p>{item.userName ? '@' + item.userName.replace(/^@+/, '') : 'Chưa có tên tài khoản'}</p>
+              </div>
+              <Dropdown trigger={['click']} menu={{
+                items: [
+                  { key: 'view', label: 'Xem hồ sơ', icon: <EyeOutlined /> },
+                  { key: 'save', label: isSaved ? 'Đã trong danh sách chọn' : 'Lưu vào danh sách', icon: <SaveOutlined />, disabled: isSaved || !canSave || !!busy },
+                  { key: 'accept', label: 'Đánh giá phù hợp', icon: <LikeOutlined />, disabled: !permissions.includes('RUN_RECOMMENDATION') || !!busy },
+                  { key: 'reject', label: 'Đánh giá không phù hợp', icon: <DislikeOutlined />, disabled: !permissions.includes('RUN_RECOMMENDATION') || !!busy },
+                ],
+                onClick: ({ key }) => {
+                  if (key === 'view') navigate(campaignPath('/creators/' + item.creatorId, campaign.id));
+                  else if (key === 'save') void save(item);
+                  else if (key === 'accept') void accept(item);
+                  else if (key === 'reject') setReject(item);
+                },
+              }}><Button type="text" icon={<MoreOutlined />} aria-label={'Thao tác với ' + item.displayName} /></Dropdown>
+            </header>
+            <div className="rec-statuses">
+              {item.platform && <Tag>{item.platform}</Tag>}
+              {item.creatorType && <Tag>{item.creatorType}</Tag>}
+            </div>
+            <section className="rec-conclusion">
+              <div className={`rec-score${!scoreReady || typeof item.finalScore !== 'number' || !Number.isFinite(item.finalScore) ? ' rec-score-unavailable' : ''}`}>
+                <span>{provisional ? 'Điểm tham khảo' : 'Điểm phù hợp'}</span>
+                <strong>{scoreReady ? formatScore(item.finalScore) : 'Chưa công bố điểm chính thức'}</strong>
+              </div>
+              <div className="rec-price"><span>Độ tin cậy dữ liệu</span><strong>{confidenceLabel(breakdown?.confidenceTier ?? item.reasoning?.confidenceTier)}</strong></div>
+              <p className="rec-conclusion-tier">{tierLabel(item)}</p>
+            </section>
+            <div className="rec-reason-summary"><h4>{provisional ? 'Nhận xét về kênh' : 'Vì sao được gợi ý?'}</h4><p>{item.reasoning?.summary || 'Chưa có phần giải thích cho kết quả này.'}</p>
+              {!!item.reasoning?.reasons?.length && <details className="rec-details"><summary>Các lý do đã ghi nhận</summary><ul>{item.reasoning.reasons.map((reason, index) => <li key={index}>{reason}</li>)}</ul></details>}
+            </div>
+            {warnings.length > 0 && <aside className="rec-evidence"><h4>Giới hạn dữ liệu</h4><ul>{warnings.map(warning => <li key={warning}>{warning}</li>)}</ul></aside>}
+            <dl className="rec-metrics">
+              <div><dt>Người theo dõi</dt><dd>{formatNumber(item.followers)}</dd></div>
+              <div><dt>Tỷ lệ tương tác</dt><dd>{formatEngagement(item.engagementRate)}</dd></div>
+              <div><dt>Lượt xem trung bình</dt><dd>{formatNumber(item.avgViews)}</dd></div>
+              <div><dt>Lượt thích trung bình</dt><dd>{formatNumber(item.avgLikes)}</dd></div>
+            </dl>
+            <div className="rec-price"><span>Trạng thái báo giá</span><strong>{formatPrice(item.priceStatus)}</strong></div>
+          </div>
+          <div className="rec-modal-col-right">
+            <section className="rec-modal-card">
+              <h4 className="rec-modal-card-title">Điểm thành phần M1–M4</h4>
+              <div className="rec-score-bars">
+                {[
+                  {
+                    label: 'M1 · Lịch sử hợp tác',
+                    score: breakdown?.m1Availability === 'AVAILABLE' ? breakdown.m1Score : null,
+                    fallback: breakdown?.m1Availability === 'UNAVAILABLE' ? 'Chưa đủ lịch sử' : 'Chưa có dữ liệu',
+                    color: '#7C3AED',
+                  },
+                  {
+                    label: 'M2 · Hiệu quả công khai',
+                    score: breakdown?.m2Score ?? null,
+                    fallback: 'Chưa có điểm',
+                    color: '#059669',
+                  },
+                  {
+                    label: 'M3 · Phù hợp nội dung',
+                    score: breakdown?.m3Score ?? null,
+                    fallback: 'Chưa có điểm',
+                    color: '#0284C7',
+                  },
+                  {
+                    label: 'M4 · Phù hợp với thương hiệu',
+                    score: breakdown?.m4EffectiveScore ?? breakdown?.m4Score ?? null,
+                    fallback: 'Chưa có điểm',
+                    color: '#D97706',
+                  },
+                ].map((row) => {
+                  const hasScore = typeof row.score === 'number' && Number.isFinite(row.score);
+                  const pct = hasScore ? Math.max(0, Math.min(100, row.score!)) : 0;
+                  return (
+                    <div className="rec-score-bar-row" key={row.label}>
+                      <div className="rec-score-bar-head">
+                        <span>{row.label}</span>
+                        <strong style={{ color: hasScore ? '#0F172A' : '#64748B' }}>
+                          {hasScore ? formatScore(row.score) : row.fallback}
+                        </strong>
+                      </div>
+                      <div className="rec-score-bar-track">
+                        <div className="rec-score-bar-fill" style={{ width: `${pct}%`, background: hasScore ? row.color : '#E2E8F0' }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="rec-modal-card-note">{tierLabel(item)}. Điểm phù hợp phản ánh mức hỗ trợ dữ liệu, không phải cam kết doanh số.</p>
+            </section>
+
+            <details className="rec-details rec-memory-details">
+              <summary>Chi tiết bằng chứng lịch sử (M1 & M4)</summary>
+              <h4>Bằng chứng lịch sử M1</h4>
+              <dl className="rec-breakdown">
+                <div><dt>Hợp tác đủ điều kiện</dt><dd>{formatNumber(breakdown?.eligibleEvaluatedCollaborations)}</dd></div>
+                <div><dt>Thương hiệu đóng góp</dt><dd>{formatNumber(breakdown?.distinctBrandCount)}</dd></div>
+                {breakdown?.maxBrandShare != null && <div><dt>Tỷ trọng lớn nhất từ một thương hiệu</dt><dd>{formatNumber(breakdown.maxBrandShare)}%</dd></div>}
+                <div><dt>Điểm đánh giá hợp tác</dt><dd>{breakdown?.rAvailability === 'AVAILABLE' ? formatScore(breakdown.rScore) : 'Chưa có đánh giá hoàn tất'}</dd></div>
+                <div><dt>Điểm đúng hạn</dt><dd>{breakdown?.tAvailability === 'AVAILABLE' ? formatScore(breakdown.tScore) : 'Chưa có dữ liệu mốc thời gian & hạn'}</dd></div>
+                <div><dt>Điểm thực hiện KPI</dt><dd>{breakdown?.kAvailability === 'AVAILABLE' ? formatScore(breakdown.kScore) : breakdown?.kAvailability === 'NOT_APPLICABLE' ? 'Không áp dụng · giữ nguyên trọng số chuẩn' : 'Chưa có dữ liệu KPI hợp lệ'}</dd></div>
+                {breakdown?.m1Availability === 'UNAVAILABLE' && <div><dt>Cách tính M1 trong lượt này</dt><dd>Chưa có lịch sử hợp tác đủ điều kiện; hệ thống dùng mức trung tính (50/100) thay thế.</dd></div>}
+              </dl>
+              <h4>Nguồn đánh giá M4</h4><p>{metadata?.m4HistoryReadStatus === 'READ_FAILED' ? 'Lịch sử đọc lỗi; điểm này dùng fallback theo tiêu chí hiện tại.' : m4SourceLabel(breakdown?.m4Source)}</p>
+              <dl className="rec-breakdown">
+                {metadata?.m4HistoryWindowMonths != null && <div><dt>Phạm vi lịch sử M4</dt><dd>{metadata.m4HistoryWindowMonths} tháng trước thời điểm đánh giá; không gồm chiến dịch này.</dd></div>}
+                {metadata?.m4ReviewEvidenceCount != null && <div><dt>Đánh giá trong phạm vi lịch sử</dt><dd>{formatNumber(metadata.m4ReviewEvidenceCount)}</dd></div>}
+                <div><dt>Điểm từ lịch sử</dt><dd>{formatScore(breakdown?.m4LearnedScore)}</dd></div>
+                <div><dt>Điểm từ tiêu chí hiện tại</dt><dd>{formatScore(breakdown?.m4ExplicitScore)}</dd></div>
+                <div><dt>Điểm được sử dụng</dt><dd>{formatScore(breakdown?.m4EffectiveScore ?? breakdown?.m4Score)}</dd></div>
+                <div><dt>Mức hỗ trợ dữ liệu</dt><dd>{confidenceLabel(breakdown?.confidenceTier ?? item.reasoning?.confidenceTier)}</dd></div>
+                <div><dt>Điểm hỗ trợ dữ liệu</dt><dd>{formatScore(breakdown?.confidenceScore ?? item.reasoning?.confidenceScore)}</dd></div>
+              </dl>
+              {item.reasoning?.explanationAvailable === false && <p>Phần giải thích đầy đủ chưa có sẵn.</p>}
+            </details>
+            <details className="rec-details rec-extra-info"><summary>Thông tin kênh bổ sung</summary>
+              {typeof item.claimed === 'boolean' && <p>{item.claimed ? 'Đã liên kết hồ sơ nhà sáng tạo.' : 'Chưa liên kết hồ sơ nhà sáng tạo.'}</p>}
+              {categories.length > 0 && <div className="rec-niches">{categories.map(category => <span key={category}>{category}</span>)}</div>}
+            </details>
+            {renderRunMetadata()}
+          </div>
+        </article>
+      );
+    }
     return (
       <article className={detailed ? 'rec-creator-card rec-card-detail' : 'rec-creator-card rec-card-compact'} key={item.creatorId}>
         <header className="rec-identity">
@@ -359,7 +527,7 @@ export default function AiRecommendationTab({
         <section className={detailed ? 'rec-conclusion' : 'rec-score-summary'}>
         <div className={`rec-score${!scoreReady || typeof item.finalScore !== 'number' || !Number.isFinite(item.finalScore) ? ' rec-score-unavailable' : ''}`}>
           <span>{provisional ? 'Điểm tham khảo' : 'Điểm phù hợp'}</span>
-          <strong>{scoreReady ? formatScore(item.finalScore) : 'Chưa đủ dữ liệu'}</strong>
+          <strong>{scoreReady ? formatScore(item.finalScore) : 'Chưa công bố điểm chính thức'}</strong>
         </div>
         {detailed && <div className="rec-price"><span>Độ tin cậy dữ liệu</span><strong>{confidenceLabel(breakdown?.confidenceTier ?? item.reasoning?.confidenceTier)}</strong></div>}
         {detailed && <p className="rec-conclusion-tier">{tierLabel(item)}</p>}
@@ -424,7 +592,15 @@ export default function AiRecommendationTab({
         <div><h1>Gợi ý nhà sáng tạo</h1></div>
         <Button disabled={running} onClick={openShortlist}>Danh sách đã chọn</Button>
       </header>
-      <section className="rec-campaign-context"><span>Chiến dịch hiện tại</span><h2>{campaign.name}</h2></section>
+      <section className="rec-campaign-context">
+        <div className="rec-campaign-context-main">
+          <CampaignImage src={campaign.imageUrl} className="rec-campaign-thumb" />
+          <div>
+            <span>CHIẾN DỊCH HIỆN TẠI</span>
+            <h2>{campaign.name}</h2>
+          </div>
+        </div>
+      </section>
       <section className="workflow-panel rec-run-panel" aria-label="Thiết lập gợi ý">
         <div className="rec-run-toolbar">
           <div className="rec-run-scope">
@@ -464,9 +640,29 @@ export default function AiRecommendationTab({
       </section>
 
       {statusWarning && <Alert type="warning" title={statusWarning} />}
+      {campaign.embeddingStatus === 'FAILED' && !running && (
+        <Alert
+          type="error"
+          showIcon
+          title="Chuẩn bị dữ liệu ngữ nghĩa (M3) thất bại"
+          description={canRetryEmbedding
+            ? 'Cần thử lại chuẩn bị dữ liệu trước khi chạy gợi ý AI.'
+            : 'Bạn chưa có quyền cập nhật chiến dịch để thử lại chuẩn bị dữ liệu.'}
+          action={canRetryEmbedding ? (
+            <Button
+              type="primary"
+              loading={retryingEmbedding}
+              disabled={retryingEmbedding || running}
+              onClick={() => void handleRetryEmbedding()}
+            >
+              Thử lại chuẩn bị dữ liệu
+            </Button>
+          ) : undefined}
+        />
+      )}
       {error && <Alert type="error" title={error} description={missingFields.length ? <><ul>{missingFields.map(field => <li key={field}>{field}</li>)}</ul>{campaign.status === 'DRAFT' ? <Button onClick={() => { const target = campaignEditor(campaign.id); navigate(target.path, { state: target.state }); }}>Bổ sung thông tin</Button> : <Button onClick={() => navigate('/campaigns/create')}>Tạo chiến dịch mới</Button>}</> : undefined} />}
 
-      <section className="rec-results" aria-label="Kết quả đánh giá">
+      <section className="rec-results rec-workspace-card" aria-label="Kết quả đánh giá">
         {newerIncompleteAttempt && <Alert type="warning" showIcon title="Lần đánh giá mới nhất chưa hoàn tất. Bạn đang xem kết quả đã lưu trước đó." />}
         {membership.status === 'error' && <Alert type="warning" title="Chưa kiểm tra được các kênh đang lưu. Tải lại trước khi chọn liên hệ." action={<Button onClick={() => void membership.reload()}>Thử lại</Button>} />}
         <header className="rec-results-heading">
@@ -475,6 +671,7 @@ export default function AiRecommendationTab({
           </div>
           <div className="rec-result-tools">{candidates != null && <Tooltip title={displayedOrder?.description || 'Máy chủ chưa lưu chế độ của lượt này.'}><Tag>Thứ tự: {displayedOrder?.label ?? 'Chưa có thông tin'}</Tag></Tooltip>}<Button disabled={running} onClick={() => setHistoryOpen(true)}>Lịch sử đánh giá</Button></div>
         </header>
+        <div className="rec-workspace-body">
         {running ? <Skeleton active /> : candidates == null ? <div className="rec-empty-results"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có kết quả đánh giá" /><Button onClick={() => setHistoryOpen(true)}>Xem lịch sử đã lưu</Button></div> : <Tabs activeKey={tab} onChange={setTab} items={[
           { key: 'main', label: `Đề xuất chính · ${main.length}`, children: <>
             {main.length ? <div className="rec-cards-grid">{main.map((item, index) => renderCandidate(item, false, index + 1))}</div> : <Empty description={candidates == null ? 'Chưa có kết quả. Mở lịch sử hoặc chủ động chạy mới.' : 'Lượt này không có đề xuất chính'} />}
@@ -484,7 +681,7 @@ export default function AiRecommendationTab({
             {reference.length ? <div className="rec-cards-grid">{reference.map((item, index) => renderCandidate(item, false, index + 1))}</div> : <Empty description="Không có kênh tham khảo trong dữ liệu lượt này" />}
           </> },
           { key: 'excluded', label: `Không đủ điều kiện${excluded ? ' · ' + excluded.length : viewedRun && metadata?.excludedCount != null ? ' · ' + metadata.excludedCount : ''}`, children: <>
-            <p>Chỉ gồm những kênh hệ thống ghi nhận lý do loại. Kênh không xuất hiện do giới hạn kết quả hoặc gộp hồ sơ không mặc nhiên thuộc nhóm này.</p>
+            <p className="rec-pool-note">Chỉ gồm những kênh hệ thống ghi nhận lý do loại. Kênh không xuất hiện do giới hạn kết quả hoặc gộp hồ sơ không mặc nhiên thuộc nhóm này.</p>
             {excluded ? excluded.length ? <div className="rec-cards-grid">{excluded.map(item => <article className="rec-creator-card rec-card-compact" key={item.creatorId}>
               <header className="rec-identity"><CreatorAvatar size={44} src={item.avatarUrl} name={item.displayName || item.userName} /><div className="rec-author"><h3>{item.displayName || item.userName || 'Kênh chưa có tên'}</h3><p>{item.userName ? '@' + item.userName.replace(/^@+/, '') : 'Chưa có tên tài khoản'}</p></div></header>
               {item.platform && <div className="rec-statuses"><Tag>{item.platform}</Tag></div>}
@@ -493,6 +690,7 @@ export default function AiRecommendationTab({
             </article>)}</div> : <Empty description="Không có kênh bị loại được ghi nhận" /> : <Empty description={viewedRun ? 'Lịch sử không cung cấp danh sách và lý do loại. Không thể dựng lại từ dữ liệu hiện tại.' : 'Chưa có dữ liệu loại từ lượt đánh giá'} />}
           </> },
         ]} />}
+        </div>
       </section>
 
       <Drawer title="Lịch sử đánh giá" open={historyOpen} onClose={() => setHistoryOpen(false)} size="min(720px, 100vw)" rootClassName="rec-detail-drawer">
@@ -510,7 +708,7 @@ export default function AiRecommendationTab({
         </table></div>}
       </Drawer>
       {!running && !invalidSelection && (
-        <section className="rec-next-action" aria-label="Tiếp tục sau khi xem kết quả">
+        <section className={contactSelection.length > 0 ? 'rec-next-action is-floating' : 'rec-next-action'} aria-label="Tiếp tục sau khi xem kết quả">
           <div>
             <h2>{candidates == null ? 'Chưa có kết quả đánh giá' : contactSelection.length ? `Đã chọn ${contactSelection.length} kênh để liên hệ` : 'Chọn kênh để tiếp tục liên hệ'}</h2>
           </div>
@@ -524,9 +722,18 @@ export default function AiRecommendationTab({
         </section>
       )}
 
-      <Drawer title="Chi tiết kết quả gợi ý" rootClassName="rec-detail-drawer rec-analysis-drawer" size="min(640px, 100vw)" open={!!detail} onClose={() => setDetail(null)} destroyOnHidden footer={detail ? renderDetailActions(detail) : null}>
+      <Modal
+        title="Chi tiết kết quả gợi ý"
+        rootClassName="rec-analysis-modal"
+        centered
+        width={1020}
+        open={!!detail}
+        onCancel={() => setDetail(null)}
+        destroyOnHidden
+        footer={detail ? renderDetailActions(detail) : null}
+      >
         {detail && renderCandidate(detail, true)}
-      </Drawer>
+      </Modal>
 
 
       <Modal

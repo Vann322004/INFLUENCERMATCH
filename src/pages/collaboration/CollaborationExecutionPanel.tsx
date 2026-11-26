@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { outcomeSourceLabel } from './lifecyclePresentation';
-import { BarChartOutlined, FileDoneOutlined, VideoCameraOutlined } from '@ant-design/icons';
+import { BarChartOutlined, CheckCircleOutlined, FileDoneOutlined, ReloadOutlined, VideoCameraOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { collaborationService, uploadDraftVideo, type VideoUploadGrant } from '../../services/api/collaborationService';
 import { getErrorMessage } from '../../services/apiClient';
@@ -555,7 +555,14 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
       else if (result) { title = 'Bài đăng đã được ghi nhận'; description = 'Bạn có thể lấy chỉ số công khai, rồi kiểm tra và lưu kết quả.'; control = <Button type="primary" disabled={busy || loading} onClick={() => startAction({ kind: 'outcome', unit: result, editing: false })}>Ghi nhận kết quả</Button>; }
       else { title = 'Đang chờ thương hiệu xử lý'; description = 'Bạn có thể xem lại bản nộp và kết quả đã khai báo bên dưới.'; }
     }
-    return <section className="collab-next-action"><div><strong>{title}</strong>{description && <p>{description}</p>}</div>{control}</section>;
+    return <section className="collab-next-action">
+      <div className="collab-next-action-body">
+        <span className="collab-next-action-eyebrow">Việc cần làm tiếp theo</span>
+        <strong>{title}</strong>
+        {description && <p>{description}</p>}
+      </div>
+      {control}
+    </section>;
   }
 
   function renderDeliverable(unit: Deliverable, splitView: boolean) {
@@ -563,10 +570,10 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
     const measurement = measurementFor(latest?.payload, unit);
     const buttons = (
       <Space wrap className="execution-actions">
-        {canPost && unit.status !== 'SUBMITTED' && <Button disabled={loading}
+        {canPost && unit.status !== 'SUBMITTED' && <Button type="primary" disabled={loading}
           onClick={() => startAction({ kind: 'submit', unit })}>{brand ? 'Ghi nhận nội dung từ bên ngoài' : unit.status === 'CHANGES_REQUESTED' ? 'Nộp lại bản nháp' : 'Nộp bản nháp'}</Button>}
         {inProgress && manage && unit.status === 'SUBMITTED' && <>
-          <Button disabled={loading} onClick={() => startAction({ kind: 'approve', unit })}>Phê duyệt</Button>
+          <Button type="primary" disabled={loading} onClick={() => startAction({ kind: 'approve', unit })}>Phê duyệt</Button>
           <Button danger={splitView} disabled={loading || unit.revisionRounds >= unit.maxRevisionRounds}
             onClick={() => startAction({ kind: 'changes', unit })}>Yêu cầu chỉnh sửa</Button>
           {unit.revisionRounds >= unit.maxRevisionRounds && <Typography.Text type="secondary">Đã hết lượt sửa.</Typography.Text>}
@@ -594,8 +601,13 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
         </div>
         {splitView && buttons}
       </div>
-      <div><strong>Checklist nghiệm thu</strong>
-        <ul>{unit.acceptanceChecklist.map(item => <li key={item}>{item}</li>)}</ul>
+      <div className="collab-checklist-block">
+        <strong className="collab-checklist-title">Checklist nghiệm thu</strong>
+        <ul className="collab-checklist">
+          {unit.acceptanceChecklist.map(item => (
+            <li key={item}><CheckCircleOutlined className="collab-checklist-icon" /><span>{item}</span></li>
+          ))}
+        </ul>
       </div>
       <DeliverableHistory collaborationId={id} unit={unit} />
       {!splitView && buttons}
@@ -609,25 +621,66 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
     {loading && !snapshot && <Spin />}
     {snapshot && <>
       <header className="collab-detail-heading">
-        <div>
-          <Space wrap><h1 className="collab-main-title">Chi tiết hợp tác</h1><StatusTag status={snapshot.status} /></Space>
-          <Descriptions size="small" column={{ xs: 1, sm: 2, lg: 3 }} items={[
-            { key: 'campaign', label: 'Chiến dịch', children: summary.campaignName || '—' },
-            { key: 'partner', label: brand ? 'Creator đối tác' : 'Nhãn hàng', children: (brand ? summary.creatorName : summary.brandName) || '—' },
-            { key: 'channels', label: 'Kênh', children: channels.map(channelLabel).join(', ') || summary.platform || '—' },
-            ...(!brand ? [{ key: 'fee', label: 'Phí đã chốt', children: formatMoney(snapshot.agreedFee, snapshot.currency) }] : []),
-          ]} />
+        <div className="collab-hero-top">
+          <div className="collab-hero-title-group">
+            <h1 className="collab-main-title">Chi tiết hợp tác</h1>
+            <StatusTag status={snapshot.status} />
+            <span className="collab-mode-pill">
+              {snapshot.managementMode === 'BRAND_MANAGED'
+                ? 'Brand quản lý bên ngoài' : 'Cùng Creator thực hiện'}
+            </span>
+          </div>
+          <Space wrap className="collab-heading-actions">
+            <Button size="small" icon={<ReloadOutlined />} aria-label="Tải lại" loading={loading} disabled={busy} onClick={() => void read()}>Tải lại</Button>
+            {canCancel && <Button size="small" danger disabled={loading || busy} onClick={() => startAction({ kind: 'cancel' })}>
+              Hủy hợp tác
+            </Button>}
+            {canLegacyReview && <Button size="small" type="primary" disabled={loading || busy}
+              onClick={() => startAction({ kind: 'legacyReview' })}>
+              Đánh giá hợp tác cũ
+            </Button>}
+          </Space>
         </div>
-        <Space wrap className="collab-heading-actions">
-          <Button size="small" aria-label="Tải lại" loading={loading} disabled={busy} onClick={() => void read()}>Tải lại</Button>
-          {canCancel && <Button danger disabled={loading || busy} onClick={() => startAction({ kind: 'cancel' })}>
-            Hủy hợp tác
-          </Button>}
-          {canLegacyReview && <Button type="primary" disabled={loading || busy}
-            onClick={() => startAction({ kind: 'legacyReview' })}>
-            Đánh giá hợp tác cũ
-          </Button>}
-        </Space>
+
+        {!['CANCELLED', 'TERMINATED'].includes(snapshot.status) && (() => {
+          const stepIndex = snapshot.status === 'PLANNED' ? 0
+            : snapshot.status === 'IN_PROGRESS' ? 1
+            : snapshot.status === 'AWAITING_REVIEW' ? 2 : 3;
+          const steps = ['Lên kế hoạch', 'Đang thực hiện', 'Chờ hoàn tất', 'Hoàn tất'];
+          return (
+            <div className="collab-stepper" aria-label="Tiến trình hợp tác">
+              {steps.map((stepLabel, idx) => {
+                const state = idx < stepIndex ? 'done' : idx === stepIndex ? (stepIndex === 3 ? 'done' : 'active') : 'todo';
+                return (
+                  <div key={stepLabel} className={`collab-step collab-step-${state}`}>
+                    <span className="collab-step-dot">{idx < stepIndex || (idx === 3 && stepIndex === 3) ? '✓' : idx + 1}</span>
+                    <span className="collab-step-label">{stepLabel}</span>
+                    {idx < steps.length - 1 && <span className="collab-step-line" />}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+
+        <div className="collab-meta-grid">
+          <div className="collab-meta-tile">
+            <span className="collab-meta-label">Chiến dịch</span>
+            <strong className="collab-meta-val">{summary.campaignName || '—'}</strong>
+          </div>
+          <div className="collab-meta-tile">
+            <span className="collab-meta-label">{brand ? 'Creator đối tác' : 'Nhãn hàng'}</span>
+            <strong className="collab-meta-val">{(brand ? summary.creatorName : summary.brandName) || '—'}</strong>
+          </div>
+          <div className="collab-meta-tile">
+            <span className="collab-meta-label">Kênh thực hiện</span>
+            <strong className="collab-meta-val">{channels.map(channelLabel).join(', ') || summary.platform || '—'}</strong>
+          </div>
+          <div className="collab-meta-tile">
+            <span className="collab-meta-label">Phí đã chốt</span>
+            <strong className="collab-meta-val collab-meta-fee">{formatMoney(snapshot.agreedFee, snapshot.currency)}</strong>
+          </div>
+        </div>
       </header>
       <FlexibleLifecycleControls key={id} snapshot={snapshot} brand={brand} permissions={permissions}
         reviewAction={canSendReview && <Button type="primary" disabled={busy || loading}
@@ -641,16 +694,34 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
       {<nav className="collab-tabs-bar" aria-label="Mục chi tiết hợp tác">
         {tabs.map(item => <button key={item.value} type="button" aria-pressed={tab === item.value}
           aria-label={item.label} className={'collab-tab-btn' + (tab === item.value ? ' active' : '')} onClick={() => setTab(item.value)}>
-          {item.icon}{item.label}
+          {item.icon}
+          <span>{item.label}</span>
+          {item.value === 'progress' && ordered.length > 0 && (
+            <span className="collab-tab-count">
+              {ordered.filter(unit => unit.status === 'APPROVED').length}/{ordered.length}
+            </span>
+          )}
         </button>)}
       </nav>}
-      {brand && tab === 'progress' && <Card title="Tiến độ thực hiện">
-        <Descriptions size="small" column={{ xs: 1, sm: 2 }} items={[
-          { key: 'approved', label: 'Ấn phẩm đã duyệt', children: ordered.length
-            ? ordered.filter(unit => unit.status === 'APPROVED').length + '/' + ordered.length : '—' },
-          { key: 'posted', label: 'Ấn phẩm đã có bài đăng', children: ordered.length ? publishedUnits.length + '/' + ordered.length : '—' },
-          { key: 'deadline', label: 'Hạn nộp sớm nhất', children: formatDate(ordered[0]?.dueAt) },
-        ]} />
+      {brand && tab === 'progress' && <Card className="collab-progress-card" title="Tiến độ thực hiện">
+        <div className="collab-progress-summary">
+          <div className="collab-progress-stat">
+            <span className="collab-progress-label">Ấn phẩm đã duyệt</span>
+            <strong className="collab-progress-value">
+              {ordered.length ? `${ordered.filter(unit => unit.status === 'APPROVED').length}/${ordered.length}` : '—'}
+            </strong>
+          </div>
+          <div className="collab-progress-stat">
+            <span className="collab-progress-label">Ấn phẩm đã có bài đăng</span>
+            <strong className="collab-progress-value">
+              {ordered.length ? `${publishedUnits.length}/${ordered.length}` : '—'}
+            </strong>
+          </div>
+          <div className="collab-progress-stat">
+            <span className="collab-progress-label">Hạn nộp sớm nhất</span>
+            <strong className="collab-progress-value">{formatDate(ordered[0]?.dueAt)}</strong>
+          </div>
+        </div>
         {planned && canReadDeal && !loading && <>
           {!snapshot.dealId && <p>Chưa có Deal liên kết để bắt đầu hợp tác.</p>}
           {!brandManaged && snapshot.assignmentStatus === 'WAITING_FOR_VERIFICATION' && <p>Chờ Creator xác minh kênh.</p>}

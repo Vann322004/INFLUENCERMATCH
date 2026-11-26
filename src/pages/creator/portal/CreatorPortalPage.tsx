@@ -42,6 +42,15 @@ import {
 } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import {
   creatorPortalService,
   CreatorIdentityVerification,
   CreatorRateCardPackage,
@@ -339,11 +348,11 @@ export default function CreatorPortalPage() {
             </div>
           </header>
 
-          {/* 2. 4 Core KPI Bento Cards (Left-Icon Layout matching Admin Mockup 1:1) */}
+          {/* 2. 4 Core KPI Bento Cards (Balanced colors & compact typography) */}
           <div className="creator-bento-grid-4">
             <section className="creator-bento-card">
               <div className="creator-bento-row">
-                <div className="creator-bento-icon purple">
+                <div className="creator-bento-icon blue">
                   <EyeOutlined />
                 </div>
                 <div className="creator-bento-body">
@@ -366,7 +375,7 @@ export default function CreatorPortalPage() {
                   <GlobalOutlined />
                 </div>
                 <div className="creator-bento-body">
-                  <span className="creator-bento-label">Lượt hiển thị (Impressions)</span>
+                  <span className="creator-bento-label" title="Lượt hiển thị (Impressions)">Lượt hiển thị</span>
                   <p className="creator-bento-value">
                     {(metrics.totalImpressions / 1000000).toFixed(2)}M
                   </p>
@@ -390,7 +399,7 @@ export default function CreatorPortalPage() {
                     {(metrics.totalVideoViews / 1000000).toFixed(2)}M
                   </p>
                   <div>
-                    <span className="creator-bento-badge">
+                    <span className="creator-bento-badge neutral">
                       TB {metrics.avgViewsPerPost.toLocaleString('vi-VN')} views/video
                     </span>
                   </div>
@@ -400,7 +409,7 @@ export default function CreatorPortalPage() {
 
             <section className="creator-bento-card">
               <div className="creator-bento-row">
-                <div className="creator-bento-icon purple">
+                <div className="creator-bento-icon green">
                   <FireOutlined />
                 </div>
                 <div className="creator-bento-body">
@@ -418,7 +427,7 @@ export default function CreatorPortalPage() {
             </section>
           </div>
 
-          {/* 3. Analytics Row: 6-Month Growth + Audience Demographics */}
+          {/* 3. Analytics Row: 6-Month Growth AreaChart + Audience Demographics */}
           <Row gutter={[18, 18]}>
             <Col xs={24} lg={14}>
               <Card
@@ -430,46 +439,79 @@ export default function CreatorPortalPage() {
                       <div className="creator-card-title">Biểu đồ Tăng trưởng Reach & Views (6 tháng)</div>
                       <div className="creator-card-subtitle">Số liệu tự động đồng bộ qua OAuth từ các kênh đã liên kết</div>
                     </div>
-                    <Tag color="purple" style={{ borderRadius: 999, fontWeight: 700, margin: 0 }}>
+                    <Tag color="blue" style={{ borderRadius: 999, fontWeight: 600, margin: 0 }}>
                       Cập nhật hôm nay
                     </Tag>
                   </div>
                 }
               >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  {metrics.monthlyReachTrend.map((item, idx) => {
-                    const reachPct = Math.min(100, Math.round((item.reach / 9000000) * 100));
-                    const viewsPct = Math.min(100, Math.round((item.views / 15000000) * 100));
-                    return (
-                      <div key={idx} className="creator-trend-row">
-                        <div className="creator-trend-meta">
-                          <span className="creator-trend-month">Tháng {item.month}</span>
-                          <div className="creator-trend-numbers">
-                            <span>
-                              Reach: <strong style={{ color: '#1E1B4B' }}>{(item.reach / 1000000).toFixed(2)}M</strong>
-                            </span>
-                            <span>
-                              Views: <strong style={{ color: '#7C3AED' }}>{(item.views / 1000000).toFixed(2)}M</strong>
-                            </span>
-                          </div>
-                        </div>
-                        <div className="creator-trend-bars">
-                          <div className="creator-bar-track">
-                            <div
-                              className="creator-bar-fill primary"
-                              style={{ width: `${reachPct}%` }}
-                            />
-                          </div>
-                          <div className="creator-bar-track light">
-                            <div
-                              className="creator-bar-fill secondary"
-                              style={{ width: `${viewsPct}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="creator-chart-legend">
+                  <span className="creator-legend-item">
+                    <span className="creator-legend-dot" style={{ background: '#2563EB' }} />
+                    Reach (triệu)
+                  </span>
+                  <span className="creator-legend-item">
+                    <span className="creator-legend-dot" style={{ background: '#7C3AED' }} />
+                    Video Views (triệu)
+                  </span>
+                </div>
+                <div style={{ width: '100%', height: 260 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={metrics.monthlyReachTrend.map(item => ({
+                        month: item.month,
+                        reachM: Number((item.reach / 1_000_000).toFixed(2)),
+                        viewsM: Number((item.views / 1_000_000).toFixed(2)),
+                      }))}
+                      margin={{ top: 10, right: 12, left: -12, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient id="creatorReachGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#2563EB" stopOpacity={0.22} />
+                          <stop offset="95%" stopColor="#2563EB" stopOpacity={0.01} />
+                        </linearGradient>
+                        <linearGradient id="creatorViewsGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.22} />
+                          <stop offset="95%" stopColor="#7C3AED" stopOpacity={0.01} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                      <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#64748B' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
+                      <YAxis
+                        tick={{ fontSize: 12, fill: '#64748B' }}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(val) => `${val}M`}
+                      />
+                      <RechartsTooltip
+                        formatter={(val: unknown, name: unknown) => [
+                          `${val}M`,
+                          name === 'reachM' ? 'Reach' : 'Video Views',
+                        ]}
+                        contentStyle={{ borderRadius: 10, borderColor: '#E2E8F0', fontSize: 12.5 }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="viewsM"
+                        name="viewsM"
+                        stroke="#7C3AED"
+                        strokeWidth={2.5}
+                        fill="url(#creatorViewsGrad)"
+                        dot={{ r: 3.5, fill: '#7C3AED' }}
+                        activeDot={{ r: 5 }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="reachM"
+                        name="reachM"
+                        stroke="#2563EB"
+                        strokeWidth={2.5}
+                        fill="url(#creatorReachGrad)"
+                        dot={{ r: 3.5, fill: '#2563EB' }}
+                        activeDot={{ r: 5 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
               </Card>
             </Col>
@@ -487,23 +529,23 @@ export default function CreatorPortalPage() {
               >
                 {/* Gender Split */}
                 <div style={{ marginBottom: 18 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 700, color: '#1E1B4B', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 700, color: '#0F172A', marginBottom: 6 }}>
                     <span>Phân bổ giới tính</span>
-                    <span style={{ color: '#6B7280', fontWeight: 600 }}>
+                    <span style={{ color: '#64748B', fontWeight: 600 }}>
                       Nữ {metrics.audienceDemographics.femalePct}% • Nam {metrics.audienceDemographics.malePct}%
                     </span>
                   </div>
-                  <div style={{ display: 'flex', height: 12, borderRadius: 999, overflow: 'hidden', gap: 3 }}>
+                  <div style={{ display: 'flex', height: 10, borderRadius: 999, overflow: 'hidden', gap: 3 }}>
                     <div
                       style={{
                         flex: metrics.audienceDemographics.femalePct,
-                        background: 'linear-gradient(90deg, #6D28D9 0%, #8B5CF6 100%)',
+                        background: '#EC4899',
                       }}
                     />
                     <div
                       style={{
                         flex: metrics.audienceDemographics.malePct,
-                        background: '#D8B4FE',
+                        background: '#3B82F6',
                       }}
                     />
                   </div>
@@ -511,23 +553,23 @@ export default function CreatorPortalPage() {
 
                 {/* Age brackets */}
                 <div style={{ marginBottom: 18 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1E1B4B', marginBottom: 8 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>
                     Độ tuổi chủ đạo
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {metrics.audienceDemographics.ageGroups.map((g, idx) => (
                       <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
-                        <span style={{ color: '#4B5563', fontWeight: 600, width: 54 }}>{g.age}</span>
+                        <span style={{ color: '#475569', fontWeight: 600, width: 54 }}>{g.age}</span>
                         <div style={{ flex: 1 }}>
                           <Progress
                             percent={g.pct}
                             size="small"
-                            strokeColor="#7C3AED"
-                            railColor="#F3E8FF"
+                            strokeColor="#2563EB"
+                            railColor="#E2E8F0"
                             showInfo={false}
                           />
                         </div>
-                        <span style={{ fontWeight: 700, color: '#1E1B4B', width: 38, textAlign: 'right' }}>
+                        <span style={{ fontWeight: 700, color: '#0F172A', width: 38, textAlign: 'right' }}>
                           {g.pct}%
                         </span>
                       </div>
