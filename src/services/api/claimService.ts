@@ -1,6 +1,6 @@
 import apiClient from '../apiClient';
 import { readPage } from './pageResponse';
-import type { ClaimResponse, ClaimListParams, ReviewRequest, RevokeRequest } from '../../types/api/claim.types';
+import type { ClaimResponse, ClaimListParams, ReviewRequest, RevokeRequest, SubmitClaimRequest } from '../../types/api/claim.types';
 
 function normalize(raw: any): ClaimResponse {
   if (!raw || typeof raw.id !== 'string' || typeof raw.creatorId !== 'string' ||
@@ -17,7 +17,9 @@ function normalize(raw: any): ClaimResponse {
     verification: raw.verification,
     status: raw.status, submittedAt: raw.createdAt ?? raw.submittedAt ?? '',
     reviewedAt: raw.reviewedAt, reviewedBy: raw.reviewerId ?? raw.reviewedBy,
-    reason: raw.revokeReason ?? raw.reason,
+    reason: raw.reason, revokeReason: raw.revokeReason,
+    cooperationInvitationId: raw.cooperationInvitationId,
+    reviewEvidenceType: raw.reviewEvidenceType, reviewVerificationNote: raw.reviewVerificationNote,
     evidenceUrl: raw.evidenceUrls?.[0] ?? raw.evidenceUrl,
     evidenceUrls: Array.isArray(raw.evidenceUrls) ? raw.evidenceUrls : [],
     evidenceNote: raw.note ?? raw.evidenceNote, evidenceType: raw.evidenceType,
@@ -36,14 +38,19 @@ const getClaimById = async (id: string): Promise<ClaimResponse> => {
 const reviewClaim = async (id: string, payload: ReviewRequest): Promise<ClaimResponse> => {
   if (!payload.reason.trim()) throw new Error('Vui lòng nhập lý do quyết định.');
   const response = await apiClient.patch('/data/creator-claims/' + encodeURIComponent(id) + '/review',
-    { decision: payload.approved ? 'APPROVED' : 'REJECTED', reason: payload.reason.trim() });
+    {
+      decision: payload.approved ? 'APPROVED' : 'REJECTED',
+      reason: payload.reason.trim(),
+      reviewEvidenceType: payload.reviewEvidenceType,
+      reviewVerificationNote: payload.reviewVerificationNote.trim(),
+    });
   return normalize(response.data?.data ?? response.data);
 };
 const revokeClaim = async (id: string, payload: RevokeRequest): Promise<ClaimResponse> => {
   const response = await apiClient.post('/data/creator-claims/' + encodeURIComponent(id) + '/revoke', payload);
   return normalize(response.data?.data ?? response.data);
 };
-const submitClaim = async (creatorId: string, payload: { evidenceUrls?: string[]; note?: string }): Promise<ClaimResponse> => {
+const submitClaim = async (creatorId: string, payload: SubmitClaimRequest): Promise<ClaimResponse> => {
   const response = await apiClient.post('/creators/' + encodeURIComponent(creatorId) + '/claim', payload);
   return normalize(response.data?.data ?? response.data);
 };

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Card, Empty, Pagination, Space, Spin, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Empty, Modal, Pagination, Radio, Space, Spin, Tag, Typography } from 'antd';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   cooperationPath, pendingCooperation, pendingCooperationTarget,
@@ -16,6 +16,14 @@ import type { ClaimResponse, ClaimStatus } from '../../../types/api/claim.types'
 import ManualChannelClaim, { httpUrl } from './ManualChannelClaim';
 
 const storageKey = 'creator.channel-oauth';
+const instagramChoices = [
+  { flow: 'INSTAGRAM_LOGIN', label: 'Đăng nhập trực tiếp bằng Instagram',
+    description: 'Dùng tài khoản Instagram chuyên nghiệp. Không cần liên kết Facebook Page.' },
+  { flow: 'FACEBOOK_LOGIN', label: 'Qua Facebook Page',
+    description: 'Dùng Trang Facebook đã liên kết với tài khoản Instagram.' },
+  { flow: 'INSTAGRAM_UNIFIED_LOGIN', label: 'Qua Meta Business Portfolio',
+    description: 'Chọn tài khoản Instagram trong danh mục doanh nghiệp bạn quản lý.' },
+] as const;
 const claimLabels: Record<ClaimStatus, { label: string; color: string }> = {
   PENDING: { label: 'Chờ duyệt', color: 'warning' },
   APPROVED: { label: 'Đã duyệt', color: 'success' },
@@ -24,10 +32,23 @@ const claimLabels: Record<ClaimStatus, { label: string; color: string }> = {
 };
 const matchLabels = {
   AVAILABLE: 'Có thể liên kết',
+  CAN_CREATE: 'Kênh đã cấp quyền và có thể tạo hồ sơ mới.',
   ALREADY_LINKED: 'Đã liên kết với bạn',
   UNMATCHED: 'Chưa khớp mã kênh trong hệ thống',
   UNAVAILABLE: 'Không thể liên kết do quyền sở hữu hoặc điều kiện kênh',
   INSUFFICIENT_EVIDENCE: 'OAuth chưa đủ bằng chứng về quyền phù hợp; cần xác minh thủ công',
+};
+const linkActions: Partial<Record<keyof typeof matchLabels, string>> = {
+  AVAILABLE: 'Liên kết kênh',
+  CAN_CREATE: 'Tạo và liên kết kênh',
+  ALREADY_LINKED: 'Xác minh lại',
+};
+const matchReasons = {
+  CHANNEL_NOT_FOUND: 'Mã kênh chưa khớp hồ sơ trong hệ thống.',
+  UNSTABLE_CHANNEL_ID: 'Hồ sơ hiện chưa có mã kênh chính thức để đối chiếu.',
+  MISSING_PAGE_MANAGEMENT: 'Tài khoản Facebook chưa có quyền quản lý Trang cần thiết.',
+  TARGET_MISMATCH: 'Tài khoản này quản lý kênh khác với kênh được mời.',
+  OWNERSHIP_CONFLICT: 'Kênh đang thuộc tài khoản khác hoặc có xung đột sở hữu.',
 };
 
 function verificationLabel(channel: LinkedChannel) {
@@ -60,15 +81,9 @@ function readPendingOAuth(): PendingOAuth | null {
   }
 }
 
-function getConsentUrl(raw: string, option: ConnectionOption) {
-  return consentUrl(raw, option.oauthFlow, window.location.origin);
-}
-
 function optionLabel(option: ConnectionOption) {
   if (option.platform === 'TIKTOK') return 'TikTok Sandbox';
-  if (option.platform === 'FACEBOOK') return 'Facebook Page';
-  if (option.oauthFlow === 'INSTAGRAM_UNIFIED_LOGIN') return 'Instagram qua Business Portfolio';
-  return option.oauthFlow === 'INSTAGRAM_LOGIN' ? 'Instagram Professional' : 'Instagram qua Facebook Page';
+  return option.platform === 'FACEBOOK' ? 'Facebook' : 'Instagram';
 }
 
 function ClaimHistory() {
@@ -100,7 +115,7 @@ function ClaimHistory() {
                 {claim.submittedAt && <Typography.Text type="secondary">
                   {new Date(claim.submittedAt).toLocaleString('vi-VN')}
                 </Typography.Text>}
-                {claim.reason && <span>Lý do: {claim.reason}</span>}
+                {(claim.revokeReason || claim.reason) && <span>Lý do: {claim.revokeReason ?? claim.reason}</span>}
               </Space>
               <Tag color={claimLabels[claim.status].color}>{claimLabels[claim.status].label}</Tag>
             </div>)}
@@ -125,11 +140,13 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
   const invitationToken = pendingCooperation();
   const invitationTarget = pendingCooperationTarget();
   const [options, setOptions] = useState<ConnectionOption[] | null>(null);
+  const [showInstagram, setShowInstagram] = useState(false);
   const [optionsError, setOptionsError] = useState('');
   const [optionsRetry, setOptionsRetry] = useState(0);
   const [pending, setPending] = useState(readPendingOAuth);
   const [returnHint, setReturnHint] = useState(() => params.get('oauth'));
   const [session, setSession] = useState<OAuthSession | null>(null);
+  const [selection, setSelection] = useState<{ sessionId: string; accountId: string } | null>(null);
   const [checking, setChecking] = useState(false);
   const [statusRetry, setStatusRetry] = useState(0);
   const [working, setWorking] = useState('');
@@ -147,18 +164,22 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
     channel => channel.creatorId === invitationTarget?.creatorId
       && channel.platform === invitationTarget?.platform,
   );
+  const manualInvitation = invitationToken && targetChannel && invitationContext?.status === 'NEEDS_CHANNEL_VERIFICATION'
+    ? { token: invitationToken, target: targetChannel } : undefined;
+  const canOpenManual = !invitationToken || !!manualInvitation;
 
   useEffect(() => {
     const returned = ['return', 'cancelled', 'conflict'].includes(params.get('oauth') ?? '');
     const openClaim = params.get('claim') === 'new';
     if (!returned && !openClaim) return;
     if (returned && !readPendingOAuth()) setError('Không tìm thấy phiên xác minh của tài khoản này. Hãy bắt đầu lại.');
-    if (openClaim && canVerify) setManual({});
+    if (openClaim && canVerify && canOpenManual) setManual({});
+    if (openClaim && invitationToken && !invitationContext && !invitationContextError && !returned) return;
     const nextParams = new URLSearchParams(params);
     if (returned) nextParams.delete('oauth');
     if (openClaim) nextParams.delete('claim');
     setParams(nextParams, { replace: true });
-  }, [canVerify, params, setParams]);
+  }, [canVerify, canOpenManual, invitationContext, invitationContextError, invitationToken, params, setParams]);
 
   useEffect(() => {
     if (!canVerify) return;
@@ -196,6 +217,7 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
     setPending(null);
     setReturnHint(null);
     setSession(null);
+    setSelection(null);
     setChecking(false);
   }
 
@@ -210,7 +232,9 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
         if (result.status === 'COMPLETED') {
           const updated = await reloadLinked(controller.signal);
           if (controller.signal.aborted || pending.authSessionId !== getAuthSessionId()) return;
-          if (!updated || (result.creatorId && !updated.some(channel => channel.id === result.creatorId))) {
+          if (!updated
+              || (pending.flow === 'TIKTOK_LOGIN' && !result.creatorId)
+              || (result.creatorId && !updated.some(channel => channel.id === result.creatorId))) {
             setError('BE đã xác nhận phiên. Chưa đọc được kênh vừa liên kết, hãy kiểm tra lại phiên.');
             return;
           }
@@ -222,6 +246,9 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
           }
         } else {
           setSession(result);
+          setSelection(current => result.status === 'READY' && current?.sessionId === result.sessionId
+            && result.accounts.some(account => account.accountId === current.accountId
+              && !!linkActions[account.matchStatus]) ? current : null);
           if (invitationToken && pending.flow === 'TIKTOK_LOGIN' && result.status === 'READY') {
             clearPending();
             navigate(cooperationPath(), { state: { channelOAuthResult: 'MANUAL_RESOLUTION' } });
@@ -230,6 +257,8 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
       })
       .catch(cause => {
         if (!controller.signal.aborted && pending.authSessionId === getAuthSessionId()) {
+          setSession(null);
+          setSelection(null);
           setError(getErrorMessage(cause, 'Không đọc được phiên xác minh. Hãy thử tải lại hoặc bắt đầu lại.'));
         }
       })
@@ -237,10 +266,31 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
     return () => controller.abort();
   }, [canVerify, invitationToken, navigate, pending, reloadLinked, statusRetry]);
 
+  const instagramOption = options?.find(option => option.platform === 'INSTAGRAM');
+  const canUsePlatform = (platform: OAuthPlatform) => !invitationToken
+    || (targetChannel?.platform === platform && invitationContext?.status === 'NEEDS_CHANNEL_VERIFICATION');
+  const checkingInvitation = !!invitationToken && !invitationContext && !invitationContextError;
+  const selectableAccounts = canVerify && pending && pending.flow !== 'TIKTOK_LOGIN'
+    && session?.status === 'READY' && session.sessionId === pending.id
+    ? session.accounts.filter(account => !!linkActions[account.matchStatus]
+      && canUsePlatform(session.platform) && (!invitationToken || account.creatorId === targetChannel?.creatorId))
+    : [];
+  const selectedAccount = selection && selection.sessionId === session?.sessionId
+    ? selectableAccounts.find(account => account.accountId === selection.accountId) : undefined;
+  const instagramDialogOpen = showInstagram && canVerify && !pending
+    && !!instagramOption && canUsePlatform('INSTAGRAM');
+  const instagramMethods = instagramChoices.map(choice => ({
+    ...choice,
+    option: instagramOption?.methods
+      ? instagramOption.methods.find(method => method.oauthFlow === choice.flow)
+      : instagramOption?.oauthFlow === choice.flow ? instagramOption : undefined,
+  }));
+
   async function start(option: ConnectionOption) {
-    if (busy.current) return;
+    const flow = option.oauthFlow;
+    if (busy.current || !option.available || !flow || !canUsePlatform(option.platform)) return;
     busy.current = true;
-    setWorking(optionLabel(option));
+    setWorking(option.platform === 'INSTAGRAM' ? flow : optionLabel(option));
     setNotice('');
     setError('');
     const authSessionId = getAuthSessionId();
@@ -252,14 +302,14 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
       const startContext = invitationToken && targetChannel
         ? { creatorId: targetChannel.creatorId, cooperationInvitationToken: invitationToken }
         : {};
-      const result = await verification.start(option, startContext);
+      const result = await verification.start({ ...option, oauthFlow: flow }, startContext);
       if (getAuthSessionId() !== authSessionId) return;
-      const url = getConsentUrl(result.authorizationUrl, option);
+      const url = consentUrl(result.authorizationUrl, flow, window.location.origin);
       if (!result.sessionId || !Number.isFinite(Date.parse(result.expiresAt))) {
         throw new Error('Phiên xác minh mới không hợp lệ.');
       }
       sessionStorage.setItem(storageKey, JSON.stringify({ id: result.sessionId, expiresAt: result.expiresAt,
-        authSessionId, flow: option.oauthFlow, targetCreatorId: targetChannel?.creatorId ?? null }));
+        authSessionId, flow, targetCreatorId: targetChannel?.creatorId ?? null }));
       window.location.assign(url);
     } catch (cause) {
       setError(getErrorMessage(cause, 'Không bắt đầu được xác minh.'));
@@ -269,8 +319,10 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
     }
   }
 
-  async function confirm(accountId: string) {
-    if (!pending || session?.status !== 'READY' || busy.current) return;
+  async function confirm() {
+    if (!pending || !selectedAccount || checking || busy.current
+        || pending.authSessionId !== getAuthSessionId()) return;
+    const accountId = selectedAccount.accountId;
     busy.current = true;
     setWorking(accountId);
     setNotice('');
@@ -333,26 +385,36 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
       {canVerify && <Card className="creator-section-card" title="Xác minh kênh">
         <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
           {notice && <Alert showIcon type="success" title={notice} />}
-          {error && <Alert showIcon type="error" title={error} />}
+          {error && !instagramDialogOpen && <Alert showIcon type="error" title={error} />}
           {optionsError && <Alert showIcon type="error" title={optionsError} action={
             <Button onClick={() => setOptionsRetry(value => value + 1)}>Thử lại</Button>
           } />}
           {invitationToken && invitationContextError && <Alert type="error" showIcon title={invitationContextError} />}
           {invitationToken && !invitationTarget && <Alert type="warning" showIcon
-            title="Chọn kênh cụ thể từ trang lời mời trước khi bắt đầu OAuth." />}
+            title="Chọn kênh cụ thể từ trang lời mời trước khi xác minh." />}
           {invitationToken && invitationTarget && invitationContext && !targetChannel && <Alert type="error" showIcon
             title="Kênh đã chọn không còn thuộc lời mời này. Quay lại lời mời để kiểm tra lại." />}
           <Space wrap>
-            <Button disabled={!!working} onClick={() => setManual({})}>Gửi bằng chứng thủ công</Button>
+            <Button disabled={!!working || !canOpenManual} onClick={() => setManual({})}>Xác minh thủ công</Button>
             {!pending && options?.filter(option => !invitationToken || option.platform === targetChannel?.platform).map(option => <Button key={optionLabel(option)} type="primary"
               loading={working === optionLabel(option)}
-              disabled={!option.available || (!!working && working !== optionLabel(option))
-                || !!invitationToken && (!targetChannel || invitationContext?.status !== 'NEEDS_CHANNEL_VERIFICATION')}
-              title={option.available ? undefined : 'Phương thức này chưa được cấu hình'}
-              onClick={() => void start(option)}>Xác minh {optionLabel(option)}</Button>)}
+              disabled={(option.platform !== 'INSTAGRAM' && !option.available) || !!working || !canUsePlatform(option.platform)}
+              title={option.platform === 'INSTAGRAM' || option.available ? undefined
+                : option.unavailableReason === 'NOT_CONFIGURED' ? 'Phương thức này chưa được cấu hình đầy đủ'
+                : 'Phương thức này chưa được bật trong môi trường hiện tại'}
+              onClick={() => {
+                if (option.platform === 'INSTAGRAM') {
+                  setError('');
+                  setShowInstagram(true);
+                } else {
+                  void start(option);
+                }
+              }}>Xác minh {optionLabel(option)}</Button>)}
             {!options && !optionsError && <Spin size="small" />}
           </Space>
-          {!pending && options && !options.some(option => option.available) &&
+          {!pending && options?.some(option => option.available || option.methods?.some(method => method.available)) &&
+            <Typography.Text type="secondary">Nền tảng sẽ kiểm tra quyền của tài khoản và kênh trong bước cấp quyền.</Typography.Text>}
+          {!pending && options && !options.some(option => option.available || option.methods?.some(method => method.available)) &&
             <Typography.Text type="secondary">Xác minh qua nền tảng hiện chưa khả dụng.</Typography.Text>}
           {pending && <>
             {checking && <Spin size="small" />}
@@ -365,37 +427,70 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
             {session?.status === 'EXPIRED' && <Alert type="warning" showIcon title="Phiên xác minh đã hết hạn." />}
             {session?.status === 'READY' && pending.flow === 'TIKTOK_LOGIN' && <>
               <Alert type="warning" showIcon
-                title="TikTok đã cấp quyền, nhưng chưa xác nhận được danh tính kênh mục tiêu. Chưa thay đổi ownership."
+                title={invitationToken
+                  ? 'TikTok chưa xác nhận được tài khoản đã cấp quyền khớp với kênh được mời.'
+                  : 'TikTok đã cấp quyền, nhưng hệ thống chưa đối chiếu được mã kênh. Hãy hủy phiên để thử lại.'}
                 description={session.account?.username || session.account?.displayName} />
-              <Button disabled={!!working} onClick={() => setManual({
+              <Button disabled={!!working || !canOpenManual} onClick={() => setManual({
                 platform: 'TIKTOK', query: session.account?.username ?? '',
               })}>Tiếp tục xác minh thủ công</Button>
             </>}
             {session?.status === 'READY' && pending.flow !== 'TIKTOK_LOGIN' && (
               session.accounts.length ? <Space orientation="vertical" style={{ width: '100%' }}>
-                <Typography.Text strong>Chọn kênh đã cấp quyền</Typography.Text>
-                {session.accounts.map(account => <div className="creator-mini-row" key={account.accountId}
-                  style={{ flexWrap: 'wrap', gap: 8 }}>
-                  <Space orientation="vertical" size={2} style={{ overflowWrap: 'anywhere' }}>
-                    <Typography.Text strong>{account.name || account.username || account.accountId}</Typography.Text>
-                    <span>{account.username && account.name ? '@' + account.username.replace(/^@/, '') + ' · ' : ''}
-                      {account.accountId}</span>
-                    <Typography.Text type="secondary">{matchLabels[account.matchStatus]}</Typography.Text>
+                <Typography.Text strong id="oauth-channel-choice">Chọn kênh đã cấp quyền</Typography.Text>
+                <Radio.Group name="oauth-account" aria-labelledby="oauth-channel-choice"
+                  value={selectedAccount?.accountId ?? ''} disabled={checking || !!working}
+                  style={{ width: '100%' }}
+                  onChange={event => {
+                    const accountId = event.target.value;
+                    if (selectableAccounts.some(account => account.accountId === accountId)) {
+                      setSelection({ sessionId: session.sessionId, accountId });
+                    }
+                  }}>
+                  <Space orientation="vertical" style={{ width: '100%' }}>
+                    {session.accounts.map(account => {
+                      const canSelect = selectableAccounts.includes(account);
+                      const canSubmitEvidence = account.matchStatus === 'INSUFFICIENT_EVIDENCE'
+                        && (!!account.creatorId || account.matchReason === 'UNSTABLE_CHANNEL_ID');
+                      const wrongTarget = !!invitationToken && !!targetChannel && !!linkActions[account.matchStatus]
+                        && account.creatorId !== targetChannel.creatorId;
+                      const reason = wrongTarget ? matchReasons.TARGET_MISMATCH
+                        : (account.matchReason && matchReasons[account.matchReason]) || matchLabels[account.matchStatus];
+                      return <div className="creator-mini-row" key={account.accountId}
+                        style={{ flexWrap: 'wrap', gap: 8 }}>
+                        <Radio value={account.accountId} disabled={canSelect ? undefined : true}
+                          style={{ flex: '1 1 180px', minWidth: 0, marginInlineEnd: 0 }}>
+                          <span style={{ display: 'flex', flexDirection: 'column', gap: 2, overflowWrap: 'anywhere' }}>
+                            <Typography.Text strong>{account.name || account.username || account.accountId}</Typography.Text>
+                            <Typography.Text>
+                              {account.username && account.name ? '@' + account.username.replace(/^@/, '') + ' · ' : ''}
+                              {account.accountId}
+                            </Typography.Text>
+                            <Typography.Text type="secondary">{reason}</Typography.Text>
+                          </span>
+                        </Radio>
+                        {canSubmitEvidence && <Button disabled={checking || !!working || !canOpenManual} onClick={() => setManual({
+                          platform: session.platform, query: account.username ?? account.accountId,
+                        })}>Gửi bằng chứng</Button>}
+                      </div>;
+                    })}
                   </Space>
-                  {(account.matchStatus === 'AVAILABLE' || account.matchStatus === 'ALREADY_LINKED') && <Button
-                    type={account.matchStatus === 'AVAILABLE' ? 'primary' : 'default'}
-                    disabled={checking || (!!working && working !== account.accountId)}
-                    loading={working === account.accountId} onClick={() => void confirm(account.accountId)}>
-                    {account.matchStatus === 'AVAILABLE' ? 'Liên kết kênh' : 'Xác minh lại'}
-                  </Button>}
-                  {(account.matchStatus === 'UNMATCHED' || account.matchStatus === 'INSUFFICIENT_EVIDENCE') && <Button disabled={!!working} onClick={() => setManual({
-                    platform: session.platform, query: account.username ?? account.accountId,
-                  })}>Gửi bằng chứng</Button>}
-                </div>)}
+                </Radio.Group>
+                {!checking && !checkingInvitation && !selectableAccounts.length && <Alert type="info" showIcon
+                  title="Chưa có kênh đủ điều kiện liên kết."
+                  description="Xem lý do ở từng kênh. Chọn Kiểm tra lại phiên để cập nhật, hoặc hủy phiên và cấp quyền lại." />}
+                <Button type="primary" disabled={!selectedAccount || checking || !!working}
+                  loading={!!selectedAccount && working === selectedAccount.accountId} onClick={() => void confirm()}>
+                  {selectedAccount ? linkActions[selectedAccount.matchStatus] : 'Liên kết kênh'}
+                </Button>
               </Space> : <Alert showIcon type="warning" title={pending.flow === 'INSTAGRAM_UNIFIED_LOGIN'
-                ? 'Chưa có tài khoản Instagram được cấp quyền trong phiên này.' : 'Nền tảng chưa trả về kênh đủ điều kiện.'}
+                ? 'Chưa có tài khoản Instagram được cấp quyền trong phiên này.'
+                : session.platform === 'FACEBOOK' ? 'Facebook chưa trả về Trang nào cho phiên này.' : 'Nền tảng chưa trả về kênh đủ điều kiện.'}
                 description={pending.flow === 'INSTAGRAM_UNIFIED_LOGIN'
-                  ? 'Hủy phiên để cấp quyền lại với đúng tài khoản chuyên nghiệp và Business Portfolio, hoặc gửi bằng chứng thủ công.' : undefined} />
+                  ? 'Hủy phiên để cấp quyền lại với đúng tài khoản chuyên nghiệp và Business Portfolio, hoặc gửi bằng chứng thủ công.'
+                  : session.platform === 'FACEBOOK'
+                    ? 'Hủy phiên và cấp quyền lại bằng tài khoản có quyền quản lý Trang, hoặc chọn xác minh thủ công.'
+                    : undefined} />
             )}
             <Space wrap>
               <Button disabled={checking || !!working} onClick={() => {
@@ -430,7 +525,38 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
             </Space>}
       </Card>}
       {canViewClaims && <ClaimHistory key={historyVersion} />}
-      {manual && canVerify && <ManualChannelClaim initialPlatform={manual.platform} initialQuery={manual.query}
+      <Modal title="Chọn cách xác minh Instagram" open={instagramDialogOpen} footer={null}
+        closable={!working} mask={{ closable: !working }} keyboard={!working}
+        onCancel={() => { setShowInstagram(false); setError(''); }}>
+        <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
+          {error && <Alert showIcon type="error" title={error} />}
+          {instagramMethods.map(({ flow, label, description, option }) => (
+            <Space key={flow} orientation="vertical" size={4} style={{ width: '100%' }}>
+              {flow === 'INSTAGRAM_LOGIN' && <Tag color="blue">Khuyên dùng</Tag>}
+              <Button block disabled={!option?.available || !!working} loading={working === flow}
+                type={flow === 'INSTAGRAM_LOGIN' ? 'primary' : 'default'}
+                style={{ whiteSpace: 'normal', height: 'auto', minHeight: 32 }}
+                onClick={() => void start({
+                  platform: 'INSTAGRAM', oauthFlow: flow, supported: true, available: option?.available === true,
+                })}>{label}</Button>
+              <Typography.Text type="secondary">{description}</Typography.Text>
+              {!option?.available && <Typography.Text type="secondary">
+                {option?.unavailableReason === 'NOT_CONFIGURED'
+                  ? 'Phương thức này chưa được cấu hình đầy đủ.'
+                  : 'Phương thức này chưa được bật trong môi trường hiện tại.'}
+              </Typography.Text>}
+            </Space>
+          ))}
+          {!instagramMethods.some(({ option }) => option?.available) && canOpenManual && (
+            <Button onClick={() => { setShowInstagram(false); setError(''); setManual({ platform: 'INSTAGRAM' }); }}>
+              Xác minh thủ công
+            </Button>
+          )}
+        </Space>
+      </Modal>
+      {manual && canVerify && canOpenManual && <ManualChannelClaim
+        key={manualInvitation?.target.creatorId ?? 'portal-claim'}
+        initialPlatform={manual.platform} initialQuery={manual.query} invitation={manualInvitation}
         onClose={() => setManual(null)} onSubmitted={() => {
           setManual(null);
           setNotice('Đã gửi bằng chứng. Yêu cầu đang chờ duyệt.');

@@ -13,8 +13,9 @@ export function collectionNeedsComparison(result: {
 // A crawl completing is not an approval. Classification alone is not an approval either.
 export function collectionOutcome(decision?: string, primaryType?: string): CollectionOutcome {
   const value = (decision || '').toUpperCase();
-  if (['SKIP_INSUFFICIENT', 'AUTO_REJECT', 'REJECTED', 'MANAGER_REJECTED'].includes(value)) return 'rejected';
-  if (['NEEDS_MANAGER_REVIEW', 'REVIEW', 'VERIFY', 'VERIFICATION', 'NEEDS_VERIFICATION'].includes(value)) return 'review';
+  if (['AUTO_REJECT', 'REJECTED', 'MANAGER_REJECTED'].includes(value)) return 'rejected';
+  if (['SKIP_INSUFFICIENT', 'RETRY_PREFLIGHT', 'NEEDS_MANAGER_REVIEW', 'REVIEW',
+    'VERIFY', 'VERIFICATION', 'NEEDS_VERIFICATION'].includes(value)) return 'review';
   if (['AUTO_ACCEPT_KOC', 'AUTO_ACCEPT_KOL', 'ACCEPTED', 'PASS', 'MANAGER_APPROVED'].includes(value)) {
     return ['KOC', 'KOL'].includes((primaryType || '').toUpperCase()) || value.startsWith('AUTO_ACCEPT_')
       ? 'accepted' : 'review';

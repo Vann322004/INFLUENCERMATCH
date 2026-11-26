@@ -1161,10 +1161,9 @@ export default function HeroLanding() {
                 <summary aria-label="Mở menu điều hướng"><span aria-hidden="true">☰</span></summary>
                 <div>
                   {LANDING_NAV.map(item => <a key={item.id} href={'#' + item.id} aria-current={activeSection === item.id ? 'location' : undefined}>{item.label}</a>)}
-                  <Link to="/login">Đăng nhập</Link>
                 </div>
               </details>
-              <Link to="/login" className="nl-nav-pill grey">
+              <Link to="/login" className="nl-nav-pill grey nl-nav-login">
                 Đăng nhập
               </Link>
               <Link to="/register" className="nl-nav-pill primary">

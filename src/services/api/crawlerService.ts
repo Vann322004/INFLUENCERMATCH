@@ -4,8 +4,11 @@ import type {
   CrawlPlatform,
   LiveCrawlResult,
   BatchCrawlResponse,
+  BatchCrawlProgress,
   CrawlMonitorOverview,
 } from '../../types/api/crawler.types';
+
+type BatchCrawlProgressListener = (progress: BatchCrawlProgress) => void;
 
 class CrawlerService {
   /**
@@ -47,11 +50,16 @@ class CrawlerService {
   /**
    * Cào hàng loạt theo ngành hàng hoặc danh sách (POST /api/v1/crawl/batch-crawl)
    */
-  async collectAccounts(platform: CrawlPlatform, usernames: string[], maxChannels = 20): Promise<BatchCrawlResponse> {
+  async collectAccounts(
+    platform: CrawlPlatform,
+    usernames: string[],
+    maxChannels = 20,
+    onProgress?: BatchCrawlProgressListener
+  ): Promise<BatchCrawlResponse> {
     const limit = Math.max(1, Math.min(20, Math.trunc(maxChannels) || 1));
     const accounts = [...new Set(usernames.map(value => value.trim().replace(/^@+/, '')).filter(Boolean))].slice(0, limit);
     if (!accounts.length) throw new Error('Vui lòng nhập ít nhất một tài khoản.');
-    return this.batchCrawl({ platform, usernames: accounts, maxChannels: limit });
+    return this.batchCrawl({ platform, usernames: accounts, maxChannels: limit }, onProgress);
   }
 
   async batchCrawl(payload: {
@@ -60,7 +68,7 @@ class CrawlerService {
     keywords?: string[];
     usernames?: string[];
     maxChannels?: number;
-  }): Promise<BatchCrawlResponse> {
+  }, onProgress?: BatchCrawlProgressListener): Promise<BatchCrawlResponse> {
     const plat = (payload.platform || 'TIKTOK').toUpperCase();
     const maxChannels = payload.maxChannels || 3;
 
@@ -82,7 +90,12 @@ class CrawlerService {
     const deadline = Date.now() + 15 * 60 * 1000;
     let failures = 0;
     while (Date.now() < deadline) {
-      let job: { status: string; result?: BatchCrawlResponse; error?: string };
+      let job: {
+        status: string;
+        result?: BatchCrawlResponse;
+        error?: string;
+        progress?: BatchCrawlProgress;
+      };
       try {
         job = await this.requestCrawler(`/api/v1/crawl/batch-crawl/jobs/${encodeURIComponent(taskId)}`, {}, 10000);
         failures = 0;
@@ -91,6 +104,7 @@ class CrawlerService {
         await new Promise(resolve => setTimeout(resolve, 2000));
         continue;
       }
+      if (job.progress) onProgress?.(job.progress);
       if (job.status === 'COMPLETED' && job.result) {
         try { sessionStorage.removeItem(storageKey); } catch { /* Storage may be disabled. */ }
         invalidateDataManagerCacheForMutation('POST', '/api/v1/crawl/batch-crawl');

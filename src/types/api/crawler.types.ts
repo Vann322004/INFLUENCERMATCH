@@ -41,6 +41,9 @@ export interface LiveCrawlResult {
 
 export interface BatchCrawlSummary {
   total_requested: number;
+  attempted_count?: number;
+  discovery_shortfall?: number;
+  discovery_status?: string;
   success_count: number;
   failed_count: number;
   avg_latency_ms: number;
@@ -53,6 +56,13 @@ export interface BatchCrawlResponse {
   summary: BatchCrawlSummary;
   results: LiveCrawlResult[];
   metrics?: Record<string, unknown>;
+}
+
+export interface BatchCrawlProgress {
+  logs?: string[];
+  current_keyword?: string;
+  platform?: string;
+  stage?: string;
 }
 
 export interface CrawlerOverviewStats {

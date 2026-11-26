@@ -5,14 +5,21 @@ export type MetaPlatform = 'FACEBOOK' | 'INSTAGRAM';
 export type OAuthPlatform = MetaPlatform | 'TIKTOK';
 export type OAuthFlow = 'FACEBOOK_LOGIN' | 'INSTAGRAM_LOGIN' | 'INSTAGRAM_UNIFIED_LOGIN' | 'TIKTOK_LOGIN';
 
+export interface ConnectionMethod {
+  oauthFlow: OAuthFlow;
+  available: boolean;
+  unavailableReason?: string | null;
+}
+
 export interface ConnectionOption {
   environment?: string;
   requirements?: string[];
   platform: OAuthPlatform;
-  oauthFlow: OAuthFlow;
+  oauthFlow: OAuthFlow | null;
   supported: boolean;
   available: boolean;
   unavailableReason?: string | null;
+  methods?: ConnectionMethod[];
 }
 
 export interface LinkedChannel {
@@ -30,9 +37,11 @@ export interface LinkedChannel {
 
 export interface OAuthAccount {
   accountId: string;
+  creatorId?: string | null;
   name?: string | null;
   username?: string | null;
-  matchStatus: 'AVAILABLE' | 'ALREADY_LINKED' | 'UNMATCHED' | 'UNAVAILABLE' | 'INSUFFICIENT_EVIDENCE';
+  matchStatus: 'AVAILABLE' | 'CAN_CREATE' | 'ALREADY_LINKED' | 'UNMATCHED' | 'UNAVAILABLE' | 'INSUFFICIENT_EVIDENCE';
+  matchReason?: 'CHANNEL_NOT_FOUND' | 'UNSTABLE_CHANNEL_ID' | 'MISSING_PAGE_MANAGEMENT' | 'TARGET_MISMATCH' | 'OWNERSHIP_CONFLICT' | null;
 }
 
 export interface OAuthSession {
@@ -63,14 +72,15 @@ export const channelVerificationService = {
   async options(signal?: AbortSignal): Promise<ConnectionOption[]> {
     const { data } = await apiClient.get(portal + '/connection-options', { signal });
     if (!Array.isArray(data?.data)) throw new Error('Danh sách phương thức xác minh không hợp lệ.');
-    return data.data.filter((option: ConnectionOption) => option.supported && (
-      (option.oauthFlow === 'FACEBOOK_LOGIN' && ['FACEBOOK', 'INSTAGRAM'].includes(option.platform))
-      || (option.oauthFlow === 'INSTAGRAM_LOGIN' && option.platform === 'INSTAGRAM')
-      || (option.oauthFlow === 'INSTAGRAM_UNIFIED_LOGIN' && option.platform === 'INSTAGRAM')
-      || (option.oauthFlow === 'TIKTOK_LOGIN' && option.platform === 'TIKTOK')
-    ));
+    const items: ConnectionOption[] = data.data;
+    return (['FACEBOOK', 'INSTAGRAM', 'TIKTOK'] as const).map(platform => {
+      const matches = items.filter(option => option.supported && option.platform === platform);
+      if (matches.length === 1) return matches[0];
+      return { platform, oauthFlow: null, supported: false, available: false,
+        unavailableReason: 'NOT_CONFIGURED' };
+    });
   },
-  async start(option: ConnectionOption, context: OAuthStartContext = {}): Promise<{ sessionId: string; authorizationUrl: string; expiresAt: string }> {
+  async start(option: ConnectionOption & { oauthFlow: OAuthFlow }, context: OAuthStartContext = {}): Promise<{ sessionId: string; authorizationUrl: string; expiresAt: string }> {
     const directInstagram = option.oauthFlow === 'INSTAGRAM_LOGIN';
     const unifiedInstagram = option.oauthFlow === 'INSTAGRAM_UNIFIED_LOGIN';
     const path = option.oauthFlow === 'TIKTOK_LOGIN' ? portal + '/connect/tiktok/start'

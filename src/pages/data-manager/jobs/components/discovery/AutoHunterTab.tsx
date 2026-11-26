@@ -14,7 +14,7 @@ import DirectCrawlModal from '../DirectCrawlModal';
 import { crawlerService } from '../../../../../services/api/crawlerService';
 import { dataQualityService } from '../../../../../services/api/dataQualityService';
 import { DATA_MANAGER_ROUTES } from '../../../../../constants/adminRoutes';
-import type { CrawlPlatform } from '../../../../../types/api/crawler.types';
+import type { BatchCrawlProgress, CrawlPlatform } from '../../../../../types/api/crawler.types';
 
 export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category' | 'custom' }) {
   const [platform, setPlatform] = useCollectionState<string>(`hunter.${mode}.platform`, 'ALL');
@@ -131,7 +131,7 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
       }
     }
 
-    const targetCount = mode === 'custom' ? Math.min(usernamesToCrawl.length, maxKocs) : maxKocs;
+    const targetCount = mode === 'custom' ? usernamesToCrawl.length : maxKocs;
     setLoading(true);
     setHuntError('');
     setProgressPercent(0);
@@ -160,13 +160,20 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
       setCurrentKeyword(activeKeywords[0] || categoryCode || '');
     }
 
+    const handleProgress = (progress: BatchCrawlProgress) => {
+      if (progress.current_keyword) setCurrentKeyword(progress.current_keyword);
+      if (progress.logs?.length) setLogLines(progress.logs);
+    };
+
     try {
-      const res = mode === 'custom' ? await crawlerService.collectAccounts(crawlPlatform, usernamesToCrawl, maxKocs) : await crawlerService.batchCrawl({
+      const res = mode === 'custom' ? await crawlerService.collectAccounts(
+        crawlPlatform, usernamesToCrawl, targetCount, handleProgress
+      ) : await crawlerService.batchCrawl({
         platform: crawlPlatform,
         category: categoryCode,
         keywords: activeKeywords,
         maxChannels: maxKocs,
-      });
+      }, handleProgress);
 
 
       const summary = res.summary;
@@ -175,45 +182,44 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
 
       res.results = restoreCrawledAvatars(res.results || []);
       setRawResults(res.results);
-      const rawResults = (res.results || []).filter((r) => r.status === 'success' && !!r.username).map(r => ({ ...r }));
 
       // Backend decisions are authoritative for eligibility.
       let rejectedCount = 0;
-      const passedResults: typeof rawResults = [];
+      let acceptedCount = 0;
+      let reviewCount = 0;
       const rejectedNames: string[] = [];
-      const reviewPendingCandidates: { username: string; platform: string }[] = [];
 
-      for (const r of rawResults) {
-        const uname = r.username || '';
-        // Loại bỏ nếu Backend Rule Engine từ chối (Brand / Shop / Spam)
-        if (collectionOutcome(r.decision, r.primary_type) === 'rejected' || r.primary_type === 'BRAND' || r.primary_type === 'SPAM') {
-          r.decision = 'AUTO_REJECT';
-          rejectedCount++;
-          rejectedNames.push(`@${uname.replace(/^@/, '')}`);
-          continue;
-        }
-
-        const outcome = collectionOutcome(r.decision, r.primary_type);
-        if (outcome === 'review') {
-          reviewPendingCandidates.push({ username: uname, platform: r.platform || 'TIKTOK' });
-          continue;
-        }
-        if (outcome === 'accepted') passedResults.push(r);
-      }
-
-      saveCollectionResults(res.results || [], mode === 'custom' ? 'manual' : 'automatic');
-
-      const totalExcluded = failedCnt + rejectedCount;
-      setScannedCount(totalReq);
-      setFilteredOutCount(totalExcluded);
-      setMatchedCount(passedResults.length);
-
-      if (passedResults.length > 0) {
-        const mappedList: DiscoveredKocItem[] = passedResults.map((r, idx) => {
+      const mappedList: DiscoveredKocItem[] = (res.results || [])
+        .filter((r) => !!r.username)
+        .map((r, idx) => {
           const username = (r.username || `koc_${idx}`).replace(/^@/, '');
           const followers = r.followers || 0;
-          // Chỉ coi là KOL khi có tick xanh chính thức hoặc backend phân loại KOL, còn lại ưu tiên chuẩn KOC
+          const isBrandOrSpam = r.primary_type === 'BRAND' || r.primary_type === 'SPAM';
+          const outcome = isBrandOrSpam ? 'rejected' : collectionOutcome(r.decision, r.primary_type);
+
+          const isRejected = outcome === 'rejected' || r.status === 'error';
+          const isReview = outcome === 'review';
+          const isAccepted = outcome === 'accepted' && !isRejected;
+
+          if (isRejected) {
+            rejectedCount++;
+            rejectedNames.push(`@${username}`);
+          } else if (isReview) {
+            reviewCount++;
+          } else if (isAccepted) {
+            acceptedCount++;
+          }
+
           const isKol = r.primary_type === 'KOL' || r.decision === 'AUTO_ACCEPT_KOL';
+
+          let itemStatus: DiscoveredKocItem['status'] = 'DISCOVERED';
+          if (isRejected) {
+            itemStatus = 'REJECTED';
+          } else if (r.database_synced) {
+            itemStatus = 'INGESTED';
+          } else if (isReview) {
+            itemStatus = 'QUEUED';
+          }
 
           return {
             id: `koc_${r.author_id || username}_${idx}`,
@@ -227,40 +233,40 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
             avatarFallbackUrl: r.avatar_fallback_url,
             profileUrl: r.profile_url,
             topicKeyword: activeKeywords[idx % activeKeywords.length] || categoryCode.toLowerCase(),
-            primaryType: isKol ? 'KOL' : 'KOC',
-            decision: r.decision,
-            bio: r.bio,
+            primaryType: isRejected ? (r.primary_type || 'REJECTED') : (isKol ? 'KOL' : 'KOC'),
+            decision: isRejected ? (r.decision || 'AUTO_REJECT') : (r.decision || (isKol ? 'AUTO_ACCEPT_KOL' : 'AUTO_ACCEPT_KOC')),
+            bio: r.bio || r.error,
             latencyMs: r.latency_ms,
-            status: r.database_synced ? 'INGESTED' : 'DISCOVERED',
+            status: itemStatus,
           };
         });
 
-        // Live API already attempts ingest. Do not recrawl completed profiles automatically.
-        const queuedCount = passedResults.filter(result => result.database_synced).length;
+      saveCollectionResults(res.results || [], mode === 'custom' ? 'manual' : 'automatic');
+
+      const totalExcluded = failedCnt + rejectedCount;
+      setScannedCount(totalReq);
+      setFilteredOutCount(totalExcluded);
+      setMatchedCount(acceptedCount);
+
+      if (mappedList.length > 0) {
         setProgressPercent(100);
         setDiscoveredList(mappedList);
 
         const newLogs = [
-          `[${now()}] Đã xử lý ${res.results?.length ?? 0}/${totalReq} kênh yêu cầu; ${mappedList.length} nhà sáng tạo đạt chuẩn Tier-0. ${(res.results?.length ?? 0) < totalReq ? "Nguồn tìm kiếm chưa trả đủ kênh phù hợp." : ""}`,
+          `[${now()}] Đã cào và thẩm định ${mappedList.length}/${totalReq} kênh mục tiêu: ${acceptedCount} đạt chuẩn KOC/KOL, ${rejectedCount} bị từ chối/không đạt${reviewCount > 0 ? `, ${reviewCount} chờ kiểm định` : ''}.`,
         ];
         if (rejectedCount > 0) {
-          newLogs.push(`[${now()}] Đã loại bỏ ${rejectedCount} tài khoản bị backend từ chối: ${rejectedNames.join(', ')}`);
+          newLogs.push(`[${now()}] Đã phân loại từ chối ${rejectedCount} tài khoản (Shop/Brand/Spam hoặc không đủ tiêu chí): ${rejectedNames.slice(0, 5).join(', ')}${rejectedNames.length > 5 ? '...' : ''}`);
         }
-        if (totalExcluded > 0) {
-          newLogs.push(`[${now()}] Có ${totalExcluded} kênh cào lỗi hoặc bị lọc Tier-0. Chưa xác nhận có hồ sơ chờ kiểm định trên hệ thống.`);
+        if (acceptedCount > 0) {
+          newLogs.push(`[${now()}] Có ${acceptedCount} nhà sáng tạo đạt chuẩn chất lượng Tier-0.`);
         }
         setLogLines(newLogs);
-        message.success(`Đã thu thập ${mappedList.length} nhà sáng tạo; ${queuedCount} hồ sơ đã lưu vào DB.`);
 
-        if (reviewPendingCandidates.length > 0) {
-          message.info({
-            content: (
-              <span>
-                Có {totalExcluded} kênh chưa đạt tự động.{' '}
-              </span>
-            ),
-            duration: 6,
-          });
+        if (acceptedCount > 0) {
+          message.success(`Đã thu thập ${mappedList.length} kênh; ${acceptedCount} kênh đạt chuẩn KOC/KOL.`);
+        } else {
+          message.warning(`Đã cào ${mappedList.length} kênh; tất cả đều bị từ chối do không đủ tiêu chuẩn KOC.`);
         }
 
         // Tự động cuộn xuống bảng kết quả
@@ -269,23 +275,11 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
         }, 150);
       } else {
         setProgressPercent(100);
-        const reason = rejectedCount > 0
-          ? `Backend từ chối ${rejectedCount} tài khoản: ${rejectedNames.join(', ')}.`
-          : 'Không có tài khoản nào đạt tiêu chuẩn Tier-0 trong danh mục này.';
         setLogLines([
-          `[${now()}] ${reason}`,
-          totalExcluded > 0
-            ? `[${now()}] Có ${totalExcluded} kênh cào lỗi hoặc bị lọc Tier-0; số này không phải số hồ sơ chờ kiểm định.`
-            : `[${now()}] Gợi ý: Hãy thử chọn danh mục khác hoặc tăng số lượng mục tiêu cào.`,
+          `[${now()}] Không tìm thấy kênh nào trên nguồn tìm kiếm với từ khóa đã chọn.`,
+          `[${now()}] Gợi ý: Hãy thử đổi từ khóa hoặc tăng phạm vi tìm kiếm.`,
         ]);
-        message.warning({
-          content: (
-            <span>
-              Không có nhà sáng tạo nào đạt chuẩn tự động (cào lỗi hoặc bị lọc {totalExcluded} kênh).{' '}
-            </span>
-          ),
-          duration: 6,
-        });
+        message.warning('Không tìm thấy kênh nào trên nguồn tìm kiếm với từ khóa đã chọn.');
       }
     } catch (err: any) {
       setHuntError(err.message || 'Crawler request failed');
@@ -314,15 +308,19 @@ export default function AutoHunterTab({ mode = 'category' }: { mode?: 'category'
   };
 
   const handleImportAll = async () => {
-    if (discoveredList.length === 0) return;
-    message.loading({ content: `Đang đồng bộ ${discoveredList.length} nhà sáng tạo vào Database...`, key: 'imp_all' });
+    const importable = discoveredList.filter((k) => k.status !== 'REJECTED' && k.status !== 'INGESTED');
+    if (importable.length === 0) {
+      message.info('Không có nhà sáng tạo đạt chuẩn mới nào để đồng bộ.');
+      return;
+    }
+    message.loading({ content: `Đang đồng bộ ${importable.length} nhà sáng tạo vào Database...`, key: 'imp_all' });
     try {
       const submissions = await Promise.allSettled(
-        discoveredList.map((k) =>
+        importable.map((k) =>
           crawlerService.enqueueCandidate(k.platform as any, k.username, false)
         )
       );
-      const queuedIds = new Set(discoveredList.filter((_, index) => submissions[index].status === 'fulfilled').map(item => item.id));
+      const queuedIds = new Set(importable.filter((_, index) => submissions[index].status === 'fulfilled').map(item => item.id));
       setDiscoveredList(prev => prev.map(item => queuedIds.has(item.id) ? { ...item, status: 'QUEUED' } : item));
       const failedCount = submissions.length - queuedIds.size;
       message[failedCount ? 'warning' : 'success']({ content: `Đã gửi ${queuedIds.size} hồ sơ vào hàng đợi.${failedCount ? ` ${failedCount} hồ sơ gửi thất bại, hãy thử lại.` : ''}`, key: 'imp_all' });
