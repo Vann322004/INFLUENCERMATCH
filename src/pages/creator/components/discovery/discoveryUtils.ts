@@ -58,7 +58,18 @@ export const mapApiCreatorToUi = (item: any): Creator => {
   const avatarRaw = item.avatarUrl || item.avatar_url || item.avatar;
   const avatarUrl = creatorProfileImage(avatarRaw);
   const isVerified = Boolean(item.verifiedByInfluencerMatch ?? item.verified ?? item.is_verified ?? item.isVerified);
-  const isSimilarFallback = Boolean(item.isSimilarFallback ?? item.isExpandedMatch ?? item.is_fallback ?? item.expandedMatch);
+  const expansionReasons: string[] = Array.isArray(item.expansionReasons)
+    ? item.expansionReasons.filter((r: unknown): r is string => typeof r === 'string' && r.trim().length > 0)
+    : [];
+  const isSimilarFallback = Boolean(
+    item.isSimilarFallback ?? item.isExpandedMatch ?? item.is_fallback ?? item.expandedMatch
+  ) || expansionReasons.length > 0;
+  const expansionReasonLabels: Record<string, string> = {
+    LOCATION: 'Mở rộng khu vực',
+    FOLLOWERS: 'Mở rộng tệp follower (±20%)',
+    TOPIC: 'Mở rộng chủ đề liên quan',
+  };
+  const fallbackReasonText = expansionReasons.map(code => expansionReasonLabels[code] ?? code).join(' · ');
   const priceSource = item.priceSource || item.feeSource || item.fee_source || (item.rateCard ? 'RATE_CARD' : 'ESTIMATED');
 
   const cleanNiche = item.niche && String(item.niche).toUpperCase() !== 'UNKNOWN' && String(item.niche).trim() !== ''
@@ -100,9 +111,10 @@ export const mapApiCreatorToUi = (item: any): Creator => {
     avatar: avatarUrl,
     isVerified,
     isSimilarFallback,
+    expansionReasons,
     matchRate: 0,
     matchLevel: 'medium',
-    matchReason: item.reason || item.matchReason || '',
+    matchReason: item.reason || item.matchReason || fallbackReasonText,
     platforms: [platformLower],
     categories: categoriesList.slice(0, 3),
     sourceCategories: String(item.niche || item.category || '').split(/[,;]/).map(value => value.trim()).filter(Boolean),
