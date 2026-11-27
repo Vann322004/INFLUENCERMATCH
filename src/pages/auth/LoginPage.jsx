@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, App, Form, Input, Button, Checkbox } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -7,6 +7,13 @@ import { authService } from '../../services/api/authService';
 import { brandService } from '../../services/api/brandService';
 import { hasDeferredBrandOnboarding } from '../../services/brandOnboarding';
 import { getErrorMessage, getAuthSessionId } from '../../services/apiClient';
+import {
+  forgetActiveRememberedLogin,
+  getRememberedLoginInitialValues,
+  loadRememberedLogin,
+  loadRememberedPasswordForEmail,
+  saveRememberedLogin,
+} from '../../services/rememberedLogin';
 import GoogleIdentityButton, { googleErrorMessage } from './GoogleIdentityButton';
 import GoogleRegistrationModal from './GoogleRegistrationModal';
 import GoogleLinkModal from '../brand/GoogleLinkModal';
@@ -26,6 +33,62 @@ export default function LoginPage() {
   const [googleLink, setGoogleLink] = useState(null);
   const [googleAttempt, setGoogleAttempt] = useState(0);
   const pending = useRef(false);
+  const userEditedRef = useRef({ email: false, password: false });
+  const autoFilledEmailRef = useRef('');
+  const initialRemembered = useMemo(() => getRememberedLoginInitialValues(), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadRememberedLogin().then((saved) => {
+      if (cancelled) return;
+      const patch = {};
+      if (!userEditedRef.current.email && saved.email) {
+        patch.email = saved.email;
+      }
+      if (!userEditedRef.current.password && saved.password) {
+        patch.password = saved.password;
+        autoFilledEmailRef.current = (saved.email || '').trim().toLowerCase();
+      }
+      patch.remember = saved.remember;
+      form.setFieldsValue(patch);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [form]);
+
+  const handleValuesChange = useCallback((changedValues) => {
+    if ('remember' in changedValues && changedValues.remember === false) {
+      forgetActiveRememberedLogin(form.getFieldValue('email'));
+    }
+    if ('email' in changedValues) {
+      userEditedRef.current.email = true;
+      const nextEmail = (changedValues.email || '').trim();
+      const nextNormalized = nextEmail.toLowerCase();
+      if (!userEditedRef.current.password) {
+        if (!nextNormalized) {
+          autoFilledEmailRef.current = '';
+          form.setFieldValue('password', '');
+          return;
+        }
+        void loadRememberedPasswordForEmail(nextEmail).then((savedPwd) => {
+          if (form.getFieldValue('email')?.trim()?.toLowerCase() !== nextNormalized || userEditedRef.current.password) {
+            return;
+          }
+          if (savedPwd) {
+            autoFilledEmailRef.current = nextNormalized;
+            form.setFieldsValue({ password: savedPwd, remember: true });
+          } else if (autoFilledEmailRef.current && autoFilledEmailRef.current !== nextNormalized) {
+            autoFilledEmailRef.current = '';
+            form.setFieldValue('password', '');
+          }
+        });
+      }
+    }
+    if ('password' in changedValues) {
+      userEditedRef.current.password = Boolean(changedValues.password);
+    }
+  }, [form]);
   const startGoogle = useCallback(async (signal) => {
     const sessionId = getAuthSessionId();
     const challenge = await authService.startGoogleLogin(sessionId, signal);
@@ -68,10 +131,14 @@ export default function LoginPage() {
     pending.current = true;
     setLoading(true);
     try {
+      const cleanEmail = values.email?.trim();
+      const shouldRemember = Boolean(values.remember ?? form.getFieldValue('remember'));
       const loginData = await authService.login({
-        email: values.email?.trim(),
+        email: cleanEmail,
         password: values.password,
       });
+
+      await saveRememberedLogin(cleanEmail, values.password, shouldRemember);
 
       if (linkGoogle && loginData.user?.role === 'BRAND') {
         const sessionId = getAuthSessionId();
@@ -158,10 +225,11 @@ export default function LoginPage() {
         name="login_form"
         layout="vertical"
         onFinish={values => void signIn(values)}
-        initialValues={{ remember: true }}
+        onValuesChange={handleValuesChange}
+        initialValues={initialRemembered}
         requiredMark={false}
         size="large"
-        autoComplete="off"
+        autoComplete="on"
       >
         <Form.Item
           name="email"

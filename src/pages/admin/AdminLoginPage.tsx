@@ -11,17 +11,40 @@ import {
 } from '@ant-design/icons';
 import { adminAuthService } from '../../services/api/adminAuthService';
 import { ADMIN_ROUTES, DATA_MANAGER_ROUTES } from '../../constants/adminRoutes';
+import {
+  getRememberedLoginInitialValues,
+  loadRememberedLogin,
+  saveRememberedLogin,
+} from '../../services/rememberedLogin';
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const initialRemembered = React.useMemo(() => getRememberedLoginInitialValues(), []);
 
-  const handleLogin = async (values: { email: string; password: string }) => {
+  React.useEffect(() => {
+    let cancelled = false;
+    void loadRememberedLogin().then((saved) => {
+      if (cancelled) return;
+      form.setFieldsValue({
+        email: saved.email || undefined,
+        password: saved.password || undefined,
+        remember: saved.remember,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [form]);
+
+  const handleLogin = async (values: { email: string; password: string; remember?: boolean }) => {
     setLoading(true);
     try {
-      const result = await adminAuthService.login(values.email, values.password);
+      const cleanEmail = values.email?.trim();
+      const result = await adminAuthService.login(cleanEmail, values.password);
       if (result.success) {
+        await saveRememberedLogin(cleanEmail, values.password, Boolean(values.remember));
         message.success('Đăng nhập thành công!');
         const user = result.user;
         const role = user?.role?.toUpperCase();
@@ -129,7 +152,7 @@ export default function AdminLoginPage() {
           layout="vertical"
           onFinish={handleLogin}
           requiredMark={false}
-          initialValues={{ email: 'admin@influencermatch.vn', password: 'admin123' }}
+          initialValues={initialRemembered}
         >
           <Form.Item
             name="email"

@@ -1,5 +1,6 @@
 import { apiClient, cookieAuthClient, getCsrfRequestConfig, setAuthSession, clearAuthSession, getStoredUser, getAccessToken, getAuthSessionId } from '../apiClient';
 import { claimRefreshCookie, ownsRefreshCookie, hasRefreshCookieOwner, withAuthCookieLock, publishAccountLogout } from '../authSession';
+import { clearRememberedLoginForEmail } from '../rememberedLogin';
 import type { ApiResponse } from '../../types/api/common.types';
 import type {
   GoogleChallenge,
@@ -111,6 +112,7 @@ export const authService = {
   async confirmPasswordReset(email: string, otp: string, newPassword: string): Promise<void> {
     const response = await cookieAuthClient.post('/auth/password-reset/confirm', { email, otp, newPassword });
     if (response.status !== 204) throw new Error('Không nhận được xác nhận đặt lại mật khẩu.');
+    clearRememberedLoginForEmail(email);
     clearAuthSession();
   },
 
