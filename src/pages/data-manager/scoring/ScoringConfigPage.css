@@ -10,6 +10,11 @@
 .dm-memory-code { color: #7C3AED; background: #F1F2FF; padding: 4px 6px; border-radius: 6px; font-size: 12px; font-weight: 650; flex-shrink: 0; }
 .dm-memory-item h2 { margin: 0 0 4px; font-size: 13px; }
 .dm-memory-item p { margin: 0; color: #64748B; font-size: 12px; line-height: 1.5; }
+.dm-memory-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.dm-memory-head h2 { margin: 0; }
+.dm-memory-tech { font-family: monospace; font-size: 11px; font-weight: 600; color: #6D28D9; background: #FAF5FF; border: 1px solid #E9D5FF; padding: 1px 6px; border-radius: 6px; }
+.dm-learning-flow { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: #FAF5FF; border: 1px solid #E9D5FF; color: #334155; font-size: 12.5px; line-height: 1.5; }
+.dm-learning-flow code { background: #FFFFFF; padding: 1px 5px; border-radius: 4px; border: 1px solid #DDD6FE; color: #6D28D9; }
 .dm-config-tab-panel { padding: 20px; }
 .dm-config-tab-panel > h2:first-child { margin-top: 0; }
 .dm-config-stat, .dm-config-policy { padding: 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; box-sizing: border-box; height: 100%; }

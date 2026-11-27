@@ -26,11 +26,12 @@ function relatedPath(item: NotificationDto): string | undefined {
   const role = String(getStoredUser()?.role).toUpperCase();
   const type = item.entityType?.toUpperCase();
   if (role === 'CREATOR' && type === 'COOPERATION_DEAL') return '/creator/bookings';
+  if (role === 'CREATOR' && type === 'COLLABORATION') return item.entityId ? '/creator/bookings/detail' : '/creator/bookings?view=work';
   if (role === 'CREATOR' && type === 'CREATOR_CLAIM') return '/creator/social-accounts';
   if (role === 'DATA_MANAGER' && type === 'CREATOR_CLAIM') return '/data-manager/claims';
   if (role !== 'BRAND') return;
   if (type === 'CAMPAIGN' && item.entityId) return `/campaigns/${encodeURIComponent(item.entityId)}`;
-  if (type === 'COLLABORATION') return '/collaboration';
+  if (type === 'COLLABORATION') return item.entityId ? '/collaboration/detail' : '/collaboration';
   if (['RELATIONSHIP', 'DEAL', 'COOPERATION_INVITATION'].includes(type ?? '')) return '/crm';
   if (['SUBSCRIPTION', 'PAYMENT'].includes(type ?? '')) return '/subscription';
 }
@@ -67,7 +68,15 @@ export default function NotificationDrawer({ onClose }: { onClose: () => void })
                   if (!path) return;
                   if (!item.read && state.canManage) await notificationStore.markRead(item.id);
                   if (notificationStore.getSnapshot().session !== session) return;
-                  onClose(); navigate(path, { state: item.entityType?.toUpperCase() === 'COOPERATION_DEAL' ? { cooperationDealId: item.entityId } : undefined });
+                  onClose();
+                  const entityType = item.entityType?.toUpperCase();
+                  navigate(path, {
+                    state: entityType === 'COOPERATION_DEAL'
+                      ? { cooperationDealId: item.entityId }
+                      : entityType === 'COLLABORATION' && item.entityId
+                        ? { collaborationId: item.entityId }
+                        : undefined,
+                  });
                 }}>Xem liên quan</Button>}
             </li>)}</ul>}
       </div>

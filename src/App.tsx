@@ -596,6 +596,14 @@ export default function App() {
             }
           />
           <Route
+            path="/campaign-history/detail"
+            element={
+              <MainLayout collaborationNavigation>
+                <CampaignHistoryPage />
+              </MainLayout>
+            }
+          />
+          <Route
             path="/campaign-history/:campaignId"
             element={
               <MainLayout collaborationNavigation>
@@ -726,6 +734,7 @@ export default function App() {
             <Route path="social-accounts" element={<CreatorPortalPage />} />
             <Route path="rate-card" element={<CreatorPortalPage />} />
             <Route path="bookings" element={<CreatorPortalPage />} />
+            <Route path="bookings/detail" element={<CollaborationDetailPage brand={false} />} />
             <Route path="bookings/:collaborationId" element={<CollaborationDetailPage brand={false} />} />
             <Route path="profile" element={<UserProfilePage />} />
           </Route>

@@ -559,6 +559,8 @@ export default function AiRecommendationTab({
           {item.platform && <Tag>{item.platform}</Tag>}
           {item.creatorType && <Tag>{item.creatorType}</Tag>}
           {!detailed && <Tag>Độ tin cậy: {confidenceLabel(breakdown?.confidenceTier ?? item.reasoning?.confidenceTier)}</Tag>}
+          {!detailed && breakdown?.m1Availability === 'AVAILABLE' && <Tag color="purple">Đã có lịch sử M1</Tag>}
+          {!detailed && breakdown?.m4LearnedScore != null && <Tag color="gold">AI đã học gu Brand (M4)</Tag>}
         </div>
         {!detailed && categories.length > 0 && <div className="rec-niches">{categories.slice(0, 3).map(category => <span key={category}>{category}</span>)}</div>}
         <section className={detailed ? 'rec-conclusion' : 'rec-score-summary'}>
@@ -569,6 +571,30 @@ export default function AiRecommendationTab({
         {detailed && <div className="rec-price"><span>Độ tin cậy dữ liệu</span><strong>{confidenceLabel(breakdown?.confidenceTier ?? item.reasoning?.confidenceTier)}</strong></div>}
         {detailed && <p className="rec-conclusion-tier">{tierLabel(item)}</p>}
         </section>
+        {!detailed && breakdown && (
+          <div className="rec-card-memories" aria-label="Điểm 4 chiều M1 đến M4">
+            {[
+              { code: 'M1', title: 'Lịch sử', val: breakdown.m1Availability === 'AVAILABLE' ? breakdown.m1Score : null, color: '#7C3AED' },
+              { code: 'M2', title: 'Công khai', val: breakdown.m2Score ?? null, color: '#059669' },
+              { code: 'M3', title: 'Nội dung', val: breakdown.m3Score ?? null, color: '#0284C7' },
+              { code: 'M4', title: 'Thương hiệu', val: breakdown.m4EffectiveScore ?? breakdown.m4Score ?? null, color: '#D97706' },
+            ].map(mem => {
+              const hasVal = typeof mem.val === 'number' && Number.isFinite(mem.val);
+              const pct = hasVal ? Math.max(0, Math.min(100, mem.val!)) : 0;
+              return (
+                <div key={mem.code} className="rec-mini-mem">
+                  <div className="rec-mini-mem-head">
+                    <span>{mem.code} · {mem.title}</span>
+                    <strong>{hasVal ? formatScore(mem.val) : '—'}</strong>
+                  </div>
+                  <div className="rec-mini-mem-track">
+                    <div className="rec-mini-mem-fill" style={{ width: `${pct}%`, background: hasVal ? mem.color : '#E2E8F0' }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
         {detailed && <div className="rec-reason-summary"><h4>{provisional ? 'Nhận xét về kênh' : 'Vì sao được gợi ý?'}</h4><p>{item.reasoning?.summary || 'Chưa có phần giải thích cho kết quả này.'}</p>
           {!!item.reasoning?.reasons?.length && <details className="rec-details"><summary>Các lý do đã ghi nhận</summary><ul>{item.reasoning.reasons.map((reason, index) => <li key={index}>{reason}</li>)}</ul></details>}
         </div>}
@@ -709,6 +735,15 @@ export default function AiRecommendationTab({
           <div className="rec-result-tools">{candidates != null && <Tooltip title={displayedOrder?.description || 'Máy chủ chưa lưu chế độ của lượt này.'}><Tag>Thứ tự: {displayedOrder?.label ?? 'Chưa có thông tin'}</Tag></Tooltip>}<Button disabled={running} onClick={() => setHistoryOpen(true)}>Lịch sử đánh giá</Button></div>
         </header>
         <div className="rec-workspace-body">
+        <details className="rec-architecture-explainer">
+          <summary>Cơ chế AI 4-Memory &amp; Post-Campaign Learning (TOPSIS / MMR)</summary>
+          <div className="rec-arch-grid">
+            <div><strong>M1 · Lịch sử hợp tác (Bayesian R·T·K):</strong> Tự học từ đánh giá cuối (R), đúng hạn (T) và đạt KPI (K) của các chiến dịch đã nghiệm thu.</div>
+            <div><strong>M2 · Hiệu suất công khai:</strong> Đo tốc độ tăng trưởng và độ ổn định tương tác của kênh.</div>
+            <div><strong>M3 · Phù hợp nội dung (Embedding):</strong> So khớp ngữ nghĩa mô tả chiến dịch với nội dung Creator bằng Vector Cosine Similarity.</div>
+            <div><strong>M4 · Gu thương hiệu (m4-evidence-v1):</strong> Tổng hợp từ lịch sử hợp tác của riêng Brand để cá nhân hóa xếp hạng TOPSIS / đa dạng hóa MMR.</div>
+          </div>
+        </details>
         {running ? <Skeleton active /> : candidates == null ? <div className="rec-empty-results"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có kết quả đánh giá" /><Button onClick={() => setHistoryOpen(true)}>Xem lịch sử đã lưu</Button></div> : <Tabs activeKey={tab} onChange={setTab} items={[
           { key: 'main', label: `Đề xuất chính · ${main.length}`, children: <>
             {main.length ? <div className="rec-cards-grid">{main.map((item, index) => renderCandidate(item, false, index + 1))}</div> : <Empty description={candidates == null ? 'Chưa có kết quả. Mở lịch sử hoặc chủ động chạy mới.' : 'Lượt này không có đề xuất chính'} />}

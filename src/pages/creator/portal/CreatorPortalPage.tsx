@@ -458,6 +458,23 @@ export default function CreatorPortalPage() {
                 </section>
               </div>
 
+              <div
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  background: '#FAF5FF',
+                  border: '1px solid #E9D5FF',
+                  fontSize: 13,
+                  color: '#334155',
+                  lineHeight: 1.55,
+                  marginBottom: 18,
+                }}
+              >
+                <strong style={{ color: '#6D28D9' }}>Cơ chế AI đề xuất kênh (4-Memory &amp; Post-Campaign Learning):</strong>{' '}
+                Mỗi hợp tác hoàn tất đúng hạn, đạt KPI và nhận đánh giá tốt từ Thương hiệu sẽ trực tiếp cộng điểm vào{' '}
+                <strong>M1 (Uy tín lịch sử)</strong> và <strong>M4 (Độ phù hợp thương hiệu)</strong>, giúp kênh của bạn được ưu tiên xếp hạng cao hơn trong các lượt Đề xuất AI tiếp theo.
+              </div>
+
               {/* 3. Real Analytics Row: Channel Comparison BarChart + Linked Channel Breakdown */}
               <Row gutter={[18, 18]}>
                 <Col xs={24} lg={14}>

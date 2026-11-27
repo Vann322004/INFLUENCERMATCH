@@ -12,7 +12,7 @@ import DuplicateBriefModal from './DuplicateBriefModal';
 import HistoryCollaboration from './HistoryCollaboration';
 import CampaignOutcomeReport from './CampaignOutcomeReport';
 
-function Contexts({ detail, duplicate }: { detail: HistoryDetail; duplicate?: (context: HistoryContext) => void }) {
+export function CampaignBriefContexts({ detail, duplicate }: { detail: HistoryDetail; duplicate?: (context: HistoryContext) => void }) {
   const [page, setPage] = useState(0);
   const id = detail.currentCampaign.id;
   const load = useCallback((signal: AbortSignal) => campaignHistoryService.contexts(id, page, signal), [id, page]);
@@ -99,18 +99,39 @@ function DetailContent({ load, canDuplicate, canRecordCampaignSummary }: {
   const detail = result.data;
   const { currentCampaign: campaign } = detail;
   return <>
-    <div className="history-heading">
-      <div><h1>{campaign.name}</h1><Space wrap><StatusTag state={campaign.status} labels={campaignStates} />
-        <span className="history-muted">{provenanceLabel(detail.currentProfileSource)}</span></Space></div>
-      {canDuplicate && <Button type="primary" icon={<CopyOutlined aria-hidden />} onClick={() => setCopy({})}>Dùng lại brief</Button>}
+    <div className="history-hero-card">
+      <div className="history-hero-main">
+        <div className="history-hero-badges">
+          <StatusTag state={campaign.status} labels={campaignStates} />
+          <span className="history-provenance-pill">{provenanceLabel(detail.currentProfileSource)}</span>
+          {detail.latestContext && (
+            <span className="history-provenance-pill">
+              Brief v{detail.latestContext.version ?? '—'} · {historyDate(detail.latestContext.createdAt)}
+            </span>
+          )}
+        </div>
+        <h1>{campaign.name}</h1>
+        {detail.copyOrigin && (
+          <p className="history-muted">
+            Tạo từ brief của <Link to="/campaign-history/detail" state={{ campaignId: detail.copyOrigin.sourceCampaignId }}>chiến dịch nguồn</Link>.
+          </p>
+        )}
+      </div>
+      {canDuplicate && (
+        <Button type="primary" icon={<CopyOutlined aria-hidden />} onClick={() => setCopy({})}>
+          Dùng lại brief
+        </Button>
+      )}
     </div>
-    <Tabs items={[
-      { key: 'overview', label: 'Tổng quan', children: <CampaignOutcomeReport detail={detail}
-        canRecordCampaignSummary={canRecordCampaignSummary} /> },
-      { key: 'brief', label: 'Brief & phiên bản', children: <Contexts detail={detail}
-        duplicate={canDuplicate ? context => setCopy({ contextId: context.id, version: context.version }) : undefined} /> },
-      { key: 'collaborations', label: 'Hợp tác', children: <Collaborations campaignId={campaign.id} /> },
-    ]} />
+    <div className="history-tabs-shell">
+      <Tabs items={[
+        { key: 'overview', label: 'Tổng quan & Hiệu quả', children: <CampaignOutcomeReport detail={detail}
+          canRecordCampaignSummary={canRecordCampaignSummary} /> },
+        { key: 'brief', label: 'Brief & phiên bản', children: <CampaignBriefContexts detail={detail}
+          duplicate={canDuplicate ? context => setCopy({ contextId: context.id, version: context.version }) : undefined} /> },
+        { key: 'collaborations', label: 'Hợp tác', children: <Collaborations campaignId={campaign.id} /> },
+      ]} />
+    </div>
     {copy && canDuplicate && <DuplicateBriefModal campaignId={campaign.id} contextId={copy.contextId}
       contextVersion={copy.version} onClose={() => setCopy(undefined)} />}
   </>;

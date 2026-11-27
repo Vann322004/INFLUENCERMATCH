@@ -92,8 +92,8 @@ function HistoryTable({ load, search, filtered, changePage }: {
       { title: 'Nền tảng', render: (_, row) => row.platforms?.join(', ') || '—' },
       { title: 'Ngày tạo', render: (_, row) => historyDate(row.createdAt) },
       { title: 'Hợp tác hoàn tất', render: (_, row) => `${row.completedCount} / ${row.collaborationCount}` },
-      { title: 'Thao tác', render: (_, row) => <Link to={{ pathname: `/campaign-history/${row.id}`, search }}
-        aria-label={`Xem lịch sử ${row.name}`}>Xem lịch sử</Link> },
+      { title: 'Thao tác', render: (_, row) => <Link to={{ pathname: '/campaign-history/detail', search }}
+        state={{ campaignId: row.id }} aria-label={`Xem lịch sử ${row.name}`}>Xem lịch sử</Link> },
     ]} />;
 }
 
@@ -102,14 +102,25 @@ export default function CampaignHistoryPage() {
   return <HistoryAccess />;
 }
 
+const HISTORY_DETAIL_STORAGE_KEY = 'campaign_history_selected_id';
+
 function HistoryAccess() {
   const { campaignId } = useParams();
+  const location = useLocation();
+  const stateCampaignId = (location.state as { campaignId?: string } | null)?.campaignId;
+  const isDetailPath = location.pathname === '/campaign-history/detail';
+  const storedCampaignId = isDetailPath ? sessionStorage.getItem(HISTORY_DETAIL_STORAGE_KEY) || undefined : undefined;
+  const resolvedCampaignId = campaignId || stateCampaignId || storedCampaignId;
   const page = useRef<HTMLElement>(null);
   const { result, retry } = useHistoryRead(readHistoryUser);
 
   useEffect(() => {
+    if (stateCampaignId) sessionStorage.setItem(HISTORY_DETAIL_STORAGE_KEY, stateCampaignId);
+  }, [stateCampaignId]);
+
+  useEffect(() => {
     page.current?.scrollIntoView({ block: 'start', behavior: 'instant' });
-  }, [campaignId]);
+  }, [resolvedCampaignId]);
 
   return <main className="history-page" ref={page}>
     {result.status !== 'ready' ? <HistoryReadState result={result} retry={retry} />
@@ -117,9 +128,10 @@ function HistoryAccess() {
         <Alert showIcon type="warning" title="Bạn không có quyền xem lịch sử chiến dịch." />
         <Link to="/performance">Về Báo cáo &amp; Hiệu suất</Link>
       </Space>
-        : campaignId ? <CampaignHistoryDetail key={campaignId} campaignId={campaignId}
+        : resolvedCampaignId ? <CampaignHistoryDetail key={resolvedCampaignId} campaignId={resolvedCampaignId}
         canDuplicate={result.data.permissions?.includes('CREATE_CAMPAIGN') === true}
         canRecordCampaignSummary={result.data.permissions?.includes('RECORD_OWN_OUTCOME') === true} />
+          : isDetailPath ? <Navigate to="/campaign-history" replace />
           : <CampaignHistoryList />}
   </main>;
 }

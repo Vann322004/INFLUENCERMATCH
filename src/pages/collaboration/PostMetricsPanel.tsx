@@ -1,35 +1,95 @@
 import { Alert, Button, Collapse, Form, Select, Space, Typography } from 'antd';
+import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import { collaborationService } from '../../services/api/collaborationService';
 import { getErrorMessage } from '../../services/apiClient';
 import type { PostMetricCollection } from '../../types/api/collaboration.types';
 import { formatDate, formatNumber, metricLabels } from './ExecutionForms';
 
-export function OutcomeCollectionPicker({ id, unitId, publicationId }: { id: string; unitId: string; publicationId: string }) {
+export function OutcomeCollectionPicker({ id, unitId, publicationId, revision }: {
+  id: string; unitId: string; publicationId: string; revision?: number;
+}) {
   const form = Form.useFormInstance();
   const [rows, setRows] = useState<PostMetricCollection[]>([]);
+  const [crawling, setCrawling] = useState(false);
   const [error, setError] = useState('');
+  const pending = useRef(false);
+  const requestKey = useRef<string | null>(null);
+
+  const applyRow = (row: PostMetricCollection) => {
+    form.setFieldValue('collectionId', row.id);
+    const metricKeys = ['views', 'likes', 'comments', 'shares', 'clicks'] as const;
+    for (const metric of metricKeys) {
+      form.setFieldValue(metric, row.metrics?.[metric] == null ? undefined : String(row.metrics[metric]));
+      form.setFieldValue(['unavailable', metric], row.metrics?.[metric] == null);
+    }
+    form.setFields(metricKeys.map(metric => ({ name: metric, errors: [] })));
+    if (!form.getFieldValue('period') && (row.postedAt || row.collectedAt)) {
+      const end = dayjs(row.collectedAt || row.postedAt);
+      const start = dayjs(row.postedAt || row.collectedAt);
+      if (start.isValid() && end.isValid()) {
+        form.setFieldValue('period', [start.isAfter(end) ? end : start, end]);
+      }
+    }
+  };
+
   useEffect(() => {
     let active = true;
     collaborationService.postMetricHistory(id, unitId).then(value => {
-      if (active) setRows(value.filter(row => row.status === 'SUCCEEDED' && row.publicationId === publicationId));
+      if (!active) return;
+      const list = (Array.isArray(value) ? value : [value]).filter(
+        row => row && row.status === 'SUCCEEDED' && row.publicationId === publicationId,
+      );
+      setRows(list);
+      if (list[0] && !form.getFieldValue('collectionId') && !form.getFieldValue('views')) {
+        applyRow(list[0]);
+      }
     }).catch(reason => { if (active) setError(getErrorMessage(reason, 'Không tải được dữ liệu thu thập.')); });
     return () => { active = false; };
   }, [id, unitId, publicationId]);
+
+  async function crawlNow() {
+    if (pending.current || revision == null) return;
+    pending.current = true;
+    setCrawling(true);
+    setError('');
+    requestKey.current ??= crypto.randomUUID();
+    try {
+      const raw = await collaborationService.collectPostMetrics(id, unitId, revision, requestKey.current);
+      requestKey.current = null;
+      const updated = Array.isArray(raw) ? raw : [raw];
+      const succeeded = updated.filter(row => row && row.status === 'SUCCEEDED' && row.publicationId === publicationId);
+      setRows(succeeded);
+      if (succeeded[0]) {
+        applyRow(succeeded[0]);
+      } else {
+        const failed = updated.find(row => row?.publicationId === publicationId && row.status === 'FAILED');
+        setError(failed ? 'Chưa lấy được chỉ số công khai tự động từ bài đăng này. Bạn vẫn có thể nhập thủ công bên dưới.' : 'Đang xử lý thu thập dữ liệu, vui lòng thử lại sau ít giây.');
+      }
+    } catch (reason) {
+      setError(getErrorMessage(reason, 'Không lấy được chỉ số tự động. Bạn có thể nhập thủ công bên dưới.'));
+    } finally {
+      pending.current = false;
+      setCrawling(false);
+    }
+  }
+
   return <>
-    {error && <Alert type="warning" title={error} />}
-    <Form.Item name="collectionId" label="Nguồn số liệu">
-      <Select allowClear placeholder="Nhập số liệu thủ công" options={rows.map(row => ({ value: row.id,
-        label: `Dữ liệu công khai · ${formatDate(row.collectedAt)}` }))} onChange={value => {
-        const row = rows.find(item => item.id === value);
-        if (!row) return;
-        for (const metric of ['views', 'likes', 'comments', 'shares', 'clicks'] as const) {
-          form.setFieldValue(metric, row.metrics?.[metric] == null ? undefined : String(row.metrics[metric]));
-          form.setFieldValue(['unavailable', metric], row.metrics?.[metric] == null);
-        }
-      }} />
-    </Form.Item>
-    <Typography.Paragraph type="secondary">Chỉ số thu thập là tổng lượt công khai tại thời điểm lấy dữ liệu. Bỏ chọn nguồn nếu chỉnh số thủ công; chưa tự xác nhận KPI hay nghiệm thu.</Typography.Paragraph>
+    {error && <Alert type="warning" showIcon style={{ marginBottom: 8 }} title={error} />}
+    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+      <Form.Item name="collectionId" label="Nguồn số liệu" style={{ flex: '1 1 260px', marginBottom: 4 }}>
+        <Select allowClear placeholder="Nhập số liệu thủ công" options={rows.map(row => ({ value: row.id,
+          label: `Dữ liệu công khai · ${formatDate(row.collectedAt)}` }))} onChange={value => {
+          const row = rows.find(item => item.id === value);
+          if (row) applyRow(row);
+        }} />
+      </Form.Item>
+      {revision != null && (
+        <Button loading={crawling} onClick={() => void crawlNow()} style={{ marginBottom: 4 }}>
+          Lấy số liệu tự động
+        </Button>
+      )}
+    </div>
   </>;
 }
 

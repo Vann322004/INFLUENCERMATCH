@@ -172,7 +172,7 @@ export function FlexibleLifecycleControls({ snapshot, brand, permissions, onChan
         <Space wrap size={8}>
           {canChooseMode && <Button size="small" onClick={() => open('management-mode')}>Đổi phương thức quản lý</Button>}
           {reviewAction}
-          {canComplete && <Button size="small" onClick={() => open('complete-without-review')}>Hoàn tất không đánh giá</Button>}
+          {canComplete && <Button size="small" type="text" style={{ color: '#64748B' }} onClick={() => open('complete-without-review')}>Hoàn tất không đánh giá</Button>}
           {active && participate && !pending && <Button size="small" danger onClick={() => open('termination-requests')}>
             {canTerminateExternal ? 'Đề nghị dừng trên hệ thống' : 'Đề nghị dừng hợp tác'}
           </Button>}
@@ -215,7 +215,17 @@ export function FlexibleLifecycleControls({ snapshot, brand, permissions, onChan
           : refreshed && <Alert type="info" title="Đã tải phiên bản mới. Kiểm tra nội dung trước khi gửi lại." />}
         {action === 'management-mode' ? <Form.Item label="Phương thức quản lý">
           <Select value={mode} onChange={setMode} options={[...modeOptions]} />
-        </Form.Item> : action === 'complete-without-review' ? <p>Hoàn tất theo kết quả đã nghiệm thu, phiên bản {target.outcomeRevision}.</p>
+        </Form.Item> : action === 'complete-without-review' ? (
+          <Space orientation="vertical" size={10} style={{ width: '100%', marginBottom: 14 }}>
+            <Alert
+              type="info"
+              showIcon
+              title="Khuyến nghị nên đánh giá trước khi hoàn tất"
+              description="Đánh giá chỉ mất ~15 giây nhưng giúp hệ thống cập nhật độ uy tín Creator và cải thiện gợi ý AI cho các chiến dịch tiếp theo của bạn."
+            />
+            <Typography.Text>Hoàn tất theo kết quả đã nghiệm thu, phiên bản {target.outcomeRevision}.</Typography.Text>
+          </Space>
+        )
           : action === 'withdraw-termination' ? <p>Rút đề nghị đang chờ phản hồi. Hợp tác tiếp tục theo trạng thái hiện tại.</p>
             : <>
               <Form.Item name="reason" label={reasonLabel} rules={[requiredText]}><Input.TextArea maxLength={2000} /></Form.Item>

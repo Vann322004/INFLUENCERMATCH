@@ -182,6 +182,77 @@
 .rec-detail-drawer .rec-card-actions .ant-btn { min-width: 0; height: auto; white-space: normal; }
 @media (max-width: 575px) { .rec-detail-drawer .ant-drawer-body { padding: 16px; } }
 @container (max-width: 480px) { .rec-creator-card { padding: 16px; gap: 14px; } .rec-score strong { font-size: 20px; } .rec-metrics { gap: 16px 12px; } .rec-feedback { align-items: start; flex-direction: column; } }
+
+.rec-architecture-explainer {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #FAF5FF;
+  border: 1px solid #E9D5FF;
+  font-size: 12.5px;
+  color: #334155;
+}
+
+.rec-architecture-explainer summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #6D28D9;
+}
+
+.rec-arch-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+  margin-top: 10px;
+  line-height: 1.45;
+}
+
+.rec-card-memories {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+}
+
+.rec-mini-mem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rec-mini-mem-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: #475569;
+}
+
+.rec-mini-mem-head strong {
+  color: #0F172A;
+  font-weight: 700;
+}
+
+.rec-mini-mem-track {
+  height: 5px;
+  border-radius: 999px;
+  background: #E2E8F0;
+  overflow: hidden;
+}
+
+.rec-mini-mem-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+@media (max-width: 640px) {
+  .rec-arch-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 @container brand (max-width: 650px) { .workflow-deliverable { grid-template-columns: minmax(0,1fr); } .workflow-panel { padding: 16px; } }
 @media (max-width: 650px) { .workflow-deliverable { grid-template-columns: minmax(0,1fr); } .workflow-page h1 { font-size: 24px; } .workflow-panel { padding: 16px; } }
 

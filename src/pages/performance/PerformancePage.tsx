@@ -1,6 +1,6 @@
 import { Alert, Button, Card, Empty, Select, Space, Spin, Table, Tag, Typography } from 'antd';
 import { useCallback, useState } from 'react';
-import { BarChart3, PieChart as PieChartIcon, Users } from 'lucide-react';
+import { BarChart3, Copy, FileText, PieChart as PieChartIcon, Users } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
 import { campaignHistoryService } from '../../services/api/campaignHistoryService';
@@ -12,6 +12,8 @@ import { FeesOverview } from '../collaboration/OperationsTables';
 import { acceptanceReadiness } from '../collaboration/collaborationProgress';
 import { useCollaborationPermissions } from '../collaboration/useCollaborationPermissions';
 import CampaignOutcomeReport from '../history/CampaignOutcomeReport';
+import { CampaignBriefContexts } from '../history/CampaignHistoryDetail';
+import DuplicateBriefModal from '../history/DuplicateBriefModal';
 import { HistoryReadState, useHistoryRead } from '../history/historyView';
 import { PerformanceOverviewSection } from './PerformanceCharts';
 import './PerformancePage.css';
@@ -114,14 +116,17 @@ function CampaignReport({ campaignId }: { campaignId: string }) {
   const load = useCallback((signal: AbortSignal) => campaignHistoryService.detail(campaignId, signal), [campaignId]);
   const { result, retry } = useHistoryRead(load);
   const permissions = useCollaborationPermissions();
-  const [activeTab, setActiveTab] = useState<'overview' | 'collaborations' | 'metrics'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'metrics' | 'collaborations' | 'brief'>('overview');
+  const [copy, setCopy] = useState<{ contextId?: string; version?: number | null }>();
+  const canDuplicate = permissions.has('CREATE_CAMPAIGN');
 
   const tabs = [
     { key: 'overview' as const, label: 'Tổng quan & Biểu đồ', icon: <PieChartIcon size={15} /> },
+    { key: 'metrics' as const, label: 'Bảng chỉ số & Xuất Excel', icon: <BarChart3 size={15} /> },
     ...(permissions.has('MANAGE_OWN_COLLABORATION')
       ? [{ key: 'collaborations' as const, label: 'Hợp tác theo Creator', icon: <Users size={15} /> }]
       : []),
-    { key: 'metrics' as const, label: 'Bảng chỉ số đối soát', icon: <BarChart3 size={15} /> },
+    { key: 'brief' as const, label: 'Brief & Phiên bản', icon: <FileText size={15} /> },
   ];
 
   return <div className="history-stack perf-report-stack">
@@ -132,6 +137,16 @@ function CampaignReport({ campaignId }: { campaignId: string }) {
         <span>Đã hủy: <strong>{result.data.report.cancelledCount}</strong></span>
         <span>Dừng giữa chừng: <strong>{result.data.report.terminatedCount ?? 0}</strong></span>
         <span>Đủ điều kiện báo cáo: <strong>{result.data.report.eligibleCount}</strong></span>
+        {canDuplicate && (
+          <Button
+            size="small"
+            icon={<Copy size={13} />}
+            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            onClick={() => setCopy({})}
+          >
+            Dùng lại brief
+          </Button>
+        )}
       </div>
     )}
 
@@ -153,7 +168,11 @@ function CampaignReport({ campaignId }: { campaignId: string }) {
       result.status === 'ready' ? (
         <div className="history-stack perf-report-stack">
           <PerformanceOverviewSection detail={result.data} />
-          <CampaignOutcomeReport detail={result.data} mode="financial" />
+          <CampaignOutcomeReport
+            detail={result.data}
+            mode="financial"
+            canRecordCampaignSummary={permissions.has('RECORD_OWN_OUTCOME')}
+          />
         </div>
       ) : (
         <HistoryReadState result={result} retry={retry} missing="Không tìm thấy báo cáo của chiến dịch." />
@@ -170,6 +189,26 @@ function CampaignReport({ campaignId }: { campaignId: string }) {
       ) : (
         <HistoryReadState result={result} retry={retry} missing="Không tìm thấy báo cáo của chiến dịch." />
       )
+    )}
+
+    {activeTab === 'brief' && (
+      result.status === 'ready' ? (
+        <CampaignBriefContexts
+          detail={result.data}
+          duplicate={canDuplicate ? context => setCopy({ contextId: context.id, version: context.version }) : undefined}
+        />
+      ) : (
+        <HistoryReadState result={result} retry={retry} missing="Không tìm thấy brief của chiến dịch." />
+      )
+    )}
+
+    {copy && canDuplicate && result.status === 'ready' && (
+      <DuplicateBriefModal
+        campaignId={result.data.currentCampaign.id}
+        contextId={copy.contextId}
+        contextVersion={copy.version}
+        onClose={() => setCopy(undefined)}
+      />
     )}
   </div>;
 }
@@ -188,7 +227,7 @@ export default function PerformancePage() {
         <h1 className="perf-main-title">Báo cáo & Hiệu suất chiến dịch</h1>
         <p className="perf-description">Số liệu đối soát từ kết quả hợp tác đã được nghiệm thu và đánh giá cuối.</p>
       </div>
-      <Link className="perf-history-btn" to="/campaign-history">Lịch sử chiến dịch</Link>
+      <Link className="perf-history-btn" to="/campaign-history">Tất cả chiến dịch</Link>
     </header>
     {result.status === 'loading' ? <div className="perf-loading-box"><Spin description="Đang tải chiến dịch" /></div>
       : result.status === 'error' ? <RetryAlert error="Không tải được danh sách chiến dịch." retry={retry} />
@@ -204,7 +243,6 @@ export default function PerformancePage() {
                 next.set('campaign', id);
                 return next;
               })} />
-            {campaign && <Button type="link" href={'/campaign-history/' + campaign.id}>Xem lịch sử chiến dịch này</Button>}
           </Space>
         </div>
         {campaign ? <CampaignReport key={campaign.id} campaignId={campaign.id} />
