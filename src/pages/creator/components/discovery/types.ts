@@ -5,6 +5,7 @@ export interface Creator {
   avatar: string;
   isVerified: boolean;
   isSimilarFallback?: boolean;
+  expansionReasons?: string[];
   matchRate: number;
   matchLevel: 'high' | 'medium' | 'low';
   matchReason?: string;
