@@ -1,7 +1,7 @@
 import { Alert, Breadcrumb, Spin } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useEffect, useRef, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { authService } from '../../services/api/authService';
 import { collaborationService } from '../../services/api/collaborationService';
 import type { CollaborationDetail } from '../../types/api/collaboration.types';
@@ -40,9 +40,10 @@ function collaborationListLocation(state: unknown, fallbackCampaignId?: string) 
 
 export default function CollaborationDetailPage({ brand }: { brand: boolean }) {
   const location = useLocation();
-  const collaborationId = stateString(location.state, 'collaborationId');
+  const { collaborationId: paramId } = useParams<{ collaborationId?: string }>();
+  const collaborationId = stateString(location.state, 'collaborationId') ?? paramId;
   if (!authService.isAuthenticated()) return <Navigate to="/login" replace />;
-  if (!collaborationId) return <Navigate to="/collaboration" replace />;
+  if (!collaborationId) return <Navigate to={brand ? '/collaboration' : '/creator/bookings?view=work'} replace />;
   return <Detail key={collaborationId} id={collaborationId} brand={brand} />;
 }
 

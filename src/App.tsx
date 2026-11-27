@@ -152,8 +152,19 @@ function MainLayout({ children }: {
       }}
     >
       {/* Floating Plum-Violet Sidebar */}
-      {mobile ? <Drawer title="Điều hướng" placement="left" size="min(280px, 88vw)"
-        open={menuOpen} onClose={() => setMenuOpen(false)} styles={{ body: { padding: 0 } }} destroyOnHidden>
+      {mobile ? <Drawer
+        title={<span style={{ color: '#FFFFFF', fontWeight: 700 }}>Điều hướng</span>}
+        placement="left"
+        size="min(280px, 88vw)"
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        closeIcon={<span style={{ color: '#E2E8F0', fontSize: 16 }}>✕</span>}
+        styles={{
+          header: { background: '#231433', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' },
+          body: { padding: 0, background: 'linear-gradient(180deg, #231433 0%, #341E4E 54%, #492A6D 100%)' },
+        }}
+        destroyOnHidden
+      >
         <AppSider inDrawer />
       </Drawer> : <AppSider />}
 
