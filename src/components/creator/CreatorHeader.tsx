@@ -86,15 +86,28 @@ export default function CreatorHeader({ title }: CreatorHeaderProps) {
         open={mobileDrawerOpen}
         onClose={() => setMobileDrawerOpen(false)}
         width={280}
-        styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column', height: '100%' } }}
+        styles={{
+          header: {
+            background: '#231433',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          },
+          body: {
+            padding: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            background: 'linear-gradient(180deg, #231433 0%, #341E4E 54%, #492A6D 100%)',
+          },
+        }}
+        closeIcon={<span style={{ color: '#E2E8F0', fontSize: 16 }}>✕</span>}
         className="creator-mobile-drawer"
       >
-        <div style={{ padding: '18px 16px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ padding: '18px 16px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div
             style={{
               width: 36,
               height: 36,
-              background: 'linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%)',
+              background: 'linear-gradient(135deg, #6D28D9 0%, #8B5CF6 100%)',
               borderRadius: 10,
               display: 'flex',
               alignItems: 'center',
@@ -106,10 +119,10 @@ export default function CreatorHeader({ title }: CreatorHeaderProps) {
             <SafetyCertificateOutlined />
           </div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 14, color: '#0F172A', lineHeight: 1.2 }}>
+            <div style={{ fontWeight: 800, fontSize: 14, color: '#FFFFFF', lineHeight: 1.2 }}>
               InfluencerMatch
             </div>
-            <div style={{ fontSize: 11, color: '#7C3AED', fontWeight: 600 }}>
+            <div style={{ fontSize: 11, color: '#C4B5FD', fontWeight: 600 }}>
               Creator Studio
             </div>
           </div>
@@ -121,6 +134,7 @@ export default function CreatorHeader({ title }: CreatorHeaderProps) {
             { key: 'rate-card', label: 'Bảng giá Rate Card', path: '/creator/rate-card', icon: <DollarOutlined /> },
             { key: 'social-accounts', label: 'Kênh liên kết', path: '/creator/social-accounts', icon: <ApiOutlined /> },
             { key: 'bookings', label: 'Hợp tác', path: '/creator/bookings', icon: <CalendarOutlined /> },
+            { key: 'profile', label: 'Thông tin cá nhân', path: '/creator/profile', icon: <UserOutlined /> },
           ].map((item) => {
             const active = location.pathname.includes(item.key);
             return (
@@ -130,27 +144,42 @@ export default function CreatorHeader({ title }: CreatorHeaderProps) {
                   navigate(item.path);
                   setMobileDrawerOpen(false);
                 }}
-                className={`sidebar-nav-item ${active ? 'active' : ''}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: active ? 600 : 500,
+                  color: active ? '#FFFFFF' : 'rgba(255, 255, 255, 0.8)',
+                  background: active
+                    ? 'linear-gradient(135deg, #6D28D9 0%, #8B5CF6 100%)'
+                    : 'transparent',
+                  boxShadow: active ? '0 6px 16px rgba(109, 40, 217, 0.35)' : 'none',
+                  transition: 'background 0.15s ease, color 0.15s ease',
+                }}
               >
-                <span className="sidebar-nav-icon">{item.icon}</span>
-                <span className="sidebar-nav-label">{item.label}</span>
+                <span style={{ fontSize: 16, display: 'inline-flex', alignItems: 'center' }}>{item.icon}</span>
+                <span>{item.label}</span>
               </div>
             );
           })}
         </div>
 
-        <div style={{ padding: '14px 16px', borderTop: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+        <div style={{ padding: '14px 16px', borderTop: '1px solid rgba(255, 255, 255, 0.12)', background: 'rgba(15, 10, 26, 0.35)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <Avatar
               size={36}
               icon={<UserOutlined />}
-              style={{ background: 'linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%)' }}
+              style={{ background: 'linear-gradient(135deg, #6D28D9 0%, #8B5CF6 100%)' }}
             />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, fontSize: 13, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontWeight: 700, fontSize: 13, color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {currentUser?.fullName || currentUser?.email || 'Nhà sáng tạo'}
               </div>
-              <div style={{ fontSize: 11, color: '#7C3AED', fontWeight: 600 }}>
+              <div style={{ fontSize: 11, color: '#C4B5FD', fontWeight: 600 }}>
                 Nhà sáng tạo (Creator)
               </div>
             </div>

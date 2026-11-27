@@ -5,6 +5,22 @@ import { notificationStore } from '../../services/notificationStore';
 import { getStoredUser } from '../../services/authSession';
 import type { NotificationDto } from '../../services/api/notificationService';
 
+function formatNotificationTime(raw: string): string {
+  if (!raw) return '';
+  const hasZone = /([Zz]|[+-]\d{2}:?\d{2})$/.test(raw);
+  const date = new Date(hasZone ? raw : `${raw}Z`);
+  if (!Number.isFinite(date.getTime())) return raw.replace('T', ' ');
+  return new Intl.DateTimeFormat('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(date);
+}
+
 // Retain existing Brand entity destinations; do not send other roles into Brand routes.
 function relatedPath(item: NotificationDto): string | undefined {
   const role = String(getStoredUser()?.role).toUpperCase();
@@ -42,7 +58,7 @@ export default function NotificationDrawer({ onClose }: { onClose: () => void })
           : state.items.length === 0 ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có thông báo" />
           : <ul>{state.items.map(item => <li key={item.id} className={item.read ? '' : 'is-unread'}>
               <div className="notification-item-title"><h3>{item.title}</h3>{!item.read && <span className="notification-unread-dot" aria-label="Chưa đọc" />}</div>
-              <p>{item.message}</p><time>{item.createdAt.replace('T', ' ')}</time>
+              <p>{item.message}</p><time>{formatNotificationTime(item.createdAt)}</time>
               {!item.read && state.canManage && <Button type="link" loading={state.pending.includes(item.id)} disabled={state.markingAll}
                 onClick={() => void notificationStore.markRead(item.id)}>Đánh dấu đã đọc</Button>}
               {relatedPath(item) && <Button type="link" className="notification-related-link" disabled={state.pending.includes(item.id)}

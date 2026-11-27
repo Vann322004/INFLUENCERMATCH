@@ -94,9 +94,20 @@ export default function AdminSidebar({ mobile = false, compact = false, open = f
   );
 
   if (mobile) return (
-    <Drawer id="admin-navigation" title="Menu điều hướng" placement="left" width="min(320px, 100vw)"
-      className="admin-navigation-drawer" open={open} onClose={onClose}
-      styles={{ body: { padding: 0, overflow: 'hidden' } }}>
+    <Drawer
+      id="admin-navigation"
+      title={<span style={{ color: '#FFFFFF', fontWeight: 700 }}>Menu điều hướng</span>}
+      placement="left"
+      width="min(320px, 100vw)"
+      className="admin-navigation-drawer"
+      open={open}
+      onClose={onClose}
+      closeIcon={<span style={{ color: '#E2E8F0', fontSize: 16 }}>✕</span>}
+      styles={{
+        header: { background: '#231433', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' },
+        body: { padding: 0, overflow: 'hidden', background: 'linear-gradient(180deg, #231433 0%, #341E4E 54%, #492A6D 100%)' },
+      }}
+    >
       {content}
     </Drawer>
   );

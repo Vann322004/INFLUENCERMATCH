@@ -1,6 +1,6 @@
-import { Alert, Avatar, Button, Card, Empty, Input, Modal, Pagination, Progress, Select, Space, Spin, Table } from 'antd';
+import { Alert, Avatar, Button, Card, Empty, Input, Modal, Pagination, Progress, Select, Space, Spin, Table, Tag } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
@@ -319,21 +319,87 @@ export function CreatorCollaborations() {
   }
 
   const columns: TableColumnsType<CollaborationSummary> = [
-    { title: 'Chiến dịch', key: 'campaign', render: (_, row) => <><strong>{row.campaignName || 'Chiến dịch'}</strong><div>{row.brandName}</div></> },
-    { title: 'Kênh', key: 'channels', render: (_, row) => row.channels?.map(channelLabel).join(', ') || row.platform || '—' },
-    { title: 'Phí đã chốt', key: 'fee', render: (_, row) => formatMoney(row.agreedFee, row.currency) },
+    {
+      title: 'Chiến dịch',
+      key: 'campaign',
+      render: (_, row) => (
+        <div>
+          <strong style={{ color: '#0F172A', fontSize: 14 }}>{row.campaignName || 'Chiến dịch'}</strong>
+          <div style={{ color: '#64748B', fontSize: 12.5, marginTop: 2 }}>{row.brandName}</div>
+        </div>
+      ),
+    },
+    {
+      title: 'Kênh',
+      key: 'channels',
+      render: (_, row) => {
+        const list = row.channels?.length ? row.channels.map(channelLabel) : [row.platform || '—'];
+        return (
+          <Space size={4} wrap>
+            {list.map((label) => (
+              <Tag key={label} color="geekblue" style={{ margin: 0 }}>{label}</Tag>
+            ))}
+          </Space>
+        );
+      },
+    },
+    {
+      title: 'Phí đã chốt',
+      key: 'fee',
+      render: (_, row) => (
+        <strong style={{ color: '#7C3AED' }}>{formatMoney(row.agreedFee, row.currency)}</strong>
+      ),
+    },
     { title: 'Trạng thái', key: 'status', render: (_, row) => <StatusTag status={row.status} /> },
-    { title: 'Thao tác', key: 'actions', render: (_, row) => <Link className="collab-row-link" to={'/creator/bookings/' + row.id}>Xem hợp tác</Link> },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      align: 'right',
+      render: (_, row) => (
+        <Button
+          type="primary"
+          size="small"
+          onClick={() => navigate('/creator/bookings/' + row.id, { state: { collaborationId: row.id } })}
+        >
+          Xem hợp tác
+        </Button>
+      ),
+    },
   ];
 
   if (!canView) return <Alert type="warning" showIcon title="Bạn chưa có quyền xem hợp tác." />;
 
-  return <div className="collaboration-page-container">
-    {!error && assignments.length > 0 && <Card title="Hợp tác chờ bạn xác nhận">
+  const activeCount = (rows ?? []).filter(r => ['PLANNED', 'IN_PROGRESS', 'ACTIVE'].includes(String(r.status).toUpperCase())).length + assignments.length;
+  const completedCount = (rows ?? []).filter(r => String(r.status).toUpperCase() === 'COMPLETED').length;
+
+  return <div className="creator-studio-stack">
+    <div className="creator-admin-rate-stats" style={{ marginBottom: 0 }}>
+      <section>
+        <span>Tổng hợp tác</span>
+        <strong>{rows?.length ?? 0} chiến dịch</strong>
+        <small>Các thỏa thuận đã được chốt với Thương hiệu</small>
+      </section>
+      <section>
+        <span>Đang triển khai</span>
+        <strong>{activeCount} hợp tác</strong>
+        <small>{assignments.length > 0 ? `${assignments.length} điều khoản chờ bạn xác nhận` : 'Sẵn sàng hoặc đang thực hiện bàn giao'}</small>
+      </section>
+      <section>
+        <span>Đã hoàn tất</span>
+        <strong>{completedCount} hợp tác</strong>
+        <small>Đã nghiệm thu và hoàn thành KPI</small>
+      </section>
+    </div>
+
+    {!error && assignments.length > 0 && <Card
+      className="creator-admin-rate-table"
+      styles={{ header: { background: '#FAF5FF', borderBottom: '1px solid #E9D5FF' } }}
+      title="Hợp tác chờ bạn xác nhận"
+    >
       <div className="execution-stack">
         {assignments.map(assignment => <div className="collab-assignment-row" key={assignment.collaborationId}>
-          <div><strong>{assignment.campaignName}</strong><div>{assignment.brandName}</div></div>
-          <Button onClick={() => {
+          <div><strong style={{ color: '#0F172A' }}>{assignment.campaignName}</strong><div style={{ color: '#64748B', fontSize: 13 }}>{assignment.brandName}</div></div>
+          <Button type="primary" onClick={() => {
             attempt.current = undefined;
             setAssignmentError('');
             setMustReload(false);
@@ -342,7 +408,16 @@ export function CreatorCollaborations() {
         </div>)}
       </div>
     </Card>}
-    <Card title="Hợp tác với nhãn hàng">
+    <Card
+      className="creator-admin-rate-table"
+      styles={{ header: { background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' } }}
+      title="Hợp tác với nhãn hàng"
+      extra={
+        <Button size="small" icon={<ReloadOutlined />} onClick={retry}>
+          Làm mới
+        </Button>
+      }
+    >
       {error ? <RetryAlert error={error} retry={retry} /> : <Spin spinning={loading}>
         {rows && <Table<CollaborationSummary> rowKey="id" columns={columns} dataSource={rows} scroll={{ x: 'max-content' }} pagination={false}
           locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có hợp tác" /> }} />}
