@@ -1,4 +1,5 @@
 import { Empty, Tag } from 'antd';
+import { ExportOutlined } from '@ant-design/icons';
 import { outcomeSourceLabel } from './lifecyclePresentation';
 import type { ReactNode } from 'react';
 import type { Deliverable, ExecutionSnapshot, OutcomeRevision, PaymentStatus } from '../../types/api/collaboration.types';
@@ -13,7 +14,12 @@ export function HttpsLink({ url, children }: { url: string; children: string }) 
   try {
     const target = new URL(url);
     if (target.protocol === 'https:' && !target.username && !target.password) {
-      return <a href={target.href} target="_blank" rel="noopener noreferrer">{children}</a>;
+      return (
+        <a className="collab-external-link-btn" href={target.href} target="_blank" rel="noopener noreferrer">
+          <ExportOutlined />
+          <span>{children}</span>
+        </a>
+      );
     }
   } catch {
     // Historical data can contain a malformed URL.
@@ -43,16 +49,14 @@ export function FeesOverview({ snapshot, latest }: {
   const payment = snapshot.paymentStatus && (payments[snapshot.paymentStatus] ?? snapshot.paymentStatus);
 
   return <section className="collab-fees-section" aria-label="Thù lao và đối soát">
-    <OperationsTable label="Bảng thù lao và đối soát" headers={['Phí đã chốt', 'Chi phí thực tế', 'Nguồn chi phí', 'Trạng thái thanh toán']}>
+    <OperationsTable label="Bảng thù lao và đối soát" headers={['Phí đã chốt', 'Chi phí thực tế', 'Nguồn đối soát']}>
       <tr>
-        <td>{fee}</td>
-        <td>{cost}</td>
+        <td><strong style={{ color: '#7C3AED' }}>{fee}</strong></td>
+        <td><strong style={{ color: latest?.calculation.actualCost != null ? '#0F172A' : '#64748B' }}>{cost}</strong></td>
         <td>{latest?.calculation.actualCost != null
-          ? `Kết quả v${latest.revision} · Brand khai báo${latest.payload.financialConfirmed ? ' và xác nhận' : ''}` : '—'}</td>
-        <td>{payment ? <Tag color={snapshot.paymentStatus === 'PAID' ? 'success' : 'default'}>{payment}</Tag> : '—'}</td>
+          ? `Kết quả v${latest.revision} · Brand khai báo${latest.payload.financialConfirmed ? ' & xác nhận' : ''}` : 'Chưa ghi nhận'}</td>
       </tr>
     </OperationsTable>
-    <p className="collab-muted collab-missing-note">— Chưa có dữ liệu.</p>
   </section>;
 }
 
@@ -82,13 +86,19 @@ export function OutcomeTable({ snapshot, latest, label }: {
               {' · '}{measurement.receivedAt ? formatDate(measurement.receivedAt) : 'Chưa ghi nhận'}</div>}
           {measurement?.evidenceUrl && <div><HttpsLink url={measurement.evidenceUrl}>Bằng chứng</HttpsLink></div>}</td>
         <td>{measurement ? `${formatDate(measurement.periodStart)} – ${formatDate(measurement.periodEnd)}` : '—'}</td>
-        {metrics.map(metric => <td key={metric}>{measurementMetric(measurement, metric)}
-          {measurement?.[metric] != null && <div className="collab-muted">{measurement.metricSources?.[metric] === 'PUBLIC_POST_CRAWL'
-            ? `Nhận từ crawl · ${formatDate(measurement.collectedAt)}`
-            : outcomeSourceLabel(measurement.metricSources?.[metric])}</div>}
+        {metrics.map(metric => <td key={metric}>
+          <strong style={{ fontSize: 14.5, color: measurement?.[metric] != null ? '#0F172A' : '#64748B' }}>
+            {measurementMetric(measurement, metric)}
+          </strong>
+          {measurement?.[metric] != null && (
+            <div className="collab-muted" style={{ fontSize: 11.5, marginTop: 2 }}>
+              {measurement.metricSources?.[metric] === 'PUBLIC_POST_CRAWL'
+                ? 'Crawl tự động'
+                : outcomeSourceLabel(measurement.metricSources?.[metric])}
+            </div>
+          )}
         </td>)}
       </tr>)}
     </OperationsTable> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có bài đăng hiện hành" />}
-    {(posts.length > 0 || latest) && <p className="collab-muted collab-missing-note">— Chưa có dữ liệu.</p>}
   </section>;
 }

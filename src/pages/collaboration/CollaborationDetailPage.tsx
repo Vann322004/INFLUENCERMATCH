@@ -1,4 +1,4 @@
-import { Alert, Breadcrumb, Spin } from 'antd';
+import { Alert, Spin } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -44,6 +44,15 @@ export default function CollaborationDetailPage({ brand }: { brand: boolean }) {
   const collaborationId = stateString(location.state, 'collaborationId') ?? paramId;
   if (!authService.isAuthenticated()) return <Navigate to="/login" replace />;
   if (!collaborationId) return <Navigate to={brand ? '/collaboration' : '/creator/bookings?view=work'} replace />;
+  if (!brand && paramId) {
+    return (
+      <Navigate
+        to="/creator/bookings/detail"
+        replace
+        state={{ ...(location.state && typeof location.state === 'object' ? location.state : {}), collaborationId: paramId }}
+      />
+    );
+  }
   return <Detail key={collaborationId} id={collaborationId} brand={brand} />;
 }
 
@@ -91,10 +100,6 @@ function Detail({ id, brand }: { id: string; brand: boolean }) {
   return <main ref={page} className="collaboration-page-container collab-detail-page">
     <div className="collab-detail-nav">
       <Link className="collab-back-link" aria-label="Quay lại danh sách" to={back.to} state={back.state}><ArrowLeftOutlined /> Quay lại danh sách</Link>
-      {!brand && <Breadcrumb items={[
-        { title: <Link to={back.to} state={back.state}>Hợp tác</Link> },
-        { title: 'Chi tiết' },
-      ]} />}
     </div>
     {!roleAllowed || !canRead ? <Alert showIcon type="warning" title="Bạn không có quyền xem hợp tác này." />
       : !validId ? <Alert showIcon type="error" title="Không tìm thấy hợp tác." />

@@ -32,7 +32,7 @@ export default function ProposalFields({form, deal, initialValues, mutable, busy
           <Form.Item name={[field.name, 'contentType']} label="Định dạng nội dung" rules={[{ required: true, whitespace: true }]}><Input maxLength={100} placeholder="Ví dụ: Video đánh giá" /></Form.Item>
           <Form.Item name={[field.name, 'quantity']} label="Số lượng" rules={[{ required: true }]}><InputNumber min={1} max={100} precision={0} style={{ width: '100%' }} /></Form.Item>
           <Form.Item name={[field.name, 'dueAt']} label="Hạn bàn giao (giờ Việt Nam)" rules={[{ required: true }]}><Input type="datetime-local" /></Form.Item></div>
-        <Form.Item name={[field.name, 'checklist']} label="Tiêu chí nghiệm thu — mỗi dòng một tiêu chí" rules={[{ required: true, whitespace: true }]}><Input.TextArea rows={2} maxLength={25049} /></Form.Item>
+        <Form.Item name={[field.name, 'checklist']} label="Tiêu chí duyệt nội dung (kiểm tra trên bản nháp) — mỗi dòng một tiêu chí" rules={[{ required: true, whitespace: true }]}><Input.TextArea rows={2} maxLength={25049} placeholder="Ví dụ: Quay rõ sản phẩm&#10;Nhắc đúng tên thương hiệu&#10;Gắn đầy đủ hashtag chiến dịch" /></Form.Item>
         <div className="contact-form-grid"><Form.Item name={[field.name, 'maxRevisionRounds']} label="Số vòng chỉnh sửa tối đa" rules={[{ required: true }]}><InputNumber min={0} max={10} precision={0} /></Form.Item>{mutable && <Button type="text" danger disabled={busy} onClick={() => remove(field.name)}>Bỏ hạng mục</Button>}</div>
       </div>)}{mutable && <Button disabled={busy || fields.length >= 100} onClick={() => add({ quantity: 1, maxRevisionRounds: 1 })}>Thêm hạng mục</Button>}</>}</Form.List>
     </Form>); }

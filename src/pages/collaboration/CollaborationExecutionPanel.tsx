@@ -1,10 +1,10 @@
 import EvidenceImages from './EvidenceImages';
-import { Alert, App, Button, Card, Collapse, Descriptions, Empty, Form, Input, Modal, Select, Space, Spin, Tag, Typography } from 'antd';
+import { Alert, App, Button, Card, Checkbox, Collapse, Descriptions, Empty, Form, Input, Modal, Select, Space, Spin, Tag, Typography } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { outcomeSourceLabel } from './lifecyclePresentation';
-import { BarChartOutlined, CheckCircleOutlined, FileDoneOutlined, ReloadOutlined, VideoCameraOutlined } from '@ant-design/icons';
+import { BarChartOutlined, CheckCircleOutlined, DownloadOutlined, FileDoneOutlined, LinkOutlined, ReloadOutlined, VideoCameraOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { collaborationService, uploadDraftVideo, type VideoUploadGrant } from '../../services/api/collaborationService';
 import { getErrorMessage } from '../../services/apiClient';
@@ -23,6 +23,7 @@ import { acceptanceReadiness, sortDeliverables } from './collaborationProgress';
 import { DraftVideoField, DraftVideoPlayer } from './DraftVideo';
 import { OutcomeCollectionPicker, PostMetricsPanel } from './PostMetricsPanel';
 import { FlexibleLifecycleControls } from './FlexibleLifecycleControls';
+import { exportCollaborationXlsx } from './exportCollaborationXlsx';
 import { DatePicker } from 'antd';
 import type { Dayjs } from 'dayjs';
 import './CollaborationPage.css';
@@ -100,28 +101,69 @@ const unavailable: Record<string, string> = {
   INVALID_DENOMINATOR: 'Mẫu số không hợp lệ',
 };
 
+const ratioMeta: Record<RatioName, { label: string; hint: string }> = {
+  roas: { label: 'ROAS', hint: 'Doanh thu GMV / Chi phí' },
+  roi: { label: 'ROI', hint: 'Tỷ suất sinh lời ròng' },
+  cpm: { label: 'CPM', hint: 'Chi phí / 1.000 lượt xem' },
+  cpe: { label: 'CPE', hint: 'Chi phí / 1 tương tác' },
+};
+
 function OutcomeFinance({ outcome }: { outcome: OutcomeRevision }) {
-  return <>
-    <Descriptions size="small" bordered column={{ xs: 1, sm: 2, lg: 3 }} title="Tài chính và chỉ số"
-      items={[
-        { key: 'cost', label: 'Chi phí thực tế', children: formatMoney(outcome.calculation.actualCost, outcome.payload.currency) },
-        { key: 'gmv', label: gmvLabel, children: formatMoney(outcome.payload.gmv, outcome.payload.currency) },
-        { key: 'revenue', label: 'Doanh thu', children: formatMoney(outcome.payload.revenue, outcome.payload.currency) },
-        ...ratios.map(ratio => {
-          const value = outcome.calculation[ratio];
-          const reason = outcome.calculation[`${ratio}UnavailableReason`];
-          return {
-            key: ratio, label: ratio.toUpperCase(),
-            children: value == null ? ['—', reason && unavailable[reason]].filter(Boolean).join(' · ')
-              : ratio === 'roi' ? formatNumber(value * 100) + '%' : formatNumber(value),
-          };
-        }),
-      ]} />
-    {!!outcome.payload.costs?.length && <ul>
-      {outcome.payload.costs.map((cost, index) => <li key={index}>{cost.description} · {formatMoney(cost.amount, outcome.payload.currency)}</li>)}
-    </ul>}
-    {outcome.payload.financialEvidence && <HttpsLink url={outcome.payload.financialEvidence}>Bằng chứng đối soát</HttpsLink>}
-  </>;
+  return <div className="finance-outcome-wrap">
+    <div className="finance-kpi-grid-3">
+      <div className="finance-kpi-tile">
+        <span className="finance-kpi-label">Chi phí thực tế</span>
+        <strong className="finance-kpi-val">{formatMoney(outcome.calculation.actualCost, outcome.payload.currency)}</strong>
+        <small className="finance-kpi-hint">Tổng ngân sách đã chi cho Creator</small>
+      </div>
+      <div className="finance-kpi-tile">
+        <span className="finance-kpi-label">{gmvLabel}</span>
+        <strong className="finance-kpi-val">{formatMoney(outcome.payload.gmv, outcome.payload.currency)}</strong>
+        <small className="finance-kpi-hint">Giá trị đơn hàng ghi nhận từ bài đăng</small>
+      </div>
+      <div className="finance-kpi-tile finance-kpi-tile--highlight">
+        <span className="finance-kpi-label">Doanh thu</span>
+        <strong className="finance-kpi-val" style={{ color: '#6D28D9' }}>{formatMoney(outcome.payload.revenue, outcome.payload.currency)}</strong>
+        <small className="finance-kpi-hint">Doanh thu thuần Brand đối soát</small>
+      </div>
+    </div>
+
+    <div className="finance-kpi-grid-4">
+      {ratios.map(ratio => {
+        const value = outcome.calculation[ratio];
+        const reason = outcome.calculation[`${ratio}UnavailableReason`];
+        const meta = ratioMeta[ratio];
+        const formatted = value == null
+          ? '—'
+          : ratio === 'roi'
+            ? `${formatNumber(value * 100)}%`
+            : ratio === 'roas'
+              ? `${formatNumber(value)}x`
+              : `${formatNumber(value)} ₫`;
+        return (
+          <div key={ratio} className="finance-kpi-tile finance-kpi-tile--ratio">
+            <span className="finance-kpi-label">{meta.label}</span>
+            <strong className="finance-kpi-val">{formatted}</strong>
+            <small className="finance-kpi-hint">
+              {value == null && reason ? (unavailable[reason] ?? meta.hint) : meta.hint}
+            </small>
+          </div>
+        );
+      })}
+    </div>
+
+    {!!outcome.payload.costs?.length && (
+      <div className="finance-cost-breakdown">
+        <span className="finance-cost-breakdown-title">Chi tiết khoản chi đã xác nhận:</span>
+        <ul>
+          {outcome.payload.costs.map((cost, index) => (
+            <li key={index}>{cost.description} · <strong>{formatMoney(cost.amount, outcome.payload.currency)}</strong></li>
+          ))}
+        </ul>
+      </div>
+    )}
+    {outcome.payload.financialEvidence && <HttpsLink url={outcome.payload.financialEvidence}>Mở bằng chứng đối soát</HttpsLink>}
+  </div>;
 }
 
 function AcceptanceHistory({ entries }: { entries: Acceptance[] }) {
@@ -236,6 +278,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
   const uploadRequest = useRef<AbortController>(null);
   const attempt = useRef<{ fingerprint: string; key: string } | null>(null);
   const pending = useRef(false);
+  const deliverablesRef = useRef<HTMLDivElement>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string>();
   const [tab, setTab] = useState<CollaborationTab>(showResults ? 'kpi' : 'progress');
   useEffect(() => { if (showResults) setTab('kpi'); }, [showResults]);
@@ -516,6 +559,21 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
   const selectedUnit = ordered.find(unit => unit.id === selectedUnitId) ?? ordered[0];
   const financeButtonLabel = readiness?.hasPositiveCost ? 'Xác nhận chi phí' : 'Ghi tài chính';
   const openFinance = () => startAction({ kind: 'finance', outcomeRevision: latest?.revision, editing: hasFinance(latest?.payload) });
+  const handleExportXlsx = () => {
+    if (!snapshot) return;
+    exportCollaborationXlsx({
+      summary,
+      snapshot,
+      brand,
+      statusLabel: statuses[snapshot.status]?.[0] ?? snapshot.status,
+      channelsText: channels.map(channelLabel).join(', ') || summary.platform || '—',
+      deliverableLabel: label,
+      unitStatusLabel: status => unitStatuses[status]?.[0] ?? status,
+      latest,
+      accepted,
+    });
+    message.success('Đã xuất file Excel (.xlsx)');
+  };
   const canSetup = manage && snapshot?.executionSource === 'LEGACY' && channels.length > 0
     && ['PLANNED', 'IN_PROGRESS'].includes(snapshot.status);
   const canLegacyReview = canReview && !!legacyOutcome && !snapshot?.review;
@@ -529,7 +587,13 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
     let title = 'Theo dõi tiến độ hợp tác';
     let description = '';
     let control: ReactNode;
-    const openUnit = (unit: Deliverable) => { setSelectedUnitId(unit.id); setTab('progress'); };
+    const openUnit = (unit: Deliverable) => {
+      setSelectedUnitId(unit.id);
+      setTab('progress');
+      setTimeout(() => {
+        deliverablesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    };
     if (planned) {
       title = 'Hợp tác chưa bắt đầu';
       if (!brand) description = 'Thương hiệu sẽ bắt đầu hợp tác sau khi chiến dịch và người thực hiện đủ điều kiện.';
@@ -594,23 +658,25 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
     );
 
     return <section key={unit.id} className={splitView ? 'review-main-card execution-unit' : 'execution-unit'}>
-      <div className={splitView ? 'review-player-top' : undefined}>
+      <div className={splitView ? 'review-player-top' : 'execution-unit-header'}>
         <div>
-          <Space wrap><strong className={splitView ? 'review-content-title' : undefined}>{label(unit)}</strong><ColoredStatus style={unitStatuses[unit.status] ?? [unit.status, 'gray']} /></Space>
-          <p className={splitView ? 'review-meta-row' : undefined}>Hạn nộp {formatDate(unit.dueAt)} · Đã dùng {unit.revisionRounds}/{unit.maxRevisionRounds} vòng sửa</p>
+          <Space wrap><strong className={splitView ? 'review-content-title' : 'execution-unit-title'}>{label(unit)}</strong><ColoredStatus style={unitStatuses[unit.status] ?? [unit.status, 'gray']} /></Space>
+          <p className={splitView ? 'review-meta-row' : 'execution-unit-due'}>Hạn nộp {formatDate(unit.dueAt)} · Đã dùng {unit.revisionRounds}/{unit.maxRevisionRounds} vòng sửa</p>
         </div>
         {splitView && buttons}
       </div>
       <div className="collab-checklist-block">
-        <strong className="collab-checklist-title">Checklist nghiệm thu</strong>
+        <strong className="collab-checklist-title">Tiêu chí duyệt nội dung</strong>
         <ul className="collab-checklist">
           {unit.acceptanceChecklist.map(item => (
             <li key={item}><CheckCircleOutlined className="collab-checklist-icon" /><span>{item}</span></li>
           ))}
         </ul>
       </div>
-      <DeliverableHistory collaborationId={id} unit={unit} />
-      {!splitView && buttons}
+      <div className={splitView ? 'execution-unit-history-stack' : 'execution-unit-footer'}>
+        <DeliverableHistory collaborationId={id} unit={unit} />
+        {!splitView && buttons}
+      </div>
     </section>;
   }
 
@@ -631,6 +697,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
             </span>
           </div>
           <Space wrap className="collab-heading-actions">
+            <Button size="small" icon={<DownloadOutlined />} disabled={loading} onClick={handleExportXlsx}>Xuất Excel (.xlsx)</Button>
             <Button size="small" icon={<ReloadOutlined />} aria-label="Tải lại" loading={loading} disabled={busy} onClick={() => void read()}>Tải lại</Button>
             {canCancel && <Button size="small" danger disabled={loading || busy} onClick={() => startAction({ kind: 'cancel' })}>
               Hủy hợp tác
@@ -684,26 +751,28 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
       </header>
       <FlexibleLifecycleControls key={id} snapshot={snapshot} brand={brand} permissions={permissions}
         reviewAction={canSendReview && <Button type="primary" disabled={busy || loading}
-          onClick={() => startAction({ kind: 'review', outcomeRevision: acceptedOutcome!.revision })}>Đánh giá & hoàn tất</Button>}
+          onClick={() => startAction({ kind: 'review', outcomeRevision: acceptedOutcome!.revision })}>Đánh giá & hoàn tất (Khuyến nghị)</Button>}
         onChanged={next => { setSnapshot(next); }} />
       {renderNextAction()}
       {['LEGACY', 'BRAND_LEGACY_PLAN'].includes(snapshot.executionSource) && <Alert showIcon type="info"
         title="Hợp tác lịch sử" description={snapshot.executionSource === 'BRAND_LEGACY_PLAN'
           ? 'Kế hoạch do Brand ghi lại từ điều khoản cũ.'
           : 'Các lần nộp, duyệt và nghiệm thu chỉ hiển thị khi có dữ liệu đã lưu.'} />}
-      {<nav className="collab-tabs-bar" aria-label="Mục chi tiết hợp tác">
-        {tabs.map(item => <button key={item.value} type="button" aria-pressed={tab === item.value}
-          aria-label={item.label} className={'collab-tab-btn' + (tab === item.value ? ' active' : '')} onClick={() => setTab(item.value)}>
-          {item.icon}
-          <span>{item.label}</span>
-          {item.value === 'progress' && ordered.length > 0 && (
-            <span className="collab-tab-count">
-              {ordered.filter(unit => unit.status === 'APPROVED').length}/{ordered.length}
-            </span>
-          )}
-        </button>)}
-      </nav>}
-      {brand && tab === 'progress' && <Card className="collab-progress-card" title="Tiến độ thực hiện">
+      {<div className="collab-tabs-card">
+        <nav className="collab-tabs-bar" aria-label="Mục chi tiết hợp tác">
+          {tabs.map(item => <button key={item.value} type="button" aria-pressed={tab === item.value}
+            aria-label={item.label} className={'collab-tab-btn' + (tab === item.value ? ' active' : '')} onClick={() => setTab(item.value)}>
+            {item.icon}
+            <span>{item.label}</span>
+            {item.value === 'progress' && ordered.length > 0 && (
+              <span className="collab-tab-count">
+                {ordered.filter(unit => unit.status === 'APPROVED').length}/{ordered.length}
+              </span>
+            )}
+          </button>)}
+        </nav>
+        <div className="collab-tab-content-wrap">
+      {tab === 'progress' && <Card className="collab-progress-card" title="Tiến độ thực hiện">
         <div className="collab-progress-summary">
           <div className="collab-progress-stat">
             <span className="collab-progress-label">Ấn phẩm đã duyệt</span>
@@ -736,7 +805,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
       {tab === 'progress' && (
         !ordered.length ? <Card title="Ấn phẩm và lịch sử duyệt">
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có ấn phẩm" />
-        </Card> : brand && selectedUnit ? <div className="collab-review-grid">
+        </Card> : brand && selectedUnit ? <div ref={deliverablesRef} className="collab-review-grid">
           <aside className="review-sidebar-card" aria-label="Danh sách ấn phẩm">
             <strong className="sidebar-header-title">Danh sách ấn phẩm</strong>
             <div className="deliverable-items-list">
@@ -754,7 +823,7 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
             </div>
           </aside>
           {renderDeliverable(selectedUnit, true)}
-        </div> : <Card title="Ấn phẩm và lịch sử duyệt">
+        </div> : <Card className="collab-deliverables-card" title="Ấn phẩm và lịch sử duyệt">
           <div className="execution-stack">{ordered.map(unit => renderDeliverable(unit, false))}</div>
         </Card>
       )}
@@ -773,40 +842,120 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
         </Card> : <>
           {tab === 'kpi' && <>
             <OutcomeTable snapshot={snapshot} latest={latest} label={label} />
-            {publishedUnits.map(unit => <Card key={unit.id} title={label(unit)}>
-              <PostMetricsPanel id={id} unitId={unit.id} publicationId={currentPublication(unit)!.id}
-                revision={snapshot.executionRevision} canCollect={unit.status === 'APPROVED' && ['IN_PROGRESS', 'AWAITING_REVIEW', 'COMPLETED'].includes(snapshot.status)
-                  && ['ACTIVE', 'COMPLETED'].includes(snapshot.campaignStatus) && !busy && !loading} />
-              {canPost && unit.status === 'APPROVED' && (!brand || canRecord) && <Button onClick={() => startAction({ kind: 'outcome', unit, editing: !!measurementFor(latest?.payload, unit) })}>Ghi nhận kết quả</Button>}
-            </Card>)}
+            {publishedUnits.map(unit => {
+              const hasMeasurement = !!measurementFor(latest?.payload, unit);
+              return (
+                <Card
+                  key={unit.id}
+                  className="collab-deliverables-card"
+                  styles={{ header: { background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' } }}
+                  title={label(unit)}
+                  extra={canPost && unit.status === 'APPROVED' && (!brand || canRecord) ? (
+                    <Button
+                      size="small"
+                      type={hasMeasurement ? 'default' : 'primary'}
+                      onClick={() => startAction({ kind: 'outcome', unit, editing: hasMeasurement })}
+                    >
+                      {hasMeasurement ? 'Cập nhật kết quả' : 'Ghi nhận kết quả'}
+                    </Button>
+                  ) : undefined}
+                >
+                  <PostMetricsPanel
+                    id={id}
+                    unitId={unit.id}
+                    publicationId={currentPublication(unit)!.id}
+                    revision={snapshot.executionRevision}
+                    canCollect={unit.status === 'APPROVED' && ['IN_PROGRESS', 'AWAITING_REVIEW', 'COMPLETED'].includes(snapshot.status)
+                      && ['ACTIVE', 'COMPLETED'].includes(snapshot.campaignStatus) && !busy && !loading}
+                  />
+                </Card>
+              );
+            })}
           </>}
           {brand && tab === 'finance' && <FeesOverview snapshot={snapshot} latest={latest} />}
-          {tab === 'finance' && latest && <Card title={brand ? 'Tài chính & nghiệm thu' : 'Trạng thái nghiệm thu'}>
-            {brand && <>
-              <OutcomeFinance outcome={latest} />
-              {ratios.some(ratio => latest.calculation[`${ratio}UnavailableReason`] === 'INCONSISTENT_MEASUREMENT_PERIOD') &&
-                <Typography.Paragraph type="secondary">
-                  Các tỷ số cần cùng kỳ đo cho bài đăng và tài chính. Điều kiện nghiệm thu được hiển thị riêng.
-                </Typography.Paragraph>}
-            </>}
-            <p>{accepted?.outcomeRevision === latest.revision ? 'Đã nghiệm thu' : 'Chưa nghiệm thu'}</p>
-            <AcceptanceHistory entries={snapshot.acceptances.filter(a => a.outcomeRevision === latest.revision)} />
-            {latest.payload.resultNote && <p>{latest.payload.resultNote}</p>}
-            {snapshot.status === 'AWAITING_REVIEW' && accepted && canRecord &&
-              <Button disabled={loading} onClick={() => startAction({ kind: 'reopen', outcomeRevision: accepted.outcomeRevision })}>
-                Mở lại nghiệm thu
-              </Button>}
-            {inProgress && canRecord && canSaveFinance && <Space wrap>
-              <Button type={readiness?.costConfirmed ? 'default' : 'primary'}
-                disabled={loading || busy} onClick={openFinance}>
-                {readiness?.costConfirmed ? 'Sửa tài chính' : financeButtonLabel}
-              </Button>
-              {canAccept && <Button type="primary" disabled={loading || busy}
-                onClick={() => startAction({ kind: 'accept', outcomeRevision: latest.revision })}>
-                Nghiệm thu
-              </Button>}
-            </Space>}
-          </Card>}
+          {tab === 'finance' && latest && (
+            <Card
+              className="collab-deliverables-card"
+              styles={{ header: { background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' } }}
+              title={
+                <Space size={10} wrap>
+                  <span>{brand ? 'Tài chính & nghiệm thu' : 'Trạng thái nghiệm thu'}</span>
+                  <Tag color={accepted?.outcomeRevision === latest.revision ? 'success' : 'default'} style={{ margin: 0 }}>
+                    {accepted?.outcomeRevision === latest.revision ? 'Đã nghiệm thu' : 'Chưa nghiệm thu'}
+                  </Tag>
+                </Space>
+              }
+              extra={
+                <Space wrap size={8}>
+                  <Button size="small" icon={<DownloadOutlined />} disabled={loading} onClick={handleExportXlsx}>
+                    Xuất Excel (.xlsx)
+                  </Button>
+                  {snapshot.status === 'AWAITING_REVIEW' && accepted && canRecord && (
+                    <Button size="small" disabled={loading} onClick={() => startAction({ kind: 'reopen', outcomeRevision: accepted.outcomeRevision })}>
+                      Mở lại nghiệm thu
+                    </Button>
+                  )}
+                  {inProgress && canRecord && canSaveFinance && (
+                    <>
+                      <Button
+                        size="small"
+                        type={readiness?.costConfirmed ? 'default' : 'primary'}
+                        disabled={loading || busy}
+                        onClick={openFinance}
+                      >
+                        {readiness?.costConfirmed ? 'Sửa tài chính' : financeButtonLabel}
+                      </Button>
+                      {canAccept && (
+                        <Button
+                          size="small"
+                          type="primary"
+                          disabled={loading || busy}
+                          onClick={() => startAction({ kind: 'accept', outcomeRevision: latest.revision })}
+                        >
+                          Nghiệm thu
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </Space>
+              }
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {brand && (
+                  latest.calculation.actualCost != null ? (
+                    <>
+                      <OutcomeFinance outcome={latest} />
+                      {latest.payload.gmv == null && latest.payload.revenue == null && (
+                        <Alert
+                          type="info"
+                          showIcon
+                          title="Chưa có dữ liệu doanh thu / GMV"
+                          description="Nếu đây là chiến dịch bán hàng, bạn có thể bổ sung GMV/Doanh thu (chỉ Brand xem được) để tự động tính ROAS, ROI và xuất báo cáo Excel."
+                          action={inProgress && canRecord && canSaveFinance ? (
+                            <Button size="small" onClick={openFinance}>Bổ sung ngay</Button>
+                          ) : undefined}
+                        />
+                      )}
+                      {ratios.some(ratio => latest.calculation[`${ratio}UnavailableReason`] === 'INCONSISTENT_MEASUREMENT_PERIOD') && (
+                        <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                          Các tỷ số cần cùng kỳ đo cho bài đăng và tài chính. Điều kiện nghiệm thu được hiển thị riêng.
+                        </Typography.Paragraph>
+                      )}
+                    </>
+                  ) : (
+                    <Alert
+                      type="info"
+                      showIcon
+                      title="Chưa ghi nhận chi phí & doanh thu thực tế"
+                      description="Bấm 'Ghi / xác nhận chi phí' ở góc phải để nhập chi phí thực tế, GMV/doanh thu (nếu có) và tính các chỉ số ROI, ROAS, CPM, CPE."
+                    />
+                  )
+                )}
+                <AcceptanceHistory entries={snapshot.acceptances.filter(a => a.outcomeRevision === latest.revision)} />
+                {latest.payload.resultNote && <p style={{ margin: 0, color: '#475569' }}>{latest.payload.resultNote}</p>}
+              </div>
+            </Card>
+          )}
           {tab === 'finance' && inProgress && brand && readiness && !canAccept && <Alert showIcon type="info" title="Cần bổ sung trước khi nghiệm thu"
             description={<ul className="collab-readiness-list">
               {readiness.issues.map(issue => <li key={issue.unit?.id ?? issue.message}>
@@ -834,6 +983,8 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
           { key: 'tags', label: 'Nhãn', children: snapshot.review.reviewTags?.map(tag => <Tag key={tag}>{tag}</Tag>) },
         ]} />
       </Card>}
+        </div>
+      </div>}
     </>}
     {action && <Modal open title={action.kind === 'submit' && brand ? 'Ghi nhận nội dung nhận bên ngoài'
       : action.kind === 'publish' && action.unit?.status === 'APPROVED' ? 'Ghi nhận bài đăng'
@@ -844,14 +995,17 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
       okButtonProps={{ htmlType: 'submit', form: 'collaboration-execution-form',
         disabled: !allowed || conflict || loading || (videoSubmission && !videoFile) }} cancelButtonProps={{ disabled: busy }}
       closable={!busy} mask={{ closable: !busy }} keyboard={!busy}
-      width={['outcome', 'finance', 'setup'].includes(action.kind) ? 780 : 540}>
+      centered
+      className="collab-execution-modal"
+      styles={{ body: { maxHeight: 'calc(100dvh - 150px)', overflowY: 'auto', paddingRight: 4 } }}
+      width={['outcome', 'finance', 'setup', 'review', 'legacyReview'].includes(action.kind) ? 840 : 540}>
       <Form<ActionValues> id="collaboration-execution-form" layout="vertical" onFinish={submit} disabled={busy}
         onKeyDown={event => {
           if (event.key === 'Enter' && event.target instanceof HTMLInputElement
               && event.target.type !== 'file') event.preventDefault();
         }}
         initialValues={action.kind === 'outcome' && action.unit ? initialOutcome(measurementFor(latest?.payload, action.unit))
-          : action.kind === 'finance' ? initialFinance(latest?.payload) : undefined}>
+          : action.kind === 'finance' ? initialFinance(latest?.payload, snapshot?.agreedFee) : undefined}>
         {failure && <Alert showIcon type={conflict ? 'warning' : 'error'} title={failure}
           description={conflict ? 'Nội dung đang nhập được giữ lại. Tải bản mới và đối chiếu trước khi gửi lại.' : undefined}
           action={conflict ? <Button loading={loading} onClick={async () => {
@@ -874,9 +1028,30 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
         {videoSubmission && <DraftVideoField file={videoFile} disabled={busy} percent={uploadPercent}
           onChange={file => { setVideoFile(file); setFailure(''); videoUpload.current = null; }} />}
         {(action.kind === 'publish' || (action.kind === 'submit' && !videoSubmission)) && (
-          <Form.Item name="url" label={action.kind === 'submit' ? brand ? 'Link nội dung nhận được' : 'Link bản nháp' : 'Link bài đăng'} rules={[requiredText, httpsRule]}>
-            <Input maxLength={2000} placeholder="https://…" />
-          </Form.Item>
+          <>
+            {action.kind === 'submit' && !brand && (
+              <Alert
+                type="info"
+                showIcon
+                style={{ marginBottom: 14, borderRadius: 10 }}
+                title="Hướng dẫn gửi bản nháp cho Thương hiệu xem trước"
+                description="Dán link Google Drive (bật quyền Ai có đường dẫn đều xem được), YouTube Không công khai (Unlisted) hoặc link video xem trước để Thương hiệu kiểm tra và duyệt."
+              />
+            )}
+            <Form.Item
+              name="url"
+              label={action.kind === 'submit' ? brand ? 'Link nội dung nhận được' : 'Link bản nháp' : 'Link bài đăng'}
+              rules={[requiredText, httpsRule]}
+            >
+              <Input
+                prefix={<LinkOutlined style={{ color: '#64748B' }} />}
+                maxLength={2000}
+                placeholder={action.kind === 'submit' && !brand
+                  ? 'https://drive.google.com/... hoặc https://youtu.be/...'
+                  : 'https://…'}
+              />
+            </Form.Item>
+          </>
         )}
         {brand && ['submit', 'publish', 'outcome'].includes(action.kind) && <>
           <Form.Item name="sourceDescription" label="Nguồn thông tin bên ngoài" rules={[requiredText]}>
@@ -889,16 +1064,38 @@ export default function CollaborationExecutionPanel({ summary, brand, permission
         {action.kind === 'exception' && action.unit && currentPublication(action.unit) && (
           <HttpsLink url={currentPublication(action.unit)!.url}>Mở bài đăng</HttpsLink>
         )}
-        {action.kind === 'approve' && <Form.Item name="checklist" label="Checklist đã đạt"
-          rules={[required, { validator: async (_, value?: string[]) => {
-            if (value?.length !== reviewUnit?.acceptanceChecklist.length) throw new Error('Xác nhận tất cả mục trong checklist.');
-          } }]}>
-          <Select mode="multiple" options={reviewUnit?.acceptanceChecklist.map(item => ({ value: item, label: item }))} />
-        </Form.Item>}
+        {action.kind === 'approve' && (
+          <Form.Item
+            name="checklist"
+            label="Xác nhận bản nháp đáp ứng yêu cầu để cho phép đăng bài"
+            rules={[required, {
+              validator: async (_, value?: string[]) => {
+                if (value?.length !== reviewUnit?.acceptanceChecklist.length) {
+                  throw new Error('Vui lòng tích xác nhận tất cả tiêu chí trước khi phê duyệt.');
+                }
+              },
+            }]}
+          >
+            <Checkbox.Group style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '10px 12px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10 }}>
+              {reviewUnit?.acceptanceChecklist.map(item => (
+                <Checkbox key={item} value={item} style={{ marginInlineStart: 0, fontSize: 13.5, color: '#0F172A' }}>
+                  {item}
+                </Checkbox>
+              ))}
+            </Checkbox.Group>
+          </Form.Item>
+        )}
         {action.kind === 'publish' && reviewUnit?.status !== 'APPROVED' && <Alert type="warning" showIcon
           title="Bài đăng sẽ được ghi là đăng trước khi duyệt." />}
         {action.kind === 'outcome' && action.unit && <>
-          {currentPublication(action.unit) && <OutcomeCollectionPicker id={id} unitId={action.unit.id} publicationId={currentPublication(action.unit)!.id} />}
+          {currentPublication(action.unit) && (
+            <OutcomeCollectionPicker
+              id={id}
+              unitId={action.unit.id}
+              publicationId={currentPublication(action.unit)!.id}
+              revision={snapshot?.executionRevision}
+            />
+          )}
           <OutcomeFields unit={action.unit} label={label(action.unit)} editing={!!action.editing} />
         </>}
         {action.kind === 'finance' && <FinanceFields editing={!!action.editing} />}

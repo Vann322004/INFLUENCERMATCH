@@ -70,29 +70,81 @@ function ProgressTable({ rows, snapshots, returnTo, returnToState, emptyLabel }:
   emptyLabel: string;
 }) {
   if (!rows.length) return <Card><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyLabel} /></Card>;
-  return <OperationsTable label="Bảng tiến độ hợp tác"
-    headers={['Chiến dịch', 'Creator đối tác', 'Ấn phẩm cam kết', 'Trạng thái hợp tác', 'Tiến trình', 'Hạn nộp', 'Phí đã chốt', 'Hành động']}>
-    {rows.map(row => {
-      const units = snapshots[row.id]?.deliverables;
-      const approved = units?.filter(unit => unit.status === 'APPROVED').length;
-      const deadline = units?.map(unit => unit.dueAt).filter(Boolean).sort()[0];
-      return <tr key={row.id}>
-        <td><strong>{row.campaignName}</strong></td>
-        <td><CreatorName row={row} /></td>
-        <td>{units?.length ? [...new Set(units.map(unit => unit.contentType))].join(', ') : 'Chưa có dữ liệu'}</td>
-        <td><StatusTag status={row.status} /></td>
-        <td>{units?.length ? <Space size={6}>
-          <Progress type="line" percent={Math.round((approved ?? 0) / units.length * 100)}
-            size={[64, 5]} showInfo={false} aria-hidden />
-          <span>{approved}/{units.length} ấn phẩm đã duyệt</span>
-        </Space> : 'Chưa có dữ liệu'}</td>
-        <td>{deadline ? formatDate(deadline) : 'Chưa có dữ liệu'}</td>
-        <td><strong>{formatMoney(row.agreedFee, row.currency)}</strong></td>
-        <td><Link className="collab-row-link" to="/collaboration/detail"
-          state={{ collaborationId: row.id, returnTo, returnToState }}>Xem hợp tác</Link></td>
-      </tr>;
-    })}
-  </OperationsTable>;
+  return <>
+    <div className="collab-desktop-table">
+      <OperationsTable label="Bảng tiến độ hợp tác"
+        headers={['Chiến dịch', 'Creator đối tác', 'Ấn phẩm cam kết', 'Trạng thái hợp tác', 'Tiến trình', 'Hạn nộp', 'Phí đã chốt', 'Hành động']}>
+        {rows.map(row => {
+          const units = snapshots[row.id]?.deliverables;
+          const approved = units?.filter(unit => unit.status === 'APPROVED').length;
+          const deadline = units?.map(unit => unit.dueAt).filter(Boolean).sort()[0];
+          return <tr key={row.id}>
+            <td><strong>{row.campaignName}</strong></td>
+            <td><CreatorName row={row} /></td>
+            <td>{units?.length ? [...new Set(units.map(unit => unit.contentType))].join(', ') : 'Chưa có dữ liệu'}</td>
+            <td><StatusTag status={row.status} /></td>
+            <td>{units?.length ? <Space size={6}>
+              <Progress type="line" percent={Math.round((approved ?? 0) / units.length * 100)}
+                size={[64, 5]} showInfo={false} aria-hidden />
+              <span>{approved}/{units.length} ấn phẩm đã duyệt</span>
+            </Space> : 'Chưa có dữ liệu'}</td>
+            <td>{deadline ? formatDate(deadline) : 'Chưa có dữ liệu'}</td>
+            <td><strong>{formatMoney(row.agreedFee, row.currency)}</strong></td>
+            <td><Link className="collab-row-link" to="/collaboration/detail"
+              state={{ collaborationId: row.id, returnTo, returnToState }}>Xem hợp tác</Link></td>
+          </tr>;
+        })}
+      </OperationsTable>
+    </div>
+
+    <div className="collab-mobile-cards" aria-label="Danh sách tiến độ hợp tác">
+      {rows.map(row => {
+        const units = snapshots[row.id]?.deliverables;
+        const approved = units?.filter(unit => unit.status === 'APPROVED').length ?? 0;
+        const deadline = units?.map(unit => unit.dueAt).filter(Boolean).sort()[0];
+        const deliverablesText = units?.length ? [...new Set(units.map(unit => unit.contentType))].join(', ') : 'Chưa có dữ liệu';
+        return (
+          <article key={row.id} className="collab-mobile-card">
+            <div className="collab-mobile-card-head">
+              <CreatorName row={row} />
+              <StatusTag status={row.status} />
+            </div>
+            <div className="collab-mobile-card-campaign">
+              <span className="collab-mobile-label">Chiến dịch</span>
+              <strong>{row.campaignName}</strong>
+            </div>
+            <div className="collab-mobile-card-grid">
+              <div className="collab-mobile-stat">
+                <span className="collab-mobile-label">Ấn phẩm cam kết</span>
+                <span>{deliverablesText}</span>
+              </div>
+              <div className="collab-mobile-stat">
+                <span className="collab-mobile-label">Phí đã chốt</span>
+                <strong style={{ color: '#7C3AED' }}>{formatMoney(row.agreedFee, row.currency)}</strong>
+              </div>
+              <div className="collab-mobile-stat">
+                <span className="collab-mobile-label">Tiến trình</span>
+                {units?.length ? (
+                  <div className="collab-mobile-progress">
+                    <Progress type="line" percent={Math.round(approved / units.length * 100)} size={[72, 5]} showInfo={false} aria-hidden />
+                    <span>{approved}/{units.length} ấn phẩm</span>
+                  </div>
+                ) : <span>Chưa có dữ liệu</span>}
+              </div>
+              <div className="collab-mobile-stat">
+                <span className="collab-mobile-label">Hạn nộp</span>
+                <span>{deadline ? formatDate(deadline) : 'Chưa có dữ liệu'}</span>
+              </div>
+            </div>
+            <div className="collab-mobile-card-foot">
+              <Link className="collab-row-link collab-mobile-link" to="/collaboration/detail"
+                state={{ collaborationId: row.id, returnTo, returnToState }}>Xem hợp tác</Link>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  </>;
 }
 
 function BrandCollaborations({ campaigns }: { campaigns: CampaignResponse[] }) {
@@ -359,7 +411,7 @@ export function CreatorCollaborations() {
         <Button
           type="primary"
           size="small"
-          onClick={() => navigate('/creator/bookings/' + row.id, { state: { collaborationId: row.id } })}
+          onClick={() => navigate('/creator/bookings/detail', { state: { collaborationId: row.id } })}
         >
           Xem hợp tác
         </Button>
