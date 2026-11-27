@@ -23,6 +23,7 @@ import BrandProfilePage, { BrandOnboardingPage } from './pages/brand/BrandProfil
 import OutreachCrmPage from './pages/crm/CampaignOutreachPage';
 import CooperationInvitationPage from './pages/crm/CooperationInvitationPage';
 import CreatorRegisterPage from './pages/auth/CreatorRegisterPage';
+import UserProfilePage from './pages/auth/UserProfilePage';
 import CollaborationPage from './pages/collaboration/CollaborationPage';
 import CollaborationDetailPage from './pages/collaboration/CollaborationDetailPage';
 import PerformancePage from './pages/performance/PerformancePage';
@@ -640,7 +641,7 @@ export default function App() {
             path="/profile"
             element={
               <MainLayout collaborationNavigation>
-                <BrandProfilePage />
+                <UserProfilePage />
               </MainLayout>
             }
           />
@@ -673,6 +674,7 @@ export default function App() {
             <Route path="payments" element={<AdminProtectedRoute requireAdmin><PaymentsPage /></AdminProtectedRoute>} />
             {/* Phase 8 — Audit Log (Admin only) */}
             <Route path="audit" element={<AdminProtectedRoute requireAdmin><AuditLogPage /></AdminProtectedRoute>} />
+            <Route path="profile" element={<UserProfilePage />} />
           </Route>
 
           {/* ── Data Manager Dedicated Routes (/data-manager/*) ─── */}
@@ -693,6 +695,7 @@ export default function App() {
             <Route path="data-sources" element={<DataSourcesPage />} />
             <Route path="taxonomy" element={<DataSourcesPage />} />
             <Route path="scoring" element={<ScoringConfigPage />} />
+            <Route path="profile" element={<UserProfilePage />} />
           </Route>
 
           {/* ── Creator Actor Routes (/creator/*) ──────────── */}
@@ -713,6 +716,7 @@ export default function App() {
             <Route path="rate-card" element={<CreatorPortalPage />} />
             <Route path="bookings" element={<CreatorPortalPage />} />
             <Route path="bookings/:collaborationId" element={<CollaborationDetailPage brand={false} />} />
+            <Route path="profile" element={<UserProfilePage />} />
           </Route>
 
           {/* Admin root redirect */}

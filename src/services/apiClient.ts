@@ -149,15 +149,52 @@ apiClient.interceptors.response.use(
   }
 );
 
+const KNOWN_ERROR_MESSAGES: Record<string, string> = {
+  'Invalid invitation': 'Đường dẫn lời mời không hợp lệ.',
+  'Invitation expired, replaced or no longer open': 'Lời mời hợp tác đã hết hạn, được thay thế hoặc đã đóng.',
+  'Recipient proof is no longer available; contact the Brand': 'Không còn thông tin người nhận lời mời; vui lòng liên hệ Thương hiệu.',
+  'Recipient email is unavailable': 'Email người nhận lời mời không khả dụng.',
+  'A cooperation invitation and target channel are required': 'Cần có lời mời hợp tác và kênh mục tiêu hợp lệ.',
+  'An active, verified Creator account is required': 'Cần tài khoản Creator đang hoạt động và đã xác minh email.',
+  'Target channel is not part of this invitation': 'Kênh đang chọn không còn thuộc lời mời hợp tác này. Vui lòng quay lại trang lời mời để kiểm tra lại.',
+  'Invitation belongs to another account': 'Lời mời này thuộc về một tài khoản khác.',
+  'Invitation belongs to another Creator': 'Lời mời này thuộc về một Creator khác.',
+  'Verify control of every invited channel before continuing': 'Vui lòng xác minh quyền quản lý tất cả kênh được mời trước khi tiếp tục.',
+  'Channels must belong to one Master': 'Các kênh trong lời mời phải thuộc cùng một hồ sơ Creator.',
+  'The Brand already has another deal for these channels; ask the Brand to resolve it': 'Thương hiệu đã có một đề xuất hợp tác khác cho các kênh này; vui lòng liên hệ Thương hiệu để xử lý.',
+  'Select active shortlist channels evaluated together in one completed recommendation run before outreach.': 'Vui lòng chọn các kênh trong danh sách rút gọn (Shortlist) đã được AI đánh giá trong cùng một lượt gợi ý hoàn tất trước khi gửi đề xuất.',
+  'Deal is no longer negotiable': 'Thỏa thuận này không còn ở trạng thái có thể thương lượng.',
+  'Deal has no channels': 'Thỏa thuận chưa có kênh nào.',
+  'Master account is unavailable': 'Hồ sơ Creator chủ quản hiện không khả dụng.',
+  'Channel ownership changed; recreate the deal': 'Quyền sở hữu kênh đã thay đổi; vui lòng tạo lại thỏa thuận mới.',
+  'Positive VND fee, terms and deliverables required': 'Vui lòng nhập mức phí VND hợp lệ, điều khoản và hạng mục bàn giao.',
+  'Invalid deliverable channel or content': 'Kênh hoặc nội dung hạng mục bàn giao không hợp lệ.',
+  'Every channel needs a deliverable': 'Mỗi kênh trong thỏa thuận cần có ít nhất một hạng mục bàn giao.',
+  'Issue a Brand OFFER before sending an invitation': 'Thương hiệu cần phát hành đề xuất (OFFER) trước khi gửi lời mời.',
+  'Campaign is read only': 'Chiến dịch đang ở trạng thái chỉ đọc, không thể chỉnh sửa.',
+  'Verified active Creator required': 'Cần tài khoản Creator đang hoạt động và đã xác minh.',
+  'Brand must issue an offer before acceptance': 'Thương hiệu cần gửi đề xuất trước khi bạn có thể đồng ý.',
+  'Wait for a Brand offer before countering': 'Vui lòng chờ đề xuất từ Thương hiệu trước khi gửi đề xuất thay đổi.',
+  'Current proposal has not been accepted': 'Đề xuất hiện tại chưa được Creator đồng ý.',
+  'Acceptance owner is no longer valid': 'Người xác nhận đồng ý không còn hợp lệ.',
+  'Channel CRM state no longer permits confirmation': 'Trạng thái kênh hiện tại không cho phép xác nhận hợp tác.',
+  'Creator already has a deal in this campaign': 'Creator này đã có một thỏa thuận khác trong chiến dịch.',
+};
+
+function localizeErrorMessage(message: string): string {
+  const trimmed = message.trim();
+  return KNOWN_ERROR_MESSAGES[trimmed] ?? message;
+}
+
 // Helper function to extract friendly error message from API
 export const getErrorMessage = (error: unknown, defaultMessage = 'Đã có lỗi xảy ra'): string => {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as ApiProblemDetails | undefined;
-    if (data?.detail) return data.detail;
-    if (data?.title) return data.title;
-    if (typeof error.response?.data === 'string') return error.response.data;
+    if (data?.detail) return localizeErrorMessage(data.detail);
+    if (data?.title) return localizeErrorMessage(data.title);
+    if (typeof error.response?.data === 'string') return localizeErrorMessage(error.response.data);
   }
-  if (error instanceof Error) return error.message;
+  if (error instanceof Error) return localizeErrorMessage(error.message);
   return defaultMessage;
 };
 
