@@ -2,8 +2,11 @@ import React, { useEffect, useState, useMemo } from 'react';
 import {
   Alert,
   Button,
+  Checkbox,
   Empty,
+  Grid,
   Input,
+  Pagination,
   Popconfirm,
   Select,
   Skeleton,
@@ -36,7 +39,10 @@ import type { CrawlPlatform, CrawlMonitorOverview, LiveCrawlResult } from '../..
 import DirectCrawlModal from '../jobs/components/DirectCrawlModal';
 
 export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }) {
+  const screens = Grid.useBreakpoint();
+  const isMobile = screens.md === false;
   const [overview, setOverview] = useState<CrawlMonitorOverview | null>(null);
+  const [mobilePage, setMobilePage] = useState(1);
   const [reviewCandidates, setReviewCandidates] = useState<LiveCrawlResult[]>([]);
   const [limitedQueue, setLimitedQueue] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -242,15 +248,15 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
         className="quality-filter-box quality-source-filter-bar"
         style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginBottom: 16 }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label htmlFor="crawler-source-filter" style={{ fontWeight: 600, fontSize: 13, color: '#475569' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: isMobile ? '100%' : 'auto' }}>
+          <label htmlFor="crawler-source-filter" style={{ fontWeight: 600, fontSize: 13, color: '#475569', whiteSpace: 'nowrap' }}>
             Nguồn:
           </label>
           <Select
             id="crawler-source-filter"
             value={source}
             onChange={setSource}
-            style={{ width: 180 }}
+            style={{ width: isMobile ? '100%' : 170 }}
             options={[
               { value: 'all', label: 'Tất cả nguồn' },
               { value: 'manual', label: 'Thu thập thủ công' },
@@ -259,15 +265,15 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label style={{ fontWeight: 600, fontSize: 13, color: '#475569' }}>Trạng thái:</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: isMobile ? '100%' : 'auto' }}>
+          <label style={{ fontWeight: 600, fontSize: 13, color: '#475569', whiteSpace: 'nowrap' }}>Trạng thái:</label>
           <Select
             value={statusFilter}
             onChange={(val) => {
               setStatusFilter(val);
               setSelectedRowKeys([]);
             }}
-            style={{ width: 200 }}
+            style={{ width: isMobile ? '100%' : 180 }}
             options={[
               { value: 'active', label: 'Cần đối chiếu' },
               { value: 'dismissed', label: 'Đã loại bỏ' },
@@ -276,7 +282,7 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
           />
         </div>
 
-        <div style={{ flex: 1, minWidth: 200 }}>
+        <div style={{ flex: 1, minWidth: isMobile ? '100%' : 200 }}>
           <Input
             placeholder="Tìm theo tên kênh hoặc @username..."
             prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
@@ -367,12 +373,104 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
             setSource('all'); setStatusFilter('all'); setSearchQuery('');
           }}>Bỏ bộ lọc và xem cả hồ sơ đã ẩn</Button>}
         </Empty>
+      ) : isMobile ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {rows.slice((mobilePage - 1) * 10, mobilePage * 10).map((row) => {
+            const { result } = row;
+            const isDismissed = dismissedIds.has(row.id);
+            const reason = dismissedReasons[row.id];
+            const checked = selectedRowKeys.includes(row.id);
+            return (
+              <div
+                key={row.id}
+                style={{
+                  border: checked ? '1px solid #7C3AED' : '1px solid #E2E8F0',
+                  borderRadius: 12,
+                  padding: 12,
+                  background: checked ? '#F3E8FF' : '#FAF8FF',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, minWidth: 0 }}>
+                    <Checkbox
+                      checked={checked}
+                      onChange={(e) => {
+                        setSelectedRowKeys((prev) =>
+                          e.target.checked ? [...prev, row.id] : prev.filter((k) => k !== row.id)
+                        );
+                      }}
+                    />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5, wordBreak: 'break-word' }}>
+                        {result.display_name || result.username}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#7C3AED' }}>@{result.username.replace(/^@/, '')}</div>
+                    </div>
+                  </div>
+                  <Tag color="geekblue" style={{ fontWeight: 600, borderRadius: 4, marginInlineEnd: 0 }}>
+                    {result.platform}
+                  </Tag>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8, fontSize: 12, color: '#475569' }}>
+                  <span>
+                    {result.followers == null ? 'Chưa có followers' : `${result.followers.toLocaleString('vi-VN')} followers`}
+                  </span>
+                  <span>·</span>
+                  <span>
+                    {result.recent_posts == null ? 'Chưa có bài viết' : `${result.recent_posts.length} bài`}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                  {row.sources.length ? (
+                    row.sources.map((value) => (
+                      <Tag key={value} color={value === 'manual' ? 'blue' : 'purple'} style={{ borderRadius: 4, marginInlineEnd: 0 }}>
+                        {value === 'manual' ? 'Thu thập thủ công' : 'Thu thập tự động'}
+                      </Tag>
+                    ))
+                  ) : (
+                    <Tag style={{ borderRadius: 4, marginInlineEnd: 0 }}>Hệ thống / Kiểm định lại</Tag>
+                  )}
+                  {isDismissed ? (
+                    <Tag color="default" style={{ borderRadius: 4, fontWeight: 600, marginInlineEnd: 0 }}>Đã loại bỏ</Tag>
+                  ) : (
+                    <Tag color="orange" style={{ borderRadius: 4, fontWeight: 600, marginInlineEnd: 0 }}>
+                      {result.decision === 'SKIP_INSUFFICIENT' ? 'Thiếu dữ liệu xác minh'
+                        : result.decision === 'RETRY_PREFLIGHT' ? 'Cần kiểm tra lại' : 'Cần đối chiếu'}
+                    </Tag>
+                  )}
+                </div>
+                {isDismissed && reason && (
+                  <div style={{ fontSize: 11, color: '#64748B', marginBottom: 8 }}>{reason}</div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  {isDismissed ? (
+                    <Button size="small" icon={<UndoOutlined />} onClick={() => handleRestore(row.id, result.username)}>
+                      Khôi phục
+                    </Button>
+                  ) : (
+                    <Button
+                      size="small"
+                      icon={<EyeOutlined />}
+                      onClick={() => setSelected(result)}
+                      style={{ background: '#F3E8FF', borderColor: '#DDD6FE', color: '#7C3AED', fontWeight: 600 }}
+                    >
+                      Đối chiếu
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
+            <Pagination current={mobilePage} pageSize={10} total={rows.length} size="small" onChange={setMobilePage} />
+          </div>
+        </div>
       ) : (
         <Table
           loading={loading}
           rowKey="id"
           dataSource={rows}
-          scroll={{ x: 950 }}
+          size="middle"
           pagination={{ pageSize: 10, showSizeChanger: true }}
           rowSelection={{
             selectedRowKeys,
@@ -381,10 +479,10 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
           columns={[
             {
               title: 'Tài khoản',
-              width: 250,
+              ellipsis: true,
               render: (_, { result }) => (
-                <div>
-                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {result.display_name || result.username}
                   </div>
                   <div style={{ fontSize: 12, color: '#64748B' }}>
@@ -395,57 +493,52 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
             },
             {
               title: 'Nền tảng',
-              width: 100,
+              width: 92,
               render: (_, row) => (
-                <Tag color="geekblue" style={{ fontWeight: 600, borderRadius: 4 }}>
+                <Tag color="geekblue" style={{ fontWeight: 600, borderRadius: 4, marginInlineEnd: 0 }}>
                   {row.result.platform}
                 </Tag>
               ),
             },
             {
-              title: 'Người theo dõi',
-              width: 130,
-              render: (_, row) =>
-                row.result.followers == null ? (
-                  <span style={{ color: '#94A3B8' }}>Chưa có dữ liệu</span>
-                ) : (
-                  <strong style={{ color: '#0F172A' }}>{row.result.followers.toLocaleString('vi-VN')}</strong>
-                ),
-            },
-            {
-              title: 'Bài viết đã thu thập',
-              width: 150,
-              render: (_, row) =>
-                row.result.recent_posts == null ? (
-                  <span style={{ color: '#94A3B8' }}>Chưa có dữ liệu</span>
-                ) : (
-                  `${row.result.recent_posts.length} bài`
-                ),
+              title: 'Chỉ số',
+              render: (_, row) => (
+                <div style={{ fontSize: 12.5 }}>
+                  <div>
+                    {row.result.followers == null ? (
+                      <span style={{ color: '#94A3B8' }}>Chưa có followers</span>
+                    ) : (
+                      <strong style={{ color: '#0F172A' }}>{row.result.followers.toLocaleString('vi-VN')}</strong>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: '#64748B' }}>
+                    {row.result.recent_posts == null ? 'Chưa có bài viết' : `${row.result.recent_posts.length} bài`}
+                  </div>
+                </div>
+              ),
             },
             {
               title: 'Nguồn',
-              width: 140,
               render: (_, row) =>
                 row.sources.length ? (
                   row.sources.map((value) => (
-                    <Tag key={value} color={value === 'manual' ? 'blue' : 'purple'} style={{ borderRadius: 4 }}>
+                    <Tag key={value} color={value === 'manual' ? 'blue' : 'purple'} style={{ borderRadius: 4, marginInlineEnd: 0, whiteSpace: 'normal' }}>
                       {value === 'manual' ? 'Thu thập thủ công' : 'Thu thập tự động'}
                     </Tag>
                   ))
                 ) : (
-                  <Tag style={{ borderRadius: 4 }}>Hệ thống / Kiểm định lại</Tag>
+                  <Tag style={{ borderRadius: 4, marginInlineEnd: 0, whiteSpace: 'normal' }}>Hệ thống / Kiểm định lại</Tag>
                 ),
             },
             {
               title: 'Trạng thái',
-              width: 170,
               render: (_, row) => {
                 const isDismissed = dismissedIds.has(row.id);
                 if (isDismissed) {
                   const reason = dismissedReasons[row.id];
                   return (
                     <div>
-                      <Tag color="default" style={{ borderRadius: 4, fontWeight: 600 }}>
+                      <Tag color="default" style={{ borderRadius: 4, fontWeight: 600, marginInlineEnd: 0 }}>
                         Đã loại bỏ
                       </Tag>
                       {reason && (
@@ -457,7 +550,7 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
                   );
                 }
                 return (
-                  <Tag color="orange" style={{ borderRadius: 4, fontWeight: 600 }}>
+                  <Tag color="orange" style={{ borderRadius: 4, fontWeight: 600, marginInlineEnd: 0, whiteSpace: 'normal' }}>
                     {row.result.decision === 'SKIP_INSUFFICIENT' ? 'Thiếu dữ liệu xác minh'
                       : row.result.decision === 'RETRY_PREFLIGHT' ? 'Cần kiểm tra lại' : 'Cần đối chiếu'}
                   </Tag>
@@ -468,7 +561,7 @@ export default function CrawlerReviewList({ refreshKey }: { refreshKey: number }
               title: 'Thao tác',
               key: 'actions',
               align: 'right',
-              width: 120,
+              width: 110,
               render: (_, row) => {
                 const isDismissed = dismissedIds.has(row.id);
 

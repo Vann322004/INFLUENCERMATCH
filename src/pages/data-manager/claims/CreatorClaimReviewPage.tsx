@@ -2,18 +2,19 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Card, Table, Tag, Avatar, Button, Input, Select, Space,
   Drawer, Descriptions, Modal, Form, Badge, message,
-  Typography, Tooltip, Tabs, Spin, Alert, Divider,
+  Typography, Tooltip, Tabs, Spin, Alert, Divider, Grid, Pagination, Empty,
 } from "antd";
 import type { TableColumnsType } from "antd";
 import {
   SearchOutlined, CheckCircleOutlined, CloseCircleOutlined,
   EyeOutlined, StopOutlined, IdcardOutlined, LinkOutlined,
-  ClockCircleOutlined, SafetyCertificateOutlined, FileSearchOutlined,
-  UserOutlined,
+  ClockCircleOutlined, FileSearchOutlined,
+  UserOutlined, ReloadOutlined,
 } from "@ant-design/icons";
 import { claimService } from "../../../services/api/claimService";
 import type { ClaimResponse, ClaimStatus, ReviewRequest, ReviewEvidenceType } from "../../../types/api/claim.types";
 import { getErrorMessage } from "../../../services/apiClient";
+import "./CreatorClaimReviewPage.css";
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
@@ -97,12 +98,14 @@ function ClaimDetailDrawer({
   }, [open, claim, retry]);
 
   const d = detail || claim;
+  const screens = Grid.useBreakpoint();
+  const isMobile = screens.md === false;
   if (!d) return null;
   const st = STATUS_CFG[d.status];
 
   return (
     <Drawer
-      open={open} onClose={onClose} width={600}
+      open={open} onClose={onClose} width={isMobile ? "100vw" : 600}
       title={
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <FileSearchOutlined style={{ color: "#7C3AED", fontSize: 18 }} />
@@ -158,7 +161,7 @@ function ClaimDetailDrawer({
 
           <div>
             <Title level={5} style={{ color: "#334155", marginBottom: 10, fontSize: 13 }}>Người gửi yêu cầu xác minh</Title>
-            <Descriptions column={2} size="small" bordered
+            <Descriptions column={isMobile ? 1 : 2} size="small" bordered
               labelStyle={{ color: "#64748B", fontSize: 12 }}
               contentStyle={{ color: "#0F172A", fontWeight: 600, fontSize: 12 }}>
               <Descriptions.Item label="Họ và tên">{d.claimantName || "—"}</Descriptions.Item>
@@ -343,6 +346,8 @@ function RevokeModal({ claim, open, onClose, onDone }: { claim: ClaimResponse | 
 }
 
 export default function CreatorClaimReviewPage() {
+  const screens = Grid.useBreakpoint();
+  const isMobile = screens.md === false;
   const [tab, setTab] = useState<"pending" | "history">("pending");
   const [claims, setClaims] = useState<ClaimResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -395,41 +400,43 @@ export default function CreatorClaimReviewPage() {
 
   const columns: TableColumnsType<ClaimResponse> = [
     {
-      title: "Creator", key: "creator", width: 200,
+      title: "Creator", key: "creator", ellipsis: true,
       render: (_, r) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
           <Avatar src={r.creatorAvatar} icon={<UserOutlined />} size={36} style={{ border: "1.5px solid rgba(124, 58, 237,0.3)", flexShrink: 0 }} />
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 13, color: "#0F172A", lineHeight: 1.2 }}>{r.creatorName || r.creatorHandle || "Kênh chưa có tên"}</div>
-            {!r.creatorName && !r.creatorHandle && <code style={{overflowWrap:'anywhere'}}>{r.creatorId}</code>}
-            <div style={{ fontSize: 11, color: "#7C3AED" }}>{r.creatorHandle}</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: 13, color: "#0F172A", lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {r.creatorName || r.creatorHandle || "Kênh chưa có tên"}
+            </div>
+            {!r.creatorName && !r.creatorHandle && <code style={{ overflowWrap: 'anywhere', fontSize: 11 }}>{r.creatorId}</code>}
+            <div style={{ fontSize: 11, color: "#7C3AED", fontWeight: 600 }}>{r.creatorHandle}</div>
           </div>
         </div>
       ),
     },
     {
-      title: "Người yêu cầu", key: "claimant", width: 180,
+      title: "Người yêu cầu", key: "claimant", ellipsis: true,
       render: (_, r) => (
-        <div>
-          <div style={{ fontWeight: 600, fontSize: 12, color: "#334155", overflowWrap:'anywhere' }}>{r.claimantName || r.claimantId || "—"}</div>
-          <div style={{ fontSize: 11, color: "#64748B" }}>{r.claimantEmail || "—"}</div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 600, fontSize: 12, color: "#334155", overflowWrap: 'anywhere' }}>{r.claimantName || r.claimantId || "—"}</div>
+          <div style={{ fontSize: 11, color: "#64748B", overflowWrap: 'anywhere' }}>{r.claimantEmail || "—"}</div>
         </div>
       ),
     },
     {
       title: "Nền tảng", dataIndex: "creatorPlatform", key: "platform", width: 100,
-      render: (v: string) => v ? <Tag style={{ borderRadius: 12, fontWeight: 600, fontSize: 11 }}>{v}</Tag> : <Text type="secondary">—</Text>,
+      render: (v: string) => v ? <Tag color="geekblue" style={{ borderRadius: 6, fontWeight: 700, marginInlineEnd: 0 }}>{v}</Tag> : <Text type="secondary">—</Text>,
     },
     {
-      title: "Ngày gửi", dataIndex: "submittedAt", key: "submittedAt", width: 130,
-      render: (v: string) => <Text style={{ fontSize: 12, color: "#64748B" }}>{v ? new Date(v).toLocaleDateString("vi-VN") : "—"}</Text>,
+      title: "Ngày gửi", dataIndex: "submittedAt", key: "submittedAt", width: 110,
+      render: (v: string) => <Text style={{ fontSize: 12, color: "#64748B", whiteSpace: "nowrap" }}>{v ? new Date(v).toLocaleDateString("vi-VN") : "—"}</Text>,
     },
     {
-      title: "Trạng thái", dataIndex: "status", key: "status", width: 120,
+      title: "Trạng thái", dataIndex: "status", key: "status", width: 115,
       render: (status: ClaimStatus) => {
         const cfg = STATUS_CFG[status];
         return (
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
             <Badge color={cfg.color} />
             <span style={{ color: cfg.color, fontWeight: 600, fontSize: 12 }}>{cfg.label}</span>
           </div>
@@ -437,13 +444,13 @@ export default function CreatorClaimReviewPage() {
       },
     },
     {
-      title: "Thao tác", key: "actions", width: 160,
+      title: "Thao tác", key: "actions", width: 124,
       render: (_, record) => (
         <Space size={6}>
           <Tooltip title="Xem bằng chứng">
             <Button size="small" icon={<EyeOutlined />}
               onClick={e => { e.stopPropagation(); setSelectedClaim(record); setDrawerOpen(true); }}
-              style={{ background: "rgba(124, 58, 237,0.1)", border: "1px solid rgba(124, 58, 237,0.2)", color: "#A78BFA" }} />
+              style={{ background: "#F3E8FF", border: "1px solid #DDD6FE", color: "#7C3AED" }} />
           </Tooltip>
           {record.status === "PENDING" && (
             <>
@@ -473,23 +480,100 @@ export default function CreatorClaimReviewPage() {
 
   const tableContent = (
     <Spin spinning={loading}>
-      <Table
-        columns={columns} dataSource={filtered} rowKey="id" size="middle"
-        pagination={{ current: page, pageSize: 10, total, onChange: value => { setPage(value); void fetchClaims(value); }, showTotal: t => `${t} hồ sơ` }}
-        scroll={{x:900}}
-        onRow={record => ({ onClick: () => { setSelectedClaim(record); setDrawerOpen(true); }, style: { cursor: "pointer" } })}
-      />
+      {isMobile ? (
+        filtered.length === 0 ? (
+          <Empty description="Không có hồ sơ xác minh nào" />
+        ) : (
+          <div className="claims-mobile-list">
+            {filtered.map((record) => {
+              const cfg = STATUS_CFG[record.status];
+              return (
+                <div
+                  key={record.id}
+                  className="claims-mobile-card"
+                  onClick={() => { setSelectedClaim(record); setDrawerOpen(true); }}
+                >
+                  <div className="claims-mobile-top">
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                      <Avatar src={record.creatorAvatar} icon={<UserOutlined />} size={36} style={{ border: "1.5px solid rgba(124, 58, 237,0.3)", flexShrink: 0 }} />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, color: "#0F172A", wordBreak: "break-word" }}>
+                          {record.creatorName || record.creatorHandle || "Kênh chưa có tên"}
+                        </div>
+                        <div style={{ fontSize: 11.5, color: "#7C3AED", fontWeight: 600 }}>{record.creatorHandle}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}>
+                      <Badge color={cfg.color} />
+                      <span style={{ color: cfg.color, fontWeight: 600, fontSize: 12 }}>{cfg.label}</span>
+                    </div>
+                  </div>
+                  <div className="claims-mobile-meta">
+                    {record.creatorPlatform && <Tag color="geekblue" style={{ borderRadius: 6, fontWeight: 700, marginInlineEnd: 0 }}>{record.creatorPlatform}</Tag>}
+                    <span>{record.claimantName || record.claimantEmail || "—"}</span>
+                    <span>· {record.submittedAt ? new Date(record.submittedAt).toLocaleDateString("vi-VN") : "—"}</span>
+                  </div>
+                  <div className="claims-mobile-actions" onClick={e => e.stopPropagation()}>
+                    <Button size="small" icon={<EyeOutlined />}
+                      onClick={() => { setSelectedClaim(record); setDrawerOpen(true); }}
+                      style={{ background: "#F3E8FF", border: "1px solid #DDD6FE", color: "#7C3AED" }}>
+                      Xem
+                    </Button>
+                    {record.status === "PENDING" && (
+                      <>
+                        <Button size="small" icon={<CheckCircleOutlined />}
+                          onClick={() => setApproveTarget(record)}
+                          style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", color: "#10B981" }}>
+                          Duyệt
+                        </Button>
+                        <Button size="small" icon={<CloseCircleOutlined />}
+                          onClick={() => setRejectTarget(record)}
+                          style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#EF4444" }}>
+                          Từ chối
+                        </Button>
+                      </>
+                    )}
+                    {record.status === "APPROVED" && (
+                      <Button size="small" icon={<StopOutlined />}
+                        onClick={() => setRevokeTarget(record)}
+                        style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#EF4444" }}>
+                        Thu hồi
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+              <Pagination
+                current={page}
+                pageSize={10}
+                total={total}
+                size="small"
+                onChange={value => { setPage(value); void fetchClaims(value); }}
+                showTotal={t => `${t} hồ sơ`}
+              />
+            </div>
+          </div>
+        )
+      ) : (
+        <Table
+          columns={columns} dataSource={filtered} rowKey="id" size="middle"
+          pagination={{ current: page, pageSize: 10, total, onChange: value => { setPage(value); void fetchClaims(value); }, showTotal: t => `${t} hồ sơ` }}
+          onRow={record => ({ onClick: () => { setSelectedClaim(record); setDrawerOpen(true); }, style: { cursor: "pointer" } })}
+        />
+      )}
     </Spin>
   );
 
   const filterBar = (showStatus = false) => (
-    <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+    <div className="claims-filter-bar">
       <Input prefix={<SearchOutlined style={{ color: "#94A3B8" }} />}
         placeholder="Tìm trong trang hiện tại theo kênh hoặc người yêu cầu"
         value={search} onChange={e => setSearch(e.target.value)}
-        style={{ maxWidth: 340, borderRadius: 8 }} allowClear />
+        style={{ width: isMobile ? "100%" : 340, borderRadius: 8 }} allowClear />
       {showStatus && (
-        <Select value={statusFilter} onChange={setStatusFilter} style={{ width: 180 }}>
+        <Select value={statusFilter} onChange={setStatusFilter} style={{ width: isMobile ? "100%" : 180 }}>
           <Select.Option value="ALL">Tất cả trạng thái</Select.Option>
           <Select.Option value="APPROVED">Đã duyệt</Select.Option>
           <Select.Option value="REJECTED">Từ chối</Select.Option>
@@ -500,17 +584,23 @@ export default function CreatorClaimReviewPage() {
   );
 
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+    <div className="claims-review-page">
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: 20 }}>
         <div>
-          <div style={{ color: "#0F172A", fontWeight: 800, fontSize: 20, display: "flex", alignItems: "center", gap: 10 }}>
-            <SafetyCertificateOutlined style={{ color: "#7C3AED" }} />
+          <div style={{ color: "#0F172A", fontWeight: 800, fontSize: 22 }}>
             Kiểm duyệt quyền sở hữu kênh
           </div>
-          <div style={{ color: "#64748B", fontSize: 13, marginTop: 2 }}>
+          <div style={{ color: "#64748B", fontSize: 13, marginTop: 4 }}>
             Đối chiếu bằng chứng, ghi nhận lý do và bảo vệ quyền sở hữu kênh trong InfluencerMatch.
           </div>
         </div>
+        <Button
+          icon={<ReloadOutlined spin={loading} />}
+          onClick={() => void fetchClaims(page)}
+          style={{ borderRadius: 8, fontWeight: 600 }}
+        >
+          Làm mới danh sách
+        </Button>
       </div>
 
       <div className="dm-flow-highlights">
@@ -527,16 +617,15 @@ export default function CreatorClaimReviewPage() {
         />
       )}
 
-      <Card bordered={false} bodyStyle={{ padding: 0 }}
-        style={{ borderRadius: 14, boxShadow: "0 2px 10px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+      <Card variant="borderless" className="claims-review-card" styles={{ body: { padding: 0 } }}>
         <Tabs activeKey={tab} onChange={v => { setTab(v as "pending" | "history"); setSearch(""); }}
-          type="line"
-          tabBarStyle={{ padding: "0 20px", marginBottom: 0, borderBottom: "1px solid #EEF0F6" }}
+          size="middle"
+          tabBarStyle={{ padding: "0 20px", marginBottom: 0, borderBottom: "1px solid #EEF0F6", background: "#FAFAFD" }}
           items={[
             {
               key: "pending",
               label: (
-                <span style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>
                   <ClockCircleOutlined />
                   Chờ duyệt
                   {pendingCount > 0 && (
@@ -546,17 +635,17 @@ export default function CreatorClaimReviewPage() {
                   )}
                 </span>
               ),
-              children: <div style={{ padding: "16px 20px 20px" }}>{filterBar(false)}{tableContent}</div>,
+              children: <div className="claims-tab-body">{filterBar(false)}{tableContent}</div>,
             },
             {
               key: "history",
               label: (
-                <span style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>
                   <FileSearchOutlined />
                   Lịch sử
                 </span>
               ),
-              children: <div style={{ padding: "16px 20px 20px" }}>{filterBar(true)}{tableContent}</div>,
+              children: <div className="claims-tab-body">{filterBar(true)}{tableContent}</div>,
             },
           ]}
         />

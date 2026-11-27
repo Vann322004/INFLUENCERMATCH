@@ -30,6 +30,7 @@ export interface BrandCampaignItem {
   targetCreatorCount?: number;
   id: string;
   name: string;
+  imageUrl?: string | null;
   tag: string;
   target?: string;
   suggestedCategory?: string;

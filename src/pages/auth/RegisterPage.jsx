@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const pendingPasswordRef = React.useRef('');
 
   React.useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -38,6 +39,7 @@ export default function RegisterPage() {
         },
       });
 
+      pendingPasswordRef.current = values.password || '';
       setVerificationEmail(values.email.trim());
       setResendCooldown(60);
       message.success('Đã tạo tài khoản. Vui lòng nhập mã xác minh được gửi đến email.');
@@ -53,6 +55,28 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await authService.verifyEmail(verificationEmail, otp);
+      const savedPassword = pendingPasswordRef.current;
+      pendingPasswordRef.current = '';
+      if (savedPassword) {
+        try {
+          const loginData = await authService.login({
+            email: verificationEmail,
+            password: savedPassword,
+          });
+          const user = loginData?.user;
+          if (user?.role === 'BRAND') {
+            const target = user.onboardingStatus === 'COMPLETED' ? (ROUTES.DASHBOARD || '/dashboard') : '/brand-onboarding';
+            message.success('Xác minh email thành công! Đang chuyển đến thiết lập hồ sơ thương hiệu.');
+            navigate(target, { replace: true });
+            return;
+          }
+          message.success('Xác minh email thành công!');
+          navigate(ROUTES.DASHBOARD || '/dashboard', { replace: true });
+          return;
+        } catch {
+          // Fallback to login page if auto-login fails
+        }
+      }
       message.success('Xác minh email thành công! Bạn có thể đăng nhập.');
       navigate(ROUTES.AUTH.LOGIN || '/login');
     } catch (error) {

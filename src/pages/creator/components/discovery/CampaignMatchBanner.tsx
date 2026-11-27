@@ -1,7 +1,17 @@
 import React from 'react';
-import { Select } from 'antd';
+import { Select, Tag } from 'antd';
 import { CompassOutlined } from '@ant-design/icons';
+import CampaignImage from '../../../../components/common/CampaignImage';
 import type { BrandCampaignItem } from './types';
+
+const platformLabels: Record<string, string> = {
+  tiktok: 'TikTok',
+  instagram: 'Instagram',
+  youtube: 'YouTube',
+  facebook: 'Facebook',
+  threads: 'Threads',
+  x: 'X',
+};
 
 interface CampaignMatchBannerProps {
   matchedCampaign: BrandCampaignItem | null;
@@ -19,11 +29,31 @@ export const CampaignMatchBanner: React.FC<CampaignMatchBannerProps> = ({
   if (matchedCampaign) {
     return (
       <section className="cdiscovery-campaign-summary">
-        <div className="cdiscovery-campaign-summary-copy">
-          <span className="cdiscovery-campaign-eyebrow">CHIẾN DỊCH ĐANG KHÁM PHÁ</span>
-          <h2>{matchedCampaign.name}</h2>
-          <p>{matchedCampaign.targetCreatorCount != null ? `Mục tiêu: ${matchedCampaign.targetCreatorCount} nhà sáng tạo. ` : ''}Khám phá và lưu kênh vào danh sách của chiến dịch này.</p>
+        <div className="cdiscovery-campaign-summary-main">
+          <CampaignImage src={matchedCampaign.imageUrl} className="cdiscovery-campaign-thumb" />
+          <div className="cdiscovery-campaign-summary-copy">
+            <div className="cdiscovery-campaign-eyebrow-row">
+              <span className="cdiscovery-campaign-eyebrow">CHIẾN DỊCH ĐANG KHÁM PHÁ</span>
+              {(matchedCampaign.channels ?? []).map((ch) => (
+                <Tag key={ch} className="cdiscovery-campaign-chip">{platformLabels[ch] || ch}</Tag>
+              ))}
+              {matchedCampaign.tag && <Tag className="cdiscovery-campaign-chip is-muted">{matchedCampaign.tag}</Tag>}
+            </div>
+            <h2>{matchedCampaign.name}</h2>
+            <p>{matchedCampaign.targetCreatorCount != null ? `Mục tiêu: ${matchedCampaign.targetCreatorCount} nhà sáng tạo. ` : ''}Khám phá và lưu kênh vào danh sách của chiến dịch này.</p>
+          </div>
         </div>
+        {campaignsList.length > 1 && (
+          <div className="cdiscovery-campaign-switcher">
+            <span>Đổi chiến dịch</span>
+            <Select
+              value={selectedCampaignId || undefined}
+              onChange={onSelectCampaign}
+              style={{ width: 230 }}
+              options={campaignsList.map((c) => ({ value: c.id, label: c.name }))}
+            />
+          </div>
+        )}
       </section>
     );
   }

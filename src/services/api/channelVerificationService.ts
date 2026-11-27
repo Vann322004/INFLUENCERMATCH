@@ -37,9 +37,10 @@ export interface LinkedChannel {
 
 export interface OAuthAccount {
   accountId: string;
+  creatorId?: string | null;
   name?: string | null;
   username?: string | null;
-  matchStatus: 'AVAILABLE' | 'ALREADY_LINKED' | 'UNMATCHED' | 'UNAVAILABLE' | 'INSUFFICIENT_EVIDENCE';
+  matchStatus: 'AVAILABLE' | 'CAN_CREATE' | 'ALREADY_LINKED' | 'UNMATCHED' | 'UNAVAILABLE' | 'INSUFFICIENT_EVIDENCE';
   matchReason?: 'CHANNEL_NOT_FOUND' | 'UNSTABLE_CHANNEL_ID' | 'MISSING_PAGE_MANAGEMENT' | 'TARGET_MISMATCH' | 'OWNERSHIP_CONFLICT' | null;
 }
 

@@ -55,10 +55,10 @@ function ProposalEditor({ campaignId, deal, initialDelivery, history, readOnly, 
   const cancelLabel = deal.collaborationId ? 'Hủy hợp tác trước khi bắt đầu' : delivery ? 'Rút lời mời' : 'Hủy hồ sơ tiếp cận';
   const resendState = emailResendState(deal, delivery, readOnly);
   const manual = deliveryMethod === 'MANUAL_LINK';
-  const channelDescription = manual ? 'Bạn tự chia sẻ link lời mời. Hệ thống không gửi email hoặc thông báo Portal.'
-    : deliveryMethod === 'PORTAL_ONLY' ? 'Chỉ tạo thông báo trong tài khoản Creator, không gửi email.'
-    : deliveryMethod === 'PORTAL_EMAIL' ? 'Tạo thông báo trong tài khoản Creator và gửi email chứa link lời mời.'
-    : deliveryMethod === 'EMAIL_ONLY' ? 'Chỉ gửi email chứa link lời mời, không tạo thông báo Portal.'
+  const channelDescription = manual ? 'Bạn tự chia sẻ link lời mời. Hệ thống không gửi email hoặc thông báo trong tài khoản InfluencerMatch.'
+    : deliveryMethod === 'PORTAL_ONLY' ? 'Chỉ tạo thông báo trong tài khoản InfluencerMatch của Creator, không gửi email.'
+    : deliveryMethod === 'PORTAL_EMAIL' ? 'Tạo thông báo trong tài khoản InfluencerMatch và gửi email chứa link lời mời.'
+    : deliveryMethod === 'EMAIL_ONLY' ? 'Chỉ gửi email chứa link lời mời, không tạo thông báo trong tài khoản InfluencerMatch.'
     : 'Chưa tải được các cách gửi khả dụng cho người nhận này.';
   const initialValues: Partial<ProposalForm> = {
     fee: deal.proposal?.fee, terms: deal.proposal?.terms ?? '',
@@ -134,13 +134,25 @@ function ProposalEditor({ campaignId, deal, initialDelivery, history, readOnly, 
     {mutable && reusableDeals.some(source => source.id !== deal.id && source.proposal?.kind === 'OFFER') && <div className="contact-reuse-proposal"><span>Dùng lại lời mời</span><Select aria-label="Dùng lại nội dung lời mời" placeholder="Chọn lời mời đã soạn" value={undefined} disabled={busy} onChange={reuseProposal} options={reusableDeals.filter(source => source.id !== deal.id && source.proposal?.kind === 'OFFER').map(source => ({ value: source.id, label: source.channels.map(channel => '@' + channel.username).join(', ') + ' · ' + source.proposal!.fee.toLocaleString('vi-VN') + ' ₫' }))} /></div>}
     <ProposalFields form={form} deal={deal} initialValues={initialValues} mutable={mutable} busy={busy} onDirty={() => setDirty(true)} onFinish={values => void save(values)} />
 
-    {delivery && <section className="contact-delivery"><strong>{delivery.emailStatus === 'NOT_REQUESTED' ? 'Đã tạo thông báo Portal · Không gửi email' : deliveryLabel(delivery.emailStatus)}</strong>{delivery.portalNotificationCreated && <p>Đã tạo thông báo lời mời trong hệ thống.</p>}{delivery.sentAt && <p>{new Date(delivery.sentAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })} (UTC+7)</p>}
+    {delivery && <section className="contact-delivery"><strong>{delivery.emailStatus === 'NOT_REQUESTED' ? 'Đã tạo thông báo trong tài khoản InfluencerMatch · Không gửi email' : deliveryLabel(delivery.emailStatus)}</strong>{delivery.portalNotificationCreated && <p>Đã tạo thông báo lời mời trong hệ thống.</p>}{delivery.sentAt && <p>Đã gửi lúc: {new Date(delivery.sentAt).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })} (UTC+7)</p>}
       {delivery.emailStatus === 'SENT' && <p>Email đã được gửi; chưa xác nhận người nhận đã đọc hoặc đồng ý.</p>}
       {delivery.active === false && <p>Lời mời này không còn hiệu lực. Trạng thái email không phải trạng thái đồng thuận của Creator.</p>}
-      <div className="contact-actions"><Button disabled={busy} onClick={() => void perform(async () => { const next = await dealService.delivery(delivery.invitationId); if (getAuthSessionId() === sessionId) setDelivery(next); })}>Kiểm tra trạng thái gửi</Button>
+      <div className="contact-actions">
+        {['QUEUED', 'PROCESSING'].includes(delivery.emailStatus) && (
+          <Button disabled={busy} onClick={() => void perform(async () => { const next = await dealService.delivery(delivery.invitationId); if (getAuthSessionId() === sessionId) setDelivery(next); })}>Kiểm tra trạng thái gửi</Button>
+        )}
         {delivery.emailStatus === 'MANUAL_REQUIRED' && delivery.active !== false && <Button disabled={busy} onClick={() => void perform(async () => { const result = await dealService.manualLink(delivery.invitationId); if (getAuthSessionId() !== sessionId) return; setManualLink(result.link); })}>Lấy link lời mời</Button>}
-        {delivery.canRetry && <Button disabled={busy} onClick={() => void perform(async () => { const result = await dealService.retryEmail(delivery.invitationId); if (getAuthSessionId() === sessionId) setDelivery(result); })}>Thử gửi lại email</Button>}</div>
-      {resendState.visible && <div className="contact-resend-control"><Button disabled={busy || !resendState.enabled} onClick={() => Modal.confirm({ title: 'Gửi lại email lời mời?', content: 'Giữ nguyên liên kết và thời hạn của lời mời, không tạo thỏa thuận mới.', okText: 'Gửi lại email', cancelText: 'Hủy', onOk: () => perform(async () => { await dealService.resendEmail(delivery.invitationId); const next = await dealService.delivery(delivery.invitationId); if (getAuthSessionId() === sessionId) { setDelivery(next); message.success('Đã xếp hàng gửi lại email.'); } }) })}>Gửi lại email</Button>{resendState.reason && <small>{resendState.reason}</small>}</div>}
+        {delivery.emailStatus === 'FAILED' && delivery.canRetry && <Button disabled={busy} onClick={() => void perform(async () => { const result = await dealService.retryEmail(delivery.invitationId); if (getAuthSessionId() === sessionId) setDelivery(result); })}>Thử gửi lại email</Button>}
+        {delivery.emailStatus !== 'FAILED' && resendState.visible && (
+          <Button disabled={busy || !resendState.enabled} onClick={() => Modal.confirm({ title: 'Gửi lại email lời mời?', content: 'Giữ nguyên liên kết và thời hạn của lời mời, không tạo thỏa thuận mới. Tối đa 5 lần/giờ.', okText: 'Gửi lại email', cancelText: 'Hủy', onOk: () => perform(async () => { await dealService.resendEmail(delivery.invitationId); const next = await dealService.delivery(delivery.invitationId); if (getAuthSessionId() === sessionId) { setDelivery(next); message.success('Đã xếp hàng gửi lại email.'); } }) })}>Gửi lại email</Button>
+        )}
+      </div>
+      {delivery.emailStatus !== 'FAILED' && resendState.visible && resendState.reason && (
+        <small className="contact-resend-note">
+          {resendState.reason}
+          {delivery.resendAvailableAt && !resendState.enabled ? ` (Có thể gửi lại lúc ${new Date(delivery.resendAvailableAt).toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', second: '2-digit' })})` : ''}
+        </small>
+      )}
       {manualLink && delivery.active !== false && <Input.TextArea readOnly value={manualLink} aria-label="Link lời mời để chia sẻ trực tiếp" autoSize onFocus={event => event.target.select()} />}
       {delivery.emailStatus === 'MANUAL_REQUIRED' && <p>Chia sẻ link qua kênh liên hệ công khai. Chưa xác nhận Creator đã nhận hoặc đồng ý.</p>}
     </section>}

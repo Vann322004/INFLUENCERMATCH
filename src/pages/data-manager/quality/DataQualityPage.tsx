@@ -305,36 +305,30 @@ export default function DataQualityPage() {
     {
       title: 'Nhà sáng tạo',
       key: 'creator',
-      width: 250,
       render: (_, item) => <CreatorIdentity item={item} />,
     },
     {
-      title: 'Ngành hàng gợi ý',
+      title: 'Ngành & Tin cậy',
       dataIndex: 'niche',
-      width: 170,
-      render: (value) => {
+      width: 155,
+      render: (value, item) => {
         const parts = parseNiches(value);
-        return parts.length > 0 ? (
-          <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {parts.map((p) => (
-              <span key={p} className="quality-niche-pill">{p}</span>
-            ))}
-          </span>
-        ) : (
-          <span className="quality-niche-pill is-empty">Chưa phân loại</span>
-        );
-      },
-    },
-    {
-      title: 'Độ tin cậy AI',
-      key: 'confidence',
-      width: 110,
-      render: (_, item) => {
         const score = confidenceNumber(item);
         return (
-          <span className={`quality-confidence-badge ${score !== null && score < 70 ? 'is-low' : ''}`}>
-            {score !== null ? `${score}%` : 'Chưa có'}
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'flex-start' }}>
+            {parts.length > 0 ? (
+              <span style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                {parts.map((p) => (
+                  <span key={p} className="quality-niche-pill">{p}</span>
+                ))}
+              </span>
+            ) : (
+              <span className="quality-niche-pill is-empty">Chưa phân loại</span>
+            )}
+            <span className={`quality-confidence-badge ${score !== null && score < 70 ? 'is-low' : ''}`}>
+              {score !== null ? `Tin cậy ${score}%` : 'Chưa có'}
+            </span>
+          </div>
         );
       },
     },
@@ -474,14 +468,13 @@ export default function DataQualityPage() {
                               Xóa bộ lọc
                             </Button>
                           </Empty>
-                        ) : screens.lg ? (
+                        ) : screens.xl ? (
                           <Table
                             rowKey="metricId"
                             columns={columns}
                             dataSource={visibleItems}
                             pagination={false}
-                            tableLayout="fixed"
-                            scroll={{ x: 680 }}
+                            size="middle"
                             rowClassName={(record) =>
                               selected?.metricId === record.metricId ? 'quality-row is-selected-row' : 'quality-row'
                             }

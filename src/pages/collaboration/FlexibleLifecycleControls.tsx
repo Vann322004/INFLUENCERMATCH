@@ -28,13 +28,13 @@ const titles: Record<Action, string> = {
 
 const resolutionLabels: Record<string, string> = {
   DECLINED: 'Đã từ chối yêu cầu dừng',
-  TERMINATED: 'Hai bên đồng thuận trên Portal',
+  TERMINATED: 'Hai bên đồng thuận trên hệ thống',
   WITHDRAWN: 'Người đề nghị đã rút yêu cầu',
   TERMINATED_EXTERNAL: 'Brand ghi nhận đồng thuận ngoài hệ thống',
 };
 const exitLabels = {
   DECLINED: 'Đã từ chối',
-  TERMINATED: 'Hai bên đã đồng ý trên Portal',
+  TERMINATED: 'Hai bên đã đồng ý trên hệ thống',
   TERMINATED_EXTERNAL: 'Đã ghi nhận đồng thuận dừng bên ngoài',
   WITHDRAWN: 'Đã rút',
 };
@@ -162,18 +162,24 @@ export function FlexibleLifecycleControls({ snapshot, brand, permissions, onChan
   const external = action === 'terminate-external';
   const terminate = action === 'terminate';
 
-  return <section className="execution-stack">
-    <Space wrap>
-      <Typography.Text type="secondary">{snapshot.managementMode === 'BRAND_MANAGED'
-        ? 'Brand quản lý công việc bên ngoài' : 'Cùng Nhà sáng tạo thực hiện'}</Typography.Text>
-      {canChooseMode && <Button onClick={() => open('management-mode')}>Chọn phương thức quản lý</Button>}
-      {reviewAction}
-      {canComplete && <Button onClick={() => open('complete-without-review')}>Hoàn tất không đánh giá</Button>}
-      {active && participate && !pending && <Button danger onClick={() => open('termination-requests')}>
-        {canTerminateExternal ? 'Đề nghị dừng trên Portal' : 'Đề nghị dừng hợp tác'}
-      </Button>}
-      {canTerminateExternal && <Button danger onClick={() => open('terminate-external')}>Ghi nhận thỏa thuận dừng bên ngoài</Button>}
-    </Space>
+  const hasActions = canChooseMode || !!reviewAction || canComplete
+    || (active && participate && !pending) || canTerminateExternal;
+
+  return <section className="execution-stack collab-lifecycle-bar">
+    {hasActions && (
+      <div className="collab-lifecycle-row">
+        <span className="collab-lifecycle-hint">Tùy chọn hợp tác</span>
+        <Space wrap size={8}>
+          {canChooseMode && <Button size="small" onClick={() => open('management-mode')}>Đổi phương thức quản lý</Button>}
+          {reviewAction}
+          {canComplete && <Button size="small" onClick={() => open('complete-without-review')}>Hoàn tất không đánh giá</Button>}
+          {active && participate && !pending && <Button size="small" danger onClick={() => open('termination-requests')}>
+            {canTerminateExternal ? 'Đề nghị dừng trên hệ thống' : 'Đề nghị dừng hợp tác'}
+          </Button>}
+          {canTerminateExternal && <Button size="small" danger onClick={() => open('terminate-external')}>Ghi nhận thỏa thuận dừng bên ngoài</Button>}
+        </Space>
+      </div>
+    )}
     {pending && <Alert type="warning" showIcon title="Đang chờ bên còn lại phản hồi đề nghị dừng"
       description={(pending.requestedByRole === 'BRAND' ? 'Brand đề nghị · ' : 'Creator đề nghị · ') + pending.reason}
       action={canResolve ? <Space wrap>

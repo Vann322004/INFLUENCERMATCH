@@ -1,17 +1,314 @@
 .performance-report {
-  width: min(100% - 32px, 1240px);
+  width: 100%;
+  max-width: 1440px;
   min-width: 0;
-  margin: 24px auto;
+  margin: 0 auto;
+  padding-bottom: 48px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .performance-report-heading {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
+.perf-main-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.perf-description {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: #64748B;
+}
+
+.perf-history-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid #E1E7F0;
+  background: #FFFFFF;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.perf-history-btn:hover {
+  border-color: #C4B5FD;
+  color: #7C3AED;
+  background: #FAF5FF;
+}
+
+.perf-toolbar-card {
+  background: #FFFFFF;
+  border: 1px solid #E1E7F0;
+  border-radius: 14px;
+  padding: 14px 20px;
+}
+
+.perf-toolbar-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
 .performance-campaign-select {
-  width: min(320px, calc(100vw - 64px));
+  width: min(360px, calc(100vw - 80px));
+}
+
+.perf-loading-box {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.perf-analytics-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 4 KPI Cards */
+.perf-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.perf-kpi-card {
+  background: #FFFFFF;
+  border: 1px solid #E1E7F0;
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.perf-kpi-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.perf-kpi-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.perf-icon-amber { background: #FEF3C7; color: #D97706; }
+.perf-icon-blue { background: #DBEAFE; color: #2563EB; }
+.perf-icon-purple { background: #EDE9FE; color: #7C3AED; }
+.perf-icon-green { background: #D1FAE5; color: #059669; }
+
+.perf-kpi-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.perf-kpi-sub {
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.4;
+}
+
+/* Charts Grid */
+.perf-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.perf-chart-card {
+  border-color: #E1E7F0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.perf-chart-card .ant-card-head {
+  background: #F5F7FC;
+  border-bottom: 1px solid #E1E7F0;
+  min-height: 46px;
+}
+
+.perf-chart-card .ant-card-head-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.perf-chart-box {
+  width: 100%;
+  min-width: 0;
+}
+
+.perf-donut-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.perf-donut-legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.perf-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.perf-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.perf-legend-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.perf-legend-value {
+  color: #0F172A;
+  font-weight: 700;
+}
+
+.perf-status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  padding: 10px 18px;
+  background: #FFFFFF;
+  border: 1px solid #E1E7F0;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #64748B;
+}
+
+.perf-status-strip strong {
+  color: #0F172A;
+  font-weight: 700;
+}
+
+.perf-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: #F5F7FC;
+  border: 1px solid #E1E7F0;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.perf-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.perf-tab-btn:hover {
+  color: #0F172A;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.perf-tab-btn.active {
+  background: #FFFFFF;
+  color: #7C3AED;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+/* Tables & Cards Sync with CRM */
+.perf-report-stack .ant-card {
+  border-color: #E1E7F0;
+  border-radius: 16px;
+}
+
+.perf-report-stack .ant-card-head {
+  background: #F5F7FC;
+  border-bottom: 1px solid #E1E7F0;
+}
+
+.perf-table-card .ant-table-thead > tr > th {
+  background: #F5F7FC;
+  color: #475569;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.perf-creator-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.perf-cell-sub {
+  font-size: 12px;
+  color: #64748B;
+}
+
+.perf-action-link {
+  color: #7C3AED;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.perf-action-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 1100px) {
+  .perf-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .perf-charts-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .perf-kpi-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

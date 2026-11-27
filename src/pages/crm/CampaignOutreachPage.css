@@ -109,3 +109,340 @@
   .contact-proposal-unit { padding: 12px; }
   .contact-channel { gap: 8px; }
 }
+
+
+/* ── Đồng bộ UI /outreach theo Recommendation, Shortlist & /data-manager/jobs ── */
+.contact-brand-workspace {
+  max-width: 1440px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #0F172A;
+  padding-bottom: 0;
+}
+
+.contact-brand-workspace .contact-heading h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.contact-campaign-banner {
+  background: #FFFFFF;
+  border: 1px solid #E1E7F0;
+  border-radius: 14px;
+  padding: 16px 22px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.contact-campaign-banner-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.contact-campaign-thumb {
+  width: 84px;
+  height: 62px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #E1E7F0;
+  background: #F8FAFC;
+  flex-shrink: 0;
+}
+
+.contact-campaign-banner-main > div > span {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #7C3AED;
+  margin-bottom: 4px;
+}
+
+.contact-campaign-banner-main h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.contact-campaign-banner .contact-campaign-selector {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.contact-workspace-card {
+  background: #FFFFFF;
+  border: 1px solid #E1E7F0;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.contact-workspace-card > .contact-workspace-tabs > .ant-tabs-nav {
+  background: #F5F7FC;
+  margin: 0;
+  padding: 0 24px;
+  border-bottom: 1px solid #EEF0F6;
+}
+
+.contact-workspace-card > .contact-workspace-tabs .ant-tabs-tab {
+  padding: 14px 2px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.contact-workspace-card > .contact-workspace-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #7C3AED !important;
+  font-weight: 700;
+}
+
+.contact-workspace-card > .contact-workspace-tabs .ant-tabs-ink-bar {
+  background: #7C3AED;
+}
+
+.contact-workspace-body {
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contact-workspace-body .contact-panel {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+.contact-brand-workspace .contact-channel {
+  border: 1px solid #E1E7F0;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.contact-brand-workspace .contact-channel:hover {
+  border-color: #C4B5FD;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.08);
+}
+
+.contact-bottom-bar {
+  position: static;
+  margin-top: 0;
+  border-color: #E1E7F0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.contact-bottom-bar.is-floating {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  border-radius: 12px 12px 0 0;
+  border-color: #C4B5FD;
+  box-shadow: 0 -6px 24px rgba(15, 23, 42, 0.12);
+}
+
+.contact-brand-workspace .ant-btn {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.contact-brand-workspace .ant-btn-primary {
+  background: #7C3AED;
+  border-color: #7C3AED;
+  box-shadow: none;
+}
+
+.contact-brand-workspace .ant-btn-primary:not(:disabled):hover {
+  background: #6D28D9;
+  border-color: #6D28D9;
+}
+
+@media (max-width: 640px) {
+  .contact-workspace-card > .contact-workspace-tabs > .ant-tabs-nav {
+    padding: 0 16px;
+  }
+  .contact-workspace-body {
+    padding: 16px;
+  }
+}
+
+
+/* ── Làm đẹp thẻ Lời mời & thỏa thuận + thông báo kết quả batch trên /crm ── */
+.contact-batch-results {
+  background: #F5F3FF;
+  border: 1px solid #DDD6FE;
+  border-left: 4px solid #7C3AED;
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #334155;
+  font-size: 13px;
+}
+
+.contact-batch-results p {
+  margin: 4px 0;
+}
+
+.contact-batch-results strong {
+  color: #0F172A;
+}
+
+.contact-deal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contact-brand-workspace .contact-deal {
+  background: #FFFFFF;
+  border: 1px solid #E1E7F0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.contact-brand-workspace .contact-deal:hover {
+  border-color: #C4B5FD;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.07);
+}
+
+.contact-brand-workspace .contact-deal:last-child {
+  border-bottom: 1px solid #E1E7F0;
+}
+
+.contact-invitation-copy > strong {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.contact-invitation-summary {
+  color: #475569 !important;
+  font-weight: 500;
+}
+
+.contact-invitation-status-grid {
+  background: #F8FAFC;
+  border: 1px solid #EEF0F6;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-top: 12px !important;
+}
+
+.contact-invitation-status-grid .ant-tag {
+  background: #EEF2FF;
+  border-color: #C7D2FE;
+  color: #4338CA;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.contact-invitation-buttons > .ant-btn:first-child {
+  background: #F5F3FF;
+  border-color: #C4B5FD;
+  color: #6D28D9;
+  font-weight: 600;
+}
+
+.contact-invitation-buttons > .ant-btn:first-child:hover {
+  background: #EDE9FE !important;
+  border-color: #A78BFA !important;
+  color: #5B21B6 !important;
+}
+
+
+/* ── Cân đối lại thẻ Lời mời & thỏa thuận (header + nút trên 1 hàng, status grid full-width) ── */
+.contact-brand-workspace .contact-invitation-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.contact-invitation-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.contact-invitation-title {
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.contact-invitation-title > strong {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.contact-invitation-title .contact-invitation-summary {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.contact-invitation-top .contact-invitation-buttons {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+}
+
+.contact-invitation-top .contact-invitation-buttons > .ant-btn {
+  width: auto;
+  min-width: 140px;
+  min-height: 36px;
+}
+
+.contact-brand-workspace .contact-invitation-status-grid {
+  max-width: none;
+  width: 100%;
+  margin: 0 !important;
+  box-sizing: border-box;
+}
+
+.contact-invitation-hint {
+  font-size: 12.5px;
+  color: #64748B;
+  line-height: 1.5;
+}
+
+
+/* ── Gọn ô nhập Modal Soạn lời mời (border-radius 8px + lưới 3 cột Phí/KPI) ── */
+.contact-compose-modal :is(.ant-input, .ant-input-number, .ant-input-affix-wrapper, .ant-select-selector) {
+  border-radius: 8px !important;
+  border-color: #DBE3EE !important;
+}
+
+.contact-compose-modal .ant-form-item {
+  margin-bottom: 14px;
+}
+
+.contact-form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 14px;
+  align-items: start;
+}
+
+.contact-resend-note {
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.5;
+}
+
+@media (max-width: 767px) {
+  .contact-form-grid-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

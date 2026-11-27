@@ -666,6 +666,7 @@ export default function App() {
             <Route path="dashboard" element={<AdminDashboardPage />} />
             {/* Phase 3 — Account Management (Admin only) */}
             <Route path="accounts" element={<AdminProtectedRoute requireAdmin><AccountManagementPage /></AdminProtectedRoute>} />
+            <Route path="accounts/detail" element={<AdminProtectedRoute requireAdmin><AccountDetailPage /></AdminProtectedRoute>} />
             <Route path="accounts/:id" element={<AdminProtectedRoute requireAdmin><AccountDetailPage /></AdminProtectedRoute>} />
             {/* Phase 7 — Subscriptions & Payments (Admin only) */}
             <Route path="subscriptions" element={<AdminProtectedRoute requireAdmin><SubscriptionPlansPage /></AdminProtectedRoute>} />

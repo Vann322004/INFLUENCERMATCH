@@ -22,6 +22,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { campaignService } from '../../services/api/campaignService';
+import { rememberCampaign } from '../../services/campaignContext';
 import type { CampaignResponse } from '../../types/api/campaign.types';
 import './CampaignListPage.css';
 
@@ -398,10 +399,10 @@ export default function CampaignListPage() {
                         <Button
                           type="primary"
                           size="small"
-                          icon={<ThunderboltOutlined />}
+                          icon={<SearchOutlined />}
                           onClick={() => {
-                            localStorage.setItem('IM_SELECTED_CAMPAIGN_ID', campaign.id);
-                            navigate('/creators?autoRun=true', { state: { campaignId: campaign.id } });
+                            rememberCampaign(campaign.id);
+                            navigate('/creators', { state: { campaignId: campaign.id } });
                           }}
                           style={{
                             background: '#7C3AED',
@@ -411,7 +412,7 @@ export default function CampaignListPage() {
                             border: 'none',
                           }}
                         >
-                          Đề xuất AI
+                          Tìm Creator
                         </Button>
                       ) : (
                         <Button
