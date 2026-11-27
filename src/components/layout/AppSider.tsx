@@ -198,8 +198,8 @@ export default function AppSider({ collapsed: initialCollapsed = false, inDrawer
   };
 
   const userDropdownItems: MenuProps['items'] = [
-    { key: 'profile', icon: <UserOutlined />, label: 'Hồ sơ thương hiệu', onClick: () => navigate('/brand-profile') },
-    { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt tài khoản', onClick: () => navigate('/brand-profile') },
+    { key: 'user-profile', icon: <UserOutlined />, label: 'Thông tin cá nhân', onClick: () => navigate('/profile') },
+    { key: 'brand-profile', icon: <SettingOutlined />, label: 'Hồ sơ thương hiệu', onClick: () => navigate('/brand-profile') },
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, danger: true, label: 'Đăng xuất', onClick: handleLogout },
   ];

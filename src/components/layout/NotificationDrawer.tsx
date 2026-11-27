@@ -7,9 +7,12 @@ import type { NotificationDto } from '../../services/api/notificationService';
 
 // Retain existing Brand entity destinations; do not send other roles into Brand routes.
 function relatedPath(item: NotificationDto): string | undefined {
-  if (String(getStoredUser()?.role).toUpperCase() === 'CREATOR' && item.entityType?.toUpperCase() === 'COOPERATION_DEAL') return '/creator/bookings';
-  if (String(getStoredUser()?.role).toUpperCase() !== 'BRAND') return;
+  const role = String(getStoredUser()?.role).toUpperCase();
   const type = item.entityType?.toUpperCase();
+  if (role === 'CREATOR' && type === 'COOPERATION_DEAL') return '/creator/bookings';
+  if (role === 'CREATOR' && type === 'CREATOR_CLAIM') return '/creator/social-accounts';
+  if (role === 'DATA_MANAGER' && type === 'CREATOR_CLAIM') return '/data-manager/claims';
+  if (role !== 'BRAND') return;
   if (type === 'CAMPAIGN' && item.entityId) return `/campaigns/${encodeURIComponent(item.entityId)}`;
   if (type === 'COLLABORATION') return '/collaboration';
   if (['RELATIONSHIP', 'DEAL', 'COOPERATION_INVITATION'].includes(type ?? '')) return '/crm';

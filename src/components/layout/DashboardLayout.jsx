@@ -49,16 +49,16 @@ export default function DashboardLayout({ children }) {
 
   const userMenuItems = [
     {
-      key: 'profile',
+      key: 'user-profile',
       icon: <UserOutlined />,
-      label: 'Thông tin tài khoản',
-      onClick: () => navigate('/brand-profile'),
+      label: 'Thông tin cá nhân',
+      onClick: () => navigate('/profile'),
     },
     {
-      key: 'settings',
+      key: 'brand-profile',
       icon: <SettingOutlined />,
-      label: 'Cài đặt hệ thống',
-      onClick: () => navigate('/subscription'),
+      label: 'Hồ sơ thương hiệu',
+      onClick: () => navigate('/brand-profile'),
     },
     {
       type: 'divider',

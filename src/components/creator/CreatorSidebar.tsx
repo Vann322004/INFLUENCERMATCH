@@ -8,6 +8,7 @@ import {
   DollarOutlined,
   CalendarOutlined,
   LogoutOutlined,
+  IdcardOutlined,
   UserOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
@@ -77,6 +78,7 @@ export default function CreatorSidebar() {
   };
 
   const userDropdown: MenuProps['items'] = [
+    { key: 'user-profile', icon: <IdcardOutlined />, label: 'Thông tin cá nhân', onClick: () => navigate('/creator/profile') },
     { key: 'profile', icon: <UserOutlined />, label: 'Tổng quan Creator', onClick: () => navigate('/creator/dashboard') },
     { key: 'settings', icon: <SettingOutlined />, label: 'Kênh liên kết', onClick: () => navigate('/creator/social-accounts') },
     { type: 'divider' },

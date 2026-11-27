@@ -241,8 +241,10 @@ export default function LoginPage() {
         >
           <Input
             id="login-email"
+            name="email"
+            type="email"
             placeholder="Email"
-            autoComplete="email"
+            autoComplete="username"
             disabled={loading}
             className="luxe-input"
           />
@@ -255,6 +257,7 @@ export default function LoginPage() {
         >
           <Input.Password
             id="login-password"
+            name="password"
             placeholder="Mật khẩu"
             autoComplete="current-password"
             disabled={loading}

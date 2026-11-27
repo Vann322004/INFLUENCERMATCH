@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import {
+  IdcardOutlined,
   UserOutlined,
   SettingOutlined,
   LogoutOutlined,
@@ -57,6 +58,7 @@ export default function AdminSidebarUserSection({
   };
 
   const userDropdownItems: MenuProps['items'] = [
+    { key: 'user-profile', icon: <IdcardOutlined />, label: 'Thông tin cá nhân', onClick: () => navigate(isManager ? '/data-manager/profile' : '/admin/profile') },
     { key: 'profile', icon: <UserOutlined />, label: isManager ? 'Hồ sơ Quản lý dữ liệu' : 'Hồ sơ Quản trị viên', onClick: handleOpenProfile },
     { key: 'settings', icon: <SettingOutlined />, label: isManager ? 'Cấu hình thuật toán' : 'Cài đặt hệ thống', onClick: handleOpenSettings },
     { type: 'divider' },

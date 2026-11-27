@@ -139,6 +139,17 @@ export const authService = {
     }
   },
 
+  async updateMe(fullName: string): Promise<UserProfileResponse> {
+    const response = await apiClient.patch<ApiResponse<UserProfileResponse>>('/auth/me', { fullName });
+    const userProfile = response.data.data;
+    setAuthSession(getAccessToken() || '', undefined, { ...getStoredUser(), ...userProfile });
+    return userProfile;
+  },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await cookieAuthClient.post('/auth/change-password', { currentPassword, newPassword });
+  },
+
   startGoogleLogin(sessionId: string, signal?: AbortSignal) {
     return withAuthCookieLock(() => googleRequest<GoogleChallenge>('start', undefined, sessionId, signal));
   },
