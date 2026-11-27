@@ -3,7 +3,8 @@ import ProposalFields from './ProposalFields';
 import { dealLabel } from './cooperationDisplay';
 import { proposalPayload, localDate } from './proposalForm';
 import type { ProposalForm } from './proposalForm';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { creatorPortalService, type CreatorRateCardPackage } from '../../services/api/creatorPortalService';
 import { Alert, App, Button, Form, Input, Modal, Select, Skeleton, Tag } from 'antd';
 import { useAsyncResource } from '../../hooks/useAsyncResource';
 import { dealService } from '../../services/api/dealService';
@@ -46,6 +47,40 @@ function ProposalEditor({ campaignId, deal, initialDelivery, history, readOnly, 
   const [deliveryMethod, setDeliveryMethod] = useState<string | undefined>(initialDelivery?.deliveryMethod ?? availableMethods[0]);
   const [manualLink, setManualLink] = useState('');
   const [error, setError] = useState('');
+  const [rateCards, setRateCards] = useState<CreatorRateCardPackage[]>([]);
+  const primaryCreatorId = deal.channels[0]?.creatorId;
+  useEffect(() => {
+    if (!primaryCreatorId) return;
+    const controller = new AbortController();
+    void creatorPortalService.fetchCreatorRateCards(primaryCreatorId, controller.signal).then((items) => {
+      if (!controller.signal.aborted) setRateCards(items);
+    });
+    return () => controller.abort();
+  }, [primaryCreatorId]);
+  const applyRateCard = (pkgId: string) => {
+    const pkg = rateCards.find((item) => item.id === pkgId);
+    if (!pkg) return;
+    const due = new Date(Date.now() + Math.max(1, pkg.turnaroundDays) * 86400000);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const dueStr = `${due.getFullYear()}-${pad(due.getMonth() + 1)}-${pad(due.getDate())}T18:00`;
+    const currentTerms = form.getFieldValue('terms') as string | undefined;
+    form.setFieldsValue({
+      fee: pkg.priceVnd,
+      terms: currentTerms?.trim()
+        ? currentTerms
+        : `Theo gói "${pkg.name}": thời gian bàn giao ${pkg.turnaroundDays} ngày, bản quyền hình ảnh ${pkg.usageRightsDays} ngày.`,
+      units: deal.channels.map((ch) => ({
+        creatorId: ch.creatorId,
+        contentType: pkg.format,
+        quantity: 1,
+        dueAt: dueStr,
+        checklist: (pkg.deliverables || []).join('\n'),
+        maxRevisionRounds: 1,
+      })),
+    });
+    setDirty(true);
+    message.success(`Đã áp dụng gói "${pkg.name}" từ Rate Card của Creator.`);
+  };
   const lock = useRef(false);
   const sessionId = getAuthSessionId();
   const mutable = !readOnly && ['CONTACTED', 'NEGOTIATING'].includes(deal.status);
@@ -131,6 +166,22 @@ function ProposalEditor({ campaignId, deal, initialDelivery, history, readOnly, 
     <div className="contact-route-summary"><strong>Cách gửi lời mời</strong>{mutable && <Select aria-label="Cách gửi lời mời" value={deliveryMethod} placeholder="Chọn cách gửi" disabled={busy || (!!delivery && delivery.active !== false && !dirty)} onChange={setDeliveryMethod} options={availableMethods.map(value => ({ value, label: deliveryMethodLabels[value] }))} style={{ width: '100%', marginTop: 10 }} />}<p>{channelDescription}</p></div>
     {deal.proposal && <p className="contact-source">Bản đề xuất {deal.proposal.revision}{accepted ? ' · Creator đã đồng ý bản này' : deal.proposal.kind === 'COUNTEROFFER' ? ' · Creator có đề xuất thay đổi. Xem lại rồi phát hành lời mời cập nhật.' : ' · Chưa ghi nhận đồng ý bản này'}</p>}
     {error && <Alert type="error" title={error} action={<Button onClick={onSaved}>Tải lại trạng thái</Button>} />}
+    {mutable && rateCards.length > 0 && (
+      <div className="contact-reuse-proposal">
+        <span>Áp dụng Rate Card</span>
+        <Select
+          aria-label="Áp dụng gói từ Rate Card của Creator"
+          placeholder="Chọn gói báo giá của Creator"
+          value={undefined}
+          disabled={busy}
+          onChange={applyRateCard}
+          options={rateCards.map((pkg) => ({
+            value: pkg.id,
+            label: `${pkg.name} · ${pkg.priceVnd.toLocaleString('vi-VN')} ₫`,
+          }))}
+        />
+      </div>
+    )}
     {mutable && reusableDeals.some(source => source.id !== deal.id && source.proposal?.kind === 'OFFER') && <div className="contact-reuse-proposal"><span>Dùng lại lời mời</span><Select aria-label="Dùng lại nội dung lời mời" placeholder="Chọn lời mời đã soạn" value={undefined} disabled={busy} onChange={reuseProposal} options={reusableDeals.filter(source => source.id !== deal.id && source.proposal?.kind === 'OFFER').map(source => ({ value: source.id, label: source.channels.map(channel => '@' + channel.username).join(', ') + ' · ' + source.proposal!.fee.toLocaleString('vi-VN') + ' ₫' }))} /></div>}
     <ProposalFields form={form} deal={deal} initialValues={initialValues} mutable={mutable} busy={busy} onDirty={() => setDirty(true)} onFinish={values => void save(values)} />
 

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Empty, Form, Input, Modal, Radio, Select, Space } from 'antd';
-import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { LinkOutlined, MinusCircleOutlined, PlusOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { claimService, type ClaimChannel } from '../../../services/api/claimService';
 import { getErrorMessage } from '../../../services/apiClient';
 import type { CooperationTarget } from '../../../services/cooperationContinuation';
+import './CreatorPortalPage.css';
 
 export function httpUrl(value?: string | null): string | undefined {
   if (!value) return undefined;
@@ -92,74 +93,222 @@ export default function ManualChannelClaim({ initialPlatform, initialQuery, invi
   }
 
   return (
-    <Modal title="Gửi bằng chứng thủ công" open onCancel={onClose} footer={null}
-      closable={!submitting} mask={{ closable: !submitting }} keyboard={!submitting}>
-      <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
+    <Modal
+      open
+      centered
+      width={580}
+      className="manual-claim-modal"
+      onCancel={onClose}
+      footer={null}
+      closable={!submitting}
+      mask={{ closable: !submitting }}
+      keyboard={!submitting}
+      title={
+        <div className="manual-claim-modal-header">
+          <div className="manual-claim-modal-icon">
+            <SafetyCertificateOutlined />
+          </div>
+          <div>
+            <div className="manual-claim-modal-title">Gửi bằng chứng thủ công</div>
+            <div className="manual-claim-modal-subtitle">
+              Tìm kênh và đính kèm liên kết xác minh để Data Manager phê duyệt
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <div className="manual-claim-body">
         {error && <Alert showIcon type="error" title={error} />}
-        {invitation ? <Alert type="info" showIcon title="Kênh trong lời mời"
-          description={`${invitation.target.platform} · ${invitation.target.username || invitation.target.creatorId}`} />
-        : <>
-        <Select aria-label="Nền tảng" value={platform} disabled={submitting}
-          style={{ width: '100%' }} options={platforms.map(value => ({ value, label: value }))}
-          onChange={value => { setPlatform(value); resetSearch(); }} />
-        <Input.Search aria-label="Tên người dùng hoặc mã kênh" placeholder="Tên người dùng hoặc mã kênh"
-          enterButton="Tra cứu" maxLength={255} loading={lookingUp} disabled={submitting}
-          value={query} onChange={event => { setQuery(event.target.value); resetSearch(); }} onSearch={findChannel} />
-        {results?.length === 0 && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="Không tìm thấy kênh có thể gửi yêu cầu. Kiểm tra lại tên người dùng hoặc mã kênh." />}
-        {!!results?.length && (
-          <Radio.Group name="claim-channel" aria-label="Chọn kênh để gửi bằng chứng" value={selected}
-            disabled={submitting} onChange={event => setSelected(event.target.value)}>
-            <Space orientation="vertical">
-              {results.map(channel => {
-                const profile = httpUrl(channel.profileUrl);
-                return <Radio key={channel.id} value={channel.id}>
-                  {channel.displayName || channel.userName} · {channel.userName} · {channel.externalId}
-                  {profile && <> · <a href={profile} target="_blank" rel="noreferrer">Mở kênh</a></>}
-                </Radio>;
-              })}
-            </Space>
-          </Radio.Group>
-        )}
-        </>}
-        <Form<Evidence> layout="vertical" disabled={submitting} initialValues={{ evidenceUrls: [''] }}
-          onFinish={submit}>
-          <Form.List name="evidenceUrls">
-            {(fields, { add, remove }) => (
-              <>
-                {fields.map(field => (
-                  <Form.Item key={field.key} label={'Liên kết bằng chứng ' + (field.name + 1)} required>
-                    <Space.Compact block>
-                      <Form.Item name={field.name} noStyle rules={[{
-                        validator: (_, value?: string) => value && value.trim().length <= 1000 && httpUrl(value.trim())
-                          ? Promise.resolve() : Promise.reject(new Error('Nhập liên kết HTTP hoặc HTTPS hợp lệ.')),
-                      }]}>
-                        <Input placeholder="https://..." maxLength={1000} />
-                      </Form.Item>
-                      {fields.length > 1 && <Button aria-label="Bỏ liên kết bằng chứng"
-                        icon={<MinusCircleOutlined />} onClick={() => remove(field.name)} />}
-                    </Space.Compact>
-                  </Form.Item>
-                ))}
-                {fields.length < 5 && <Button icon={<PlusOutlined />} onClick={() => add('')}>
-                  Thêm liên kết
-                </Button>}
-              </>
-            )}
-          </Form.List>
-          <Form.Item name="note" label="Ghi chú" style={{ marginTop: 16 }}
-            rules={[{ required: true, whitespace: true, message: 'Nhập ghi chú về quyền quản lý kênh.' }]}>
-            <Input.TextArea rows={3} maxLength={2000} showCount
-              placeholder="Ví dụ: Liên kết này dẫn đến ảnh phần cài đặt hiển thị quyền quản lý kênh của tôi." />
-          </Form.Item>
-          <Space wrap>
-            <Button onClick={onClose}>Đóng</Button>
-            <Button type="primary" htmlType="submit" disabled={!creatorId} loading={submitting}>
+
+        <div className="manual-claim-section">
+          <div className="manual-claim-step-header">
+            <span className="manual-claim-step-badge">1</span>
+            <span>Chọn nền tảng &amp; tra cứu kênh</span>
+          </div>
+
+          {invitation ? (
+            <div className="manual-claim-invite-box">
+              <div className="manual-claim-invite-label">Kênh trong lời mời hợp tác</div>
+              <div className="manual-claim-invite-value">
+                {invitation.target.platform} · {invitation.target.username || invitation.target.creatorId}
+              </div>
+            </div>
+          ) : (
+            <div className="manual-claim-lookup-stack">
+              <div className="manual-claim-lookup-grid">
+                <div>
+                  <label className="manual-claim-field-label">Nền tảng</label>
+                  <Select
+                    aria-label="Nền tảng"
+                    value={platform}
+                    disabled={submitting}
+                    style={{ width: '100%' }}
+                    options={platforms.map(value => ({ value, label: value }))}
+                    onChange={value => { setPlatform(value); resetSearch(); }}
+                  />
+                </div>
+                <div>
+                  <label className="manual-claim-field-label">Tên người dùng hoặc mã kênh</label>
+                  <Input.Search
+                    aria-label="Tên người dùng hoặc mã kênh"
+                    placeholder="Ví dụ: @username hoặc ID kênh"
+                    enterButton="Tra cứu"
+                    maxLength={255}
+                    loading={lookingUp}
+                    disabled={submitting}
+                    value={query}
+                    onChange={event => { setQuery(event.target.value); resetSearch(); }}
+                    onSearch={findChannel}
+                  />
+                </div>
+              </div>
+
+              {results?.length === 0 && (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="Không tìm thấy kênh có thể gửi yêu cầu. Kiểm tra lại tên người dùng hoặc mã kênh."
+                />
+              )}
+
+              {!!results?.length && (
+                <Radio.Group
+                  name="claim-channel"
+                  aria-label="Chọn kênh để gửi bằng chứng"
+                  value={selected}
+                  disabled={submitting}
+                  style={{ width: '100%' }}
+                  onChange={event => setSelected(event.target.value)}
+                >
+                  <div className="manual-claim-results-list">
+                    {results.map(channel => {
+                      const profile = httpUrl(channel.profileUrl);
+                      const isSelected = selected === channel.id;
+                      return (
+                        <label
+                          key={channel.id}
+                          className={`manual-claim-channel-card${isSelected ? ' is-selected' : ''}`}
+                        >
+                          <Radio value={channel.id}>
+                            <span className="manual-claim-channel-name">
+                              {channel.displayName || channel.userName}
+                            </span>
+                            <span className="manual-claim-channel-meta">
+                              @{channel.userName} · {channel.externalId}
+                            </span>
+                          </Radio>
+                          {profile && (
+                            <a
+                              className="manual-claim-channel-link"
+                              href={profile}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Mở kênh
+                            </a>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </Radio.Group>
+              )}
+            </div>
+          )}
+        </div>
+
+        <Form<Evidence>
+          layout="vertical"
+          disabled={submitting}
+          initialValues={{ evidenceUrls: [''] }}
+          onFinish={submit}
+          className="manual-claim-form"
+        >
+          <div className="manual-claim-section manual-claim-section--white">
+            <div className="manual-claim-step-header">
+              <span className="manual-claim-step-badge">2</span>
+              <span>Bằng chứng quyền sở hữu</span>
+            </div>
+
+            <Form.List name="evidenceUrls">
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map(field => (
+                    <Form.Item
+                      key={field.key}
+                      label={`Liên kết bằng chứng ${field.name + 1}`}
+                      required
+                      style={{ marginBottom: 12 }}
+                    >
+                      <Space.Compact block>
+                        <Form.Item
+                          name={field.name}
+                          noStyle
+                          rules={[{
+                            validator: (_, value?: string) => value && value.trim().length <= 1000 && httpUrl(value.trim())
+                              ? Promise.resolve() : Promise.reject(new Error('Nhập liên kết HTTP hoặc HTTPS hợp lệ.')),
+                          }]}
+                        >
+                          <Input
+                            prefix={<LinkOutlined style={{ color: '#64748B' }} />}
+                            placeholder="https://drive.google.com/... hoặc ảnh chụp màn hình"
+                            maxLength={1000}
+                          />
+                        </Form.Item>
+                        {fields.length > 1 && (
+                          <Button
+                            aria-label="Bỏ liên kết bằng chứng"
+                            icon={<MinusCircleOutlined />}
+                            onClick={() => remove(field.name)}
+                          />
+                        )}
+                      </Space.Compact>
+                    </Form.Item>
+                  ))}
+                  {fields.length < 5 && (
+                    <Button
+                      type="dashed"
+                      icon={<PlusOutlined />}
+                      onClick={() => add('')}
+                      className="manual-claim-add-link-btn"
+                    >
+                      Thêm liên kết bằng chứng
+                    </Button>
+                  )}
+                </>
+              )}
+            </Form.List>
+
+            <Form.Item
+              name="note"
+              label="Ghi chú xác minh"
+              style={{ marginTop: 12, marginBottom: 0 }}
+              rules={[{ required: true, whitespace: true, message: 'Nhập ghi chú về quyền quản lý kênh.' }]}
+            >
+              <Input.TextArea
+                rows={2}
+                maxLength={2000}
+                showCount
+                placeholder="Ví dụ: Liên kết này dẫn đến ảnh phần cài đặt hiển thị quyền quản lý kênh của tôi."
+              />
+            </Form.Item>
+          </div>
+
+          <div className="manual-claim-footer">
+            <Button onClick={onClose} className="manual-claim-cancel-btn">
+              Đóng
+            </Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              disabled={!creatorId}
+              loading={submitting}
+              className="manual-claim-submit-btn"
+            >
               Gửi bằng chứng
             </Button>
-          </Space>
+          </div>
         </Form>
-      </Space>
+      </div>
     </Modal>
   );
 }

@@ -1,7 +1,7 @@
 import ImageUploadButton from '../../../components/common/ImageUploadButton';
 import CreatorAvatar from '../components/discovery/CreatorAvatar';
 import { creatorService } from '../../../services/api/creatorService';
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import {
   Alert,
   Card,
@@ -21,6 +21,7 @@ import {
   Popconfirm,
   Descriptions,
   Tooltip,
+  Table,
 } from 'antd';
 import {
   SafetyCertificateOutlined,
@@ -32,6 +33,7 @@ import {
   EyeOutlined,
   CheckCircleFilled,
   ThunderboltOutlined,
+  CalendarOutlined,
   IdcardOutlined,
   RiseOutlined,
   CheckOutlined,
@@ -42,9 +44,10 @@ import {
 } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Area,
-  AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
+  Legend,
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
   XAxis,
@@ -52,9 +55,9 @@ import {
 } from 'recharts';
 import {
   creatorPortalService,
+  type AggregatedReachResponse,
   CreatorIdentityVerification,
   CreatorRateCardPackage,
-  CreatorReachMetrics,
 } from '../../../services/api/creatorPortalService';
 import { authService } from '../../../services/api/authService';
 import { getErrorMessage } from '../../../services/apiClient';
@@ -104,7 +107,8 @@ export default function CreatorPortalPage() {
   const [linked, setLinked] = useState<LinkedChannel[] | null>(null);
   const [linkedError, setLinkedError] = useState('');
   const [rateCards, setRateCards] = useState<CreatorRateCardPackage[]>(creatorPortalService.getRateCards());
-  const [metrics] = useState<CreatorReachMetrics>(creatorPortalService.getReachMetrics());
+  const profileEtagRef = useRef<string | undefined>(undefined);
+  const [reach, setReach] = useState<AggregatedReachResponse | null>(null);
   const user = authService.getCurrentUser();
   const activeCreator = user?.role === 'CREATOR' && user.status === 'ACTIVE';
   const canVerify = activeCreator && (user.permissions?.includes('CLAIM_CREATOR_PROFILE') ?? false);
@@ -146,9 +150,21 @@ export default function CreatorPortalPage() {
 
   useEffect(() => {
     setLinked(null);
+    setReach(null);
     if (!canVerify) return;
     const controller = new AbortController();
     void reloadLinked(controller.signal);
+    void creatorPortalService.fetchAggregatedReach(controller.signal).then((data) => {
+      if (!controller.signal.aborted) setReach(data);
+    });
+    void creatorPortalService.fetchProfileApi(controller.signal).then((res) => {
+      if (controller.signal.aborted || !res) return;
+      if (res.etag) profileEtagRef.current = res.etag;
+      const savedCards = res.profile?.profile?.rateCards;
+      if (Array.isArray(savedCards) && savedCards.length > 0) {
+        setRateCards(savedCards);
+      }
+    });
     return () => controller.abort();
   }, [canVerify, user?.id, reloadLinked]);
 
@@ -205,16 +221,18 @@ export default function CreatorPortalPage() {
 
       const updated = creatorPortalService.upsertRateCard(payload);
       setRateCards(updated);
-      creatorPortalService.updateProfileApi({ rateCards: updated }).catch(() => null);
+      const saved = await creatorPortalService.updateProfileApi({ rateCards: updated }, profileEtagRef.current);
+      if (saved?.etag) profileEtagRef.current = saved.etag;
       message.success(editingRateCard ? 'Đã cập nhật gói báo giá thành công!' : 'Đã thêm gói báo giá mới vào Rate Card!');
       setRateCardModalOpen(false);
     } catch {}
   };
 
-  const handleDeleteRateCard = (id: string) => {
+  const handleDeleteRateCard = async (id: string) => {
     const updated = creatorPortalService.deleteRateCard(id);
     setRateCards(updated);
-    creatorPortalService.updateProfileApi({ rateCards: updated }).catch(() => null);
+    const saved = await creatorPortalService.updateProfileApi({ rateCards: updated }, profileEtagRef.current);
+    if (saved?.etag) profileEtagRef.current = saved.etag;
     message.success('Đã xóa gói báo giá khỏi Rate Card.');
   };
 
@@ -324,11 +342,11 @@ export default function CreatorPortalPage() {
 
             <div className="creator-hero-actions">
               <Button
-                icon={<IdcardOutlined />}
-                onClick={() => handleTabChange('verification')}
+                icon={<CalendarOutlined />}
+                onClick={() => handleTabChange('bookings')}
                 className="creator-secondary-btn"
               >
-                Hồ sơ eKYC
+                Hợp tác của tôi
               </Button>
               <Button
                 icon={<DollarOutlined />}
@@ -348,252 +366,201 @@ export default function CreatorPortalPage() {
             </div>
           </header>
 
-          {/* 2. 4 Core KPI Bento Cards (Balanced colors & compact typography) */}
-          <div className="creator-bento-grid-4">
-            <section className="creator-bento-card">
-              <div className="creator-bento-row">
-                <div className="creator-bento-icon blue">
-                  <EyeOutlined />
-                </div>
-                <div className="creator-bento-body">
-                  <span className="creator-bento-label">Tổng Reach (30 ngày)</span>
-                  <p className="creator-bento-value">
-                    {(metrics.totalReach30d / 1000000).toFixed(2)}M
-                  </p>
-                  <div>
-                    <span className="creator-growth-pill">
-                      ↗ +{metrics.reachGrowthMoM}% tháng này
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
+          {/* 2. 4 Core KPI Bento Cards (Real data from /creators/portal/analytics/reach) */}
+          {(() => {
+            const totalFollowers = reach?.totalFollowers ?? 0;
+            const totalAvgViews = reach?.totalAvgViews ?? 0;
+            const rawEr = reach?.averageEngagementRate ?? 0;
+            const erPct = rawEr > 0 ? (rawEr <= 1 ? rawEr * 100 : rawEr) : 0;
+            const channelTotal = reach?.channelCount ?? connectedChannelsCount ?? 0;
+            const fmtCount = (n: number) =>
+              n >= 1_000_000 ? `${(n / 1_000_000).toFixed(2)}M`
+              : n >= 1_000 ? `${(n / 1_000).toFixed(1)}K`
+              : n.toLocaleString('vi-VN');
+            const breakdown = reach?.platformBreakdown ?? [];
+            const chartData = breakdown.map(item => ({
+              name: item.userName ? `@${item.userName.replace(/^@+/, '')}` : item.platform,
+              platform: item.platform,
+              followers: Number(item.followers ?? 0),
+              avgViews: Number(item.avgViews ?? 0),
+            }));
 
-            <section className="creator-bento-card">
-              <div className="creator-bento-row">
-                <div className="creator-bento-icon purple">
-                  <GlobalOutlined />
-                </div>
-                <div className="creator-bento-body">
-                  <span className="creator-bento-label" title="Lượt hiển thị (Impressions)">Lượt hiển thị</span>
-                  <p className="creator-bento-value">
-                    {(metrics.totalImpressions / 1000000).toFixed(2)}M
-                  </p>
-                  <div>
-                    <span className="creator-bento-badge">
-                      {connectedChannelsCount ?? '—'} kênh đã liên kết
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="creator-bento-card">
-              <div className="creator-bento-row">
-                <div className="creator-bento-icon amber">
-                  <VideoCameraOutlined />
-                </div>
-                <div className="creator-bento-body">
-                  <span className="creator-bento-label">Tổng lượt xem Video</span>
-                  <p className="creator-bento-value">
-                    {(metrics.totalVideoViews / 1000000).toFixed(2)}M
-                  </p>
-                  <div>
-                    <span className="creator-bento-badge neutral">
-                      TB {metrics.avgViewsPerPost.toLocaleString('vi-VN')} views/video
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="creator-bento-card">
-              <div className="creator-bento-row">
-                <div className="creator-bento-icon green">
-                  <FireOutlined />
-                </div>
-                <div className="creator-bento-body">
-                  <span className="creator-bento-label">Tỷ lệ tương tác (ER%)</span>
-                  <p className="creator-bento-value">
-                    {metrics.avgEngagementRate}%
-                  </p>
-                  <div>
-                    <span className="creator-growth-pill">
-                      Top 15% Nhà sáng tạo
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-
-          {/* 3. Analytics Row: 6-Month Growth AreaChart + Audience Demographics */}
-          <Row gutter={[18, 18]}>
-            <Col xs={24} lg={14}>
-              <Card
-                bordered={false}
-                className="creator-section-card"
-                title={
-                  <div className="creator-card-header-inline">
-                    <div>
-                      <div className="creator-card-title">Biểu đồ Tăng trưởng Reach & Views (6 tháng)</div>
-                      <div className="creator-card-subtitle">Số liệu tự động đồng bộ qua OAuth từ các kênh đã liên kết</div>
+            return <>
+              <div className="creator-bento-grid-4">
+                <section className="creator-bento-card">
+                  <div className="creator-bento-row">
+                    <div className="creator-bento-icon blue">
+                      <EyeOutlined />
                     </div>
-                    <Tag color="blue" style={{ borderRadius: 999, fontWeight: 600, margin: 0 }}>
-                      Cập nhật hôm nay
-                    </Tag>
-                  </div>
-                }
-              >
-                <div className="creator-chart-legend">
-                  <span className="creator-legend-item">
-                    <span className="creator-legend-dot" style={{ background: '#2563EB' }} />
-                    Reach (triệu)
-                  </span>
-                  <span className="creator-legend-item">
-                    <span className="creator-legend-dot" style={{ background: '#7C3AED' }} />
-                    Video Views (triệu)
-                  </span>
-                </div>
-                <div style={{ width: '100%', height: 260 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={metrics.monthlyReachTrend.map(item => ({
-                        month: item.month,
-                        reachM: Number((item.reach / 1_000_000).toFixed(2)),
-                        viewsM: Number((item.views / 1_000_000).toFixed(2)),
-                      }))}
-                      margin={{ top: 10, right: 12, left: -12, bottom: 0 }}
-                    >
-                      <defs>
-                        <linearGradient id="creatorReachGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#2563EB" stopOpacity={0.22} />
-                          <stop offset="95%" stopColor="#2563EB" stopOpacity={0.01} />
-                        </linearGradient>
-                        <linearGradient id="creatorViewsGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.22} />
-                          <stop offset="95%" stopColor="#7C3AED" stopOpacity={0.01} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-                      <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#64748B' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
-                      <YAxis
-                        tick={{ fontSize: 12, fill: '#64748B' }}
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={(val) => `${val}M`}
-                      />
-                      <RechartsTooltip
-                        formatter={(val: unknown, name: unknown) => [
-                          `${val}M`,
-                          name === 'reachM' ? 'Reach' : 'Video Views',
-                        ]}
-                        contentStyle={{ borderRadius: 10, borderColor: '#E2E8F0', fontSize: 12.5 }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="viewsM"
-                        name="viewsM"
-                        stroke="#7C3AED"
-                        strokeWidth={2.5}
-                        fill="url(#creatorViewsGrad)"
-                        dot={{ r: 3.5, fill: '#7C3AED' }}
-                        activeDot={{ r: 5 }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="reachM"
-                        name="reachM"
-                        stroke="#2563EB"
-                        strokeWidth={2.5}
-                        fill="url(#creatorReachGrad)"
-                        dot={{ r: 3.5, fill: '#2563EB' }}
-                        activeDot={{ r: 5 }}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-            </Col>
-
-            <Col xs={24} lg={10}>
-              <Card
-                bordered={false}
-                className="creator-section-card"
-                title={
-                  <div>
-                    <div className="creator-card-title">Nhân khẩu học Khán giả (Audience Insights)</div>
-                    <div className="creator-card-subtitle">Cơ cấu người xem thực tế giúp Nhãn hàng đánh giá mức độ phù hợp</div>
-                  </div>
-                }
-              >
-                {/* Gender Split */}
-                <div style={{ marginBottom: 18 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 700, color: '#0F172A', marginBottom: 6 }}>
-                    <span>Phân bổ giới tính</span>
-                    <span style={{ color: '#64748B', fontWeight: 600 }}>
-                      Nữ {metrics.audienceDemographics.femalePct}% • Nam {metrics.audienceDemographics.malePct}%
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', height: 10, borderRadius: 999, overflow: 'hidden', gap: 3 }}>
-                    <div
-                      style={{
-                        flex: metrics.audienceDemographics.femalePct,
-                        background: '#EC4899',
-                      }}
-                    />
-                    <div
-                      style={{
-                        flex: metrics.audienceDemographics.malePct,
-                        background: '#3B82F6',
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Age brackets */}
-                <div style={{ marginBottom: 18 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', marginBottom: 8 }}>
-                    Độ tuổi chủ đạo
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {metrics.audienceDemographics.ageGroups.map((g, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
-                        <span style={{ color: '#475569', fontWeight: 600, width: 54 }}>{g.age}</span>
-                        <div style={{ flex: 1 }}>
-                          <Progress
-                            percent={g.pct}
-                            size="small"
-                            strokeColor="#2563EB"
-                            railColor="#E2E8F0"
-                            showInfo={false}
-                          />
-                        </div>
-                        <span style={{ fontWeight: 700, color: '#0F172A', width: 38, textAlign: 'right' }}>
-                          {g.pct}%
+                    <div className="creator-bento-body">
+                      <span className="creator-bento-label">Tổng người theo dõi</span>
+                      <p className="creator-bento-value">{fmtCount(totalFollowers)}</p>
+                      <div>
+                        <span className="creator-bento-badge neutral">
+                          Tổng hợp {channelTotal} kênh
                         </span>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </div>
+                </section>
 
-                {/* Top Cities */}
-                <div>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1E1B4B', marginBottom: 8 }}>
-                    Tỉnh / Thành phố tập trung người xem
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {metrics.audienceDemographics.topCities.map((c, idx) => (
-                      <div key={idx} className="creator-city-pill">
-                        <span>{c.city}</span>
-                        <strong>{c.pct}%</strong>
+                <section className="creator-bento-card">
+                  <div className="creator-bento-row">
+                    <div className="creator-bento-icon amber">
+                      <VideoCameraOutlined />
+                    </div>
+                    <div className="creator-bento-body">
+                      <span className="creator-bento-label">Lượt xem TB / Video</span>
+                      <p className="creator-bento-value">{fmtCount(totalAvgViews)}</p>
+                      <div>
+                        <span className="creator-bento-badge neutral">
+                          Theo dữ liệu kênh đã duyệt
+                        </span>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </div>
-              </Card>
-            </Col>
-          </Row>
+                </section>
+
+                <section className="creator-bento-card">
+                  <div className="creator-bento-row">
+                    <div className="creator-bento-icon green">
+                      <FireOutlined />
+                    </div>
+                    <div className="creator-bento-body">
+                      <span className="creator-bento-label">Tỷ lệ tương tác (ER%)</span>
+                      <p className="creator-bento-value">
+                        {erPct > 0 ? `${erPct.toFixed(2)}%` : '—'}
+                      </p>
+                      <div>
+                        <span className="creator-growth-pill">
+                          {erPct > 0 ? 'Trung bình gia quyền' : 'Chưa có dữ liệu ER'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="creator-bento-card">
+                  <div className="creator-bento-row">
+                    <div className="creator-bento-icon purple">
+                      <GlobalOutlined />
+                    </div>
+                    <div className="creator-bento-body">
+                      <span className="creator-bento-label">Kênh đã liên kết</span>
+                      <p className="creator-bento-value">{channelTotal} kênh</p>
+                      <div>
+                        <span className="creator-bento-badge">
+                          {reach?.platforms?.length ? reach.platforms.join(', ') : 'Chưa liên kết kênh'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              {/* 3. Real Analytics Row: Channel Comparison BarChart + Linked Channel Breakdown */}
+              <Row gutter={[18, 18]}>
+                <Col xs={24} lg={14}>
+                  <Card
+                    variant="borderless"
+                    className="creator-section-card"
+                    title={
+                      <div className="creator-card-header-inline">
+                        <div>
+                          <div className="creator-card-title">Hiệu suất theo Kênh đã liên kết</div>
+                          <div className="creator-card-subtitle">So sánh lượng người theo dõi và lượt xem trung bình từ dữ liệu thực tế</div>
+                        </div>
+                        <Tag color="blue" style={{ borderRadius: 999, fontWeight: 600, margin: 0 }}>
+                          Dữ liệu thực tế
+                        </Tag>
+                      </div>
+                    }
+                  >
+                    {chartData.length ? (
+                      <div style={{ width: '100%', height: 260 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={chartData} margin={{ top: 10, right: 12, left: -8, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                            <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#475569' }} axisLine={{ stroke: '#E2E8F0' }} tickLine={false} />
+                            <YAxis
+                              tick={{ fontSize: 11.5, fill: '#64748B' }}
+                              axisLine={false}
+                              tickLine={false}
+                              tickFormatter={(val: number) => fmtCount(val)}
+                            />
+                            <RechartsTooltip
+                              formatter={(val: unknown, name: unknown) => [
+                                Number(val).toLocaleString('vi-VN'),
+                                name === 'followers' ? 'Followers' : 'Lượt xem TB',
+                              ]}
+                              contentStyle={{ borderRadius: 10, borderColor: '#E2E8F0', fontSize: 12.5 }}
+                            />
+                            <Legend formatter={(value) => (value === 'followers' ? 'Followers' : 'Lượt xem TB')} />
+                            <Bar dataKey="followers" fill="#2563EB" radius={[6, 6, 0, 0]} maxBarSize={42} />
+                            <Bar dataKey="avgViews" fill="#7C3AED" radius={[6, 6, 0, 0]} maxBarSize={42} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '36px 16px', color: '#64748B' }}>
+                        <p style={{ marginBottom: 12 }}>Bạn chưa có kênh mạng xã hội nào được xác minh để tổng hợp số liệu.</p>
+                        <Button type="primary" className="creator-primary-btn" onClick={handleOpenClaimModal}>
+                          Liên kết & xác minh kênh ngay
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
+                </Col>
+
+                <Col xs={24} lg={10}>
+                  <Card
+                    variant="borderless"
+                    className="creator-section-card"
+                    title={
+                      <div>
+                        <div className="creator-card-title">Chi tiết từng Kênh</div>
+                        <div className="creator-card-subtitle">Số liệu đồng bộ cho từng kênh thuộc quyền quản lý của bạn</div>
+                      </div>
+                    }
+                  >
+                    {breakdown.length ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {breakdown.map((ch) => {
+                          const chEr = ch.engagementRate != null
+                            ? (ch.engagementRate <= 1 ? ch.engagementRate * 100 : ch.engagementRate)
+                            : null;
+                          return (
+                            <div key={ch.channelId} className="creator-mini-row" style={{ background: '#F8FAFC', borderColor: '#E1E7F0' }}>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontWeight: 700, color: '#0F172A', fontSize: 13.5 }}>
+                                  {ch.displayName || ch.userName || ch.platform}
+                                </div>
+                                <div style={{ fontSize: 12, color: '#64748B' }}>
+                                  {ch.platform} · {ch.userName ? `@${ch.userName.replace(/^@+/, '')}` : '—'}
+                                </div>
+                              </div>
+                              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                <div style={{ fontWeight: 700, color: '#2563EB', fontSize: 13 }}>
+                                  {fmtCount(Number(ch.followers ?? 0))} followers
+                                </div>
+                                <div style={{ fontSize: 12, color: '#64748B' }}>
+                                  {fmtCount(Number(ch.avgViews ?? 0))} views · ER {chEr != null ? `${chEr.toFixed(2)}%` : '—'}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '36px 16px', color: '#64748B' }}>
+                        Chưa có dữ liệu phân tích kênh.
+                      </div>
+                    )}
+                  </Card>
+                </Col>
+              </Row>
+            </>;
+          })()}
 
           {/* 4. Quick Workspace Overview: Linked Channels & Active Rate Cards */}
           <Row gutter={[18, 18]}>
@@ -672,144 +639,121 @@ export default function CreatorPortalPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* VIEW 2: BẢNG GIÁ RATE CARD (/creator/rate-card)                           */}
+      {/* VIEW 2: BẢNG GIÁ RATE CARD (/creator/rate-card - Đồng bộ Admin Table UI)  */}
       {/* ========================================================================= */}
       {activeTab === 'ratecard' && (
-        <div className="creator-studio-stack">
-          <div className="creator-page-header-row">
+        <div className="creator-admin-rate-page">
+          <header className="creator-admin-rate-header">
             <div>
-              <h1 className="creator-page-title">Bảng giá Dịch vụ & Hợp tác (Rate Card)</h1>
-              <p className="creator-page-subtitle">
-                Thiết lập các gói sản xuất nội dung minh bạch để Thương hiệu (Brand) tham khảo và gửi lời mời Booking nhanh hơn
-              </p>
+              <h1>Bảng giá dịch vụ (Rate Card)</h1>
+              <p>Quản lý các gói sản xuất nội dung, mức giá niêm yết và điều khoản bàn giao cho Thương hiệu.</p>
             </div>
             <Button
               type="primary"
               icon={<PlusOutlined />}
               onClick={handleOpenAddRateCard}
-              className="creator-primary-btn"
+              style={{ background: '#7C3AED', borderColor: '#7C3AED', fontWeight: 600, borderRadius: 8 }}
             >
               Thêm gói báo giá mới
             </Button>
-          </div>
+          </header>
 
-          {/* Summary Strip */}
-          <div className="creator-bento-grid-3">
-            <section className="creator-bento-card">
-              <div className="creator-bento-row">
-                <div className="creator-bento-icon purple">
-                  <DollarOutlined />
-                </div>
-                <div className="creator-bento-body">
-                  <span className="creator-bento-label">Tổng số gói đang niêm yết</span>
-                  <p className="creator-bento-value">{rateCards.length} gói</p>
-                  <div>
-                    <span className="creator-bento-badge">Trên Creator Catalog</span>
-                  </div>
-                </div>
-              </div>
+          <div className="creator-admin-rate-stats">
+            <section>
+              <span>Tổng số gói đang niêm yết</span>
+              <strong>{rateCards.length} gói</strong>
+              <small>Hiển thị công khai cho Brand tham khảo</small>
             </section>
-
-            <section className="creator-bento-card">
-              <div className="creator-bento-row">
-                <div className="creator-bento-icon amber">
-                  <StarFilled />
-                </div>
-                <div className="creator-bento-body">
-                  <span className="creator-bento-label">Mức báo giá trung bình</span>
-                  <p className="creator-bento-value" style={{ fontSize: 24 }}>
-                    {avgRateCardPrice.toLocaleString('vi-VN')} ₫
-                  </p>
-                  <div>
-                    <span className="creator-bento-badge">Giá niêm yết công khai</span>
-                  </div>
-                </div>
-              </div>
+            <section>
+              <span>Mức báo giá trung bình</span>
+              <strong>{avgRateCardPrice.toLocaleString('vi-VN')} ₫</strong>
+              <small>Tính trung bình trên {rateCards.length} gói hiện có</small>
             </section>
-
-            <section className="creator-bento-card">
-              <div className="creator-bento-row">
-                <div className="creator-bento-icon purple">
-                  <CheckCircleFilled />
-                </div>
-                <div className="creator-bento-body">
-                  <span className="creator-bento-label">Trạng thái hiển thị</span>
-                  <p className="creator-bento-value" style={{ fontSize: 22 }}>
-                    Công khai
-                  </p>
-                  <div>
-                    <span className="creator-growth-pill">● Sẵn sàng nhận Booking</span>
-                  </div>
-                </div>
-              </div>
+            <section>
+              <span>Trạng thái nhận Booking</span>
+              <strong>Đang mở</strong>
+              <small>Sẵn sàng nhận lời mời hợp tác từ Thương hiệu</small>
             </section>
           </div>
 
-          {/* Rate Cards Grid */}
-          <Row gutter={[18, 18]} className="rate-card-grid">
-            {rateCards.map((pkg) => (
-              <Col xs={24} md={12} lg={8} key={pkg.id}>
-                <Card
-                  bordered={false}
-                  className={`rate-card-pkg-card ${pkg.isPopular ? 'popular' : ''}`}
-                  bodyStyle={{ padding: '22px', flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
-                >
-                  {pkg.isPopular && (
-                    <div className="rate-card-popular-badge">
-                      Gói phổ biến nhất
+          <div className="creator-admin-rate-table">
+            <Table<CreatorRateCardPackage>
+              rowKey="id"
+              dataSource={rateCards}
+              pagination={false}
+              scroll={{ x: 960 }}
+              locale={{ emptyText: 'Chưa có gói báo giá nào. Bấm "Thêm gói báo giá mới" để tạo.' }}
+              columns={[
+                {
+                  title: 'Gói dịch vụ',
+                  key: 'name',
+                  width: 280,
+                  render: (_, pkg) => (
+                    <div className="creator-rate-table-name">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <strong>{pkg.name}</strong>
+                        {pkg.isPopular && <Tag color="purple" style={{ margin: 0, fontSize: 11 }}>Phổ biến</Tag>}
+                      </div>
+                      <p title={pkg.description}>{pkg.description || 'Chưa có mô tả'}</p>
                     </div>
-                  )}
-
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <Tag color="purple" style={{ fontWeight: 700, borderRadius: 6, padding: '2px 10px', margin: 0 }}>
-                      {pkg.platform} • {pkg.format}
+                  ),
+                },
+                {
+                  title: 'Nền tảng / Định dạng',
+                  key: 'platform',
+                  width: 170,
+                  render: (_, pkg) => (
+                    <Tag color="geekblue" style={{ margin: 0, fontWeight: 600 }}>
+                      {pkg.platform} · {pkg.format}
                     </Tag>
-                    <Space size={4}>
-                      <Tooltip title="Chỉnh sửa gói">
-                        <Button type="text" size="small" icon={<EditOutlined />} onClick={() => handleOpenEditRateCard(pkg)} />
-                      </Tooltip>
+                  ),
+                },
+                {
+                  title: 'Mức giá niêm yết',
+                  key: 'price',
+                  width: 170,
+                  render: (_, pkg) => (
+                    <div className="creator-rate-table-price">
+                      <strong>{pkg.priceVnd.toLocaleString('vi-VN')} ₫</strong>
+                      <span>Giao bài: {pkg.turnaroundDays} ngày</span>
+                    </div>
+                  ),
+                },
+                {
+                  title: 'Bản quyền',
+                  dataIndex: 'usageRightsDays',
+                  key: 'usageRightsDays',
+                  width: 100,
+                  render: (days: number) => `${days} ngày`,
+                },
+                {
+                  title: 'Hạng mục bàn giao',
+                  key: 'deliverables',
+                  render: (_, pkg) => (
+                    <ul className="creator-rate-deliverables-mini">
+                      {pkg.deliverables.map((d, idx) => (
+                        <li key={idx}>{d}</li>
+                      ))}
+                    </ul>
+                  ),
+                },
+                {
+                  title: '',
+                  key: 'actions',
+                  width: 140,
+                  align: 'right',
+                  render: (_, pkg) => (
+                    <Space size={6}>
+                      <Button size="small" onClick={() => handleOpenEditRateCard(pkg)}>Chỉnh sửa</Button>
                       <Popconfirm title="Xóa gói báo giá này?" okText="Xóa" cancelText="Hủy" onConfirm={() => handleDeleteRateCard(pkg.id)}>
-                        <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+                        <Button size="small" danger>Xóa</Button>
                       </Popconfirm>
                     </Space>
-                  </div>
-
-                  <div style={{ fontWeight: 800, fontSize: 16, color: '#1E1B4B', lineHeight: 1.35, marginBottom: 8 }}>
-                    {pkg.name}
-                  </div>
-
-                  <div style={{ fontSize: 26, fontWeight: 900, color: '#6D28D9', fontVariantNumeric: 'tabular-nums', marginBottom: 12 }}>
-                    {pkg.priceVnd.toLocaleString('vi-VN')} <span style={{ fontSize: 14, fontWeight: 700, color: '#6B7280' }}>VNĐ</span>
-                  </div>
-
-                  <div style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, marginBottom: 16 }}>
-                    {pkg.description}
-                  </div>
-
-                  <div style={{ flex: 1, background: '#FAF7FF', borderRadius: 12, padding: '12px 14px', border: '1px solid #EDE9FE' }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 700, color: '#4C1D95', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.02em' }}>
-                      Hạng mục bàn giao
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {pkg.deliverables.map((d, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12.5, color: '#374151' }}>
-                          <CheckOutlined style={{ color: '#7C3AED', fontSize: 12, marginTop: 3, flexShrink: 0 }} />
-                          <span>{d}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Divider style={{ margin: '14px 0 12px', borderColor: '#F3E8FF' }} />
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6B7280' }}>
-                    <span>Thời gian giao: <strong style={{ color: '#1E1B4B' }}>{pkg.turnaroundDays} ngày</strong></span>
-                    <span>Bản quyền hình ảnh: <strong style={{ color: '#1E1B4B' }}>{pkg.usageRightsDays} ngày</strong></span>
-                  </div>
-                </Card>
-              </Col>
-            ))}
-          </Row>
+                  ),
+                },
+              ]}
+            />
+          </div>
         </div>
       )}
 
@@ -835,8 +779,10 @@ export default function CreatorPortalPage() {
 
       {/* MODAL 1: ADD / EDIT RATE CARD */}
       <Modal
+        centered
+        className="rate-card-modal"
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 800 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15.5, fontWeight: 700, color: '#0F172A' }}>
             <DollarOutlined style={{ color: '#7C3AED' }} />
             <span>{editingRateCard ? 'Chỉnh sửa Gói Báo giá' : 'Thêm Gói Báo giá Mới (Rate Card)'}</span>
           </div>
@@ -846,16 +792,16 @@ export default function CreatorPortalPage() {
         onOk={() => void handleSaveRateCard()}
         okText="Lưu gói dịch vụ"
         cancelText="Hủy"
-        width={540}
+        width={600}
         destroyOnClose
       >
-        <Form form={rateCardForm} layout="vertical" style={{ marginTop: 14 }}>
+        <Form form={rateCardForm} layout="vertical" className="rate-card-modal-form">
           <Form.Item name="name" label="Tên gói dịch vụ" rules={[{ required: true, message: 'Vui lòng nhập tên gói!' }]}>
             <Input placeholder="VD: 1x Video TikTok Review Chuyên sâu (60s)" />
           </Form.Item>
 
           <Row gutter={12}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="platform" label="Nền tảng" rules={[{ required: true }]}>
                 <Select
                   options={[
@@ -867,7 +813,7 @@ export default function CreatorPortalPage() {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="format" label="Định dạng" rules={[{ required: true }]}>
                 <Select
                   options={[
@@ -882,25 +828,26 @@ export default function CreatorPortalPage() {
             </Col>
           </Row>
 
-          <Form.Item name="priceVnd" label="Mức giá niêm yết (VNĐ)" rules={[{ required: true, message: 'Nhập giá tiền!' }]}>
-            <InputNumber
-              style={{ width: '100%' }}
-              formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(val) => val!.replace(/\$\s?|(,*)/g, '') as any}
-              addonAfter="₫"
-              min={1000000}
-              step={1000000}
-            />
-          </Form.Item>
-
           <Row gutter={12}>
-            <Col span={12}>
-              <Form.Item name="turnaroundDays" label="Thời gian bàn giao (ngày)" rules={[{ required: true }]}>
+            <Col xs={24} sm={12}>
+              <Form.Item name="priceVnd" label="Mức giá niêm yết (VNĐ)" rules={[{ required: true, message: 'Nhập giá tiền!' }]}>
+                <InputNumber
+                  style={{ width: '100%' }}
+                  formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(val) => val!.replace(/\$\s?|(,*)/g, '') as any}
+                  addonAfter="₫"
+                  min={1000000}
+                  step={1000000}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={12} sm={6}>
+              <Form.Item name="turnaroundDays" label="Bàn giao (ngày)" rules={[{ required: true }]}>
                 <InputNumber min={1} max={30} style={{ width: '100%' }} />
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item name="usageRightsDays" label="Bản quyền sử dụng (ngày)" rules={[{ required: true }]}>
+            <Col xs={12} sm={6}>
+              <Form.Item name="usageRightsDays" label="Bản quyền (ngày)" rules={[{ required: true }]}>
                 <InputNumber min={7} max={365} style={{ width: '100%' }} />
               </Form.Item>
             </Col>
@@ -910,8 +857,8 @@ export default function CreatorPortalPage() {
             <Input.TextArea rows={2} placeholder="Mô tả phong cách làm video, kịch bản, cam kết tương tác..." />
           </Form.Item>
 
-          <Form.Item name="deliverablesText" label="Các hạng mục bàn giao (mỗi dòng một ý)">
-            <Input.TextArea rows={3} placeholder="1 Video TikTok HD (60s)&#10;Gắn link bio 7 ngày&#10;Bàn giao file MP4 sạch" />
+          <Form.Item name="deliverablesText" label="Các hạng mục bàn giao (mỗi dòng một ý)" style={{ marginBottom: 0 }}>
+            <Input.TextArea rows={2} placeholder="1 Video TikTok HD (60s)&#10;Gắn link bio 7 ngày&#10;Bàn giao file MP4 sạch" />
           </Form.Item>
         </Form>
       </Modal>

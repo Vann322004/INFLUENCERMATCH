@@ -31,8 +31,22 @@ export default function HistoryTab({ invoices, loading, onViewInvoice, onRetryPa
       title: 'Mã giao dịch',
       dataIndex: 'code',
       key: 'code',
+      width: 145,
       render: (code: string) => (
-        <span style={{ fontWeight: 700, color: '#0F172A', fontFamily: 'monospace' }}>
+        <span
+          title={code}
+          style={{
+            fontWeight: 700,
+            color: '#0F172A',
+            fontFamily: 'monospace',
+            display: 'inline-block',
+            maxWidth: 125,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            verticalAlign: 'middle',
+          }}
+        >
           {code}
         </span>
       ),
@@ -49,19 +63,17 @@ export default function HistoryTab({ invoices, loading, onViewInvoice, onRetryPa
       ),
     },
     {
-      title: 'Ngày thanh toán',
+      title: 'Thời gian & Phương thức',
       dataIndex: 'date',
       key: 'date',
-      render: (date: string) => <span style={{ color: '#475569' }}>{date}</span>,
-    },
-    {
-      title: 'Phương thức',
-      dataIndex: 'method',
-      key: 'method',
-      render: (method: string) => (
-        <Tag color="geekblue" style={{ borderRadius: 6, fontWeight: 500 }}>
-          {method}
-        </Tag>
+      responsive: ['md'],
+      render: (date: string, record: PaymentInvoice) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+          <span style={{ color: '#475569', fontSize: 12.5 }}>{date}</span>
+          <Tag color="geekblue" style={{ borderRadius: 6, fontWeight: 500, margin: 0 }}>
+            {record.method}
+          </Tag>
+        </div>
       ),
     },
     {
@@ -69,7 +81,7 @@ export default function HistoryTab({ invoices, loading, onViewInvoice, onRetryPa
       dataIndex: 'amount',
       key: 'amount',
       render: (amount: number) => (
-        <span style={{ fontWeight: 700, color: '#0F172A' }}>
+        <span style={{ fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap' }}>
           {formatVND(amount)}
         </span>
       ),
@@ -81,7 +93,7 @@ export default function HistoryTab({ invoices, loading, onViewInvoice, onRetryPa
       render: (status: string, record: PaymentInvoice) => (
         <Tag
           color={status === 'success' ? 'success' : status === 'pending' ? 'warning' : 'error'}
-          style={{ borderRadius: 999, padding: '2px 10px', fontWeight: 600 }}
+          style={{ borderRadius: 999, padding: '2px 10px', fontWeight: 600, margin: 0, whiteSpace: 'nowrap' }}
         >
           {record.statusText}
         </Tag>

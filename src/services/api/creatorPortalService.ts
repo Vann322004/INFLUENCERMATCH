@@ -55,6 +55,30 @@ export interface CreatorReachMetrics {
   monthlyReachTrend: { month: string; reach: number; views: number }[];
 }
 
+export interface ChannelReachItem {
+  channelId: string;
+  platform: string;
+  userName?: string | null;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  profileUrl?: string | null;
+  followers?: number | null;
+  avgViews?: number | null;
+  engagementRate?: number | null;
+}
+
+export interface AggregatedReachResponse {
+  masterId?: string | null;
+  canonicalName?: string | null;
+  channelCount: number;
+  totalFollowers: number;
+  totalAvgViews: number;
+  averageEngagementRate: number;
+  platforms: string[];
+  platformBreakdown: ChannelReachItem[];
+  calculatedAt?: string | null;
+}
+
 export interface CreatorBookingItem {
   id: string;
   campaignId: string;
@@ -316,26 +340,54 @@ export const creatorPortalService = {
   },
 
   /** 8. Backend API: Lấy thông tin Profile (GET /creators/portal/profile) */
-  async fetchProfileApi(): Promise<any> {
+  async fetchProfileApi(signal?: AbortSignal): Promise<{ etag?: string; profile?: any } | null> {
     try {
-      const response = await apiClient.get('/creators/portal/profile');
-      return response.data?.data || response.data;
+      const response = await apiClient.get('/creators/portal/profile', { signal });
+      const etag = (response.headers?.etag as string | undefined) || undefined;
+      return { etag, profile: response.data?.data ?? response.data };
     } catch (err) {
-      console.warn('[creatorPortalService.fetchProfileApi] API error or unauthorized:', err);
+      if ((err as { name?: string })?.name !== 'CanceledError') {
+        console.warn('[creatorPortalService.fetchProfileApi] API error or unauthorized:', err);
+      }
       return null;
     }
   },
 
   /** 8b. Backend API: Cập nhật Profile & Rate Card (PATCH /creators/portal/profile) */
-  async updateProfileApi(data: any): Promise<any> {
+  async updateProfileApi(data: any, etag?: string): Promise<{ etag?: string; data?: any } | null> {
     try {
       const response = await apiClient.patch('/creators/portal/profile', data, {
-        headers: { 'If-Match': '*' },
+        headers: { 'If-Match': etag || '*' },
       });
-      return response.data?.data || response.data;
+      const nextEtag = (response.headers?.etag as string | undefined) || undefined;
+      return { etag: nextEtag, data: response.data?.data ?? response.data };
     } catch (err) {
       console.warn('[creatorPortalService.updateProfileApi] API error or unauthorized:', err);
       return null;
+    }
+  },
+
+  /** 8c. Backend API: Lấy số liệu tổng hợp đa kênh thật (GET /creators/portal/analytics/reach) */
+  async fetchAggregatedReach(signal?: AbortSignal): Promise<AggregatedReachResponse | null> {
+    try {
+      const response = await apiClient.get('/creators/portal/analytics/reach', { signal });
+      return response.data?.data ?? null;
+    } catch (err) {
+      if ((err as { name?: string })?.name !== 'CanceledError') {
+        console.warn('[creatorPortalService.fetchAggregatedReach] API error:', err);
+      }
+      return null;
+    }
+  },
+
+  /** 8d. Brand API: Đọc Rate Card công bố của 1 Creator (GET /creators/{id}/rate-cards) */
+  async fetchCreatorRateCards(creatorId: string, signal?: AbortSignal): Promise<CreatorRateCardPackage[]> {
+    try {
+      const response = await apiClient.get(`/creators/${creatorId}/rate-cards`, { signal });
+      const list = response.data?.data;
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
     }
   },
 };

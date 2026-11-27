@@ -15,6 +15,7 @@ import {
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { creatorService } from '../../services/api/creatorService';
+import { creatorPortalService, type CreatorRateCardPackage } from '../../services/api/creatorPortalService';
 import { shortlistService } from '../../services/api/shortlistService';
 import { authService } from '../../services/api/authService';
 import { activeCampaignId } from '../../services/campaignContext';
@@ -47,6 +48,7 @@ export default function CreatorDetailPage() {
   const [shortlistError, setShortlistError] = useState(false);
   const [shortlistOpen, setShortlistOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const [rateCards, setRateCards] = useState<CreatorRateCardPackage[]>([]);
 
   const signedInUser = authService.getCurrentUser();
   const canClaim = signedInUser?.role === 'CREATOR' && signedInUser.status === 'ACTIVE'
@@ -69,8 +71,13 @@ export default function CreatorDetailPage() {
     if (campaignId) shortlistService.all(campaignId).then(items => {
       if (active) setSaved(items.some(item => item.creatorId === creatorId && item.status !== 'REMOVED'));
     }).catch(() => { if (active) setShortlistError(true); });
+    if (signedInUser?.role === 'BRAND') {
+      creatorPortalService.fetchCreatorRateCards(creatorId).then(list => {
+        if (active) setRateCards(list);
+      });
+    }
     return () => { active = false; };
-  }, [creatorId, campaignId, retry]);
+  }, [creatorId, campaignId, retry, signedInUser?.role]);
 
   const fromShortlist = location.state?.from === 'shortlist' || location.state?.returnTo === '/creators/shortlist';
   const backPath = fromShortlist ? '/creators/shortlist' : '/creators';
@@ -267,6 +274,28 @@ export default function CreatorDetailPage() {
           <div className="creator-detail-overview-main"><Card title="Về nhà sáng tạo"><p className="creator-detail-live-summary">{creator.contentSummary?.trim() || 'Kênh chưa có nội dung giới thiệu được ghi nhận. Bạn có thể mở kênh để xem nội dung trực tiếp.'}</p>
             <div className="creator-detail-live-tags">{categories.map(category => <Tag key={category}>{category}</Tag>)}</div>
           </Card>
+          {rateCards.length > 0 && (
+            <Card title="Bảng giá dịch vụ (Rate Card) do Creator công bố">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {rateCards.map((pkg) => (
+                  <div key={pkg.id} style={{ padding: '12px 14px', border: '1px solid #E1E7F0', borderRadius: 10, background: '#FAFBFD' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <strong style={{ color: '#0F172A', fontSize: 14 }}>{pkg.name}</strong>
+                      <strong style={{ color: '#7C3AED', fontSize: 15 }}>{pkg.priceVnd.toLocaleString('vi-VN')} ₫</strong>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
+                      {pkg.platform} · {pkg.format} · Giao bài {pkg.turnaroundDays} ngày · Bản quyền {pkg.usageRightsDays} ngày
+                    </div>
+                    {pkg.deliverables?.length > 0 && (
+                      <ul style={{ margin: '8px 0 0', paddingLeft: 18, fontSize: 12.5, color: '#334155' }}>
+                        {pkg.deliverables.map((d, i) => <li key={i}>{d}</li>)}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
           <section className="creator-detail-post-preview"><div className="creator-detail-section-heading"><div><h2>Nội dung đã ghi nhận</h2><p>Xem chủ đề và tương tác trên từng bài đăng.</p></div>{posts.length > 3 && <Button type="text" onClick={() => setActiveTab('posts')}>Xem tất cả ({posts.length})</Button>}</div>
             {posts.length ? renderPosts(posts.slice(0, 3), true) : <Card><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có bài đăng được đồng bộ" />{profileLink && <Button href={profileLink} target="_blank" rel="noopener noreferrer">Xem nội dung trên kênh</Button>}</Card>}
           </section></div>

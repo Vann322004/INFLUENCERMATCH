@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Card, Empty, Modal, Pagination, Radio, Space, Spin, Tag, Typography } from 'antd';
+import { CheckCircleFilled, ExportOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   cooperationPath, pendingCooperation, pendingCooperationTarget,
 } from '../../../services/cooperationContinuation';
 import { dealService } from '../../../services/api/dealService';
 import { claimService } from '../../../services/api/claimService';
+import {
+  creatorPortalService,
+  type ChannelReachItem,
+} from '../../../services/api/creatorPortalService';
+import CreatorAvatar from '../components/discovery/CreatorAvatar';
 import {
   channelVerificationService as verification,
   type ConnectionOption, type LinkedChannel, type OAuthFlow, type OAuthPlatform, type OAuthSession,
@@ -158,6 +164,20 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
   const [unlinkError, setUnlinkError] = useState('');
   const [manual, setManual] = useState<{ platform?: OAuthPlatform; query?: string } | null>(null);
   const [historyVersion, setHistoryVersion] = useState(0);
+  const [reachMap, setReachMap] = useState<Record<string, ChannelReachItem>>({});
+  useEffect(() => {
+    if (!canVerify) return;
+    const controller = new AbortController();
+    void creatorPortalService.fetchAggregatedReach(controller.signal).then((data) => {
+      if (controller.signal.aborted || !data?.platformBreakdown) return;
+      const next: Record<string, ChannelReachItem> = {};
+      for (const item of data.platformBreakdown) {
+        if (item.channelId) next[item.channelId] = item;
+      }
+      setReachMap(next);
+    });
+    return () => controller.abort();
+  }, [canVerify, linked]);
   const [invitationContext, setInvitationContext] = useState<{
     status: string;
     channels?: { creatorId: string; platform: string; username: string }[];
@@ -252,10 +272,6 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
           setSelection(current => result.status === 'READY' && current?.sessionId === result.sessionId
             && result.accounts.some(account => account.accountId === current.accountId
               && !!linkActions[account.matchStatus]) ? current : null);
-          if (invitationToken && pending.flow === 'TIKTOK_LOGIN' && result.status === 'READY') {
-            clearPending();
-            navigate(cooperationPath(), { state: { channelOAuthResult: 'MANUAL_RESOLUTION' } });
-          }
         }
       })
       .catch(cause => {
@@ -408,19 +424,82 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
     }
   }
 
+  const verifiedChannels = (linked ?? []).filter(c => c.verifiedByInfluencerMatch || c.verification?.status === 'VERIFIED');
+  const verifiedPlatforms = [...new Set(verifiedChannels.map(c => c.platform))];
+  const fmtMetric = (n?: number | null) => {
+    if (n == null || !Number.isFinite(n)) return '—';
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+    return n.toLocaleString('vi-VN');
+  };
+
   return (
-    <Space orientation="vertical" size="large" style={{ width: '100%' }}>
+    <div className="creator-admin-rate-page" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       {invitationToken && <Alert type="info" title="Bạn đang xác minh kênh cho lời mời hợp tác"
         description={invitationTarget ? `Kênh mục tiêu: ${invitationTarget.platform} · @${invitationTarget.username}` : undefined}
         action={<Link to={cooperationPath()}><Button>Tiếp tục lời mời</Button></Link>} />}
-      <h1 className="creator-page-title">Kênh liên kết</h1>
-      {canVerify && <Card className="creator-section-card" title="Xác minh kênh">
+      <header className="creator-admin-rate-header" style={{ marginBottom: 0 }}>
+        <div>
+          <h1>Kênh liên kết & Xác minh sở hữu</h1>
+          <p>Kết nối và xác minh quyền quản lý kênh mạng xã hội để đồng bộ chỉ số thật và nhận lời mời hợp tác từ Thương hiệu.</p>
+        </div>
+        {canVerify && (
+          <Button icon={<ReloadOutlined />} onClick={() => void reloadLinked()}>
+            Làm mới kênh
+          </Button>
+        )}
+      </header>
+
+      {canVerify && (
+        <div className="creator-admin-rate-stats" style={{ marginBottom: 0 }}>
+          <section>
+            <span>Kênh đã xác minh</span>
+            <strong>{verifiedChannels.length} kênh</strong>
+            <small>{linked ? `Tổng ${linked.length} kênh đã gắn với tài khoản` : 'Đang tải danh sách kênh'}</small>
+          </section>
+          <section>
+            <span>Nền tảng đã kích hoạt</span>
+            <strong>{verifiedPlatforms.length ? verifiedPlatforms.join(', ') : 'Chưa có'}</strong>
+            <small>Đủ điều kiện nhận lời mời hợp tác từ Brand</small>
+          </section>
+          <section>
+            <span>Trạng thái hồ sơ</span>
+            <strong>{verifiedChannels.length > 0 ? 'Sẵn sàng' : 'Chờ xác minh'}</strong>
+            <small>Hỗ trợ OAuth trực tiếp hoặc gửi bằng chứng thủ công</small>
+          </section>
+        </div>
+      )}
+
+      {canVerify && <Card className="creator-admin-rate-table" styles={{ header: { background: '#f8fafc', borderBottom: '1px solid #e2e8f0' } }} title="Kết nối & Xác minh thêm kênh">
         <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
-          {notice && <Alert showIcon type="success" title={notice} />}
+          {notice && (
+            <Alert
+              showIcon
+              type="success"
+              title={notice}
+              action={invitationToken ? (
+                <Button size="small" type="primary" onClick={() => navigate(cooperationPath())}>
+                  Quay lại lời mời hợp tác
+                </Button>
+              ) : undefined}
+            />
+          )}
           {error && !instagramDialogOpen && <Alert showIcon type="error" title={error} />}
           {optionsError && <Alert showIcon type="error" title={optionsError} action={
             <Button onClick={() => setOptionsRetry(value => value + 1)}>Thử lại</Button>
           } />}
+          {invitationToken && targetChannel && (
+            <Alert
+              type="info"
+              showIcon
+              title={`Đang xác minh kênh cho lời mời hợp tác: ${targetChannel.platform} · @${(targetChannel.username || targetChannel.creatorId).replace(/^@+/, '')}`}
+              action={
+                <Button size="small" onClick={() => navigate(cooperationPath())}>
+                  Quay lại lời mời
+                </Button>
+              }
+            />
+          )}
           {invitationToken && invitationContextError && <Alert type="error" showIcon title={invitationContextError} />}
           {invitationToken && !invitationTarget && <Alert type="warning" showIcon
             title="Chọn kênh cụ thể từ trang lời mời trước khi xác minh." />}
@@ -428,20 +507,28 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
             title="Kênh đã chọn không còn thuộc lời mời này. Quay lại lời mời để kiểm tra lại." />}
           <Space wrap>
             <Button disabled={!!working || !canOpenManual} onClick={() => setManual({})}>Xác minh thủ công</Button>
-            {!pending && options?.filter(option => !invitationToken || option.platform === targetChannel?.platform).map(option => <Button key={optionLabel(option)} type="primary"
-              loading={working === optionLabel(option)}
-              disabled={(option.platform !== 'INSTAGRAM' && !option.available) || !!working || !canUsePlatform(option.platform)}
-              title={option.platform === 'INSTAGRAM' || option.available ? undefined
-                : option.unavailableReason === 'NOT_CONFIGURED' ? 'Phương thức này chưa được cấu hình đầy đủ'
-                : 'Phương thức này chưa được bật trong môi trường hiện tại'}
-              onClick={() => {
-                if (option.platform === 'INSTAGRAM') {
-                  setError('');
-                  setShowInstagram(true);
-                } else {
-                  void start(option);
-                }
-              }}>Xác minh {optionLabel(option)}</Button>)}
+            {!pending && options?.filter(option => !invitationToken || option.platform === targetChannel?.platform).map(option => {
+              const alreadyVerified = verifiedPlatforms.includes(option.platform);
+              return (
+                <Button key={optionLabel(option)} type={alreadyVerified ? 'default' : 'primary'}
+                  icon={alreadyVerified ? <CheckCircleFilled style={{ color: '#10B981' }} /> : undefined}
+                  loading={working === optionLabel(option)}
+                  disabled={(option.platform !== 'INSTAGRAM' && !option.available) || !!working || !canUsePlatform(option.platform)}
+                  title={option.platform === 'INSTAGRAM' || option.available ? undefined
+                    : option.unavailableReason === 'NOT_CONFIGURED' ? 'Phương thức này chưa được cấu hình đầy đủ'
+                    : 'Phương thức này chưa được bật trong môi trường hiện tại'}
+                  onClick={() => {
+                    if (option.platform === 'INSTAGRAM') {
+                      setError('');
+                      setShowInstagram(true);
+                    } else {
+                      void start(option);
+                    }
+                  }}>
+                  {alreadyVerified ? `Đã xác minh ${optionLabel(option)} · Liên kết thêm` : `Xác minh ${optionLabel(option)}`}
+                </Button>
+              );
+            })}
             {!options && !optionsError && <Spin size="small" />}
           </Space>
           {!pending && options?.some(option => option.available || option.methods?.some(method => method.available)) &&
@@ -451,13 +538,38 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
           {pending && <>
             {checking && <Spin size="small" />}
             {(session?.status === 'NEW' || session?.status === 'EXCHANGING') && <Alert type="info" showIcon title="Đang chờ kết quả cấp quyền từ nền tảng." />}
-            {session?.status === 'FAILED' && <Alert type="warning" showIcon title={
-              session.failureCode === 'CHANNEL_PLATFORM_ALREADY_LINKED' ? matchReasons.CHANNEL_PLATFORM_ALREADY_LINKED
-                : returnHint === 'cancelled' ? 'Bạn đã hủy cấp quyền.'
-                : returnHint === 'conflict' ? 'Không thể liên kết vì có xung đột quyền sở hữu hoặc phiên xác minh.'
-                : 'Nền tảng không hoàn tất cấp quyền.'
-            } />}
-            {session?.status === 'EXPIRED' && <Alert type="warning" showIcon title="Phiên xác minh đã hết hạn." />}
+            {session?.status === 'FAILED' && (
+              <Alert
+                type="warning"
+                showIcon
+                title={
+                  session.failureCode === 'CHANNEL_PLATFORM_ALREADY_LINKED'
+                    ? matchReasons.CHANNEL_PLATFORM_ALREADY_LINKED
+                    : returnHint === 'cancelled' ? 'Bạn đã hủy cấp quyền.'
+                    : returnHint === 'conflict' ? 'Không thể liên kết vì có xung đột quyền sở hữu hoặc phiên xác minh.'
+                    : 'Nền tảng không hoàn tất cấp quyền.'
+                }
+                action={canOpenManual ? (
+                  <Button size="small" disabled={!!working} onClick={() => setManual({
+                    platform: pending.flow === 'TIKTOK_LOGIN' ? 'TIKTOK' : session.platform,
+                    query: targetChannel?.username?.replace(/^@+/, '') ?? '',
+                  })}>Xác minh thủ công</Button>
+                ) : undefined}
+              />
+            )}
+            {session?.status === 'EXPIRED' && (
+              <Alert
+                type="warning"
+                showIcon
+                title="Phiên xác minh đã hết hạn."
+                action={canOpenManual ? (
+                  <Button size="small" disabled={!!working} onClick={() => setManual({
+                    platform: pending.flow === 'TIKTOK_LOGIN' ? 'TIKTOK' : session.platform,
+                    query: targetChannel?.username?.replace(/^@+/, '') ?? '',
+                  })}>Xác minh thủ công</Button>
+                ) : undefined}
+              />
+            )}
             {session?.status === 'READY' && pending.flow === 'TIKTOK_LOGIN' && <>
               <Alert type="warning" showIcon
                 title={invitationToken
@@ -509,21 +621,44 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
                     })}
                   </Space>
                 </Radio.Group>
-                {!checking && !checkingInvitation && !selectableAccounts.length && <Alert type="info" showIcon
-                  title="Chưa có kênh đủ điều kiện liên kết."
-                  description="Xem lý do ở từng kênh. Chọn Kiểm tra lại phiên để cập nhật, hoặc hủy phiên và cấp quyền lại." />}
+                {!checking && !checkingInvitation && !selectableAccounts.length && (
+                  <Alert
+                    type="info"
+                    showIcon
+                    title="Chưa có kênh đủ điều kiện liên kết."
+                    description="Xem lý do ở từng kênh. Chọn Kiểm tra lại phiên để cập nhật, hủy phiên để cấp quyền lại, hoặc gửi bằng chứng thủ công."
+                    action={canOpenManual ? (
+                      <Button size="small" disabled={!!working} onClick={() => setManual({
+                        platform: session.platform,
+                        query: targetChannel?.username?.replace(/^@+/, '') || session.accounts[0]?.username || '',
+                      })}>Tiếp tục xác minh thủ công</Button>
+                    ) : undefined}
+                  />
+                )}
                 <Button type="primary" disabled={!selectedAccount || checking || !!working}
                   loading={!!selectedAccount && working === selectedAccount.accountId} onClick={() => void confirm()}>
                   {selectedAccount ? linkActions[selectedAccount.matchStatus] : 'Liên kết kênh'}
                 </Button>
-              </Space> : <Alert showIcon type="warning" title={pending.flow === 'INSTAGRAM_UNIFIED_LOGIN'
-                ? 'Chưa có tài khoản Instagram được cấp quyền trong phiên này.'
-                : session.platform === 'FACEBOOK' ? 'Facebook chưa trả về Trang nào cho phiên này.' : 'Nền tảng chưa trả về kênh đủ điều kiện.'}
-                description={pending.flow === 'INSTAGRAM_UNIFIED_LOGIN'
-                  ? 'Hủy phiên để cấp quyền lại với đúng tài khoản chuyên nghiệp và Business Portfolio, hoặc gửi bằng chứng thủ công.'
-                  : session.platform === 'FACEBOOK'
-                    ? 'Hủy phiên và cấp quyền lại bằng tài khoản có quyền quản lý Trang, hoặc chọn xác minh thủ công.'
-                    : undefined} />
+              </Space> : (
+                <Alert
+                  showIcon
+                  type="warning"
+                  title={pending.flow === 'INSTAGRAM_UNIFIED_LOGIN'
+                    ? 'Chưa có tài khoản Instagram được cấp quyền trong phiên này.'
+                    : session.platform === 'FACEBOOK' ? 'Facebook chưa trả về Trang nào cho phiên này.' : 'Nền tảng chưa trả về kênh đủ điều kiện.'}
+                  description={pending.flow === 'INSTAGRAM_UNIFIED_LOGIN'
+                    ? 'Hủy phiên để cấp quyền lại với đúng tài khoản chuyên nghiệp và Business Portfolio, hoặc gửi bằng chứng thủ công.'
+                    : session.platform === 'FACEBOOK'
+                      ? 'Hủy phiên và cấp quyền lại bằng tài khoản có quyền quản lý Trang, hoặc chọn xác minh thủ công.'
+                      : undefined}
+                  action={canOpenManual ? (
+                    <Button size="small" disabled={!!working} onClick={() => setManual({
+                      platform: session.platform,
+                      query: targetChannel?.username?.replace(/^@+/, '') ?? '',
+                    })}>Tiếp tục xác minh thủ công</Button>
+                  ) : undefined}
+                />
+              )
             )}
             <Space wrap>
               <Button disabled={checking || !!working} onClick={() => {
@@ -538,29 +673,77 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
         </Space>
       </Card>}
       {!canVerify && <Alert type="info" showIcon title="Tài khoản chưa có quyền xác minh kênh." />}
-      {canVerify && <Card className="creator-section-card" title="Kênh đã liên kết"
-        extra={<Button onClick={() => void reloadLinked()}>Tải lại</Button>}>
+      {canVerify && <Card className="creator-admin-rate-table" styles={{ header: { background: '#f8fafc', borderBottom: '1px solid #e2e8f0' } }} title="Kênh đã liên kết"
+        extra={<Button size="small" icon={<ReloadOutlined />} onClick={() => void reloadLinked()}>Tải lại</Button>}>
         {linkedError ? <Alert type="error" showIcon title={linkedError} /> : !linked ? <Spin /> :
           linked.length === 0 ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có kênh đã liên kết." /> :
-            <Space orientation="vertical" style={{ width: '100%' }}>
+            <Space orientation="vertical" size={12} style={{ width: '100%' }}>
               {new Set(linked.map(channel => channel.platform.toUpperCase())).size < linked.length
                 && <Alert showIcon type="warning" title="Hãy gỡ các kênh trùng để mỗi nền tảng chỉ còn một kênh." />}
               {linked.map(channel => {
                 const profile = httpUrl(channel.profileUrl);
-                return <div className="creator-mini-row" style={{ flexWrap: 'wrap', gap: 8 }} key={channel.id}>
-                  <Space orientation="vertical" size={2} style={{ overflowWrap: 'anywhere' }}>
-                    <Typography.Text strong>{channel.displayName || channel.userName || channel.externalId}</Typography.Text>
-                    <span>{channel.platform} · {channel.userName || channel.externalId}</span>
-                    {profile && <a href={profile} target="_blank" rel="noreferrer">Mở kênh</a>}
-                  </Space>
-                  <Space wrap>
-                    <Tag color={channel.verification?.environment === 'SANDBOX' ? 'warning'
-                      : channel.verifiedByInfluencerMatch ? 'success' : 'default'}>{verificationLabel(channel)}</Tag>
-                    <Button danger disabled={!!working} onClick={() => { setUnlinkError(''); setUnlinkTarget(channel); }}>
-                      Gỡ liên kết
-                    </Button>
-                  </Space>
-                </div>;
+                const metrics = reachMap[channel.id];
+                const erVal = metrics?.engagementRate != null
+                  ? (metrics.engagementRate <= 1 ? metrics.engagementRate * 100 : metrics.engagementRate)
+                  : null;
+                const verifiedAt = channel.verification?.verifiedAt;
+                return (
+                  <div
+                    key={channel.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: 14,
+                      padding: '14px 16px',
+                      borderRadius: 10,
+                      border: '1px solid #e2e8f0',
+                      background: '#f8fafc',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 220, flex: 1 }}>
+                      <CreatorAvatar size={44} src={(channel.avatarUrl || metrics?.avatarUrl) ?? undefined} name={(channel.displayName || channel.userName) ?? undefined} />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <strong style={{ color: '#182230', fontSize: 14.5 }}>
+                            {channel.displayName || channel.userName || channel.externalId}
+                          </strong>
+                          <Tag color="geekblue" style={{ margin: 0, fontWeight: 600 }}>{channel.platform}</Tag>
+                        </div>
+                        <div style={{ fontSize: 12.5, color: '#667085', marginTop: 2 }}>
+                          {channel.userName ? `@${channel.userName.replace(/^@+/, '')}` : channel.externalId}
+                          {verifiedAt && ` · Xác minh lúc ${new Date(verifiedAt).toLocaleDateString('vi-VN')}`}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: 16, fontSize: 12.5, color: '#475467' }}>
+                        <div><span style={{ color: '#667085' }}>Followers:</span> <strong>{fmtMetric(metrics?.followers)}</strong></div>
+                        <div><span style={{ color: '#667085' }}>Views TB:</span> <strong>{fmtMetric(metrics?.avgViews)}</strong></div>
+                        <div><span style={{ color: '#667085' }}>ER:</span> <strong>{erVal != null ? `${erVal.toFixed(2)}%` : '—'}</strong></div>
+                      </div>
+                      <Space size={6} wrap>
+                        <Tag
+                          color={channel.verification?.environment === 'SANDBOX' ? 'warning'
+                            : channel.verifiedByInfluencerMatch || channel.verification?.status === 'VERIFIED' ? 'success' : 'default'}
+                          style={{ margin: 0, fontWeight: 600 }}
+                        >
+                          {verificationLabel(channel)}
+                        </Tag>
+                        {profile && (
+                          <Button size="small" icon={<ExportOutlined />} href={profile} target="_blank" rel="noreferrer">
+                            Mở kênh
+                          </Button>
+                        )}
+                        <Button size="small" danger disabled={!!working} onClick={() => { setUnlinkError(''); setUnlinkTarget(channel); }}>
+                          Gỡ liên kết
+                        </Button>
+                      </Space>
+                    </div>
+                  </div>
+                );
               })}
             </Space>}
       </Card>}
@@ -611,6 +794,6 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
           setNotice('Đã gửi bằng chứng. Yêu cầu đang chờ duyệt.');
           setHistoryVersion(value => value + 1);
         }} />}
-    </Space>
+    </div>
   );
 }
