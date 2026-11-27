@@ -44,6 +44,7 @@ const linkActions: Partial<Record<keyof typeof matchLabels, string>> = {
   ALREADY_LINKED: 'Xác minh lại',
 };
 const matchReasons = {
+  CHANNEL_PLATFORM_ALREADY_LINKED: 'Gỡ kênh đang liên kết trên nền tảng này trước khi liên kết kênh khác.',
   CHANNEL_NOT_FOUND: 'Mã kênh chưa khớp hồ sơ trong hệ thống.',
   UNSTABLE_CHANNEL_ID: 'Hồ sơ hiện chưa có mã kênh chính thức để đối chiếu.',
   MISSING_PAGE_MANAGEMENT: 'Tài khoản Facebook chưa có quyền quản lý Trang cần thiết.',
@@ -153,6 +154,8 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
   const busy = useRef(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [unlinkTarget, setUnlinkTarget] = useState<LinkedChannel | null>(null);
+  const [unlinkError, setUnlinkError] = useState('');
   const [manual, setManual] = useState<{ platform?: OAuthPlatform; query?: string } | null>(null);
   const [historyVersion, setHistoryVersion] = useState(0);
   const [invitationContext, setInvitationContext] = useState<{
@@ -351,6 +354,35 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
     }
   }
 
+  async function unlinkChannel() {
+    if (!unlinkTarget || busy.current) return;
+    const accountSession = getAuthSessionId();
+    const channel = unlinkTarget;
+    busy.current = true;
+    setWorking('unlink');
+    setUnlinkError('');
+    setNotice('');
+    try {
+      await verification.unlink(channel.id);
+      if (accountSession !== getAuthSessionId()) return;
+      if (pending && (pending.flow === 'TIKTOK_LOGIN' ? 'TIKTOK' : session?.platform) === channel.platform) {
+        clearPending();
+      } else if (pending) {
+        setStatusRetry(value => value + 1);
+      }
+      setUnlinkTarget(null);
+      setHistoryVersion(value => value + 1);
+      setNotice('Đã gỡ liên kết kênh.');
+      await reloadLinked();
+    } catch (cause) {
+      if (accountSession === getAuthSessionId())
+        setUnlinkError(getErrorMessage(cause, 'Không gỡ được liên kết kênh.'));
+    } finally {
+      busy.current = false;
+      setWorking('');
+    }
+  }
+
   async function cancelSession() {
     if (!pending || busy.current) return;
     const current = pending;
@@ -420,7 +452,8 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
             {checking && <Spin size="small" />}
             {(session?.status === 'NEW' || session?.status === 'EXCHANGING') && <Alert type="info" showIcon title="Đang chờ kết quả cấp quyền từ nền tảng." />}
             {session?.status === 'FAILED' && <Alert type="warning" showIcon title={
-              returnHint === 'cancelled' ? 'Bạn đã hủy cấp quyền.'
+              session.failureCode === 'CHANNEL_PLATFORM_ALREADY_LINKED' ? matchReasons.CHANNEL_PLATFORM_ALREADY_LINKED
+                : returnHint === 'cancelled' ? 'Bạn đã hủy cấp quyền.'
                 : returnHint === 'conflict' ? 'Không thể liên kết vì có xung đột quyền sở hữu hoặc phiên xác minh.'
                 : 'Nền tảng không hoàn tất cấp quyền.'
             } />}
@@ -510,6 +543,8 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
         {linkedError ? <Alert type="error" showIcon title={linkedError} /> : !linked ? <Spin /> :
           linked.length === 0 ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có kênh đã liên kết." /> :
             <Space orientation="vertical" style={{ width: '100%' }}>
+              {new Set(linked.map(channel => channel.platform.toUpperCase())).size < linked.length
+                && <Alert showIcon type="warning" title="Hãy gỡ các kênh trùng để mỗi nền tảng chỉ còn một kênh." />}
               {linked.map(channel => {
                 const profile = httpUrl(channel.profileUrl);
                 return <div className="creator-mini-row" style={{ flexWrap: 'wrap', gap: 8 }} key={channel.id}>
@@ -518,13 +553,27 @@ export default function ChannelVerification({ canVerify, canViewClaims, linked, 
                     <span>{channel.platform} · {channel.userName || channel.externalId}</span>
                     {profile && <a href={profile} target="_blank" rel="noreferrer">Mở kênh</a>}
                   </Space>
-                  <Tag color={channel.verification?.environment === 'SANDBOX' ? 'warning'
-                    : channel.verifiedByInfluencerMatch ? 'success' : 'default'}>{verificationLabel(channel)}</Tag>
+                  <Space wrap>
+                    <Tag color={channel.verification?.environment === 'SANDBOX' ? 'warning'
+                      : channel.verifiedByInfluencerMatch ? 'success' : 'default'}>{verificationLabel(channel)}</Tag>
+                    <Button danger disabled={!!working} onClick={() => { setUnlinkError(''); setUnlinkTarget(channel); }}>
+                      Gỡ liên kết
+                    </Button>
+                  </Space>
                 </div>;
               })}
             </Space>}
       </Card>}
       {canViewClaims && <ClaimHistory key={historyVersion} />}
+      <Modal title="Gỡ liên kết kênh" open={!!unlinkTarget && canVerify}
+        okText="Gỡ liên kết" cancelText="Giữ liên kết" okButtonProps={{ danger: true }}
+        confirmLoading={working === 'unlink'} closable={working !== 'unlink'}
+        mask={{ closable: working !== 'unlink' }} keyboard={working !== 'unlink'}
+        onCancel={() => { if (!busy.current) setUnlinkTarget(null); }} onOk={() => void unlinkChannel()}>
+        <p>Gỡ liên kết với <strong>{unlinkTarget?.displayName || unlinkTarget?.userName || unlinkTarget?.externalId}</strong>?
+          Bạn sẽ cần xác minh lại nếu muốn liên kết kênh này.</p>
+        {unlinkError && <Alert showIcon type="error" title={unlinkError} />}
+      </Modal>
       <Modal title="Chọn cách xác minh Instagram" open={instagramDialogOpen} footer={null}
         closable={!working} mask={{ closable: !working }} keyboard={!working}
         onCancel={() => { setShowInstagram(false); setError(''); }}>

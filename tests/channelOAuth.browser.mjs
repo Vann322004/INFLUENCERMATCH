@@ -8,16 +8,22 @@ const harness = new URL('../.channel-oauth-browser.html', import.meta.url);
 let server, browser;
 try {
   await writeFile(harness, `<!doctype html><html><body><div id="harness"></div><script type="module">
-    import { createElement } from 'react';
+    import { createElement, useCallback, useState } from 'react';
     import { createRoot } from 'react-dom/client';
     import { BrowserRouter } from 'react-router-dom';
     import ChannelVerification from '/src/pages/creator/portal/ChannelVerification.tsx';
-    window.mountChannelVerification = (reloadResult = [{ id: 'creator' }]) => {
+    window.mountChannelVerification = (reloadResult = [{ id: 'creator' }], initialLinked = []) => {
+      function Harness() {
+        const [linked, setLinked] = useState(initialLinked);
+        const reloadLinked = useCallback(async () => {
+          setLinked(reloadResult.map(channel => ({ platform: 'TIKTOK', externalId: channel.id, ...channel })));
+          return reloadResult;
+        }, []);
+        return createElement(ChannelVerification, { canVerify: true, canViewClaims: false,
+          linked, linkedError: null, reloadLinked });
+      }
       createRoot(document.getElementById('harness')).render(
-        createElement(BrowserRouter, {}, createElement(ChannelVerification, {
-          canVerify: true, canViewClaims: false, linked: [], linkedError: null,
-          reloadLinked: async () => reloadResult,
-        })),
+        createElement(BrowserRouter, {}, createElement(Harness)),
       );
     };
   </script></body></html>`, 'utf8');
@@ -37,6 +43,10 @@ try {
     const path = new URL(req.url()).pathname;
     requests.push({ path, method: req.method(), body: req.postDataJSON() });
     let data;
+    if (req.method() === 'DELETE' && path.endsWith('/creators/portal/accounts/extra-tiktok')) {
+      await route.fulfill({ status: 204 });
+      return;
+    }
     if (path.endsWith('/connection-options')) {
       data = [
         { platform: 'FACEBOOK', oauthFlow: 'FACEBOOK_LOGIN', available: true, supported: true },
@@ -201,6 +211,23 @@ try {
   const previousConfirms = confirmRequests().length;
   await create.evaluate(button => { button.click(); button.click(); });
   await page.getByText('Kênh đã được liên kết.', { exact: true }).waitFor();
+  await page.goto(harnessUrl);
+  await page.evaluate(async () => {
+    const { setAuthSession } = await import('/src/services/authSession.ts');
+    setAuthSession('fixture-access-token', undefined, { id: 'creator-user', role: 'CREATOR', status: 'ACTIVE' });
+    sessionStorage.removeItem('creator.channel-oauth');
+    const keep = { id: 'keep-tiktok', platform: 'TIKTOK', externalId: '101', displayName: 'Kênh giữ lại' };
+    window.mountChannelVerification([keep], [keep, { ...keep, id: 'extra-tiktok', displayName: 'Kênh cần gỡ' }]);
+  });
+  await page.getByText('Hãy gỡ các kênh trùng để mỗi nền tảng chỉ còn một kênh.').waitFor();
+  await page.locator('.creator-mini-row').filter({ hasText: 'Kênh cần gỡ' })
+    .getByRole('button', { name: 'Gỡ liên kết' }).click();
+  const unlinkDialog = page.getByRole('dialog', { name: 'Gỡ liên kết kênh' });
+  await unlinkDialog.getByText('Kênh cần gỡ').waitFor();
+  await unlinkDialog.getByRole('button', { name: 'Gỡ liên kết' }).click();
+  await page.getByText('Đã gỡ liên kết kênh.', { exact: true }).waitFor();
+  await page.locator('.creator-mini-row').filter({ hasText: 'Kênh cần gỡ' }).waitFor({ state: 'detached' });
+  assert.equal(await page.getByText('Kênh giữ lại', { exact: true }).count(), 1);
   assert.deepEqual(confirmRequests().slice(previousConfirms).map(req => req.body), [{ accountId: '178400002' }]);
 
   await page.setViewportSize({ width: 375, height: 812 });

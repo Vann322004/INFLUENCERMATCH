@@ -41,7 +41,7 @@ export interface OAuthAccount {
   name?: string | null;
   username?: string | null;
   matchStatus: 'AVAILABLE' | 'CAN_CREATE' | 'ALREADY_LINKED' | 'UNMATCHED' | 'UNAVAILABLE' | 'INSUFFICIENT_EVIDENCE';
-  matchReason?: 'CHANNEL_NOT_FOUND' | 'UNSTABLE_CHANNEL_ID' | 'MISSING_PAGE_MANAGEMENT' | 'TARGET_MISMATCH' | 'OWNERSHIP_CONFLICT' | null;
+  matchReason?: 'CHANNEL_NOT_FOUND' | 'UNSTABLE_CHANNEL_ID' | 'MISSING_PAGE_MANAGEMENT' | 'TARGET_MISMATCH' | 'OWNERSHIP_CONFLICT' | 'CHANNEL_PLATFORM_ALREADY_LINKED' | null;
 }
 
 export interface OAuthSession {
@@ -52,6 +52,7 @@ export interface OAuthSession {
   accounts: OAuthAccount[];
   account?: { username?: string | null; displayName?: string | null; matchStatus?: string | null };
   creatorId?: string;
+  failureCode?: string | null;
 }
 
 export interface OAuthStartContext {
@@ -64,6 +65,9 @@ const meta = portal + '/connect/meta';
 const sessionPath = (id: string) => meta + '/sessions/' + encodeURIComponent(id);
 
 export const channelVerificationService = {
+  async unlink(creatorId: string): Promise<void> {
+    await apiClient.delete(portal + '/' + encodeURIComponent(creatorId));
+  },
   async listLinked(signal?: AbortSignal): Promise<LinkedChannel[]> {
     const { data } = await apiClient.get(portal, { signal });
     if (!Array.isArray(data?.data)) throw new Error('Danh sách kênh đã liên kết không hợp lệ.');
