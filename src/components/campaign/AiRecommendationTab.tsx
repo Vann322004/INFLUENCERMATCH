@@ -73,6 +73,43 @@ const tierLabel = (item: CreatorRecommendationItemDto) => {
     default: return item.isProvisional === true ? 'Kết quả tham khảo' : 'Chưa có phân loại bằng chứng';
   }
 };
+
+function formatExcludedReason(reason: string): string {
+  const upper = reason.toUpperCase();
+  if (upper.includes('EXTREME_OUTLIER_ER') || upper.includes('ENGAGEMENTRATE EXCEEDS')) {
+    return 'Tỷ lệ tương tác (ER) vượt ngưỡng bất thường, hệ thống tạm loại để tránh sai lệch xếp hạng.';
+  }
+  if (upper.includes('EXTREME_OUTLIER_VR') || upper.includes('VIEW')) {
+    return 'Lượt xem trung bình có dấu hiệu bất thường so với ngưỡng chuẩn.';
+  }
+  if (upper.includes('STALE') || upper.includes('FRESHNESS') || upper.includes('OUTDATED')) {
+    return 'Dữ liệu kênh đã cũ, cần làm mới trước khi AI đánh giá.';
+  }
+  if (upper.includes('EMBEDDING')) {
+    return 'Hồ sơ kênh chưa có dữ liệu phân tích ngữ nghĩa (AI Embedding).';
+  }
+  if (upper.includes('POST') && (upper.includes('INSUFFICIENT') || upper.includes('MIN') || upper.includes('NO_POST'))) {
+    return 'Số lượng bài đăng gần đây chưa đủ để AI đánh giá độ ổn định.';
+  }
+  if (upper.includes('PLATFORM')) {
+    return 'Nền tảng hoạt động của kênh chưa khớp với chiến dịch.';
+  }
+  if (upper.includes('NICHE') || upper.includes('CATEGORY')) {
+    return 'Lĩnh vực nội dung chưa khớp với ngành hàng của chiến dịch.';
+  }
+  if (upper.includes('FOLLOWER')) {
+    return 'Lượng người theo dõi nằm ngoài phạm vi mục tiêu chiến dịch.';
+  }
+  if (upper.includes('DATA_QUALITY_ERROR')) {
+    return 'Chỉ số dữ liệu của kênh chưa đạt chuẩn kiểm định chất lượng.';
+  }
+  return reason;
+}
+
+function renderExcludedReasons(reasons: string[]) {
+  const formatted = [...new Set(reasons.map(formatExcludedReason))];
+  return <ul>{formatted.map((reason, index) => <li key={index}>{reason}</li>)}</ul>;
+}
 const m4SourceLabel = (value?: string | null) => ({
   DIRECT_BRAND_CREATOR: 'Lịch sử hợp tác trực tiếp của bạn với nhà sáng tạo',
   COHORT_PLATFORM_NICHE: 'Lịch sử hợp tác của bạn cùng nền tảng và ngành hàng',
@@ -680,14 +717,14 @@ export default function AiRecommendationTab({
             <p className="rec-pool-note">Đánh giá tham khảo; chưa thuộc nhóm xếp hạng chính.</p>
             {reference.length ? <div className="rec-cards-grid">{reference.map((item, index) => renderCandidate(item, false, index + 1))}</div> : <Empty description="Không có kênh tham khảo trong dữ liệu lượt này" />}
           </> },
-          { key: 'excluded', label: `Không đủ điều kiện${excluded ? ' · ' + excluded.length : viewedRun && metadata?.excludedCount != null ? ' · ' + metadata.excludedCount : ''}`, children: <>
-            <p className="rec-pool-note">Chỉ gồm những kênh hệ thống ghi nhận lý do loại. Kênh không xuất hiện do giới hạn kết quả hoặc gộp hồ sơ không mặc nhiên thuộc nhóm này.</p>
+          { key: 'excluded', label: `Chưa phù hợp${excluded ? ' · ' + excluded.length : viewedRun && metadata?.excludedCount != null ? ' · ' + metadata.excludedCount : ''}`, children: <>
+            <p className="rec-pool-note">Các kênh dưới đây tạm thời chưa được đưa vào bảng xếp hạng do lệch tiêu chí chiến dịch hoặc chỉ số dữ liệu cần kiểm định lại.</p>
             {excluded ? excluded.length ? <div className="rec-cards-grid">{excluded.map(item => <article className="rec-creator-card rec-card-compact" key={item.creatorId}>
               <header className="rec-identity"><CreatorAvatar size={44} src={item.avatarUrl} name={item.displayName || item.userName} /><div className="rec-author"><h3>{item.displayName || item.userName || 'Kênh chưa có tên'}</h3><p>{item.userName ? '@' + item.userName.replace(/^@+/, '') : 'Chưa có tên tài khoản'}</p></div></header>
               {item.platform && <div className="rec-statuses"><Tag>{item.platform}</Tag></div>}
-              <div className="rec-reason-summary"><h4>Lý do không đủ điều kiện</h4><p>{item.message || 'Máy chủ chưa cung cấp mô tả lý do.'}</p></div>
-              {!!item.reasons?.length && <details className="rec-details"><summary>Xem lý do đã ghi nhận</summary><ul>{item.reasons.map((reason, index) => <li key={index}>{reason}</li>)}</ul></details>}
-            </article>)}</div> : <Empty description="Không có kênh bị loại được ghi nhận" /> : <Empty description={viewedRun ? 'Lịch sử không cung cấp danh sách và lý do loại. Không thể dựng lại từ dữ liệu hiện tại.' : 'Chưa có dữ liệu loại từ lượt đánh giá'} />}
+              <div className="rec-reason-summary"><h4>Lý do chưa đề xuất</h4><p>{item.message || 'Dữ liệu kênh chưa đáp ứng tiêu chí đánh giá của lượt này.'}</p></div>
+              {!!item.reasons?.length && <details className="rec-details"><summary>Xem chi tiết lý do</summary>{renderExcludedReasons(item.reasons)}</details>}
+            </article>)}</div> : <Empty description="Không có kênh nào bị loại trong lượt này" /> : <Empty description={viewedRun ? 'Lịch sử không cung cấp danh sách và lý do chi tiết.' : 'Chưa có dữ liệu từ lượt đánh giá'} />}
           </> },
         ]} />}
         </div>

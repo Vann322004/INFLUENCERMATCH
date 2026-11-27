@@ -77,8 +77,8 @@ export default function CreatorSidebar() {
   };
 
   const userDropdown: MenuProps['items'] = [
-    { key: 'profile', icon: <UserOutlined />, label: 'Hồ sơ Creator', onClick: () => navigate('/creator/verification') },
-    { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt tài khoản', onClick: () => navigate('/creator/social-accounts') },
+    { key: 'profile', icon: <UserOutlined />, label: 'Tổng quan Creator', onClick: () => navigate('/creator/dashboard') },
+    { key: 'settings', icon: <SettingOutlined />, label: 'Kênh liên kết', onClick: () => navigate('/creator/social-accounts') },
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, danger: true, label: 'Đăng xuất', onClick: handleLogout },
   ];
