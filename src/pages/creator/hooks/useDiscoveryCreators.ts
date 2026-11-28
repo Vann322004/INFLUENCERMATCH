@@ -83,21 +83,23 @@ export function useDiscoveryCreators({
             size: limit,
           });
           const raw: any = response;
-          const rows = Array.isArray(raw) ? raw : raw?.content ?? raw?.items ?? raw?.candidates;
+          const payload: any = raw?.data && !Array.isArray(raw) ? raw.data : raw;
+          const rows = Array.isArray(payload) ? payload : payload?.content ?? payload?.items ?? payload?.candidates;
           if (!Array.isArray(rows)) throw new Error('Dữ liệu gợi ý Creator không đúng định dạng.');
           const allRows = [...rows];
-          const totalPages = Number(raw.totalPages ?? (raw.totalElements != null ? Math.ceil(raw.totalElements / (raw.size || limit)) : 1));
+          const totalPages = Number(payload.totalPages ?? (payload.totalElements != null ? Math.ceil(payload.totalElements / (payload.size || limit)) : 1));
           if (!Number.isSafeInteger(totalPages) || totalPages < 0) throw new Error('Invalid discovery pagination.');
           for (let page = 1; page < totalPages; page++) {
             if (!active || version !== requestVersion.current) return;
-            const next = await creatorService.discoverCreators(matchedCampaign.id, {
+            const next: any = await creatorService.discoverCreators(matchedCampaign.id, {
               keyword: submittedSearch || undefined,
               niche: selectedCategory !== 'all' ? selectedCategory : undefined,
               minFollowers: requestedRange?.minFollowers,
               maxFollowers: requestedRange?.maxFollowers,
               page, size: limit,
             });
-            const nextRows = next.content ?? next.items ?? next.candidates;
+            const nextPayload: any = next?.data && !Array.isArray(next) ? next.data : next;
+            const nextRows = Array.isArray(nextPayload) ? nextPayload : nextPayload?.content ?? nextPayload?.items ?? nextPayload?.candidates;
             if (!Array.isArray(nextRows)) throw new Error('Invalid discovery page response.');
             allRows.push(...nextRows);
           }
